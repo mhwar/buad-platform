@@ -151,7 +151,7 @@ input,textarea,select{font-family:"IBM Plex Sans Arabic",sans-serif;direction:rt
 .ba{background:var(--Al);color:var(--A)}.bgr{background:#F0F0F4;color:#555}.bp{background:var(--Pl);color:var(--P)}
 
 .sg{display:grid;gap:8px;margin-bottom:11px}
-.sg3{grid-template-columns:repeat(3,1fr)}.sg4{grid-template-columns:repeat(4,1fr)}
+.sg2{grid-template-columns:repeat(2,1fr)}.sg3{grid-template-columns:repeat(3,1fr)}.sg4{grid-template-columns:repeat(4,1fr)}
 .sc{background:var(--sand);border-radius:8px;padding:10px 11px;text-align:center}
 .sc .sn{font-size:17px;font-weight:600;margin-bottom:2px;font-family:"IBM Plex Mono",monospace}
 .sc .sl{font-size:9px;color:var(--mu);line-height:1.3}
@@ -317,13 +317,6 @@ input[type=checkbox]{accent-color:var(--N);width:13px;height:13px;cursor:pointer
 <div class="wrap">
 
 <div class="topbar">
-  <div class="tbl-btns">
-    <button class="tb" onclick="if(window.parent&&window.parent!==window){window.parent.postMessage('closeViewer','*');}else if(window.opener){window.close();}else{history.back();}" style="background:var(--sand2);border-color:var(--bd2);color:var(--mu)">← الداشبورد</button>
-    <button class="tb pri" onclick="window.print()">⬇ طباعة</button>
-    <button class="tb sec" onclick="openContractPDF()">📄 تصدير العقد PDF</button>
-    <button class="tb pur" onclick="exportDist()">📊 تصدير التوزيع المالي</button>
-    <button class="tb" onclick="saveHTML()">💾 حفظ HTML</button>
-  </div>
   <div style="font-size:11px;color:var(--mu);display:flex;align-items:center;gap:5px"><span style="width:7px;height:7px;border-radius:50%;background:var(--S);display:inline-block"></span>جميع الحقول قابلة للتعديل مباشرة</div>
 </div>
 
@@ -503,28 +496,29 @@ input[type=checkbox]{accent-color:var(--N);width:13px;height:13px;cursor:pointer
   <div class="spanel" id="sp0-1">
     <div class="card">
       <div class="ch"><div class="ci ci-g">م</div><h2>الميزانية التنفيذية</h2>
-        <div style="display:flex;align-items:center;gap:6px;margin-right:auto;font-size:11px;color:var(--mu)">
-          سقف الميزانية: <strong class="mn" id="fin-ceiling-val" style="color:var(--N)">—</strong> ر.س
-        </div>
+        <button id="approve-btn" class="btn" style="margin-right:auto;font-size:11px;background:var(--S);color:#fff;border:none;padding:4px 10px" onclick="approveBudget()">✓ اعتماد الميزانية</button>
+        <button class="btn" style="font-size:11px;background:var(--P);color:#fff;border:none;padding:4px 10px;margin-right:6px" onclick="openDistModal()">📊 التوزيع المالي</button>
       </div>
       <div class="cb">
-        <div class="sg sg3" style="margin-bottom:12px">
-          <div class="sc"><div class="sn cn mn" id="d-bud">—</div><div class="sl">الميزانية (ر.س)</div></div>
-          <div class="sc"><div class="sn cg mn" id="d-spent">—</div><div class="sl">مجموع البنود</div></div>
-          <div class="sc"><div class="sn cs mn" id="d-rem">—</div><div class="sl">الاحتياطي</div></div>
+        <div id="overhead-panel" style="background:var(--Nl);border:.5px solid var(--bd);border-radius:7px;padding:10px 13px;margin-bottom:12px;font-size:12px">
+          <div style="font-size:11px;font-weight:600;color:var(--N);margin-bottom:8px">توزيع قيمة العقد</div>
+          <div class="cr-row"><span style="color:var(--mu)">قيمة العقد قبل الضريبة</span><span id="ob-gross" class="mn">—</span></div>
+          <div class="cr-row" id="ob-exec-row"><span id="ob-exec-lbl" style="color:var(--mu)">رسوم بُعد التمكين</span><span id="ob-exec" class="mn">—</span></div>
+          <div class="cr-row"><span style="color:var(--mu)">مخصص التسويق</span><span id="ob-mkt" class="mn">—</span></div>
+          <div class="cr-row" style="border-bottom:.5px solid var(--bd);padding-bottom:6px;margin-bottom:6px"><span style="color:var(--mu)">ضريبة القيمة المضافة</span><span id="ob-vat" class="mn">—</span></div>
+          <div class="cr-row"><span style="font-weight:600;color:var(--N)">الميزانية التنفيذية المتاحة</span><span id="ob-net" class="mn cn" style="font-weight:700">—</span></div>
         </div>
-        <table class="tbl" style="table-layout:fixed"><colgroup><col><col style="width:88px"><col style="width:110px"><col style="width:78px"><col style="width:26px"></colgroup>
-          <thead><tr><th>البند</th><th>النسبة</th><th>المبلغ (ر.س)</th><th>المسؤول</th><th></th></tr></thead>
+        <div class="sg sg2" style="margin-bottom:12px">
+          <div class="sc"><div class="sn cn mn" id="d-bud">—</div><div class="sl">مجموع الميزانية (ر.س)</div></div>
+          <div class="sc"><div class="sn cg mn" id="d-spent">—</div><div class="sl">قيمة العقد (ر.س)</div></div>
+        </div>
+        <table class="tbl" style="table-layout:fixed"><colgroup><col><col style="width:62px"><col style="width:62px"><col style="width:90px"><col style="width:90px"><col style="width:72px"><col style="width:26px"></colgroup>
+          <thead><tr><th>البند</th><th>الوحدة</th><th>الكمية</th><th>سعر الوحدة</th><th>الإجمالي (ر.س)</th><th>المسؤول</th><th></th></tr></thead>
           <tbody id="fin-body"></tbody>
-          <tfoot><tr class="fin-tot"><td>المجموع</td><td class="mn" id="fin-pct">—</td><td class="mn" id="fin-sum">—</td><td></td><td></td></tr></tfoot>
+          <tfoot><tr class="fin-tot"><td colspan="4">المجموع</td><td class="mn" id="fin-sum">—</td><td></td><td></td></tr></tfoot>
         </table>
-        <div style="padding:8px 11px;border-top:.5px solid var(--bd);display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <div style="padding:8px 11px;border-top:.5px solid var(--bd)">
           <button class="btn btn-g" onclick="addFin()">+ بند</button>
-          <div style="display:flex;align-items:center;gap:6px;margin-right:auto">
-            <label style="font-size:11px;color:var(--mu)">الميزانية:</label>
-            <input type="number" id="bud-inp" value="50000" class="ef" style="width:108px;padding:4px 7px;font-family:'IBM Plex Mono',monospace" onchange="recalc()">
-            <span style="font-size:10px;color:var(--mu)">ر.س</span>
-          </div>
         </div>
       </div>
     </div>
@@ -662,83 +656,12 @@ input[type=checkbox]{accent-color:var(--N);width:13px;height:13px;cursor:pointer
     </div>
   </div>
 
-  <!-- FINANCIAL AGREEMENT INTERNAL -->
+  <!-- navigation note — content moved to sp0-1 -->
   <div class="spanel" id="sp1-1">
-    <div class="note-p" style="margin-bottom:13px">هذا القسم للاستخدام الداخلي فقط — لا يُطبَع في العقد الرسمي.</div>
-
-    <!-- MKT SOURCE TOGGLE -->
-    <div class="card">
-      <div class="ch"><div class="ci ci-g">ت</div><h2>إعدادات التوزيع المالي الداخلي</h2></div>
-      <div class="cb">
-        <div class="mkt-toggle-wrap">
-          <div><label>المسوّق من أين؟</label><div style="font-size:10px;color:var(--mu);margin-top:2px">يحدد هذا الخيار طبيعة مخصص التسويق في التوزيع المالي</div></div>
-          <div class="mkt-radio">
-            <button id="mkt-in-btn" class="act-in" onclick="setMktSource('in')">داخل بُعد التمكين (ربح إضافي)</button>
-            <button id="mkt-out-btn" onclick="setMktSource('out')">خارج بُعد التمكين (التزام مالي)</button>
-          </div>
-        </div>
-        <div class="g3" style="margin-bottom:12px">
-          <div class="fb"><label>نوع مخصص التسويق</label><select class="ef" id="i-mkt-t" onchange="calcC()"><option value="pct">نسبة % من الإجمالي</option><option value="fix">مبلغ مقطوع</option></select></div>
-          <div class="fb"><label>قيمة مخصص التسويق</label><input class="ef mn" type="number" id="i-mkt-v" value="10" step="0.1" oninput="calcC()"></div>
-          <div class="fb"><label>اسم المسوّق / الجهة</label><input class="ef efg" id="i-mkt-name" value="مسوق خارجي" oninput="calcC()"></div>
-          <div class="fb"><label>نوع الكاش باك للجمعية</label><select class="ef" id="i-cb-t" onchange="calcC()"><option value="pct">نسبة % من الإجمالي</option><option value="fix">مبلغ مقطوع</option></select></div>
-          <div class="fb"><label>قيمة الكاش باك</label><input class="ef mn" type="number" id="i-cb-v" value="5" step="0.1" oninput="calcC()"></div>
-          <div class="fb"><label>موعد صرف الكاش باك</label><select class="ef efg" id="i-cb-w"><option>بعد إتمام المشروع</option><option>مع الدفعة الأخيرة</option><option>خلال 30 يوماً من الختام</option></select></div>
-        </div>
-
-        <!-- EXECUTION MODEL TOGGLE -->
-        <div class="mkt-toggle-wrap" style="margin-bottom:12px;background:var(--Nl);border-color:#B5C8F0">
-          <div>
-            <label style="color:var(--N);font-size:11.5px;font-weight:500">نموذج تنفيذ بُعد التمكين</label>
-            <div style="font-size:10px;color:var(--mu);margin-top:2px">يحدد كيف تُحسب حصة بُعد التمكين في التوزيع المالي الداخلي</div>
-          </div>
-          <div class="mkt-radio">
-            <button id="exec-bud-btn" class="act-in" onclick="setExecMode('budget')">ميزانية تفصيلية</button>
-            <button id="exec-pct-btn" onclick="setExecMode('pct')">نسبة من الإجمالي</button>
-          </div>
-        </div>
-        <div class="fb" id="exec-pct-row" style="display:none;max-width:240px;margin-bottom:12px">
-          <label>نسبة تنفيذ بُعد التمكين من الإجمالي (%)</label>
-          <input class="ef mn" type="number" id="i-exec-pct" value="30" min="0" max="100" step="0.1" oninput="syncAll()">
-        </div>
-
-        <!-- DISTRIBUTION BLOCK -->
-        <div class="dist-wrap" id="dist-wrap">
-          <div class="dist-title">
-            <span style="width:9px;height:9px;border-radius:3px;background:var(--P);display:inline-block"></span>
-            التوزيع المالي الداخلي — من المبلغ الإجمالي قبل الضريبة
-          </div>
-          <div class="dist-grid">
-            <div class="dc dc-exec"><div class="dcl" id="dc-exec-label">تكلفة التنفيذ الفعلي</div><div class="dcp" id="dc-exec-pct">—</div><div class="dca" id="dc-exec-amt">—</div><div class="dcn" id="dc-exec-note">مجموع بنود الميزانية التنفيذية</div></div>
-            <div class="dc dc-profit"><div class="dcl">ربح بُعد التمكين</div><div class="dcp" id="dc-profit-pct">—</div><div class="dca" id="dc-profit-amt">—</div><div class="dcn" id="dc-profit-note">صافي الربح بعد جميع الاستقطاعات</div></div>
-            <div class="dc dc-return"><div class="dcl">العوائد للجمعية</div><div class="dcp" id="dc-return-pct">—</div><div class="dca" id="dc-return-amt">—</div><div class="dcn" id="dc-return-note">كاش باك + استرداد ضريبي</div></div>
-            <div class="dc" id="dc-mkt-card"><div class="dcl" id="dc-mkt-label">مخصص التسويق</div><div class="dcp" id="dc-mkt-pct">—</div><div class="dca" id="dc-mkt-amt">—</div><div class="dcn" id="dc-mkt-note">—</div></div>
-          </div>
-          <div style="margin-bottom:8px"><div style="font-size:10px;color:var(--P);margin-bottom:5px;font-weight:500">التوزيع البصري</div>
-            <div class="dist-bar">
-              <div class="dbs" id="bar-exec" style="background:#00197D">تنفيذ</div>
-              <div class="dbs" id="bar-profit" style="background:#2C5F2D">ربح</div>
-              <div class="dbs" id="bar-return" style="background:#5B2D8E">عوائد</div>
-              <div class="dbs" id="bar-mkt" style="background:#B8841A">تسويق</div>
-            </div>
-          </div>
-          <div class="dist-legend">
-            <div class="dl"><div class="dld" style="background:#00197D"></div>تنفيذ فعلي</div>
-            <div class="dl"><div class="dld" style="background:#2C5F2D"></div>ربح الشركة</div>
-            <div class="dl"><div class="dld" style="background:#5B2D8E"></div>عوائد الجمعية</div>
-            <div class="dl"><div class="dld" id="mkt-legend-dot" style="background:#B8841A"></div><span id="mkt-legend-label">تسويق خارجي</span></div>
-          </div>
-          <div class="dist-return-detail">
-            <div style="font-size:11px;font-weight:600;color:var(--P);margin-bottom:8px">تفصيل عوائد الجمعية</div>
-            <div class="cr-row"><span class="cr-lbl" style="color:var(--P)">الكاش باك المتفق عليه</span><span class="cr-val cp" id="detail-cb">—</span></div>
-            <div class="cr-row" style="border-bottom:.5px solid #C5A8E8"><span style="color:var(--P)">الاسترداد الضريبي المتوقع <span style="font-size:9px;font-weight:400;opacity:.7">(الجمعيات الخيرية تسترد الضريبة كاملاً بعد المطالبة)</span></span><span class="cr-val cp" id="detail-vat-refund">—</span></div>
-            <div style="display:flex;justify-content:space-between;font-weight:600;color:var(--P);font-size:12.5px;padding-top:7px;margin-top:2px"><span>إجمالي العوائد للجمعية</span><span class="mn" id="detail-total-return">—</span></div>
-          </div>
-          <div style="margin-top:10px;padding-top:10px;border-top:.5px solid #C5A8E8;display:flex;gap:8px;flex-wrap:wrap">
-            <button class="btn btn-g" style="border-color:var(--P);color:var(--P)" onclick="exportDist()">📊 تصدير PDF / صورة</button>
-          </div>
-        </div>
-        <div class="note-p" style="margin-top:10px"><strong>ملاحظة:</strong> وفق نظام ضريبة القيمة المضافة السعودي، يحق للجمعيات الخيرية استرداد ضريبة القيمة المضافة كاملاً عبر تقديم طلب للهيئة العامة للزكاة والضريبة والجمارك (ZATCA). الأرقام تقديرية للتخطيط الداخلي.</div>
+    <div class="note-p" style="text-align:center;padding:20px 0">
+      تم دمج إعدادات التوزيع المالي الداخلي في <strong>العرض والتخطيط → المالي</strong> للتكامل مع الميزانية التنفيذية.
+      <div style="margin-top:12px">
+        <button class="btn btn-g" onclick="msw(0);ssw(0,1);">الانتقال إلى الإعدادات المالية</button>
       </div>
     </div>
   </div>
@@ -866,7 +789,7 @@ var GOALS=["رفع كفاءة الصيادلة المهنية وتطوير مه�
 var COURSES=["الاستشارات الدوائية المتقدمة","التعامل مع الحالات الخاصة","أخطاء صرف الدواء والوقاية","التداخلات الدوائية","أخلاقيات المهنة وسلامة المرضى"];
 var SESSIONS=["دور الصيدلي في تحسين تجربة المريض","التحديات اليومية في الصيدليات","حالات دوائية واقعية","الصيدلي والمجتمع","أخلاقيات المهنة والمسؤولية القانونية","التحول الرقمي في العمل الصيدلاني","تطوير المسار المهني للصيدلي"];
 var KPIS=[{k:"عدد الصيادلة المؤهَّلين",t:"≥ 30",m:"سجل التسجيل"},{k:"نسبة الاجتياز",t:"≥ 80%",m:"شهادات"},{k:"رضا المشاركين",t:"≥ 8.5/10",m:"استبيان"},{k:"تنفيذ اللقاءات",t:"12/12",m:"سجل الحضور"}];
-var FIN=[{c:"تنظيم وإدارة اللقاءات (12 لقاءً)",a:15000,o:"بُعد التمكين"},{c:"أتعاب المحاضرين",a:12000,o:"مراس"},{c:"المواد التدريبية",a:6000,o:"عقول"},{c:"الضيافة والتموين",a:7000,o:"بُعد التمكين"},{c:"الشهادات والتكريم",a:3000,o:"بُعد التمكين"},{c:"التسويق والتوثيق",a:4000,o:"عقول"},{c:"احتياطي طوارئ",a:3000,o:"بُعد التمكين"}];
+var FIN=[{c:"تنظيم وإدارة اللقاءات (12 لقاءً)",u:"لقاء",q:12,p:1250,a:15000,o:"بُعد التمكين"},{c:"أتعاب المحاضرين",u:"محاضر",q:4,p:3000,a:12000,o:"مراس"},{c:"المواد التدريبية",u:"دفعة",q:1,p:6000,a:6000,o:"عقول"},{c:"الضيافة والتموين",u:"لقاء",q:7,p:1000,a:7000,o:"بُعد التمكين"},{c:"الشهادات والتكريم",u:"قطعة",q:30,p:100,a:3000,o:"بُعد التمكين"},{c:"التسويق والتوثيق",u:"مقطوع",q:1,p:4000,a:4000,o:"عقول"},{c:"احتياطي طوارئ",u:"مقطوع",q:1,p:3000,a:3000,o:"بُعد التمكين"}];
 var TASKS=[{t:"توقيع العقد مع جمعية توفير الدواء",w:"م1",o:"الإدارة",c:"bn",done:false},{t:"تحديد مكان اللقاءات وحجزه",w:"م1",o:"بُعد التمكين",c:"bn",done:false},{t:"التعاقد مع المحاضرين الخمسة",w:"م1",o:"مراس",c:"bs",done:false},{t:"إطلاق التسجيل وفتح القبول",w:"م1",o:"عقول",c:"bg",done:false},{t:"إعداد المواد التدريبية",w:"م2",o:"مراس",c:"bs",done:false},{t:"إطلاق حملة التسويق",w:"م2",o:"عقول",c:"bg",done:false},{t:"تنفيذ اللقاء التفاعلي الأول",w:"م2",o:"الفريق",c:"bn",done:false},{t:"تنفيذ الدورة التدريبية الأولى",w:"م3",o:"مراس",c:"bs",done:false},{t:"تنفيذ باقي الدورات والجلسات",w:"م4-6",o:"الفريق",c:"bn",done:false},{t:"حفل الختام وتوزيع الشهادات",w:"م7",o:"بُعد التمكين",c:"bn",done:false},{t:"تسليم التقرير الختامي",w:"بعد",o:"بُعد التمكين",c:"bn",done:false}];
 var RISKS=[{r:"انخفاض إقبال الصيادلة على التسجيل",p:"متوسطة",lv:"high",plan:"التنسيق مع المستشفيات والنقابات"},{r:"تعارض مواعيد مع الورديات",p:"متوسطة",lv:"high",plan:"تنويع التوقيتات صباحية/مسائية"},{r:"انسحاب محاضر",p:"منخفضة",lv:"med",plan:"قائمة احتياطية جاهزة"},{r:"تجاوز الميزانية",p:"منخفضة",lv:"med",plan:"احتياطي 3,000 ر.س مرصود"}];
 var CTG=[{n:"بروتوكول انسحاب المحاضر",d:"إشعار الجمعية فوراً — تفعيل البديل خلال 48 ساعة"},{n:"بروتوكول التأجيل الطارئ",d:"إشعار المسجلين قبل 72 ساعة + إعادة الجدولة"}];
@@ -879,7 +802,7 @@ var INVOICES=[{date:"",desc:"دفعة أولى — بدء التنفيذ",amt:25
 var CLAUSES=[{n:"1",t:"نطاق الخدمات",b:"تلتزم الشركة بتنظيم وتنفيذ مبادرة ملتقى الصيادلة للتأهيل المهني وتحسين جودة الخدمات الصحية، بما يشمل 5 دورات تدريبية معتمدة و7 لقاءات تفاعلية (مجموع 12 لقاءً) في منطقة عسير."},{n:"2",t:"الالتزامات المالية وآلية السداد",b:"تُسدَّد الدفعة الأولى (50%) فور توقيع العقد، والدفعة الثانية بعد تسليم التقرير الختامي وإتمام جميع اللقاءات المقررة."},{n:"3",t:"سياسة الإلغاء والاسترداد",b:"يحق لأي طرف إنهاء العقد بإشعار خطي مسبق. تُطبَّق نسب الاسترداد المحددة في جدول السياسة المالية الوارد في هذا العقد."},{n:"4",t:"التزامات الجمعية",b:"تلتزم الجمعية بتسهيل وصول الصيادلة المستهدفين والتنسيق مع المنظومات الصحية لضمان حضور 30 مشاركاً كحد أدنى."},{n:"5",t:"السرية وحماية البيانات",b:"يلتزم الطرفان بالحفاظ على سرية المعلومات وفق أحكام نظام حماية البيانات الشخصية (PDPL) المعمول به في المملكة."},{n:"6",t:"فض النزاعات",b:"يُحسم أي نزاع وفق الأنظمة السعودية المعمول بها، والمرجعية القضائية هي المحاكم المختصة في منطقة عسير."}];
 
 // ══ UTILS ══════════════════════════════════════════════════════
-var BUD=50000, MKT_SOURCE="in", EXEC_MODE="budget";
+var BUD=50000, MKT_SOURCE="in", EXEC_MODE="budget", PRICING_MODE="budget", PCT_INCLUSIVE=false;
 function fmt(n){return isNaN(n)?'—':Math.round(n).toLocaleString("en-US");}
 function pct(n,t){return t?Math.round(n/t*100):0;}
 function V(id){var el=document.getElementById(id);return el?el.value:"";}
@@ -899,9 +822,91 @@ function setExecMode(m){
   EXEC_MODE=m;
   document.getElementById("exec-bud-btn").className=m==="budget"?"act-in":"";
   document.getElementById("exec-pct-btn").className=m==="pct"?"act-in":"";
-  var row=document.getElementById("exec-pct-row");
-  if(row) row.style.display=m==="pct"?"":"none";
+  document.getElementById("exec-fix-btn").className=m==="fixed"?"act-in":"";
+  var pctRow=document.getElementById("exec-pct-row");
+  var fixRow=document.getElementById("exec-fix-row");
+  var detTog=document.getElementById("exec-details-toggle");
+  if(pctRow) pctRow.style.display=m==="pct"?"":"none";
+  if(fixRow) fixRow.style.display=m==="fixed"?"":"none";
+  if(detTog) detTog.style.display=(m==="pct"||m==="fixed")?"":"none";
   syncAll();
+}
+function toggleExecDetails(){
+  var s=document.getElementById("exec-details-section");
+  var b=document.getElementById("exec-details-btn");
+  var open=s&&s.style.display!=="none";
+  if(s) s.style.display=open?"none":"";
+  if(b) b.textContent=open?"تفاصيل ↓":"إخفاء ↑";
+}
+function openDistModal(){var m=document.getElementById("dist-modal");if(m)m.classList.add("open");dmTab(0);}
+function closeDistModal(){var m=document.getElementById("dist-modal");if(m)m.classList.remove("open");}
+function dmTab(n){
+  [0,1].forEach(function(i){
+    var tb=document.getElementById("dm-tab-"+i);
+    var pn=document.getElementById("dm-panel-"+i);
+    if(tb) tb.className="stab"+(i===n?" act":"");
+    if(pn) pn.style.display=i===n?"":"none";
+  });
+}
+function setPricingMode(m){
+  PRICING_MODE=m;
+  var bb=document.getElementById("pm-bud-btn"),mb=document.getElementById("pm-mkp-btn");
+  if(bb) bb.className=m==="budget"?"act-in":"";
+  if(mb) mb.className=m==="markup"?"act-in":"";
+  var ms=document.getElementById("markup-settings");
+  if(ms) ms.style.display=m==="markup"?"":"none";
+  syncAll();
+}
+function exportQuote(){
+  buildContract();
+  var logoSrc=document.getElementById("logo-main").src;
+  var gross=parseFloat(V("c-gross"))||0;
+  var vatPct=parseFloat(V("c-vat"))||0;
+  var vatIncluded=document.getElementById("vat-included").checked;
+  var g=vatIncluded?gross/(1+vatPct/100):gross;
+  var mkpExec=parseFloat(V("i-mkp-exec"))||0;
+  var mkpMkt=parseFloat(V("i-mkp-mkt"))||0;
+  var mkpVat=parseFloat(V("i-mkp-vat"))||0;
+  var totalPct=mkpExec+mkpMkt+mkpVat;
+  var factor=1+totalPct/100;
+  var rows=FIN.map(function(f){
+    var net=f.a||0;
+    var bill=PCT_INCLUSIVE?net:Math.round(net*factor);
+    return '<tr><td>'+f.c+'</td><td style="font-size:10px;color:#666">'+f.u+'</td><td class="mn" style="text-align:center">'+f.q+'</td><td class="mn" style="text-align:left">'+fmt(f.p)+'</td><td class="mn" style="text-align:left">'+fmt(net)+'</td><td class="mn" style="text-align:left;font-weight:600;color:#00197D">'+fmt(bill)+'</td></tr>';
+  }).join('');
+  var finNet=FIN.reduce(function(s,i){return s+(i.a||0);},0);
+  var finBill=PCT_INCLUSIVE?finNet:Math.round(finNet*factor);
+  var css='<style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:"IBM Plex Sans Arabic",sans-serif;direction:rtl;background:#fff;color:#111;padding:28px;font-size:12px;line-height:1.75;-webkit-print-color-adjust:exact;print-color-adjust:exact}.mn{font-family:"IBM Plex Mono",monospace}.header{display:flex;align-items:center;gap:18px;margin-bottom:20px;padding-bottom:14px;border-bottom:2px solid #00197D}.header img{width:110px}.header h1{font-size:16px;font-weight:600;color:#00197D;margin-bottom:2px}.header p{font-size:10.5px;color:#72728A}table{width:100%;border-collapse:collapse;margin:10px 0;font-size:11px}th{padding:6px 8px;background:#00197D;color:#fff;text-align:right;font-weight:600}td{padding:5px 8px;border-bottom:1px solid #E0DAD0}.tot td{background:#E6EAF8;font-weight:600;color:#00197D}.summary{background:#F7F4EF;border-radius:8px;padding:12px 16px;margin-top:16px}.summary h3{font-size:12px;font-weight:600;color:#00197D;margin-bottom:8px}.row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:.5px solid #E0DAD0;font-size:11.5px}.row:last-child{border-bottom:none}.row-tot{font-weight:600;color:#00197D}.lbl{color:#72728A}.footer{text-align:center;font-size:10px;color:#A8A8C0;margin-top:20px;padding-top:14px;border-top:1px solid #E0DAD0}@media print{body{padding:15px}}</style>';
+  var html='<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="UTF-8"><title>عرض السعر</title>'+
+  '<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">'+css+'</head><body>'+
+  '<div class="header"><img src="'+logoSrc+'"><div><h1>عرض السعر</h1><p>'+V("cv1")+'</p><p>'+V("c-p1")+' → '+V("c-p2")+'</p></div></div>'+
+  '<table><thead><tr><th>البند</th><th>الوحدة</th><th>الكمية</th><th>سعر الوحدة</th><th>التكلفة</th><th>السعر للعميل</th></tr></thead><tbody>'+rows+'</tbody>'+
+  '<tfoot><tr class="tot"><td colspan="4">المجموع</td><td class="mn" style="text-align:left">'+fmt(finNet)+'</td><td class="mn" style="text-align:left">'+fmt(finBill)+'</td></tr></tfoot></table>'+
+  '<div class="summary"><h3>ملخص التسعير</h3>'+
+  '<div class="row"><span class="lbl">نسبة رسوم بُعد التمكين</span><span>'+mkpExec+'%</span></div>'+
+  '<div class="row"><span class="lbl">نسبة التسويق</span><span>'+mkpMkt+'%</span></div>'+
+  '<div class="row"><span class="lbl">ضريبة القيمة المضافة</span><span>'+mkpVat+'%</span></div>'+
+  '<div class="row row-tot"><span>النسبة الإجمالية</span><span>'+totalPct+'%</span></div>'+
+  '<div class="row"><span class="lbl">المبالغ المدخلة</span><span>'+(PCT_INCLUSIVE?"شاملة النسبة الإجمالية":"غير شاملة — صافي تكلفة")+'</span></div>'+
+  '<div class="row row-tot"><span>إجمالي عرض السعر للعميل</span><span class="mn">'+fmt(finBill)+' ر.س</span></div>'+
+  '</div>'+
+  '<div class="footer">وثيقة سرية — بُعد التمكين للخدمات التنفيذية | تاريخ الإصدار: '+new Date().toLocaleDateString("ar-SA")+'</div>'+
+  '</body></html>';
+  var blob=new Blob([html],{type:"text/html;charset=utf-8"});
+  var url=URL.createObjectURL(blob);
+  var w=window.open(url,"_blank","width=900,height=700,scrollbars=yes,resizable=yes");
+  if(!w){var a=document.createElement("a");a.href=url;a.download="عرض-السعر.html";a.click();}
+  else{w.addEventListener("load",function(){try{w.print();}catch(e){}});setTimeout(function(){URL.revokeObjectURL(url);},8000);}
+}
+function approveBudget(){
+  SPEND_ITEMS=FIN.map(function(f){
+    var ex=SPEND_ITEMS.filter(function(s){return s.cat===f.c;})[0]||{};
+    return {cat:f.c,approved:f.a,paid:ex.paid||0,party:f.o};
+  });
+  syncAll();
+  var btn=document.getElementById("approve-btn");
+  if(btn){btn.textContent="✓ تم الاعتماد";btn.style.background="var(--G)";}
+  setTimeout(function(){if(btn){btn.textContent="✓ اعتماد الميزانية";btn.style.background="var(--S)";}},2500);
 }
 
 // ══ VAT TOGGLE — calcC is now an alias; syncAll() is single source of truth ═══
@@ -1059,16 +1064,32 @@ function syncAll(){
 
   // 2. FIN totals
   var finTotal=FIN.reduce(function(s,i){return s+(i.a||0);},0);
-  var margin=gross-finTotal;
+  // Markup pricing summary
+  var mkpExec=PRICING_MODE==="markup"?(parseFloat(V("i-mkp-exec"))||0):0;
+  var mkpMkt=PRICING_MODE==="markup"?(parseFloat(V("i-mkp-mkt"))||0):0;
+  var mkpVatPct=PRICING_MODE==="markup"?(parseFloat(V("i-mkp-vat"))||0):0;
+  var totalMarkupPct=mkpExec+mkpMkt+mkpVatPct;
+  var markupFactor=1+totalMarkupPct/100;
+  var finBillable=PCT_INCLUSIVE?finTotal:Math.round(finTotal*markupFactor);
+  set("mkp-total-pct",totalMarkupPct+"%");
+  set("mkp-per-1k",fmt(Math.round(1000*markupFactor)));
+  // Pre-compute mkt & execCost (section 8 reuses these)
+  var _mktT=V("i-mkt-t"); var _mktV=parseFloat(V("i-mkt-v"))||0;
+  var _mkt=_mktT==="pct"?gross*_mktV/100:_mktV;
+  var _execCost=EXEC_MODE==="pct"?gross*(parseFloat(V("i-exec-pct"))||0)/100
+               :EXEC_MODE==="fixed"?(parseFloat(V("i-exec-fix"))||0)
+               :finTotal;
+  var finCeil=EXEC_MODE==="budget"?gross:_execCost;
+  var margin=gross-finTotal; // always compare FIN total vs contract gross
   var isOK=margin>=0;
-  BUD=gross; // keep legacy var in sync
+  BUD=gross;
 
-  // 3. Budget stats
-  set("d-bud",fmt(gross));
-  set("d-spent",fmt(finTotal));
+  // 3. Budget stats — d-bud = sum of budget items, d-spent = contract gross, d-rem = diff
+  set("d-bud",fmt(finTotal));
+  set("d-spent",fmt(gross));
   var dRemEl=document.getElementById("d-rem");
   if(dRemEl){dRemEl.textContent=fmt(margin);dRemEl.style.color=isOK?(margin<5000?"var(--G)":"var(--S)"):"var(--R)";}
-  set("fin-ceiling-val",fmt(gross));
+  set("fin-ceiling-val",fmt(finCeil));
   set("bud-from-contract",fmt(gross));
   set("fin-use-max",fmt(gross));
   var usePct=gross?Math.min(pct(finTotal,gross),150):0;
@@ -1081,7 +1102,7 @@ function syncAll(){
   var okNotice=document.getElementById("fin-ok-notice");
   if(overNotice) overNotice.style.display=isOK?"none":"flex";
   if(okNotice) okNotice.style.display=isOK?"flex":"none";
-  set("fn-total",fmt(finTotal));set("fn-ceiling",fmt(gross));set("fn-margin",fmt(margin));
+  set("fn-total",fmt(finTotal));set("fn-ceiling",fmt(finCeil));set("fn-margin",fmt(margin));
 
   // 5. Global sync bar
   var gBar=document.getElementById("global-sync-bar");
@@ -1091,8 +1112,8 @@ function syncAll(){
     gBar.className="sync-bar "+(isOK?"ok":"warn");
     if(gDot) gDot.className="sync-dot "+(isOK?"ok":"warn");
     if(gMsg) gMsg.textContent=isOK?
-      "✓ الميزانية والعقد متسقان — الهامش المتاح "+fmt(margin)+" ر.س (الميزانية "+fmt(finTotal)+" من أصل "+fmt(gross)+" ر.س)":
-      "⚠ تعارض: مجموع الميزانية ("+fmt(finTotal)+" ر.س) يتجاوز قيمة العقد ("+fmt(gross)+" ر.س) بـ "+fmt(-margin)+" ر.س — يجب التعديل";
+      "✓ الميزانية والعقد متسقان — الهامش المتاح "+fmt(margin)+" ر.س (الميزانية "+fmt(finTotal)+" من أصل "+fmt(finCeil)+" ر.س)":
+      "⚠ تعارض: مجموع الميزانية ("+fmt(finTotal)+" ر.س) يتجاوز السقف ("+fmt(finCeil)+" ر.س) بـ "+fmt(-margin)+" ر.س — يجب التعديل";
   }
   // Tab warning dot
   var tw=document.getElementById("tab-warn-contract");
@@ -1123,12 +1144,13 @@ function syncAll(){
   // 8. Internal distribution
   var mktT=V("i-mkt-t"); var mktV=parseFloat(V("i-mkt-v"))||0;
   var cbT=V("i-cb-t");   var cbV=parseFloat(V("i-cb-v"))||0;
-  var mkt=mktT==="pct"?gross*mktV/100:mktV;
+  var mkt=_mkt; // reuse pre-computed value from section 2
+  var execCost=_execCost; // reuse pre-computed value from section 2
   var cb=cbT==="pct"?gross*cbV/100:cbV;
   var vatRefund=vat;
   var totalReturn=cb+vatRefund;
-  // Execution cost: budget mode uses FIN total; pct mode uses gross × %
-  var execCost = EXEC_MODE==="pct" ? gross*(parseFloat(V("i-exec-pct"))||0)/100 : finTotal;
+  // net execution budget: budget mode = gross (FIN items ARE costs); pct/fixed = what's left after exec + mkt + VAT
+  var netBudget=EXEC_MODE==="budget"?gross:gross-execCost-mkt-vat;
   // Always deduct mkt regardless of source so bar segments sum to 100% of gross
   var actualProfit=gross-execCost-mkt-cb;
   var mktColor=MKT_SOURCE==="in"?"#2C5F2D":"#8B1A0E";
@@ -1138,10 +1160,10 @@ function syncAll(){
   // Bar uses cb-only for returns (VAT is separate tax, not from gross) → segments sum to ~100%
   var returnPctBar=gross?pct(cb,gross):0;
   var returnPct=gross?pct(totalReturn,gross):0;  // card display includes VAT refund
-  // dc-exec card: label and note change by EXEC_MODE
-  set("dc-exec-label",EXEC_MODE==="pct"?"رسوم تنفيذ بُعد التمكين":"تكلفة التنفيذ الفعلي");
-  set("dc-exec-pct",execPct+"% من الإجمالي");set("dc-exec-amt",fmt(execCost)+" ر.س");
-  set("dc-exec-note",EXEC_MODE==="pct"?"نسبة "+(parseFloat(V("i-exec-pct"))||0)+"% من قيمة العقد":"مجموع بنود الميزانية التفصيلية");
+  // dc-exec card → now shows contract value (قيمة العقد)
+  set("dc-exec-pct","100%");
+  set("dc-exec-amt",fmt(grossVat)+" ر.س");
+  set("dc-exec-note",fmt(gross)+" ر.س + ضريبة "+fmt(vat)+" ر.س");
   set("dc-profit-pct",profitPct+"% من الإجمالي");set("dc-profit-amt",fmt(actualProfit<0?0:actualProfit)+" ر.س");
   set("dc-profit-note",MKT_SOURCE==="in"?"يشمل مخصص التسويق الداخلي ("+fmt(mkt)+" ر.س)":"صافي بعد خصم التسويق الخارجي");
   set("dc-return-pct",returnPct+"% من الإجمالي");set("dc-return-amt",fmt(totalReturn)+" ر.س");
@@ -1160,6 +1182,36 @@ function syncAll(){
     bM.style.background=mktColor;
   }
   set("detail-cb",fmt(cb)+" ر.س");set("detail-vat-refund",fmt(vatRefund)+" ر.س");set("detail-total-return",fmt(totalReturn)+" ر.س");
+  // Extended financial summary in dist-return-detail
+  set("detail-gross",fmt(gross)+" ر.س");
+  set("detail-vat",fmt(vat)+" ر.س");
+  set("detail-gross-vat",fmt(grossVat)+" ر.س");
+  set("detail-exec",fmt(execCost)+" ر.س");
+  set("detail-mkt-d",fmt(mkt)+" ر.س");
+  set("detail-profit-d",fmt(actualProfit<0?0:actualProfit)+" ر.س");
+  // Settings summary line
+  var modeLabel=EXEC_MODE==="pct"?"نسبة "+(parseFloat(V("i-exec-pct"))||0)+"%":EXEC_MODE==="fixed"?"مبلغ ثابت "+fmt(execCost)+" ر.س":"ميزانية تفصيلية";
+  set("settings-summary","تنفيذ: "+modeLabel+" | تسويق: "+(MKT_SOURCE==="in"?"داخلي":"خارجي")+" "+fmt(mkt)+" ر.س");
+  // Overhead breakdown panel (sp0-1)
+  var obExecLbl=EXEC_MODE==="pct"?"رسوم بُعد التمكين ("+((parseFloat(V("i-exec-pct"))||0)+"%)")
+               :EXEC_MODE==="fixed"?"رسوم بُعد التمكين (مبلغ ثابت)"
+               :"رسوم بُعد التمكين (من البنود)";
+  var obNet=EXEC_MODE==="budget"?gross:netBudget;
+  set("ob-gross",fmt(gross)+" ر.س");
+  set("ob-exec-lbl",obExecLbl);
+  set("ob-exec",fmt(execCost)+" ر.س");
+  set("ob-mkt",fmt(mkt)+" ر.س");
+  set("ob-vat",fmt(vat)+" ر.س");
+  set("ob-net",fmt(obNet)+" ر.س");
+  // Inline details section (exec toggle card)
+  var edbExecLbl=EXEC_MODE==="pct"?"رسوم بُعد التمكين ("+((parseFloat(V("i-exec-pct"))||0)+"%)")
+                :"رسوم بُعد التمكين (مبلغ ثابت)";
+  set("edb-gross",fmt(gross)+" ر.س");
+  set("edb-exec-lbl",edbExecLbl);
+  set("edb-exec",fmt(execCost)+" ر.س");
+  set("edb-mkt",fmt(mkt)+" ر.س");
+  set("edb-vat",fmt(vat)+" ر.س");
+  set("edb-net",fmt(EXEC_MODE!=="budget"?netBudget:gross)+" ر.س");
 
   // Cover stats (updated here so they're always in sync regardless of trigger)
   var marginEl=document.getElementById("cv-margin");
@@ -1181,26 +1233,55 @@ function renderFin(){
   var vatPct=parseFloat(V("c-vat"))||0;
   var vatIncluded=document.getElementById("vat-included").checked;
   var gross=vatIncluded?grossInput/(1+vatPct/100):grossInput;
-  var ceiling=gross||BUD||1;
-  var b=document.getElementById("fin-body");b.innerHTML="";
   var finTotal=FIN.reduce(function(s,i){return s+(i.a||0);},0);
+  var isOver=(gross>0&&finTotal>gross);
+  var isMarkup=PRICING_MODE==="markup";
+  var mkpT=isMarkup?(parseFloat(V("i-mkp-exec"))||0)+(parseFloat(V("i-mkp-mkt"))||0)+(parseFloat(V("i-mkp-vat"))||0):0;
+  var mkpF=1+mkpT/100;
+  // Update thead
+  var tbl=document.getElementById("fin-body")&&document.getElementById("fin-body").closest("table");
+  var thead=tbl&&tbl.querySelector("thead tr");
+  if(thead){
+    var existBill=thead.querySelector(".fin-th-bill");
+    if(isMarkup&&!existBill){
+      var th=document.createElement("th");th.className="fin-th-bill";th.textContent="سعر العميل";
+      thead.insertBefore(th,thead.children[thead.children.length-1]);
+    } else if(!isMarkup&&existBill){existBill.remove();}
+  }
+  // Update tfoot
+  var tfoot=tbl&&tbl.querySelector("tfoot tr");
+  if(tfoot){
+    var existBillTd=tfoot.querySelector(".fin-td-bill");
+    if(isMarkup&&!existBillTd){
+      var td=document.createElement("td");td.className="fin-td-bill mn";
+      var finBill=PCT_INCLUSIVE?finTotal:Math.round(finTotal*mkpF);
+      td.textContent=fmt(finBill);td.style.fontWeight="600";td.style.color="var(--P)";
+      var sumTd=document.getElementById("fin-sum");
+      if(sumTd) tfoot.insertBefore(td,sumTd.nextSibling);
+    } else if(!isMarkup&&existBillTd){existBillTd.remove();
+    } else if(isMarkup&&existBillTd){existBillTd.textContent=fmt(PCT_INCLUSIVE?finTotal:Math.round(finTotal*mkpF));}
+  }
+  var b=document.getElementById("fin-body");b.innerHTML="";
   FIN.forEach(function(item,i){
-    var p=ceiling?pct(item.a||0,ceiling):0;
-    var barColor=p>=30?"var(--N)":"var(--S)";
-    var isOver=(finTotal>ceiling);
+    var rowOver=isOver&&item.a>0;
     var tr=document.createElement("tr");
-    if(isOver&&(item.a||0)===FIN.reduce(function(a,b,j){return j===i?b.a:a;},0)) tr.className="fin-row-over";
-    tr.innerHTML='<td><input class="ef efg" value="'+item.c+'" style="width:100%" onchange="FIN['+i+'].c=this.value;syncAll()"></td>'+
-      '<td><div class="bsm"><div class="bsf" style="width:'+Math.min(p*2,100)+'%;height:100%;border-radius:3px;background:'+barColor+'"></div></div><span class="mn" style="font-size:9.5px;color:var(--mu)">'+p+'%</span></td>'+
-      '<td><input type="number" class="ef mn" value="'+item.a+'" style="width:100px;padding:3px 6px;'+(isOver?"border-color:var(--R)":"")+'" onchange="FIN['+i+'].a=parseInt(this.value)||0;syncAll()"></td>'+
-      '<td><input class="ef efg" value="'+item.o+'" style="width:74px" onchange="FIN['+i+'].o=this.value"></td>'+
+    if(rowOver) tr.className="fin-row-over";
+    var billAmt=isMarkup?(PCT_INCLUSIVE?item.a:Math.round(item.a*mkpF)):0;
+    var billCell=isMarkup?('<td class="mn" style="padding:3px 8px;font-size:12px;color:var(--P);font-weight:600">'+fmt(billAmt)+'</td>'):'';
+    tr.innerHTML=
+      '<td><input class="ef efg" value="'+item.c+'" style="width:100%" onchange="FIN['+i+'].c=this.value;syncAll()"></td>'+
+      '<td><input class="ef efg" value="'+(item.u||'مرة')+'" style="width:58px" onchange="FIN['+i+'].u=this.value"></td>'+
+      '<td><input type="number" class="ef mn" value="'+(item.q||1)+'" style="width:58px" min="0" step="any" onchange="FIN['+i+'].q=parseFloat(this.value)||0;FIN['+i+'].a=Math.round(FIN['+i+'].q*FIN['+i+'].p);syncAll()"></td>'+
+      '<td><input type="number" class="ef mn" value="'+(item.p||0)+'" style="width:86px" min="0" step="any" onchange="FIN['+i+'].p=parseFloat(this.value)||0;FIN['+i+'].a=Math.round(FIN['+i+'].q*FIN['+i+'].p);syncAll()"></td>'+
+      '<td class="mn" style="padding:3px 8px;font-size:12px;'+(rowOver?"color:var(--R)":"")+'">'+fmt(item.a)+'</td>'+
+      billCell+
+      '<td><input class="ef efg" value="'+(item.o||'—')+'" style="width:70px" onchange="FIN['+i+'].o=this.value"></td>'+
       '<td><button class="del" onclick="FIN.splice('+i+',1);syncAll()">×</button></td>';
     b.appendChild(tr);
   });
-  set("fin-pct",ceiling?pct(finTotal,ceiling)+"%":"—");
   set("fin-sum",fmt(finTotal));
 }
-function addFin(){FIN.push({c:"بند جديد",a:0,o:"—"});syncAll();}
+function addFin(){FIN.push({c:"بند جديد",u:"مرة",q:1,p:0,a:0,o:"—"});syncAll();}
 
 function syncSpendFromFin(){
   FIN.forEach(function(f){
@@ -1414,11 +1495,11 @@ function exportDist(){
   var cbT=V("i-cb-t");   var cbV=parseFloat(V("i-cb-v"))||0;
   var mkt=mktT==="pct"?g*mktV/100:mktV;
   var cb=cbT==="pct"?g*cbV/100:cbV;
-  var execCost=EXEC_MODE==="pct"?g*(parseFloat(V("i-exec-pct"))||0)/100:FIN.reduce(function(s,i){return s+(i.a||0);},0);
+  var execCost=EXEC_MODE==="pct"?g*(parseFloat(V("i-exec-pct"))||0)/100:EXEC_MODE==="fixed"?(parseFloat(V("i-exec-fix"))||0):FIN.reduce(function(s,i){return s+(i.a||0);},0);
   var actualProfit=g-execCost-mkt-cb;
   var vatRefund=vat;
   var totalReturn=cb+vatRefund;
-  var execLabel=EXEC_MODE==="pct"?"رسوم تنفيذ بُعد التمكين":"تكلفة التنفيذ الفعلي";
+  var execLabel=EXEC_MODE==="pct"?"رسوم تنفيذ بُعد التمكين (نسبة)":EXEC_MODE==="fixed"?"رسوم بُعد التمكين (مبلغ ثابت)":"تكلفة التنفيذ الفعلي";
   var execNote=EXEC_MODE==="pct"?"نسبة "+(parseFloat(V("i-exec-pct"))||0)+"% من قيمة العقد":"مجموع بنود الميزانية التفصيلية";
   var mktLabel=MKT_SOURCE==="in"?"تسويق داخلي (يضاف للربح)":"تسويق خارجي (التزام مالي)";
   var profitNote=MKT_SOURCE==="in"?"يشمل مخصص التسويق الداخلي ("+fmt(mkt)+" ر.س)":"صافي بعد خصم التسويق الخارجي";
@@ -1433,7 +1514,7 @@ function exportDist(){
 
   var html='<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="UTF-8"><title>التوزيع المالي الداخلي</title>'+
   '<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">'+
-  '<style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:"IBM Plex Sans Arabic",sans-serif;direction:rtl;background:#F7F4EF;color:#1A1A2E;padding:28px;-webkit-print-color-adjust:exact;print-color-adjust:exact}.wrap{max-width:760px;margin:0 auto;background:#fff;border-radius:14px;overflow:hidden;padding:32px}.header{display:flex;align-items:center;gap:18px;margin-bottom:24px;padding-bottom:18px;border-bottom:2px solid #00197D}.header img{width:130px;height:auto}.header h1{font-size:18px;font-weight:600;color:#00197D;margin-bottom:4px}.header p{font-size:11px;color:#72728A}.notice{background:#F0EBF8;border:.5px solid #C5A8E8;border-radius:9px;padding:10px 14px;font-size:11px;color:#5B2D8E;margin-bottom:20px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:18px}.card{border-radius:10px;padding:14px 16px;border:1px solid transparent}.card .label{font-size:10px;font-weight:600;margin-bottom:5px;opacity:.85}.card .pct{font-size:11px;opacity:.65;margin-bottom:4px}.card .amount{font-size:22px;font-weight:600;font-family:"IBM Plex Mono",monospace;margin-bottom:5px}.card .note{font-size:9.5px;opacity:.65;line-height:1.4}.bar-section h3{font-size:12px;font-weight:600;color:#5B2D8E;margin-bottom:8px}.bar{height:22px;border-radius:11px;overflow:hidden;display:flex;margin-bottom:12px}.seg{height:100%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:600;color:rgba(255,255,255,.9);overflow:hidden;white-space:nowrap}.legend{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:16px}.leg{display:flex;align-items:center;gap:5px;font-size:10.5px;color:#72728A}.dot{width:12px;height:12px;border-radius:4px}.return-detail{background:#fff;border:.5px solid #C5A8E8;border-radius:8px;padding:12px 16px;margin-top:14px}.return-detail h3{font-size:12px;font-weight:600;color:#5B2D8E;margin-bottom:10px}.row{display:flex;justify-content:space-between;align-items:flex-start;padding:6px 0;border-bottom:.5px solid #E0DAD0;font-size:12px}.row:last-child{border-bottom:none}.row-tot{font-weight:600;color:#5B2D8E;font-size:13px}.lbl{color:#72728A}.val{font-family:"IBM Plex Mono",monospace;font-weight:500}.footer{text-align:center;font-size:10px;color:#A8A8C0;margin-top:20px;padding-top:14px;border-top:1px solid #E0DAD0}@media print{body{background:#fff;padding:10px}.wrap{box-shadow:none;border-radius:0}}</style></head><body><div class="wrap">'+
+  '<style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:"IBM Plex Sans Arabic",sans-serif;direction:rtl;background:#F7F4EF;color:#1A1A2E;padding:28px;-webkit-print-color-adjust:exact;print-color-adjust:exact}.wrap{max-width:760px;margin:0 auto;background:#fff;border-radius:14px;overflow:hidden;padding:32px}.header{display:flex;align-items:center;gap:18px;margin-bottom:24px;padding-bottom:18px;border-bottom:2px solid #00197D}.header img{width:130px;height:auto}.header h1{font-size:18px;font-weight:600;color:#00197D;margin-bottom:4px}.header p{font-size:11px;color:#72728A}.notice{background:#F0EBF8;border:.5px solid #C5A8E8;border-radius:9px;padding:10px 14px;font-size:11px;color:#5B2D8E;margin-bottom:20px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:18px}.card{border-radius:10px;padding:14px 16px;border:1px solid transparent}.card .label{font-size:10px;font-weight:600;margin-bottom:5px;opacity:.85}.card .pct{font-size:11px;opacity:.65;margin-bottom:4px}.card .amount{font-size:22px;font-weight:600;font-family:"IBM Plex Mono",monospace;margin-bottom:5px}.card .note{font-size:9.5px;opacity:.65;line-height:1.4}.bar-section h3{font-size:12px;font-weight:600;color:#5B2D8E;margin-bottom:8px}.bar{height:22px;border-radius:11px;overflow:hidden;display:flex;margin-bottom:12px}.seg{height:100%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:600;color:rgba(255,255,255,.9);overflow:hidden;white-space:nowrap}.legend{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:16px}.leg{display:flex;align-items:center;gap:5px;font-size:10.5px;color:#72728A}.dot{width:12px;height:12px;border-radius:4px}.return-detail{background:#fff;border:.5px solid #C5A8E8;border-radius:8px;padding:12px 16px;margin-top:14px}.return-detail h3{font-size:12px;font-weight:600;color:#5B2D8E;margin-bottom:10px}.row{display:flex;justify-content:space-between;align-items:flex-start;padding:6px 0;border-bottom:.5px solid #E0DAD0;font-size:12px}.row:last-child{border-bottom:none}.row-tot{font-weight:600;color:#5B2D8E;font-size:13px}.lbl{color:#72728A}.val{font-family:"IBM Plex Mono",monospace;font-weight:500}.footer{text-align:center;font-size:10px;color:#A8A8C0;margin-top:20px;padding-top:14px;border-top:1px solid #E0DAD0}.bt{width:100%;border-collapse:collapse;margin:6px 0;font-size:11px}.bt th{padding:5px 8px;background:#00197D;color:#fff;text-align:right;font-weight:600}.bt td{padding:5px 8px;border-bottom:1px solid #E0DAD0}.btt td{background:#E6EAF8;font-weight:600;color:#00197D}@media print{body{background:#fff;padding:10px}.wrap{box-shadow:none;border-radius:0}}</style></head><body><div class="wrap">'+
   '<div class="header"><img src="'+logoSrc+'"><div><h1>التوزيع المالي الداخلي</h1><p>مبادرة ملتقى الصيادلة للتأهيل المهني | جمعية توفير الدواء × بُعد التمكين</p><p>إجمالي العقد قبل الضريبة: '+fmt(g)+' ر.س | الضريبة ('+vatPct+'%): '+fmt(vat)+' ر.س | الإجمالي شامل الضريبة: '+fmt(g+vat)+' ر.س</p></div></div>'+
   '<div class="notice">⚠ هذه الوثيقة للاستخدام الداخلي فقط — لا يُشارك محتواها مع الطرف الثاني ولا يُرفق بالعقد الرسمي.</div>'+
   '<div class="grid">'+
@@ -1448,7 +1529,33 @@ function exportDist(){
   '<div class="return-detail"><h3>تفصيل عوائد جمعية توفير الدواء</h3>'+
   '<div class="row"><span class="lbl">الكاش باك المتفق عليه ('+(cbT==="pct"?cbV+"%":fmt(cb)+" ر.س مقطوع")+')</span><span class="val" style="color:#5B2D8E">'+fmt(cb)+' ر.س</span></div>'+
   '<div class="row"><div><span class="lbl">الاسترداد الضريبي المتوقع</span><br><span style="font-size:9.5px;color:#A8A8C0">الجمعيات الخيرية تسترد ضريبة القيمة المضافة كاملاً ('+vatPct+'%) بعد تقديم طلب ZATCA</span></div><span class="val" style="color:#5B2D8E">'+fmt(vatRefund)+' ر.س</span></div>'+
-  '<div class="row row-tot"><span>إجمالي عوائد الجمعية</span><span class="val">'+fmt(totalReturn)+' ر.س</span></div></div></div>'+
+  '<div class="row row-tot"><span>إجمالي عوائد الجمعية</span><span class="val">'+fmt(totalReturn)+' ر.س</span></div></div></div>';
+  // Budget table
+  var budRows=FIN.map(function(f){
+    return '<tr><td>'+f.c+'</td><td style="font-size:10px;color:#666;text-align:right">'+f.u+'</td><td class="mn" style="text-align:center">'+f.q+'</td><td class="mn" style="text-align:left">'+fmt(f.p)+'</td><td class="mn" style="text-align:left;font-weight:600">'+fmt(f.a)+'</td><td style="font-size:10px;color:#666;text-align:right">'+f.o+'</td></tr>';
+  }).join('');
+  var budTotal=FIN.reduce(function(s,i){return s+(i.a||0);},0);
+  // Full financial summary
+  var summaryRows=[
+    ['قيمة العقد قبل الضريبة',fmt(g)+' ر.س',false],
+    ['ضريبة القيمة المضافة ('+vatPct+'%)',fmt(vat)+' ر.س',false],
+    ['إجمالي العقد شامل الضريبة',fmt(g+vat)+' ر.س',true],
+    ['تكلفة التنفيذ (مجموع الميزانية)',fmt(execCost)+' ر.س',false],
+    ['مخصص التسويق',fmt(mkt)+' ر.س',false],
+    ['صافي ربح بُعد التمكين',fmt(actualProfit<0?0:actualProfit)+' ر.س',true],
+    ['الكاش باك للجمعية',fmt(cb)+' ر.س',false],
+    ['الاسترداد الضريبي المتوقع',fmt(vatRefund)+' ر.س',false],
+    ['إجمالي العوائد للجمعية',fmt(totalReturn)+' ر.س',true]
+  ].map(function(r){return '<div class="row'+(r[2]?' row-tot':'')+'"><span class="lbl">'+r[0]+'</span><span class="val">'+r[1]+'</span></div>';}).join('');
+
+  html+=
+  '<div style="margin-top:20px;border-top:1px solid #E0DAD0;padding-top:16px">'+
+  '<h3 style="font-size:13px;font-weight:600;color:#00197D;margin-bottom:10px">الميزانية التنفيذية التفصيلية</h3>'+
+  '<table class="bt"><thead><tr><th>البند</th><th>الوحدة</th><th>الكمية</th><th style="text-align:left">سعر الوحدة</th><th style="text-align:left">الإجمالي (ر.س)</th><th>المسؤول</th></tr></thead>'+
+  '<tbody>'+budRows+'</tbody>'+
+  '<tfoot><tr class="btt"><td colspan="4">المجموع</td><td class="mn" style="text-align:left;font-weight:700;color:#00197D">'+fmt(budTotal)+'</td><td></td></tr></tfoot></table>'+
+  '</div>'+
+  '<div class="return-detail" style="margin-top:16px"><h3>الملخص المالي الداخلي</h3>'+summaryRows+'</div>'+
   '<div style="margin-top:14px;padding:12px 16px;background:#EAF3EA;border-radius:9px;border:.5px solid #B0D4B0">'+
     '<div style="font-size:11.5px;font-weight:600;color:#2C5F2D;margin-bottom:7px">الصرف الفعلي حتى الآن</div>'+
     '<div style="display:flex;justify-content:space-between;font-size:11.5px;padding:4px 0;border-bottom:.5px solid #B0D4B0;margin-bottom:4px"><span style="color:#72728A">المدفوع فعلياً</span><span style="font-family:monospace;font-weight:600;color:#2C5F2D">'+fmt(SPEND_ITEMS.reduce(function(s,i){return s+(i.paid||0);},0))+' ر.س</span></div>'+
@@ -1555,5 +1662,143 @@ renderInvoices();
 syncAll();
 updateSpend();syncAll();
 </script>
+
+<!-- ════ DISTRIBUTION SETTINGS MODAL ════ -->
+<!-- ════ DISTRIBUTION MODAL ════ -->
+<div id="dist-modal" class="modal-bg" onclick="if(event.target===this)closeDistModal()">
+  <div class="modal" style="width:min(700px,96vw)">
+    <div class="modal-head">
+      <h3>📊 التوزيع المالي الداخلي</h3>
+      <div style="display:flex;align-items:center;gap:8px">
+        <button class="btn btn-g" style="font-size:11px" onclick="exportDist()">⬇ تصدير PDF</button>
+        <button class="del" onclick="closeDistModal()" style="font-size:16px">×</button>
+      </div>
+    </div>
+    <div style="display:flex;border-bottom:.5px solid var(--bd);padding:0 16px">
+      <button id="dm-tab-0" class="stab act" onclick="dmTab(0)" style="font-size:11.5px;padding:8px 14px">التوزيع والتفصيل</button>
+      <button id="dm-tab-1" class="stab" onclick="dmTab(1)" style="font-size:11.5px;padding:8px 14px">الإعدادات</button>
+    </div>
+    <div style="padding:16px 20px;max-height:72vh;overflow-y:auto">
+      <!-- Panel 0: Distribution details -->
+      <div id="dm-panel-0">
+        <div class="dist-wrap" id="dist-wrap">
+          <div class="dist-title" style="display:flex;align-items:center;justify-content:space-between">
+            <span><span style="width:9px;height:9px;border-radius:3px;background:var(--P);display:inline-block;margin-left:6px"></span>التوزيع المالي الداخلي — من المبلغ الإجمالي قبل الضريبة</span>
+          </div>
+          <div class="dist-grid">
+            <div class="dc dc-exec"><div class="dcl">قيمة العقد</div><div class="dcp" id="dc-exec-pct">—</div><div class="dca" id="dc-exec-amt">—</div><div class="dcn" id="dc-exec-note">القيمة الإجمالية للعقد</div></div>
+            <div class="dc dc-profit"><div class="dcl">ربح بُعد التمكين</div><div class="dcp" id="dc-profit-pct">—</div><div class="dca" id="dc-profit-amt">—</div><div class="dcn" id="dc-profit-note">صافي الربح بعد جميع الاستقطاعات</div></div>
+            <div class="dc dc-return"><div class="dcl">عائد الجمعية</div><div class="dcp" id="dc-return-pct">—</div><div class="dca" id="dc-return-amt">—</div><div class="dcn" id="dc-return-note">كاش باك + استرداد ضريبي</div></div>
+            <div class="dc" id="dc-mkt-card"><div class="dcl" id="dc-mkt-label">مخصص التسويق</div><div class="dcp" id="dc-mkt-pct">—</div><div class="dca" id="dc-mkt-amt">—</div><div class="dcn" id="dc-mkt-note">—</div></div>
+          </div>
+          <div style="margin-bottom:8px"><div style="font-size:10px;color:var(--P);margin-bottom:5px;font-weight:500">التوزيع البصري</div>
+            <div class="dist-bar">
+              <div class="dbs" id="bar-exec" style="background:#00197D">تنفيذ</div>
+              <div class="dbs" id="bar-profit" style="background:#2C5F2D">ربح</div>
+              <div class="dbs" id="bar-return" style="background:#5B2D8E">عوائد</div>
+              <div class="dbs" id="bar-mkt" style="background:#B8841A">تسويق</div>
+            </div>
+          </div>
+          <div class="dist-legend">
+            <div class="dl"><div class="dld" style="background:#00197D"></div>تنفيذ فعلي</div>
+            <div class="dl"><div class="dld" style="background:#2C5F2D"></div>ربح الشركة</div>
+            <div class="dl"><div class="dld" style="background:#5B2D8E"></div>عوائد الجمعية</div>
+            <div class="dl"><div class="dld" id="mkt-legend-dot" style="background:#B8841A"></div><span id="mkt-legend-label">تسويق خارجي</span></div>
+          </div>
+          <div class="dist-return-detail">
+            <div style="font-size:11px;font-weight:600;color:var(--P);margin-bottom:8px">الملخص المالي الداخلي</div>
+            <div class="cr-row"><span style="color:var(--mu)">قيمة العقد قبل الضريبة</span><span class="mn" id="detail-gross">—</span></div>
+            <div class="cr-row"><span style="color:var(--mu)">ضريبة القيمة المضافة</span><span class="mn" id="detail-vat">—</span></div>
+            <div class="cr-row" style="border-bottom:.5px solid #C5A8E8;padding-bottom:6px;margin-bottom:6px"><span style="font-weight:600;color:var(--P)">إجمالي العقد شامل الضريبة</span><span class="mn cp" id="detail-gross-vat">—</span></div>
+            <div class="cr-row"><span style="color:var(--mu)">تكلفة التنفيذ (مجموع الميزانية)</span><span class="mn" id="detail-exec">—</span></div>
+            <div class="cr-row"><span style="color:var(--mu)">مخصص التسويق</span><span class="mn" id="detail-mkt-d">—</span></div>
+            <div class="cr-row" style="border-bottom:.5px solid #C5A8E8;padding-bottom:6px;margin-bottom:6px"><span style="font-weight:600">صافي ربح بُعد التمكين</span><span class="mn" id="detail-profit-d">—</span></div>
+            <div style="font-size:10.5px;font-weight:600;color:var(--P);margin-bottom:5px">عوائد الجمعية</div>
+            <div class="cr-row"><span class="cr-lbl" style="color:var(--P)">الكاش باك المتفق عليه</span><span class="cr-val cp" id="detail-cb">—</span></div>
+            <div class="cr-row" style="border-bottom:.5px solid #C5A8E8"><span style="color:var(--P)">الاسترداد الضريبي المتوقع <span style="font-size:9px;font-weight:400;opacity:.7">(الجمعيات الخيرية تسترد الضريبة كاملاً بعد المطالبة)</span></span><span class="cr-val cp" id="detail-vat-refund">—</span></div>
+            <div style="display:flex;justify-content:space-between;font-weight:600;color:var(--P);font-size:12.5px;padding-top:7px;margin-top:2px"><span>إجمالي العوائد للجمعية</span><span class="mn" id="detail-total-return">—</span></div>
+          </div>
+        </div>
+        <div class="note-p" style="margin-top:10px"><strong>ملاحظة:</strong> وفق نظام ضريبة القيمة المضافة السعودي، يحق للجمعيات الخيرية استرداد ضريبة القيمة المضافة كاملاً عبر تقديم طلب للهيئة العامة للزكاة والضريبة والجمارك (ZATCA). الأرقام تقديرية للتخطيط الداخلي.</div>
+      </div>
+      <!-- Panel 1: Settings -->
+      <div id="dm-panel-1" style="display:none">
+        <div class="mkt-toggle-wrap" style="margin-bottom:14px">
+          <div><label>المسوّق من أين؟</label><div style="font-size:10px;color:var(--mu);margin-top:2px">يحدد هذا الخيار طبيعة مخصص التسويق في التوزيع المالي</div></div>
+          <div class="mkt-radio">
+            <button id="mkt-in-btn" class="act-in" onclick="setMktSource('in')">داخل بُعد التمكين (ربح إضافي)</button>
+            <button id="mkt-out-btn" onclick="setMktSource('out')">خارج بُعد التمكين (التزام مالي)</button>
+          </div>
+        </div>
+        <div class="g3" style="margin-bottom:14px">
+          <div class="fb"><label>نوع مخصص التسويق</label><select class="ef" id="i-mkt-t" onchange="calcC()"><option value="pct">نسبة % من الإجمالي</option><option value="fix">مبلغ مقطوع</option></select></div>
+          <div class="fb"><label>قيمة مخصص التسويق</label><input class="ef mn" type="number" id="i-mkt-v" value="10" step="0.1" oninput="calcC()"></div>
+          <div class="fb"><label>اسم المسوّق / الجهة</label><input class="ef efg" id="i-mkt-name" value="مسوق خارجي" oninput="calcC()"></div>
+          <div class="fb"><label>نوع الكاش باك للجمعية</label><select class="ef" id="i-cb-t" onchange="calcC()"><option value="pct">نسبة % من الإجمالي</option><option value="fix">مبلغ مقطوع</option></select></div>
+          <div class="fb"><label>قيمة الكاش باك</label><input class="ef mn" type="number" id="i-cb-v" value="5" step="0.1" oninput="calcC()"></div>
+          <div class="fb"><label>موعد صرف الكاش باك</label><select class="ef efg" id="i-cb-w"><option>بعد إتمام المشروع</option><option>مع الدفعة الأخيرة</option><option>خلال 30 يوماً من الختام</option></select></div>
+        </div>
+        <div class="mkt-toggle-wrap" style="margin-bottom:12px;background:var(--Nl);border-color:#B5C8F0">
+          <div>
+            <label style="color:var(--N);font-size:11.5px;font-weight:500">نموذج تنفيذ بُعد التمكين</label>
+            <div style="font-size:10px;color:var(--mu);margin-top:2px">يحدد كيف تُحسب حصة بُعد التمكين في التوزيع المالي</div>
+          </div>
+          <div class="mkt-radio">
+            <button id="exec-bud-btn" class="act-in" onclick="setExecMode('budget')">ميزانية تفصيلية</button>
+            <button id="exec-pct-btn" onclick="setExecMode('pct')">نسبة من الإجمالي</button>
+            <button id="exec-fix-btn" onclick="setExecMode('fixed')">مبلغ إجمالي</button>
+          </div>
+        </div>
+        <div class="fb" id="exec-pct-row" style="display:none;max-width:240px;margin-bottom:8px">
+          <label>نسبة تنفيذ بُعد التمكين من الإجمالي (%)</label>
+          <input class="ef mn" type="number" id="i-exec-pct" value="30" min="0" max="100" step="0.1" oninput="syncAll()">
+        </div>
+        <div class="fb" id="exec-fix-row" style="display:none;max-width:240px;margin-bottom:8px">
+          <label>رسوم بُعد التمكين الإجمالية (ر.س)</label>
+          <input class="ef mn" type="number" id="i-exec-fix" value="0" min="0" oninput="syncAll()">
+        </div>
+        <div id="exec-details-toggle" style="display:none;margin-bottom:12px">
+          <button class="btn btn-g" id="exec-details-btn" onclick="toggleExecDetails()">تفاصيل ↓</button>
+          <div id="exec-details-section" style="display:none;background:var(--Nl);border-radius:6px;padding:10px 12px;margin-top:8px;border:.5px solid var(--bd)">
+            <div class="cr-row"><span style="color:var(--mu)">قيمة العقد قبل الضريبة</span><span id="edb-gross" class="mn">—</span></div>
+            <div class="cr-row"><span id="edb-exec-lbl" style="color:var(--mu)">رسوم بُعد التمكين</span><span id="edb-exec" class="mn">—</span></div>
+            <div class="cr-row"><span style="color:var(--mu)">مخصص التسويق</span><span id="edb-mkt" class="mn">—</span></div>
+            <div class="cr-row" style="border-bottom:.5px solid var(--bd);padding-bottom:6px;margin-bottom:6px"><span style="color:var(--mu)">ضريبة القيمة المضافة</span><span id="edb-vat" class="mn">—</span></div>
+            <div class="cr-row"><span style="font-weight:600">الميزانية التنفيذية المتاحة</span><span id="edb-net" class="mn cn" style="font-weight:600">—</span></div>
+          </div>
+        </div>
+        <!-- Pricing mode -->
+        <div class="mkt-toggle-wrap" style="margin-bottom:12px">
+          <div>
+            <label>طريقة التسعير</label>
+            <div style="font-size:10px;color:var(--mu);margin-top:2px">كيف تُحسب الأسعار النهائية للبنود المقدَّمة للجهة</div>
+          </div>
+          <div class="mkt-radio">
+            <button id="pm-bud-btn" class="act-in" onclick="setPricingMode('budget')">ميزانية مرجعية</button>
+            <button id="pm-mkp-btn" onclick="setPricingMode('markup')">نسبة تسعير</button>
+          </div>
+        </div>
+        <div id="markup-settings" style="display:none">
+          <div class="g3" style="margin-bottom:10px">
+            <div class="fb"><label>نسبة رسوم بُعد التمكين (%)</label><input class="ef mn" type="number" id="i-mkp-exec" value="10" step="0.1" oninput="syncAll()"></div>
+            <div class="fb"><label>نسبة التسويق (%)</label><input class="ef mn" type="number" id="i-mkp-mkt" value="10" step="0.1" oninput="syncAll()"></div>
+            <div class="fb"><label>ضريبة القيمة المضافة (%)</label><input class="ef mn" type="number" id="i-mkp-vat" value="5" step="0.1" oninput="syncAll()"></div>
+          </div>
+          <div style="background:var(--Nl);border-radius:6px;padding:8px 12px;font-size:11.5px;margin-bottom:10px">
+            النسبة الإجمالية: <strong class="mn" id="mkp-total-pct">—</strong> | على كل 1,000 ر.س → <strong class="mn" id="mkp-per-1k">—</strong> ر.س
+          </div>
+          <div class="fb" style="max-width:320px;margin-bottom:12px">
+            <label>المبالغ المدخلة في الميزانية</label>
+            <select class="ef" id="pct-inclusive" onchange="PCT_INCLUSIVE=this.value==='true';syncAll()">
+              <option value="false">غير شاملة للنسب (صافي تكلفة)</option>
+              <option value="true">شاملة النسبة الإجمالية</option>
+            </select>
+          </div>
+          <button class="btn btn-g" onclick="exportQuote()">📋 تصدير عرض السعر PDF</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 </body>
 </html>
