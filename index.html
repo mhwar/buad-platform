@@ -27,9 +27,10 @@ body{font-family:"IBM Plex Sans Arabic",sans-serif;direction:rtl;background:var(
 .sb-un{font-size:11px;font-weight:500;color:#fff}.sb-ur{font-size:9px;color:rgba(255,255,255,.35)}
 .main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0;position:relative}
 .topbar{background:var(--w);border-bottom:.5px solid var(--bd);padding:9px 18px;display:flex;align-items:center;gap:10px;flex-shrink:0}
-.bc{font-size:11px;color:var(--mu);flex:1}
+.bc{font-size:11px;color:var(--mu);flex:1;min-width:0}
 .bc-link{cursor:pointer;color:var(--N)}.bc-link:hover{text-decoration:underline}
 .page-title{font-size:14px;font-weight:600}
+.tb-actions{flex:1;display:flex;align-items:center;justify-content:flex-end;gap:7px}
 .tb-btn{font-family:inherit;padding:6px 12px;border-radius:7px;border:1px solid var(--bd);font-size:11.5px;font-weight:500;cursor:pointer;background:var(--w);color:var(--tx);transition:.15s;white-space:nowrap}
 .tb-btn:hover{background:var(--sand2)}
 .tb-btn.pri{background:var(--N);color:#fff;border-color:var(--N)}
@@ -120,9 +121,11 @@ body{font-family:"IBM Plex Sans Arabic",sans-serif;direction:rtl;background:var(
   <div class="main">
     <div class="topbar">
       <div class="bc" id="bc"><span class="bc-link" id="bc-home">الرئيسية</span></div>
-      <span class="page-title" id="page-title" style="flex:1;text-align:center">لوحة التحكم</span>
-      <button class="tb-btn sec" id="btn-new">+ مشروع جديد</button>
-      <button class="tb-btn" id="btn-save">💾 حفظ</button>
+      <span class="page-title" id="page-title">لوحة التحكم</span>
+      <div class="tb-actions">
+        <button class="tb-btn sec" id="btn-new">+ مشروع جديد</button>
+        <button class="tb-btn" id="btn-save">💾 حفظ</button>
+      </div>
     </div>
 
     <div class="content">
@@ -131,16 +134,14 @@ body{font-family:"IBM Plex Sans Arabic",sans-serif;direction:rtl;background:var(
           <div class="sc"><div class="sc-ico ic-n">📁</div><div><div class="sc-num" id="d-active">—</div><div class="sc-lbl">مشروع نشط</div></div></div>
           <div class="sc"><div class="sc-ico ic-g">💰</div><div><div class="sc-num" id="d-value">—</div><div class="sc-lbl">إجمالي العقود (ر.س)</div></div></div>
           <div class="sc"><div class="sc-ico ic-s">✅</div><div><div class="sc-num" id="d-done">0</div><div class="sc-lbl">مشروع مكتمل</div></div></div>
-          <div class="sc"><div class="sc-ico ic-r">⏳</div><div><div class="sc-num" id="d-pending">—</div><div class="sc-lbl">قيد التنفيذ</div></div></div>
+          <div class="sc"><div class="sc-ico ic-r">⏳</div><div><div class="sc-num" id="d-pending">—</div><div class="sc-lbl">معلق</div></div></div>
         </div>
         <div class="sec-head"><h2>أحدث المشاريع</h2><button class="tb-btn" id="btn-see-all">عرض الكل ←</button></div>
         <div class="proj-grid" id="recent-grid"></div>
         <div style="margin-top:18px">
           <div class="sec-head"><h2>آخر النشاطات</h2></div>
           <div class="ac"><div class="ach">📋 سجل النشاط</div>
-            <div id="act-log">
-              <div class="ai"><div class="ai-dot" style="background:#2C5F2D"></div><span>تم إنشاء مشروع ملتقى الصيادلة — بُعد التمكين</span><span class="ai-time">اليوم</span></div>
-            </div>
+            <div id="act-log"></div>
           </div>
         </div>
       </div>
@@ -286,6 +287,9 @@ function initApp(pharmacyB64, logoSrc) {
   renderAll();
   renderFinance();
   renderClients();
+  PROJECTS.forEach(function(p) {
+    addAct('تم إنشاء مشروع ' + p.name + ' — ' + p.client);
+  });
   window._appReady = true;
 }
 
@@ -322,6 +326,9 @@ function doGoPage(p) {
                  + '<span style="color:#A8A8C0;margin:0 4px">›</span>'
                  + (titles[p] || p);
   }
+
+  var showNew = (p === 'dash' || p === 'projects');
+  document.getElementById('btn-new').style.display = showNew ? '' : 'none';
 
   if (document.getElementById('viewer').classList.contains('open')) doCloseViewer();
 
@@ -389,9 +396,9 @@ function renderAll() {
     if (!g) return;
     g.innerHTML = '';
     var filter = grids[gid];
-    PROJECTS.forEach(function(p) {
-      if (!filter || p.status === filter) g.appendChild(makeCard(p));
-    });
+    var list = PROJECTS.filter(function(p){ return !filter || p.status === filter; });
+    if (gid === 'recent-grid') list = list.slice(0, 3);
+    list.forEach(function(p){ g.appendChild(makeCard(p)); });
     if (gid !== 'recent-grid') g.appendChild(makeAddCard());
   });
 
@@ -399,7 +406,7 @@ function renderAll() {
   if (n) n.textContent = PROJECTS.length;
   document.getElementById('d-active').textContent  = PROJECTS.filter(function(p){return p.status==='active';}).length;
   document.getElementById('d-done').textContent    = PROJECTS.filter(function(p){return p.status==='done';}).length;
-  document.getElementById('d-pending').textContent = PROJECTS.filter(function(p){return p.status!=='done';}).length;
+  document.getElementById('d-pending').textContent = PROJECTS.filter(function(p){return p.status==='pending';}).length;
   document.getElementById('d-value').textContent   = fmt(PROJECTS.reduce(function(s,p){return s+(p.value||0);},0));
 }
 
