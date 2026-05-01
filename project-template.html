@@ -686,6 +686,22 @@ input[type=checkbox]{accent-color:var(--N);width:13px;height:13px;cursor:pointer
           <div class="fb"><label>موعد صرف الكاش باك</label><select class="ef efg" id="i-cb-w"><option>بعد إتمام المشروع</option><option>مع الدفعة الأخيرة</option><option>خلال 30 يوماً من الختام</option></select></div>
         </div>
 
+        <!-- EXECUTION MODEL TOGGLE -->
+        <div class="mkt-toggle-wrap" style="margin-bottom:12px;background:var(--Nl);border-color:#B5C8F0">
+          <div>
+            <label style="color:var(--N);font-size:11.5px;font-weight:500">نموذج تنفيذ بُعد التمكين</label>
+            <div style="font-size:10px;color:var(--mu);margin-top:2px">يحدد كيف تُحسب حصة بُعد التمكين في التوزيع المالي الداخلي</div>
+          </div>
+          <div class="mkt-radio">
+            <button id="exec-bud-btn" class="act-in" onclick="setExecMode('budget')">ميزانية تفصيلية</button>
+            <button id="exec-pct-btn" onclick="setExecMode('pct')">نسبة من الإجمالي</button>
+          </div>
+        </div>
+        <div class="fb" id="exec-pct-row" style="display:none;max-width:240px;margin-bottom:12px">
+          <label>نسبة تنفيذ بُعد التمكين من الإجمالي (%)</label>
+          <input class="ef mn" type="number" id="i-exec-pct" value="30" min="0" max="100" step="0.1" oninput="syncAll()">
+        </div>
+
         <!-- DISTRIBUTION BLOCK -->
         <div class="dist-wrap" id="dist-wrap">
           <div class="dist-title">
@@ -693,7 +709,7 @@ input[type=checkbox]{accent-color:var(--N);width:13px;height:13px;cursor:pointer
             التوزيع المالي الداخلي — من المبلغ الإجمالي قبل الضريبة
           </div>
           <div class="dist-grid">
-            <div class="dc dc-exec"><div class="dcl">تكلفة التنفيذ الفعلي</div><div class="dcp" id="dc-exec-pct">—</div><div class="dca" id="dc-exec-amt">—</div><div class="dcn">مجموع بنود الميزانية التنفيذية</div></div>
+            <div class="dc dc-exec"><div class="dcl" id="dc-exec-label">تكلفة التنفيذ الفعلي</div><div class="dcp" id="dc-exec-pct">—</div><div class="dca" id="dc-exec-amt">—</div><div class="dcn" id="dc-exec-note">مجموع بنود الميزانية التنفيذية</div></div>
             <div class="dc dc-profit"><div class="dcl">ربح بُعد التمكين</div><div class="dcp" id="dc-profit-pct">—</div><div class="dca" id="dc-profit-amt">—</div><div class="dcn" id="dc-profit-note">صافي الربح بعد جميع الاستقطاعات</div></div>
             <div class="dc dc-return"><div class="dcl">العوائد للجمعية</div><div class="dcp" id="dc-return-pct">—</div><div class="dca" id="dc-return-amt">—</div><div class="dcn" id="dc-return-note">كاش باك + استرداد ضريبي</div></div>
             <div class="dc" id="dc-mkt-card"><div class="dcl" id="dc-mkt-label">مخصص التسويق</div><div class="dcp" id="dc-mkt-pct">—</div><div class="dca" id="dc-mkt-amt">—</div><div class="dcn" id="dc-mkt-note">—</div></div>
@@ -863,7 +879,7 @@ var INVOICES=[{date:"",desc:"دفعة أولى — بدء التنفيذ",amt:25
 var CLAUSES=[{n:"1",t:"نطاق الخدمات",b:"تلتزم الشركة بتنظيم وتنفيذ مبادرة ملتقى الصيادلة للتأهيل المهني وتحسين جودة الخدمات الصحية، بما يشمل 5 دورات تدريبية معتمدة و7 لقاءات تفاعلية (مجموع 12 لقاءً) في منطقة عسير."},{n:"2",t:"الالتزامات المالية وآلية السداد",b:"تُسدَّد الدفعة الأولى (50%) فور توقيع العقد، والدفعة الثانية بعد تسليم التقرير الختامي وإتمام جميع اللقاءات المقررة."},{n:"3",t:"سياسة الإلغاء والاسترداد",b:"يحق لأي طرف إنهاء العقد بإشعار خطي مسبق. تُطبَّق نسب الاسترداد المحددة في جدول السياسة المالية الوارد في هذا العقد."},{n:"4",t:"التزامات الجمعية",b:"تلتزم الجمعية بتسهيل وصول الصيادلة المستهدفين والتنسيق مع المنظومات الصحية لضمان حضور 30 مشاركاً كحد أدنى."},{n:"5",t:"السرية وحماية البيانات",b:"يلتزم الطرفان بالحفاظ على سرية المعلومات وفق أحكام نظام حماية البيانات الشخصية (PDPL) المعمول به في المملكة."},{n:"6",t:"فض النزاعات",b:"يُحسم أي نزاع وفق الأنظمة السعودية المعمول بها، والمرجعية القضائية هي المحاكم المختصة في منطقة عسير."}];
 
 // ══ UTILS ══════════════════════════════════════════════════════
-var BUD=50000, MKT_SOURCE="in";
+var BUD=50000, MKT_SOURCE="in", EXEC_MODE="budget";
 function fmt(n){return isNaN(n)?'—':Math.round(n).toLocaleString("en-US");}
 function pct(n,t){return t?Math.round(n/t*100):0;}
 function V(id){var el=document.getElementById(id);return el?el.value:"";}
@@ -875,11 +891,22 @@ function setMktSource(src){
   MKT_SOURCE=src;
   document.getElementById("mkt-in-btn").className=src==="in"?"act-in":"";
   document.getElementById("mkt-out-btn").className=src==="out"?"act-out":"";
-  calcC();
+  syncAll();
 }
 
-// ══ VAT TOGGLE ═════════════════════════════════════════════════
-function calcC(){
+// ══ EXEC MODE ══════════════════════════════════════════════════
+function setExecMode(m){
+  EXEC_MODE=m;
+  document.getElementById("exec-bud-btn").className=m==="budget"?"act-in":"";
+  document.getElementById("exec-pct-btn").className=m==="pct"?"act-in":"";
+  var row=document.getElementById("exec-pct-row");
+  if(row) row.style.display=m==="pct"?"":"none";
+  syncAll();
+}
+
+// ══ VAT TOGGLE — calcC is now an alias; syncAll() is single source of truth ═══
+function calcC(){ syncAll(); }
+function _calcC_UNUSED_REMOVED(){
   var grossInput=parseFloat(V("c-gross"))||0;
   var vatPct=parseFloat(V("c-vat"))||0;
   var vatIncluded=document.getElementById("vat-included").checked;
@@ -996,6 +1023,7 @@ function calcC(){
 
   buildContract();
 }
+// ═══════════════════════════════════════════════════════════════
 
 // ══ TABS ═══════════════════════════════════════════════════════
 function msw(i){document.querySelectorAll(".mtab").forEach(function(t,j){t.classList.toggle("act",i===j);});document.querySelectorAll(".mpanel").forEach(function(p,j){p.classList.toggle("act",i===j);});}
@@ -1099,31 +1127,48 @@ function syncAll(){
   var cb=cbT==="pct"?gross*cbV/100:cbV;
   var vatRefund=vat;
   var totalReturn=cb+vatRefund;
-  var actualProfit=gross-finTotal-(MKT_SOURCE==="out"?mkt:0)-cb;
+  // Execution cost: budget mode uses FIN total; pct mode uses gross × %
+  var execCost = EXEC_MODE==="pct" ? gross*(parseFloat(V("i-exec-pct"))||0)/100 : finTotal;
+  // Always deduct mkt regardless of source so bar segments sum to 100% of gross
+  var actualProfit=gross-execCost-mkt-cb;
   var mktColor=MKT_SOURCE==="in"?"#2C5F2D":"#8B1A0E";
-  var execPct=gross?pct(finTotal,gross):0;
+  var execPct=gross?pct(execCost,gross):0;
   var profitPct=gross?pct(actualProfit<0?0:actualProfit,gross):0;
-  var returnPct=gross?pct(totalReturn,gross):0;
   var mktPct=gross?pct(mkt,gross):0;
-  set("dc-exec-pct",execPct+"%");set("dc-exec-amt",fmt(finTotal)+" ر.س");
-  set("dc-profit-pct",profitPct+"%");set("dc-profit-amt",fmt(actualProfit<0?0:actualProfit)+" ر.س");
-  set("dc-profit-note",MKT_SOURCE==="in"?"يشمل مخصص التسويق الداخلي":"بعد خصم التسويق الخارجي");
-  set("dc-return-pct",returnPct+"%");set("dc-return-amt",fmt(totalReturn)+" ر.س");
+  // Bar uses cb-only for returns (VAT is separate tax, not from gross) → segments sum to ~100%
+  var returnPctBar=gross?pct(cb,gross):0;
+  var returnPct=gross?pct(totalReturn,gross):0;  // card display includes VAT refund
+  // dc-exec card: label and note change by EXEC_MODE
+  set("dc-exec-label",EXEC_MODE==="pct"?"رسوم تنفيذ بُعد التمكين":"تكلفة التنفيذ الفعلي");
+  set("dc-exec-pct",execPct+"% من الإجمالي");set("dc-exec-amt",fmt(execCost)+" ر.س");
+  set("dc-exec-note",EXEC_MODE==="pct"?"نسبة "+(parseFloat(V("i-exec-pct"))||0)+"% من قيمة العقد":"مجموع بنود الميزانية التفصيلية");
+  set("dc-profit-pct",profitPct+"% من الإجمالي");set("dc-profit-amt",fmt(actualProfit<0?0:actualProfit)+" ر.س");
+  set("dc-profit-note",MKT_SOURCE==="in"?"يشمل مخصص التسويق الداخلي ("+fmt(mkt)+" ر.س)":"صافي بعد خصم التسويق الخارجي");
+  set("dc-return-pct",returnPct+"% من الإجمالي");set("dc-return-amt",fmt(totalReturn)+" ر.س");
   set("dc-return-note","كاش باك ("+fmt(cb)+" ر.س) + استرداد ضريبي ("+fmt(vatRefund)+" ر.س)");
   var mktCard=document.getElementById("dc-mkt-card");
   if(mktCard) mktCard.className="dc "+(MKT_SOURCE==="in"?"dc-mkt-in":"dc-mkt-out");
   set("dc-mkt-label",MKT_SOURCE==="in"?"مخصص التسويق (ربح إضافي)":"مخصص التسويق (التزام)");
-  set("dc-mkt-pct",mktPct+"%");set("dc-mkt-amt",fmt(mkt)+" ر.س");
+  set("dc-mkt-pct",mktPct+"% من الإجمالي");set("dc-mkt-amt",fmt(mkt)+" ر.س");
   set("dc-mkt-note",MKT_SOURCE==="in"?"يُضاف للربح — "+V("i-mkt-name"):"التزام تجاه "+V("i-mkt-name"));
   var mktLegDot=document.getElementById("mkt-legend-dot");if(mktLegDot)mktLegDot.style.background=mktColor;
   set("mkt-legend-label",MKT_SOURCE==="in"?"تسويق داخلي (ربح)":"تسويق خارجي (التزام)");
   var bE=document.getElementById("bar-exec"),bP=document.getElementById("bar-profit"),bR=document.getElementById("bar-return"),bM=document.getElementById("bar-mkt");
   if(bE&&gross>0){
-    bE.style.width=execPct+"%";bP.style.width=(profitPct>0?profitPct:0)+"%";bR.style.width=returnPct+"%";bM.style.width=mktPct+"%";
-    bE.textContent=execPct>8?execPct+"%":"";bP.textContent=profitPct>8?profitPct+"%":"";bR.textContent=returnPct>8?returnPct+"%":"";bM.textContent=mktPct>8?mktPct+"%":"";
+    bE.style.width=execPct+"%";bP.style.width=(profitPct>0?profitPct:0)+"%";bR.style.width=returnPctBar+"%";bM.style.width=mktPct+"%";
+    bE.textContent=execPct>8?execPct+"%":"";bP.textContent=profitPct>8?profitPct+"%":"";bR.textContent=returnPctBar>8?returnPctBar+"%":"";bM.textContent=mktPct>8?mktPct+"%":"";
     bM.style.background=mktColor;
   }
   set("detail-cb",fmt(cb)+" ر.س");set("detail-vat-refund",fmt(vatRefund)+" ر.س");set("detail-total-return",fmt(totalReturn)+" ر.س");
+
+  // Cover stats (updated here so they're always in sync regardless of trigger)
+  var marginEl=document.getElementById("cv-margin");
+  if(marginEl){marginEl.textContent=fmt(margin);marginEl.style.color=isOK?"#90EE90":"#FFB3B3";}
+  var statusEl=document.getElementById("cv-sync-status");
+  if(statusEl){statusEl.textContent=isOK?"✓":"⚠";statusEl.style.color=isOK?"#90EE90":"#FFD700";}
+  set("cv-gross",fmt(grossVat));
+  set("cv-fin-total",fmt(execCost));
+  set("cv-profit",fmt(actualProfit<0?0:actualProfit));
 
   // 9. Render budget table
   renderFin();
@@ -1369,14 +1414,17 @@ function exportDist(){
   var cbT=V("i-cb-t");   var cbV=parseFloat(V("i-cb-v"))||0;
   var mkt=mktT==="pct"?g*mktV/100:mktV;
   var cb=cbT==="pct"?g*cbV/100:cbV;
-  var execCost=FIN.reduce(function(s,i){return s+(i.a||0);},0);
-  var actualProfit=g-cb-(MKT_SOURCE==="out"?mkt:0)-execCost;
+  var execCost=EXEC_MODE==="pct"?g*(parseFloat(V("i-exec-pct"))||0)/100:FIN.reduce(function(s,i){return s+(i.a||0);},0);
+  var actualProfit=g-execCost-mkt-cb;
   var vatRefund=vat;
   var totalReturn=cb+vatRefund;
+  var execLabel=EXEC_MODE==="pct"?"رسوم تنفيذ بُعد التمكين":"تكلفة التنفيذ الفعلي";
+  var execNote=EXEC_MODE==="pct"?"نسبة "+(parseFloat(V("i-exec-pct"))||0)+"% من قيمة العقد":"مجموع بنود الميزانية التفصيلية";
   var mktLabel=MKT_SOURCE==="in"?"تسويق داخلي (يضاف للربح)":"تسويق خارجي (التزام مالي)";
   var profitNote=MKT_SOURCE==="in"?"يشمل مخصص التسويق الداخلي ("+fmt(mkt)+" ر.س)":"صافي بعد خصم التسويق الخارجي";
   var execPct=g?pct(execCost,g):0;
   var profitPct=g?pct(actualProfit<0?0:actualProfit,g):0;
+  var returnPctBar=g?pct(cb,g):0;
   var returnPct=g?pct(totalReturn,g):0;
   var mktPct=g?pct(mkt,g):0;
   var mktColor=MKT_SOURCE==="in"?"#2C5F2D":"#8B1A0E";
@@ -1389,13 +1437,13 @@ function exportDist(){
   '<div class="header"><img src="'+logoSrc+'"><div><h1>التوزيع المالي الداخلي</h1><p>مبادرة ملتقى الصيادلة للتأهيل المهني | جمعية توفير الدواء × بُعد التمكين</p><p>إجمالي العقد قبل الضريبة: '+fmt(g)+' ر.س | الضريبة ('+vatPct+'%): '+fmt(vat)+' ر.س | الإجمالي شامل الضريبة: '+fmt(g+vat)+' ر.س</p></div></div>'+
   '<div class="notice">⚠ هذه الوثيقة للاستخدام الداخلي فقط — لا يُشارك محتواها مع الطرف الثاني ولا يُرفق بالعقد الرسمي.</div>'+
   '<div class="grid">'+
-  '<div class="card" style="background:#E6EAF8;border-color:#B5C8F0;color:#00197D"><div class="label">تكلفة التنفيذ الفعلي</div><div class="pct">'+execPct+'% من الإجمالي</div><div class="amount">'+fmt(execCost)+' ر.س</div><div class="note">مجموع بنود الميزانية التنفيذية</div></div>'+
+  '<div class="card" style="background:#E6EAF8;border-color:#B5C8F0;color:#00197D"><div class="label">'+execLabel+'</div><div class="pct">'+execPct+'% من الإجمالي</div><div class="amount">'+fmt(execCost)+' ر.س</div><div class="note">'+execNote+'</div></div>'+
   '<div class="card" style="background:#EAF3EA;border-color:#B0D4B0;color:#2C5F2D"><div class="label">ربح بُعد التمكين</div><div class="pct">'+profitPct+'% من الإجمالي</div><div class="amount">'+fmt(actualProfit<0?0:actualProfit)+' ر.س</div><div class="note">'+profitNote+'</div></div>'+
   '<div class="card" style="background:#F0EBF8;border-color:#C5A8E8;color:#5B2D8E"><div class="label">إجمالي العوائد للجمعية</div><div class="pct">'+returnPct+'% من الإجمالي</div><div class="amount">'+fmt(totalReturn)+' ر.س</div><div class="note">كاش باك + استرداد ضريبي كامل</div></div>'+
   '<div class="card" style="background:'+mktBg+';border-color:'+mktBorderColor+';color:'+mktColor+'"><div class="label">'+mktLabel+'</div><div class="pct">'+mktPct+'% من الإجمالي</div><div class="amount">'+fmt(mkt)+' ر.س</div><div class="note">'+(V("i-mkt-name")||"المسوق")+'</div></div>'+
   '</div>'+
   '<div class="bar-section"><h3>التوزيع البصري من الإجمالي</h3>'+
-  '<div class="bar"><div class="seg" style="width:'+execPct+'%;background:#00197D">'+execPct+'%</div><div class="seg" style="width:'+profitPct+'%;background:#2C5F2D">'+profitPct+'%</div><div class="seg" style="width:'+returnPct+'%;background:#5B2D8E">'+returnPct+'%</div><div class="seg" style="width:'+mktPct+'%;background:'+mktColor+'">'+mktPct+'%</div></div>'+
+  '<div class="bar"><div class="seg" style="width:'+execPct+'%;background:#00197D">'+execPct+'%</div><div class="seg" style="width:'+profitPct+'%;background:#2C5F2D">'+profitPct+'%</div><div class="seg" style="width:'+returnPctBar+'%;background:#5B2D8E">'+returnPctBar+'%</div><div class="seg" style="width:'+mktPct+'%;background:'+mktColor+'">'+mktPct+'%</div></div>'+
   '<div class="legend"><div class="leg"><div class="dot" style="background:#00197D"></div>تنفيذ فعلي ('+fmt(execCost)+' ر.س)</div><div class="leg"><div class="dot" style="background:#2C5F2D"></div>ربح الشركة ('+fmt(actualProfit<0?0:actualProfit)+' ر.س)</div><div class="leg"><div class="dot" style="background:#5B2D8E"></div>عوائد الجمعية ('+fmt(totalReturn)+' ر.س)</div><div class="leg"><div class="dot" style="background:'+mktColor+'"></div>'+mktLabel+' ('+fmt(mkt)+' ر.س)</div></div>'+
   '<div class="return-detail"><h3>تفصيل عوائد جمعية توفير الدواء</h3>'+
   '<div class="row"><span class="lbl">الكاش باك المتفق عليه ('+(cbT==="pct"?cbV+"%":fmt(cb)+" ر.س مقطوع")+')</span><span class="val" style="color:#5B2D8E">'+fmt(cb)+' ر.س</span></div>'+
