@@ -168,6 +168,16 @@ body{font-family:"IBM Plex Sans Arabic",sans-serif;direction:rtl;background:var(
 .prod-mfoot{padding:13px 18px;border-top:.5px solid var(--bd);display:flex;gap:8px;justify-content:space-between;align-items:center;flex-shrink:0;background:var(--sand)}
 .prod-tag-row{display:flex;gap:6px;flex-wrap:wrap}
 .prod-tag{padding:3px 10px;border-radius:20px;font-size:10px;font-weight:500;background:var(--Nl);color:var(--N);border:.5px solid #B5C8F0}
+/* ── Products Page Grid ───────────────────────────── */
+.prod-pg-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px;margin-top:6px}
+.prod-pg-card{background:var(--w);border-radius:12px;border:1px solid var(--bd);padding:22px 16px 18px;cursor:pointer;transition:.15s;text-align:center}
+.prod-pg-card:hover{border-color:var(--P);transform:translateY(-2px);box-shadow:0 4px 16px rgba(0,25,125,.08)}
+.prod-pg-ico{font-size:36px;margin-bottom:10px;line-height:1}
+.prod-pg-name{font-size:13.5px;font-weight:700;color:var(--tx);margin-bottom:6px}
+.prod-pg-tag{font-size:11px;color:var(--mu);line-height:1.55;margin-bottom:12px;min-height:34px}
+.prod-pg-meta{font-size:10px;color:var(--P);font-weight:600;background:rgba(0,25,125,.07);border-radius:20px;padding:3px 12px;display:inline-block;margin-bottom:10px}
+.prod-pg-btn{font-size:11px;color:var(--P);font-weight:600;opacity:.7}
+.prod-pg-card:hover .prod-pg-btn{opacity:1}
 </style>
 </head>
 <body>
@@ -181,26 +191,12 @@ body{font-family:"IBM Plex Sans Arabic",sans-serif;direction:rtl;background:var(
       </div>
       <button class="sb-collapse-btn" id="sb-toggle" onclick="toggleSidebar()" title="تصغير القائمة">‹</button>
     </div>
-    <!-- Tab bar -->
-    <div class="sb-tab-bar">
-      <button class="sb-tab act" id="sbt-nav" onclick="sbTab('nav')">
-        <span class="sb-tab-ico">🗂</span><span class="sb-tab-lbl">التنقل</span>
-      </button>
-      <button class="sb-tab" id="sbt-products" onclick="sbTab('products')">
-        <span class="sb-tab-ico">📦</span><span class="sb-tab-lbl">المنتجات</span>
-      </button>
-      <button class="sb-tab" id="sbt-reports" onclick="sbTab('reports')" title="التقارير — قريباً">
-        <span class="sb-tab-ico">📊</span><span class="sb-tab-lbl">تقارير</span>
-      </button>
-      <button class="sb-tab" id="sbt-partners" onclick="sbTab('partners')" title="الشراكات — قريباً">
-        <span class="sb-tab-ico">🤝</span><span class="sb-tab-lbl">شراكات</span>
-      </button>
-    </div>
-    <!-- Nav Panel -->
+    <!-- Nav -->
     <div class="sb-panel" id="sbp-nav">
       <div class="sb-sec">القائمة الرئيسية</div>
       <div class="sb-item act" id="nav-dash"><span class="sb-ico">🏠</span><span class="sb-label">الرئيسية</span></div>
       <div class="sb-item" id="nav-projects"><span class="sb-ico">📁</span><span class="sb-label">المشاريع</span><span class="sb-badge" id="sb-count">1</span></div>
+      <div class="sb-item" id="nav-products"><span class="sb-ico">📦</span><span class="sb-label">المنتجات</span></div>
       <div class="sb-div"></div>
       <div class="sb-sec">الإدارة</div>
       <div class="sb-item" id="nav-clients"><span class="sb-ico">🏛</span><span class="sb-label">العملاء</span></div>
@@ -210,28 +206,6 @@ body{font-family:"IBM Plex Sans Arabic",sans-serif;direction:rtl;background:var(
       <div class="sb-item" style="opacity:.5;cursor:default"><span class="sb-ico">📊</span><span class="sb-label">التقارير <span style="font-size:8px;opacity:.6">قريباً</span></span></div>
       <div class="sb-item" style="opacity:.5;cursor:default"><span class="sb-ico">🤝</span><span class="sb-label">الشراكات <span style="font-size:8px;opacity:.6">قريباً</span></span></div>
       <div class="sb-item" style="opacity:.5;cursor:default"><span class="sb-ico">📚</span><span class="sb-label">المكتبة <span style="font-size:8px;opacity:.6">قريباً</span></span></div>
-    </div>
-    <!-- Products Panel -->
-    <div class="sb-panel" id="sbp-products" style="display:none">
-      <div class="sb-sec">خدمات وحلول بُعد التمكين</div>
-      <div id="prod-list"></div>
-      <div class="sb-add-prod" onclick="openProdModal(-1)">＋ <span class="sb-label">إضافة منتج</span></div>
-    </div>
-    <!-- Reports Panel (placeholder) -->
-    <div class="sb-panel" id="sbp-reports" style="display:none">
-      <div class="sb-placeholder">
-        <div style="font-size:26px;margin-bottom:8px">📊</div>
-        <div>التقارير</div>
-        <div style="font-size:9px;margin-top:4px;opacity:.7">قيد التطوير</div>
-      </div>
-    </div>
-    <!-- Partners Panel (placeholder) -->
-    <div class="sb-panel" id="sbp-partners" style="display:none">
-      <div class="sb-placeholder">
-        <div style="font-size:26px;margin-bottom:8px">🤝</div>
-        <div>الشراكات</div>
-        <div style="font-size:9px;margin-top:4px;opacity:.7">قيد التطوير</div>
-      </div>
     </div>
     <!-- Bottom user -->
     <div class="sb-bottom">
@@ -302,6 +276,14 @@ body{font-family:"IBM Plex Sans Arabic",sans-serif;direction:rtl;background:var(
           <div class="sc"><div class="sc-ico ic-r">📊</div><div><div class="sc-num" id="f-avg">—</div><div class="sc-lbl">متوسط قيمة المشروع</div></div></div>
         </div>
         <div class="ac"><div class="ach">💰 تفصيل المشاريع</div><div id="fin-body"></div></div>
+      </div>
+
+      <div class="page" id="page-products">
+        <div class="sec-head">
+          <h2>خدمات وحلول بُعد التمكين</h2>
+          <button class="tb-btn sec" onclick="openProdModal(-1)">+ إضافة منتج</button>
+        </div>
+        <div id="prod-grid" class="prod-pg-grid"></div>
       </div>
     </div>
 
@@ -435,14 +417,14 @@ function sm(s) { return SM[s] || SM.draft; }
 
 // ── NAVIGATION ───────────────────────────────────────────────────
 function doGoPage(p) {
-  ['dash','projects','clients','finance'].forEach(function(n) {
+  ['dash','projects','clients','finance','products'].forEach(function(n) {
     var pg  = document.getElementById('page-' + n);
     var nav = document.getElementById('nav-' + n);
     if (pg)  pg.classList.toggle('act', n === p);
     if (nav) nav.classList.toggle('act', n === p);
   });
 
-  var titles = { dash:'لوحة التحكم', projects:'المشاريع', clients:'العملاء', finance:'المالية' };
+  var titles = { dash:'لوحة التحكم', projects:'المشاريع', clients:'العملاء', finance:'المالية', products:'المنتجات' };
   document.getElementById('page-title').textContent = titles[p] || p;
 
   var bc = document.getElementById('bc');
@@ -462,6 +444,7 @@ function doGoPage(p) {
   if (p === 'dash' || p === 'projects') renderAll();
   if (p === 'finance') renderFinance();
   if (p === 'clients') renderClients();
+  if (p === 'products') renderProducts();
 }
 
 function doSwitchTab(i) {
@@ -838,25 +821,15 @@ function toggleSidebar() {
 
 // ── RENDER PRODUCTS ───────────────────────────────────────────────
 function renderProducts() {
-  var el = document.getElementById('prod-list');
+  var el = document.getElementById('prod-grid');
   if (!el) return;
   el.innerHTML = PRODUCTS.map(function(p, i) {
-    var svcs = p.services.slice(0, 3).map(function(s) {
-      return '<div class="sb-prod-sub">' + s + '</div>';
-    }).join('') + (p.services.length > 3
-      ? '<div class="sb-prod-sub" style="opacity:.6">+' + (p.services.length - 3) + ' خدمات أخرى</div>'
-      : '');
-    return '<div class="sb-prod" id="prod-item-' + i + '">'
-      + '<div class="sb-prod-h" onclick="toggleProd(' + i + ')">'
-      + '<span class="sb-prod-ico">' + p.icon + '</span>'
-      + '<span class="sb-prod-label">' + p.name + '</span>'
-      + '<span class="sb-prod-arrow" id="prod-arr-' + i + '">›</span>'
-      + '</div>'
-      + '<div class="sb-prod-body" id="prod-body-' + i + '" style="display:none">'
-      + '<div style="font-size:9.5px;color:rgba(255,255,255,.55);margin-bottom:6px;line-height:1.5">' + p.tagline + '</div>'
-      + svcs
-      + '<button class="sb-prod-detail-btn" onclick="openProdModal(' + i + ')">تفاصيل وتعديل ›</button>'
-      + '</div>'
+    return '<div class="prod-pg-card" onclick="openProdModal(' + i + ')">'
+      + '<div class="prod-pg-ico">' + p.icon + '</div>'
+      + '<div class="prod-pg-name">' + escHtml(p.name) + '</div>'
+      + '<div class="prod-pg-tag">' + escHtml(p.tagline) + '</div>'
+      + '<div class="prod-pg-meta">' + p.services.length + ' خدمة</div>'
+      + '<div class="prod-pg-btn">تفاصيل وتعديل ›</div>'
       + '</div>';
   }).join('');
 }
@@ -942,6 +915,7 @@ function delSvc(id) {
 document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('nav-dash')    .addEventListener('click', function(){ doGoPage('dash'); });
   document.getElementById('nav-projects').addEventListener('click', function(){ doGoPage('projects'); });
+  document.getElementById('nav-products').addEventListener('click', function(){ doGoPage('products'); });
   document.getElementById('nav-clients') .addEventListener('click', function(){ doGoPage('clients'); });
   document.getElementById('nav-finance') .addEventListener('click', function(){ doGoPage('finance'); });
   document.getElementById('bc-home')     .addEventListener('click', function(){ doGoPage('dash'); });
