@@ -508,6 +508,14 @@ input[type=checkbox]{accent-color:var(--N);width:13px;height:13px;cursor:pointer
         </div>
       </div>
       <div class="cb">
+        <div id="overhead-panel" style="background:var(--Nl);border:.5px solid var(--bd);border-radius:7px;padding:10px 13px;margin-bottom:12px;font-size:12px">
+          <div style="font-size:11px;font-weight:600;color:var(--N);margin-bottom:8px">توزيع قيمة العقد</div>
+          <div class="cr-row"><span style="color:var(--mu)">قيمة العقد قبل الضريبة</span><span id="ob-gross" class="mn">—</span></div>
+          <div class="cr-row" id="ob-exec-row"><span id="ob-exec-lbl" style="color:var(--mu)">رسوم بُعد التمكين</span><span id="ob-exec" class="mn">—</span></div>
+          <div class="cr-row"><span style="color:var(--mu)">مخصص التسويق</span><span id="ob-mkt" class="mn">—</span></div>
+          <div class="cr-row" style="border-bottom:.5px solid var(--bd);padding-bottom:6px;margin-bottom:6px"><span style="color:var(--mu)">ضريبة القيمة المضافة</span><span id="ob-vat" class="mn">—</span></div>
+          <div class="cr-row"><span style="font-weight:600;color:var(--N)">الميزانية التنفيذية المتاحة</span><span id="ob-net" class="mn cn" style="font-weight:700">—</span></div>
+        </div>
         <div class="sg sg3" style="margin-bottom:12px">
           <div class="sc"><div class="sn cn mn" id="d-bud">—</div><div class="sl">الميزانية (ر.س)</div></div>
           <div class="sc"><div class="sn cg mn" id="d-spent">—</div><div class="sl">مجموع البنود</div></div>
@@ -526,6 +534,96 @@ input[type=checkbox]{accent-color:var(--N);width:13px;height:13px;cursor:pointer
             <span style="font-size:10px;color:var(--mu)">ر.س</span>
           </div>
         </div>
+      </div>
+    </div>
+    <!-- Financial Distribution Settings (moved from sp1-1) -->
+    <div class="card" style="margin-top:13px">
+      <div class="ch"><div class="ci ci-g">ت</div><h2>إعدادات التوزيع المالي الداخلي</h2></div>
+      <div class="cb">
+        <div class="mkt-toggle-wrap">
+          <div><label>المسوّق من أين؟</label><div style="font-size:10px;color:var(--mu);margin-top:2px">يحدد هذا الخيار طبيعة مخصص التسويق في التوزيع المالي</div></div>
+          <div class="mkt-radio">
+            <button id="mkt-in-btn" class="act-in" onclick="setMktSource('in')">داخل بُعد التمكين (ربح إضافي)</button>
+            <button id="mkt-out-btn" onclick="setMktSource('out')">خارج بُعد التمكين (التزام مالي)</button>
+          </div>
+        </div>
+        <div class="g3" style="margin-bottom:12px">
+          <div class="fb"><label>نوع مخصص التسويق</label><select class="ef" id="i-mkt-t" onchange="calcC()"><option value="pct">نسبة % من الإجمالي</option><option value="fix">مبلغ مقطوع</option></select></div>
+          <div class="fb"><label>قيمة مخصص التسويق</label><input class="ef mn" type="number" id="i-mkt-v" value="10" step="0.1" oninput="calcC()"></div>
+          <div class="fb"><label>اسم المسوّق / الجهة</label><input class="ef efg" id="i-mkt-name" value="مسوق خارجي" oninput="calcC()"></div>
+          <div class="fb"><label>نوع الكاش باك للجمعية</label><select class="ef" id="i-cb-t" onchange="calcC()"><option value="pct">نسبة % من الإجمالي</option><option value="fix">مبلغ مقطوع</option></select></div>
+          <div class="fb"><label>قيمة الكاش باك</label><input class="ef mn" type="number" id="i-cb-v" value="5" step="0.1" oninput="calcC()"></div>
+          <div class="fb"><label>موعد صرف الكاش باك</label><select class="ef efg" id="i-cb-w"><option>بعد إتمام المشروع</option><option>مع الدفعة الأخيرة</option><option>خلال 30 يوماً من الختام</option></select></div>
+        </div>
+
+        <!-- EXECUTION MODEL TOGGLE -->
+        <div class="mkt-toggle-wrap" style="margin-bottom:12px;background:var(--Nl);border-color:#B5C8F0">
+          <div>
+            <label style="color:var(--N);font-size:11.5px;font-weight:500">نموذج تنفيذ بُعد التمكين</label>
+            <div style="font-size:10px;color:var(--mu);margin-top:2px">يحدد كيف تُحسب حصة بُعد التمكين في التوزيع المالي الداخلي</div>
+          </div>
+          <div class="mkt-radio">
+            <button id="exec-bud-btn" class="act-in" onclick="setExecMode('budget')">ميزانية تفصيلية</button>
+            <button id="exec-pct-btn" onclick="setExecMode('pct')">نسبة من الإجمالي</button>
+            <button id="exec-fix-btn" onclick="setExecMode('fixed')">مبلغ إجمالي</button>
+          </div>
+        </div>
+        <div class="fb" id="exec-pct-row" style="display:none;max-width:240px;margin-bottom:8px">
+          <label>نسبة تنفيذ بُعد التمكين من الإجمالي (%)</label>
+          <input class="ef mn" type="number" id="i-exec-pct" value="30" min="0" max="100" step="0.1" oninput="syncAll()">
+        </div>
+        <div class="fb" id="exec-fix-row" style="display:none;max-width:240px;margin-bottom:8px">
+          <label>رسوم بُعد التمكين الإجمالية (ر.س)</label>
+          <input class="ef mn" type="number" id="i-exec-fix" value="0" min="0" oninput="syncAll()">
+        </div>
+        <div id="exec-details-toggle" style="display:none;margin-bottom:12px">
+          <button class="btn btn-g" id="exec-details-btn" onclick="toggleExecDetails()">تفاصيل ↓</button>
+          <div id="exec-details-section" style="display:none;background:var(--Nl);border-radius:6px;padding:10px 12px;margin-top:8px;border:.5px solid var(--bd)">
+            <div class="cr-row"><span style="color:var(--mu)">قيمة العقد قبل الضريبة</span><span id="edb-gross" class="mn">—</span></div>
+            <div class="cr-row"><span id="edb-exec-lbl" style="color:var(--mu)">رسوم بُعد التمكين</span><span id="edb-exec" class="mn">—</span></div>
+            <div class="cr-row"><span style="color:var(--mu)">مخصص التسويق</span><span id="edb-mkt" class="mn">—</span></div>
+            <div class="cr-row" style="border-bottom:.5px solid var(--bd);padding-bottom:6px;margin-bottom:6px"><span style="color:var(--mu)">ضريبة القيمة المضافة</span><span id="edb-vat" class="mn">—</span></div>
+            <div class="cr-row"><span style="font-weight:600">الميزانية التنفيذية المتاحة</span><span id="edb-net" class="mn cn" style="font-weight:600">—</span></div>
+          </div>
+        </div>
+
+        <!-- DISTRIBUTION BLOCK -->
+        <div class="dist-wrap" id="dist-wrap">
+          <div class="dist-title">
+            <span style="width:9px;height:9px;border-radius:3px;background:var(--P);display:inline-block"></span>
+            التوزيع المالي الداخلي — من المبلغ الإجمالي قبل الضريبة
+          </div>
+          <div class="dist-grid">
+            <div class="dc dc-exec" style="cursor:pointer" title="انتقل إلى الميزانية التنفيذية" onclick="msw(0);ssw(0,1);setTimeout(function(){var el=document.getElementById('sp0-1');if(el)el.scrollIntoView({behavior:'smooth'});},100)"><div class="dcl" id="dc-exec-label">تكلفة التنفيذ الفعلي</div><div class="dcp" id="dc-exec-pct">—</div><div class="dca" id="dc-exec-amt">—</div><div class="dcn" id="dc-exec-note">مجموع بنود الميزانية التنفيذية</div></div>
+            <div class="dc dc-profit"><div class="dcl">ربح بُعد التمكين</div><div class="dcp" id="dc-profit-pct">—</div><div class="dca" id="dc-profit-amt">—</div><div class="dcn" id="dc-profit-note">صافي الربح بعد جميع الاستقطاعات</div></div>
+            <div class="dc dc-return"><div class="dcl">العوائد للجمعية</div><div class="dcp" id="dc-return-pct">—</div><div class="dca" id="dc-return-amt">—</div><div class="dcn" id="dc-return-note">كاش باك + استرداد ضريبي</div></div>
+            <div class="dc" id="dc-mkt-card"><div class="dcl" id="dc-mkt-label">مخصص التسويق</div><div class="dcp" id="dc-mkt-pct">—</div><div class="dca" id="dc-mkt-amt">—</div><div class="dcn" id="dc-mkt-note">—</div></div>
+          </div>
+          <div style="margin-bottom:8px"><div style="font-size:10px;color:var(--P);margin-bottom:5px;font-weight:500">التوزيع البصري</div>
+            <div class="dist-bar">
+              <div class="dbs" id="bar-exec" style="background:#00197D">تنفيذ</div>
+              <div class="dbs" id="bar-profit" style="background:#2C5F2D">ربح</div>
+              <div class="dbs" id="bar-return" style="background:#5B2D8E">عوائد</div>
+              <div class="dbs" id="bar-mkt" style="background:#B8841A">تسويق</div>
+            </div>
+          </div>
+          <div class="dist-legend">
+            <div class="dl"><div class="dld" style="background:#00197D"></div>تنفيذ فعلي</div>
+            <div class="dl"><div class="dld" style="background:#2C5F2D"></div>ربح الشركة</div>
+            <div class="dl"><div class="dld" style="background:#5B2D8E"></div>عوائد الجمعية</div>
+            <div class="dl"><div class="dld" id="mkt-legend-dot" style="background:#B8841A"></div><span id="mkt-legend-label">تسويق خارجي</span></div>
+          </div>
+          <div class="dist-return-detail">
+            <div style="font-size:11px;font-weight:600;color:var(--P);margin-bottom:8px">تفصيل عوائد الجمعية</div>
+            <div class="cr-row"><span class="cr-lbl" style="color:var(--P)">الكاش باك المتفق عليه</span><span class="cr-val cp" id="detail-cb">—</span></div>
+            <div class="cr-row" style="border-bottom:.5px solid #C5A8E8"><span style="color:var(--P)">الاسترداد الضريبي المتوقع <span style="font-size:9px;font-weight:400;opacity:.7">(الجمعيات الخيرية تسترد الضريبة كاملاً بعد المطالبة)</span></span><span class="cr-val cp" id="detail-vat-refund">—</span></div>
+            <div style="display:flex;justify-content:space-between;font-weight:600;color:var(--P);font-size:12.5px;padding-top:7px;margin-top:2px"><span>إجمالي العوائد للجمعية</span><span class="mn" id="detail-total-return">—</span></div>
+          </div>
+          <div style="margin-top:10px;padding-top:10px;border-top:.5px solid #C5A8E8;display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn btn-g" style="border-color:var(--P);color:var(--P)" onclick="exportDist()">📊 تصدير PDF / صورة</button>
+          </div>
+        </div>
+        <div class="note-p" style="margin-top:10px"><strong>ملاحظة:</strong> وفق نظام ضريبة القيمة المضافة السعودي، يحق للجمعيات الخيرية استرداد ضريبة القيمة المضافة كاملاً عبر تقديم طلب للهيئة العامة للزكاة والضريبة والجمارك (ZATCA). الأرقام تقديرية للتخطيط الداخلي.</div>
       </div>
     </div>
   </div>
@@ -662,83 +760,12 @@ input[type=checkbox]{accent-color:var(--N);width:13px;height:13px;cursor:pointer
     </div>
   </div>
 
-  <!-- FINANCIAL AGREEMENT INTERNAL -->
+  <!-- navigation note — content moved to sp0-1 -->
   <div class="spanel" id="sp1-1">
-    <div class="note-p" style="margin-bottom:13px">هذا القسم للاستخدام الداخلي فقط — لا يُطبَع في العقد الرسمي.</div>
-
-    <!-- MKT SOURCE TOGGLE -->
-    <div class="card">
-      <div class="ch"><div class="ci ci-g">ت</div><h2>إعدادات التوزيع المالي الداخلي</h2></div>
-      <div class="cb">
-        <div class="mkt-toggle-wrap">
-          <div><label>المسوّق من أين؟</label><div style="font-size:10px;color:var(--mu);margin-top:2px">يحدد هذا الخيار طبيعة مخصص التسويق في التوزيع المالي</div></div>
-          <div class="mkt-radio">
-            <button id="mkt-in-btn" class="act-in" onclick="setMktSource('in')">داخل بُعد التمكين (ربح إضافي)</button>
-            <button id="mkt-out-btn" onclick="setMktSource('out')">خارج بُعد التمكين (التزام مالي)</button>
-          </div>
-        </div>
-        <div class="g3" style="margin-bottom:12px">
-          <div class="fb"><label>نوع مخصص التسويق</label><select class="ef" id="i-mkt-t" onchange="calcC()"><option value="pct">نسبة % من الإجمالي</option><option value="fix">مبلغ مقطوع</option></select></div>
-          <div class="fb"><label>قيمة مخصص التسويق</label><input class="ef mn" type="number" id="i-mkt-v" value="10" step="0.1" oninput="calcC()"></div>
-          <div class="fb"><label>اسم المسوّق / الجهة</label><input class="ef efg" id="i-mkt-name" value="مسوق خارجي" oninput="calcC()"></div>
-          <div class="fb"><label>نوع الكاش باك للجمعية</label><select class="ef" id="i-cb-t" onchange="calcC()"><option value="pct">نسبة % من الإجمالي</option><option value="fix">مبلغ مقطوع</option></select></div>
-          <div class="fb"><label>قيمة الكاش باك</label><input class="ef mn" type="number" id="i-cb-v" value="5" step="0.1" oninput="calcC()"></div>
-          <div class="fb"><label>موعد صرف الكاش باك</label><select class="ef efg" id="i-cb-w"><option>بعد إتمام المشروع</option><option>مع الدفعة الأخيرة</option><option>خلال 30 يوماً من الختام</option></select></div>
-        </div>
-
-        <!-- EXECUTION MODEL TOGGLE -->
-        <div class="mkt-toggle-wrap" style="margin-bottom:12px;background:var(--Nl);border-color:#B5C8F0">
-          <div>
-            <label style="color:var(--N);font-size:11.5px;font-weight:500">نموذج تنفيذ بُعد التمكين</label>
-            <div style="font-size:10px;color:var(--mu);margin-top:2px">يحدد كيف تُحسب حصة بُعد التمكين في التوزيع المالي الداخلي</div>
-          </div>
-          <div class="mkt-radio">
-            <button id="exec-bud-btn" class="act-in" onclick="setExecMode('budget')">ميزانية تفصيلية</button>
-            <button id="exec-pct-btn" onclick="setExecMode('pct')">نسبة من الإجمالي</button>
-          </div>
-        </div>
-        <div class="fb" id="exec-pct-row" style="display:none;max-width:240px;margin-bottom:12px">
-          <label>نسبة تنفيذ بُعد التمكين من الإجمالي (%)</label>
-          <input class="ef mn" type="number" id="i-exec-pct" value="30" min="0" max="100" step="0.1" oninput="syncAll()">
-        </div>
-
-        <!-- DISTRIBUTION BLOCK -->
-        <div class="dist-wrap" id="dist-wrap">
-          <div class="dist-title">
-            <span style="width:9px;height:9px;border-radius:3px;background:var(--P);display:inline-block"></span>
-            التوزيع المالي الداخلي — من المبلغ الإجمالي قبل الضريبة
-          </div>
-          <div class="dist-grid">
-            <div class="dc dc-exec"><div class="dcl" id="dc-exec-label">تكلفة التنفيذ الفعلي</div><div class="dcp" id="dc-exec-pct">—</div><div class="dca" id="dc-exec-amt">—</div><div class="dcn" id="dc-exec-note">مجموع بنود الميزانية التنفيذية</div></div>
-            <div class="dc dc-profit"><div class="dcl">ربح بُعد التمكين</div><div class="dcp" id="dc-profit-pct">—</div><div class="dca" id="dc-profit-amt">—</div><div class="dcn" id="dc-profit-note">صافي الربح بعد جميع الاستقطاعات</div></div>
-            <div class="dc dc-return"><div class="dcl">العوائد للجمعية</div><div class="dcp" id="dc-return-pct">—</div><div class="dca" id="dc-return-amt">—</div><div class="dcn" id="dc-return-note">كاش باك + استرداد ضريبي</div></div>
-            <div class="dc" id="dc-mkt-card"><div class="dcl" id="dc-mkt-label">مخصص التسويق</div><div class="dcp" id="dc-mkt-pct">—</div><div class="dca" id="dc-mkt-amt">—</div><div class="dcn" id="dc-mkt-note">—</div></div>
-          </div>
-          <div style="margin-bottom:8px"><div style="font-size:10px;color:var(--P);margin-bottom:5px;font-weight:500">التوزيع البصري</div>
-            <div class="dist-bar">
-              <div class="dbs" id="bar-exec" style="background:#00197D">تنفيذ</div>
-              <div class="dbs" id="bar-profit" style="background:#2C5F2D">ربح</div>
-              <div class="dbs" id="bar-return" style="background:#5B2D8E">عوائد</div>
-              <div class="dbs" id="bar-mkt" style="background:#B8841A">تسويق</div>
-            </div>
-          </div>
-          <div class="dist-legend">
-            <div class="dl"><div class="dld" style="background:#00197D"></div>تنفيذ فعلي</div>
-            <div class="dl"><div class="dld" style="background:#2C5F2D"></div>ربح الشركة</div>
-            <div class="dl"><div class="dld" style="background:#5B2D8E"></div>عوائد الجمعية</div>
-            <div class="dl"><div class="dld" id="mkt-legend-dot" style="background:#B8841A"></div><span id="mkt-legend-label">تسويق خارجي</span></div>
-          </div>
-          <div class="dist-return-detail">
-            <div style="font-size:11px;font-weight:600;color:var(--P);margin-bottom:8px">تفصيل عوائد الجمعية</div>
-            <div class="cr-row"><span class="cr-lbl" style="color:var(--P)">الكاش باك المتفق عليه</span><span class="cr-val cp" id="detail-cb">—</span></div>
-            <div class="cr-row" style="border-bottom:.5px solid #C5A8E8"><span style="color:var(--P)">الاسترداد الضريبي المتوقع <span style="font-size:9px;font-weight:400;opacity:.7">(الجمعيات الخيرية تسترد الضريبة كاملاً بعد المطالبة)</span></span><span class="cr-val cp" id="detail-vat-refund">—</span></div>
-            <div style="display:flex;justify-content:space-between;font-weight:600;color:var(--P);font-size:12.5px;padding-top:7px;margin-top:2px"><span>إجمالي العوائد للجمعية</span><span class="mn" id="detail-total-return">—</span></div>
-          </div>
-          <div style="margin-top:10px;padding-top:10px;border-top:.5px solid #C5A8E8;display:flex;gap:8px;flex-wrap:wrap">
-            <button class="btn btn-g" style="border-color:var(--P);color:var(--P)" onclick="exportDist()">📊 تصدير PDF / صورة</button>
-          </div>
-        </div>
-        <div class="note-p" style="margin-top:10px"><strong>ملاحظة:</strong> وفق نظام ضريبة القيمة المضافة السعودي، يحق للجمعيات الخيرية استرداد ضريبة القيمة المضافة كاملاً عبر تقديم طلب للهيئة العامة للزكاة والضريبة والجمارك (ZATCA). الأرقام تقديرية للتخطيط الداخلي.</div>
+    <div class="note-p" style="text-align:center;padding:20px 0">
+      تم دمج إعدادات التوزيع المالي الداخلي في <strong>العرض والتخطيط → المالي</strong> للتكامل مع الميزانية التنفيذية.
+      <div style="margin-top:12px">
+        <button class="btn btn-g" onclick="msw(0);ssw(0,1);">الانتقال إلى الإعدادات المالية</button>
       </div>
     </div>
   </div>
@@ -899,9 +926,21 @@ function setExecMode(m){
   EXEC_MODE=m;
   document.getElementById("exec-bud-btn").className=m==="budget"?"act-in":"";
   document.getElementById("exec-pct-btn").className=m==="pct"?"act-in":"";
-  var row=document.getElementById("exec-pct-row");
-  if(row) row.style.display=m==="pct"?"":"none";
+  document.getElementById("exec-fix-btn").className=m==="fixed"?"act-in":"";
+  var pctRow=document.getElementById("exec-pct-row");
+  var fixRow=document.getElementById("exec-fix-row");
+  var detTog=document.getElementById("exec-details-toggle");
+  if(pctRow) pctRow.style.display=m==="pct"?"":"none";
+  if(fixRow) fixRow.style.display=m==="fixed"?"":"none";
+  if(detTog) detTog.style.display=(m==="pct"||m==="fixed")?"":"none";
   syncAll();
+}
+function toggleExecDetails(){
+  var s=document.getElementById("exec-details-section");
+  var b=document.getElementById("exec-details-btn");
+  var open=s&&s.style.display!=="none";
+  if(s) s.style.display=open?"none":"";
+  if(b) b.textContent=open?"تفاصيل ↓":"إخفاء ↑";
 }
 
 // ══ VAT TOGGLE — calcC is now an alias; syncAll() is single source of truth ═══
@@ -1059,20 +1098,28 @@ function syncAll(){
 
   // 2. FIN totals
   var finTotal=FIN.reduce(function(s,i){return s+(i.a||0);},0);
-  var margin=gross-finTotal;
+  // Pre-compute mkt & execCost for ceiling (section 8 will also use these)
+  var _mktT=V("i-mkt-t"); var _mktV=parseFloat(V("i-mkt-v"))||0;
+  var _mkt=_mktT==="pct"?gross*_mktV/100:_mktV;
+  var _execCost=EXEC_MODE==="pct"?gross*(parseFloat(V("i-exec-pct"))||0)/100
+               :EXEC_MODE==="fixed"?(parseFloat(V("i-exec-fix"))||0)
+               :finTotal;
+  // finCeil: in budget mode ceiling = gross; in pct/fixed ceiling = execCost
+  var finCeil=EXEC_MODE==="budget"?gross:_execCost;
+  var margin=finCeil-finTotal;
   var isOK=margin>=0;
-  BUD=gross; // keep legacy var in sync
+  BUD=finCeil; // keep legacy var in sync
 
   // 3. Budget stats
-  set("d-bud",fmt(gross));
+  set("d-bud",fmt(finCeil));
   set("d-spent",fmt(finTotal));
   var dRemEl=document.getElementById("d-rem");
   if(dRemEl){dRemEl.textContent=fmt(margin);dRemEl.style.color=isOK?(margin<5000?"var(--G)":"var(--S)"):"var(--R)";}
-  set("fin-ceiling-val",fmt(gross));
-  set("bud-from-contract",fmt(gross));
-  set("fin-use-max",fmt(gross));
-  var usePct=gross?Math.min(pct(finTotal,gross),150):0;
-  set("fin-use-pct",(gross?pct(finTotal,gross):0)+"%");
+  set("fin-ceiling-val",fmt(finCeil));
+  set("bud-from-contract",fmt(finCeil));
+  set("fin-use-max",fmt(finCeil));
+  var usePct=finCeil?Math.min(pct(finTotal,finCeil),150):0;
+  set("fin-use-pct",(finCeil?pct(finTotal,finCeil):0)+"%");
   var useBar=document.getElementById("fin-use-bar");
   if(useBar){useBar.style.width=Math.min(usePct,100)+"%";useBar.style.background=usePct>=100?"var(--R)":usePct>=85?"var(--G)":"var(--S)";}
 
@@ -1081,7 +1128,7 @@ function syncAll(){
   var okNotice=document.getElementById("fin-ok-notice");
   if(overNotice) overNotice.style.display=isOK?"none":"flex";
   if(okNotice) okNotice.style.display=isOK?"flex":"none";
-  set("fn-total",fmt(finTotal));set("fn-ceiling",fmt(gross));set("fn-margin",fmt(margin));
+  set("fn-total",fmt(finTotal));set("fn-ceiling",fmt(finCeil));set("fn-margin",fmt(margin));
 
   // 5. Global sync bar
   var gBar=document.getElementById("global-sync-bar");
@@ -1091,8 +1138,8 @@ function syncAll(){
     gBar.className="sync-bar "+(isOK?"ok":"warn");
     if(gDot) gDot.className="sync-dot "+(isOK?"ok":"warn");
     if(gMsg) gMsg.textContent=isOK?
-      "✓ الميزانية والعقد متسقان — الهامش المتاح "+fmt(margin)+" ر.س (الميزانية "+fmt(finTotal)+" من أصل "+fmt(gross)+" ر.س)":
-      "⚠ تعارض: مجموع الميزانية ("+fmt(finTotal)+" ر.س) يتجاوز قيمة العقد ("+fmt(gross)+" ر.س) بـ "+fmt(-margin)+" ر.س — يجب التعديل";
+      "✓ الميزانية والعقد متسقان — الهامش المتاح "+fmt(margin)+" ر.س (الميزانية "+fmt(finTotal)+" من أصل "+fmt(finCeil)+" ر.س)":
+      "⚠ تعارض: مجموع الميزانية ("+fmt(finTotal)+" ر.س) يتجاوز السقف ("+fmt(finCeil)+" ر.س) بـ "+fmt(-margin)+" ر.س — يجب التعديل";
   }
   // Tab warning dot
   var tw=document.getElementById("tab-warn-contract");
@@ -1123,12 +1170,13 @@ function syncAll(){
   // 8. Internal distribution
   var mktT=V("i-mkt-t"); var mktV=parseFloat(V("i-mkt-v"))||0;
   var cbT=V("i-cb-t");   var cbV=parseFloat(V("i-cb-v"))||0;
-  var mkt=mktT==="pct"?gross*mktV/100:mktV;
+  var mkt=_mkt; // reuse pre-computed value from section 2
+  var execCost=_execCost; // reuse pre-computed value from section 2
   var cb=cbT==="pct"?gross*cbV/100:cbV;
   var vatRefund=vat;
   var totalReturn=cb+vatRefund;
-  // Execution cost: budget mode uses FIN total; pct mode uses gross × %
-  var execCost = EXEC_MODE==="pct" ? gross*(parseFloat(V("i-exec-pct"))||0)/100 : finTotal;
+  // net execution budget: budget mode = gross (FIN items ARE costs); pct/fixed = what's left after exec + mkt + VAT
+  var netBudget=EXEC_MODE==="budget"?gross:gross-execCost-mkt-vat;
   // Always deduct mkt regardless of source so bar segments sum to 100% of gross
   var actualProfit=gross-execCost-mkt-cb;
   var mktColor=MKT_SOURCE==="in"?"#2C5F2D":"#8B1A0E";
@@ -1139,9 +1187,13 @@ function syncAll(){
   var returnPctBar=gross?pct(cb,gross):0;
   var returnPct=gross?pct(totalReturn,gross):0;  // card display includes VAT refund
   // dc-exec card: label and note change by EXEC_MODE
-  set("dc-exec-label",EXEC_MODE==="pct"?"رسوم تنفيذ بُعد التمكين":"تكلفة التنفيذ الفعلي");
+  var execLabel=EXEC_MODE==="pct"?"رسوم تنفيذ بُعد التمكين":EXEC_MODE==="fixed"?"رسوم بُعد التمكين (مبلغ ثابت)":"تكلفة التنفيذ الفعلي";
+  set("dc-exec-label",execLabel);
   set("dc-exec-pct",execPct+"% من الإجمالي");set("dc-exec-amt",fmt(execCost)+" ر.س");
-  set("dc-exec-note",EXEC_MODE==="pct"?"نسبة "+(parseFloat(V("i-exec-pct"))||0)+"% من قيمة العقد":"مجموع بنود الميزانية التفصيلية");
+  var execNote=EXEC_MODE==="pct"?"نسبة "+(parseFloat(V("i-exec-pct"))||0)+"% من قيمة العقد"
+              :EXEC_MODE==="fixed"?"مبلغ ثابت — الميزانية المتاحة "+fmt(netBudget)+" ر.س"
+              :"مجموع بنود الميزانية التفصيلية";
+  set("dc-exec-note",execNote);
   set("dc-profit-pct",profitPct+"% من الإجمالي");set("dc-profit-amt",fmt(actualProfit<0?0:actualProfit)+" ر.س");
   set("dc-profit-note",MKT_SOURCE==="in"?"يشمل مخصص التسويق الداخلي ("+fmt(mkt)+" ر.س)":"صافي بعد خصم التسويق الخارجي");
   set("dc-return-pct",returnPct+"% من الإجمالي");set("dc-return-amt",fmt(totalReturn)+" ر.س");
@@ -1160,6 +1212,26 @@ function syncAll(){
     bM.style.background=mktColor;
   }
   set("detail-cb",fmt(cb)+" ر.س");set("detail-vat-refund",fmt(vatRefund)+" ر.س");set("detail-total-return",fmt(totalReturn)+" ر.س");
+  // Overhead breakdown panel (sp0-1)
+  var obExecLbl=EXEC_MODE==="pct"?"رسوم بُعد التمكين ("+((parseFloat(V("i-exec-pct"))||0)+"%)")
+               :EXEC_MODE==="fixed"?"رسوم بُعد التمكين (مبلغ ثابت)"
+               :"رسوم بُعد التمكين (من البنود)";
+  var obNet=EXEC_MODE==="budget"?gross:netBudget;
+  set("ob-gross",fmt(gross)+" ر.س");
+  set("ob-exec-lbl",obExecLbl);
+  set("ob-exec",fmt(execCost)+" ر.س");
+  set("ob-mkt",fmt(mkt)+" ر.س");
+  set("ob-vat",fmt(vat)+" ر.س");
+  set("ob-net",fmt(obNet)+" ر.س");
+  // Inline details section (exec toggle card)
+  var edbExecLbl=EXEC_MODE==="pct"?"رسوم بُعد التمكين ("+((parseFloat(V("i-exec-pct"))||0)+"%)")
+                :"رسوم بُعد التمكين (مبلغ ثابت)";
+  set("edb-gross",fmt(gross)+" ر.س");
+  set("edb-exec-lbl",edbExecLbl);
+  set("edb-exec",fmt(execCost)+" ر.س");
+  set("edb-mkt",fmt(mkt)+" ر.س");
+  set("edb-vat",fmt(vat)+" ر.س");
+  set("edb-net",fmt(EXEC_MODE!=="budget"?netBudget:gross)+" ر.س");
 
   // Cover stats (updated here so they're always in sync regardless of trigger)
   var marginEl=document.getElementById("cv-margin");
