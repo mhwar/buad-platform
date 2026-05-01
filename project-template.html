@@ -1,0 +1,1520 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ملتقى الصيادلة — بُعد التمكين</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --N:#00197D;--Nd:#001060;--Nl:#E6EAF8;
+  --G:#B8841A;--Gl:#FDF3E3;
+  --S:#2C5F2D;--Sl:#EAF3EA;
+  --R:#8B1A0E;--Rl:#FDECEA;
+  --A:#92620A;--Al:#FFF3CD;
+  --P:#5B2D8E;--Pl:#F0EBF8;
+  --sand:#F7F4EF;--sand2:#EDE8E0;
+  --bd:#E0DAD0;--bd2:#C8C0B4;
+  --tx:#1A1A2E;--mu:#72728A;--mu2:#A8A8C0;
+  --w:#FFFFFF;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"IBM Plex Sans Arabic",sans-serif;direction:rtl;background:var(--sand);color:var(--tx);font-size:13px;line-height:1.6;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+input,textarea,select{font-family:"IBM Plex Sans Arabic",sans-serif;direction:rtl}
+.wrap{max-width:980px;margin:0 auto;padding:13px 12px 70px}
+
+.topbar{display:flex;justify-content:space-between;align-items:center;padding:7px 0 10px;border-bottom:1px solid var(--bd);margin-bottom:15px;gap:7px;flex-wrap:wrap}
+.tbl-btns{display:flex;gap:6px;flex-wrap:wrap}
+.tb{font-family:inherit;padding:6px 13px;border-radius:7px;border:1px solid var(--bd);font-size:11.5px;font-weight:500;cursor:pointer;background:var(--w);color:var(--tx);transition:all .15s;display:flex;align-items:center;gap:4px}
+.tb:hover{background:var(--sand2)}
+.tb.pri{background:var(--N);color:#fff;border-color:var(--N)}.tb.pri:hover{background:var(--Nd)}
+.tb.sec{background:var(--Sl);color:var(--S);border-color:#B0D4B0}
+.tb.pur{background:var(--Pl);color:var(--P);border-color:#C5A8E8}
+
+/* ── NEW COVER ── */
+.cover{background:var(--N);border-radius:14px;overflow:hidden;margin-bottom:15px}
+
+/* TOP ROW: logos + title + tools */
+.cover-top{display:flex;align-items:stretch;border-bottom:1px solid rgba(255,255,255,.1)}
+
+/* Project logo zone (client logo) */
+.cv-logo-zone{width:140px;flex-shrink:0;background:rgba(255,255,255,.06);border-left:1px solid rgba(255,255,255,.1);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px 12px;gap:10px}
+.cv-client-logo{width:106px;height:72px;background:rgba(255,255,255,.9);border-radius:9px;display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;overflow:hidden;transition:.2s}
+.cv-client-logo:hover{background:#fff}
+.cv-client-logo img{width:100%;height:100%;object-fit:contain;padding:8px}
+.cv-client-logo .cl-placeholder{display:flex;flex-direction:column;align-items:center;gap:4px;pointer-events:none}
+.cv-client-logo .cl-ico{font-size:22px;opacity:.35}
+.cv-client-logo .cl-lbl{font-size:8.5px;color:var(--mu);opacity:.8}
+.cv-client-logo input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer}
+.cv-platform-logo{display:flex;align-items:center;gap:5px}
+.cv-platform-logo img{height:22px;width:auto;filter:brightness(0) invert(1);opacity:.55}
+.cv-platform-lbl{font-size:8.5px;color:rgba(255,255,255,.3);white-space:nowrap}
+
+/* Center: project info */
+.cv-info{flex:1;padding:16px 18px;min-width:0}
+.cv-info-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px;gap:10px}
+.cv-title-wrap{flex:1;min-width:0}
+.cv1{font-size:19px;font-weight:600;color:#fff;line-height:1.3;margin-bottom:3px;
+  border:.5px solid transparent;border-radius:6px;padding:2px 5px;margin-right:-5px;
+  transition:border .15s;cursor:text;word-break:break-word}
+.cv1:hover{border-color:rgba(255,255,255,.2)}
+.cv1:focus{border-color:rgba(255,255,255,.4);outline:none;background:rgba(255,255,255,.07)}
+.cv2{font-size:10.5px;color:rgba(255,255,255,.42);
+  border:.5px solid transparent;border-radius:5px;padding:1px 5px;margin-right:-5px;
+  transition:border .15s;cursor:text}
+.cv2:hover{border-color:rgba(255,255,255,.2)}
+.cv2:focus{border-color:rgba(255,255,255,.35);outline:none;background:rgba(255,255,255,.07)}
+
+/* Status tool */
+.cv-status-wrap{flex-shrink:0}
+.cv-status-sel{font-family:"IBM Plex Sans Arabic",sans-serif;background:rgba(255,255,255,.12);
+  border:.5px solid rgba(255,255,255,.2);border-radius:8px;padding:5px 10px;
+  font-size:11px;font-weight:600;color:#fff;cursor:pointer;direction:rtl;
+  appearance:none;-webkit-appearance:none;background-image:none}
+.cv-status-sel:focus{outline:none;border-color:rgba(255,255,255,.4)}
+.cv-status-sel option{color:var(--tx);background:#fff;font-weight:500}
+
+/* Meta pills row */
+.cv-meta{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.cv-pill{background:rgba(255,255,255,.1);border:.5px solid rgba(255,255,255,.18);
+  border-radius:20px;padding:3px 10px;font-size:10px;color:rgba(255,255,255,.78);
+  display:flex;align-items:center;gap:5px;cursor:default}
+.cv-pill.editable{cursor:text;transition:.15s}
+.cv-pill.editable:hover{background:rgba(255,255,255,.18)}
+.cv-pill-val{border:none;background:transparent;color:rgba(255,255,255,.78);
+  font-size:10px;font-family:inherit;direction:rtl;width:auto;min-width:40px;max-width:120px}
+.cv-pill-val:focus{outline:none;color:#fff}
+
+/* Quick tools row */
+.cv-tools{display:flex;gap:6px;flex-wrap:wrap}
+.cv-tool{background:rgba(255,255,255,.09);border:.5px solid rgba(255,255,255,.15);
+  border-radius:7px;padding:5px 10px;font-size:10.5px;font-weight:500;
+  color:rgba(255,255,255,.75);cursor:pointer;display:flex;align-items:center;gap:5px;
+  transition:.15s;font-family:inherit;white-space:nowrap}
+.cv-tool:hover{background:rgba(255,255,255,.18);color:#fff}
+.cv-tool.active{background:rgba(255,255,255,.2);color:#fff;border-color:rgba(255,255,255,.4)}
+
+/* STATS ROW */
+.cover-stats{display:grid;grid-template-columns:repeat(6,1fr);border-top:1px solid rgba(255,255,255,.1)}
+.cs{padding:10px 11px;text-align:center;border-left:.5px solid rgba(255,255,255,.1);position:relative}
+.cs:last-child{border-left:none}
+.cs .csn{font-size:13px;font-weight:600;color:#fff;margin-bottom:2px;font-family:"IBM Plex Mono",monospace;line-height:1}
+.cs .csl{font-size:8.5px;color:rgba(255,255,255,.38);line-height:1.3}
+.cs .cs-trend{font-size:8px;color:rgba(255,255,255,.35);margin-top:1px}
+/* sync status indicator */
+.cs-sync .csn{font-size:16px}
+
+.mtabs{display:flex;background:var(--w);border:.5px solid var(--bd);border-radius:10px;overflow:hidden;margin-bottom:13px}
+.mtab{flex:1;padding:9px 4px;font-size:11.5px;font-weight:500;text-align:center;cursor:pointer;color:var(--mu);border-left:.5px solid var(--bd);transition:all .15s}
+.mtab:first-child{border-left:none}
+.mtab.act{background:var(--N);color:#fff}
+.mtab:hover:not(.act){background:var(--sand)}
+.mpanel{display:none}.mpanel.act{display:block}
+
+.stabs{display:flex;background:var(--sand);border:.5px solid var(--bd);border-radius:8px;overflow:hidden;margin-bottom:11px}
+.stab{flex:1;padding:8px 4px;font-size:11px;font-weight:500;text-align:center;cursor:pointer;color:var(--mu);border-left:.5px solid var(--bd);transition:all .15s}
+.stab:first-child{border-left:none}
+.stab.act{background:var(--Nl);color:var(--N);font-weight:600}
+.stab:hover:not(.act){background:var(--sand2)}
+.spanel{display:none}.spanel.act{display:block}
+
+.card{background:var(--w);border:.5px solid var(--bd);border-radius:12px;margin-bottom:12px;overflow:hidden}
+.ch{padding:10px 15px;border-bottom:.5px solid var(--bd);display:flex;align-items:center;gap:8px;background:var(--sand)}
+.ch h2{font-size:13px;font-weight:600;flex:1;color:var(--tx)}
+.ci{width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:11.5px;flex-shrink:0}
+.ci-n{background:var(--Nl);color:var(--N)}.ci-g{background:var(--Gl);color:var(--G)}
+.ci-s{background:var(--Sl);color:var(--S)}.ci-r{background:var(--Rl);color:var(--R)}
+.ci-a{background:var(--Al);color:var(--A)}.ci-p{background:var(--Pl);color:var(--P)}
+.cb{padding:13px 15px}
+
+.ef{font-family:inherit;direction:rtl;width:100%;border:.5px solid var(--bd);border-radius:6px;padding:5px 7px;font-size:12px;background:var(--w);color:var(--tx);transition:border .15s;resize:none}
+.ef:focus{border-color:var(--N);outline:none}
+.efg{border-color:transparent;background:transparent}
+.efg:hover{border-color:var(--bd)}
+.efg:focus{border-color:var(--N);background:var(--w)}
+.fb{background:var(--sand);border-radius:8px;padding:8px 10px;margin-bottom:8px}
+.fb label{display:block;font-size:9.5px;color:var(--mu);margin-bottom:2px;font-weight:500}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+
+.tbl{width:100%;border-collapse:collapse;table-layout:fixed}
+.tbl th{padding:7px 9px;text-align:right;font-weight:600;font-size:9.5px;color:var(--mu);background:var(--sand);border-bottom:.5px solid var(--bd)}
+.tbl td{padding:7px 9px;border-bottom:.5px solid var(--bd);vertical-align:middle;font-size:11.5px}
+.tbl tbody tr:last-child td{border-bottom:none}
+.tbl tbody tr:hover td{background:#FAFAFA}
+.tbl .ef{padding:2px 5px;font-size:11px}
+.mn{font-family:"IBM Plex Mono",monospace}
+
+.bd{font-size:9.5px;padding:2px 7px;border-radius:8px;font-weight:600;white-space:nowrap;display:inline-block}
+.bn{background:var(--Nl);color:var(--N)}.bs{background:var(--Sl);color:var(--S)}
+.bg{background:var(--Gl);color:var(--G)}.br{background:var(--Rl);color:var(--R)}
+.ba{background:var(--Al);color:var(--A)}.bgr{background:#F0F0F4;color:#555}.bp{background:var(--Pl);color:var(--P)}
+
+.sg{display:grid;gap:8px;margin-bottom:11px}
+.sg3{grid-template-columns:repeat(3,1fr)}.sg4{grid-template-columns:repeat(4,1fr)}
+.sc{background:var(--sand);border-radius:8px;padding:10px 11px;text-align:center}
+.sc .sn{font-size:17px;font-weight:600;margin-bottom:2px;font-family:"IBM Plex Mono",monospace}
+.sc .sl{font-size:9px;color:var(--mu);line-height:1.3}
+.cn{color:var(--N)}.cg{color:var(--G)}.cs{color:var(--S)}.cr{color:var(--R)}.ca{color:var(--A)}.cp{color:var(--P)}
+
+.fin-tot td{background:var(--N)!important;color:#fff!important;font-weight:600!important}
+.bsm{width:48px;height:5px;background:#E8E8E8;border-radius:3px;overflow:hidden;display:inline-block;vertical-align:middle;margin-left:3px}
+.bsf{height:100%;border-radius:3px;background:var(--N)}
+.spend-tot td{background:var(--Sl)!important;font-weight:600!important;color:var(--S)!important}
+.prog-o{height:7px;background:#EEEEF2;border-radius:4px;overflow:hidden;margin:4px 0}
+.prog-i{height:100%;background:var(--N);border-radius:4px;transition:width .4s}
+.spend-prog{height:9px;background:#E8E8E8;border-radius:5px;overflow:hidden;margin:3px 0}
+.spend-fill{height:100%;border-radius:5px;transition:width .4s}
+input[type=checkbox]{accent-color:var(--N);width:13px;height:13px;cursor:pointer}
+
+/* VAT TOGGLE */
+.vat-toggle{display:flex;align-items:center;gap:8px;background:var(--sand);border:.5px solid var(--bd);border-radius:8px;padding:8px 12px;margin-bottom:10px}
+.vat-toggle label{font-size:11.5px;font-weight:500;flex:1}
+.toggle-btn{position:relative;width:40px;height:22px;flex-shrink:0}
+.toggle-btn input{opacity:0;width:0;height:0;position:absolute}
+.toggle-slider{position:absolute;inset:0;background:#C8C0B4;border-radius:11px;cursor:pointer;transition:.3s}
+.toggle-slider:before{content:"";position:absolute;width:16px;height:16px;right:3px;top:3px;background:#fff;border-radius:50%;transition:.3s}
+.toggle-btn input:checked+.toggle-slider{background:var(--N)}
+.toggle-btn input:checked+.toggle-slider:before{right:21px}
+.vat-note{font-size:10px;color:var(--mu)}
+
+/* INTERNAL DISTRIBUTION */
+.dist-wrap{background:var(--Pl);border:.5px solid #C5A8E8;border-radius:12px;padding:16px;margin-top:12px}
+.dist-title{font-size:12px;font-weight:600;color:var(--P);margin-bottom:12px;display:flex;align-items:center;gap:7px}
+.dist-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px}
+.dc{border-radius:10px;padding:12px 13px;border:1px solid transparent}
+.dc .dcl{font-size:9.5px;font-weight:600;margin-bottom:4px;opacity:.85}
+.dc .dcp{font-size:10px;opacity:.65;margin-bottom:3px}
+.dc .dca{font-size:17px;font-weight:600;font-family:"IBM Plex Mono",monospace;margin-bottom:4px}
+.dc .dcn{font-size:9px;opacity:.6;line-height:1.4}
+.dc-exec{background:var(--Nl);border-color:#B5C8F0;color:var(--N)}
+.dc-profit{background:var(--Sl);border-color:#B0D4B0;color:var(--S)}
+.dc-return{background:var(--Pl);border-color:#C5A8E8;color:var(--P)}
+.dc-mkt-out{background:var(--Rl);border-color:#F5C0B8;color:var(--R)}
+.dc-mkt-in{background:var(--Sl);border-color:#B0D4B0;color:var(--S)}
+.dist-bar{height:18px;border-radius:9px;overflow:hidden;display:flex;margin-bottom:8px}
+.dbs{height:100%;transition:width .4s;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:600;color:rgba(255,255,255,.9);overflow:hidden;white-space:nowrap}
+.dist-legend{display:flex;flex-wrap:wrap;gap:8px}
+.dl{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--mu)}
+.dld{width:10px;height:10px;border-radius:3px;flex-shrink:0}
+.dist-return-detail{background:#fff;border-radius:8px;padding:10px 13px;margin-top:10px;border:.5px solid #C5A8E8}
+
+/* CONTRACT */
+.cs-block{border-right:3px solid var(--N);padding:9px 12px;background:var(--Nl);border-radius:0 8px 8px 0;margin-bottom:9px}
+.cs-block h3{font-size:11.5px;font-weight:600;color:var(--N);margin-bottom:7px}
+.cr-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:.5px solid var(--bd);font-size:12px}
+.cr-row:last-child{border-bottom:none}
+.cr-row.cr-tot{font-weight:600;color:var(--N);font-size:13px;padding-top:7px}
+.cr-row.cr-sub{color:var(--mu);font-size:11px}
+.cr-lbl{color:var(--mu)}.cr-val{font-family:"IBM Plex Mono",monospace;font-weight:500}
+.cv-g{color:var(--G)}.cv-s{color:var(--S)}.cv-r{color:var(--R)}.cv-p{color:var(--P)}
+.calc-box{background:var(--w);border:1px solid var(--bd);border-radius:8px;padding:11px 14px;margin-top:9px}
+.ref-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:9px;padding-top:9px;border-top:.5px solid var(--bd)}
+.ref-cell{text-align:center;border-radius:7px;padding:8px 5px}
+
+/* MKT TOGGLE */
+.mkt-toggle-wrap{display:flex;gap:8px;background:var(--sand);border-radius:8px;padding:10px 12px;margin-bottom:10px;align-items:center}
+.mkt-toggle-wrap label{font-size:11.5px;font-weight:500;flex:1}
+.mkt-radio{display:flex;gap:6px}
+.mkt-radio button{font-family:inherit;padding:5px 12px;border-radius:6px;border:.5px solid var(--bd);font-size:11px;cursor:pointer;background:var(--w);color:var(--mu);transition:all .15s}
+.mkt-radio button.act-in{background:var(--Sl);color:var(--S);border-color:var(--S)}
+.mkt-radio button.act-out{background:var(--Rl);color:var(--R);border-color:var(--R)}
+
+.spg{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.spc{border:.5px solid var(--bd);border-radius:9px;padding:10px 12px;display:flex;gap:10px}
+.spav{width:36px;height:36px;border-radius:50%;background:var(--Nl);color:var(--N);display:flex;align-items:center;justify-content:center;font-weight:600;font-size:12px;flex-shrink:0}
+.add-c{border:1px dashed var(--bd2);border-radius:9px;padding:12px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--mu);font-size:12px;gap:5px}
+.add-c:hover{background:var(--sand)}
+
+.lgg{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:8px}
+.lgs{border:1px dashed var(--bd2);border-radius:8px;height:60px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;position:relative;overflow:hidden;background:var(--sand);transition:background .15s}
+.lgs:hover{background:var(--sand2)}
+.lgs img{width:100%;height:100%;object-fit:contain;padding:5px}
+.lgs .lgi{font-size:16px;color:var(--mu2);line-height:1}
+.lgs .lgl{font-size:9px;color:var(--mu);margin-top:2px}
+.lgs input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer}
+.lgsec{font-size:10.5px;font-weight:600;color:var(--mu);margin:10px 0 5px;padding-bottom:4px;border-bottom:.5px solid var(--bd)}
+
+.btnr{display:flex;gap:6px;padding-top:10px;border-top:.5px solid var(--bd);margin-top:11px;flex-wrap:wrap}
+.btn{font-family:inherit;padding:6px 12px;border-radius:7px;border:.5px solid var(--bd);font-size:11.5px;font-weight:500;cursor:pointer;transition:background .15s}
+.btn-g{background:var(--w);color:var(--N)}.btn-g:hover{background:var(--Nl)}
+.btn-p{background:var(--N);color:#fff;border-color:var(--N)}.btn-p:hover{background:var(--Nd)}
+
+.note{background:var(--Al);border:.5px solid #E8C97A;border-radius:7px;padding:8px 12px;font-size:11px;color:var(--A);margin-top:10px;line-height:1.5}
+.note-i{background:var(--Nl);border:.5px solid #B5C8F0;border-radius:7px;padding:8px 12px;font-size:11px;color:var(--N);margin-top:10px;line-height:1.5}
+.note-p{background:var(--Pl);border:.5px solid #C5A8E8;border-radius:7px;padding:8px 12px;font-size:11px;color:var(--P);margin-top:10px;line-height:1.5}
+.del{background:none;border:none;cursor:pointer;color:var(--mu);font-size:14px;padding:1px 4px;flex-shrink:0}
+.del:hover{color:var(--R)}
+
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;align-items:flex-start;justify-content:center;padding-top:25px}
+.modal-bg.open{display:flex}
+.modal{background:var(--w);border-radius:14px;width:min(820px,96vw);max-height:88vh;overflow-y:auto;position:relative}
+.modal-head{padding:12px 16px;border-bottom:.5px solid var(--bd);display:flex;align-items:center;justify-content:space-between;background:var(--sand);border-radius:14px 14px 0 0;position:sticky;top:0;z-index:1}
+.modal-head h3{font-size:13px;font-weight:600}
+.close-btn{background:none;border:none;font-size:20px;cursor:pointer;color:var(--mu);line-height:1;padding:2px 7px}
+
+/* CONTRACT DOC */
+.cdoc{direction:rtl;font-family:"IBM Plex Sans Arabic",sans-serif;color:#111;padding:34px;background:#fff}
+.cdoc .c-logo{display:flex;align-items:center;justify-content:center;margin-bottom:20px;padding-bottom:16px;border-bottom:2px solid #00197D}
+.cdoc .c-logo img{width:140px}
+.cdoc .c-title{text-align:center;font-size:18px;font-weight:600;color:#00197D;margin-bottom:4px}
+.cdoc .c-no{text-align:center;font-size:11px;color:#72728A;margin-bottom:16px}
+.cdoc .c-parties{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;padding:12px;background:#F7F4EF;border-radius:8px;-webkit-print-color-adjust:exact}
+.cdoc .c-party h4{font-size:10px;color:#72728A;margin-bottom:2px}
+.cdoc .c-party p{font-size:13px;font-weight:600;color:#00197D}
+.cdoc .c-section{margin-bottom:15px}
+.cdoc .c-section h3{font-size:12px;font-weight:600;color:#00197D;margin-bottom:7px;padding-bottom:4px;border-bottom:1px solid #E0DAD0}
+.cdoc .c-section p,.cdoc .c-section li{font-size:11.5px;line-height:1.8;color:#222;margin-bottom:3px}
+.cdoc .c-section ul{padding-right:15px}
+.cdoc .ft{width:100%;border-collapse:collapse;margin:6px 0;font-size:11px}
+.cdoc .ft th{padding:5px 8px;background:#00197D;color:#fff;text-align:right;font-weight:600;-webkit-print-color-adjust:exact}
+.cdoc .ft td{padding:5px 8px;border-bottom:1px solid #E0DAD0}
+.cdoc .ft .ftt td{background:#E6EAF8;font-weight:600;color:#00197D;-webkit-print-color-adjust:exact}
+.cdoc .c-signs{display:grid;grid-template-columns:1fr 1fr;gap:26px;margin-top:26px;padding-top:16px;border-top:2px solid #E0DAD0}
+.cdoc .c-sign{text-align:center}
+.cdoc .c-sign .s-line{border-bottom:1px solid #888;height:46px;margin-bottom:6px}
+.cdoc .c-sign .s-name{font-size:12px;font-weight:600;margin-bottom:2px}
+.cdoc .c-sign .s-role,.cdoc .c-sign .s-date{font-size:10px;color:#72728A}
+
+/* DIST SNAPSHOT MODAL */
+.dist-snap{background:#fff;direction:rtl;font-family:"IBM Plex Sans Arabic",sans-serif;padding:32px}
+.ds-header{display:flex;align-items:center;gap:16px;margin-bottom:20px;padding-bottom:16px;border-bottom:2px solid #00197D}
+.ds-header img{width:120px;height:auto}
+.ds-header h2{font-size:18px;font-weight:600;color:#00197D}
+.ds-header p{font-size:11px;color:#72728A}
+
+@media print{
+  body{background:#fff}
+  .topbar,.mtabs,.stabs,.no-print{display:none!important}
+  .mpanel,.spanel{display:block!important}
+  .card{break-inside:avoid;border:1px solid #DDD;margin-bottom:10px}
+  .cover{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+  .fin-tot td,.sc,.dc{-webkit-print-color-adjust:exact!important}
+}
+
+/* ── SYNC INDICATORS ── */
+.sync-bar{display:flex;align-items:center;gap:9px;padding:9px 14px;border-radius:8px;margin-bottom:12px;font-size:11.5px;font-weight:500;transition:all .3s}
+.sync-bar.ok{background:var(--Sl);border:.5px solid #B0D4B0;color:var(--S)}
+.sync-bar.warn{background:var(--Rl);border:.5px solid #F5C0B8;color:var(--R)}
+.sync-bar.info{background:var(--Nl);border:.5px solid #B5C8F0;color:var(--N)}
+.sync-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.sync-dot.ok{background:var(--S)}.sync-dot.warn{background:var(--R)}.sync-dot.info{background:var(--N)}
+/* tab warning dot */
+.tab-warn-dot{display:none;width:7px;height:7px;border-radius:50%;background:var(--R);position:absolute;top:6px;left:8px}
+.tab-warn-dot.show{display:inline-block}
+/* ceiling progress bar */
+.ceil-bar-wrap{height:10px;background:#E8E8E8;border-radius:5px;overflow:hidden;margin:6px 0 3px}
+.ceil-bar-fill{height:100%;border-radius:5px;transition:width .4s,background .4s}
+/* auto-linked fin table */
+.cft-box{background:var(--sand);border-radius:9px;padding:12px 14px;margin:10px 0}
+.cft-box h4{font-size:11.5px;font-weight:600;color:var(--N);margin-bottom:9px;display:flex;align-items:center;gap:6px}
+.badge-auto{background:var(--Nl);color:var(--N);border-radius:5px;padding:1px 7px;font-size:9px;font-weight:600}
+/* over-budget row */
+.fin-row-over td{background:var(--Rl)!important}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="topbar">
+  <div class="tbl-btns">
+    <button class="tb" onclick="if(window.parent&&window.parent!==window){window.parent.postMessage('closeViewer','*');}else if(window.opener){window.close();}else{history.back();}" style="background:var(--sand2);border-color:var(--bd2);color:var(--mu)">← الداشبورد</button>
+    <button class="tb pri" onclick="window.print()">⬇ طباعة</button>
+    <button class="tb sec" onclick="openContractPDF()">📄 تصدير العقد PDF</button>
+    <button class="tb pur" onclick="exportDist()">📊 تصدير التوزيع المالي</button>
+    <button class="tb" onclick="saveHTML()">💾 حفظ HTML</button>
+  </div>
+  <div style="font-size:11px;color:var(--mu);display:flex;align-items:center;gap:5px"><span style="width:7px;height:7px;border-radius:50%;background:var(--S);display:inline-block"></span>جميع الحقول قابلة للتعديل مباشرة</div>
+</div>
+
+<!-- COVER -->
+<div class="cover">
+  <div class="cover-top">
+
+    <!-- شعار الجهة / المشروع (قابل للتغيير) -->
+    <div class="cv-logo-zone">
+      <div class="cv-client-logo" id="client-logo-wrap" title="اضغط لتغيير شعار الجهة">
+        <div class="cl-placeholder" id="client-logo-placeholder">
+          <span class="cl-ico">🏛</span>
+          <span class="cl-lbl">شعار الجهة</span>
+        </div>
+        <img id="client-logo-img" style="display:none" alt="شعار الجهة">
+        <input type="file" accept="image/*" id="client-logo-input">
+      </div>
+      <!-- شعار المنصة (بُعد التمكين) — ثابت -->
+      <div class="cv-platform-logo">
+        <img id="logo-main" alt="بُعد التمكين">
+        <span class="cv-platform-lbl">منصة بُعد</span>
+      </div>
+    </div>
+
+    <!-- معلومات المشروع — قابلة للتعديل مباشرة -->
+    <div class="cv-info">
+      <div class="cv-info-top">
+        <div class="cv-title-wrap">
+          <div class="cv1" id="cv1" contenteditable="true"
+               spellcheck="false"
+               data-placeholder="اسم المشروع...">مبادرة ملتقى الصيادلة للتأهيل المهني</div>
+          <div class="cv2" id="cv2" contenteditable="true"
+               spellcheck="false"
+               data-placeholder="وصف مختصر أو اسم الجهات المنفذة...">جمعية توفير الدواء × بُعد التمكين × نادي عقول × جمعية مراس الصحية</div>
+        </div>
+        <!-- حالة المشروع -->
+        <div class="cv-status-wrap">
+          <select class="cv-status-sel" id="cv-proj-status" title="حالة المشروع">
+            <option value="active">🟢 نشط</option>
+            <option value="pending">🟡 معلق</option>
+            <option value="done">🔵 مكتمل</option>
+            <option value="draft">⚪ مسودة</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- بيانات سريعة قابلة للتعديل -->
+      <div class="cv-meta">
+        <div class="cv-pill editable">
+          <span style="opacity:.55;font-size:9px">🏛</span>
+          <input class="cv-pill-val" id="cv-client-name" value="جمعية توفير الدواء" title="اسم العميل">
+        </div>
+        <div class="cv-pill editable">
+          <span style="opacity:.55;font-size:9px">📅</span>
+          <input class="cv-pill-val" id="cv-event-date" type="date" title="تاريخ الفعالية" style="max-width:110px">
+        </div>
+        <div class="cv-pill editable">
+          <span style="opacity:.55;font-size:9px">📍</span>
+          <input class="cv-pill-val" id="cv-location" value="منطقة عسير" title="الموقع">
+        </div>
+        <div class="cv-pill editable">
+          <span style="opacity:.55;font-size:9px">👥</span>
+          <input class="cv-pill-val" id="cv-audience" value="30+ صيدلاني" title="الجمهور المستهدف">
+        </div>
+        <div class="cv-pill editable">
+          <span style="opacity:.55;font-size:9px">🗓</span>
+          <input class="cv-pill-val" id="cv-sessions" value="12 لقاءً مهنياً" title="عدد الجلسات">
+        </div>
+      </div>
+
+      <!-- أدوات سريعة -->
+      <div class="cv-tools">
+        <button class="cv-tool" onclick="msw(0);ssw(0,0)" title="الانتقال للعرض الفني">
+          📋 الفني
+        </button>
+        <button class="cv-tool" onclick="msw(0);ssw(0,1)" title="الانتقال للعرض المالي">
+          💰 المالي
+        </button>
+        <button class="cv-tool" onclick="msw(1);ssw(1,0)" title="الانتقال للعقد">
+          📄 العقد
+        </button>
+        <button class="cv-tool" onclick="msw(2);ssw(2,0)" title="الانتقال للتنفيذ">
+          ⚙️ التنفيذ
+        </button>
+        <button class="cv-tool" onclick="openContractPDF()" title="تصدير العقد PDF">
+          ⬇ العقد PDF
+        </button>
+        <button class="cv-tool" onclick="exportDist()" title="تصدير التوزيع المالي">
+          📊 التوزيع
+        </button>
+        <button class="cv-tool" id="cv-back-btn" style="margin-right:auto;display:none" title="العودة للداشبورد">
+          ← الداشبورد
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- إحصائيات سريعة -->
+  <div class="cover-stats">
+    <div class="cs"><div class="csn mn" id="cv-gross">—</div><div class="csl">قيمة العقد (ر.س)</div></div>
+    <div class="cs"><div class="csn mn" id="cv-fin-total">—</div><div class="csl">مجموع الميزانية</div></div>
+    <div class="cs"><div class="csn mn" id="cv-margin" style="color:#90EE90">—</div><div class="csl">الهامش المتاح</div></div>
+    <div class="cs"><div class="csn mn cs" id="cv-profit">—</div><div class="csl">ربح بُعد التمكين</div></div>
+    <div class="cs cs-sync"><div class="csn" id="cv-sync-status">—</div><div class="csl">حالة الربط</div></div>
+    <div class="cs"><div class="csn mn" id="cv-pct">0%</div><div class="csl">نسبة الإنجاز</div></div>
+  </div>
+</div>
+
+<!-- MAIN TABS -->
+<div class="mtabs">
+  <div class="mtab act" onclick="msw(0)">📋 العرض والتخطيط</div>
+  <div class="mtab"     onclick="msw(1)">📄 العقد والاتفاق</div>
+  <div class="mtab"     onclick="msw(2)">⚙️ التنفيذ والمتابعة</div>
+</div>
+
+<!-- ════ TAB 0 ════ -->
+<div class="mpanel act" id="mp0">
+  <div class="stabs">
+    <div class="stab act" onclick="ssw(0,0)">الفني</div>
+    <div class="stab"     onclick="ssw(0,1)">المالي</div>
+    <div class="stab"     onclick="ssw(0,2)">المخاطر</div>
+    <div class="stab"     onclick="ssw(0,3)">متابعة المهام</div>
+  </div>
+  <div class="spanel act" id="sp0-0">
+    <div class="card">
+      <div class="ch"><div class="ci ci-n">ع</div><h2>بيانات العميل</h2></div>
+      <div class="cb">
+        <div class="g2">
+          <div class="fb"><label>اسم الجمعية</label><input class="ef efg" value="جمعية توفير الدواء"></div>
+          <div class="fb"><label>رقم الترخيص</label><input class="ef efg" placeholder="الرقم الرسمي..."></div>
+          <div class="fb"><label>المنطقة</label><input class="ef efg" value="منطقة عسير"></div>
+          <div class="fb"><label>نوع الجهة</label><select class="ef efg"><option selected>جمعية خيرية</option><option>مؤسسة حكومية</option><option>شركة خاصة</option></select></div>
+          <div class="fb"><label>المدير التنفيذي</label><input class="ef efg" id="f-director" value="محمد القحطاني" oninput="buildContract()"></div>
+          <div class="fb"><label>بريد التواصل</label><input class="ef efg" placeholder="البريد أو الجوال..."></div>
+        </div>
+        <div class="fb"><label>رسالة الجمعية</label><textarea class="ef efg" rows="2">جمعية توفير الدواء تعنى بضمان وصول الدواء للمحتاجين ودعم الوعي الصحي في منطقة عسير.</textarea></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ch"><div class="ci ci-s">م</div><h2>وصف المبادرة</h2></div>
+      <div class="cb">
+        <div class="g3">
+          <div class="fb"><label>اسم المبادرة</label><input class="ef efg" value="ملتقى الصيادلة للتأهيل المهني"></div>
+          <div class="fb"><label>التاريخ</label><input class="ef efg" type="date" id="f-date" onchange="setDate()"></div>
+          <div class="fb"><label>الموقع</label><input class="ef efg" placeholder="يُحدَّد لاحقاً..."></div>
+          <div class="fb"><label>عدد اللقاءات</label><input class="ef efg" value="12 لقاءً (5 دورات + 7 تفاعلية)"></div>
+          <div class="fb"><label>الفئة المستهدفة</label><input class="ef efg" value="الصيادلة العاملون + حديثو التخرج"></div>
+          <div class="fb"><label>عدد المستفيدين</label><input class="ef efg" value="30 صيدلياً كحد أدنى"></div>
+        </div>
+        <div class="fb"><label>وصف المبادرة</label><textarea class="ef efg" rows="3">مبادرة صحية مهنية لتأهيل الصيادلة ورفع كفاءتهم عبر 5 دورات تدريبية معتمدة و7 لقاءات تفاعلية.</textarea></div>
+        <div class="fb"><label>الجهات المنفذة</label><input class="ef efg" value="بُعد التمكين (تنفيذياً) — نادي عقول — جمعية مراس الصحية"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ch"><div class="ci ci-n">أ</div><h2>الأهداف والمؤشرات</h2></div>
+      <div class="cb">
+        <div id="goals-c"></div>
+        <div class="btnr"><button class="btn btn-g" onclick="addGoal()">+ هدف</button></div>
+        <div style="margin-top:14px;padding-top:12px;border-top:.5px solid var(--bd)">
+          <div style="font-size:11.5px;font-weight:600;color:var(--N);margin-bottom:8px">المسارات — المحتوى التفصيلي</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <div>
+              <div style="font-size:11px;font-weight:600;color:var(--N);margin-bottom:6px;padding-bottom:4px;border-bottom:.5px solid var(--bd)">الدورات التدريبية الخمس</div>
+              <div id="courses-c"></div>
+              <div class="btnr" style="border:none;padding-top:5px;margin-top:0"><button class="btn btn-g" onclick="addCourse()">+ دورة</button></div>
+            </div>
+            <div>
+              <div style="font-size:11px;font-weight:600;color:var(--S);margin-bottom:6px;padding-bottom:4px;border-bottom:.5px solid var(--bd)">اللقاءات التفاعلية السبع</div>
+              <div id="sessions-c"></div>
+              <div class="btnr" style="border:none;padding-top:5px;margin-top:0"><button class="btn btn-g" onclick="addSession()">+ لقاء</button></div>
+            </div>
+          </div>
+        </div>
+        <div style="margin-top:13px;padding-top:11px;border-top:.5px solid var(--bd)">
+          <div style="font-size:11.5px;font-weight:600;color:var(--N);margin-bottom:8px">مؤشرات النجاح (KPIs)</div>
+          <table class="tbl" style="table-layout:fixed"><colgroup><col><col style="width:105px"><col style="width:125px"><col style="width:26px"></colgroup>
+            <thead><tr><th>المؤشر</th><th>الهدف</th><th>أداة القياس</th><th></th></tr></thead>
+            <tbody id="kpi-body"></tbody>
+          </table>
+          <div style="padding:8px 0 0"><button class="btn btn-g" onclick="addKPI()">+ مؤشر</button></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="spanel" id="sp0-1">
+    <div class="card">
+      <div class="ch"><div class="ci ci-g">م</div><h2>الميزانية التنفيذية</h2>
+        <div style="display:flex;align-items:center;gap:6px;margin-right:auto;font-size:11px;color:var(--mu)">
+          سقف الميزانية: <strong class="mn" id="fin-ceiling-val" style="color:var(--N)">—</strong> ر.س
+        </div>
+      </div>
+      <div class="cb">
+        <div class="sg sg3" style="margin-bottom:12px">
+          <div class="sc"><div class="sn cn mn" id="d-bud">—</div><div class="sl">الميزانية (ر.س)</div></div>
+          <div class="sc"><div class="sn cg mn" id="d-spent">—</div><div class="sl">مجموع البنود</div></div>
+          <div class="sc"><div class="sn cs mn" id="d-rem">—</div><div class="sl">الاحتياطي</div></div>
+        </div>
+        <table class="tbl" style="table-layout:fixed"><colgroup><col><col style="width:88px"><col style="width:110px"><col style="width:78px"><col style="width:26px"></colgroup>
+          <thead><tr><th>البند</th><th>النسبة</th><th>المبلغ (ر.س)</th><th>المسؤول</th><th></th></tr></thead>
+          <tbody id="fin-body"></tbody>
+          <tfoot><tr class="fin-tot"><td>المجموع</td><td class="mn" id="fin-pct">—</td><td class="mn" id="fin-sum">—</td><td></td><td></td></tr></tfoot>
+        </table>
+        <div style="padding:8px 11px;border-top:.5px solid var(--bd);display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <button class="btn btn-g" onclick="addFin()">+ بند</button>
+          <div style="display:flex;align-items:center;gap:6px;margin-right:auto">
+            <label style="font-size:11px;color:var(--mu)">الميزانية:</label>
+            <input type="number" id="bud-inp" value="50000" class="ef" style="width:108px;padding:4px 7px;font-family:'IBM Plex Mono',monospace" onchange="recalc()">
+            <span style="font-size:10px;color:var(--mu)">ر.س</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="spanel" id="sp0-2">
+    <div class="card">
+      <div class="ch"><div class="ci ci-r">خ</div><h2>مصفوفة المخاطر</h2></div>
+      <div class="cb" style="padding:0">
+        <table class="tbl" style="table-layout:fixed"><colgroup><col><col style="width:72px"><col style="width:68px"><col><col style="width:26px"></colgroup>
+          <thead><tr><th>المخاطرة</th><th>الاحتمالية</th><th>الأثر</th><th>خطة التحوط</th><th></th></tr></thead>
+          <tbody id="risk-body"></tbody>
+        </table>
+        <div style="padding:8px 11px;border-top:.5px solid var(--bd)"><button class="btn btn-g" onclick="addRisk()">+ مخاطرة</button></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ch"><div class="ci ci-a">ط</div><h2>بروتوكولات الطوارئ</h2></div>
+      <div class="cb"><div id="conting-c"></div>
+        <div class="btnr"><button class="btn btn-g" onclick="addConting()">+ بروتوكول</button></div>
+      </div>
+    </div>
+  </div>
+  <div class="spanel" id="sp0-3">
+    <div class="card">
+      <div class="ch"><div class="ci ci-n">ت</div><h2>متابعة مهام التنفيذ</h2></div>
+      <div class="cb">
+        <div style="display:flex;align-items:center;gap:11px;margin-bottom:12px">
+          <div style="flex:1"><div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="font-size:11px;color:var(--mu)">الإنجاز</span><span style="font-size:11.5px;font-weight:600;color:var(--N)" id="prog-pct">0%</span></div><div class="prog-o"><div class="prog-i" id="prog-bar"></div></div></div>
+          <div style="text-align:center;min-width:48px"><div class="mn" style="font-size:17px;font-weight:600;color:var(--N)" id="prog-cnt">0/0</div><div style="font-size:9px;color:var(--mu)">مكتملة</div></div>
+        </div>
+        <table class="tbl" style="table-layout:fixed"><colgroup><col style="width:25px"><col><col style="width:55px"><col style="width:75px"><col style="width:68px"></colgroup>
+          <thead><tr><th></th><th>المهمة</th><th>المرحلة</th><th>المسؤول</th><th>الحالة</th></tr></thead>
+          <tbody id="tasks-body"></tbody>
+        </table>
+        <div class="btnr"><button class="btn btn-g" onclick="addTask()">+ مهمة</button></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ TAB 1: CONTRACT (sub-tabs) ════ -->
+<div class="mpanel" id="mp1">
+  <div class="stabs">
+    <div class="stab act" onclick="ssw(1,0)">العقد الرسمي</div>
+    <div class="stab"     onclick="ssw(1,1)">الاتفاق المالي الداخلي</div>
+  </div>
+
+  <!-- CONTRACT OFFICIAL -->
+  <div class="spanel act" id="sp1-0">
+    <div class="card">
+      <div class="ch"><div class="ci ci-n">ب</div><h2>بيانات العقد</h2></div>
+      <div class="cb">
+        <div class="g3">
+          <div class="fb"><label>رقم العقد</label><input class="ef efg" id="c-no" placeholder="BTK-APF-2025-001" oninput="buildContract()"></div>
+          <div class="fb"><label>تاريخ الإبرام</label><input class="ef efg" type="date" id="c-date" onchange="buildContract()"></div>
+          <div class="fb"><label>مدة العقد</label><input class="ef efg" id="c-dur" value="90 يوماً من تاريخ التوقيع" oninput="buildContract()"></div>
+          <div class="fb"><label>الطرف الأول</label><input class="ef efg" id="c-p1" value="شركة بُعد التمكين" oninput="buildContract()"></div>
+          <div class="fb"><label>الطرف الثاني</label><input class="ef efg" id="c-p2" value="جمعية توفير الدواء" oninput="buildContract()"></div>
+          <div class="fb"><label>المفوَّض بالتوقيع</label><input class="ef efg" id="c-p2sig" value="محمد القحطاني — المدير التنفيذي" oninput="buildContract()"></div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ch"><div class="ci ci-g">م</div><h2>القيمة المالية للعقد</h2></div>
+      <div class="cb">
+        <!-- VAT INCLUDE/EXCLUDE TOGGLE -->
+        <div class="vat-toggle">
+          <div>
+            <label style="font-size:11.5px;font-weight:500;display:block">قيمة العقد المُدخَلة</label>
+            <div class="vat-note" id="vat-toggle-note">المبلغ لا يشمل الضريبة — سيُضاف إليه 15%</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:10.5px;color:var(--mu)">بدون ضريبة</span>
+            <label class="toggle-btn"><input type="checkbox" id="vat-included" onchange="syncAll()"><span class="toggle-slider"></span></label>
+            <span style="font-size:10.5px;color:var(--mu)">شامل الضريبة</span>
+          </div>
+        </div>
+        <div class="g2">
+          <div class="fb"><label id="gross-label">قيمة العقد (ر.س) — قبل الضريبة</label><input class="ef mn" type="number" id="c-gross" value="50000" oninput="syncAll()"></div>
+          <div class="fb"><label>نسبة الضريبة (%)</label><input class="ef mn" type="number" id="c-vat" value="15" step="0.1" oninput="syncAll()"></div>
+        </div>
+        <div class="cs-block">
+          <h3>سياسة الإلغاء والاسترداد</h3>
+          <div class="g2">
+            <div class="fb"><label>استرداد عند الإلغاء قبل 7 أيام (%)</label><input class="ef mn" type="number" id="c-r2" value="50" oninput="calcC()"></div>
+            <div class="fb"><label>استرداد يوم التنفيذ (%)</label><input class="ef mn" type="number" id="c-r3" value="0" oninput="calcC()"></div>
+          </div>
+        </div>
+                <!-- جدول الميزانية مرتبط تلقائياً بالعقد -->
+        <div class="cft-box">
+          <h4>الجدول المالي التنفيذي <span class="badge-auto">مرتبط تلقائياً بالميزانية</span></h4>
+          <table class="tbl" style="table-layout:fixed"><colgroup><col><col style="width:112px"><col style="width:82px"></colgroup>
+            <thead><tr><th>البند</th><th>المبلغ (ر.س)</th><th>المسؤول</th></tr></thead>
+            <tbody id="cft-body"></tbody>
+            <tfoot><tr class="fin-tot"><td>المجموع التنفيذي</td><td class="mn" id="cft-total">—</td><td></td></tr></tfoot>
+          </table>
+          <div style="font-size:10.5px;color:var(--mu);margin-top:7px">أي تعديل في بنود الميزانية (العرض المالي) يتعكس هنا فوراً — هذا الجدول مضمّن في العقد الرسمي.</div>
+        </div>
+<div class="calc-box">
+          <div style="font-size:11px;font-weight:600;color:var(--N);margin-bottom:7px;padding-bottom:5px;border-bottom:.5px solid var(--bd)">ملخص القيمة المالية (ما يُطبَع في العقد)</div>
+          <div class="cr-row"><span class="cr-lbl">قيمة الخدمات (قبل الضريبة)</span><span class="cr-val" id="r-gross">—</span></div>
+          <div class="cr-row cr-sub"><span class="cr-lbl" id="r-vat-lbl">الضريبة (15%)</span><span class="cr-val cv-g" id="r-vat">—</span></div>
+          <div class="cr-row cr-tot"><span>إجمالي ما تسدده الجمعية</span><span class="cr-val cn" id="r-gv">—</span></div>
+          <div class="ref-grid">
+            <div class="ref-cell" style="background:var(--Al)"><div style="font-size:9.5px;color:var(--A);margin-bottom:3px">استرداد قبل 7 أيام</div><div class="mn" style="font-weight:600;color:var(--A);font-size:13px" id="r-r2">—</div></div>
+            <div class="ref-cell" style="background:#F0F0F4"><div style="font-size:9.5px;color:var(--mu);margin-bottom:3px">استرداد يوم التنفيذ</div><div class="mn" style="font-weight:600;color:var(--mu);font-size:13px" id="r-r3">—</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ch"><div class="ci ci-n">ب</div><h2>بنود العقد والالتزامات</h2></div>
+      <div class="cb"><div id="clauses-c"></div>
+        <div class="btnr"><button class="btn btn-g" onclick="addClause()">+ بند</button></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ch"><div class="ci ci-s">ت</div><h2>التوقيعات</h2></div>
+      <div class="cb">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:4px">
+          <div style="text-align:center"><div style="border-bottom:1px solid var(--bd2);height:44px;margin-bottom:7px"></div>
+            <div style="font-size:12px;font-weight:600;margin-bottom:2px">الطرف الأول: <span id="sgn-p1">شركة بُعد التمكين</span></div>
+            <div style="font-size:10px;color:var(--mu)">التوقيع والختم | التاريخ: ________________</div>
+          </div>
+          <div style="text-align:center"><div style="border-bottom:1px solid var(--bd2);height:44px;margin-bottom:7px"></div>
+            <div style="font-size:12px;font-weight:600;margin-bottom:2px">الطرف الثاني: <span id="sgn-p2">جمعية توفير الدواء</span></div>
+            <div style="font-size:10px;color:var(--mu)">التوقيع والختم | التاريخ: ________________</div>
+          </div>
+        </div>
+        <div class="note-i" style="margin-top:11px">هذا العقد ملزم قانونياً بعد توقيع الطرفين وفق الأنظمة المعمول بها في المملكة العربية السعودية.</div>
+      </div>
+    </div>
+    <div class="btnr no-print" style="border:none;padding:0">
+      <button class="btn btn-p" onclick="openContractPDF()">📄 معاينة العقد الرسمي وتصديره PDF</button>
+    </div>
+  </div>
+
+  <!-- FINANCIAL AGREEMENT INTERNAL -->
+  <div class="spanel" id="sp1-1">
+    <div class="note-p" style="margin-bottom:13px">هذا القسم للاستخدام الداخلي فقط — لا يُطبَع في العقد الرسمي.</div>
+
+    <!-- MKT SOURCE TOGGLE -->
+    <div class="card">
+      <div class="ch"><div class="ci ci-g">ت</div><h2>إعدادات التوزيع المالي الداخلي</h2></div>
+      <div class="cb">
+        <div class="mkt-toggle-wrap">
+          <div><label>المسوّق من أين؟</label><div style="font-size:10px;color:var(--mu);margin-top:2px">يحدد هذا الخيار طبيعة مخصص التسويق في التوزيع المالي</div></div>
+          <div class="mkt-radio">
+            <button id="mkt-in-btn" class="act-in" onclick="setMktSource('in')">داخل بُعد التمكين (ربح إضافي)</button>
+            <button id="mkt-out-btn" onclick="setMktSource('out')">خارج بُعد التمكين (التزام مالي)</button>
+          </div>
+        </div>
+        <div class="g3" style="margin-bottom:12px">
+          <div class="fb"><label>نوع مخصص التسويق</label><select class="ef" id="i-mkt-t" onchange="calcC()"><option value="pct">نسبة % من الإجمالي</option><option value="fix">مبلغ مقطوع</option></select></div>
+          <div class="fb"><label>قيمة مخصص التسويق</label><input class="ef mn" type="number" id="i-mkt-v" value="10" step="0.1" oninput="calcC()"></div>
+          <div class="fb"><label>اسم المسوّق / الجهة</label><input class="ef efg" id="i-mkt-name" value="مسوق خارجي" oninput="calcC()"></div>
+          <div class="fb"><label>نوع الكاش باك للجمعية</label><select class="ef" id="i-cb-t" onchange="calcC()"><option value="pct">نسبة % من الإجمالي</option><option value="fix">مبلغ مقطوع</option></select></div>
+          <div class="fb"><label>قيمة الكاش باك</label><input class="ef mn" type="number" id="i-cb-v" value="5" step="0.1" oninput="calcC()"></div>
+          <div class="fb"><label>موعد صرف الكاش باك</label><select class="ef efg" id="i-cb-w"><option>بعد إتمام المشروع</option><option>مع الدفعة الأخيرة</option><option>خلال 30 يوماً من الختام</option></select></div>
+        </div>
+
+        <!-- DISTRIBUTION BLOCK -->
+        <div class="dist-wrap" id="dist-wrap">
+          <div class="dist-title">
+            <span style="width:9px;height:9px;border-radius:3px;background:var(--P);display:inline-block"></span>
+            التوزيع المالي الداخلي — من المبلغ الإجمالي قبل الضريبة
+          </div>
+          <div class="dist-grid">
+            <div class="dc dc-exec"><div class="dcl">تكلفة التنفيذ الفعلي</div><div class="dcp" id="dc-exec-pct">—</div><div class="dca" id="dc-exec-amt">—</div><div class="dcn">مجموع بنود الميزانية التنفيذية</div></div>
+            <div class="dc dc-profit"><div class="dcl">ربح بُعد التمكين</div><div class="dcp" id="dc-profit-pct">—</div><div class="dca" id="dc-profit-amt">—</div><div class="dcn" id="dc-profit-note">صافي الربح بعد جميع الاستقطاعات</div></div>
+            <div class="dc dc-return"><div class="dcl">العوائد للجمعية</div><div class="dcp" id="dc-return-pct">—</div><div class="dca" id="dc-return-amt">—</div><div class="dcn" id="dc-return-note">كاش باك + استرداد ضريبي</div></div>
+            <div class="dc" id="dc-mkt-card"><div class="dcl" id="dc-mkt-label">مخصص التسويق</div><div class="dcp" id="dc-mkt-pct">—</div><div class="dca" id="dc-mkt-amt">—</div><div class="dcn" id="dc-mkt-note">—</div></div>
+          </div>
+          <div style="margin-bottom:8px"><div style="font-size:10px;color:var(--P);margin-bottom:5px;font-weight:500">التوزيع البصري</div>
+            <div class="dist-bar">
+              <div class="dbs" id="bar-exec" style="background:#00197D">تنفيذ</div>
+              <div class="dbs" id="bar-profit" style="background:#2C5F2D">ربح</div>
+              <div class="dbs" id="bar-return" style="background:#5B2D8E">عوائد</div>
+              <div class="dbs" id="bar-mkt" style="background:#B8841A">تسويق</div>
+            </div>
+          </div>
+          <div class="dist-legend">
+            <div class="dl"><div class="dld" style="background:#00197D"></div>تنفيذ فعلي</div>
+            <div class="dl"><div class="dld" style="background:#2C5F2D"></div>ربح الشركة</div>
+            <div class="dl"><div class="dld" style="background:#5B2D8E"></div>عوائد الجمعية</div>
+            <div class="dl"><div class="dld" id="mkt-legend-dot" style="background:#B8841A"></div><span id="mkt-legend-label">تسويق خارجي</span></div>
+          </div>
+          <div class="dist-return-detail">
+            <div style="font-size:11px;font-weight:600;color:var(--P);margin-bottom:8px">تفصيل عوائد الجمعية</div>
+            <div class="cr-row"><span class="cr-lbl" style="color:var(--P)">الكاش باك المتفق عليه</span><span class="cr-val cp" id="detail-cb">—</span></div>
+            <div class="cr-row" style="border-bottom:.5px solid #C5A8E8"><span style="color:var(--P)">الاسترداد الضريبي المتوقع <span style="font-size:9px;font-weight:400;opacity:.7">(الجمعيات الخيرية تسترد الضريبة كاملاً بعد المطالبة)</span></span><span class="cr-val cp" id="detail-vat-refund">—</span></div>
+            <div style="display:flex;justify-content:space-between;font-weight:600;color:var(--P);font-size:12.5px;padding-top:7px;margin-top:2px"><span>إجمالي العوائد للجمعية</span><span class="mn" id="detail-total-return">—</span></div>
+          </div>
+          <div style="margin-top:10px;padding-top:10px;border-top:.5px solid #C5A8E8;display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn btn-g" style="border-color:var(--P);color:var(--P)" onclick="exportDist()">📊 تصدير PDF / صورة</button>
+          </div>
+        </div>
+        <div class="note-p" style="margin-top:10px"><strong>ملاحظة:</strong> وفق نظام ضريبة القيمة المضافة السعودي، يحق للجمعيات الخيرية استرداد ضريبة القيمة المضافة كاملاً عبر تقديم طلب للهيئة العامة للزكاة والضريبة والجمارك (ZATCA). الأرقام تقديرية للتخطيط الداخلي.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ TAB 2 ════ -->
+<div class="mpanel" id="mp2">
+  <div class="stabs">
+    <div class="stab act" onclick="ssw(2,0)">الأجندة والفريق</div>
+    <div class="stab"     onclick="ssw(2,1)">المتابعة المالية</div>
+    <div class="stab"     onclick="ssw(2,2)">الشعارات</div>
+  </div>
+  <div class="spanel act" id="sp2-0">
+    <div class="card">
+      <div class="ch"><div class="ci ci-s">أ</div><h2>أجندة الفعالية</h2></div>
+      <div class="cb" style="padding:0">
+        <table class="tbl" style="table-layout:fixed"><colgroup><col style="width:66px"><col style="width:44px"><col><col style="width:75px"><col style="width:78px"><col style="width:26px"></colgroup>
+          <thead><tr><th>الوقت</th><th>المدة</th><th>الفقرة</th><th>النوع</th><th>المسؤول</th><th></th></tr></thead>
+          <tbody id="agenda-body"></tbody>
+        </table>
+        <div style="padding:8px 11px;border-top:.5px solid var(--bd)"><button class="btn btn-g" onclick="addAgenda()">+ فقرة</button></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ch"><div class="ci ci-s">م</div><h2>المتحدثون والمنفذون</h2></div>
+      <div class="cb"><div class="spg" id="speakers-g"></div>
+        <div class="btnr"><button class="btn btn-g" onclick="addSpeaker()">+ إضافة</button></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ch"><div class="ci ci-g">ض</div><h2>الضيوف</h2></div>
+      <div class="cb"><div id="guests-c"></div>
+        <div class="btnr"><button class="btn btn-g" onclick="addGuest()">+ ضيف</button></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ch"><div class="ci ci-n">ف</div><h2>فريق التنظيم</h2></div>
+      <div class="cb"><div class="spg" id="team-g"></div>
+        <div class="btnr"><button class="btn btn-g" onclick="addTeam()">+ عضو</button></div>
+      </div>
+    </div>
+  </div>
+  <div class="spanel" id="sp2-1">
+    <div class="card">
+      <div class="ch"><div class="ci ci-g">م</div><h2>متابعة الصرف المالي</h2></div>
+      <div class="cb">
+        <div class="sg sg4" style="margin-bottom:12px">
+          <div class="sc"><div class="sn cn mn" id="tr-budget">—</div><div class="sl">الميزانية المعتمدة</div></div>
+          <div class="sc"><div class="sn cg mn" id="tr-paid">0</div><div class="sl">المدفوع فعلياً</div></div>
+          <div class="sc"><div class="sn ca mn" id="tr-remain">—</div><div class="sl">المتبقي</div></div>
+          <div class="sc"><div class="sn cs mn" id="tr-pct">0%</div><div class="sl">نسبة الصرف</div></div>
+        </div>
+        <div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;font-size:11px;color:var(--mu);margin-bottom:4px"><span>استهلاك الميزانية</span><span id="tr-pct-lbl">0%</span></div><div class="spend-prog"><div class="spend-fill" id="tr-bar" style="width:0%;background:var(--S)"></div></div></div>
+        <table class="tbl" style="table-layout:fixed"><colgroup><col><col style="width:90px"><col style="width:108px"><col style="width:108px"><col style="width:65px"><col style="width:26px"></colgroup>
+          <thead><tr><th>البند</th><th>المعتمد</th><th>المدفوع</th><th>الجهة المستفيدة</th><th>الحالة</th><th></th></tr></thead>
+          <tbody id="spend-body"></tbody>
+          <tfoot>
+          <tr class="spend-tot"><td>المجموع</td><td class="mn" id="sp-approved">—</td><td class="mn" id="sp-paid">0</td><td colspan="2"></td><td></td></tr>
+          <tr style="background:var(--Nl)">
+            <td colspan="3" style="font-size:10.5px;color:var(--N);font-weight:600">المدفوع من العقد شامل الضريبة</td>
+            <td colspan="2" class="mn" id="spend-contract-pct" style="font-size:10.5px;color:var(--N);font-weight:600">—</td><td></td>
+          </tr>
+        </tfoot>
+        </table>
+        <div style="padding:8px 11px;border-top:.5px solid var(--bd)"><button class="btn btn-g" onclick="addSpend()">+ بند</button></div>
+        <div class="note">أدخل المبلغ المدفوع فعلياً واسم الجهة (قد تكون الجمعية عند صرف الكاش باك أو مكافآت الموظفين).</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ch"><div class="ci ci-n">س</div><h2>سجل الدفعات والفواتير</h2></div>
+      <div class="cb" style="padding:0">
+        <table class="tbl" style="table-layout:fixed"><colgroup><col style="width:80px"><col><col style="width:100px"><col style="width:110px"><col style="width:72px"><col style="width:26px"></colgroup>
+          <thead><tr><th>التاريخ</th><th>البيان</th><th>المبلغ (ر.س)</th><th>الجهة المستفيدة</th><th>الحالة</th><th></th></tr></thead>
+          <tbody id="invoice-body"></tbody>
+        </table>
+        <div style="padding:8px 11px;border-top:.5px solid var(--bd)"><button class="btn btn-g" onclick="addInvoice()">+ دفعة</button></div>
+      </div>
+    </div>
+  </div>
+  <div class="spanel" id="sp2-2">
+    <div class="card">
+      <div class="ch"><div class="ci ci-g">ش</div><h2>الشعارات</h2></div>
+      <div class="cb">
+        <div class="note-i" style="margin-top:0;margin-bottom:11px">اضغط على أي خانة لرفع الشعار.</div>
+        <div class="lgsec">الجهات المنظمة</div><div class="lgg" id="lg-org"></div>
+        <div class="lgsec">الرعاة</div><div class="lgg" id="lg-sp"></div>
+        <div class="lgsec">الشركاء</div><div class="lgg" id="lg-par"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CONTRACT MODAL -->
+<div class="modal-bg" id="contract-modal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>معاينة العقد الرسمي</h3>
+      <div style="display:flex;gap:7px">
+        <button class="tb pri" onclick="printContract()">⬇ تصدير PDF</button>
+        <button class="close-btn" onclick="closeContract()">×</button>
+      </div>
+    </div>
+    <div id="contract-doc" class="cdoc"></div>
+  </div>
+</div>
+
+<!-- DIST EXPORT MODAL -->
+<div class="modal-bg" id="dist-modal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>تصدير التوزيع المالي الداخلي</h3>
+      <div style="display:flex;gap:7px">
+        <button class="tb pri" onclick="printDist()">⬇ طباعة / PDF</button>
+        <button class="close-btn" onclick="document.getElementById('dist-modal').classList.remove('open')">×</button>
+      </div>
+    </div>
+    <div id="dist-doc" style="padding:0"></div>
+  </div>
+</div>
+
+</div>
+<script>
+// ══ DATA ══════════════════════════════════════════════════════
+var GOALS=["رفع كفاءة الصيادلة المهنية وتطوير مهاراتهم العلمية","تحسين جودة الاستشارات الدوائية المقدمة للمرضى","تعزيز الدور المجتمعي للصيدلي في منطقة عسير","تبادل الخبرات وبناء شبكة تواصل مهنية","دعم التوجه الوطني نحو جودة الخدمات الصحية"];
+var COURSES=["الاستشارات الدوائية المتقدمة","التعامل مع الحالات الخاصة","أخطاء صرف الدواء والوقاية","التداخلات الدوائية","أخلاقيات المهنة وسلامة المرضى"];
+var SESSIONS=["دور الصيدلي في تحسين تجربة المريض","التحديات اليومية في الصيدليات","حالات دوائية واقعية","الصيدلي والمجتمع","أخلاقيات المهنة والمسؤولية القانونية","التحول الرقمي في العمل الصيدلاني","تطوير المسار المهني للصيدلي"];
+var KPIS=[{k:"عدد الصيادلة المؤهَّلين",t:"≥ 30",m:"سجل التسجيل"},{k:"نسبة الاجتياز",t:"≥ 80%",m:"شهادات"},{k:"رضا المشاركين",t:"≥ 8.5/10",m:"استبيان"},{k:"تنفيذ اللقاءات",t:"12/12",m:"سجل الحضور"}];
+var FIN=[{c:"تنظيم وإدارة اللقاءات (12 لقاءً)",a:15000,o:"بُعد التمكين"},{c:"أتعاب المحاضرين",a:12000,o:"مراس"},{c:"المواد التدريبية",a:6000,o:"عقول"},{c:"الضيافة والتموين",a:7000,o:"بُعد التمكين"},{c:"الشهادات والتكريم",a:3000,o:"بُعد التمكين"},{c:"التسويق والتوثيق",a:4000,o:"عقول"},{c:"احتياطي طوارئ",a:3000,o:"بُعد التمكين"}];
+var TASKS=[{t:"توقيع العقد مع جمعية توفير الدواء",w:"م1",o:"الإدارة",c:"bn",done:false},{t:"تحديد مكان اللقاءات وحجزه",w:"م1",o:"بُعد التمكين",c:"bn",done:false},{t:"التعاقد مع المحاضرين الخمسة",w:"م1",o:"مراس",c:"bs",done:false},{t:"إطلاق التسجيل وفتح القبول",w:"م1",o:"عقول",c:"bg",done:false},{t:"إعداد المواد التدريبية",w:"م2",o:"مراس",c:"bs",done:false},{t:"إطلاق حملة التسويق",w:"م2",o:"عقول",c:"bg",done:false},{t:"تنفيذ اللقاء التفاعلي الأول",w:"م2",o:"الفريق",c:"bn",done:false},{t:"تنفيذ الدورة التدريبية الأولى",w:"م3",o:"مراس",c:"bs",done:false},{t:"تنفيذ باقي الدورات والجلسات",w:"م4-6",o:"الفريق",c:"bn",done:false},{t:"حفل الختام وتوزيع الشهادات",w:"م7",o:"بُعد التمكين",c:"bn",done:false},{t:"تسليم التقرير الختامي",w:"بعد",o:"بُعد التمكين",c:"bn",done:false}];
+var RISKS=[{r:"انخفاض إقبال الصيادلة على التسجيل",p:"متوسطة",lv:"high",plan:"التنسيق مع المستشفيات والنقابات"},{r:"تعارض مواعيد مع الورديات",p:"متوسطة",lv:"high",plan:"تنويع التوقيتات صباحية/مسائية"},{r:"انسحاب محاضر",p:"منخفضة",lv:"med",plan:"قائمة احتياطية جاهزة"},{r:"تجاوز الميزانية",p:"منخفضة",lv:"med",plan:"احتياطي 3,000 ر.س مرصود"}];
+var CTG=[{n:"بروتوكول انسحاب المحاضر",d:"إشعار الجمعية فوراً — تفعيل البديل خلال 48 ساعة"},{n:"بروتوكول التأجيل الطارئ",d:"إشعار المسجلين قبل 72 ساعة + إعادة الجدولة"}];
+var AGENDA=[{t:"3:30 م",d:"30 د",n:"التسجيل والاستقبال",ty:"ops",o:"الفريق"},{t:"4:00 م",d:"15 د",n:"كلمة الافتتاح",ty:"formal",o:"الإدارة"},{t:"4:15 م",d:"45 د",n:"المحور الرئيسي",ty:"dialog",o:"المحاضر"},{t:"5:00 م",d:"30 د",n:"نقاش وأسئلة",ty:"dialog",o:"المحاضر"},{t:"5:30 م",d:"20 د",n:"استراحة وتواصل",ty:"social",o:"الجميع"},{t:"5:50 م",d:"30 د",n:"ورشة تطبيقية",ty:"dialog",o:"الفريق"},{t:"6:20 م",d:"10 د",n:"الختام والإعلان",ty:"formal",o:"الإدارة"}];
+var SPK=[{n:"يُحدَّد لاحقاً",r:"مختص في الاستشارات",tp:"الاستشارات الدوائية",i:"م1"},{n:"يُحدَّد لاحقاً",r:"صيدلاني سريري",tp:"الحالات الخاصة",i:"م2"},{n:"يُحدَّد لاحقاً",r:"خبير سلامة الدواء",tp:"أخطاء الصرف",i:"م3"}];
+var GST=[{n:"محمد القحطاني",r:"المدير التنفيذي — جمعية توفير الدواء"},{n:"ممثل نادي عقول",r:"جهة منظمة"},{n:"ممثل جمعية مراس",r:"جهة منظمة"}];
+var TEAM=[{n:"سامي سعد الأجهر",r:"رئيس الفريق",i:"س"},{n:"بندر مصلح القحطاني",r:"تنسيق لوجستي",i:"ب"},{n:"سفر عبدالمحسن الشبيلي",r:"تنسيق فني",i:"س"},{n:"فواز القرني",r:"تسويق ومحتوى",i:"ف"},{n:"وجن خالد القثانين",r:"تسجيل وعلاقات",i:"و"}];
+var SPEND_ITEMS=[{cat:"تنظيم وإدارة اللقاءات",approved:15000,paid:0,party:"بُعد التمكين"},{cat:"أتعاب المحاضرين",approved:12000,paid:0,party:"المحاضرون"},{cat:"المواد التدريبية",approved:6000,paid:0,party:"مطبعة"},{cat:"الضيافة والتموين",approved:7000,paid:0,party:"موردون"},{cat:"الشهادات والتكريم",approved:3000,paid:0,party:"بُعد التمكين"},{cat:"التسويق والتوثيق",approved:4000,paid:0,party:"عقول"},{cat:"كاش باك للجمعية",approved:0,paid:0,party:"جمعية توفير الدواء"},{cat:"مكافآت الفريق",approved:0,paid:0,party:"الفريق"}];
+var INVOICES=[{date:"",desc:"دفعة أولى — بدء التنفيذ",amt:25000,party:"بُعد التمكين",status:"معلقة"},{date:"",desc:"أتعاب المحاضر الأول",amt:2500,party:"المحاضر",status:"معلقة"}];
+var CLAUSES=[{n:"1",t:"نطاق الخدمات",b:"تلتزم الشركة بتنظيم وتنفيذ مبادرة ملتقى الصيادلة للتأهيل المهني وتحسين جودة الخدمات الصحية، بما يشمل 5 دورات تدريبية معتمدة و7 لقاءات تفاعلية (مجموع 12 لقاءً) في منطقة عسير."},{n:"2",t:"الالتزامات المالية وآلية السداد",b:"تُسدَّد الدفعة الأولى (50%) فور توقيع العقد، والدفعة الثانية بعد تسليم التقرير الختامي وإتمام جميع اللقاءات المقررة."},{n:"3",t:"سياسة الإلغاء والاسترداد",b:"يحق لأي طرف إنهاء العقد بإشعار خطي مسبق. تُطبَّق نسب الاسترداد المحددة في جدول السياسة المالية الوارد في هذا العقد."},{n:"4",t:"التزامات الجمعية",b:"تلتزم الجمعية بتسهيل وصول الصيادلة المستهدفين والتنسيق مع المنظومات الصحية لضمان حضور 30 مشاركاً كحد أدنى."},{n:"5",t:"السرية وحماية البيانات",b:"يلتزم الطرفان بالحفاظ على سرية المعلومات وفق أحكام نظام حماية البيانات الشخصية (PDPL) المعمول به في المملكة."},{n:"6",t:"فض النزاعات",b:"يُحسم أي نزاع وفق الأنظمة السعودية المعمول بها، والمرجعية القضائية هي المحاكم المختصة في منطقة عسير."}];
+
+// ══ UTILS ══════════════════════════════════════════════════════
+var BUD=50000, MKT_SOURCE="in";
+function fmt(n){return isNaN(n)?'—':Math.round(n).toLocaleString("en-US");}
+function pct(n,t){return t?Math.round(n/t*100):0;}
+function V(id){var el=document.getElementById(id);return el?el.value:"";}
+function set(id,v){var el=document.getElementById(id);if(el)el.textContent=v;}
+function saveHTML(){var b=new Blob([document.documentElement.outerHTML],{type:"text/html;charset=utf-8"});var a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="ملتقى-الصيادلة-بُعد-التمكين.html";a.click();}
+
+// ══ MKT SOURCE ═════════════════════════════════════════════════
+function setMktSource(src){
+  MKT_SOURCE=src;
+  document.getElementById("mkt-in-btn").className=src==="in"?"act-in":"";
+  document.getElementById("mkt-out-btn").className=src==="out"?"act-out":"";
+  calcC();
+}
+
+// ══ VAT TOGGLE ═════════════════════════════════════════════════
+function calcC(){
+  var grossInput=parseFloat(V("c-gross"))||0;
+  var vatPct=parseFloat(V("c-vat"))||0;
+  var vatIncluded=document.getElementById("vat-included").checked;
+  var noteEl=document.getElementById("vat-toggle-note");
+  var labelEl=document.getElementById("gross-label");
+
+  var gross, vat;
+  if(vatIncluded){
+    gross=grossInput/(1+vatPct/100);
+    vat=grossInput-gross;
+    if(noteEl) noteEl.textContent="المبلغ يشمل الضريبة — سيُحسب منه "+vatPct+"%";
+    if(labelEl) labelEl.textContent="قيمة العقد (ر.س) — شامل الضريبة";
+  } else {
+    gross=grossInput;
+    vat=gross*vatPct/100;
+    if(noteEl) noteEl.textContent="المبلغ لا يشمل الضريبة — سيُضاف إليه "+vatPct+"%";
+    if(labelEl) labelEl.textContent="قيمة العقد (ر.س) — قبل الضريبة";
+  }
+  var grossVat=gross+vat;
+
+  var mktT=V("i-mkt-t"); var mktV=parseFloat(V("i-mkt-v"))||0;
+  var cbT=V("i-cb-t");   var cbV=parseFloat(V("i-cb-v"))||0;
+  var r2=parseFloat(V("c-r2"))||0, r3=parseFloat(V("c-r3"))||0;
+
+  var mkt=mktT==="pct"?gross*mktV/100:mktV;
+  var cb=cbT==="pct"?gross*cbV/100:cbV;
+  var execCost=FIN.reduce(function(s,i){return s+(i.a||0);},0);
+
+  // If mkt is internal → adds to profit; if external → deduct from profit
+  var profitBase=gross-cb-(MKT_SOURCE==="out"?mkt:0)-execCost;
+  var profitWithInternalMkt=MKT_SOURCE==="in"?profitBase+mkt:profitBase; // If internal, mkt is already included in profit calc above
+  var actualProfit=gross-cb-(MKT_SOURCE==="out"?mkt:0)-execCost;
+
+  var vatRefund=vat;
+  var totalReturn=cb+vatRefund;
+
+  // Cover
+  // Cover stats
+  var grossVat2=gross+vat;
+  set("cv-gross",fmt(grossVat2));
+  set("cv-fin-total",fmt(finTotal));
+  var marginEl=document.getElementById("cv-margin");
+  if(marginEl){marginEl.textContent=fmt(margin);marginEl.style.color=isOK?"#90EE90":"#FFB3B3";}
+  var statusEl=document.getElementById("cv-sync-status");
+  if(statusEl){statusEl.textContent=isOK?"✓":"⚠";statusEl.style.color=isOK?"#90EE90":"#FFD700";}
+  set("cv-profit",fmt(actualProfit));
+
+  // Contract prints (gross/vat)
+  set("r-gross",fmt(gross)+" ر.س");
+  set("r-vat-lbl","الضريبة ("+Math.round(vatPct)+"%)");
+  set("r-vat",fmt(vat)+" ر.س");
+  set("r-gv",fmt(grossVat)+" ر.س");
+  set("r-r2",fmt(gross*r2/100)+" ر.س");
+  set("r-r3",fmt(gross*r3/100)+" ر.س");
+
+  // Distribution
+  var execPct=gross?pct(execCost,gross):0;
+  var profitPct=gross?pct(actualProfit<0?0:actualProfit,gross):0;
+  var returnPct=gross?pct(totalReturn,gross):0;
+  var mktPct=gross?pct(mkt,gross):0;
+
+  set("dc-exec-pct",execPct+"% من الإجمالي");
+  set("dc-exec-amt",fmt(execCost)+" ر.س");
+
+  set("dc-profit-pct",profitPct+"% من الإجمالي");
+  set("dc-profit-amt",fmt(actualProfit<0?0:actualProfit)+" ر.س");
+  if(MKT_SOURCE==="in"){
+    set("dc-profit-note","يشمل مخصص التسويق الداخلي ("+fmt(mkt)+" ر.س)");
+  } else {
+    set("dc-profit-note","صافي بعد خصم التسويق الخارجي");
+  }
+
+  set("dc-return-pct",returnPct+"% من الإجمالي");
+  set("dc-return-amt",fmt(totalReturn)+" ر.س");
+  set("dc-return-note","كاش باك ("+fmt(cb)+" ر.س) + استرداد ضريبي ("+fmt(vatRefund)+" ر.س)");
+
+  // Mkt card
+  var mktCard=document.getElementById("dc-mkt-card");
+  var mktLabel=document.getElementById("dc-mkt-label");
+  var mktNote=document.getElementById("dc-mkt-note");
+  if(mktCard){
+    mktCard.className="dc "+(MKT_SOURCE==="in"?"dc-mkt-in":"dc-mkt-out");
+  }
+  if(mktLabel) mktLabel.textContent=MKT_SOURCE==="in"?"مخصص التسويق (ربح إضافي)":"مخصص التسويق (التزام مالي)";
+  set("dc-mkt-pct",mktPct+"% من الإجمالي");
+  set("dc-mkt-amt",fmt(mkt)+" ر.س");
+  if(mktNote) mktNote.textContent=(MKT_SOURCE==="in"?"يُضاف إلى ربح الشركة — "+V("i-mkt-name"):"التزام تجاه "+V("i-mkt-name"));
+  // legend
+  var dot=document.getElementById("mkt-legend-dot");
+  var lbl=document.getElementById("mkt-legend-label");
+  if(dot) dot.style.background=MKT_SOURCE==="in"?"#2C5F2D":"#8B1A0E";
+  if(lbl) lbl.textContent=MKT_SOURCE==="in"?"تسويق داخلي (ربح)":"تسويق خارجي (التزام)";
+  // Bar
+  var barExec=document.getElementById("bar-exec");
+  var barProfit=document.getElementById("bar-profit");
+  var barReturn=document.getElementById("bar-return");
+  var barMkt=document.getElementById("bar-mkt");
+  if(barExec && gross>0){
+    barExec.style.width=execPct+"%";
+    barProfit.style.width=(profitPct>0?profitPct:0)+"%";
+    barReturn.style.width=returnPct+"%";
+    barMkt.style.width=mktPct+"%";
+    barExec.textContent=execPct>8?execPct+"%":"";
+    barProfit.textContent=profitPct>8?profitPct+"%":"";
+    barReturn.textContent=returnPct>8?returnPct+"%":"";
+    barMkt.textContent=mktPct>8?mktPct+"%":"";
+    barMkt.style.background=MKT_SOURCE==="in"?"#2C5F2D":"#8B1A0E";
+  }
+
+  // Return detail
+  set("detail-cb",fmt(cb)+" ر.س");
+  set("detail-vat-refund",fmt(vatRefund)+" ر.س");
+  set("detail-total-return",fmt(totalReturn)+" ر.س");
+
+  buildContract();
+}
+
+// ══ TABS ═══════════════════════════════════════════════════════
+function msw(i){document.querySelectorAll(".mtab").forEach(function(t,j){t.classList.toggle("act",i===j);});document.querySelectorAll(".mpanel").forEach(function(p,j){p.classList.toggle("act",i===j);});}
+function ssw(panel,i){var prefix="sp"+panel+"-";document.querySelectorAll('[id^="'+prefix+'"]').forEach(function(p,j){p.classList.toggle("act",i===j);});var tabs=document.querySelectorAll("#mp"+panel+" .stab");tabs.forEach(function(t,j){t.classList.toggle("act",i===j);});}
+
+function setDate(){var v=V("f-date");if(v){var el=document.getElementById("issue-date");if(el)el.textContent=new Date(v).toLocaleDateString("ar-SA");}}
+function loadSS(inp,i){var r=new FileReader();r.onload=function(e){document.getElementById("ss"+i).src=e.target.result;document.getElementById("ss"+i).style.display="block";document.getElementById("ss"+i+"p").style.display="none";};r.readAsDataURL(inp.files[0]);}
+
+// ══ RENDER FUNCTIONS ═══════════════════════════════════════════
+function renderGoals(){var c=document.getElementById("goals-c");c.innerHTML="";GOALS.forEach(function(g,i){var d=document.createElement("div");d.style.cssText="display:flex;gap:7px;align-items:center;margin-bottom:6px";d.innerHTML='<span style="width:21px;height:21px;background:var(--Nl);border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:var(--N);flex-shrink:0">'+(i+1)+'</span><input class="ef efg" value="'+g+'" style="flex:1;border-radius:6px;padding:5px 9px" onchange="GOALS['+i+']=this.value"><button class="del" onclick="GOALS.splice('+i+',1);renderGoals()">×</button>';c.appendChild(d);});}
+function addGoal(){GOALS.push("هدف جديد...");renderGoals();}
+function renderCourses(){var c=document.getElementById("courses-c");c.innerHTML="";COURSES.forEach(function(g,i){var d=document.createElement("div");d.style.cssText="display:flex;gap:6px;align-items:center;margin-bottom:5px";d.innerHTML='<span class="bd bn" style="min-width:22px;text-align:center">'+(i+1)+'</span><input class="ef efg" value="'+g+'" style="flex:1;border-radius:5px;padding:4px 8px;font-size:11.5px" onchange="COURSES['+i+']=this.value"><button class="del" onclick="COURSES.splice('+i+',1);renderCourses()">×</button>';c.appendChild(d);});}
+function addCourse(){COURSES.push("دورة جديدة...");renderCourses();}
+function renderSessions(){var c=document.getElementById("sessions-c");c.innerHTML="";SESSIONS.forEach(function(g,i){var d=document.createElement("div");d.style.cssText="display:flex;gap:6px;align-items:center;margin-bottom:5px";d.innerHTML='<span class="bd bs" style="min-width:22px;text-align:center">'+(i+1)+'</span><input class="ef efg" value="'+g+'" style="flex:1;border-radius:5px;padding:4px 8px;font-size:11.5px" onchange="SESSIONS['+i+']=this.value"><button class="del" onclick="SESSIONS.splice('+i+',1);renderSessions()">×</button>';c.appendChild(d);});}
+function addSession(){SESSIONS.push("لقاء جديد...");renderSessions();}
+function renderKPIs(){var b=document.getElementById("kpi-body");b.innerHTML="";KPIS.forEach(function(k,i){var tr=document.createElement("tr");tr.innerHTML='<td><input class="ef efg" value="'+k.k+'" style="width:100%" onchange="KPIS['+i+'].k=this.value"></td><td><input class="ef efg mn" value="'+k.t+'" style="width:100%" onchange="KPIS['+i+'].t=this.value"></td><td><input class="ef efg" value="'+k.m+'" style="width:100%" onchange="KPIS['+i+'].m=this.value"></td><td><button class="del" onclick="KPIS.splice('+i+',1);renderKPIs()">×</button></td>';b.appendChild(tr);});}
+function addKPI(){KPIS.push({k:"مؤشر",t:"الهدف",m:"الأداة"});renderKPIs();}
+
+// syncAll: single source of truth — called on any financial input change
+function syncAll(){
+  // 1. Derive gross from contract inputs
+  var grossInput=parseFloat(V("c-gross"))||0;
+  var vatPct=parseFloat(V("c-vat"))||0;
+  var vatIncluded=document.getElementById("vat-included").checked;
+  var gross=vatIncluded?grossInput/(1+vatPct/100):grossInput;
+  var vat=gross*vatPct/100;
+  var grossVat=gross+vat;
+  // VAT toggle labels
+  var noteEl=document.getElementById("vat-toggle-note");
+  var labelEl=document.getElementById("gross-label");
+  if(noteEl) noteEl.textContent=vatIncluded?"المبلغ يشمل الضريبة — سيُحسب منه "+vatPct+"%":"المبلغ لا يشمل الضريبة";
+  if(labelEl) labelEl.textContent=vatIncluded?"قيمة العقد (ر.س) — شامل الضريبة":"قيمة العقد (ر.س) — قبل الضريبة";
+
+  // 2. FIN totals
+  var finTotal=FIN.reduce(function(s,i){return s+(i.a||0);},0);
+  var margin=gross-finTotal;
+  var isOK=margin>=0;
+  BUD=gross; // keep legacy var in sync
+
+  // 3. Budget stats
+  set("d-bud",fmt(gross));
+  set("d-spent",fmt(finTotal));
+  var dRemEl=document.getElementById("d-rem");
+  if(dRemEl){dRemEl.textContent=fmt(margin);dRemEl.style.color=isOK?(margin<5000?"var(--G)":"var(--S)"):"var(--R)";}
+  set("fin-ceiling-val",fmt(gross));
+  set("bud-from-contract",fmt(gross));
+  set("fin-use-max",fmt(gross));
+  var usePct=gross?Math.min(pct(finTotal,gross),150):0;
+  set("fin-use-pct",(gross?pct(finTotal,gross):0)+"%");
+  var useBar=document.getElementById("fin-use-bar");
+  if(useBar){useBar.style.width=Math.min(usePct,100)+"%";useBar.style.background=usePct>=100?"var(--R)":usePct>=85?"var(--G)":"var(--S)";}
+
+  // 4. Sync notices
+  var overNotice=document.getElementById("fin-over-notice");
+  var okNotice=document.getElementById("fin-ok-notice");
+  if(overNotice) overNotice.style.display=isOK?"none":"flex";
+  if(okNotice) okNotice.style.display=isOK?"flex":"none";
+  set("fn-total",fmt(finTotal));set("fn-ceiling",fmt(gross));set("fn-margin",fmt(margin));
+
+  // 5. Global sync bar
+  var gBar=document.getElementById("global-sync-bar");
+  var gDot=document.getElementById("global-sync-dot");
+  var gMsg=document.getElementById("global-sync-msg");
+  if(gBar){
+    gBar.className="sync-bar "+(isOK?"ok":"warn");
+    if(gDot) gDot.className="sync-dot "+(isOK?"ok":"warn");
+    if(gMsg) gMsg.textContent=isOK?
+      "✓ الميزانية والعقد متسقان — الهامش المتاح "+fmt(margin)+" ر.س (الميزانية "+fmt(finTotal)+" من أصل "+fmt(gross)+" ر.س)":
+      "⚠ تعارض: مجموع الميزانية ("+fmt(finTotal)+" ر.س) يتجاوز قيمة العقد ("+fmt(gross)+" ر.س) بـ "+fmt(-margin)+" ر.س — يجب التعديل";
+  }
+  // Tab warning dot
+  var tw=document.getElementById("tab-warn-contract");
+  if(tw) tw.classList.toggle("show",!isOK);
+
+  // 6. Contract fin table (embedded)
+  var cftBody=document.getElementById("cft-body");
+  if(cftBody){
+    cftBody.innerHTML="";
+    FIN.forEach(function(f){
+      var tr=document.createElement("tr");
+      tr.innerHTML='<td style="font-size:12px">'+f.c+'</td><td class="mn" style="font-size:12px">'+fmt(f.a)+'</td><td style="font-size:11px;color:var(--mu)">'+f.o+'</td>';
+      cftBody.appendChild(tr);
+    });
+  }
+  set("cft-total",fmt(finTotal));
+
+  // 7. Contract summary
+  set("r-gross",fmt(gross)+" ر.س");
+  set("r-vat-lbl","الضريبة ("+Math.round(vatPct)+"%)");
+  set("r-vat",fmt(vat)+" ر.س");
+  set("r-gv",fmt(grossVat)+" ر.س");
+  set("r-r2",fmt(gross*(parseFloat(V("c-r2"))||0)/100)+" ر.س");
+  set("r-r3",fmt(gross*(parseFloat(V("c-r3"))||0)/100)+" ر.س");
+  set("sgn-p1",V("c-p1")||"شركة بُعد التمكين");
+  set("sgn-p2",V("c-p2")||"جمعية توفير الدواء");
+
+  // 8. Internal distribution
+  var mktT=V("i-mkt-t"); var mktV=parseFloat(V("i-mkt-v"))||0;
+  var cbT=V("i-cb-t");   var cbV=parseFloat(V("i-cb-v"))||0;
+  var mkt=mktT==="pct"?gross*mktV/100:mktV;
+  var cb=cbT==="pct"?gross*cbV/100:cbV;
+  var vatRefund=vat;
+  var totalReturn=cb+vatRefund;
+  var actualProfit=gross-finTotal-(MKT_SOURCE==="out"?mkt:0)-cb;
+  var mktColor=MKT_SOURCE==="in"?"#2C5F2D":"#8B1A0E";
+  var execPct=gross?pct(finTotal,gross):0;
+  var profitPct=gross?pct(actualProfit<0?0:actualProfit,gross):0;
+  var returnPct=gross?pct(totalReturn,gross):0;
+  var mktPct=gross?pct(mkt,gross):0;
+  set("dc-exec-pct",execPct+"%");set("dc-exec-amt",fmt(finTotal)+" ر.س");
+  set("dc-profit-pct",profitPct+"%");set("dc-profit-amt",fmt(actualProfit<0?0:actualProfit)+" ر.س");
+  set("dc-profit-note",MKT_SOURCE==="in"?"يشمل مخصص التسويق الداخلي":"بعد خصم التسويق الخارجي");
+  set("dc-return-pct",returnPct+"%");set("dc-return-amt",fmt(totalReturn)+" ر.س");
+  set("dc-return-note","كاش باك ("+fmt(cb)+" ر.س) + استرداد ضريبي ("+fmt(vatRefund)+" ر.س)");
+  var mktCard=document.getElementById("dc-mkt-card");
+  if(mktCard) mktCard.className="dc "+(MKT_SOURCE==="in"?"dc-mkt-in":"dc-mkt-out");
+  set("dc-mkt-label",MKT_SOURCE==="in"?"مخصص التسويق (ربح إضافي)":"مخصص التسويق (التزام)");
+  set("dc-mkt-pct",mktPct+"%");set("dc-mkt-amt",fmt(mkt)+" ر.س");
+  set("dc-mkt-note",MKT_SOURCE==="in"?"يُضاف للربح — "+V("i-mkt-name"):"التزام تجاه "+V("i-mkt-name"));
+  var mktLegDot=document.getElementById("mkt-legend-dot");if(mktLegDot)mktLegDot.style.background=mktColor;
+  set("mkt-legend-label",MKT_SOURCE==="in"?"تسويق داخلي (ربح)":"تسويق خارجي (التزام)");
+  var bE=document.getElementById("bar-exec"),bP=document.getElementById("bar-profit"),bR=document.getElementById("bar-return"),bM=document.getElementById("bar-mkt");
+  if(bE&&gross>0){
+    bE.style.width=execPct+"%";bP.style.width=(profitPct>0?profitPct:0)+"%";bR.style.width=returnPct+"%";bM.style.width=mktPct+"%";
+    bE.textContent=execPct>8?execPct+"%":"";bP.textContent=profitPct>8?profitPct+"%":"";bR.textContent=returnPct>8?returnPct+"%":"";bM.textContent=mktPct>8?mktPct+"%":"";
+    bM.style.background=mktColor;
+  }
+  set("detail-cb",fmt(cb)+" ر.س");set("detail-vat-refund",fmt(vatRefund)+" ر.س");set("detail-total-return",fmt(totalReturn)+" ر.س");
+
+  // 9. Render budget table
+  renderFin();
+  // 10. Keep spend tracking fresh
+  if(document.getElementById("spend-body")) updateSpend();
+}
+function recalc(){syncAll();} // legacy alias
+function renderFin(){
+  var grossInput=parseFloat(V("c-gross"))||0;
+  var vatPct=parseFloat(V("c-vat"))||0;
+  var vatIncluded=document.getElementById("vat-included").checked;
+  var gross=vatIncluded?grossInput/(1+vatPct/100):grossInput;
+  var ceiling=gross||BUD||1;
+  var b=document.getElementById("fin-body");b.innerHTML="";
+  var finTotal=FIN.reduce(function(s,i){return s+(i.a||0);},0);
+  FIN.forEach(function(item,i){
+    var p=ceiling?pct(item.a||0,ceiling):0;
+    var barColor=p>=30?"var(--N)":"var(--S)";
+    var isOver=(finTotal>ceiling);
+    var tr=document.createElement("tr");
+    if(isOver&&(item.a||0)===FIN.reduce(function(a,b,j){return j===i?b.a:a;},0)) tr.className="fin-row-over";
+    tr.innerHTML='<td><input class="ef efg" value="'+item.c+'" style="width:100%" onchange="FIN['+i+'].c=this.value;syncAll()"></td>'+
+      '<td><div class="bsm"><div class="bsf" style="width:'+Math.min(p*2,100)+'%;height:100%;border-radius:3px;background:'+barColor+'"></div></div><span class="mn" style="font-size:9.5px;color:var(--mu)">'+p+'%</span></td>'+
+      '<td><input type="number" class="ef mn" value="'+item.a+'" style="width:100px;padding:3px 6px;'+(isOver?"border-color:var(--R)":"")+'" onchange="FIN['+i+'].a=parseInt(this.value)||0;syncAll()"></td>'+
+      '<td><input class="ef efg" value="'+item.o+'" style="width:74px" onchange="FIN['+i+'].o=this.value"></td>'+
+      '<td><button class="del" onclick="FIN.splice('+i+',1);syncAll()">×</button></td>';
+    b.appendChild(tr);
+  });
+  set("fin-pct",ceiling?pct(finTotal,ceiling)+"%":"—");
+  set("fin-sum",fmt(finTotal));
+}
+function addFin(){FIN.push({c:"بند جديد",a:0,o:"—"});syncAll();}
+
+function syncSpendFromFin(){
+  FIN.forEach(function(f){
+    SPEND_ITEMS.forEach(function(sp){
+      if(sp.cat===f.c) sp.approved=f.a;
+    });
+  });
+}
+function updateSpend(){
+  syncSpendFromFin();
+  var tA=SPEND_ITEMS.reduce(function(s,i){return s+(i.approved||0);},0),tP=SPEND_ITEMS.reduce(function(s,i){return s+(i.paid||0);},0),rem=tA-tP,p=tA?pct(tP,tA):0;set("tr-budget",fmt(tA));set("tr-paid",fmt(tP));var tr=document.getElementById("tr-remain");if(tr){tr.textContent=fmt(rem);tr.style.color=rem<0?"var(--R)":rem<3000?"var(--G)":"var(--A)";}set("tr-pct",p+"%");set("tr-pct-lbl",p+"%");var bar=document.getElementById("tr-bar");if(bar){bar.style.width=p+"%";bar.style.background=p>90?"var(--R)":p>70?"var(--G)":"var(--S)";}set("sp-approved",fmt(tA));set("sp-paid",fmt(tP));
+  // Financial health dashboard
+  set("fh-paid",fmt(tP));
+  var _gi=parseFloat(V("c-gross"))||0,_vi=parseFloat(V("c-vat"))||0;
+  var _vi2=document.getElementById("vat-included").checked;
+  var _g=_vi2?_gi/(1+_vi/100):_gi;
+  set("fh-contract",fmt(_g+_g*_vi/100));
+  set("fh-budgeted",fmt(tA));
+  var _fhR=tA-tP,_fhEl=document.getElementById("fh-remaining");
+  if(_fhEl){_fhEl.textContent=fmt(_fhR);_fhEl.style.color=_fhR<0?"var(--R)":_fhR<5000?"var(--G)":"var(--S)";}
+  // spend pct of contract
+  var _g2=_g+_g*_vi/100;
+  set("spend-contract-pct",_g2?pct(tP,_g2)+"% من العقد شامل الضريبة":"—");
+  renderSpend();}
+function renderSpend(){
+  var b=document.getElementById("spend-body");b.innerHTML="";
+  SPEND_ITEMS.forEach(function(item,i){
+    var p=item.approved?pct(item.paid||0,item.approved):0;
+    var barColor=p>=100?"var(--R)":p>=75?"var(--G)":"var(--N)";
+    var tr=document.createElement("tr");
+    tr.style.background=p>=100?"var(--Rl)":"";
+    tr.innerHTML=
+      '<td><input class="ef efg" value="'+item.cat+'" style="width:100%" onchange="SPEND_ITEMS['+i+'].cat=this.value"></td>'+
+      '<td class="mn" style="color:var(--mu)">'+fmt(item.approved)+'</td>'+
+      '<td><input type="number" class="ef mn" value="'+(item.paid||0)+'" style="width:100px;padding:3px 6px" placeholder="0" onchange="SPEND_ITEMS['+i+'].paid=parseInt(this.value)||0;updateSpend()"></td>'+
+      '<td><input class="ef efg" value="'+item.party+'" style="width:102px" onchange="SPEND_ITEMS['+i+'].party=this.value"></td>'+
+      '<td style="text-align:center">'+
+        '<div style="font-size:9px;color:var(--mu);margin-bottom:2px">'+p+'%</div>'+
+        '<div style="height:5px;background:#E8E8E8;border-radius:3px;overflow:hidden;width:52px;margin:0 auto">'+
+          '<div style="height:100%;border-radius:3px;background:'+barColor+';width:'+Math.min(p,100)+'%"></div>'+
+        '</div>'+
+      '</td>'+
+      '<td><button class="del" onclick="SPEND_ITEMS.splice('+i+',1);updateSpend()">×</button></td>';
+    b.appendChild(tr);
+  });
+}
+function addSpend(){SPEND_ITEMS.push({cat:"بند جديد",approved:0,paid:0,party:"اسم الجهة"});updateSpend();}
+function renderInvoices(){var b=document.getElementById("invoice-body");b.innerHTML="";INVOICES.forEach(function(inv,i){var sc=inv.status==="مدفوعة"?"bs":inv.status==="معلقة"?"ba":"br";var tr=document.createElement("tr");tr.innerHTML='<td><input class="ef efg" type="date" value="'+inv.date+'" style="width:76px;font-size:10.5px" onchange="INVOICES['+i+'].date=this.value"></td><td><input class="ef efg" value="'+inv.desc+'" style="width:100%" onchange="INVOICES['+i+'].desc=this.value"></td><td><input type="number" class="ef mn" value="'+inv.amt+'" style="width:94px;padding:3px 6px" onchange="INVOICES['+i+'].amt=parseInt(this.value)||0"></td><td><input class="ef efg" value="'+inv.party+'" style="width:100px" onchange="INVOICES['+i+'].party=this.value"></td><td style="text-align:center"><span class="bd '+sc+'">'+inv.status+'</span></td><td><button class="del" onclick="INVOICES.splice('+i+',1);renderInvoices()">×</button></td>';b.appendChild(tr);});}
+function addInvoice(){var today=new Date().toISOString().split("T")[0];INVOICES.push({date:today,desc:"دفعة جديدة",amt:0,party:"اسم الجهة",status:"معلقة"});renderInvoices();}
+
+function renderTasks(){var b=document.getElementById("tasks-body");b.innerHTML="";TASKS.forEach(function(tk,i){var tr=document.createElement("tr");tr.style.background=tk.done?"var(--Sl)":"";tr.innerHTML='<td style="text-align:center"><input type="checkbox" '+(tk.done?"checked":"")+'  onchange="TASKS['+i+'].done=this.checked;this.closest(\'tr\').style.background=this.checked?\'var(--Sl)\':\'\';updProg()"></td><td style="'+(tk.done?"text-decoration:line-through;color:var(--mu)":"")+';font-size:11.5px">'+tk.t+'</td><td style="text-align:center;font-size:10px;color:var(--mu);font-family:\'IBM Plex Mono\',monospace">'+tk.w+'</td><td><span class="bd '+tk.c+'">'+tk.o+'</span></td><td style="text-align:center;font-size:10px;color:'+(tk.done?"var(--S)":"var(--mu)")+'">'+(tk.done?"مكتملة ✓":"معلقة")+'</td>';b.appendChild(tr);});updProg();}
+function addTask(){TASKS.push({t:"مهمة جديدة",w:"—",o:"—",c:"bgr",done:false});renderTasks();}
+function updProg(){var done=TASKS.filter(function(t){return t.done;}).length,tot=TASKS.length,p=tot?pct(done,tot):0;var bar=document.getElementById("prog-bar");if(bar)bar.style.width=p+"%";set("prog-pct",p+"%");set("prog-cnt",done+"/"+tot);set("cv-pct",p+"%");}
+
+var LV={high:'<span class="bd br">عالٍ</span>',med:'<span class="bd ba">متوسط</span>',low:'<span class="bd bs">منخفض</span>'};
+var PM={متوسطة:'<span class="bd ba">متوسطة</span>',منخفضة:'<span class="bd bs">منخفضة</span>',عالية:'<span class="bd br">عالية</span>'};
+function renderRisks(){var b=document.getElementById("risk-body");b.innerHTML="";RISKS.forEach(function(r,i){var tr=document.createElement("tr");tr.innerHTML='<td><input class="ef efg" value="'+r.r+'" style="width:100%" onchange="RISKS['+i+'].r=this.value"></td><td style="text-align:center">'+(PM[r.p]||"")+'</td><td style="text-align:center">'+(LV[r.lv]||"")+'</td><td><input class="ef efg" value="'+r.plan+'" style="width:100%" onchange="RISKS['+i+'].plan=this.value"></td><td><button class="del" onclick="RISKS.splice('+i+',1);renderRisks()">×</button></td>';b.appendChild(tr);});}
+function addRisk(){RISKS.push({r:"مخاطرة",p:"منخفضة",lv:"low",plan:"خطة التحوط..."});renderRisks();}
+function renderCTG(){var c=document.getElementById("conting-c");c.innerHTML="";CTG.forEach(function(item,i){var d=document.createElement("div");d.style.cssText="border-right:3px solid var(--R);padding:8px 12px;background:var(--sand);border-radius:0 7px 7px 0;margin-bottom:7px";d.innerHTML='<div style="display:flex;gap:6px;align-items:center;margin-bottom:4px"><input class="ef efg" value="'+item.n+'" style="font-weight:600;flex:1" onchange="CTG['+i+'].n=this.value"><button class="del" onclick="CTG.splice('+i+',1);renderCTG()">×</button></div><textarea class="ef efg" rows="2" style="width:100%;font-size:11.5px" onchange="CTG['+i+'].d=this.value">'+item.d+'</textarea>';c.appendChild(d);});}
+function addConting(){CTG.push({n:"بروتوكول جديد",d:"وصف الإجراء..."});renderCTG();}
+
+var TM={formal:'<span class="bd bn">رسمي</span>',dialog:'<span class="bd bs">حواري</span>',social:'<span class="bd bg">تواصل</span>',ops:'<span class="bd bgr">تشغيلي</span>'};
+function renderAgenda(){var b=document.getElementById("agenda-body");b.innerHTML="";AGENDA.forEach(function(r,i){var tr=document.createElement("tr");tr.innerHTML='<td style="font-family:\'IBM Plex Mono\',monospace;font-size:10.5px;color:var(--N)"><input class="ef efg mn" value="'+r.t+'" style="width:60px" onchange="AGENDA['+i+'].t=this.value"></td><td><input class="ef efg" value="'+r.d+'" style="width:38px" onchange="AGENDA['+i+'].d=this.value"></td><td><input class="ef efg" value="'+r.n+'" style="width:100%" onchange="AGENDA['+i+'].n=this.value"></td><td>'+(TM[r.ty]||"")+'</td><td><input class="ef efg" value="'+r.o+'" style="width:74px" onchange="AGENDA['+i+'].o=this.value"></td><td><button class="del" onclick="AGENDA.splice('+i+',1);renderAgenda()">×</button></td>';b.appendChild(tr);});}
+function addAgenda(){AGENDA.push({t:"--:--",d:"-- د",n:"فقرة جديدة",ty:"ops",o:"—"});renderAgenda();}
+
+function renderSPK(){var g=document.getElementById("speakers-g");g.innerHTML="";SPK.forEach(function(s,i){var d=document.createElement("div");d.className="spc";d.innerHTML='<div class="spav">'+s.i+'</div><div style="flex:1;min-width:0"><input class="ef efg" value="'+s.n+'" style="font-weight:600;width:100%;margin-bottom:2px" onchange="SPK['+i+'].n=this.value"><input class="ef efg" value="'+s.r+'" style="font-size:11px;color:var(--mu);width:100%;margin-bottom:3px" onchange="SPK['+i+'].r=this.value"><input class="ef efg" value="'+s.tp+'" style="font-size:11px;width:100%" onchange="SPK['+i+'].tp=this.value"></div><button class="del" onclick="SPK.splice('+i+',1);renderSPK()" style="align-self:flex-start">×</button>';g.appendChild(d);});var a=document.createElement("div");a.className="add-c";a.innerHTML="+ إضافة";a.onclick=function(){SPK.push({n:"اسم",r:"التخصص",tp:"الموضوع",i:"م"});renderSPK();};g.appendChild(a);}
+function addSpeaker(){SPK.push({n:"اسم",r:"التخصص",tp:"الموضوع",i:"م"});renderSPK();}
+function renderGST(){var c=document.getElementById("guests-c");c.innerHTML="";GST.forEach(function(g,i){var d=document.createElement("div");d.style.cssText="display:flex;gap:7px;margin-bottom:6px;align-items:center";d.innerHTML='<div class="spav" style="width:32px;height:32px;font-size:10px">'+g.n.charAt(0)+'</div><input class="ef efg" value="'+g.n+'" style="flex:1;border-radius:6px;padding:4px 8px" onchange="GST['+i+'].n=this.value"><input class="ef efg" value="'+g.r+'" style="width:180px;font-size:11px;border-radius:6px;padding:4px 8px" onchange="GST['+i+'].r=this.value"><button class="del" onclick="GST.splice('+i+',1);renderGST()">×</button>';c.appendChild(d);});}
+function addGuest(){GST.push({n:"اسم الضيف",r:"الصفة"});renderGST();}
+function renderTeam(){var g=document.getElementById("team-g");g.innerHTML="";TEAM.forEach(function(s,i){var d=document.createElement("div");d.className="spc";d.innerHTML='<div class="spav" style="background:var(--Sl);color:var(--S)">'+s.i+'</div><div style="flex:1;min-width:0"><input class="ef efg" value="'+s.n+'" style="font-weight:600;width:100%;margin-bottom:2px" onchange="TEAM['+i+'].n=this.value"><input class="ef efg" value="'+s.r+'" style="font-size:11px;color:var(--mu);width:100%" onchange="TEAM['+i+'].r=this.value"></div><button class="del" onclick="TEAM.splice('+i+',1);renderTeam()" style="align-self:flex-start">×</button>';g.appendChild(d);});var a=document.createElement("div");a.className="add-c";a.innerHTML="+ عضو";a.onclick=function(){TEAM.push({n:"اسم",r:"الدور",i:"ع"});renderTeam();};g.appendChild(a);}
+function addTeam(){TEAM.push({n:"اسم",r:"الدور",i:"ع"});renderTeam();}
+
+function mkLG(id,lbls){var c=document.getElementById(id);c.innerHTML="";lbls.forEach(function(l){var d=document.createElement("div");d.className="lgs";d.innerHTML='<span class="lgi">+</span><span class="lgl">'+l+'</span><input type="file" accept="image/*" onchange="ldLG(this)">';c.appendChild(d);});}
+function ldLG(inp){var r=new FileReader();r.onload=function(e){var s=inp.closest(".lgs");s.innerHTML='<img src="'+e.target.result+'"><input type="file" accept="image/*" onchange="ldLG(this)">';};r.readAsDataURL(inp.files[0]);}
+
+function renderClauses(){var c=document.getElementById("clauses-c");c.innerHTML="";CLAUSES.forEach(function(cl,i){var d=document.createElement("div");d.style.cssText="margin-bottom:9px;border:.5px solid var(--bd);border-radius:9px;overflow:hidden";d.innerHTML='<div style="display:flex;gap:7px;align-items:center;padding:7px 11px;background:var(--sand);border-bottom:.5px solid var(--bd)"><span style="width:22px;height:22px;background:var(--N);border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#fff;flex-shrink:0">'+cl.n+'</span><input class="ef efg" value="'+cl.t+'" style="font-weight:600;flex:1" onchange="CLAUSES['+i+'].t=this.value;buildContract()"><button class="del" onclick="CLAUSES.splice('+i+',1);renderClauses();buildContract()">×</button></div><div style="padding:8px 11px"><textarea class="ef efg" rows="2" style="width:100%;font-size:11.5px" onchange="CLAUSES['+i+'].b=this.value;buildContract()">'+cl.b+'</textarea></div>';c.appendChild(d);});}
+function addClause(){CLAUSES.push({n:CLAUSES.length+1,t:"بند جديد",b:"نص البند..."});renderClauses();}
+
+// ══ CONTRACT ═══════════════════════════════════════════════════
+function buildContractHTML(){
+  var p1=V("c-p1")||"شركة بُعد التمكين";
+  var p2=V("c-p2")||"جمعية توفير الدواء";
+  var p2sig=V("c-p2sig")||"محمد القحطاني — المدير التنفيذي";
+  var cno=V("c-no")||"—";
+  var cdateRaw=V("c-date"); var cdate=cdateRaw?new Date(cdateRaw).toLocaleDateString("ar-SA"):"—";
+  var cdur=V("c-dur")||"—";
+  var vatIncluded=document.getElementById("vat-included").checked;
+  var grossInput=parseFloat(V("c-gross"))||0;
+  var vatPct=parseFloat(V("c-vat"))||0;
+  var gross=vatIncluded?grossInput/(1+vatPct/100):grossInput;
+  var vat=gross*vatPct/100;
+  var r2=parseFloat(V("c-r2"))||0, r3=parseFloat(V("c-r3"))||0;
+  var payMeth=V("pay-method")||"—";
+  var finTotal=FIN.reduce(function(s,i){return s+(i.a||0);},0);
+  var logoSrc=document.getElementById("logo-main").src;
+  var cHTML=CLAUSES.map(function(cl){return '<p style="margin-bottom:4px"><strong>المادة '+cl.n+': '+cl.t+'</strong></p><p style="color:#333;margin-bottom:12px">'+cl.b+'</p>';}).join("");
+  var fHTML=FIN.map(function(f){return '<tr><td>'+f.c+'</td><td style="font-family:monospace;text-align:left">'+fmt(f.a)+'</td><td style="color:#72728A">'+f.o+'</td></tr>';}).join("");
+  var css='<style>*{box-sizing:border-box;margin:0;padding:0}@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap");body{font-family:"IBM Plex Sans Arabic",Arial,sans-serif;direction:rtl;background:#fff;color:#111;padding:28px;font-size:12px;line-height:1.75;-webkit-print-color-adjust:exact;print-color-adjust:exact}.mn{font-family:"IBM Plex Mono",monospace}.c-logo{display:flex;align-items:center;justify-content:center;margin-bottom:20px;padding-bottom:16px;border-bottom:2px solid #00197D}.c-logo img{width:130px}.c-title{text-align:center;font-size:17px;font-weight:600;color:#00197D;margin-bottom:4px}.c-no{text-align:center;font-size:11px;color:#72728A;margin-bottom:15px}.c-parties{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:15px;padding:12px;background:#F7F4EF;border-radius:8px;-webkit-print-color-adjust:exact}.c-party h4{font-size:10px;color:#72728A;margin-bottom:2px}.c-party p{font-size:12.5px;font-weight:600;color:#00197D}.c-section{margin-bottom:14px}.c-section h3{font-size:11.5px;font-weight:600;color:#00197D;margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid #E0DAD0}.c-section p,.c-section li{font-size:11.5px;line-height:1.75;color:#222;margin-bottom:3px}.c-section ul{padding-right:14px}.ft{width:100%;border-collapse:collapse;margin:6px 0;font-size:11px}.ft th{padding:5px 8px;background:#00197D;color:#fff;text-align:right;font-weight:600;-webkit-print-color-adjust:exact}.ft td{padding:5px 8px;border-bottom:1px solid #E0DAD0}.ftt td{background:#E6EAF8;font-weight:600;color:#00197D;-webkit-print-color-adjust:exact}.c-signs{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:22px;padding-top:14px;border-top:2px solid #E0DAD0}.c-sign{text-align:center}.s-line{border-bottom:1px solid #888;height:45px;margin-bottom:6px}.s-name{font-size:12px;font-weight:600;margin-bottom:2px}.s-role{font-size:10px;color:#72728A}@media print{body{padding:15px}}</style>';
+  return '<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="UTF-8"><title>عقد ملتقى الصيادلة</title>'+css+'</head><body>'+
+    '<div class="c-logo"><img src="'+logoSrc+'" style="width:130px;height:auto"></div>'+
+    '<div class="c-title">عقد تنظيم وتنفيذ مبادرة ملتقى الصيادلة للتأهيل المهني</div>'+
+    '<div class="c-no">رقم العقد: '+cno+' &nbsp;|&nbsp; تاريخ الإبرام: '+cdate+'</div>'+
+    '<div class="c-parties"><div class="c-party"><h4>الطرف الأول — مزود الخدمة</h4><p>'+p1+'</p></div><div class="c-party"><h4>الطرف الثاني — الجمعية</h4><p>'+p2+'</p><p style="font-size:11px;color:#72728A;margin-top:2px">المفوَّض: '+p2sig+'</p></div></div>'+
+    '<div class="c-section"><h3>أولاً: موضوع العقد ومدته</h3><p>اتفق الطرفان على تكليف الطرف الأول بتنفيذ مبادرة ملتقى الصيادلة (12 لقاءً: 5 دورات + 7 تفاعلية) خلال مدة <strong>'+cdur+'</strong>.</p></div>'+
+    '<div class="c-section"><h3>ثانياً: القيمة المالية</h3>'+
+    '<table class="ft"><thead><tr><th>البيان</th><th>القيمة (ر.س)</th></tr></thead><tbody>'+
+    '<tr><td>قيمة الخدمات (قبل الضريبة)</td><td class="mn">'+fmt(gross)+'</td></tr>'+
+    '<tr><td>ضريبة القيمة المضافة ('+vatPct+'%)</td><td class="mn">'+fmt(vat)+'</td></tr>'+
+    '</tbody><tfoot><tr class="ftt"><td><strong>الإجمالي المستحق</strong></td><td class="mn"><strong>'+fmt(gross+vat)+'</strong></td></tr></tfoot></table>'+
+    '<p style="margin-top:8px">آلية السداد: <strong>'+payMeth+'</strong></p></div>'+
+    '<div class="c-section"><h3>ثالثاً: تفصيل الميزانية التنفيذية</h3>'+
+    '<table class="ft"><thead><tr><th>البند</th><th>المبلغ (ر.س)</th><th>المسؤول</th></tr></thead><tbody>'+fHTML+'</tbody>'+
+    '<tfoot><tr class="ftt"><td><strong>المجموع التنفيذي</strong></td><td class="mn"><strong>'+fmt(finTotal)+'</strong></td><td></td></tr></tfoot></table></div>'+
+    '<div class="c-section"><h3>رابعاً: سياسة الإلغاء</h3><ul>'+
+    '<li>الإلغاء قبل 7 أيام: يُستردّ <strong>'+r2+'%</strong> ('+fmt(gross*r2/100)+' ر.س)</li>'+
+    '<li>الإلغاء يوم التنفيذ: يُستردّ <strong>'+r3+'%</strong></li></ul></div>'+
+    '<div class="c-section"><h3>خامساً: بنود العقد</h3>'+cHTML+'</div>'+
+    '<div class="c-signs"><div class="c-sign"><div class="s-line"></div><div class="s-name">'+p1+'</div><div class="s-role">الطرف الأول | التاريخ: ________________</div></div>'+
+    '<div class="c-sign"><div class="s-line"></div><div class="s-name">'+p2+'</div><div class="s-role">'+p2sig+' | التاريخ: ________________</div></div></div>'+
+    '<p style="text-align:center;font-size:10px;color:#72728A;margin-top:14px;padding-top:10px;border-top:1px solid #E0DAD0">نسختان أصليتان | asirpharmacistsforum@outlook.com | @APF_KSA</p>'+
+    '</body></html>';
+}
+
+function buildContract(){
+  var p1=V("c-p1")||"شركة بُعد التمكين";
+  var p2=V("c-p2")||"جمعية توفير الدواء";
+  var p2sig=V("c-p2sig")||"محمد القحطاني";
+  var cno=V("c-no")||"—"; var cdateRaw=V("c-date");
+  var cdate=cdateRaw?new Date(cdateRaw).toLocaleDateString("ar-SA"):"—";
+  var cdur=V("c-dur")||"—";
+  var vatIncluded=document.getElementById("vat-included").checked;
+  var grossInput=parseFloat(V("c-gross"))||0;
+  var vatPct=parseFloat(V("c-vat"))||0;
+  var gross=vatIncluded?grossInput/(1+vatPct/100):grossInput;
+  var vat=gross*vatPct/100;
+  var r2=parseFloat(V("c-r2"))||0, r3=parseFloat(V("c-r3"))||0;
+  var payMeth=V("pay-method")||"—";
+  var logoSrc=document.getElementById("logo-main").src;
+  set("sgn-p1",p1);set("sgn-p2",p2);
+  var cHTML=CLAUSES.map(function(cl){return '<p style="margin-bottom:4px"><strong>المادة '+cl.n+': '+cl.t+'</strong></p><p style="color:#333;margin-bottom:12px">'+cl.b+'</p>';}).join("");
+  var fHTML=FIN.map(function(f){return '<tr><td>'+f.c+'</td><td class="mn">'+fmt(f.a)+'</td><td>'+f.o+'</td></tr>';}).join("");
+  document.getElementById("contract-doc").innerHTML=
+    '<div class="c-logo"><img src="'+logoSrc+'" style="width:130px;height:auto"></div>'+
+    '<div class="c-title">عقد تنظيم وتنفيذ مبادرة ملتقى الصيادلة للتأهيل المهني</div>'+
+    '<div class="c-no">رقم العقد: '+cno+' &nbsp;|&nbsp; تاريخ الإبرام: '+cdate+'</div>'+
+    '<div class="c-parties"><div class="c-party"><h4>الطرف الأول — مزود الخدمة</h4><p>'+p1+'</p></div><div class="c-party"><h4>الطرف الثاني — الجمعية</h4><p>'+p2+'</p><p style="font-size:11px;color:#72728A;margin-top:2px">المفوَّض: '+p2sig+'</p></div></div>'+
+    '<div class="c-section"><h3>أولاً: موضوع العقد ومدته</h3><p>اتفق الطرفان على تكليف الطرف الأول بتنفيذ مبادرة ملتقى الصيادلة للتأهيل المهني (12 لقاءً: 5 دورات + 7 تفاعلية) خلال مدة <strong>'+cdur+'</strong>.</p></div>'+
+    '<div class="c-section"><h3>ثانياً: القيمة المالية</h3>'+
+    '<table class="ft"><thead><tr><th>البيان</th><th>القيمة (ر.س)</th></tr></thead><tbody>'+
+    '<tr><td>قيمة الخدمات (قبل الضريبة)</td><td class="mn">'+fmt(gross)+'</td></tr>'+
+    '<tr><td>ضريبة القيمة المضافة ('+vatPct+'%)</td><td class="mn">'+fmt(vat)+'</td></tr>'+
+    '</tbody><tfoot><tr class="ftt"><td><strong>الإجمالي المستحق</strong></td><td class="mn"><strong>'+fmt(gross+vat)+'</strong></td></tr></tfoot></table>'+
+    '<p style="margin-top:8px">آلية السداد: <strong>'+payMeth+'</strong></p></div>'+
+    '<div class="c-section"><h3>ثالثاً: تفصيل الميزانية التنفيذية</h3>'+
+    '<table class="ft"><thead><tr><th>البند</th><th>المبلغ (ر.س)</th><th>المسؤول</th></tr></thead><tbody>'+fHTML+'</tbody></table></div>'+
+    '<div class="c-section"><h3>رابعاً: سياسة الإلغاء والاسترداد</h3><ul>'+
+    '<li>الإلغاء قبل 7 أيام: يُستردّ <strong>'+r2+'%</strong> ('+fmt(gross*r2/100)+' ر.س)</li>'+
+    '<li>الإلغاء يوم التنفيذ: يُستردّ <strong>'+r3+'%</strong></li></ul></div>'+
+    '<div class="c-section"><h3>خامساً: بنود العقد</h3>'+cHTML+'</div>'+
+    '<div class="c-signs">'+
+      '<div class="c-sign"><div class="s-line"></div><div class="s-name">'+p1+'</div><div class="s-role">الطرف الأول | التاريخ: ________________</div></div>'+
+      '<div class="c-sign"><div class="s-line"></div><div class="s-name">'+p2+'</div><div class="s-role">'+p2sig+' | التاريخ: ________________</div></div>'+
+    '</div>'+
+    '<p style="text-align:center;font-size:10px;color:#72728A;margin-top:14px;padding-top:10px;border-top:1px solid #E0DAD0">نسختان أصليتان | asirpharmacistsforum@outlook.com | @APF_KSA</p>';
+}
+function openContract(){openContractPDF();}
+function closeContract(){document.getElementById("contract-modal").classList.remove("open");}
+function openContractPDF(){
+  var html=buildContractHTML();
+  var blob=new Blob([html],{type:"text/html;charset=utf-8"});
+  var url=URL.createObjectURL(blob);
+  var w=window.open(url,"_blank","width=920,height=750,scrollbars=yes,resizable=yes");
+  if(!w){
+    var a=document.createElement("a");a.href=url;a.download="عقد-ملتقى-الصيادلة.html";a.click();
+  } else {
+    w.addEventListener("load",function(){
+      try{w.print();}catch(e){}
+      setTimeout(function(){URL.revokeObjectURL(url);},8000);
+    });
+    setTimeout(function(){URL.revokeObjectURL(url);},8000);
+  }
+}
+
+function printContractModal(){
+  var w=window.open("","_blank","width=900,height=700,scrollbars=yes");
+  if(!w){
+    // Fallback: Blob URL
+    var html=buildContractHTML();
+    var blob=new Blob([html],{type:"text/html;charset=utf-8"});
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement("a"); a.href=url; a.download="عقد-ملتقى-الصيادلة.html"; a.click();
+    setTimeout(function(){URL.revokeObjectURL(url);},3000);
+    return;
+  }
+  var css='<style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:"IBM Plex Sans Arabic",sans-serif;direction:rtl;background:#fff;color:#111;padding:28px;font-size:12px;line-height:1.75;-webkit-print-color-adjust:exact;print-color-adjust:exact}.mn{font-family:"IBM Plex Mono",monospace}.c-logo{display:flex;align-items:center;justify-content:center;margin-bottom:20px;padding-bottom:16px;border-bottom:2px solid #00197D}.c-logo img{width:130px}.c-title{text-align:center;font-size:17px;font-weight:600;color:#00197D;margin-bottom:4px}.c-no{text-align:center;font-size:11px;color:#72728A;margin-bottom:15px}.c-parties{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:15px;padding:12px;background:#F7F4EF;border-radius:8px;-webkit-print-color-adjust:exact}.c-party h4{font-size:10px;color:#72728A;margin-bottom:2px}.c-party p{font-size:12.5px;font-weight:600;color:#00197D}.c-section{margin-bottom:14px}.c-section h3{font-size:11.5px;font-weight:600;color:#00197D;margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid #E0DAD0}.c-section p,.c-section li{font-size:11.5px;line-height:1.75;color:#222;margin-bottom:3px}.c-section ul{padding-right:14px}.ft{width:100%;border-collapse:collapse;margin:6px 0;font-size:11px}.ft th{padding:5px 8px;background:#00197D;color:#fff;text-align:right;font-weight:600;-webkit-print-color-adjust:exact}.ft td{padding:5px 8px;border-bottom:1px solid #E0DAD0}.ftt td{background:#E6EAF8;font-weight:600;color:#00197D;-webkit-print-color-adjust:exact}.c-signs{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:22px;padding-top:14px;border-top:2px solid #E0DAD0}.c-sign{text-align:center}.s-line{border-bottom:1px solid #888;height:45px;margin-bottom:6px}.s-name{font-size:12px;font-weight:600;margin-bottom:2px}.s-role{font-size:10px;color:#72728A}@media print{body{padding:15px}}</style>';
+  w.document.write(buildContractHTML());
+  w.document.close();
+  setTimeout(function(){w.print();},900);
+}
+
+// ══ DIST EXPORT ════════════════════════════════════════════════
+function exportDist(){
+  buildContract();
+  var logoSrc=document.getElementById("logo-main").src;
+  var gross=parseFloat(V("c-gross"))||0;
+  var vatIncluded=document.getElementById("vat-included").checked;
+  var vatPct=parseFloat(V("c-vat"))||0;
+  var g=vatIncluded?gross/(1+vatPct/100):gross;
+  var vat=g*vatPct/100;
+  var mktT=V("i-mkt-t"); var mktV=parseFloat(V("i-mkt-v"))||0;
+  var cbT=V("i-cb-t");   var cbV=parseFloat(V("i-cb-v"))||0;
+  var mkt=mktT==="pct"?g*mktV/100:mktV;
+  var cb=cbT==="pct"?g*cbV/100:cbV;
+  var execCost=FIN.reduce(function(s,i){return s+(i.a||0);},0);
+  var actualProfit=g-cb-(MKT_SOURCE==="out"?mkt:0)-execCost;
+  var vatRefund=vat;
+  var totalReturn=cb+vatRefund;
+  var mktLabel=MKT_SOURCE==="in"?"تسويق داخلي (يضاف للربح)":"تسويق خارجي (التزام مالي)";
+  var profitNote=MKT_SOURCE==="in"?"يشمل مخصص التسويق الداخلي ("+fmt(mkt)+" ر.س)":"صافي بعد خصم التسويق الخارجي";
+  var execPct=g?pct(execCost,g):0;
+  var profitPct=g?pct(actualProfit<0?0:actualProfit,g):0;
+  var returnPct=g?pct(totalReturn,g):0;
+  var mktPct=g?pct(mkt,g):0;
+  var mktColor=MKT_SOURCE==="in"?"#2C5F2D":"#8B1A0E";
+  var mktBg=MKT_SOURCE==="in"?"#EAF3EA":"#FDECEA";
+  var mktBorderColor=MKT_SOURCE==="in"?"#B0D4B0":"#F5C0B8";
+
+  var html='<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="UTF-8"><title>التوزيع المالي الداخلي</title>'+
+  '<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">'+
+  '<style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:"IBM Plex Sans Arabic",sans-serif;direction:rtl;background:#F7F4EF;color:#1A1A2E;padding:28px;-webkit-print-color-adjust:exact;print-color-adjust:exact}.wrap{max-width:760px;margin:0 auto;background:#fff;border-radius:14px;overflow:hidden;padding:32px}.header{display:flex;align-items:center;gap:18px;margin-bottom:24px;padding-bottom:18px;border-bottom:2px solid #00197D}.header img{width:130px;height:auto}.header h1{font-size:18px;font-weight:600;color:#00197D;margin-bottom:4px}.header p{font-size:11px;color:#72728A}.notice{background:#F0EBF8;border:.5px solid #C5A8E8;border-radius:9px;padding:10px 14px;font-size:11px;color:#5B2D8E;margin-bottom:20px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:18px}.card{border-radius:10px;padding:14px 16px;border:1px solid transparent}.card .label{font-size:10px;font-weight:600;margin-bottom:5px;opacity:.85}.card .pct{font-size:11px;opacity:.65;margin-bottom:4px}.card .amount{font-size:22px;font-weight:600;font-family:"IBM Plex Mono",monospace;margin-bottom:5px}.card .note{font-size:9.5px;opacity:.65;line-height:1.4}.bar-section h3{font-size:12px;font-weight:600;color:#5B2D8E;margin-bottom:8px}.bar{height:22px;border-radius:11px;overflow:hidden;display:flex;margin-bottom:12px}.seg{height:100%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:600;color:rgba(255,255,255,.9);overflow:hidden;white-space:nowrap}.legend{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:16px}.leg{display:flex;align-items:center;gap:5px;font-size:10.5px;color:#72728A}.dot{width:12px;height:12px;border-radius:4px}.return-detail{background:#fff;border:.5px solid #C5A8E8;border-radius:8px;padding:12px 16px;margin-top:14px}.return-detail h3{font-size:12px;font-weight:600;color:#5B2D8E;margin-bottom:10px}.row{display:flex;justify-content:space-between;align-items:flex-start;padding:6px 0;border-bottom:.5px solid #E0DAD0;font-size:12px}.row:last-child{border-bottom:none}.row-tot{font-weight:600;color:#5B2D8E;font-size:13px}.lbl{color:#72728A}.val{font-family:"IBM Plex Mono",monospace;font-weight:500}.footer{text-align:center;font-size:10px;color:#A8A8C0;margin-top:20px;padding-top:14px;border-top:1px solid #E0DAD0}@media print{body{background:#fff;padding:10px}.wrap{box-shadow:none;border-radius:0}}</style></head><body><div class="wrap">'+
+  '<div class="header"><img src="'+logoSrc+'"><div><h1>التوزيع المالي الداخلي</h1><p>مبادرة ملتقى الصيادلة للتأهيل المهني | جمعية توفير الدواء × بُعد التمكين</p><p>إجمالي العقد قبل الضريبة: '+fmt(g)+' ر.س | الضريبة ('+vatPct+'%): '+fmt(vat)+' ر.س | الإجمالي شامل الضريبة: '+fmt(g+vat)+' ر.س</p></div></div>'+
+  '<div class="notice">⚠ هذه الوثيقة للاستخدام الداخلي فقط — لا يُشارك محتواها مع الطرف الثاني ولا يُرفق بالعقد الرسمي.</div>'+
+  '<div class="grid">'+
+  '<div class="card" style="background:#E6EAF8;border-color:#B5C8F0;color:#00197D"><div class="label">تكلفة التنفيذ الفعلي</div><div class="pct">'+execPct+'% من الإجمالي</div><div class="amount">'+fmt(execCost)+' ر.س</div><div class="note">مجموع بنود الميزانية التنفيذية</div></div>'+
+  '<div class="card" style="background:#EAF3EA;border-color:#B0D4B0;color:#2C5F2D"><div class="label">ربح بُعد التمكين</div><div class="pct">'+profitPct+'% من الإجمالي</div><div class="amount">'+fmt(actualProfit<0?0:actualProfit)+' ر.س</div><div class="note">'+profitNote+'</div></div>'+
+  '<div class="card" style="background:#F0EBF8;border-color:#C5A8E8;color:#5B2D8E"><div class="label">إجمالي العوائد للجمعية</div><div class="pct">'+returnPct+'% من الإجمالي</div><div class="amount">'+fmt(totalReturn)+' ر.س</div><div class="note">كاش باك + استرداد ضريبي كامل</div></div>'+
+  '<div class="card" style="background:'+mktBg+';border-color:'+mktBorderColor+';color:'+mktColor+'"><div class="label">'+mktLabel+'</div><div class="pct">'+mktPct+'% من الإجمالي</div><div class="amount">'+fmt(mkt)+' ر.س</div><div class="note">'+(V("i-mkt-name")||"المسوق")+'</div></div>'+
+  '</div>'+
+  '<div class="bar-section"><h3>التوزيع البصري من الإجمالي</h3>'+
+  '<div class="bar"><div class="seg" style="width:'+execPct+'%;background:#00197D">'+execPct+'%</div><div class="seg" style="width:'+profitPct+'%;background:#2C5F2D">'+profitPct+'%</div><div class="seg" style="width:'+returnPct+'%;background:#5B2D8E">'+returnPct+'%</div><div class="seg" style="width:'+mktPct+'%;background:'+mktColor+'">'+mktPct+'%</div></div>'+
+  '<div class="legend"><div class="leg"><div class="dot" style="background:#00197D"></div>تنفيذ فعلي ('+fmt(execCost)+' ر.س)</div><div class="leg"><div class="dot" style="background:#2C5F2D"></div>ربح الشركة ('+fmt(actualProfit<0?0:actualProfit)+' ر.س)</div><div class="leg"><div class="dot" style="background:#5B2D8E"></div>عوائد الجمعية ('+fmt(totalReturn)+' ر.س)</div><div class="leg"><div class="dot" style="background:'+mktColor+'"></div>'+mktLabel+' ('+fmt(mkt)+' ر.س)</div></div>'+
+  '<div class="return-detail"><h3>تفصيل عوائد جمعية توفير الدواء</h3>'+
+  '<div class="row"><span class="lbl">الكاش باك المتفق عليه ('+(cbT==="pct"?cbV+"%":fmt(cb)+" ر.س مقطوع")+')</span><span class="val" style="color:#5B2D8E">'+fmt(cb)+' ر.س</span></div>'+
+  '<div class="row"><div><span class="lbl">الاسترداد الضريبي المتوقع</span><br><span style="font-size:9.5px;color:#A8A8C0">الجمعيات الخيرية تسترد ضريبة القيمة المضافة كاملاً ('+vatPct+'%) بعد تقديم طلب ZATCA</span></div><span class="val" style="color:#5B2D8E">'+fmt(vatRefund)+' ر.س</span></div>'+
+  '<div class="row row-tot"><span>إجمالي عوائد الجمعية</span><span class="val">'+fmt(totalReturn)+' ر.س</span></div></div></div>'+
+  '<div style="margin-top:14px;padding:12px 16px;background:#EAF3EA;border-radius:9px;border:.5px solid #B0D4B0">'+
+    '<div style="font-size:11.5px;font-weight:600;color:#2C5F2D;margin-bottom:7px">الصرف الفعلي حتى الآن</div>'+
+    '<div style="display:flex;justify-content:space-between;font-size:11.5px;padding:4px 0;border-bottom:.5px solid #B0D4B0;margin-bottom:4px"><span style="color:#72728A">المدفوع فعلياً</span><span style="font-family:monospace;font-weight:600;color:#2C5F2D">'+fmt(SPEND_ITEMS.reduce(function(s,i){return s+(i.paid||0);},0))+' ر.س</span></div>'+
+    '<div style="display:flex;justify-content:space-between;font-size:11.5px;padding:4px 0"><span style="color:#72728A">المتبقي من الميزانية</span><span style="font-family:monospace;font-weight:600;color:#B8841A">'+fmt(SPEND_ITEMS.reduce(function(s,i){return s+(i.approved||0);},0)-SPEND_ITEMS.reduce(function(s,i){return s+(i.paid||0);},0))+' ر.س</span></div>'+
+    '</div>'+
+    '<div class="footer">وثيقة سرية — بُعد التمكين للخدمات التنفيذية | تاريخ الإصدار: '+new Date().toLocaleDateString("ar-SA")+'</div>'+
+  '</div></body></html>';
+
+  var blob=new Blob([html],{type:"text/html;charset=utf-8"});
+  var url=URL.createObjectURL(blob);
+  var w=window.open(url,"_blank","width=900,height=750,scrollbars=yes,resizable=yes");
+  if(!w){
+    var a=document.createElement("a");a.href=url;a.download="التوزيع-المالي.html";a.click();
+  } else {
+    w.addEventListener("load",function(){try{w.print();}catch(e){}});
+    setTimeout(function(){URL.revokeObjectURL(url);},8000);
+  }
+}
+function printDist(){exportDist();}
+
+// ══ INIT ═══════════════════════════════════════════════════════
+
+// ── مسح بيانات المشروع للمشروع الجديد الفارغ ─────────────────
+function clearProjectData(){
+  var el;
+  el=document.getElementById('cv1'); if(el) el.textContent='اسم المشروع الجديد';
+  el=document.getElementById('cv2'); if(el) el.textContent='وصف المشروع والجهات المنفذة';
+  el=document.getElementById('cv-client-name'); if(el) el.value='اسم العميل';
+  el=document.getElementById('cv-location'); if(el) el.value='المدينة';
+  el=document.getElementById('cv-audience'); if(el) el.value='الفئة المستهدفة';
+  el=document.getElementById('cv-sessions'); if(el) el.value='عدد اللقاءات';
+  var img=document.getElementById('client-logo-img');
+  var ph=document.getElementById('client-logo-placeholder');
+  if(img){img.style.display='none';img.src='';}
+  if(ph) ph.style.display='flex';
+  el=document.getElementById('c-p2'); if(el) el.value='اسم العميل';
+  el=document.getElementById('c-p2sig'); if(el) el.value='المفوَّض بالتوقيع';
+  el=document.getElementById('c-no'); if(el) el.value='';
+  el=document.getElementById('c-date'); if(el) el.value='';
+  el=document.getElementById('c-gross'); if(el) el.value='0';
+  el=document.getElementById('c-p1'); if(el) el.value='شركة بُعد التمكين';
+  el=document.getElementById('cv-proj-status'); if(el) el.value='draft';
+  GOALS=[];FIN=[];TASKS=[];RISKS=[];CTG=[];AGENDA=[];
+  SPK=[];GST=[];TEAM=[];INVOICES=[];SPEND_ITEMS=[];
+  CLAUSES=[];KPIS=[];COURSES=[];SESSIONS=[];
+  renderGoals();renderCourses();renderSessions();renderKPIs();
+  renderFin();renderAgenda();renderSPK();renderGST();renderTeam();
+  renderTasks();renderRisks();renderCTG();renderClauses();
+  renderInvoices();updateSpend();syncAll();
+}
+window.clearProjectData=clearProjectData;
+
+document.getElementById("logo-main").src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4KPCEtLSBHZW5lcmF0b3I6IEFkb2JlIElsbHVzdHJhdG9yIDMwLjEuMCwgU1ZHIEV4cG9ydCBQbHVnLUluIC4gU1ZHIFZlcnNpb246IDkuMDMgQnVpbGQgMCkgIC0tPgo8c3ZnIHZlcnNpb249IjEuMSIgaWQ9IkxheWVyXzEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHg9IjBweCIgeT0iMHB4IgoJIHZpZXdCb3g9IjAgMCA4NDEuODkgNTk1LjI3NiIgc3R5bGU9ImVuYWJsZS1iYWNrZ3JvdW5kOm5ldyAwIDAgODQxLjg5IDU5NS4yNzY7IiB4bWw6c3BhY2U9InByZXNlcnZlIj4KPGc+Cgk8Zz4KCQk8cGF0aCBzdHlsZT0iZmlsbDojMDAxOTdEOyIgZD0iTTI4Mi4wOTYsMzU3LjQ4N2MtMS44MjgsMC0zLjQzOC0wLjMyMS00LjgzLTAuOTYyYy0xLjM5NC0wLjY0Mi0yLjU2My0xLjUyOC0zLjUwOS0yLjY2CgkJCWMtMC45NDYtMS4xMzEtMS42NTktMi40NDctMi4xMzYtMy45NDhjLTAuNDc5LTEuNTAxLTAuNzE4LTMuMTMzLTAuNzE4LTQuODk2YzAtMC44OTIsMC4wNjUtMS43OTUsMC4xOTUtMi43MDkKCQkJYzAuMTMtMC45MTQsMC4zMDQtMS43OTUsMC41MjMtMi42NDNsMy45ODEsMC43NWMtMC4xOTYsMC44MDUtMC4zNDIsMS41ODgtMC40NDEsMi4zNWMtMC4wOTgsMC43NjItMC4xNDcsMS41MTItMC4xNDcsMi4yNTIKCQkJYzAsMS42MzEsMC4yNjYsMy4wMjQsMC44LDQuMTc3YzAuNTMyLDEuMTUzLDEuMzI3LDIuMDI5LDIuMzgyLDIuNjI3YzEuMDU1LDAuNTk4LDIuMzU1LDAuODk3LDMuOSwwLjg5NwoJCQljMS41NjYsMCwyLjg4OC0wLjI5OSwzLjk2NS0wLjg5N2MxLjA3Ny0wLjU5OSwxLjg5OC0xLjQ3NCwyLjQ2NC0yLjYyN2MwLjU2Ni0xLjE1MywwLjg0OC0yLjU1NiwwLjg0OC00LjIxdi0xMi42M2g0LjExMnYxMi42MwoJCQljMCwxLjc2Mi0wLjI0NCwzLjQtMC43MzMsNC45MTFjLTAuNDksMS41MTItMS4yMjQsMi44MzQtMi4yMDQsMy45NjVjLTAuOTc4LDEuMTMyLTIuMTcsMi4wMTgtMy41NzMsMi42NgoJCQlDMjg1LjU3MSwzNTcuMTY2LDI4My45NDQsMzU3LjQ4NywyODIuMDk2LDM1Ny40ODd6IE0yODIuMTkzLDMzMi41ODdjLTAuNzE4LDAtMS4zMTctMC4yMzktMS43OTUtMC43MTgKCQkJYy0wLjQ3OS0wLjQ3OC0wLjcxNy0xLjA3Ny0wLjcxNy0xLjc5NWMwLTAuNzE3LDAuMjM5LTEuMzE2LDAuNzE3LTEuNzk1YzAuNDc4LTAuNDc4LDEuMDc3LTAuNzE3LDEuNzk1LTAuNzE3CgkJCWMwLjczOSwwLDEuMzQzLDAuMjM5LDEuODExLDAuNzE3YzAuNDY4LDAuNDc5LDAuNzAyLDEuMDc4LDAuNzAyLDEuNzk1YzAsMC43MTgtMC4yMzUsMS4zMTctMC43MDIsMS43OTUKCQkJQzI4My41MzYsMzMyLjM0NywyODIuOTMyLDMzMi41ODcsMjgyLjE5MywzMzIuNTg3eiBNMjk2LjYxOCwzNDguNTc4Yy0yLjExLDAtMy43NjQtMC40NzMtNC45NjEtMS40MgoJCQljLTEuMTk2LTAuOTQ3LTEuOTM2LTIuMzM0LTIuMjE5LTQuMTZsNC4wMTQtMS4yNzNjMC4wNjUsMC44NDgsMC4zMTEsMS40MTQsMC43MzQsMS42OTdjMC40MjQsMC4yODMsMS4yMzQsMC40MjUsMi40MzEsMC40MjUKCQkJaDEuMjczdjQuNzMySDI5Ni42MTh6IE0yOTcuODkxLDM0OC41Nzh2LTQuNzMyYzAuMjE4LDAsMC4zODEsMC4yMTIsMC40ODksMC42MzZjMC4xMDgsMC40MjUsMC4xNjQsMC45ODUsMC4xNjQsMS42ODEKCQkJYzAsMC43NC0wLjA1NSwxLjMyNy0wLjE2NCwxLjc2MkMyOTguMjcxLDM0OC4zNjEsMjk4LjEwOSwzNDguNTc4LDI5Ny44OTEsMzQ4LjU3OHoiLz4KCQk8cGF0aCBzdHlsZT0iZmlsbDojMDAxOTdEOyIgZD0iTTI5Ny44OTEsMzQ4LjU3OGMtMC4yMTcsMC0wLjM4MS0wLjIxNy0wLjQ4OS0wLjY1M2MtMC4xMDgtMC40MzUtMC4xNjQtMS4wMjItMC4xNjQtMS43NjIKCQkJYzAtMC43MTgsMC4wNTUtMS4yODMsMC4xNjQtMS42OTdjMC4xMDktMC40MTMsMC4yNzItMC42MiwwLjQ4OS0wLjYyVjM0OC41Nzh6IE0yOTcuODkxLDM0OC41Nzh2LTQuNzMyaDYuMzY0djQuNzMySDI5Ny44OTF6CgkJCSBNMzA0LjI1NSwzNDguNTc4di00LjczMmMwLjIxNywwLDAuMzgxLDAuMjEyLDAuNDg5LDAuNjM2YzAuMTA4LDAuNDI1LDAuMTYzLDAuOTg1LDAuMTYzLDEuNjgxYzAsMC43NC0wLjA1NCwxLjMyNy0wLjE2MywxLjc2MgoJCQlDMzA0LjYzNiwzNDguMzYxLDMwNC40NzIsMzQ4LjU3OCwzMDQuMjU1LDM0OC41Nzh6Ii8+CgkJPHBhdGggc3R5bGU9ImZpbGw6IzAwMTk3RDsiIGQ9Ik0zMDQuMjU1LDM0OC41NzhjLTAuMjE3LDAtMC4zODEtMC4yMTctMC40ODktMC42NTNjLTAuMTA4LTAuNDM1LTAuMTY0LTEuMDIyLTAuMTY0LTEuNzYyCgkJCWMwLTAuNzE4LDAuMDU1LTEuMjgzLDAuMTY0LTEuNjk3YzAuMTA5LTAuNDEzLDAuMjcyLTAuNjIsMC40ODktMC42MlYzNDguNTc4eiBNMzA0LjI1NSwzNDguNTc4di00LjczMmg2LjM2NHY0LjczMkgzMDQuMjU1egoJCQkgTTMxMC42MTksMzQ4LjU3OHYtNC43MzJjMC4yMTcsMCwwLjM4MSwwLjIxMiwwLjQ4OSwwLjYzNmMwLjEwOCwwLjQyNSwwLjE2MywwLjk4NSwwLjE2MywxLjY4MWMwLDAuNzQtMC4wNTQsMS4zMjctMC4xNjMsMS43NjIKCQkJQzMxMSwzNDguMzYxLDMxMC44MzYsMzQ4LjU3OCwzMTAuNjE5LDM0OC41Nzh6Ii8+CgkJPHBhdGggc3R5bGU9ImZpbGw6IzAwMTk3RDsiIGQ9Ik0zMTAuNjE5LDM0OC41NzhjLTAuMjE3LDAtMC4zODEtMC4yMTctMC40ODktMC42NTNjLTAuMTA4LTAuNDM1LTAuMTY0LTEuMDIyLTAuMTY0LTEuNzYyCgkJCWMwLTAuNzE4LDAuMDU1LTEuMjgzLDAuMTY0LTEuNjk3YzAuMTA5LTAuNDEzLDAuMjcyLTAuNjIsMC40ODktMC42MlYzNDguNTc4eiBNMzEwLjYxOSwzNDguNTc4di00LjczMmg2LjM2NHY0LjczMkgzMTAuNjE5egoJCQkgTTMxNi45ODMsMzQ4LjU3OHYtNC43MzJjMC4yMTcsMCwwLjM4MSwwLjIxMiwwLjQ4OSwwLjYzNmMwLjEwOCwwLjQyNSwwLjE2MywwLjk4NSwwLjE2MywxLjY4MWMwLDAuNzQtMC4wNTQsMS4zMjctMC4xNjMsMS43NjIKCQkJQzMxNy4zNjQsMzQ4LjM2MSwzMTcuMiwzNDguNTc4LDMxNi45ODMsMzQ4LjU3OHoiLz4KCQk8cGF0aCBzdHlsZT0iZmlsbDojMDAxOTdEOyIgZD0iTTMxNi45ODIsMzQ4LjU3OGMtMC4yMTcsMC0wLjM4LTAuMjE3LTAuNDg5LTAuNjUzYy0wLjEwOS0wLjQzNS0wLjE2NC0xLjAyMi0wLjE2NC0xLjc2MgoJCQljMC0wLjcxOCwwLjA1NS0xLjI4MywwLjE2NC0xLjY5N2MwLjEwOS0wLjQxMywwLjI3Mi0wLjYyLDAuNDg5LTAuNjJWMzQ4LjU3OHogTTMxNi45ODIsMzQ4LjU3OHYtNC43MzJoNi4zNjR2NC43MzJIMzE2Ljk4MnoKCQkJIE0zMjMuMzQ2LDM0OC41Nzh2LTQuNzMyYzAuMjE3LDAsMC4zODEsMC4yMTIsMC40OSwwLjYzNmMwLjEwOCwwLjQyNSwwLjE2MywwLjk4NSwwLjE2MywxLjY4MWMwLDAuNzQtMC4wNTQsMS4zMjctMC4xNjMsMS43NjIKCQkJQzMyMy43MjcsMzQ4LjM2MSwzMjMuNTYzLDM0OC41NzgsMzIzLjM0NiwzNDguNTc4eiIvPgoJCTxwYXRoIHN0eWxlPSJmaWxsOiMwMDE5N0Q7IiBkPSJNMzIzLjM0NiwzNDguNTc4Yy0wLjIxNywwLTAuMzgtMC4yMTctMC40ODktMC42NTNjLTAuMTA5LTAuNDM1LTAuMTY0LTEuMDIyLTAuMTY0LTEuNzYyCgkJCWMwLTAuNzE4LDAuMDU1LTEuMjgzLDAuMTY0LTEuNjk3YzAuMTA5LTAuNDEzLDAuMjcyLTAuNjIsMC40ODktMC42MlYzNDguNTc4eiBNMzIzLjM0NiwzNDguNTc4di00LjczMmgxLjczCgkJCWMwLjg5MiwwLDEuNTY2LTAuMDc3LDIuMDIzLTAuMjI5YzAuNDU3LTAuMTUyLDAuNzYxLTAuNDI0LDAuOTE0LTAuODE2YzAuMTUyLTAuMzkyLDAuMjI4LTAuOTU3LDAuMjI4LTEuNjk3di04Ljc0Nmg0LjE0NXY4Ljc0NgoJCQljMCwxLjYzMS0wLjI3MywzLjAwMi0wLjgxNyw0LjExMnMtMS4zNTQsMS45NDctMi40MzEsMi41MTNjLTEuMDc4LDAuNTY2LTIuNDMyLDAuODQ4LTQuMDYzLDAuODQ4SDMyMy4zNDZ6IE0zMjcuNjg3LDM1Ni41MDkKCQkJYy0wLjYwOSwwLTEuMTIxLTAuMjEyLTEuNTM0LTAuNjM3Yy0wLjQxMy0wLjQyNC0wLjYyLTAuOTMtMC42Mi0xLjUxN2MwLTAuNjUzLDAuMjA3LTEuMTgsMC42Mi0xLjU4MwoJCQljMC40MTMtMC40MDMsMC45MjUtMC42MDQsMS41MzQtMC42MDRjMC42MzEsMCwxLjE1MywwLjIwMSwxLjU2NywwLjYwNGMwLjQxMywwLjQwMiwwLjYyLDAuOTMsMC42MiwxLjU4MwoJCQljMCwwLjU4Ny0wLjIwNywxLjA5My0wLjYyLDEuNTE3QzMyOC44NCwzNTYuMjk3LDMyOC4zMTgsMzU2LjUwOSwzMjcuNjg3LDM1Ni41MDl6IE0zMzUuNTUyLDM0OC41NzgKCQkJYy0xLjYzMSwwLTIuOTg2LTAuMjgyLTQuMDYzLTAuODQ4cy0xLjg4OC0xLjQwNC0yLjQzMi0yLjUxM2MtMC41NDMtMS4xMDktMC44MTYtMi40ODEtMC44MTYtNC4xMTJoNC4xNDUKCQkJYzAsMC43NCwwLjA3NSwxLjMwNSwwLjIyOCwxLjY5N2MwLjE1MiwwLjM5MiwwLjQ1NiwwLjY2NCwwLjkxMywwLjgxNmMwLjQ1NywwLjE1MiwxLjEzMiwwLjIyOSwyLjAyNCwwLjIyOWgxLjI3MnY0LjczMkgzMzUuNTUyegoJCQkgTTMzMi42ODEsMzU2LjUwOWMtMC42MSwwLTEuMTIxLTAuMjEyLTEuNTM0LTAuNjM3Yy0wLjQxMy0wLjQyNC0wLjYyMS0wLjkzLTAuNjIxLTEuNTE3YzAtMC42NTMsMC4yMDgtMS4xOCwwLjYyMS0xLjU4MwoJCQljMC40MTItMC40MDMsMC45MjQtMC42MDQsMS41MzQtMC42MDRjMC42MywwLDEuMTUyLDAuMjAxLDEuNTY2LDAuNjA0YzAuNDEzLDAuNDAyLDAuNjIsMC45MywwLjYyLDEuNTgzCgkJCWMwLDAuNTg3LTAuMjA3LDEuMDkzLTAuNjIsMS41MTdDMzMzLjgzMywzNTYuMjk3LDMzMy4zMTEsMzU2LjUwOSwzMzIuNjgxLDM1Ni41MDl6IE0zMzYuODI0LDM0OC41Nzh2LTQuNzMyCgkJCWMwLjIxOCwwLDAuMzgyLDAuMjEyLDAuNDksMC42MzZjMC4xMDksMC40MjUsMC4xNjMsMC45ODUsMC4xNjMsMS42ODFjMCwwLjc0LTAuMDU0LDEuMzI3LTAuMTYzLDEuNzYyCgkJCUMzMzcuMjA2LDM0OC4zNjEsMzM3LjA0MiwzNDguNTc4LDMzNi44MjQsMzQ4LjU3OHoiLz4KCQk8cGF0aCBzdHlsZT0iZmlsbDojMDAxOTdEOyIgZD0iTTMzNi44MjUsMzQ4LjU3OGMtMC4yMTcsMC0wLjM4MS0wLjIxNy0wLjQ4OS0wLjY1M2MtMC4xMDgtMC40MzUtMC4xNjQtMS4wMjItMC4xNjQtMS43NjIKCQkJYzAtMC43MTgsMC4wNTUtMS4yODMsMC4xNjQtMS42OTdzMC4yNzItMC42MiwwLjQ4OS0wLjYyVjM0OC41Nzh6IE0zMzYuODI1LDM0OC41Nzh2LTQuNzMyaDYuMzY0djQuNzMySDMzNi44MjV6IE0zNDMuMTg5LDM0OC41NzgKCQkJdi00LjczMmMwLjIxNywwLDAuMzgxLDAuMjEyLDAuNDg5LDAuNjM2YzAuMTA5LDAuNDI1LDAuMTYzLDAuOTg1LDAuMTYzLDEuNjgxYzAsMC43NC0wLjA1NCwxLjMyNy0wLjE2MywxLjc2MgoJCQlDMzQzLjU3LDM0OC4zNjEsMzQzLjQwNiwzNDguNTc4LDM0My4xODksMzQ4LjU3OHoiLz4KCQk8cGF0aCBzdHlsZT0iZmlsbDojMDAxOTdEOyIgZD0iTTM0My4xODksMzQ4LjU3OGMtMC4yMTcsMC0wLjM4LTAuMjE3LTAuNDg5LTAuNjUzYy0wLjEwOC0wLjQzNS0wLjE2NC0xLjAyMi0wLjE2NC0xLjc2MgoJCQljMC0wLjcxOCwwLjA1NS0xLjI4MywwLjE2NC0xLjY5N2MwLjEwOS0wLjQxMywwLjI3Mi0wLjYyLDAuNDg5LTAuNjJWMzQ4LjU3OHogTTM0My4xODksMzQ4LjU3OHYtNC43MzJoNS42NzkKCQkJYzEuMDIxLDAsMS44ODgtMC4xMiwyLjU5NS0wLjM1OWMwLjcwNi0wLjIzOSwxLjI0NS0wLjU2LDEuNjE0LTAuOTYyYzAuMzctMC40MDMsMC41NTYtMC44NDQsMC41NTYtMS4zMjMKCQkJYzAtMC4zMjYtMC4wODgtMC42NTgtMC4yNjItMC45OTVjLTAuMTc0LTAuMzM3LTAuNTE2LTAuNzU2LTEuMDI3LTEuMjU2Yy0wLjUxMi0wLjUtMS4yNjgtMS4xNDItMi4yNjktMS45MjYKCQkJYy0xLjAwMS0wLjc4My0yLjMyNy0xLjc2Mi0zLjk4MS0yLjkzN2wtMS44OTMtMS40MzZsMi42NDMtMy42ODhsMi4yODUsMS42OTdjMS41MDEsMS4xMSwyLjc5NiwyLjEwMSwzLjg4NCwyLjk3MQoJCQljMS4wODgsMC44NywxLjk4LDEuNjk3LDIuNjc2LDIuNDhjMC42OTYsMC43ODQsMS4yMTIsMS41ODQsMS41NTEsMi4zOTljMC4zMzcsMC44MTYsMC41MDUsMS43MTQsMC41MDUsMi42OTIKCQkJYzAsMS41MjQtMC4zODEsMi44NC0xLjE0MiwzLjk0OWMtMC43NjIsMS4xMS0xLjgxNywxLjk1OS0zLjE2NiwyLjU0NnMtMi44NzEsMC44ODEtNC41NjgsMC44ODFIMzQzLjE4OXogTTM0NC4yMDEsMzMyLjY1MnYtNC41NjkKCQkJbDE1LjA0NS02LjkxOXY1LjEyNEwzNDQuMjAxLDMzMi42NTJ6IE0zNjAuOTQzLDM0OC41NzhjLTEuNjMyLDAtMi45ODctMC4yODItNC4wNjMtMC44NDhjLTEuMDc4LTAuNTY2LTEuODg4LTEuNDA0LTIuNDMyLTIuNTEzCgkJCWMtMC41NDQtMS4xMDktMC44MTYtMi40ODEtMC44MTYtNC4xMTJ2LTAuMDk4bDQuMTEyLDAuMTY0djAuMDY1YzAuMDIyLDAuNjk3LDAuMTE0LDEuMjM2LDAuMjc3LDEuNjE2CgkJCWMwLjE2NCwwLjM4MSwwLjQ3MywwLjY0MiwwLjkzMSwwLjc4M2MwLjQ1NywwLjE0MSwxLjEyMSwwLjIxMiwxLjk5MSwwLjIxMmgxLjI0djQuNzMySDM2MC45NDN6IE0zNjIuMTgzLDM0OC41Nzh2LTQuNzMyCgkJCWMwLjIzOSwwLDAuNDA4LDAuMjEyLDAuNTA1LDAuNjM2YzAuMDk4LDAuNDI1LDAuMTQ4LDAuOTg1LDAuMTQ4LDEuNjgxYzAsMC43NC0wLjA1LDEuMzI3LTAuMTQ4LDEuNzYyCgkJCUMzNjIuNTkxLDM0OC4zNjEsMzYyLjQyMiwzNDguNTc4LDM2Mi4xODMsMzQ4LjU3OHoiLz4KCQk8cGF0aCBzdHlsZT0iZmlsbDojMDAxOTdEOyIgZD0iTTM2Mi4xODMsMzQ4LjU3OGMtMC4yMTcsMC0wLjM4MS0wLjIxNy0wLjQ5LTAuNjUzYy0wLjEwOC0wLjQzNS0wLjE2My0xLjAyMi0wLjE2My0xLjc2MgoJCQljMC0wLjcxOCwwLjA1NC0xLjI4MywwLjE2My0xLjY5N2MwLjEwOS0wLjQxMywwLjI3My0wLjYyLDAuNDktMC42MlYzNDguNTc4eiBNMzYyLjE4MywzNDguNTc4di00LjczMmg2LjM2NHY0LjczMkgzNjIuMTgzegoJCQkgTTM2OC41NDgsMzQ4LjU3OHYtNC43MzJjMC4yMTcsMCwwLjM4LDAuMjEyLDAuNDg4LDAuNjM2YzAuMTA5LDAuNDI1LDAuMTY0LDAuOTg1LDAuMTY0LDEuNjgxYzAsMC43NC0wLjA1NCwxLjMyNy0wLjE2NCwxLjc2MgoJCQlDMzY4LjkyNywzNDguMzYxLDM2OC43NjUsMzQ4LjU3OCwzNjguNTQ4LDM0OC41Nzh6Ii8+CgkJPHBhdGggc3R5bGU9ImZpbGw6IzAwMTk3RDsiIGQ9Ik0zNjguNTQ4LDM0OC41NzhjLTAuMjE3LDAtMC4zODEtMC4yMTctMC40OS0wLjY1M2MtMC4xMDgtMC40MzUtMC4xNjMtMS4wMjItMC4xNjMtMS43NjIKCQkJYzAtMC43MTgsMC4wNTQtMS4yODMsMC4xNjMtMS42OTdjMC4xMDktMC40MTMsMC4yNzMtMC42MiwwLjQ5LTAuNjJWMzQ4LjU3OHogTTM2OC41NDgsMzQ4LjU3OHYtNC43MzIKCQkJYzAuOTc4LDAsMS44MDUtMC4xOCwyLjQ4MS0wLjUzOWMwLjY3My0wLjM1OSwxLjI3OC0wLjg3LDEuODExLTEuNTM0YzAuNTMzLTAuNjYzLDEuMDcxLTEuNDQxLDEuNjE1LTIuMzM0CgkJCWMwLjUyMi0wLjgyNiwxLjA4Mi0xLjY1OCwxLjY4MS0yLjQ5NmMwLjU5OS0wLjgzNywxLjI1Ni0xLjU5OSwxLjk3NC0yLjI4NGMwLjcxOC0wLjY4NiwxLjUxOC0xLjI0LDIuNC0xLjY2NQoJCQljMC44ODEtMC40MjQsMS44ODctMC42MzYsMy4wMTgtMC42MzZjMS4xNzUsMCwyLjE5NywwLjI1MSwzLjA2NywwLjc1YzAuODcsMC41MDEsMS41ODgsMS4xNzUsMi4xNTUsMi4wMjQKCQkJYzAuNTY1LDAuODQ4LDAuOTg0LDEuODIyLDEuMjU1LDIuOTJjMC4yNzMsMS4wOTksMC40MDksMi4yMzYsMC40MDksMy40MTFzLTAuMTUyLDIuNDY0LTAuNDU3LDMuODY3CgkJCWMtMC4zMDUsMS40MDQtMC43NzMsMi43MDQtMS40MDMsMy45bC0zLjc4Ni0xLjk1OWMwLjUwMS0wLjg3LDAuODgxLTEuOCwxLjE0My0yLjc5YzAuMjYxLTAuOTksMC4zOTEtMS45OTYsMC4zOTEtMy4wMTgKCQkJYzAtMS41MDEtMC4yNDQtMi42MTEtMC43MzMtMy4zMjljLTAuNDktMC43MTgtMS4xOC0xLjA3OC0yLjA3My0xLjA3OGMtMC41ODcsMC0xLjE2NSwwLjE1OC0xLjczLDAuNDczCgkJCWMtMC41NjUsMC4zMTYtMS4xNTgsMC44MzgtMS43NzgsMS41NjdjLTAuNjIsMC43My0xLjMxLDEuNzE0LTIuMDcyLDIuOTU0Yy0wLjk1OCwxLjQ4LTEuODgzLDIuNzAzLTIuNzc0LDMuNjcxCgkJCWMtMC44OTIsMC45NjgtMS44NiwxLjY4Ni0yLjkwNSwyLjE1NEMzNzEuMTkxLDM0OC4zNDQsMzY5Ljk2MiwzNDguNTc4LDM2OC41NDgsMzQ4LjU3OHogTTM4OC4zMjQsMzQ0LjQ5OWwwLjIyOCw0LjczMgoJCQljLTIuMDQ1LDAuMTMtMy44MjQsMC4xMTktNS4zMzUtMC4wMzNjLTEuNTEzLTAuMTUyLTIuODM1LTAuNDI1LTMuOTY2LTAuODE2Yy0xLjEzMi0wLjM5Mi0yLjEzOC0wLjg4Ny0zLjAxOS0xLjQ4NQoJCQljLTAuODgxLTAuNTk4LTEuNzAyLTEuMjg5LTIuNDY0LTIuMDczbDIuODQtMy4wNjdjMC43ODMsMC44MDQsMS42OTEsMS40MjUsMi43MjUsMS44NTljMS4wMzQsMC40MzYsMi4yODUsMC43MTgsMy43NTQsMC44NDkKCQkJQzM4NC41NTUsMzQ0LjU5NiwzODYuMywzNDQuNjA4LDM4OC4zMjQsMzQ0LjQ5OXogTTM5My41NDYsMzQ4LjU3OGMtMS41MjMsMC0yLjgtMC4yODItMy44MzUtMC44NDgKCQkJYy0xLjAzMy0wLjU2Ni0xLjgxNi0xLjQwNC0yLjM1LTIuNTEzcy0wLjc5OS0yLjQ4MS0wLjc5OS00LjExMnYtMC43MThsMy42ODcsMC4xNjRsMC4xMzEsMC43NQoJCQljMC4wMjIsMC42NzQsMC4xMTQsMS4xOTcsMC4yNzcsMS41NjdjMC4xNjQsMC4zNywwLjQ3MywwLjYyNiwwLjkzMSwwLjc2N2MwLjQ1NywwLjE0MSwxLjExLDAuMjEyLDEuOTU4LDAuMjEyaDEuMjc0djQuNzMyCgkJCUgzOTMuNTQ2eiBNMzk0LjgxOSwzNDguNTc4di00LjczMmMwLjIxNywwLDAuMzgsMC4yMTIsMC40ODgsMC42MzZjMC4xMDksMC40MjUsMC4xNjQsMC45ODUsMC4xNjQsMS42ODEKCQkJYzAsMC43NC0wLjA1NCwxLjMyNy0wLjE2NCwxLjc2MkMzOTUuMTk5LDM0OC4zNjEsMzk1LjAzNiwzNDguNTc4LDM5NC44MTksMzQ4LjU3OHoiLz4KCQk8cGF0aCBzdHlsZT0iZmlsbDojMDAxOTdEOyIgZD0iTTM5NC44MTksMzQ4LjU3OGMtMC4yMTcsMC0wLjM4MS0wLjIxNy0wLjQ4OS0wLjY1M2MtMC4xMDgtMC40MzUtMC4xNjQtMS4wMjItMC4xNjQtMS43NjIKCQkJYzAtMC43MTgsMC4wNTUtMS4yODMsMC4xNjQtMS42OTdjMC4xMDktMC40MTMsMC4yNzItMC42MiwwLjQ4OS0wLjYyVjM0OC41Nzh6IE0zOTQuODE5LDM0OC41Nzh2LTQuNzMyaDEuNzI5CgkJCWMwLjg5MiwwLDEuNTY3LTAuMDc3LDIuMDI0LTAuMjI5YzAuNDU2LTAuMTUyLDAuNzYxLTAuNDI0LDAuOTEzLTAuODE2YzAuMTUyLTAuMzkyLDAuMjI4LTAuOTU3LDAuMjI4LTEuNjk3di04Ljc0Nmg0LjE0NXY4Ljc0NgoJCQljMCwxLjYzMS0wLjI3MiwzLjAwMi0wLjgxNiw0LjExMmMtMC41NDQsMS4xMDktMS4zNTQsMS45NDctMi40MzIsMi41MTNjLTEuMDc3LDAuNTY2LTIuNDMxLDAuODQ4LTQuMDYzLDAuODQ4SDM5NC44MTl6CgkJCSBNMzk5LjE5MSwzMjguNzM2Yy0wLjYzLDAtMS4xNTItMC4yMDctMS41NjYtMC42MmMtMC40MTMtMC40MTMtMC42MjEtMC45MjQtMC42MjEtMS41MzRjMC0wLjY1MywwLjIwOC0xLjE4LDAuNjIxLTEuNTgzCgkJCXMwLjkzNS0wLjYwNCwxLjU2Ni0wLjYwNGMwLjYxLDAsMS4xMjEsMC4yMDIsMS41MzQsMC42MDRzMC42MjEsMC45MywwLjYyMSwxLjU4M2MwLDAuNjEtMC4yMDgsMS4xMjEtMC42MjEsMS41MzQKCQkJQzQwMC4zMTIsMzI4LjUyOSwzOTkuODAxLDMyOC43MzYsMzk5LjE5MSwzMjguNzM2eiBNNDA3LjAyNCwzNDguNTc4Yy0xLjYzMSwwLTIuOTg2LTAuMjgyLTQuMDYzLTAuODQ4CgkJCWMtMS4wNzctMC41NjYtMS44ODgtMS40MDQtMi40MzEtMi41MTNzLTAuODE3LTIuNDgxLTAuODE3LTQuMTEyaDQuMTQ1YzAsMC43NCwwLjA3NiwxLjMwNSwwLjIyOCwxLjY5NwoJCQljMC4xNTIsMC4zOTIsMC40NTYsMC42NjQsMC45MTQsMC44MTZjMC40NTcsMC4xNTIsMS4xMzEsMC4yMjksMi4wMjMsMC4yMjloMS4yNzN2NC43MzJINDA3LjAyNHogTTQwNC4xODUsMzI4LjczNgoJCQljLTAuNjMxLDAtMS4xNTMtMC4yMDctMS41NjctMC42MmMtMC40MTMtMC40MTMtMC42Mi0wLjkyNC0wLjYyLTEuNTM0YzAtMC42NTMsMC4yMDctMS4xOCwwLjYyLTEuNTgzczAuOTM1LTAuNjA0LDEuNTY3LTAuNjA0CgkJCWMwLjYwOSwwLDEuMTIsMC4yMDIsMS41MzQsMC42MDRjMC40MTMsMC40MDIsMC42MiwwLjkzLDAuNjIsMS41ODNjMCwwLjYxLTAuMjA4LDEuMTIxLTAuNjIsMS41MzQKCQkJQzQwNS4zMDUsMzI4LjUyOSw0MDQuNzk0LDMyOC43MzYsNDA0LjE4NSwzMjguNzM2eiBNNDA4LjI5NywzNDguNTc4di00LjczMmMwLjIxOCwwLDAuMzgxLDAuMjEyLDAuNDg5LDAuNjM2CgkJCWMwLjEwOSwwLjQyNSwwLjE2NCwwLjk4NSwwLjE2NCwxLjY4MWMwLDAuNzQtMC4wNTUsMS4zMjctMC4xNjQsMS43NjJDNDA4LjY3NywzNDguMzYxLDQwOC41MTUsMzQ4LjU3OCw0MDguMjk3LDM0OC41Nzh6Ii8+CgkJPHBhdGggc3R5bGU9ImZpbGw6IzAwMTk3RDsiIGQ9Ik00MDguMjk4LDM0OC41NzhjLTAuMjE3LDAtMC4zODEtMC4yMTctMC40OS0wLjY1M2MtMC4xMDgtMC40MzUtMC4xNjMtMS4wMjItMC4xNjMtMS43NjIKCQkJYzAtMC43MTgsMC4wNTQtMS4yODMsMC4xNjMtMS42OTdjMC4xMDktMC40MTMsMC4yNzMtMC42MiwwLjQ5LTAuNjJWMzQ4LjU3OHogTTQwOC4yOTgsMzQ4LjU3OHYtNC43MzJoNC40Mzh2LTIyLjc0OGg0LjExMnYyNy40NzkKCQkJSDQwOC4yOTh6Ii8+CgkJPHBhdGggc3R5bGU9ImZpbGw6IzAwMTk3RDsiIGQ9Ik00MjEuMjU0LDM0OC41Nzh2LTI3LjQ3OWg0LjE0NXYyNy40NzlINDIxLjI1NHoiLz4KCQk8cGF0aCBzdHlsZT0iZmlsbDojMDAxOTdEOyIgZD0iTTQzNy45MywzNDguNTc4di00LjczMmgxNS41Njd2NC43MzJINDM3LjkzeiBNNDUwLjUyOCwzNDguNTc4Yy0wLjAyMi0yLjMyOC0wLjQyNC00LjM5NC0xLjIwOC02LjIKCQkJYy0wLjc4My0xLjgwNi0xLjkxNS0zLjMxOC0zLjM5My00LjUzNmMtMS40OC0xLjIxOS0zLjI3Ni0yLjA2Ny01LjM4Ni0yLjU0NmwwLjkxNS00LjUzNmMyLjY5OCwwLjYxLDUuMDI1LDEuNzQxLDYuOTgzLDMuMzk0CgkJCXMzLjQ4MSwzLjcxLDQuNTY5LDYuMTY4YzEuMDg4LDIuNDU5LDEuNjQyLDUuMjEyLDEuNjY0LDguMjU3SDQ1MC41Mjh6IE00NTAuOTUyLDM0OC41Nzh2LTQuNzMyaDYuMjY2djQuNzMySDQ1MC45NTJ6CgkJCSBNNDU3LjIxOCwzNDguNTc4di00LjczMmMwLjIxNywwLDAuMzgsMC4yMTIsMC40OSwwLjYzNmMwLjEwOCwwLjQyNSwwLjE2MywwLjk4NSwwLjE2MywxLjY4MWMwLDAuNzQtMC4wNTQsMS4zMjctMC4xNjMsMS43NjIKCQkJQzQ1Ny41OTgsMzQ4LjM2MSw0NTcuNDM1LDM0OC41NzgsNDU3LjIxOCwzNDguNTc4eiIvPgoJCTxwYXRoIHN0eWxlPSJmaWxsOiMwMDE5N0Q7IiBkPSJNNDU3LjIxOCwzNDguNTc4Yy0wLjIxNywwLTAuMzgtMC4yMTctMC40OS0wLjY1M2MtMC4xMDgtMC40MzUtMC4xNjMtMS4wMjItMC4xNjMtMS43NjIKCQkJYzAtMC43MTgsMC4wNTQtMS4yODMsMC4xNjMtMS42OTdjMC4xMS0wLjQxMywwLjI3My0wLjYyLDAuNDktMC42MlYzNDguNTc4eiBNNDU3LjIxOCwzNDguNTc4di00LjczMmg2LjQ2MQoJCQljMC44MjcsMCwxLjczLTAuMTM2LDIuNzA5LTAuNDA4YzAuOTgtMC4yNzIsMS45NDctMC42MjYsMi45MDUtMS4wNjFjMC45NTctMC40MzUsMS44MzMtMC45MDgsMi42MjYtMS40MgoJCQljMC43OTUtMC41MTEsMS40MjUtMS4wMTIsMS44OTMtMS41MDFjMC40NjgtMC40OSwwLjcwMi0wLjkxOSwwLjcwMi0xLjI4OWMwLTAuMzctMC4yMzktMC43MTMtMC43MTctMS4wMjkKCQkJYy0wLjQ3OS0wLjMxNC0xLjE0OC0wLjU3Ni0yLjAwNy0wLjc4M2MtMC44Ni0wLjIwNy0xLjg1NS0wLjMxLTIuOTg3LTAuMzFjLTAuOTU4LDAtMS44NTUsMC4wODEtMi42OTIsMC4yNDQKCQkJYy0wLjgzOCwwLjE2NC0xLjcyNSwwLjM5OC0yLjY2LDAuNzAybC0xLjE3NSwxLjQ2OWwtMi41MTItMS4wNDVsMi45NjktNC44NjNjMC44OTItMC4yODMsMS44NS0wLjUyOCwyLjg3Mi0wLjczNAoJCQljMS4wMjItMC4yMDcsMi4xNjUtMC4zMSwzLjQyNy0wLjMxYzEuOTE1LDAsMy41OTUsMC4yNSw1LjA0MiwwLjc1YzEuNDQ2LDAuNTAxLDIuNTcyLDEuMTkyLDMuMzc4LDIuMDczCgkJCWMwLjgwNCwwLjg4MSwxLjIwOCwxLjkzMSwxLjIwOCwzLjE0OWMwLDEuMDAxLTAuMjczLDEuOTY5LTAuODE2LDIuOTA0Yy0wLjU0NCwwLjkzNi0xLjI3NCwxLjgxNy0yLjE4NywyLjY0MwoJCQljLTAuOTE0LDAuODI4LTEuOTQyLDEuNTc4LTMuMDg1LDIuMjUyYy0xLjE0MSwwLjY3NC0yLjMyMiwxLjI1Ni0zLjU0LDEuNzQ2Yy0xLjIxOSwwLjQ4OS0yLjQxLDAuODctMy41NzQsMS4xNDIKCQkJcy0yLjIxNCwwLjQwOC0zLjE0OSwwLjQwOEg0NTcuMjE4eiBNNDc1LjAwNSwzNDguNTc4Yy0yLjU2OCwwLTQuODg0LTAuNDYyLTYuOTUxLTEuMzg3Yy0yLjA2Ny0wLjkyNC0zLjgwOC0yLjIzLTUuMjIxLTMuOTE2CgkJCWMtMS40MTUtMS42ODUtMi40MzgtMy42MzgtMy4wNjgtNS44NThsMy4zMjgtMS45MjZjMC4zMDUsMS42NzYsMC45MzEsMy4xNDUsMS44NzcsNC40MDZjMC45NDYsMS4yNjIsMi4xNTQsMi4yMzUsMy42MjMsMi45MjEKCQkJYzEuNDY5LDAuNjg1LDMuMTA1LDEuMDI4LDQuOTExLDEuMDI4aDguMTI2djQuNzMySDQ3NS4wMDV6IE00ODEuNjMsMzQ4LjU3OHYtNC43MzJjMC4yMTcsMCwwLjM4MSwwLjIxMiwwLjQ4OSwwLjYzNgoJCQljMC4xMDgsMC40MjUsMC4xNjQsMC45ODUsMC4xNjQsMS42ODFjMCwwLjc0LTAuMDU1LDEuMzI3LTAuMTY0LDEuNzYyQzQ4Mi4wMSwzNDguMzYxLDQ4MS44NDcsMzQ4LjU3OCw0ODEuNjMsMzQ4LjU3OHoiLz4KCQk8cGF0aCBzdHlsZT0iZmlsbDojMDAxOTdEOyIgZD0iTTQ4MS42MywzNDguNTc4Yy0wLjIxNywwLTAuMzgxLTAuMjE3LTAuNDg5LTAuNjUzYy0wLjEwOS0wLjQzNS0wLjE2NC0xLjAyMi0wLjE2NC0xLjc2MgoJCQljMC0wLjcxOCwwLjA1NS0xLjI4MywwLjE2NC0xLjY5N2MwLjEwOC0wLjQxMywwLjI3Mi0wLjYyLDAuNDg5LTAuNjJWMzQ4LjU3OHogTTQ4MS42MywzNDguNTc4di00LjczMmg2LjM2NHY0LjczMkg0ODEuNjN6CgkJCSBNNDg3Ljk5NCwzNDguNTc4di00LjczMmMwLjIxNywwLDAuMzgxLDAuMjEyLDAuNDg5LDAuNjM2YzAuMTA4LDAuNDI1LDAuMTYzLDAuOTg1LDAuMTYzLDEuNjgxYzAsMC43NC0wLjA1NCwxLjMyNy0wLjE2MywxLjc2MgoJCQlDNDg4LjM3NCwzNDguMzYxLDQ4OC4yMTEsMzQ4LjU3OCw0ODcuOTk0LDM0OC41Nzh6Ii8+CgkJPHBhdGggc3R5bGU9ImZpbGw6IzAwMTk3RDsiIGQ9Ik00ODcuOTk0LDM0OC41NzhjLTAuMjE3LDAtMC4zODEtMC4yMTctMC40ODktMC42NTNjLTAuMTA5LTAuNDM1LTAuMTY0LTEuMDIyLTAuMTY0LTEuNzYyCgkJCWMwLTAuNzE4LDAuMDU1LTEuMjgzLDAuMTY0LTEuNjk3YzAuMTA4LTAuNDEzLDAuMjcyLTAuNjIsMC40ODktMC42MlYzNDguNTc4eiBNNDg3Ljk5NCwzNDguNTc4di00LjczMmg2LjM2NHY0LjczMkg0ODcuOTk0egoJCQkgTTQ5NC4zNTgsMzQ4LjU3OHYtNC43MzJjMC4yMTcsMCwwLjM4MSwwLjIxMiwwLjQ4OSwwLjYzNmMwLjEwOCwwLjQyNSwwLjE2MywwLjk4NSwwLjE2MywxLjY4MWMwLDAuNzQtMC4wNTQsMS4zMjctMC4xNjMsMS43NjIKCQkJQzQ5NC43MzgsMzQ4LjM2MSw0OTQuNTc1LDM0OC41NzgsNDk0LjM1OCwzNDguNTc4eiIvPgoJCTxwYXRoIHN0eWxlPSJmaWxsOiMwMDE5N0Q7IiBkPSJNNDk0LjM1NywzNDguNTc4Yy0wLjIxNywwLTAuMzgtMC4yMTctMC40ODktMC42NTNjLTAuMTA4LTAuNDM1LTAuMTY0LTEuMDIyLTAuMTY0LTEuNzYyCgkJCWMwLTAuNzE4LDAuMDU1LTEuMjgzLDAuMTY0LTEuNjk3YzAuMTA5LTAuNDEzLDAuMjcyLTAuNjIsMC40ODktMC42MlYzNDguNTc4eiBNNDk0LjM1NywzNDguNTc4di00LjczMmg2LjM2NHY0LjczMkg0OTQuMzU3egoJCQkgTTUwMC43MjEsMzQ4LjU3OHYtNC43MzJjMC4yMTcsMCwwLjM4MSwwLjIxMiwwLjQ5LDAuNjM2YzAuMTA4LDAuNDI1LDAuMTYzLDAuOTg1LDAuMTYzLDEuNjgxYzAsMC43NC0wLjA1NCwxLjMyNy0wLjE2MywxLjc2MgoJCQlDNTAxLjEwMiwzNDguMzYxLDUwMC45MzgsMzQ4LjU3OCw1MDAuNzIxLDM0OC41Nzh6Ii8+CgkJPHBhdGggc3R5bGU9ImZpbGw6IzAwMTk3RDsiIGQ9Ik01MDAuNzIxLDM0OC41NzhjLTAuMjE3LDAtMC4zOC0wLjIxNy0wLjQ4OS0wLjY1M2MtMC4xMDgtMC40MzUtMC4xNjQtMS4wMjItMC4xNjQtMS43NjIKCQkJYzAtMC43MTgsMC4wNTUtMS4yODMsMC4xNjQtMS42OTdjMC4xMDktMC40MTMsMC4yNzItMC42MiwwLjQ4OS0wLjYyVjM0OC41Nzh6IE01MDAuNzIxLDM0OC41Nzh2LTQuNzMyaDYuMzY0djQuNzMySDUwMC43MjF6CgkJCSBNNTA3LjA4NSwzNDguNTc4di00LjczMmMwLjIxNywwLDAuMzgxLDAuMjEyLDAuNDksMC42MzZjMC4xMDgsMC40MjUsMC4xNjMsMC45ODUsMC4xNjMsMS42ODFjMCwwLjc0LTAuMDU0LDEuMzI3LTAuMTYzLDEuNzYyCgkJCUM1MDcuNDY2LDM0OC4zNjEsNTA3LjMwMiwzNDguNTc4LDUwNy4wODUsMzQ4LjU3OHoiLz4KCQk8cGF0aCBzdHlsZT0iZmlsbDojMDAxOTdEOyIgZD0iTTUwNy4wODUsMzQ4LjU3OGMtMC4yMTcsMC0wLjM4LTAuMjE3LTAuNDg5LTAuNjUzYy0wLjEwOC0wLjQzNS0wLjE2NC0xLjAyMi0wLjE2NC0xLjc2MgoJCQljMC0wLjcxOCwwLjA1NS0xLjI4MywwLjE2NC0xLjY5N2MwLjEwOS0wLjQxMywwLjI3Mi0wLjYyLDAuNDg5LTAuNjJWMzQ4LjU3OHogTTUwNy4wODUsMzQ4LjU3OHYtNC43MzJoNi4zNjR2NC43MzJINTA3LjA4NXoKCQkJIE01MTMuNDQ5LDM0OC41Nzh2LTQuNzMyYzAuMjE3LDAsMC4zODEsMC4yMTIsMC40OSwwLjYzNmMwLjEwOSwwLjQyNSwwLjE2MywwLjk4NSwwLjE2MywxLjY4MWMwLDAuNzQtMC4wNTQsMS4zMjctMC4xNjMsMS43NjIKCQkJQzUxMy44MywzNDguMzYxLDUxMy42NjYsMzQ4LjU3OCw1MTMuNDQ5LDM0OC41Nzh6Ii8+CgkJPHBhdGggc3R5bGU9ImZpbGw6IzAwMTk3RDsiIGQ9Ik01MTkuMjI2LDMyOC4yNzhjLTAuNSwwLTEuMTI1LTAuMDYtMS44NzYtMC4xOGMtMC43NS0wLjExOS0xLjQ3NC0wLjI5OC0yLjE3LTAuNTM4bDAuNjUzLTEuOTI2CgkJCWMwLjQ5OSwwLjE3NCwxLjA2NiwwLjMxNSwxLjY5NywwLjQyNWMwLjYzLDAuMTA5LDEuMTk2LDAuMTYzLDEuNjk3LDAuMTYzYzAuMjYyLDAsMC41MTctMC4wMTYsMC43NjctMC4wNDkKCQkJYzAuMjUxLTAuMDMzLDAuNDg0LTAuMDgyLDAuNzAyLTAuMTQ3Yy0wLjM3LTAuMzkyLTAuNjQ3LTAuODA1LTAuODMyLTEuMjRjLTAuMTg1LTAuNDM1LTAuMjc4LTAuODYtMC4yNzgtMS4yNzMKCQkJYzAtMC41NDMsMC4xMjUtMS4wNDksMC4zNzYtMS41MTdjMC4yNS0wLjQ2OCwwLjYwMy0wLjg0NCwxLjA2MS0xLjEyNmMwLjQ1Ni0wLjI4MiwwLjk2Ny0wLjQyNSwxLjUzNC0wLjQyNQoJCQljMC43NjEsMCwxLjQxNCwwLjI2NywxLjk1OCwwLjhjMC41NDMsMC41MzMsMC44MTcsMS4yNjcsMC44MTcsMi4yMDNjMCwwLjk3OS0wLjI5NCwxLjgyOC0wLjg4MiwyLjU0NgoJCQljLTAuNTg3LDAuNzE3LTEuMzUsMS4yNzktMi4yODQsMS42ODFDNTIxLjIyNywzMjguMDc3LDUyMC4yNDksMzI4LjI3OCw1MTkuMjI2LDMyOC4yNzh6IE01MjIuNjIxLDMyNC45ODIKCQkJYzAuMjE3LTAuMjM5LDAuMzg1LTAuNDg5LDAuNTA1LTAuNzVjMC4xMi0wLjI2MSwwLjE4LTAuNTMzLDAuMTgtMC44MTdjMC0wLjMyNi0wLjA2NS0wLjU1OS0wLjE5Ni0wLjcwMgoJCQljLTAuMTMtMC4xNDEtMC4zMDUtMC4yMTItMC41MjItMC4yMTJjLTAuMjYsMC0wLjQ4OSwwLjA5NC0wLjY4NSwwLjI3OGMtMC4xOTYsMC4xODUtMC4yOTQsMC40My0wLjI5NCwwLjczNAoJCQljMCwwLjIzOSwwLjA4MSwwLjQ4NCwwLjI0NSwwLjczNEM1MjIuMDE3LDMyNC40OTksNTIyLjI3MiwzMjQuNzQzLDUyMi42MjEsMzI0Ljk4MnoiLz4KCQk8cGF0aCBzdHlsZT0iZmlsbDojMDAxOTdEOyIgZD0iTTUxMy40NDksMzQ4LjU3OGMtMC4yMTcsMC0wLjM4LTAuMjE3LTAuNDg5LTAuNjUzYy0wLjEwOS0wLjQzNS0wLjE2NC0xLjAyMi0wLjE2NC0xLjc2MgoJCQljMC0wLjcxOCwwLjA1NS0xLjI4MywwLjE2NC0xLjY5N2MwLjEwOS0wLjQxMywwLjI3Mi0wLjYyLDAuNDg5LTAuNjJWMzQ4LjU3OHogTTUxOC4xODIsMzMyLjM1OGg0LjE0NHYxNi4yMmgtOC44Nzd2LTQuNzMyaDQuNzMzCgkJCVYzMzIuMzU4eiBNNTE4LjczNywzNTcuNzE2Yy0wLjcxNywwLTEuMzE2LTAuMjQtMS43OTUtMC43MThjLTAuNDc5LTAuNDc5LTAuNzE4LTEuMDc3LTAuNzE4LTEuNzk1czAuMjM5LTEuMzE3LDAuNzE4LTEuNzk1CgkJCWMwLjQ3OS0wLjQ3OSwxLjA3OC0wLjcxOCwxLjc5NS0wLjcxOGMwLjc0LDAsMS4zNDMsMC4yMzksMS44MTIsMC43MThjMC40NjgsMC40NzgsMC43MDEsMS4wNzcsMC43MDEsMS43OTUKCQkJcy0wLjIzNCwxLjMxNi0wLjcwMSwxLjc5NUM1MjAuMDgsMzU3LjQ3Niw1MTkuNDc2LDM1Ny43MTYsNTE4LjczNywzNTcuNzE2eiIvPgoJPC9nPgoJPGc+CgkJPHBhdGggc3R5bGU9ImZpbGw6IzAwMTk3RDsiIGQ9Ik0yODIuMjc2LDM2NC4xNjdjMS42NDIsMCwzLjA0OCwwLjIyNCw0LjIyLDAuNjcyYzEuMTcyLDAuNDQ4LDIuMDc4LDEuMDkyLDIuNzE4LDEuOTM0CgkJCWMwLjYzOSwwLjg0MywwLjk1OSwxLjgzOSwwLjk1OSwyLjk4OWMwLDEuMjE1LTAuMzQ2LDIuMjcxLTEuMDM5LDMuMTY2Yy0wLjY5MiwwLjg5NS0xLjYzNiwxLjQ5Mi0yLjgyOSwxLjc5CgkJCWMxLjQ1LDAuMjU1LDIuNTk1LDAuODksMy40MzcsMS45MDJjMC44NDIsMS4wMTMsMS4yNjMsMi4yNjUsMS4yNjMsMy43NTdjMCwxLjI3OS0wLjM0MSwyLjM3Ny0xLjAyMywzLjI5MgoJCQljLTAuNjgyLDAuOTE4LTEuNjUyLDEuNjI2LTIuOTEsMi4xMjdjLTEuMjU3LDAuNS0yLjc0OSwwLjc1MS00LjQ3NiwwLjc1MWgtMTAuNDg4di0yMi4zODJIMjgyLjI3NnogTTI4Mi4wNTIsMzczLjI4CgkJCWMxLjAwMiwwLDEuNzktMC4yNCwyLjM2NS0wLjcxOWMwLjU3Ni0wLjQ4LDAuODYzLTEuMTM1LDAuODYzLTEuOTY3cy0wLjI4Ny0xLjQ3Ni0wLjg2My0xLjkzNAoJCQljLTAuNTc1LTAuNDU4LTEuMzY0LTAuNjc2LTIuMzY1LTAuNjU2aC01LjE0OHY1LjI3NkgyODIuMDUyeiBNMjgyLjA1MiwzODIuNzEyYzEuMjM2LDAuMDIxLDIuMjE3LTAuMjI5LDIuOTQyLTAuNzUxCgkJCWMwLjcyNC0wLjUyMywxLjA4Ny0xLjI1MiwxLjA4Ny0yLjE5MWMwLTAuODc0LTAuMzYzLTEuNTYxLTEuMDg3LTIuMDYyYy0wLjcyNS0wLjUtMS43MDYtMC43NC0yLjk0Mi0wLjcxOWgtNS4xNDh2NS43MjNIMjgyLjA1MnoiCgkJCS8+CgkJPHBhdGggc3R5bGU9ImZpbGw6IzAwMTk3RDsiIGQ9Ik0yOTcuNzUxLDM3Ny4zNGMwLDEuNzA2LDAuNDc5LDMuMDQ4LDEuNDM5LDQuMDI5YzAuOTU5LDAuOTgxLDIuMjA2LDEuNDcxLDMuNzQsMS40NzEKCQkJYzEuNTM1LDAsMi43Ni0wLjQ4NCwzLjY3OC0xLjQ1NWMwLjkxNi0wLjk2OSwxLjM3NC0yLjMxOCwxLjM3NC00LjA0NHYtMTMuMTczaDQuNzk2djEzLjE3M2MwLDEuOTQtMC4zOTksMy42MjktMS4xOTksNS4wNjgKCQkJYy0wLjc5OSwxLjQzOS0xLjkzNCwyLjU0Mi0zLjQwNSwzLjMwOWMtMS40NzEsMC43NjgtMy4yMTksMS4xNTEtNS4yNDQsMS4xNTFjLTIuMDQ2LDAtMy44MTUtMC4zODMtNS4zMDctMS4xNTEKCQkJYy0xLjQ5My0wLjc2Ny0yLjY0My0xLjg3MS0zLjQ1My0zLjMwOWMtMC44MS0xLjQzOS0xLjIxNS0zLjEyOC0xLjIxNS01LjA2OHYtMTMuMTczaDQuNzk2VjM3Ny4zNHoiLz4KCQk8cGF0aCBzdHlsZT0iZmlsbDojMDAxOTdEOyIgZD0iTTMyMi40OTgsMzY0LjE2N2g0LjkyNGw5LjU5MiwyMi4zODJoLTUuMTE1bC03LjA2Ni0xNy41ODVsLTcuMTMsMTcuNTg1aC00Ljk1NUwzMjIuNDk4LDM2NC4xNjd6CgkJCSBNMzE4LjA4NiwzNzguMTRoMTMuMjM3djMuNzcyaC0xMy4yMzdWMzc4LjE0eiIvPgoJCTxwYXRoIHN0eWxlPSJmaWxsOiMwMDE5N0Q7IiBkPSJNMzQ3LjQ3LDM2NC4xNjdjMS43MjcsMCwzLjMwNCwwLjI3Miw0LjczMiwwLjgxNmMxLjQyNywwLjU0MywyLjY2NCwxLjMxMSwzLjcwOSwyLjMwMgoJCQljMS4wNDUsMC45OTEsMS44NTUsMi4xNzUsMi40MywzLjU1YzAuNTc1LDEuMzc1LDAuODYzLDIuODgzLDAuODYzLDQuNTI0YzAsMS42NDItMC4yODgsMy4xMzktMC44NjMsNC40OTIKCQkJYy0wLjU3NSwxLjM1NC0xLjM5NiwyLjUzOC0yLjQ2MiwzLjU1Yy0xLjA2NiwxLjAxMy0yLjMyMywxLjc5LTMuNzczLDIuMzM0Yy0xLjQ1LDAuNTQzLTMuMDQ4LDAuODE2LTQuNzk2LDAuODE2aC05LjI3M3YtMjIuMzgyCgkJCUgzNDcuNDd6IE0zNDcuNTY1LDM4Mi42MTVjMC45OCwwLDEuODgxLTAuMTc2LDIuNzAyLTAuNTI4YzAuODItMC4zNTIsMS41MzUtMC44NDcsMi4xNDItMS40ODYKCQkJYzAuNjA4LTAuNjQsMS4wODEtMS40MDEsMS40MjMtMi4yODZjMC4zNDEtMC44ODUsMC41MTItMS44NTksMC41MTItMi45MjZjMC0xLjA4Ny0wLjE3Ni0yLjA3My0wLjUyOC0yLjk1OAoJCQljLTAuMzUyLTAuODg1LTAuODQyLTEuNjU3LTEuNDctMi4zMThjLTAuNjI5LTAuNjYxLTEuMzY1LTEuMTYyLTIuMjA2LTEuNTAzYy0wLjg0Mi0wLjM0LTEuNzY0LTAuNTEyLTIuNzY2LTAuNTEyaC00LjU0djE0LjUxNgoJCQlIMzQ3LjU2NXoiLz4KCQk8cGF0aCBzdHlsZT0iZmlsbDojMDAxOTdEOyIgZD0iTTM3NS41MTEsMzY0LjE2N2g0LjkyNGw5LjU5MiwyMi4zODJoLTUuMTE1bC03LjA2Ny0xNy41ODVsLTcuMTMsMTcuNTg1aC00Ljk1NUwzNzUuNTExLDM2NC4xNjd6CgkJCSBNMzcxLjA5OSwzNzguMTRoMTMuMjM3djMuNzcyaC0xMy4yMzdWMzc4LjE0eiIvPgoJCTxwYXRoIHN0eWxlPSJmaWxsOiMwMDE5N0Q7IiBkPSJNMzkxLjA1LDM2NC4xNjdoNC43OTZ2MTguMzUzaDkuNTkydjQuMDI5SDM5MS4wNVYzNjQuMTY3eiIvPgoJCTxwYXRoIHN0eWxlPSJmaWxsOiMwMDE5N0Q7IiBkPSJNNDA0Ljc5OCwzNjQuMTY3aDE4LjU0NXYzLjkzM2gtNi45MDd2MTguNDQ5aC00Ljc2NFYzNjguMWgtNi44NzVWMzY0LjE2N3oiLz4KCQk8cGF0aCBzdHlsZT0iZmlsbDojMDAxOTdEOyIgZD0iTTQyOS41MTQsMzY0LjE2N2g0LjkyNWw5LjU5MiwyMi4zODJoLTUuMTE2bC03LjA2Ni0xNy41ODVsLTcuMTMsMTcuNTg1aC00Ljk1Nkw0MjkuNTE0LDM2NC4xNjd6CgkJCSBNNDI1LjEwMiwzNzguMTRoMTMuMjM3djMuNzcyaC0xMy4yMzdWMzc4LjE0eiIvPgoJCTxwYXRoIHN0eWxlPSJmaWxsOiMwMDE5N0Q7IiBkPSJNNDQ1LjA1MywzNjQuMTY3aDUuMzcybDcuMTMsMTQuMjI4bDcuMDY2LTE0LjIyOGg1LjM0MXYyMi4zODJoLTQuMzE4di0xNS43NjNsLTYuNTg3LDEzLjQ2MQoJCQloLTMuMDY5bC02LjYxOC0xMy40NjF2MTUuNzYzaC00LjMxN1YzNjQuMTY3eiIvPgoJCTxwYXRoIHN0eWxlPSJmaWxsOiMwMDE5N0Q7IiBkPSJNNDczLjYzOCwzNjQuMTY3aDQuNzk2djEwLjkzNWw5LjU2LTEwLjkzNWg1LjU5NWwtMTUuMTU1LDE2LjY5djUuNjkyaC00Ljc5NlYzNjQuMTY3egoJCQkgTTQ4NC42NjksMzcyLjk5Mmw5LjQ2NSwxMy41NTdoLTUuNzIzbC02LjkzOC05Ljc4NEw0ODQuNjY5LDM3Mi45OTJ6Ii8+CgkJPHBhdGggc3R5bGU9ImZpbGw6IzAwMTk3RDsiIGQ9Ik00OTUuNjA0LDM2NC4xNjdoNC43OTZ2MjIuMzgyaC00Ljc5NlYzNjQuMTY3eiIvPgoJCTxwYXRoIHN0eWxlPSJmaWxsOiMwMDE5N0Q7IiBkPSJNNTA0LjA0NSwzNjQuMTY3aDQuNDEybDEyLjM3NCwxNi43MjJsLTEuMjQ3LDAuNDE2di0xNy4xMzhoNC41NHYyMi4zODJoLTQuNDEybC0xMi4zMS0xNi42OQoJCQlsMS4yNDctMC40MTV2MTcuMTA2aC00LjYwNFYzNjQuMTY3eiIvPgoJPC9nPgoJPGc+CgkJPGc+CgkJCTxwYXRoIHN0eWxlPSJmaWxsOiMwMDE5N0Q7IiBkPSJNNDM1LjM4LDIxOC43MjZjLTIuNzMsMC4xMzQtNS40NTksMC4yNzYtOC4xODgsMC40MjdjLTIxLjEzNCwxLjE2Ni00Mi4yMzksMi44MzgtNjMuMjI5LDUuNjQ1CgkJCQljMS4yNTgtNS45MDUsMi41MTctMTEuODExLDMuNzc1LTE3LjcxNmMxOC4xMDQsMi4zODQsMzYuMjk3LDMuODUxLDU0LjUyLDQuODg4YzIuOTM0LDAuMTY2LDUuODcsMC4zMjMsOC44MDYsMC40NjkKCQkJCUw0MzUuMzgsMjE4LjcyNnoiLz4KCQk8L2c+CgkJPGc+CgkJCTxwYXRoIHN0eWxlPSJmaWxsOiMwMDE5N0Q7IiBkPSJNMzU3LjE4NCwyNTYuNjA4YzI5LjQ3Mi0xNC44NjYsNjEuMjgyLTIzLjA4OSw5My42OTktMjguNTIyCgkJCQljLTEuMjU4LTEuODE0LTIuNTE3LTMuNjI4LTMuNzc1LTUuNDQyYy0yOS4xMzEsMy4wMjgtNTguMTMsNy41MDItODYuMTQ4LDE2LjI0OAoJCQkJQzM1OS43MDEsMjQ0Ljc5OCwzNTguNDQyLDI1MC43MDMsMzU3LjE4NCwyNTYuNjA4eiIvPgoJCTwvZz4KCQk8Zz4KCQkJPHBhdGggc3R5bGU9ImZpbGw6IzAwMTk3RDsiIGQ9Ik00NDIuODc5LDI0MS45OThjLTMzLjM3MSwxMC4wNzEtNjQuNzI0LDI0LjcwMS05Mi40NzQsNDYuNDE5CgkJCQljMS4yNTgtNS45MDQsMi41MTctMTEuODA5LDMuNzc1LTE3LjcxNWMyNi4xMS0xNi42MjksNTQuNzM2LTI3LjM3OSw4NC41MTUtMzQuNzk4TDQ0Mi44NzksMjQxLjk5OHoiLz4KCQk8L2c+CgkJPGc+CgkJCQoJCQkJPHJlY3QgeD0iMzk5LjgiIHk9IjI3MC45MzMiIHRyYW5zZm9ybT0ibWF0cml4KDAuNzA3MSAwLjcwNzEgLTAuNzA3MSAwLjcwNzEgMzE4LjE3NjcgLTIwNy4yODE3KSIgc3R5bGU9ImZpbGw6IzAwMTk3RDsiIHdpZHRoPSIxOC45OTkiIGhlaWdodD0iMTguOTk5Ii8+CgkJPC9nPgoJPC9nPgo8L2c+Cjwvc3ZnPgo=";
+mkLG("lg-org",["جمعية توفير الدواء","نادي عقول","جمعية مراس","بُعد التمكين"]);
+mkLG("lg-sp",["راعٍ ذهبي","راعٍ فضي","راعٍ برونزي","راعٍ رابع"]);
+mkLG("lg-par",["شريك 1","شريك 2","شريك 3","شريك 4"]);
+
+// Wire client logo upload
+var clInput=document.getElementById('client-logo-input');
+if(clInput) clInput.addEventListener('change',function(){loadClientLogo(this);});
+// Wire cv-back-btn for when opened from dashboard
+if(window.parent&&window.parent!==window){
+  var bb=document.getElementById('cv-back-btn');
+  if(bb){bb.style.display='flex';bb.addEventListener('click',function(){window.parent.postMessage('closeViewer','*');});}
+}
+// Sync cover status badge color
+var statusSel=document.getElementById('cv-proj-status');
+if(statusSel){
+  function updateStatusColor(){
+    var v=statusSel.value;
+    var colors={active:'rgba(44,95,45,.35)',pending:'rgba(184,132,26,.35)',done:'rgba(0,25,125,.35)',draft:'rgba(100,100,120,.2)'};
+    statusSel.style.background=colors[v]||colors.active;
+  }
+  statusSel.addEventListener('change',updateStatusColor);
+  updateStatusColor();
+}
+
+// ── Listen for messages from parent dashboard ──────────────────
+window.addEventListener('message', function(e) {
+  if (!e.data || typeof e.data !== 'object') return;
+  if (e.data.type === 'clearAndInit') {
+    var d = e.data.data || {};
+    clearProjectData();
+    // Apply the project's basic data
+    var el;
+    el = document.getElementById('cv1'); if(el && d.name) el.textContent = d.name;
+    el = document.getElementById('cv2'); if(el) el.textContent = (d.client || '') + (d.type ? ' | ' + d.type : '');
+    el = document.getElementById('cv-client-name'); if(el && d.client) el.value = d.client;
+    el = document.getElementById('c-p2'); if(el && d.client) el.value = d.client;
+    el = document.getElementById('c-gross'); if(el && d.value) el.value = d.value;
+    el = document.getElementById('cv-proj-status'); if(el && d.status) { el.value = d.status; updateStatusColor && updateStatusColor(); }
+    syncAll();
+  }
+});
+
+// Signal parent that iframe is ready (for blank project init)
+if (window.parent && window.parent !== window) {
+  window.parent.postMessage('iframeReady', '*');
+}
+renderGoals();renderCourses();renderSessions();renderKPIs();
+renderFin();renderAgenda();renderSPK();renderGST();renderTeam();
+renderTasks();renderRisks();renderCTG();renderClauses();
+renderInvoices();
+syncAll();
+updateSpend();syncAll();
+</script>
+</body>
+</html>
