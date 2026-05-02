@@ -487,7 +487,11 @@ function _loadProj() {
     if(!r) return null;
     var a=JSON.parse(r);
     if(!Array.isArray(a)||!a.length) return null;
-    return a.map(function(p){ p.html=PHARMACY_HTML; return p; });
+    return a.map(function(p) {
+      var savedHtml = localStorage.getItem('buad_html_' + p.id);
+      p.html = savedHtml || PHARMACY_HTML;
+      return p;
+    });
   } catch(e){ return null; }
 }
 
@@ -502,31 +506,22 @@ function initApp(pharmacyB64, logoSrc) {
   var _ls = _loadProj();
   if (_ls) {
     PROJECTS = _ls;
-  } else {
-    var _stEl = document.getElementById('proj-state');
-    if (_stEl && _stEl.textContent.trim()) {
-      try {
-        var _st = JSON.parse(_stEl.textContent);
-        if (Array.isArray(_st) && _st.length) {
-          PROJECTS = _st.map(function(p){ p.html=PHARMACY_HTML; return p; });
-        }
-      } catch(e) {}
-    }
-    if (!PROJECTS.length) {
-      PROJECTS = [{
-        id: 'apf-2025',
-        name: 'مبادرة ملتقى الصيادلة للتأهيل المهني',
-        client: 'جمعية توفير الدواء',
-        type: 'بناء القدرات والتدريب',
-        status: 'active',
-        value: 50000,
-        progress: 0,
-        date: '2025-03-01',
-        desc: 'مبادرة صحية — 12 لقاءً، 5 دورات تدريبية، منطقة عسير',
-        created: new Date().toLocaleDateString('ar-SA'),
-        html: PHARMACY_HTML
-      }];
-    }
+  }
+  // مشروع الصيادلة دائماً متاح كمشروع مرجعي
+  if (!PROJECTS.find(function(p) { return p.id === 'apf-2025'; })) {
+    PROJECTS.unshift({
+      id: 'apf-2025',
+      name: 'مبادرة ملتقى الصيادلة للتأهيل المهني',
+      client: 'جمعية توفير الدواء',
+      type: 'بناء القدرات والتدريب',
+      status: 'active',
+      value: 50000,
+      progress: 0,
+      date: '2025-03-01',
+      desc: 'مبادرة صحية — 12 لقاءً، 5 دورات تدريبية، منطقة عسير',
+      created: new Date().toLocaleDateString('ar-SA'),
+      html: PHARMACY_HTML
+    });
     _saveProj();
   }
 
@@ -687,7 +682,8 @@ function findProj(id) {
 function doOpenProj(idOrObj) {
   var proj = (typeof idOrObj === 'string') ? findProj(idOrObj) : idOrObj;
   if (!proj) return;
-  if (proj.initData) { openBoarding(proj); return; }
+  var hasSavedHtml = !!localStorage.getItem('buad_html_' + proj.id);
+  if (proj.initData && !hasSavedHtml) { openBoarding(proj); return; }
   _launchViewer(proj);
 }
 
@@ -719,10 +715,9 @@ function openBoarding(proj) {
 }
 
 function _launchViewer(proj) {
-  if (proj.initData) {
+  var hasSavedHtml = !!localStorage.getItem('buad_html_' + proj.id);
+  if (!hasSavedHtml && proj.initData) {
     window._pendingBlankData = proj.initData;
-    proj.initData = null;
-    _saveProj();
   }
   CUR_PROJ = proj;
 
@@ -735,7 +730,7 @@ function _launchViewer(proj) {
   if (CUR_URL) { try { URL.revokeObjectURL(CUR_URL); } catch(e){} CUR_URL = null; }
 
   var iframe = document.getElementById('v-iframe');
-  var html = proj.html || '';
+  var html = localStorage.getItem('buad_html_' + proj.id) || proj.html || '';
 
   document.getElementById('vt-loading').classList.add('show');
 
@@ -756,19 +751,31 @@ function _launchViewer(proj) {
 }
 
 function doCloseViewer() {
+  var iframe = document.getElementById('v-iframe');
   // Sync progress from iframe
   try {
-    var iW = document.getElementById('v-iframe').contentWindow;
+    var iW = iframe.contentWindow;
     if (iW && iW.TASKS && CUR_PROJ) {
       var done = iW.TASKS.filter(function(t){ return t.done; }).length;
       var tot  = iW.TASKS.length;
       if (tot > 0) CUR_PROJ.progress = Math.round(done / tot * 100);
     }
   } catch(e) {}
-
-  var _if = document.getElementById('v-iframe');
-  _if.removeAttribute('srcdoc');
-  _if.src = 'about:blank';
+  // Save per-project HTML snapshot to localStorage
+  if (CUR_PROJ) {
+    try {
+      var doc = iframe.contentDocument || (iframe.contentWindow && iframe.contentWindow.document);
+      if (doc && doc.documentElement) {
+        var snap = doc.documentElement.outerHTML;
+        if (snap && snap.length > 1000) {
+          localStorage.setItem('buad_html_' + CUR_PROJ.id, snap);
+          CUR_PROJ.html = snap;
+        }
+      }
+    } catch(e) {}
+  }
+  iframe.removeAttribute('srcdoc');
+  iframe.src = 'about:blank';
   if (CUR_URL) { try { URL.revokeObjectURL(CUR_URL); } catch(e){} CUR_URL = null; }
   document.getElementById('viewer').classList.remove('open');
   renderAll();
