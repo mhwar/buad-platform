@@ -696,7 +696,7 @@ function makeCard(proj) {
       '<div style="font-size:9.5px;color:#72728A;margin-bottom:3px;display:flex;justify-content:space-between"><span>التقدم</span><span>' + proj.progress + '%</span></div>' +
       '<div class="pc-bar-wrap"><div class="pc-bar-fill" style="width:' + proj.progress + '%"></div></div>' +
     '</div>' +
-    + '<div class="pc-svcs">'
+    '<div class="pc-svcs">'
     + (proj.services && proj.services.length
         ? proj.services.slice(0,3).map(function(sid){var sv=getSvc(sid);return sv?'<span class="pc-svc-chip">'+escHtml(sv.name)+'</span>':'';}).join('')
           + (proj.services.length>3?'<span class="pc-svc-chip" style="background:var(--sand2);color:var(--mu)">+' + (proj.services.length-3) + '</span>':'')
@@ -1088,9 +1088,9 @@ function renderProducts() {
     var projCnt = function(sid){ return PROJECTS.filter(function(p){ return p.services && p.services.indexOf(sid)>=0; }).length; };
     var cards = svcs.map(function(svc, i) {
       var cnt = projCnt(svc.id);
-      return '<div class="svc-card" onclick="openSvcView('' + svc.id + '')">'
+      return '<div class="svc-card" onclick="openSvcView(\'' + svc.id + '\')">'
         + '<div class="svc-acts">'
-        + '<button class="svc-act" title="تعديل" onclick="event.stopPropagation();openSvcModal('' + svc.id + '','' + cat.id + '')">✏</button>'
+        + '<button class="svc-act" title="تعديل" onclick="event.stopPropagation();openSvcModal(\'' + svc.id + '\',\'' + cat.id + '\')">✏</button>'
         + '</div>'
         + '<div class="svc-top"><div class="svc-ico" style="background:' + cat.bg + ';color:' + cat.color + '">' + svc.icon + '</div>'
         + '<div class="svc-name">' + escHtml(svc.name) + '</div></div>'
@@ -1107,11 +1107,11 @@ function renderProducts() {
       + '<div class="cat-hd-name">' + escHtml(cat.name) + '</div>'
       + '<span class="cat-hd-cnt svc-count-badge" style="background:' + cat.bg + ';color:' + cat.color + '">' + svcs.length + ' خدمة</span>'
       + '<div class="cat-hd-acts">'
-      + '<button class="cat-hd-btn" onclick="openSvcModal(-1,'' + cat.id + '')">+ خدمة</button>'
-      + '<button class="cat-hd-btn" onclick="openCatModal('' + cat.id + '')">✏ القسم</button>'
+      + '<button class="cat-hd-btn" onclick="openSvcModal(-1,\'' + cat.id + '\')" >+ خدمة</button>'
+      + '<button class="cat-hd-btn" onclick="openCatModal(\'' + cat.id + '\')">✏ القسم</button>'
       + '</div></div>'
       + (cards ? '<div class="svc-grid">' + cards + '</div>'
-               : '<p style="font-size:11px;color:var(--mu);padding:8px 0">لا توجد خدمات في هذا القسم — <button style="background:none;border:none;color:var(--N);cursor:pointer;font-family:inherit;font-size:11px;padding:0" onclick="openSvcModal(-1,'' + cat.id + '')">أضف خدمة</button></p>')
+               : '<p style="font-size:11px;color:var(--mu);padding:8px 0">لا توجد خدمات في هذا القسم — <button style="background:none;border:none;color:var(--N);cursor:pointer;font-family:inherit;font-size:11px;padding:0" onclick="openSvcModal(-1,\'' + cat.id + '\')">أضف خدمة</button></p>')
       + '</div>';
   }).join('');
 }
