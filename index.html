@@ -716,8 +716,15 @@ function openBoarding(proj) {
 
 function _launchViewer(proj) {
   var hasSavedHtml = !!localStorage.getItem('buad_html_' + proj.id);
-  if (!hasSavedHtml && proj.initData) {
-    window._pendingBlankData = proj.initData;
+  // For non-pharmacy projects without saved state, always clear pharmacy data
+  if (!hasSavedHtml && proj.id !== 'apf-2025') {
+    window._pendingBlankData = proj.initData || {
+      name:   proj.name,
+      client: proj.client,
+      value:  proj.value,
+      type:   proj.type,
+      status: proj.status
+    };
   }
   CUR_PROJ = proj;
 
