@@ -145,7 +145,69 @@ body{font-family:"IBM Plex Sans Arabic",sans-serif;direction:rtl;background:var(
 .sb-add-prod{display:flex;align-items:center;justify-content:center;gap:6px;padding:8px;margin:6px 2px 2px;border:1px dashed rgba(255,255,255,.2);border-radius:7px;cursor:pointer;color:rgba(255,255,255,.35);font-size:10.5px;transition:.15s}
 .sb-add-prod:hover{border-color:rgba(255,255,255,.45);color:rgba(255,255,255,.8)}
 .sb-placeholder{padding:12px 10px;text-align:center;color:rgba(255,255,255,.25);font-size:10.5px}
-/* ── Product Detail Modal ─────────────────────────── */
+/* ── Services & Products ──────────────────────────── */
+/* Category sections */
+.cat-sec{margin-bottom:24px}
+.cat-hd{display:flex;align-items:center;gap:9px;padding:0 0 10px;border-bottom:2px solid var(--bd);margin-bottom:13px}
+.cat-hd-ico{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.cat-hd-name{font-size:13px;font-weight:700;color:var(--tx)}
+.cat-hd-cnt{font-size:10px;font-weight:600;padding:2px 9px;border-radius:20px;margin-right:auto}
+.cat-hd-acts{display:flex;gap:5px}
+.cat-hd-btn{font-size:10.5px;padding:4px 10px;border-radius:7px;border:1px solid var(--bd);background:var(--w);color:var(--mu);cursor:pointer;font-family:inherit;transition:.15s}
+.cat-hd-btn:hover{border-color:var(--N);color:var(--N)}
+/* Service cards */
+.svc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
+.svc-card{background:var(--w);border:1.5px solid var(--bd);border-radius:10px;padding:13px;transition:.15s;position:relative;cursor:pointer}
+.svc-card:hover{border-color:var(--N);box-shadow:0 3px 12px rgba(0,25,125,.08);transform:translateY(-1px)}
+.svc-top{display:flex;align-items:flex-start;gap:9px;margin-bottom:8px}
+.svc-ico{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.svc-name{font-size:12px;font-weight:700;color:var(--tx);line-height:1.4;flex:1}
+.svc-desc{font-size:10px;color:var(--mu);margin-bottom:9px;line-height:1.55}
+.svc-foot{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.svc-tag{font-size:9px;padding:2px 8px;border-radius:20px;font-weight:600;white-space:nowrap}
+.svc-price{background:var(--Sl);color:var(--S)}
+.svc-dur{background:var(--sand2,#EDE8E0);color:var(--mu)}
+.svc-proj-cnt{background:var(--Nl);color:var(--N)}
+.svc-acts{position:absolute;top:7px;left:7px;display:flex;gap:3px;opacity:0;transition:.15s}
+.svc-card:hover .svc-acts{opacity:1}
+.svc-act{width:22px;height:22px;border-radius:5px;border:1px solid var(--bd);background:var(--w);font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.15s}
+.svc-act:hover{border-color:var(--N);color:var(--N)}
+/* Service modal */
+.svc-modal{background:var(--w);border-radius:13px;width:min(560px,96vw);max-height:88vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 16px 48px rgba(0,0,0,.25)}
+.svc-mh{padding:14px 18px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;border-bottom:.5px solid var(--bd);background:var(--sand)}
+.svc-mb{flex:1;overflow-y:auto;padding:18px 20px}
+.svc-mfoot{padding:12px 18px;border-top:.5px solid var(--bd);display:flex;gap:8px;justify-content:space-between;align-items:center;flex-shrink:0;background:var(--sand)}
+.svc-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.svc-fld{margin-bottom:12px}
+.svc-fld > label{display:block;font-size:9.5px;font-weight:600;color:var(--mu);margin-bottom:5px;letter-spacing:.3px}
+.svc-fld input,.svc-fld textarea,.svc-fld select{font-family:inherit;direction:rtl;width:100%;border:.5px solid var(--bd);border-radius:8px;padding:7px 11px;font-size:12px;background:var(--w);color:var(--tx);transition:.15s;box-sizing:border-box}
+.svc-fld input:focus,.svc-fld textarea:focus,.svc-fld select:focus{border-color:var(--N);outline:none;box-shadow:0 0 0 3px var(--Nl)}
+.ico-pick{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:4px}
+.ico-pick button{background:var(--sand);border:.5px solid var(--bd);border-radius:6px;padding:4px 8px;cursor:pointer;font-size:15px;transition:.15s;line-height:1}
+.ico-pick button.sel,.ico-pick button:hover{background:var(--Nl);border-color:var(--N)}
+/* Service detail view */
+.svc-view-modal{background:var(--w);border-radius:14px;width:min(500px,96vw);max-height:90vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.28)}
+.svc-view-hd{padding:20px 20px 16px;flex-shrink:0}
+.svc-view-body{flex:1;overflow-y:auto;padding:16px 20px}
+.svc-view-row{display:flex;justify-content:space-between;align-items:flex-start;padding:8px 11px;background:var(--sand);border-radius:7px;margin-bottom:5px;font-size:11px}
+.svc-view-lbl{color:var(--mu);font-weight:500}
+.svc-view-val{font-weight:600;color:var(--tx);text-align:left}
+.svc-view-foot{padding:12px 20px;border-top:.5px solid var(--bd);display:flex;justify-content:space-between;align-items:center;flex-shrink:0;background:var(--sand)}
+/* np-svc multi-select list */
+.np-svc-list{max-height:190px;overflow-y:auto;border:1px solid var(--bd);border-radius:8px;padding:3px}
+.np-svc-item{display:flex;align-items:center;gap:7px;padding:6px 9px;border-radius:6px;cursor:pointer;transition:.15s;font-size:11px;user-select:none}
+.np-svc-item:hover{background:var(--sand)}
+.np-svc-item.sel{background:var(--Nl)}
+.np-svc-ico{font-size:13px;width:20px;text-align:center;flex-shrink:0}
+.np-svc-nm{flex:1;font-weight:500}
+.np-svc-pr{font-size:9.5px;color:var(--S);font-weight:600;flex-shrink:0}
+.np-cat-lbl{font-size:9px;font-weight:700;color:var(--mu);padding:7px 9px 2px;letter-spacing:.4px}
+/* Project card service chips */
+.pc-svcs{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:4px}
+.pc-svc-chip{font-size:9px;padding:2px 8px;border-radius:20px;background:var(--Nl);color:var(--N);font-weight:600}
+/* Service count badge */
+.svc-count-badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:600;padding:2px 9px;border-radius:20px;margin-right:4px}
+/* ── Product Detail Modal (kept for compat) ─────────── */
 .prod-modal{background:var(--w);border-radius:13px;width:min(680px,96vw);max-height:88vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 16px 48px rgba(0,0,0,.25)}
 .prod-mh{padding:14px 18px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;color:#fff}
 .prod-mh h3{font-size:14px;font-weight:600}
@@ -348,7 +410,8 @@ body{font-family:"IBM Plex Sans Arabic",sans-serif;direction:rtl;background:var(
       <div class="page" id="page-products">
         <div class="sec-head">
           <h2>خدمات وحلول بُعد التمكين</h2>
-          <button class="tb-btn sec" onclick="openProdModal(-1)">+ إضافة منتج</button>
+          <button class="tb-btn sec" onclick="openSvcModal(-1,'')">+ خدمة جديدة</button>
+          <button class="tb-btn" onclick="openCatModal(-1)" style="margin-right:6px">+ قسم</button>
         </div>
         <div id="prod-grid" class="prod-pg-grid"></div>
       </div>
@@ -408,26 +471,10 @@ body{font-family:"IBM Plex Sans Arabic",sans-serif;direction:rtl;background:var(
       </div>
 
       <div class="np-sec">
-        <div class="np-sec-title">نوع الخدمة</div>
-        <div class="np-svc-grid" id="np-svc-grid">
-          <button type="button" class="np-svc-btn" data-svc="التسويق للقطاع الخيري" onclick="npSelSvc(this)">
-            <span class="np-svc-ico">📢</span>التسويق الخيري
-          </button>
-          <button type="button" class="np-svc-btn" data-svc="التحول الرقمي" onclick="npSelSvc(this)">
-            <span class="np-svc-ico">💻</span>التحول الرقمي
-          </button>
-          <button type="button" class="np-svc-btn" data-svc="خدمات الحوكمة" onclick="npSelSvc(this)">
-            <span class="np-svc-ico">⚖️</span>الحوكمة
-          </button>
-          <button type="button" class="np-svc-btn" data-svc="بناء وإدارة المشاريع" onclick="npSelSvc(this)">
-            <span class="np-svc-ico">🏗</span>إدارة المشاريع
-          </button>
-          <button type="button" class="np-svc-btn" data-svc="بناء القدرات والتدريب" onclick="npSelSvc(this)">
-            <span class="np-svc-ico">🎓</span>بناء القدرات
-          </button>
-          <button type="button" class="np-svc-btn" data-svc="الاستشارات المؤسسية" onclick="npSelSvc(this)">
-            <span class="np-svc-ico">💡</span>الاستشارات
-          </button>
+        <div class="np-sec-title">الخدمات المقدمة <span id="np-svc-sel-cnt" style="font-weight:400;color:var(--N);display:none"></span></div>
+        <div class="np-svc-list" id="np-svc-list"></div>
+        <div id="np-svc-suggest" style="font-size:10.5px;color:var(--S);font-weight:600;margin-top:6px;display:none">
+          💡 المبلغ المقترح: <span id="np-svc-total">0</span> ر.س
         </div>
       </div>
 
@@ -501,6 +548,7 @@ function initApp(pharmacyB64, logoSrc) {
   var bytes = new Uint8Array(bin.length);
   for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
   PHARMACY_HTML = new TextDecoder('utf-8').decode(bytes);
+  _loadSvcs();
 
   var TMPL_VER = 'v5';
   if (localStorage.getItem('buad_tmpl_ver') !== TMPL_VER) {
@@ -648,7 +696,13 @@ function makeCard(proj) {
       '<div style="font-size:9.5px;color:#72728A;margin-bottom:3px;display:flex;justify-content:space-between"><span>التقدم</span><span>' + proj.progress + '%</span></div>' +
       '<div class="pc-bar-wrap"><div class="pc-bar-fill" style="width:' + proj.progress + '%"></div></div>' +
     '</div>' +
-    '<div class="pc-bot"><span class="pc-type">' + escHtml(proj.type) + '</span><span class="pc-arr">←</span></div>';
+    + '<div class="pc-svcs">'
+    + (proj.services && proj.services.length
+        ? proj.services.slice(0,3).map(function(sid){var sv=getSvc(sid);return sv?'<span class="pc-svc-chip">'+escHtml(sv.name)+'</span>':'';}).join('')
+          + (proj.services.length>3?'<span class="pc-svc-chip" style="background:var(--sand2);color:var(--mu)">+' + (proj.services.length-3) + '</span>':'')
+        : '<span class="pc-svc-chip" style="background:var(--sand2,#EDE8E0);color:var(--mu)">' + escHtml(proj.type||'') + '</span>')
+    + '</div>'
+    + '<div class="pc-bot"><span class="pc-arr">←</span></div>';
   return d;
 }
 
@@ -817,11 +871,13 @@ function doOpenInNewTab() {
 }
 
 // ── NEW PROJECT ──────────────────────────────────────────────────
-function doOpenNewProj()  { document.getElementById('np-modal').classList.add('open'); }
+function doOpenNewProj()  { document.getElementById('np-modal').classList.add('open'); renderNpSvcs(); }
 function doCloseNewProj() { document.getElementById('np-modal').classList.remove('open'); }
 
 function npSelSvc(btn) {
-  document.querySelectorAll('#np-svc-grid .np-svc-btn').forEach(function(b){ b.classList.remove('sel'); });
+  document.querySelectorAll('#np-svc-list .np-svc-item').forEach(function(b){ b.classList.remove('sel'); });
+  var cntEl=document.getElementById('np-svc-sel-cnt'); if(cntEl){cntEl.textContent='';cntEl.style.display='none';}
+  var sugEl=document.getElementById('np-svc-suggest'); if(sugEl)sugEl.style.display='none';
   btn.classList.add('sel');
 }
 
@@ -830,12 +886,11 @@ function doCreateProj() {
   var client = document.getElementById('np-client').value.trim();
   if (!name || !client) { alert('يرجى إدخال اسم المشروع والعميل'); return; }
 
-  var selBtn = document.querySelector('#np-svc-grid .np-svc-btn.sel');
-  if (!selBtn) { alert('يرجى اختيار نوع الخدمة'); return; }
-
+  var selItems = document.querySelectorAll('#np-svc-list .np-svc-item.sel');
   var value   = parseInt(document.getElementById('np-value').value) || 0;
   var status  = document.getElementById('np-status').value;
-  var type    = selBtn.dataset.svc;
+  var selSvcs = Array.from(selItems).map(function(it){ return it.dataset.id; });
+  var type    = selSvcs.length ? (getSvc(selSvcs[0])||{name:''}).name : 'عام';
   var orgType = document.getElementById('np-org-type').value;
   var region  = document.getElementById('np-region').value;
   var date    = document.getElementById('np-date').value;
@@ -858,6 +913,7 @@ function doCreateProj() {
     dateEnd:  dateEnd,
     desc:     desc,
     created:  new Date().toLocaleDateString('ar-SA'),
+    services: selSvcs,
     initData: initData,
     html:     PHARMACY_HTML
   };
@@ -965,104 +1021,276 @@ function doSaveDash() {
   setTimeout(function(){ URL.revokeObjectURL(a.href); }, 5000);
 }
 
-// ── PRODUCTS DATA ─────────────────────────────────────────────────
-var PRODUCTS = [
-  {
-    icon: '📢', name: 'التسويق للقطاع الخيري',
-    tagline: 'حلول تسويقية متخصصة تُمكّن المنظمات الخيرية من توسيع أثرها',
-    services: [
-      'بناء الهوية البصرية والعلامة التجارية',
-      'إدارة منصات التواصل الاجتماعي',
-      'إنتاج المحتوى الرقمي (مرئي وكتابي)',
-      'حملات جمع التبرعات الرقمية',
-      'التسويق عبر البريد الإلكتروني والرسائل',
-      'تصميم المطبوعات والمواد التعريفية',
-      'إدارة العلاقات العامة والإعلام',
-      'قياس وتحليل الأداء التسويقي'
-    ],
-    mechanism: 'نبدأ بدراسة هوية المنظمة وجمهورها المستهدف، نُصمّم استراتيجية تسويقية شاملة، ثم ننفذ بشكل منهجي مع تقارير دورية لقياس الأثر وتحسين الأداء.',
-    details: 'خبرة متخصصة في القطاع غير الربحي مع فهم عميق لقيم العمل الخيري وأخلاقياته. نضمن توافق كل رسالة تسويقية مع مبادئ الشفافية والمصداقية.',
-    color: '#D4701A', bg: '#FDF6EF'
-  },
-  {
-    icon: '💻', name: 'التحول الرقمي',
-    tagline: 'رحلة التحول من العمليات التقليدية إلى الحلول الذكية',
-    services: [
-      'تقييم النضج الرقمي للمنظمة',
-      'تصميم خارطة طريق التحول الرقمي',
-      'اختيار وتطبيق أنظمة إدارة المشاريع',
-      'رقمنة العمليات والإجراءات الداخلية',
-      'بناء المنصات والتطبيقات المخصصة',
-      'تدريب الفرق على الأدوات الرقمية',
-      'دعم وصيانة الأنظمة'
-    ],
-    mechanism: 'نُجري تقييماً شاملاً للوضع الراهن، نحدد الفجوات الرقمية، نبني خطة تحول مرحلية قابلة للتنفيذ، ثم نرافق المنظمة في كل خطوة.',
-    details: 'نركز على الحلول العملية القابلة للتطبيق بميزانيات القطاع الخيري، مع ضمان استدامة التحول ونقل المعرفة للكوادر الداخلية.',
-    color: '#1A62D4', bg: '#EFF4FD'
-  },
-  {
-    icon: '⚖️', name: 'خدمات الحوكمة',
-    tagline: 'تعزيز الشفافية والمساءلة في الحوكمة المؤسسية',
-    services: [
-      'مراجعة وتطوير اللوائح التنظيمية',
-      'بناء هياكل الحوكمة والرقابة',
-      'وضع سياسات الإفصاح والشفافية',
-      'تقييم مخاطر الامتثال التنظيمي',
-      'تطوير آليات قياس الأداء المؤسسي',
-      'إعداد تقارير الحوكمة السنوية'
-    ],
-    mechanism: 'نُحلّل البنية التنظيمية الحالية وفق أفضل معايير الحوكمة الدولية، نُعدّ توصيات قابلة للتطبيق، ونُرافق تنفيذها مع برامج تدريبية للمجلس وفريق الإدارة.',
-    details: 'متوافق مع متطلبات هيئة الجمعيات الأهلية واللوائح التنظيمية السعودية لضمان الامتثال الكامل.',
-    color: '#2C7A2E', bg: '#EFF6EF'
-  },
-  {
-    icon: '🏗', name: 'بناء وإدارة المشاريع',
-    tagline: 'إدارة احترافية للمشاريع من الفكرة إلى الإنجاز',
-    services: [
-      'دراسة الجدوى وتحليل الاحتياجات',
-      'تصميم هيكل المشروع والخطة التنفيذية',
-      'إدارة الجداول الزمنية والموارد',
-      'متابعة التنفيذ وإدارة المخاطر',
-      'إعداد التقارير الدورية للجهة الممولة',
-      'تقييم الأثر وقياس النتائج'
-    ],
-    mechanism: 'نطبّق منهجية PMI المعتمدة دولياً مع تكييفها لطبيعة القطاع الخيري. نستخدم أدوات رقمية متقدمة لمتابعة التنفيذ وضمان الشفافية.',
-    details: 'فريق مُعتمَد في إدارة المشاريع مع خبرة واسعة في المشاريع الاجتماعية والتنموية في المملكة العربية السعودية.',
-    color: '#6B35B2', bg: '#F4EFF9'
-  },
-  {
-    icon: '🎓', name: 'بناء القدرات والتدريب',
-    tagline: 'تمكين الكوادر البشرية لمنظمات أكثر فاعلية',
-    services: [
-      'تقييم الاحتياجات التدريبية',
-      'تصميم المناهج والبرامج التدريبية',
-      'تنفيذ ورش العمل والدورات',
-      'تدريب المدربين (TOT)',
-      'برامج الإرشاد والتوجيه المهني',
-      'قياس أثر التدريب وتطوير الأداء'
-    ],
-    mechanism: 'نُصمّم برامج تدريبية مخصصة تلبّي الاحتياجات الفعلية لكل منظمة، ونقيس الأثر بعد التطبيق لضمان الفائدة الحقيقية.',
-    details: 'مدربون معتمدون من جهات دولية مع خبرة في تدريب فرق العمل الخيري والتطوعي.',
-    color: '#1A8A7A', bg: '#EFF6F4'
-  },
-  {
-    icon: '💡', name: 'الاستشارات المؤسسية',
-    tagline: 'رؤى استراتيجية لتطوير المنظمات وتعزيز أثرها',
-    services: [
-      'التخطيط الاستراتيجي (3-5 سنوات)',
-      'تقييم الأثر الاجتماعي',
-      'تطوير نماذج الاستدامة المالية',
-      'دراسات السوق والبيئة التنافسية',
-      'استشارات الاندماج والشراكات',
-      'تطوير العروض والمقترحات للممولين'
-    ],
-    mechanism: 'جلسات استشارية منهجية تجمع بين التحليل العلمي والخبرة الميدانية لبناء خطط عملية قابلة للتنفيذ بموارد المنظمة.',
-    details: 'نُقدّم توصيات واضحة وعملية بعيداً عن التعقيد النظري، مع التركيز على النتائج القابلة للقياس.',
-    color: '#A07820', bg: '#FBF7EE'
-  }
+// ── CATEGORIES & SERVICES DATA ──────────────────────────────────────
+var CATEGORIES = [
+  {id:'mkt',     name:'التسويق',            icon:'📢', color:'#D4701A', bg:'#FDF6EF'},
+  {id:'digi',    name:'التحول الرقمي',       icon:'💻', color:'#1A62D4', bg:'#EFF4FD'},
+  {id:'gov',     name:'الحوكمة',             icon:'⚖️', color:'#2C7A2E', bg:'#EFF6EF'},
+  {id:'pm',      name:'إدارة المشاريع',      icon:'🏗', color:'#6B35B2', bg:'#F4EFF9'},
+  {id:'train',   name:'بناء القدرات',        icon:'🎓', color:'#1A8A7A', bg:'#EFF6F4'},
+  {id:'consult', name:'الاستشارات',          icon:'💡', color:'#8A6A1A', bg:'#FFF9EF'}
 ];
-var _editProdIdx = -1;
-var _svcCounter  = 0;
+var SERVICES = [
+  // التسويق
+  {id:'s1',  cat:'mkt',     icon:'📱', name:'التسويق الإلكتروني',              desc:'إدارة الحضور الرقمي والحملات الإعلانية على المنصات',          price:3000,  unit:'شهرياً',       dur:'3 أشهر+'},
+  {id:'s2',  cat:'mkt',     icon:'🤝', name:'استهداف المانحين والداعمين',       desc:'بناء استراتيجية جذب الممولين والشركاء للمنظمة',               price:5000,  unit:'لكل مشروع',   dur:'4-6 أسابيع'},
+  {id:'s3',  cat:'mkt',     icon:'🌐', name:'رفع المشاريع على منصة إحسان',      desc:'تحضير وتقديم المشاريع الخيرية على منصة إحسان',                price:1500,  unit:'لكل مشروع',   dur:'أسبوعان'},
+  {id:'s4',  cat:'mkt',     icon:'💰', name:'التقديم لصناديق الدعم',            desc:'إعداد ملفات التقديم لصناديق الدعم الحكومية والخيرية',          price:2500,  unit:'لكل تقديم',   dur:'3 أسابيع'},
+  {id:'s5',  cat:'mkt',     icon:'🎨', name:'بناء الهوية البصرية',             desc:'تصميم الشعار والهوية البصرية الكاملة للمنظمة',                 price:4000,  unit:'لكل مشروع',   dur:'3-4 أسابيع'},
+  {id:'s6',  cat:'mkt',     icon:'📣', name:'إدارة منصات التواصل الاجتماعي',   desc:'إنتاج المحتوى الرقمي وإدارة الحضور على وسائل التواصل',        price:2000,  unit:'شهرياً',       dur:'مستمر'},
+  // التحول الرقمي
+  {id:'s7',  cat:'digi',    icon:'🔍', name:'تقييم النضج الرقمي',              desc:'تحليل شامل للوضع الرقمي الحالي وتحديد الفجوات والأولويات',    price:3500,  unit:'لكل مشروع',   dur:'أسبوعان'},
+  {id:'s8',  cat:'digi',    icon:'🗺️', name:'خارطة طريق التحول الرقمي',        desc:'تصميم مسار التحول الرقمي المرحلي القابل للتنفيذ',             price:6000,  unit:'لكل مشروع',   dur:'4 أسابيع'},
+  {id:'s9',  cat:'digi',    icon:'⚙️', name:'تطبيق أنظمة إدارة المشاريع',      desc:'اختيار وتطبيق وتدريب الفريق على أنظمة إدارة المشاريع',       price:4500,  unit:'لكل مشروع',   dur:'3 أسابيع'},
+  {id:'s10', cat:'digi',    icon:'🖥️', name:'بناء المنصات والمواقع الرقمية',   desc:'تطوير مواقع وتطبيقات مخصصة لاحتياجات المنظمة',               price:15000, unit:'لكل مشروع',   dur:'2-4 أشهر'},
+  // الحوكمة
+  {id:'s11', cat:'gov',     icon:'📋', name:'تأسيس الجمعية الخيرية',           desc:'إجراءات التأسيس والترخيص الرسمي من الجهات المختصة',           price:5000,  unit:'لكل مشروع',   dur:'2-3 أشهر'},
+  {id:'s12', cat:'gov',     icon:'📜', name:'تحديث النظام الأساسي',            desc:'مراجعة وتطوير اللوائح والأنظمة الداخلية للمنظمة',             price:3000,  unit:'لكل مشروع',   dur:'3 أسابيع'},
+  {id:'s13', cat:'gov',     icon:'🏛️', name:'بناء هياكل الحوكمة',              desc:'تصميم هياكل الرقابة والمساءلة والشفافية المؤسسية',            price:4500,  unit:'لكل مشروع',   dur:'4 أسابيع'},
+  {id:'s14', cat:'gov',     icon:'📊', name:'تقرير الحوكمة السنوي',            desc:'إعداد التقارير السنوية المطلوبة للجهات الرقابية',             price:2500,  unit:'سنوياً',       dur:'أسبوعان'},
+  // إدارة المشاريع
+  {id:'s15', cat:'pm',      icon:'📐', name:'تصميم خطة المشروع',               desc:'بناء هيكل المشروع والخطة التنفيذية التفصيلية الشاملة',        price:4000,  unit:'لكل مشروع',   dur:'أسبوعان'},
+  {id:'s16', cat:'pm',      icon:'📅', name:'إدارة التنفيذ الكاملة',           desc:'متابعة وإدارة المشروع ميدانياً من الانطلاق حتى التسليم',     price:8000,  unit:'لكل مشروع',   dur:'حسب المشروع'},
+  {id:'s17', cat:'pm',      icon:'📈', name:'تقييم الأثر والنتائج',            desc:'قياس نتائج المشروع وإعداد تقارير الأثر للجهة الممولة',       price:3000,  unit:'لكل مشروع',   dur:'أسبوعان'},
+  // بناء القدرات
+  {id:'s18', cat:'train',   icon:'🎓', name:'تصميم برنامج تدريبي',             desc:'تصميم منهج تدريبي مخصص يلبي الاحتياجات الفعلية للمنظمة',     price:5000,  unit:'لكل برنامج',  dur:'3 أسابيع'},
+  {id:'s19', cat:'train',   icon:'🏫', name:'تنفيذ ورش العمل والدورات',        desc:'تقديم ورش العمل والجلسات التدريبية المتخصصة',                price:2000,  unit:'لكل ورشة',    dur:'يوم—يومان'},
+  {id:'s20', cat:'train',   icon:'👨‍🏫', name:'تدريب المدربين (TOT)',            desc:'تأهيل وبناء قدرات المدربين الداخليين للمنظمة',               price:7000,  unit:'لكل برنامج',  dur:'5 أيام'},
+  // الاستشارات
+  {id:'s21', cat:'consult', icon:'🗓️', name:'جلسة استشارية',                   desc:'استشارة متخصصة لمعالجة تحدي أو دعم قرار مؤسسي محدد',         price:1500,  unit:'لكل جلسة',    dur:'3-4 ساعات'},
+  {id:'s22', cat:'consult', icon:'🗺️', name:'التخطيط الاستراتيجي',             desc:'بناء الخطة الاستراتيجية للمنظمة لمدة 3-5 سنوات',             price:12000, unit:'لكل مشروع',   dur:'6-8 أسابيع'},
+  {id:'s23', cat:'consult', icon:'🔬', name:'تقييم الأثر الاجتماعي',           desc:'قياس وتوثيق الأثر الاجتماعي والتنموي للمنظمة وبرامجها',     price:6000,  unit:'لكل مشروع',   dur:'4 أسابيع'}
+];
+
+function _loadSvcs() {
+  try {
+    var c = localStorage.getItem('buad_cats'); if(c) CATEGORIES = JSON.parse(c);
+    var s = localStorage.getItem('buad_svcs'); if(s) SERVICES = JSON.parse(s);
+  } catch(e){}
+}
+function _saveSvcs() {
+  try {
+    localStorage.setItem('buad_cats', JSON.stringify(CATEGORIES));
+    localStorage.setItem('buad_svcs', JSON.stringify(SERVICES));
+  } catch(e){}
+}
+function getCat(id) { return CATEGORIES.find(function(c){return c.id===id;})||{id:'',name:'أخرى',icon:'📦',color:'#72728A',bg:'#F5F5F8'}; }
+function getSvc(id) { return SERVICES.find(function(s){return s.id===id;})||null; }
+function fmt2(n) { return n?n.toLocaleString('ar-SA'):'—'; }
+
+// ── RENDER PRODUCTS PAGE ──────────────────────────────────────────
+function renderProducts() {
+  var el = document.getElementById('prod-grid');
+  if (!el) return;
+  if (!CATEGORIES.length) { el.innerHTML = '<p style="color:var(--mu);font-size:12px;padding:20px 0">لا توجد أقسام بعد — أضف قسماً أولاً</p>'; return; }
+  el.innerHTML = CATEGORIES.map(function(cat) {
+    var svcs = SERVICES.filter(function(s){ return s.cat === cat.id; });
+    var projCnt = function(sid){ return PROJECTS.filter(function(p){ return p.services && p.services.indexOf(sid)>=0; }).length; };
+    var cards = svcs.map(function(svc, i) {
+      var cnt = projCnt(svc.id);
+      return '<div class="svc-card" onclick="openSvcView('' + svc.id + '')">'
+        + '<div class="svc-acts">'
+        + '<button class="svc-act" title="تعديل" onclick="event.stopPropagation();openSvcModal('' + svc.id + '','' + cat.id + '')">✏</button>'
+        + '</div>'
+        + '<div class="svc-top"><div class="svc-ico" style="background:' + cat.bg + ';color:' + cat.color + '">' + svc.icon + '</div>'
+        + '<div class="svc-name">' + escHtml(svc.name) + '</div></div>'
+        + '<div class="svc-desc">' + escHtml(svc.desc) + '</div>'
+        + '<div class="svc-foot">'
+        + (svc.price ? '<span class="svc-tag svc-price">' + fmt2(svc.price) + ' ' + escHtml(svc.unit||'') + '</span>' : '')
+        + (svc.dur ? '<span class="svc-tag svc-dur">' + escHtml(svc.dur) + '</span>' : '')
+        + (cnt > 0 ? '<span class="svc-tag svc-proj-cnt">' + cnt + ' مشروع</span>' : '')
+        + '</div></div>';
+    }).join('');
+    return '<div class="cat-sec">'
+      + '<div class="cat-hd">'
+      + '<div class="cat-hd-ico" style="background:' + cat.bg + ';color:' + cat.color + '">' + cat.icon + '</div>'
+      + '<div class="cat-hd-name">' + escHtml(cat.name) + '</div>'
+      + '<span class="cat-hd-cnt svc-count-badge" style="background:' + cat.bg + ';color:' + cat.color + '">' + svcs.length + ' خدمة</span>'
+      + '<div class="cat-hd-acts">'
+      + '<button class="cat-hd-btn" onclick="openSvcModal(-1,'' + cat.id + '')">+ خدمة</button>'
+      + '<button class="cat-hd-btn" onclick="openCatModal('' + cat.id + '')">✏ القسم</button>'
+      + '</div></div>'
+      + (cards ? '<div class="svc-grid">' + cards + '</div>'
+               : '<p style="font-size:11px;color:var(--mu);padding:8px 0">لا توجد خدمات في هذا القسم — <button style="background:none;border:none;color:var(--N);cursor:pointer;font-family:inherit;font-size:11px;padding:0" onclick="openSvcModal(-1,'' + cat.id + '')">أضف خدمة</button></p>')
+      + '</div>';
+  }).join('');
+}
+
+// ── SERVICE VIEW MODAL ────────────────────────────────────────────
+function openSvcView(id) {
+  var svc = getSvc(id); if(!svc) return;
+  var cat = getCat(svc.cat);
+  var hd = document.getElementById('svc-view-hd');
+  hd.style.background = cat.bg;
+  document.getElementById('svc-view-ico').textContent = svc.icon;
+  document.getElementById('svc-view-ico').style.background = cat.color;
+  document.getElementById('svc-view-ico').style.color = '#fff';
+  document.getElementById('svc-view-name').textContent = svc.name;
+  var catEl = document.getElementById('svc-view-cat');
+  catEl.textContent = cat.name;
+  catEl.style.background = cat.bg;
+  catEl.style.color = cat.color;
+  document.getElementById('svc-view-desc').textContent = svc.desc || '';
+  var rows = [];
+  if(svc.price) rows.push(['السعر المقترح', fmt2(svc.price) + ' ر.س — ' + (svc.unit||'')]);
+  if(svc.dur)   rows.push(['مدة التنفيذ المعتادة', svc.dur]);
+  var projs = PROJECTS.filter(function(p){ return p.services && p.services.indexOf(id)>=0; });
+  if(projs.length) rows.push(['مشاريع مرتبطة', projs.map(function(p){return p.name;}).join(' · ')]);
+  document.getElementById('svc-view-body').innerHTML = rows.map(function(r){
+    return '<div class="svc-view-row"><span class="svc-view-lbl">'+r[0]+'</span><span class="svc-view-val">'+escHtml(r[1])+'</span></div>';
+  }).join('');
+  document.getElementById('svc-view-proj-cnt').textContent = projs.length + ' مشروع مرتبط';
+  var eb = document.getElementById('svc-view-edit-btn');
+  eb.style.background = cat.color;
+  eb.onclick = function(){ closeSvcView(); openSvcModal(id, svc.cat); };
+  document.getElementById('svc-view-bg').classList.add('open');
+}
+function closeSvcView() { document.getElementById('svc-view-bg').classList.remove('open'); }
+
+// ── SERVICE EDIT MODAL ────────────────────────────────────────────
+var _editSvcId = null;
+function openSvcModal(id, catId) {
+  _editSvcId = id === -1 ? null : id;
+  var svc = (id !== -1 && id !== '') ? (getSvc(id) || {}) : {};
+  var defCat = catId || (CATEGORIES[0]||{}).id || '';
+  var cat = svc.cat || defCat;
+  document.getElementById('sm-ico').textContent = svc.icon || '📦';
+  document.getElementById('sm-title').textContent = _editSvcId ? ('تعديل: ' + (svc.name||'')) : 'خدمة جديدة';
+  document.getElementById('sm-del-btn').style.display = _editSvcId ? '' : 'none';
+  var ICONS = ['📋','📊','💰','📱','🎨','📣','🔍','🗺️','⚙️','🖥️','📋','📜','🏛️','📊','📐','📅','📈','🎓','🏫','👨‍🏫','🗓️','🔬','🤝','🌐','💡'];
+  var icoHtml = ICONS.map(function(ico){
+    return '<button onclick="smPickIco(this)" data-ico="'+ico+'"'+(ico===(svc.icon||'📦')?' class="sel"':'')+'>'+ico+'</button>';
+  }).join('');
+  var catsOpts = CATEGORIES.map(function(c){
+    return '<option value="'+c.id+'"'+(c.id===cat?' selected':'')+'>'+escHtml(c.name)+'</option>';
+  }).join('');
+  document.getElementById('svc-modal-body').innerHTML =
+    '<div class="svc-fld"><label>الأيقونة</label><div class="ico-pick" id="sm-ico-pick">'+icoHtml+'</div></div>'
+    +'<div class="svc-fld"><label>اسم الخدمة *</label><input class="ef" id="sm-name" value="'+escHtml(svc.name||'')+'"></div>'
+    +'<div class="svc-fld"><label>القسم</label><select class="ef" id="sm-cat">'+catsOpts+'</select></div>'
+    +'<div class="svc-fld"><label>وصف الخدمة</label><textarea class="ef" id="sm-desc" rows="2" style="resize:vertical">'+escHtml(svc.desc||'')+'</textarea></div>'
+    +'<div class="svc-row">'
+    +'<div class="svc-fld"><label>السعر المقترح (ر.س)</label><input class="ef mn" type="number" id="sm-price" value="'+(svc.price||0)+'"></div>'
+    +'<div class="svc-fld"><label>وحدة التسعير</label><input class="ef" id="sm-unit" value="'+escHtml(svc.unit||'لكل مشروع')+'"></div>'
+    +'</div>'
+    +'<div class="svc-fld"><label>مدة التنفيذ المعتادة</label><input class="ef" id="sm-dur" value="'+escHtml(svc.dur||'')+'"></div>';
+  document.getElementById('svc-modal-bg').classList.add('open');
+}
+function smPickIco(btn) {
+  document.querySelectorAll('#sm-ico-pick button').forEach(function(b){b.classList.remove('sel');});
+  btn.classList.add('sel');
+  document.getElementById('sm-ico').textContent = btn.dataset.ico;
+}
+function closeSvcModal() { document.getElementById('svc-modal-bg').classList.remove('open'); }
+function saveSvc() {
+  var name = document.getElementById('sm-name').value.trim();
+  if(!name) { alert('يرجى إدخال اسم الخدمة'); return; }
+  var ico  = document.getElementById('sm-ico').textContent;
+  var cat  = document.getElementById('sm-cat').value;
+  var desc = document.getElementById('sm-desc').value.trim();
+  var price= parseFloat(document.getElementById('sm-price').value)||0;
+  var unit = document.getElementById('sm-unit').value.trim();
+  var dur  = document.getElementById('sm-dur').value.trim();
+  if(_editSvcId) {
+    var idx = SERVICES.findIndex(function(s){return s.id===_editSvcId;});
+    if(idx>=0) SERVICES[idx] = {id:_editSvcId,icon:ico,cat:cat,name:name,desc:desc,price:price,unit:unit,dur:dur};
+  } else {
+    SERVICES.push({id:'s'+Date.now(),icon:ico,cat:cat,name:name,desc:desc,price:price,unit:unit,dur:dur});
+  }
+  _saveSvcs(); renderProducts(); renderNpSvcs && renderNpSvcs(); closeSvcModal();
+}
+function deleteSvc() {
+  if(!_editSvcId || !confirm('حذف هذه الخدمة؟')) return;
+  SERVICES = SERVICES.filter(function(s){return s.id!==_editSvcId;});
+  _saveSvcs(); renderProducts(); renderNpSvcs && renderNpSvcs(); closeSvcModal();
+}
+
+// ── CATEGORY MODAL ────────────────────────────────────────────────
+var _editCatId = null;
+function openCatModal(id) {
+  _editCatId = (id === -1 || id === null) ? null : id;
+  var cat = _editCatId ? (getCat(_editCatId)||{}) : {};
+  document.getElementById('cat-modal-title').textContent = _editCatId ? ('تعديل: '+(cat.name||'')) : 'قسم جديد';
+  document.getElementById('cm-del-btn').style.display = _editCatId ? '' : 'none';
+  document.getElementById('cm-name').value  = cat.name  || '';
+  document.getElementById('cm-color').value = cat.color || '#00197D';
+  document.getElementById('cm-bg').value    = cat.bg    || '#E6EAF8';
+  var selIco = cat.icon || '📢';
+  document.querySelectorAll('#cm-ico-pick button').forEach(function(b){
+    b.classList.toggle('sel', b.dataset.ico === selIco);
+  });
+  document.getElementById('cat-modal-bg').classList.add('open');
+}
+function cmPickIco(btn) {
+  document.querySelectorAll('#cm-ico-pick button').forEach(function(b){b.classList.remove('sel');});
+  btn.classList.add('sel');
+}
+function closeCatModal() { document.getElementById('cat-modal-bg').classList.remove('open'); }
+function saveCat() {
+  var name = document.getElementById('cm-name').value.trim();
+  if(!name) { alert('يرجى إدخال اسم القسم'); return; }
+  var ico  = (document.querySelector('#cm-ico-pick button.sel')||{}).dataset?.ico || '📢';
+  var color= document.getElementById('cm-color').value;
+  var bg   = document.getElementById('cm-bg').value;
+  if(_editCatId) {
+    var idx = CATEGORIES.findIndex(function(c){return c.id===_editCatId;});
+    if(idx>=0) CATEGORIES[idx] = {id:_editCatId,name:name,icon:ico,color:color,bg:bg};
+  } else {
+    CATEGORIES.push({id:'cat'+Date.now(),name:name,icon:ico,color:color,bg:bg});
+  }
+  _saveSvcs(); renderProducts(); closeCatModal();
+}
+function deleteCat() {
+  if(!_editCatId || !confirm('حذف هذا القسم وكل خدماته؟')) return;
+  CATEGORIES = CATEGORIES.filter(function(c){return c.id!==_editCatId;});
+  SERVICES   = SERVICES.filter(function(s){return s.cat!==_editCatId;});
+  _saveSvcs(); renderProducts(); closeCatModal();
+}
+
+// ── NP-SVC LIST (project creation multi-select) ───────────────────
+function renderNpSvcs() {
+  var el = document.getElementById('np-svc-list');
+  if(!el) return;
+  var html = '';
+  CATEGORIES.forEach(function(cat) {
+    var svcs = SERVICES.filter(function(s){return s.cat===cat.id;});
+    if(!svcs.length) return;
+    html += '<div class="np-cat-lbl">' + cat.icon + ' ' + escHtml(cat.name) + '</div>';
+    svcs.forEach(function(svc){
+      html += '<div class="np-svc-item" data-id="'+svc.id+'" data-price="'+(svc.price||0)+'" onclick="npToggleSvc(this)">'
+        + '<span class="np-svc-ico">'+svc.icon+'</span>'
+        + '<span class="np-svc-nm">'+escHtml(svc.name)+'</span>'
+        + (svc.price?'<span class="np-svc-pr">'+fmt2(svc.price)+' ر.س</span>':'')
+        + '</div>';
+    });
+  });
+  el.innerHTML = html || '<p style="font-size:11px;color:var(--mu);padding:8px">لا توجد خدمات مضافة بعد</p>';
+}
+function npToggleSvc(item) {
+  item.classList.toggle('sel');
+  var sel = document.querySelectorAll('#np-svc-list .np-svc-item.sel');
+  var cnt = sel.length;
+  var total = 0;
+  sel.forEach(function(it){ total += parseFloat(it.dataset.price)||0; });
+  var cntEl   = document.getElementById('np-svc-sel-cnt');
+  var sugEl   = document.getElementById('np-svc-suggest');
+  var totEl   = document.getElementById('np-svc-total');
+  if(cntEl) { cntEl.textContent = cnt ? '— '+cnt+' محددة' : ''; cntEl.style.display = cnt?'':'none'; }
+  if(sugEl) sugEl.style.display = (cnt && total) ? '' : 'none';
+  if(totEl) totEl.textContent = total.toLocaleString('ar-SA');
+  // suggest total in value field if empty
+  var valEl = document.getElementById('np-value');
+  if(valEl && (!valEl.value || valEl.value === '0') && total) valEl.value = total;
+}
+
+// ── LEGACY STUBS ─────────────────────────────────────────────────
+function openProdModal()  { openSvcModal(-1,''); }
+function closeProdModal() { closeSvcModal(); }
+function openProdView()   {}
+function closeProdView()  { closeSvcView(); }
+function saveProd()       { saveSvc(); }
+function deleteProd()     { deleteSvc(); }
+function npSelSvc(btn)    { npToggleSvc(btn); }
 
 // ── SIDEBAR TABS ──────────────────────────────────────────────────
 function sbTab(t) {
@@ -1288,45 +1516,75 @@ document.addEventListener('DOMContentLoaded', function() {
   </div>
 </div>
 
-<div id="prod-view-bg" class="modal-bg" onclick="if(event.target===this)closeProdView()" style="z-index:1900">
-  <div class="prod-view-modal">
-    <div id="pv-head" style="padding:22px 22px 18px;flex-shrink:0">
-      <div style="display:flex;align-items:flex-start;gap:16px">
-        <div id="pv-ico" class="pvm-ico"></div>
+<div id="svc-view-bg" class="modal-bg" onclick="if(event.target===this)closeSvcView()" style="z-index:1900">
+  <div class="svc-view-modal">
+    <div class="svc-view-hd" id="svc-view-hd">
+      <div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:12px">
+        <div id="svc-view-ico" style="width:44px;height:44px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0"></div>
         <div style="flex:1;min-width:0">
-          <div id="pv-name" class="pvm-name"></div>
-          <div id="pv-tag" class="pvm-tag"></div>
+          <div id="svc-view-name" style="font-size:16px;font-weight:700;color:var(--tx);margin-bottom:3px"></div>
+          <div id="svc-view-cat" style="font-size:10px;font-weight:600;padding:2px 9px;border-radius:20px;display:inline-block"></div>
         </div>
-        <button onclick="closeProdView()" style="background:none;border:none;font-size:22px;cursor:pointer;color:rgba(0,0,0,.3);line-height:1;padding:2px 6px;flex-shrink:0">×</button>
+        <button onclick="closeSvcView()" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--mu);line-height:1;padding:2px 6px;flex-shrink:0">×</button>
       </div>
+      <div id="svc-view-desc" style="font-size:11px;color:var(--mu);line-height:1.65"></div>
     </div>
-    <div id="pv-body" class="pvm-body"></div>
-    <div class="pvm-foot">
-      <span style="font-size:10.5px;color:var(--mu)">بُعد التمكين — خدمات متخصصة للقطاع الخيري</span>
-      <button id="pv-edit-btn" style="padding:7px 16px;border-radius:8px;cursor:pointer;font-family:inherit;font-size:12px;font-weight:500;border:none">✏ تعديل المنتج</button>
+    <div class="svc-view-body" id="svc-view-body"></div>
+    <div class="svc-view-foot">
+      <span id="svc-view-proj-cnt" style="font-size:10.5px;color:var(--mu)"></span>
+      <button id="svc-view-edit-btn" style="padding:7px 16px;border-radius:8px;cursor:pointer;font-family:inherit;font-size:12px;font-weight:500;border:none;background:var(--N);color:#fff">✏ تعديل الخدمة</button>
     </div>
   </div>
 </div>
 
-<!-- ── PRODUCT MODAL ──────────────────────────────────────────── -->
-<div id="prod-modal-bg" class="modal-bg" onclick="if(event.target===this)closeProdModal()" style="z-index:2000">
-  <div class="prod-modal">
-    <div class="prod-mh">
-      <div style="display:flex;align-items:center;gap:10px">
-        <span id="pm-ico" style="font-size:26px;line-height:1">📦</span>
-        <div>
-          <div id="pm-title" style="font-weight:700;font-size:15px;color:var(--tx)">تفاصيل المنتج</div>
-          <div id="pm-tag" style="font-size:10px;color:var(--mu);margin-top:2px"></div>
+<!-- ── SERVICE MODAL ─────────────────────────────────────────── -->
+<div id="svc-modal-bg" class="modal-bg" onclick="if(event.target===this)closeSvcModal()" style="z-index:2000">
+  <div class="svc-modal">
+    <div class="svc-mh">
+      <div style="display:flex;align-items:center;gap:9px">
+        <span id="sm-ico" style="font-size:22px;line-height:1">📦</span>
+        <div id="sm-title" style="font-weight:700;font-size:14px;color:var(--tx)">خدمة جديدة</div>
+      </div>
+      <button onclick="closeSvcModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--mu);line-height:1">×</button>
+    </div>
+    <div class="svc-mb" id="svc-modal-body"></div>
+    <div class="svc-mfoot">
+      <button id="sm-del-btn" style="background:var(--Rl);color:var(--R);border:1px solid var(--R);padding:6px 13px;border-radius:7px;font-size:11.5px;cursor:pointer;font-family:inherit;display:none" onclick="deleteSvc()">🗑 حذف</button>
+      <div style="display:flex;gap:7px;margin-right:auto">
+        <button style="background:var(--sand);color:var(--tx);border:1px solid var(--bd);padding:6px 13px;border-radius:7px;font-size:11.5px;cursor:pointer;font-family:inherit" onclick="closeSvcModal()">إلغاء</button>
+        <button style="background:var(--N);color:#fff;border:none;padding:6px 14px;border-radius:7px;font-size:11.5px;cursor:pointer;font-family:inherit" onclick="saveSvc()">💾 حفظ</button>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- ── CATEGORY MODAL ─────────────────────────────────────────── -->
+<div id="cat-modal-bg" class="modal-bg" onclick="if(event.target===this)closeCatModal()" style="z-index:2000">
+  <div class="svc-modal" style="width:min(400px,96vw)">
+    <div class="svc-mh">
+      <div id="cat-modal-title" style="font-weight:700;font-size:14px;color:var(--tx)">قسم جديد</div>
+      <button onclick="closeCatModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--mu);line-height:1">×</button>
+    </div>
+    <div class="svc-mb">
+      <div class="svc-fld"><label>اسم القسم</label><input class="ef" id="cm-name" placeholder="مثال: التسويق"></div>
+      <div class="svc-fld"><label>الأيقونة</label>
+        <div class="ico-pick" id="cm-ico-pick">
+          <button onclick="cmPickIco(this)" data-ico="📢" class="sel">📢</button><button onclick="cmPickIco(this)" data-ico="💻">💻</button>
+          <button onclick="cmPickIco(this)" data-ico="⚖️">⚖️</button><button onclick="cmPickIco(this)" data-ico="🏗">🏗</button>
+          <button onclick="cmPickIco(this)" data-ico="🎓">🎓</button><button onclick="cmPickIco(this)" data-ico="💡">💡</button>
+          <button onclick="cmPickIco(this)" data-ico="🌐">🌐</button><button onclick="cmPickIco(this)" data-ico="🤝">🤝</button>
+          <button onclick="cmPickIco(this)" data-ico="📋">📋</button><button onclick="cmPickIco(this)" data-ico="🏛️">🏛️</button>
         </div>
       </div>
-      <button class="del" onclick="closeProdModal()" style="font-size:18px;background:none;border:none;cursor:pointer;color:var(--mu)">×</button>
+      <div class="svc-row">
+        <div class="svc-fld"><label>لون القسم</label><input type="color" id="cm-color" value="#00197D" style="height:36px;padding:2px;cursor:pointer;width:100%;border-radius:8px;border:.5px solid var(--bd)"></div>
+        <div class="svc-fld"><label>اللون الفاتح</label><input type="color" id="cm-bg" value="#E6EAF8" style="height:36px;padding:2px;cursor:pointer;width:100%;border-radius:8px;border:.5px solid var(--bd)"></div>
+      </div>
     </div>
-    <div class="prod-mb" id="prod-modal-body"></div>
-    <div class="prod-mfoot">
-      <button id="pm-del-btn" class="btn" style="background:var(--R,#e53);color:#fff;border:none;padding:6px 14px;border-radius:7px;font-size:12px;cursor:pointer" onclick="deleteProd()">🗑 حذف</button>
-      <div style="display:flex;gap:8px">
-        <button class="btn" style="background:var(--Nl,#f5f7ff);color:var(--tx);border:1px solid var(--bd);padding:6px 14px;border-radius:7px;font-size:12px;cursor:pointer" onclick="closeProdModal()">إلغاء</button>
-        <button class="btn" style="background:var(--P,#00197D);color:#fff;border:none;padding:6px 14px;border-radius:7px;font-size:12px;cursor:pointer" onclick="saveProd()">💾 حفظ</button>
+    <div class="svc-mfoot">
+      <button id="cm-del-btn" style="background:var(--Rl);color:var(--R);border:1px solid var(--R);padding:6px 13px;border-radius:7px;font-size:11.5px;cursor:pointer;font-family:inherit;display:none" onclick="deleteCat()">🗑 حذف القسم</button>
+      <div style="display:flex;gap:7px;margin-right:auto">
+        <button style="background:var(--sand);color:var(--tx);border:1px solid var(--bd);padding:6px 13px;border-radius:7px;font-size:11.5px;cursor:pointer;font-family:inherit" onclick="closeCatModal()">إلغاء</button>
+        <button style="background:var(--N);color:#fff;border:none;padding:6px 14px;border-radius:7px;font-size:11.5px;cursor:pointer;font-family:inherit" onclick="saveCat()">💾 حفظ</button>
       </div>
     </div>
   </div>
