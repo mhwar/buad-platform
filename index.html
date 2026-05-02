@@ -9,22 +9,26 @@
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:"IBM Plex Sans Arabic",sans-serif;direction:rtl;background:var(--sand);color:var(--tx);font-size:13px;overflow:hidden;height:100vh}
 .app{display:flex;height:100vh}
-.sidebar{width:208px;flex-shrink:0;background:var(--N);display:flex;flex-direction:column}
-.sb-logo{padding:16px 14px 12px;border-bottom:1px solid rgba(255,255,255,.1)}
+.sidebar{width:222px;flex-shrink:0;background:linear-gradient(165deg,#001E9A 0%,#000C54 100%);display:flex;flex-direction:column;box-shadow:2px 0 18px rgba(0,0,0,.22)}
+.sb-logo{padding:16px 14px 12px;border-bottom:1px solid rgba(255,255,255,.08)}
 .sb-logo img{width:132px;height:auto;display:block}
-.sb-tag{font-size:9px;color:rgba(255,255,255,.28);margin-top:4px}
+.sb-tag{font-size:9px;color:rgba(255,255,255,.28);margin-top:5px}
 .sb-nav{flex:1;padding:10px 7px;overflow-y:auto}
-.sb-sec{font-size:8.5px;font-weight:600;color:rgba(255,255,255,.28);padding:10px 10px 4px;letter-spacing:.5px}
-.sb-item{display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:8px;cursor:pointer;color:rgba(255,255,255,.6);font-size:12px;font-weight:500;transition:.15s;margin-bottom:2px}
-.sb-item:hover{background:rgba(255,255,255,.1);color:#fff}
-.sb-item.act{background:rgba(255,255,255,.14);color:#fff}
-.sb-ico{width:17px;text-align:center;font-size:14px;flex-shrink:0}
-.sb-badge{background:rgba(255,255,255,.18);border-radius:9px;padding:1px 7px;font-size:10px;margin-right:auto;font-family:"IBM Plex Mono",monospace}
-.sb-div{height:.5px;background:rgba(255,255,255,.1);margin:7px 9px}
-.sb-bottom{padding:10px 7px;border-top:1px solid rgba(255,255,255,.1)}
-.sb-user{display:flex;align-items:center;gap:9px;padding:8px 10px}
-.sb-av{width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:#fff;flex-shrink:0}
-.sb-un{font-size:11px;font-weight:500;color:#fff}.sb-ur{font-size:9px;color:rgba(255,255,255,.35)}
+.sb-sec{font-size:7.5px;font-weight:700;color:rgba(255,255,255,.22);padding:12px 10px 5px;letter-spacing:.8px;text-transform:uppercase}
+.sb-item{display:flex;align-items:center;gap:9px;padding:7px 8px;border-radius:9px;cursor:pointer;color:rgba(255,255,255,.52);font-size:12px;font-weight:500;transition:.15s;margin-bottom:1px;position:relative}
+.sb-item:hover{background:rgba(255,255,255,.08);color:rgba(255,255,255,.88)}
+.sb-item.act{background:rgba(255,255,255,.13);color:#fff}
+.sb-item.act::after{content:'';position:absolute;right:0;top:22%;bottom:22%;width:3px;background:rgba(255,255,255,.65);border-radius:2px 0 0 2px}
+.sb-ico{width:28px;height:28px;border-radius:7px;background:rgba(255,255,255,.07);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:.15s;color:rgba(255,255,255,.55)}
+.sb-item:hover .sb-ico{background:rgba(255,255,255,.12);color:rgba(255,255,255,.88)}
+.sb-item.act .sb-ico{background:rgba(255,255,255,.18);color:#fff}
+.sb-badge{background:rgba(255,255,255,.14);border-radius:9px;padding:1px 7px;font-size:10px;margin-right:auto;font-family:"IBM Plex Mono",monospace}
+.sb-div{height:1px;background:rgba(255,255,255,.07);margin:6px 10px}
+.sb-bottom{padding:10px 7px;border-top:1px solid rgba(255,255,255,.07)}
+.sb-user{display:flex;align-items:center;gap:9px;padding:7px 8px;border-radius:9px;transition:.15s;cursor:default}
+.sb-user:hover{background:rgba(255,255,255,.06)}
+.sb-av{width:30px;height:30px;border-radius:8px;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0}
+.sb-un{font-size:11.5px;font-weight:600;color:#fff}.sb-ur{font-size:9px;color:rgba(255,255,255,.32)}
 .main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0;position:relative}
 .topbar{background:var(--w);border-bottom:.5px solid var(--bd);padding:9px 18px;display:flex;align-items:center;gap:10px;flex-shrink:0}
 .bc{font-size:11px;color:var(--mu);flex:1;min-width:0}
@@ -101,22 +105,20 @@ body{font-family:"IBM Plex Sans Arabic",sans-serif;direction:rtl;background:var(
 .sec-head h2{font-size:14px;font-weight:600}
 /* ── Sidebar Collapse ─────────────────────────────── */
 .sidebar{transition:width .22s cubic-bezier(.4,0,.2,1);overflow:hidden;position:relative}
-.sidebar.collapsed{width:50px}
+.sidebar.collapsed{width:52px}
 .sidebar.collapsed .sb-label,.sidebar.collapsed .sb-tag,.sidebar.collapsed .sb-sec,.sidebar.collapsed .sb-badge,.sidebar.collapsed .sb-un,.sidebar.collapsed .sb-ur,.sidebar.collapsed .sb-tab-lbl,.sidebar.collapsed .sb-prod-arrow,.sidebar.collapsed .sb-prod-label{display:none!important}
-.sidebar.collapsed .sb-logo{padding:12px 6px;display:flex;justify-content:center}
-.sidebar.collapsed .sb-logo img{width:28px}
-.sidebar.collapsed .sb-item{justify-content:center;padding:9px 0}
-.sidebar.collapsed .sb-tab{padding:9px 0;flex:none;width:100%}
-.sidebar.collapsed .sb-tab-bar{flex-direction:column;gap:2px;padding:6px 4px;border-bottom:none;border-left:none}
-.sidebar.collapsed .sb-panel{padding:4px 3px}
-.sidebar.collapsed .sb-prod-h{justify-content:center;padding:9px 0}
-.sidebar.collapsed .sb-bottom{padding:7px 3px}
-.sidebar.collapsed .sb-user{justify-content:center;padding:7px 0}
-.sidebar.collapsed .sb-logo-row{justify-content:center}
+.sidebar.collapsed .sb-logo{display:none}
+.sidebar.collapsed .sb-logo-row{justify-content:center;padding:12px 4px}
+.sidebar.collapsed .sb-item{justify-content:center;padding:8px 0}
+.sidebar.collapsed .sb-item.act::after{display:none}
+.sidebar.collapsed .sb-ico{width:32px;height:32px;border-radius:8px}
+.sidebar.collapsed .sb-panel{padding:4px 4px}
+.sidebar.collapsed .sb-bottom{padding:7px 4px}
+.sidebar.collapsed .sb-user{justify-content:center;padding:8px 0}
 /* ── Sidebar Header Row ───────────────────────────── */
-.sb-logo-row{display:flex;align-items:center;justify-content:space-between;padding:14px 12px 10px;border-bottom:1px solid rgba(255,255,255,.1)}
-.sb-collapse-btn{background:none;border:none;cursor:pointer;color:rgba(255,255,255,.35);font-size:16px;padding:3px 5px;border-radius:5px;line-height:1;transition:.15s;flex-shrink:0}
-.sb-collapse-btn:hover{color:#fff;background:rgba(255,255,255,.12)}
+.sb-logo-row{display:flex;align-items:center;justify-content:space-between;padding:15px 13px 13px;border-bottom:1px solid rgba(255,255,255,.08)}
+.sb-collapse-btn{background:none;border:none;cursor:pointer;color:rgba(255,255,255,.3);font-size:15px;padding:4px 6px;border-radius:6px;line-height:1;transition:.15s;flex-shrink:0}
+.sb-collapse-btn:hover{color:#fff;background:rgba(255,255,255,.1)}
 /* ── Sidebar Tab Bar ──────────────────────────────── */
 .sb-tab-bar{display:flex;gap:2px;padding:6px 7px 0;border-bottom:1px solid rgba(255,255,255,.1)}
 .sb-tab{flex:1;padding:6px 4px 7px;font-size:9.5px;font-weight:500;color:rgba(255,255,255,.4);border:none;background:none;cursor:pointer;border-radius:6px 6px 0 0;transition:.15s;text-align:center;font-family:inherit;white-space:nowrap;overflow:hidden}
@@ -209,7 +211,7 @@ body{font-family:"IBM Plex Sans Arabic",sans-serif;direction:rtl;background:var(
     <!-- Logo + collapse -->
     <div class="sb-logo-row">
       <div class="sb-logo" style="padding:0;border-bottom:none;flex:1;overflow:hidden">
-        <img id="sb-logo" alt="بُعد التمكين" style="width:120px;height:auto;display:block">
+        <img id="sb-logo" alt="بُعد التمكين" style="width:124px;height:auto;display:block">
         <div class="sb-tag">منصة إدارة المشاريع</div>
       </div>
       <button class="sb-collapse-btn" id="sb-toggle" onclick="toggleSidebar()" title="تصغير القائمة">‹</button>
@@ -217,18 +219,43 @@ body{font-family:"IBM Plex Sans Arabic",sans-serif;direction:rtl;background:var(
     <!-- Nav -->
     <div class="sb-panel" id="sbp-nav">
       <div class="sb-sec">القائمة الرئيسية</div>
-      <div class="sb-item act" id="nav-dash"><span class="sb-ico">🏠</span><span class="sb-label">الرئيسية</span></div>
-      <div class="sb-item" id="nav-projects"><span class="sb-ico">📁</span><span class="sb-label">المشاريع</span><span class="sb-badge" id="sb-count">1</span></div>
-      <div class="sb-item" id="nav-products"><span class="sb-ico">📦</span><span class="sb-label">المنتجات</span></div>
+      <div class="sb-item act" id="nav-dash">
+        <span class="sb-ico"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>
+        <span class="sb-label">الرئيسية</span>
+      </div>
+      <div class="sb-item" id="nav-projects">
+        <span class="sb-ico"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg></span>
+        <span class="sb-label">المشاريع</span>
+        <span class="sb-badge" id="sb-count">1</span>
+      </div>
       <div class="sb-div"></div>
       <div class="sb-sec">الإدارة</div>
-      <div class="sb-item" id="nav-clients"><span class="sb-ico">🏛</span><span class="sb-label">العملاء</span></div>
-      <div class="sb-item" id="nav-finance"><span class="sb-ico">💰</span><span class="sb-label">المالية</span></div>
-      <div class="sb-div" style="margin-top:14px"></div>
+      <div class="sb-item" id="nav-clients">
+        <span class="sb-ico"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+        <span class="sb-label">العملاء</span>
+      </div>
+      <div class="sb-item" id="nav-finance">
+        <span class="sb-ico"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg></span>
+        <span class="sb-label">المالية</span>
+      </div>
+      <div class="sb-item" id="nav-products">
+        <span class="sb-ico"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg></span>
+        <span class="sb-label">المنتجات والخدمات</span>
+      </div>
+      <div class="sb-div" style="margin-top:6px"></div>
       <div class="sb-sec">المنصة</div>
-      <div class="sb-item" style="opacity:.5;cursor:default"><span class="sb-ico">📊</span><span class="sb-label">التقارير <span style="font-size:8px;opacity:.6">قريباً</span></span></div>
-      <div class="sb-item" style="opacity:.5;cursor:default"><span class="sb-ico">🤝</span><span class="sb-label">الشراكات <span style="font-size:8px;opacity:.6">قريباً</span></span></div>
-      <div class="sb-item" style="opacity:.5;cursor:default"><span class="sb-ico">📚</span><span class="sb-label">المكتبة <span style="font-size:8px;opacity:.6">قريباً</span></span></div>
+      <div class="sb-item" style="opacity:.4;cursor:default">
+        <span class="sb-ico"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span>
+        <span class="sb-label">التقارير <span style="font-size:8px;opacity:.7">قريباً</span></span>
+      </div>
+      <div class="sb-item" style="opacity:.4;cursor:default">
+        <span class="sb-ico"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></span>
+        <span class="sb-label">الشراكات <span style="font-size:8px;opacity:.7">قريباً</span></span>
+      </div>
+      <div class="sb-item" style="opacity:.4;cursor:default">
+        <span class="sb-ico"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></span>
+        <span class="sb-label">المكتبة <span style="font-size:8px;opacity:.7">قريباً</span></span>
+      </div>
     </div>
     <!-- Bottom user -->
     <div class="sb-bottom">
