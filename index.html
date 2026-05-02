@@ -442,12 +442,7 @@ body{font-family:"IBM Plex Sans Arabic",sans-serif;direction:rtl;background:var(
       <div class="np-sec">
         <div class="np-sec-title">تفاصيل إضافية</div>
         <div class="mf"><label>وصف مختصر</label><textarea id="np-desc" rows="2" placeholder="وصف مختصر عن المشروع وأهدافه..."></textarea></div>
-        <div class="mf"><label>نموذج المشروع</label>
-          <select id="np-tmpl">
-            <option value="blank">مشروع جديد فارغ</option>
-            <option value="pharmacy">ملتقى صيادلة عسير (النموذج الكامل)</option>
-          </select>
-        </div>
+        <input type="hidden" id="np-tmpl" value="blank">
       </div>
 
     </div>
@@ -468,6 +463,24 @@ var CUR_PROJ = null;
 var CUR_URL  = null;
 var PHARMACY_HTML = '';
 
+var _LS = 'buad_v1';
+function _saveProj() {
+  try {
+    localStorage.setItem(_LS, JSON.stringify(PROJECTS.map(function(p){
+      var x={}; for(var k in p) if(k!=='html') x[k]=p[k]; return x;
+    })));
+  } catch(e){}
+}
+function _loadProj() {
+  try {
+    var r=localStorage.getItem(_LS);
+    if(!r) return null;
+    var a=JSON.parse(r);
+    if(!Array.isArray(a)||!a.length) return null;
+    return a.map(function(p){ p.html=PHARMACY_HTML; return p; });
+  } catch(e){ return null; }
+}
+
 function initApp(pharmacyB64, logoSrc) {
   // Decode project template
   var bin = atob(pharmacyB64);
@@ -475,30 +488,21 @@ function initApp(pharmacyB64, logoSrc) {
   for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
   PHARMACY_HTML = new TextDecoder('utf-8').decode(bytes);
 
-  PROJECTS = [{
-    id: 'apf-2025',
-    name: 'مبادرة ملتقى الصيادلة للتأهيل المهني',
-    client: 'جمعية توفير الدواء',
-    type: 'فعالية وملتقى',
-    status: 'active',
-    value: 50000,
-    progress: 0,
-    desc: 'مبادرة صحية — 12 لقاءً، 5 دورات تدريبية، منطقة عسير',
-    created: new Date().toLocaleDateString('ar-SA'),
-    html: PHARMACY_HTML
-  }];
-
-  var stateEl = document.getElementById('proj-state');
-  if (stateEl && stateEl.textContent.trim()) {
-    try {
-      var saved = JSON.parse(stateEl.textContent);
-      if (Array.isArray(saved) && saved.length) {
-        PROJECTS = saved.map(function(p) {
-          if (!p.html) p.html = PHARMACY_HTML;
-          return p;
-        });
-      }
-    } catch(e) {}
+  PROJECTS = [];
+  var _ls = _loadProj();
+  if (_ls) {
+    PROJECTS = _ls;
+  } else {
+    var stateEl = document.getElementById('proj-state');
+    if (stateEl && stateEl.textContent.trim()) {
+      try {
+        var _st = JSON.parse(stateEl.textContent);
+        if (Array.isArray(_st) && _st.length) {
+          PROJECTS = _st.map(function(p){ p.html=PHARMACY_HTML; return p; });
+          _saveProj();
+        }
+      } catch(e) {}
+    }
   }
 
   document.getElementById('sb-logo').src = logoSrc;
@@ -659,6 +663,7 @@ function doOpenProj(idOrObj) {
   var proj = (typeof idOrObj === 'string') ? findProj(idOrObj) : idOrObj;
   if (!proj) return;
   CUR_PROJ = proj;
+  if (proj.initData) window._pendingBlankData = proj.initData;
 
   var s = sm(proj.status);
   document.getElementById('vt-title').textContent  = proj.name;
@@ -742,7 +747,8 @@ function doCreateProj() {
   var date    = document.getElementById('np-date').value;
   var dateEnd = document.getElementById('np-date-end').value;
   var desc    = document.getElementById('np-desc').value;
-  var tmpl    = document.getElementById('np-tmpl').value;
+  var initData = { name: name, client: client, value: value, type: type };
+  window._pendingBlankData = initData;
 
   var proj = {
     id:       'proj-' + Date.now(),
@@ -758,16 +764,18 @@ function doCreateProj() {
     dateEnd:  dateEnd,
     desc:     desc,
     created:  new Date().toLocaleDateString('ar-SA'),
-    html:     tmpl === 'pharmacy' ? PHARMACY_HTML : buildBlank(name, client, value, type)
+    initData: initData,
+    html:     PHARMACY_HTML
   };
 
   PROJECTS.push(proj);
+  _saveProj();
   doCloseNewProj();
 
   ['np-name','np-client','np-value','np-date','np-date-end','np-desc'].forEach(function(id){
     document.getElementById(id).value = '';
   });
-  ['np-org-type','np-region','np-status','np-tmpl'].forEach(function(id){
+  ['np-org-type','np-region','np-status'].forEach(function(id){
     document.getElementById(id).selectedIndex = 0;
   });
   document.querySelectorAll('#np-svc-grid .np-svc-btn').forEach(function(b){ b.classList.remove('sel'); });
@@ -779,9 +787,6 @@ function doCreateProj() {
 }
 
 function buildBlank(name, client, value, type) {
-  // Use pharmacy template then clear data — triggered via postMessage after load
-  // Store pending clear data so iframe can apply it after init
-  window._pendingBlankData = { name: name, client: client, value: value, type: type };
   return PHARMACY_HTML;
 }
 
@@ -848,6 +853,7 @@ function renderClients() {
 
 // ── SAVE ─────────────────────────────────────────────────────────
 function doSaveDash() {
+  _saveProj();
   var stateEl = document.getElementById('proj-state');
   if (stateEl) {
     var toSave = PROJECTS.map(function(p) {
