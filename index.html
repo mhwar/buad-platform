@@ -550,7 +550,7 @@ function initApp(pharmacyB64, logoSrc) {
   PHARMACY_HTML = new TextDecoder('utf-8').decode(bytes);
   _loadSvcs();
 
-  var TMPL_VER = 'v11';
+  var TMPL_VER = 'v12';
   if (localStorage.getItem('buad_tmpl_ver') !== TMPL_VER) {
     Object.keys(localStorage)
       .filter(function(k){ return k.indexOf('buad_html_') === 0; })
