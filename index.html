@@ -210,6 +210,16 @@ body{font-family:"IBM Plex Sans Arabic",sans-serif;direction:rtl;background:var(
 .np-svc-btn .np-svc-ico{font-size:18px;display:block;margin-bottom:4px}
 .np-svc-btn:hover{border-color:var(--N);background:var(--Nl)}
 .np-svc-btn.sel{border-color:var(--N);background:var(--Nl);color:var(--N);font-weight:600}
+.ob-header{background:linear-gradient(135deg,var(--N) 0%,#1A62D4 100%);padding:28px 24px 22px;text-align:center;border-radius:13px 13px 0 0}
+.ob-icon{font-size:38px;margin-bottom:10px}
+.ob-title{font-size:16px;font-weight:700;color:#fff;margin-bottom:5px}
+.ob-sub{font-size:11px;color:rgba(255,255,255,.72)}
+.ob-body{padding:16px 20px;max-height:55vh;overflow-y:auto}
+.ob-sec-title{font-size:9px;font-weight:700;color:var(--mu);letter-spacing:.5px;text-transform:uppercase;margin:14px 0 8px}
+.ob-sec-title:first-child{margin-top:0}
+.ob-row{display:flex;justify-content:space-between;align-items:center;padding:9px 12px;background:var(--sand);border-radius:8px;margin-bottom:5px}
+.ob-lbl{font-size:11px;color:var(--mu);font-weight:500}
+.ob-val{font-size:12px;font-weight:600;color:var(--tx);max-width:55%;text-align:left;direction:ltr}
 </style>
 </head>
 <body>
@@ -493,16 +503,31 @@ function initApp(pharmacyB64, logoSrc) {
   if (_ls) {
     PROJECTS = _ls;
   } else {
-    var stateEl = document.getElementById('proj-state');
-    if (stateEl && stateEl.textContent.trim()) {
+    var _stEl = document.getElementById('proj-state');
+    if (_stEl && _stEl.textContent.trim()) {
       try {
-        var _st = JSON.parse(stateEl.textContent);
+        var _st = JSON.parse(_stEl.textContent);
         if (Array.isArray(_st) && _st.length) {
           PROJECTS = _st.map(function(p){ p.html=PHARMACY_HTML; return p; });
-          _saveProj();
         }
       } catch(e) {}
     }
+    if (!PROJECTS.length) {
+      PROJECTS = [{
+        id: 'apf-2025',
+        name: 'مبادرة ملتقى الصيادلة للتأهيل المهني',
+        client: 'جمعية توفير الدواء',
+        type: 'بناء القدرات والتدريب',
+        status: 'active',
+        value: 50000,
+        progress: 0,
+        date: '2025-03-01',
+        desc: 'مبادرة صحية — 12 لقاءً، 5 دورات تدريبية، منطقة عسير',
+        created: new Date().toLocaleDateString('ar-SA'),
+        html: PHARMACY_HTML
+      }];
+    }
+    _saveProj();
   }
 
   document.getElementById('sb-logo').src = logoSrc;
@@ -662,8 +687,44 @@ function findProj(id) {
 function doOpenProj(idOrObj) {
   var proj = (typeof idOrObj === 'string') ? findProj(idOrObj) : idOrObj;
   if (!proj) return;
+  if (proj.initData) { openBoarding(proj); return; }
+  _launchViewer(proj);
+}
+
+function openBoarding(proj) {
+  var ST = {active:'نشط',pending:'معلق',draft:'مسودة',done:'منتهٍ'};
+  var rows = [
+    ['اسم المشروع',    proj.name],
+    ['العميل / الجهة', proj.client],
+    ['نوع الخدمة',     proj.type],
+    ['نوع المنظمة',    proj.orgType],
+    ['المنطقة',        proj.region],
+    ['قيمة العقد',     proj.value ? fmt(proj.value)+' ر.س' : null],
+    ['الحالة',         ST[proj.status] || proj.status],
+    ['تاريخ البداية',  proj.date],
+    ['تاريخ الانتهاء', proj.dateEnd],
+    ['الوصف',          proj.desc],
+  ].filter(function(r){ return r[1]; });
+
+  document.getElementById('ob-proj-name').textContent = proj.name;
+  document.getElementById('ob-body').innerHTML = rows.map(function(r){
+    return '<div class="ob-row"><span class="ob-lbl">'+escHtml(r[0])+'</span>'
+      +'<span class="ob-val">'+escHtml(String(r[1]))+'</span></div>';
+  }).join('');
+  document.getElementById('ob-start').onclick = function(){
+    document.getElementById('ob-modal').classList.remove('open');
+    _launchViewer(proj);
+  };
+  document.getElementById('ob-modal').classList.add('open');
+}
+
+function _launchViewer(proj) {
+  if (proj.initData) {
+    window._pendingBlankData = proj.initData;
+    proj.initData = null;
+    _saveProj();
+  }
   CUR_PROJ = proj;
-  if (proj.initData) window._pendingBlankData = proj.initData;
 
   var s = sm(proj.status);
   document.getElementById('vt-title').textContent  = proj.name;
@@ -676,7 +737,6 @@ function doOpenProj(idOrObj) {
   var iframe = document.getElementById('v-iframe');
   var html = proj.html || '';
 
-  // Show loading spinner
   document.getElementById('vt-loading').classList.add('show');
 
   if (html.length > 100) {
@@ -1180,6 +1240,20 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 <!-- ── PRODUCT VIEW MODAL ─────────────────────────────────────── -->
+<div class="modal-bg" id="ob-modal">
+  <div class="modal" style="width:min(480px,96vw);overflow:hidden;padding:0">
+    <div class="ob-header">
+      <div class="ob-icon">🎉</div>
+      <div class="ob-title">تم إنشاء "<span id="ob-proj-name"></span>" بنجاح!</div>
+      <div class="ob-sub">راجع تفاصيل العقد قبل الدخول للمشروع</div>
+    </div>
+    <div id="ob-body" class="ob-body"></div>
+    <div class="mfoot" style="border-radius:0 0 13px 13px">
+      <button class="tb-btn pri" id="ob-start" style="width:100%;justify-content:center;padding:10px">← ابدأ العمل في المشروع</button>
+    </div>
+  </div>
+</div>
+
 <div id="prod-view-bg" class="modal-bg" onclick="if(event.target===this)closeProdView()" style="z-index:1900">
   <div class="prod-view-modal">
     <div id="pv-head" style="padding:22px 22px 18px;flex-shrink:0">
