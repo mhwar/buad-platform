@@ -549,7 +549,7 @@ function initApp(pharmacyB64, logoSrc) {
   PHARMACY_HTML = new TextDecoder('utf-8').decode(bytes);
   _loadSvcs();
 
-  var TMPL_VER = 'v24';
+  var TMPL_VER = 'v25';
   if (localStorage.getItem('buad_tmpl_ver') !== TMPL_VER) {
     Object.keys(localStorage)
       .filter(function(k){ return k.indexOf('buad_html_') === 0; })
@@ -580,30 +580,40 @@ function initApp(pharmacyB64, logoSrc) {
     _saveProj();
   }
 
-  // مشروع خبرة التعليمية — مشروع تجريبي
-  if (!PROJECTS.find(function(p) { return p.id === 'khb-2025'; })) {
-    PROJECTS.push({
-      id: 'khb-2025',
-      name: 'برنامج تطوير الكفاءات التعليمية',
-      client: 'جمعية خبرة التعليمية',
-      type: 'التدريب والتطوير المهني',
-      orgType: 'جمعية خيرية',
-      region: 'الرياض',
-      status: 'active',
-      value: 121000,
-      progress: 0,
-      date: '2025-09-01',
-      dateEnd: '2025-12-31',
-      desc: 'برنامج تدريبي متكامل — 10 جلسات، 30 مشاركاً، منطقة الرياض',
-      created: new Date().toLocaleDateString('ar-SA'),
-      html: PHARMACY_HTML
-    });
-    _saveProj();
+  // مشروع خبرة التعليمية — يُحدَّث في كل تشغيل ليضمن تنظيف البيانات القديمة
+  var _khbExisting = PROJECTS.find(function(p) { return p.id === 'khb-2025'; });
+  var _khbDef = {
+    id: 'khb-2025',
+    name: 'برنامج تطوير الكفاءات التعليمية',
+    client: 'جمعية خبرة التعليمية',
+    type: 'التدريب والتطوير المهني',
+    orgType: 'جمعية خيرية',
+    region: 'الرياض',
+    status: 'active',
+    value: 121000,
+    progress: 0,
+    date: '2025-09-01',
+    dateEnd: '2025-12-31',
+    desc: 'برنامج تدريبي متكامل — 10 جلسات، 30 مشاركاً، منطقة الرياض',
+    created: (_khbExisting && _khbExisting.created) || new Date().toLocaleDateString('ar-SA'),
+    html: PHARMACY_HTML
+  };
+  if (_khbExisting) {
+    // تنظيف الخصائص القديمة (initData القديم) واستبدالها بالقيم النظيفة
+    Object.keys(_khbDef).forEach(function(k){ _khbExisting[k] = _khbDef[k]; });
+    delete _khbExisting.initData;
+  } else {
+    PROJECTS.push(_khbDef);
   }
-  // تهيئة بيانات مشروع خبرة إن لم تكن محفوظة
-  if (!localStorage.getItem('buad_data_khb-2025')) {
-    try { localStorage.setItem('buad_data_khb-2025', '{"fin": [{"c": "تصميم المناهج التعليمية", "u": "دورة", "q": 3, "p": 5000, "a": 15000, "o": "بُعد التمكين", "cat": "exec", "type": "qty"}, {"c": "تنفيذ الجلسات التدريبية", "u": "يوم", "q": 10, "p": 2000, "a": 20000, "o": "بُعد التمكين", "cat": "exec", "type": "qty"}, {"c": "المواد والمستلزمات التدريبية", "u": "مشارك", "q": 30, "p": 300, "a": 9000, "o": "مسوّق خارجي", "cat": "purchase", "type": "qty"}, {"c": "مكافآت المدربين والميسّرين", "u": "جلسة", "q": 10, "p": 800, "a": 8000, "o": "مراس", "cat": "service", "type": "qty"}, {"c": "أتعاب بُعد التمكين", "u": "%", "q": 1, "p": 15, "a": 15783, "o": "بُعد التمكين", "cat": "exec", "type": "pct", "purpose": "exec_profit"}], "goals": [], "tasks": [], "risks": [], "ctg": [], "agenda": [], "spk": [], "gst": [], "team": [], "invoices": [], "spend_items": [], "clauses": [], "kpis": [], "courses": [], "sessions": [], "surplusMode": "cb_org", "execMode": "budget", "mktSource": "out", "finWizardDone": true, "fw": {"step": 5, "exec": "budget", "execPct": 30, "execFix": 0, "hasMkt": true, "mktSrc": "out", "mktType": "pct", "mktVal": 10, "mktName": "مسوّق خارجي", "vatPct": 15, "vatIncl": true, "hasCB": false, "cbType": "pct", "cbVal": 0, "cbWhen": "بعد إتمام المشروع"}, "form": {"c-gross": "121000", "c-vat": "15", "c-no": "", "c-date": "2025-09-01", "c-p1": "شركة بُعد التمكين", "c-p2": "جمعية خبرة التعليمية", "c-p2sig": "", "vat-included": true, "cv1": "برنامج تطوير الكفاءات التعليمية", "cv2": "جمعية خبرة التعليمية | التدريب والتطوير المهني", "cv-client-name": "جمعية خبرة التعليمية", "cv-location": "الرياض", "cv-audience": "30 مشاركاً", "cv-sessions": "10 جلسات", "cv-proj-status": "active", "i-exec-pct": "30", "i-exec-fix": "0", "i-mkt-t": "pct", "i-mkt-v": "10", "i-mkt-name": "مسوّق خارجي", "i-cb-t": "pct", "i-cb-v": "0", "i-cb-w": "بعد إتمام المشروع", "fw-done-flag": "1"}}'); } catch(e) {}
-  }
+  _saveProj();
+  // تهيئة/تحديث بيانات مشروع خبرة بصيغة fullData (يُستبدل إن كان النموذج القديم بدون form)
+  (function(){
+    var _existing = null;
+    try { _existing = JSON.parse(localStorage.getItem('buad_data_khb-2025') || 'null'); } catch(e){}
+    if (!_existing || !_existing.form) {
+      try { localStorage.setItem('buad_data_khb-2025', '{"fin": [{"c": "تصميم المناهج التعليمية", "u": "دورة", "q": 3, "p": 5000, "a": 15000, "o": "بُعد التمكين", "cat": "exec", "type": "qty"}, {"c": "تنفيذ الجلسات التدريبية", "u": "يوم", "q": 10, "p": 2000, "a": 20000, "o": "بُعد التمكين", "cat": "exec", "type": "qty"}, {"c": "المواد والمستلزمات التدريبية", "u": "مشارك", "q": 30, "p": 300, "a": 9000, "o": "مسوّق خارجي", "cat": "purchase", "type": "qty"}, {"c": "مكافآت المدربين والميسّرين", "u": "جلسة", "q": 10, "p": 800, "a": 8000, "o": "مراس", "cat": "service", "type": "qty"}, {"c": "أتعاب بُعد التمكين", "u": "%", "q": 1, "p": 15, "a": 15783, "o": "بُعد التمكين", "cat": "exec", "type": "pct", "purpose": "exec_profit"}], "goals": [], "tasks": [], "risks": [], "ctg": [], "agenda": [], "spk": [], "gst": [], "team": [], "invoices": [], "spend_items": [], "clauses": [], "kpis": [], "courses": [], "sessions": [], "surplusMode": "cb_org", "execMode": "budget", "mktSource": "out", "finWizardDone": true, "fw": {"step": 5, "exec": "budget", "execPct": 30, "execFix": 0, "hasMkt": true, "mktSrc": "out", "mktType": "pct", "mktVal": 10, "mktName": "مسوّق خارجي", "vatPct": 15, "vatIncl": true, "hasCB": false, "cbType": "pct", "cbVal": 0, "cbWhen": "بعد إتمام المشروع"}, "form": {"c-gross": "121000", "c-vat": "15", "c-no": "", "c-date": "2025-09-01", "c-p1": "شركة بُعد التمكين", "c-p2": "جمعية خبرة التعليمية", "c-p2sig": "", "vat-included": true, "cv1": "برنامج تطوير الكفاءات التعليمية", "cv2": "جمعية خبرة التعليمية | التدريب والتطوير المهني", "cv-client-name": "جمعية خبرة التعليمية", "cv-location": "الرياض", "cv-audience": "30 مشاركاً", "cv-sessions": "10 جلسات", "cv-proj-status": "active", "i-exec-pct": "30", "i-exec-fix": "0", "i-mkt-t": "pct", "i-mkt-v": "10", "i-mkt-name": "مسوّق خارجي", "i-cb-t": "pct", "i-cb-v": "0", "i-cb-w": "بعد إتمام المشروع", "fw-done-flag": "1"}}'); } catch(e) {}
+    }
+  })();
 
   document.getElementById('sb-logo').src = logoSrc;
 
@@ -775,7 +785,8 @@ function findProj(id) {
 function doOpenProj(idOrObj) {
   var proj = (typeof idOrObj === 'string') ? findProj(idOrObj) : idOrObj;
   if (!proj) return;
-  if (proj.initData && !hasSavedHtml) { openBoarding(proj); return; }
+  var hasSavedData = !!localStorage.getItem('buad_data_' + proj.id);
+  if (proj.initData && !hasSavedData) { openBoarding(proj); return; }
   _launchViewer(proj);
 }
 
