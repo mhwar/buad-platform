@@ -332,9 +332,55 @@ body{font-family:"IBM Plex Sans Arabic",sans-serif;direction:rtl;background:var(
 .fpj-form-field input,.fpj-form-field select{font-family:inherit;direction:rtl;border:.5px solid var(--bd);border-radius:8px;padding:7px 10px;font-size:12px;background:var(--w);color:var(--tx);transition:.15s}
 .fpj-form-field input:focus,.fpj-form-field select:focus{border-color:var(--N);outline:none}
 .fpj-form-check{display:flex;align-items:center;gap:6px;font-size:12px;margin-top:2px}
+.sb-hamburger{display:none;background:none;border:none;cursor:pointer;padding:5px 7px;border-radius:7px;color:var(--mu);transition:.15s;flex-shrink:0;align-items:center;justify-content:center}
+.sb-hamburger:hover{background:var(--sand2)}
+.sb-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.48);z-index:199;opacity:0;transition:opacity .22s;-webkit-tap-highlight-color:transparent;pointer-events:none}
+.sb-overlay.show{opacity:1;pointer-events:auto}
+@media(max-width:768px){
+  .sb-hamburger{display:flex}
+  .sb-collapse-btn{display:none!important}
+  .sb-overlay{display:block}
+  .sidebar{position:fixed!important;top:0;right:0;height:100vh!important;z-index:200;width:248px!important;transform:translateX(110%);transition:transform .26s cubic-bezier(.4,0,.2,1)!important;box-shadow:none}
+  .sidebar.collapsed{width:248px!important}
+  .sidebar.mob-open{transform:translateX(0);box-shadow:-4px 0 24px rgba(0,0,0,.35)}
+  .main{width:100%;min-width:0}
+  .topbar{padding:8px 12px;gap:8px}
+  .page-title{font-size:13px}
+  .tb-btn{padding:5px 9px;font-size:11px}
+  .content{padding:10px}
+  .stats-row{grid-template-columns:repeat(2,1fr);gap:9px;margin-bottom:13px}
+  .sc{padding:11px 12px;gap:10px}
+  .sc-num{font-size:17px}
+  .sc-ico{width:34px;height:34px;font-size:14px}
+  .proj-grid{grid-template-columns:1fr;gap:10px}
+  .fin-table-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .fin-table{min-width:600px}
+  .entry-table{min-width:480px}
+  .entry-table-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .sec-head{flex-wrap:wrap;gap:8px}
+  .sec-head h2{font-size:13px}
+  .fin-toolbar{gap:7px}
+  .fin-search{min-width:130px!important;font-size:11.5px}
+  .fpj-form-grid{grid-template-columns:1fr!important}
+  .fpj-agr-grid{grid-template-columns:repeat(2,1fr)}
+  .fdm-stats{grid-template-columns:repeat(2,1fr)!important}
+  .fpj-sh{font-size:12px}
+  .fpj-section{margin-bottom:10px}
+  .modal{width:96vw!important}
+  #fin-detail-modal{max-width:96vw!important}
+  .bc{font-size:10.5px}
+  .page-title{display:none}
+}
+@media(max-width:400px){
+  .stats-row{grid-template-columns:1fr 1fr;gap:7px}
+  .sc-num{font-size:15px}
+  .content{padding:8px}
+  .fpj-agr-grid{grid-template-columns:1fr 1fr}
+}
 </style>
 </head>
 <body>
+<div id="sb-overlay" onclick="closeMobileSidebar()"></div>
 <div class="app">
   <div class="sidebar" id="sidebar">
     <!-- Logo + collapse -->
@@ -400,6 +446,7 @@ body{font-family:"IBM Plex Sans Arabic",sans-serif;direction:rtl;background:var(
 
   <div class="main">
     <div class="topbar">
+      <button class="sb-hamburger" id="sb-hamburger" onclick="toggleMobileSidebar()" aria-label="القائمة"><svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect y="3" width="18" height="2" rx="1" fill="currentColor"/><rect y="8" width="18" height="2" rx="1" fill="currentColor"/><rect y="13" width="18" height="2" rx="1" fill="currentColor"/></svg></button>
       <div class="bc" id="bc"><span class="bc-link" id="bc-home">الرئيسية</span></div>
       <span class="page-title" id="page-title">لوحة التحكم</span>
       <div class="tb-actions">
@@ -471,6 +518,7 @@ body{font-family:"IBM Plex Sans Arabic",sans-serif;direction:rtl;background:var(
           </select>
         </div>
         <div style="background:var(--w);border:.5px solid var(--bd);border-radius:12px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.05)">
+          <div class="fin-table-scroll">
           <table class="fin-table">
             <thead><tr>
               <th style="width:22%">المشروع</th>
@@ -580,7 +628,7 @@ body{font-family:"IBM Plex Sans Arabic",sans-serif;direction:rtl;background:var(
               <button class="tb-btn-sm suc" onclick="openAddEntry('income')">+ دخل</button>
             </div>
           </div>
-          <div style="overflow:hidden">
+          <div class="entry-table-scroll">
             <table class="entry-table">
               <thead><tr>
                 <th style="width:88px">التاريخ</th>
@@ -603,7 +651,7 @@ body{font-family:"IBM Plex Sans Arabic",sans-serif;direction:rtl;background:var(
             بنود الميزانية المخططة
             <span style="font-size:10px;color:var(--mu);font-weight:400">(من ملف المشروع)</span>
           </div>
-          <div style="overflow:hidden">
+          <div class="entry-table-scroll">
             <table class="entry-table">
               <thead><tr>
                 <th>البند</th>
@@ -893,6 +941,7 @@ function doGoPage(p) {
   document.getElementById('btn-new').style.display = showNew ? '' : 'none';
 
   if (document.getElementById('viewer').classList.contains('open')) doCloseViewer();
+  if (window.innerWidth <= 768) closeMobileSidebar();
 
   if (p === 'dash' || p === 'projects') renderAll();
   if (p === 'finance') renderFinance();
@@ -1874,10 +1923,31 @@ function sbTab(t) {
 
 // ── SIDEBAR COLLAPSE ──────────────────────────────────────────────
 function toggleSidebar() {
+  if (window.innerWidth <= 768) { toggleMobileSidebar(); return; }
   var sb  = document.getElementById('sidebar');
   var btn = document.getElementById('sb-toggle');
   sb.classList.toggle('collapsed');
   btn.textContent = sb.classList.contains('collapsed') ? '›' : '‹';
+}
+
+function toggleMobileSidebar() {
+  var sb = document.getElementById('sidebar');
+  var ov = document.getElementById('sb-overlay');
+  if (sb.classList.contains('mob-open')) { closeMobileSidebar(); }
+  else {
+    sb.classList.remove('collapsed');
+    sb.classList.add('mob-open');
+    if (ov) ov.classList.add('show');
+    document.body.style.overflow = 'hidden';
+  }
+}
+
+function closeMobileSidebar() {
+  var sb = document.getElementById('sidebar');
+  var ov = document.getElementById('sb-overlay');
+  sb.classList.remove('mob-open');
+  if (ov) ov.classList.remove('show');
+  document.body.style.overflow = '';
 }
 
 
