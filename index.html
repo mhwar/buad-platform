@@ -344,7 +344,8 @@ body{font-family:"IBM Plex Sans Arabic",sans-serif;direction:rtl;background:var(
   .sidebar.collapsed{width:248px!important}
   .sidebar.mob-open{transform:translateX(0);box-shadow:-4px 0 24px rgba(0,0,0,.35)}
   .main{width:100%;min-width:0}
-  .topbar{padding:8px 12px;gap:8px}
+  .topbar{padding:calc(env(safe-area-inset-top,0px) + 14px) 12px 10px;gap:8px}
+  .sb-hamburger{padding:9px 10px;min-width:42px;min-height:42px}
   .page-title{font-size:13px}
   .tb-btn{padding:5px 9px;font-size:11px}
   .content{padding:10px}
