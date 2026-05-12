@@ -318,6 +318,20 @@ body{font-family:"IBM Plex Sans Arabic",sans-serif;direction:rtl;background:var(
 .entry-table td{padding:7px 10px;border-bottom:.5px solid var(--bd);vertical-align:middle}
 .entry-table tbody tr:hover td{background:var(--sand)}
 .entry-source-badge{font-size:9px;padding:1px 6px;border-radius:4px;font-weight:600}
+/* ═══ Financial Project Page ═══ */
+.fpj-section{background:var(--w);border:.5px solid var(--bd);border-radius:12px;margin-bottom:14px;overflow:hidden}
+.fpj-sh{padding:12px 16px;border-bottom:.5px solid var(--bd);font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.fpj-form-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:16px}
+@media(max-width:720px){.fpj-form-grid{grid-template-columns:1fr 1fr}}
+.fpj-agr-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:16px}
+.fpj-agr-card{background:var(--sand);border-radius:9px;padding:11px 13px;border:.5px solid var(--bd)}
+.fpj-agr-card .lac{font-size:9.5px;color:var(--mu);font-weight:600;margin-bottom:3px}
+.fpj-agr-card .vac{font-size:14px;font-weight:600;font-family:"IBM Plex Mono",monospace}
+.fpj-form-field{display:flex;flex-direction:column;gap:4px}
+.fpj-form-field label{font-size:10px;font-weight:600;color:var(--mu)}
+.fpj-form-field input,.fpj-form-field select{font-family:inherit;direction:rtl;border:.5px solid var(--bd);border-radius:8px;padding:7px 10px;font-size:12px;background:var(--w);color:var(--tx);transition:.15s}
+.fpj-form-field input:focus,.fpj-form-field select:focus{border-color:var(--N);outline:none}
+.fpj-form-check{display:flex;align-items:center;gap:6px;font-size:12px;margin-top:2px}
 </style>
 </head>
 <body>
@@ -482,6 +496,129 @@ body{font-family:"IBM Plex Sans Arabic",sans-serif;direction:rtl;background:var(
           <button class="tb-btn" onclick="openCatModal(-1)" style="margin-right:6px">+ قسم</button>
         </div>
         <div id="prod-grid" class="prod-pg-grid"></div>
+      </div>
+      <div class="page" id="page-finproject">
+        <div class="sec-head" style="align-items:center;flex-wrap:wrap;gap:8px">
+          <button class="tb-btn" onclick="doGoPage('finance')" style="font-size:12px;padding:5px 12px">← العودة للمالية</button>
+          <div style="flex:1;min-width:120px">
+            <h2 id="fpj-name" style="font-size:15px;font-weight:600">—</h2>
+            <div style="font-size:11px;color:var(--mu);margin-top:2px" id="fpj-sub">—</div>
+          </div>
+          <span id="fpj-badge" class="fp-badge" style="align-self:center"></span>
+          <button class="tb-btn" onclick="exportFinProjExcel()" title="تصدير كشف الحساب Excel">⬇ Excel</button>
+          <button class="tb-btn pri" onclick="exportFinProjPDF()" title="تصدير الاتفاق PDF">🖨 PDF</button>
+        </div>
+        <div class="stats-row" id="fpj-stats-row" style="margin-bottom:16px"></div>
+        <div class="fpj-section" id="fpj-agr-section">
+          <div class="fpj-sh">
+            الاتفاق المالي
+            <button class="tb-btn-sm" id="fpj-agr-toggle" onclick="toggleFinAgreement()" style="margin-right:auto">تعديل</button>
+          </div>
+          <div id="fpj-agr-view"></div>
+          <div id="fpj-agr-form" style="display:none">
+            <div class="fpj-form-grid">
+              <div class="fpj-form-field">
+                <label>قيمة العقد الإجمالية (ر.س)</label>
+                <input type="number" id="fpj-c-gross" placeholder="0" min="0" step="any">
+              </div>
+              <div class="fpj-form-field">
+                <label>نسبة ضريبة القيمة المضافة (%)</label>
+                <input type="number" id="fpj-c-vat" placeholder="15" min="0" max="100" step="any">
+              </div>
+              <div class="fpj-form-field" style="justify-content:flex-end">
+                <label>&nbsp;</label>
+                <label class="fpj-form-check"><input type="checkbox" id="fpj-vat-incl"> ضريبة مدمجة في القيمة</label>
+              </div>
+              <div class="fpj-form-field">
+                <label>رقم العقد</label>
+                <input type="text" id="fpj-c-no" placeholder="رقم العقد">
+              </div>
+              <div class="fpj-form-field">
+                <label>تاريخ العقد</label>
+                <input type="date" id="fpj-c-date">
+              </div>
+              <div class="fpj-form-field">
+                <label>اسم الجهة في العقد</label>
+                <input type="text" id="fpj-cv-client" placeholder="الاسم الرسمي">
+              </div>
+              <div class="fpj-form-field">
+                <label>نسبة التنفيذ (%)</label>
+                <input type="number" id="fpj-exec-pct" placeholder="100" min="0" max="100" step="any">
+              </div>
+              <div class="fpj-form-field">
+                <label>قيمة التسويق</label>
+                <div style="display:flex;gap:6px">
+                  <select id="fpj-mkt-t" style="font-family:inherit;border:.5px solid var(--bd);border-radius:8px;padding:7px 8px;font-size:12px;background:var(--w);width:72px">
+                    <option value="pct">%</option>
+                    <option value="fix">ر.س</option>
+                  </select>
+                  <input type="number" id="fpj-mkt-v" placeholder="0" min="0" step="any" style="flex:1;font-family:inherit;border:.5px solid var(--bd);border-radius:8px;padding:7px 10px;font-size:12px;background:var(--w);color:var(--tx)">
+                </div>
+              </div>
+              <div class="fpj-form-field">
+                <label>قيمة الكاش باك</label>
+                <div style="display:flex;gap:6px">
+                  <select id="fpj-cb-t" style="font-family:inherit;border:.5px solid var(--bd);border-radius:8px;padding:7px 8px;font-size:12px;background:var(--w);width:72px">
+                    <option value="pct">%</option>
+                    <option value="fix">ر.س</option>
+                  </select>
+                  <input type="number" id="fpj-cb-v" placeholder="0" min="0" step="any" style="flex:1;font-family:inherit;border:.5px solid var(--bd);border-radius:8px;padding:7px 10px;font-size:12px;background:var(--w);color:var(--tx)">
+                </div>
+              </div>
+            </div>
+            <div style="padding:0 16px 16px;display:flex;justify-content:flex-end;gap:7px">
+              <button class="tb-btn" onclick="toggleFinAgreement()">إلغاء</button>
+              <button class="tb-btn pri" onclick="saveFinAgreement()">حفظ الاتفاق</button>
+            </div>
+          </div>
+        </div>
+        <div class="fpj-section">
+          <div class="fpj-sh">
+            سجل المعاملات
+            <div style="display:flex;gap:6px;margin-right:auto">
+              <button class="tb-btn-sm prim" onclick="openAddEntry('expense')">+ مصروف</button>
+              <button class="tb-btn-sm suc" onclick="openAddEntry('income')">+ دخل</button>
+            </div>
+          </div>
+          <div style="overflow:hidden">
+            <table class="entry-table">
+              <thead><tr>
+                <th style="width:88px">التاريخ</th>
+                <th>البيان</th>
+                <th style="width:78px">التصنيف</th>
+                <th style="width:62px">النوع</th>
+                <th style="width:108px">المبلغ (ر.س)</th>
+                <th style="width:108px">الجهة</th>
+                <th style="width:68px">الحالة</th>
+                <th style="width:28px"></th>
+              </tr></thead>
+              <tbody id="fpj-entries-body">
+                <tr><td colspan="8" style="text-align:center;padding:22px;color:var(--mu)">لا توجد معاملات</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="fpj-section" id="fpj-budget-section">
+          <div class="fpj-sh">
+            بنود الميزانية المخططة
+            <span style="font-size:10px;color:var(--mu);font-weight:400">(من ملف المشروع)</span>
+          </div>
+          <div style="overflow:hidden">
+            <table class="entry-table">
+              <thead><tr>
+                <th>البند</th>
+                <th style="width:78px">الوحدة</th>
+                <th style="width:58px">الكمية</th>
+                <th style="width:108px">سعر الوحدة</th>
+                <th style="width:108px">الإجمالي (ر.س)</th>
+                <th style="width:118px">الجهة</th>
+              </tr></thead>
+              <tbody id="fpj-budget-body">
+                <tr><td colspan="6" style="text-align:center;padding:18px;color:var(--mu)">لا توجد بنود</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -733,14 +870,14 @@ function sm(s) { return SM[s] || SM.draft; }
 
 // ── NAVIGATION ───────────────────────────────────────────────────
 function doGoPage(p) {
-  ['dash','projects','clients','finance','products'].forEach(function(n) {
+  ['dash','projects','clients','finance','products','finproject'].forEach(function(n) {
     var pg  = document.getElementById('page-' + n);
     var nav = document.getElementById('nav-' + n);
     if (pg)  pg.classList.toggle('act', n === p);
     if (nav) nav.classList.toggle('act', n === p);
   });
 
-  var titles = { dash:'لوحة التحكم', projects:'المشاريع', clients:'العملاء', finance:'المالية', products:'المنتجات' };
+  var titles = { dash:'لوحة التحكم', projects:'المشاريع', clients:'العملاء', finance:'المالية', products:'المنتجات', finproject:'المشروع المالي' };
   document.getElementById('page-title').textContent = titles[p] || p;
 
   var bc = document.getElementById('bc');
@@ -761,6 +898,7 @@ function doGoPage(p) {
   if (p === 'finance') renderFinance();
   if (p === 'clients') renderClients();
   if (p === 'products') renderProducts();
+  if (p === 'finproject') renderFinProject();
 }
 
 function doSwitchTab(i) {
@@ -1134,7 +1272,7 @@ function renderFinance() {
       '<td class="mn et-inc" style="text-align:left;direction:ltr">'+fmt(s.profit)+' ر.س</td>'+
       '<td><div style="display:flex;align-items:center;gap:6px"><div class="fin-bar-wrap"><div class="fin-bar" style="width:'+paidPct+'%"></div></div><span class="mn" style="font-size:10.5px;color:'+remColor+'">'+fmt(s.remaining)+' ر.س</span></div></td>'+
       '<td><span class="fp-badge" style="background:'+st.dot+';color:#fff">'+st.label+'</span></td>'+
-      '<td><button class="tb-btn-sm" onclick="openFinDetail(this.dataset.pid)" data-pid="'+escHtml(p.id)+'" style="padding:4px 10px">تفاصيل</button></td>';
+      '<td><button class="tb-btn-sm" onclick="openFinProject(this.dataset.pid)" data-pid="'+escHtml(p.id)+'" style="padding:4px 10px">تفاصيل →</button></td>';
     tb.appendChild(tr);
   });
 }
@@ -1270,7 +1408,13 @@ function saveAddEntry(){
   localStorage.setItem('buad_data_' + _finDetailProjId, JSON.stringify(d));
   closeAddEntry();
   var proj = PROJECTS.find(function(p){return p.id===_finDetailProjId;});
-  if (proj) { var s = computeProjectFinSummary(proj); _renderFinDetailEntries(s); openFinDetail(_finDetailProjId); }
+  if (proj) {
+    var s = computeProjectFinSummary(proj);
+    _renderFinDetailEntries(s);
+    var _fpjEl = document.getElementById('page-finproject');
+    if (_fpjEl && _fpjEl.classList.contains('act')) { renderFinProject(); }
+    else { openFinDetail(_finDetailProjId); }
+  }
   renderFinance();
 }
 
@@ -1282,7 +1426,13 @@ function deleteFinEntry(idx){
   d.dash_entries.splice(idx, 1);
   localStorage.setItem('buad_data_' + _finDetailProjId, JSON.stringify(d));
   var proj = PROJECTS.find(function(p){return p.id===_finDetailProjId;});
-  if (proj) { var s = computeProjectFinSummary(proj); _renderFinDetailEntries(s); openFinDetail(_finDetailProjId); }
+  if (proj) {
+    var s = computeProjectFinSummary(proj);
+    _renderFinDetailEntries(s);
+    var _fpjEl = document.getElementById('page-finproject');
+    if (_fpjEl && _fpjEl.classList.contains('act')) { renderFinProject(); }
+    else { openFinDetail(_finDetailProjId); }
+  }
   renderFinance();
 }
 
@@ -1730,6 +1880,327 @@ function toggleSidebar() {
   btn.textContent = sb.classList.contains('collapsed') ? '›' : '‹';
 }
 
+
+
+// ════════════ Financial Project Page (standalone) ════════════
+var _curFinProjId = null;
+
+function openFinProject(projId) {
+  _curFinProjId    = projId;
+  _finDetailProjId = projId;
+  doGoPage('finproject');
+}
+
+function renderFinProject() {
+  if (!_curFinProjId) { doGoPage('finance'); return; }
+  var proj = PROJECTS.find(function(p){ return p.id === _curFinProjId; });
+  if (!proj) { doGoPage('finance'); return; }
+  var s  = computeProjectFinSummary(proj);
+  var st = sm(proj.status);
+
+  document.getElementById('fpj-name').textContent = proj.name;
+  document.getElementById('fpj-sub').textContent  = (proj.client||'') + (proj.type ? ' · ' + proj.type : '') + (proj.region ? ' · ' + proj.region : '');
+  var badge = document.getElementById('fpj-badge');
+  badge.textContent = st.label; badge.style.background = st.dot; badge.style.color = '#fff';
+
+  var statsRow = document.getElementById('fpj-stats-row');
+  statsRow.innerHTML = [
+    {lbl:'قيمة العقد الصافية',  val:fmt(s.contractNet)+' ر.س', cls:'ic-n', col:'#00197D'},
+    {lbl:'إجمالي المصاريف',     val:fmt(s.expenses)+' ر.س',    cls:'ic-r', col:'#8B1A0E'},
+    {lbl:'الربح المتوقع',       val:fmt(s.profit)+' ر.س',      cls:'ic-s', col:'#2C5F2D'},
+    {lbl:'المتبقي غير المدفوع', val:fmt(s.remaining)+' ر.س',   cls:'ic-g', col:'#B8841A'}
+  ].map(function(c){
+    return '<div class="sc"><div class="sc-ico '+c.cls+'"></div>'
+      +'<div><div class="sc-num mn" style="color:'+c.col+'">'+c.val+'</div><div class="sc-lbl">'+c.lbl+'</div></div></div>';
+  }).join('');
+
+  _renderFinAgreementView(s, proj);
+  _renderFinProjEntries(s);
+  _renderFinProjBudget(s);
+}
+
+function _renderFinAgreementView(s, proj) {
+  var vd = document.getElementById('fpj-agr-view');
+  if (!vd) return;
+  var f = s.form || {};
+  var vatIncl = !!f['vat-included'];
+  var vatAmt  = s.contractNet * (s.vatPct||0) / 100;
+  var gross   = vatIncl ? s.contractNet : s.contractNet + vatAmt;
+  var mktLbl  = (f['i-mkt-t']==='fix') ? fmt(s.mkt)+' ر.س' : (parseFloat(f['i-mkt-v'])||0)+'% = '+fmt(s.mkt)+' ر.س';
+  var cbLbl   = (f['i-cb-t']==='fix')  ? fmt(s.cb)+' ر.س'  : (parseFloat(f['i-cb-v'])||0)+'% = '+fmt(s.cb)+' ر.س';
+  var items = [
+    {lbl:'الإجمالي قبل الضريبة',          val:fmt(s.contractNet)+' ر.س'},
+    {lbl:'ضريبة ق.م ('+(s.vatPct||0)+'%'+(vatIncl?' مدمجة':'')+')', val:vatAmt>0?fmt(vatAmt)+' ر.س':'—'},
+    {lbl:'الإجمالي شامل الضريبة',          val:fmt(gross)+' ر.س'},
+    {lbl:'رقم العقد',                      val:f['c-no']||'—'},
+    {lbl:'تاريخ العقد',                    val:f['c-date']||'—'},
+    {lbl:'الجهة المتعاقدة',                val:f['cv-client-name']||proj.client||'—'},
+    {lbl:'حصة التنفيذ',                    val:(f['i-exec-pct']||100)+'%'},
+    {lbl:'قيمة التسويق',                   val:s.mkt>0?mktLbl:'—'},
+    {lbl:'قيمة الكاش باك',                 val:s.cb>0?cbLbl:'—'}
+  ];
+  vd.innerHTML = '<div class="fpj-agr-grid">'
+    + items.map(function(it){
+        return '<div class="fpj-agr-card"><div class="lac">'+it.lbl+'</div><div class="vac">'+it.val+'</div></div>';
+      }).join('') + '</div>';
+}
+
+function _populateFinAgreementForm() {
+  if (!_curFinProjId) return;
+  var d = null;
+  try { d = JSON.parse(localStorage.getItem('buad_data_' + _curFinProjId) || 'null'); } catch(e){}
+  var f = (d && d.form) ? d.form : {};
+  var _sv = function(id,val){ var el=document.getElementById(id); if(el) el.value=val||''; };
+  var _sc = function(id,val){ var el=document.getElementById(id); if(el) el.checked=!!val; };
+  _sv('fpj-c-gross',   f['c-gross']        || '');
+  _sv('fpj-c-vat',     f['c-vat']          || '15');
+  _sc('fpj-vat-incl',  f['vat-included']);
+  _sv('fpj-c-no',      f['c-no']           || '');
+  _sv('fpj-c-date',    f['c-date']         || '');
+  _sv('fpj-cv-client', f['cv-client-name'] || '');
+  _sv('fpj-exec-pct',  f['i-exec-pct']     || '100');
+  _sv('fpj-mkt-t',     f['i-mkt-t']        || 'pct');
+  _sv('fpj-mkt-v',     f['i-mkt-v']        || '');
+  _sv('fpj-cb-t',      f['i-cb-t']         || 'pct');
+  _sv('fpj-cb-v',      f['i-cb-v']         || '');
+}
+
+function toggleFinAgreement() {
+  var fd = document.getElementById('fpj-agr-form');
+  var vd = document.getElementById('fpj-agr-view');
+  var tb = document.getElementById('fpj-agr-toggle');
+  if (!fd || !vd) return;
+  var isEdit = fd.style.display !== 'none';
+  if (isEdit) {
+    fd.style.display = 'none'; vd.style.display = '';
+    if (tb) tb.textContent = 'تعديل';
+  } else {
+    _populateFinAgreementForm();
+    fd.style.display = ''; vd.style.display = 'none';
+    if (tb) tb.textContent = 'إغلاق النموذج';
+  }
+}
+
+function saveFinAgreement() {
+  if (!_curFinProjId) return;
+  var _gv = function(id){ var el=document.getElementById(id); return el?el.value||'':''; };
+  var _gc = function(id){ var el=document.getElementById(id); return el?el.checked:false; };
+  var d = null;
+  try { d = JSON.parse(localStorage.getItem('buad_data_' + _curFinProjId) || 'null'); } catch(e){}
+  if (!d || typeof d !== 'object') d = {};
+  if (!d.form) d.form = {};
+  d.form['c-gross']        = _gv('fpj-c-gross');
+  d.form['c-vat']          = _gv('fpj-c-vat');
+  d.form['vat-included']   = _gc('fpj-vat-incl');
+  d.form['c-no']           = _gv('fpj-c-no');
+  d.form['c-date']         = _gv('fpj-c-date');
+  d.form['cv-client-name'] = _gv('fpj-cv-client');
+  d.form['i-exec-pct']     = _gv('fpj-exec-pct');
+  d.form['i-mkt-t']        = _gv('fpj-mkt-t');
+  d.form['i-mkt-v']        = _gv('fpj-mkt-v');
+  d.form['i-cb-t']         = _gv('fpj-cb-t');
+  d.form['i-cb-v']         = _gv('fpj-cb-v');
+  localStorage.setItem('buad_data_' + _curFinProjId, JSON.stringify(d));
+  var fd = document.getElementById('fpj-agr-form');
+  var vd = document.getElementById('fpj-agr-view');
+  var tb = document.getElementById('fpj-agr-toggle');
+  if (fd) fd.style.display = 'none';
+  if (vd) vd.style.display = '';
+  if (tb) tb.textContent = 'تعديل';
+  renderFinProject();
+}
+
+function _renderFinProjEntries(s) {
+  var tb = document.getElementById('fpj-entries-body');
+  if (!tb) return;
+  var rows = [];
+  (s.fin||[]).forEach(function(f){
+    if ((f.a||0)<=0) return;
+    rows.push({date:'—',desc:f.c||'',cat:_catLabel(f.cat||'exec'),typeKey:'expense',amount:f.a||0,party:f.o||'—',status:'مخطط',editable:false});
+  });
+  (s.spendItems||[]).forEach(function(sp){
+    if ((sp.paid||0)<=0) return;
+    rows.push({date:'—',desc:sp.cat||'مدفوع',cat:'صرف فعلي',typeKey:'expense',amount:sp.paid||0,party:sp.party||'—',status:'مدفوع',editable:false});
+  });
+  (s.dashEntries||[]).forEach(function(e,i){
+    rows.push({date:e.date||'—',desc:e.desc||'',cat:_catLabel(e.category),typeKey:e.type,amount:e.amount||0,party:e.party||'—',status:e.status||'',editable:true,idx:i});
+  });
+  if (!rows.length) {
+    tb.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:22px;color:var(--mu)">لا توجد معاملات — أضف مصروفاً أو دخلاً</td></tr>';
+    return;
+  }
+  tb.innerHTML = '';
+  rows.forEach(function(r){
+    var isInc = r.typeKey === 'income';
+    var tr = document.createElement('tr');
+    tr.innerHTML =
+      '<td style="font-size:11px;color:var(--mu)">'+r.date+'</td>'+
+      '<td>'+escHtml(r.desc)+'</td>'+
+      '<td><span class="fp-badge" style="background:var(--Nl);color:var(--N);font-size:9.5px">'+r.cat+'</span></td>'+
+      '<td><span style="font-size:10px;font-weight:600;color:'+(isInc?'var(--S)':'var(--R)')+'">'+(isInc?'دخل':'مصروف')+'</span></td>'+
+      '<td class="mn '+(isInc?'et-inc':'et-exp')+'" style="text-align:left;direction:ltr">'+fmt(r.amount)+'</td>'+
+      '<td style="font-size:11px;color:var(--mu)">'+escHtml(r.party)+'</td>'+
+      '<td><span style="font-size:10px;color:var(--mu)">'+r.status+'</span></td>'+
+      (r.editable?'<td><button style="background:none;border:none;cursor:pointer;color:var(--R);font-size:15px;padding:0 3px;line-height:1" onclick="deleteFinProjEntry('+r.idx+')">&#215;</button></td>':'<td></td>');
+    tb.appendChild(tr);
+  });
+}
+
+function _renderFinProjBudget(s) {
+  var tb = document.getElementById('fpj-budget-body');
+  if (!tb) return;
+  var items = (s.fin||[]).filter(function(fi){ return (fi.a||0)>0; });
+  if (!items.length) {
+    tb.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:18px;color:var(--mu)">لا توجد بنود ميزانية</td></tr>';
+    return;
+  }
+  tb.innerHTML = '';
+  items.forEach(function(fi){
+    var tr = document.createElement('tr');
+    tr.innerHTML =
+      '<td>'+escHtml(fi.c||'')+'</td>'+
+      '<td style="color:var(--mu);font-size:11px">'+escHtml(fi.u||'—')+'</td>'+
+      '<td style="text-align:center;color:var(--mu)">'+( fi.q||'—')+'</td>'+
+      '<td class="mn" style="text-align:left;direction:ltr;color:var(--mu)">'+fmt(fi.p||0)+'</td>'+
+      '<td class="mn et-exp" style="text-align:left;direction:ltr;font-weight:600">'+fmt(fi.a||0)+'</td>'+
+      '<td style="font-size:11px;color:var(--mu)">'+escHtml(fi.o||'—')+'</td>';
+    tb.appendChild(tr);
+  });
+}
+
+function deleteFinProjEntry(idx) {
+  if (!_curFinProjId) return;
+  _finDetailProjId = _curFinProjId;
+  deleteFinEntry(idx);
+}
+
+function exportFinProjExcel() {
+  if (!_curFinProjId) return;
+  var proj = PROJECTS.find(function(p){ return p.id === _curFinProjId; });
+  if (!proj) return;
+  var s = computeProjectFinSummary(proj);
+  var headers = ['التاريخ','البيان','التصنيف','النوع','المبلغ (ر.س)','الجهة','الحالة'];
+  var rows = [];
+  (s.fin||[]).forEach(function(fi){
+    if ((fi.a||0)<=0) return;
+    rows.push(['—',fi.c||'',_catLabel(fi.cat||'exec'),'مصروف',fi.a||0,fi.o||'','مخطط']);
+  });
+  (s.spendItems||[]).forEach(function(sp){
+    if ((sp.paid||0)<=0) return;
+    rows.push(['—',sp.cat||'مدفوع','صرف فعلي','مصروف',sp.paid||0,sp.party||'','مدفوع']);
+  });
+  (s.dashEntries||[]).forEach(function(e){
+    rows.push([e.date||'',e.desc||'',_catLabel(e.category),e.type==='income'?'دخل':'مصروف',e.amount||0,e.party||'',e.status||'']);
+  });
+  rows.push(['','','','','','','']);
+  rows.push(['','إجمالي قيمة العقد','','',fmt(s.contractNet)+' ر.س','','']);
+  rows.push(['','إجمالي المصاريف','','',  fmt(s.expenses)+' ر.س','','']);
+  rows.push(['','الربح المتوقع','','',     fmt(s.profit)+' ر.س','','']);
+  rows.push(['','المتبقي غير المدفوع','','',fmt(s.remaining)+' ر.س','','']);
+  var xhtml = _buildExcelTable('كشف حساب — '+escHtml(proj.name), headers, rows);
+  _dlHtmlAsXls(xhtml, 'كشف-حساب-'+(proj.name||'مشروع').replace(/[/\\]/g,'-')+'.xls');
+}
+
+function exportFinProjPDF() {
+  if (!_curFinProjId) return;
+  var proj = PROJECTS.find(function(p){ return p.id === _curFinProjId; });
+  if (!proj) return;
+  var s = computeProjectFinSummary(proj);
+  var w = window.open('', '_blank');
+  if (!w) { alert('يرجى السماح بالنوافذ المنبثقة لتصدير PDF'); return; }
+  w.document.write(_buildFinProjPDFHtml(proj, s));
+  w.document.close();
+  w.focus();
+  setTimeout(function(){ w.print(); }, 700);
+}
+
+function _buildFinProjPDFHtml(proj, s) {
+  var f = s.form || {};
+  var logo = (typeof _BUAD_LOGO_SRC !== 'undefined' && _BUAD_LOGO_SRC)
+    ? '<img src="'+_BUAD_LOGO_SRC+'" style="height:48px;width:auto">'
+    : '<div style="font-size:16px;font-weight:700;color:#00197D">&#1576;&#1615;&#1593;&#1618;&#1583; &#1575;&#1604;&#1578;&#1605;&#1603;&#1610;&#1606;</div>';
+  var vatIncl = !!f['vat-included'];
+  var vatAmt  = s.contractNet * (s.vatPct||0) / 100;
+  var gross   = vatIncl ? s.contractNet : s.contractNet + vatAmt;
+
+  var finRows = (s.fin||[]).filter(function(fi){return (fi.a||0)>0;}).map(function(fi){
+    return '<tr><td>'+escHtml(fi.c||'')+'</td><td style="text-align:center">'+escHtml(fi.u||'')+'</td>'+
+      '<td style="text-align:center">'+(fi.q||'')+'</td>'+
+      '<td class="mn" style="text-align:left">'+fmt(fi.p||0)+'</td>'+
+      '<td class="mn" style="text-align:left;font-weight:600">'+fmt(fi.a||0)+'</td>'+
+      '<td>'+escHtml(fi.o||'')+'</td></tr>';
+  }).join('');
+
+  var txnRows = (s.dashEntries||[]).concat(
+    (s.spendItems||[]).map(function(sp){
+      return {date:'—',desc:sp.cat||'مدفوع',category:'صرف فعلي',type:'expense',amount:sp.paid||0,party:sp.party||'',status:'مدفوع'};
+    })
+  ).map(function(e){
+    var isInc = e.type === 'income';
+    return '<tr style="background:'+(isInc?'#F0FAF0':'')+'">'+
+      '<td style="font-size:10px;color:#666">'+escHtml(e.date||'—')+'</td>'+
+      '<td>'+escHtml(e.desc||'')+'</td>'+
+      '<td style="text-align:center"><span style="padding:1px 7px;border-radius:5px;font-size:9.5px;background:'+(isInc?'#EAF3EA':'#FDECEA')+';color:'+(isInc?'#2C5F2D':'#8B1A0E')+'">'+_catLabel(e.category)+'</span></td>'+
+      '<td class="mn" style="text-align:left;font-weight:600;color:'+(isInc?'#2C5F2D':'#8B1A0E')+'">'+(isInc?'+':'-')+fmt(e.amount||0)+' &#x631;.&#x633;</td>'+
+      '<td style="font-size:10px;color:#666">'+escHtml(e.party||'')+'</td>'+
+      '<td style="font-size:10px;color:#666">'+escHtml(e.status||'')+'</td></tr>';
+  }).join('');
+
+  return '<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="UTF-8">'+
+    '<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">'+
+    '<style>*{box-sizing:border-box;margin:0;padding:0}'+
+    'body{font-family:"IBM Plex Sans Arabic",sans-serif;direction:rtl;background:#F7F4EF;color:#1A1A2E;padding:20px;-webkit-print-color-adjust:exact;print-color-adjust:exact}'+
+    '.wrap{max-width:760px;margin:0 auto;background:#fff;border-radius:12px;padding:26px;box-shadow:0 4px 20px rgba(0,0,0,.1)}'+
+    '.mn{font-family:"IBM Plex Mono",monospace}'+
+    '.hdr{display:flex;align-items:center;gap:14px;margin-bottom:20px;padding-bottom:16px;border-bottom:2px solid #00197D}'+
+    '.hdr-info h1{font-size:16px;font-weight:600;color:#00197D;margin-bottom:2px}'+
+    '.hdr-info p{font-size:10.5px;color:#72728A;margin-top:2px}'+
+    '.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-bottom:18px;break-inside:avoid;page-break-inside:avoid}'+
+    '.stat{border-radius:8px;padding:10px 12px;border:1px solid transparent}'+
+    '.stat .sl{font-size:9px;font-weight:600;margin-bottom:2px;opacity:.8}'+
+    '.stat .sv{font-size:14px;font-weight:600;font-family:"IBM Plex Mono",monospace}'+
+    '.sec-t{font-size:12px;font-weight:600;color:#00197D;margin:16px 0 7px;border-bottom:1px solid #E0DAD0;padding-bottom:4px;break-after:avoid}'+
+    '.bt{width:100%;border-collapse:collapse;font-size:11px;break-inside:avoid;page-break-inside:avoid}'+
+    '.bt th{padding:6px 8px;background:#00197D;color:#fff;text-align:right;font-weight:600}'+
+    '.bt td{padding:6px 8px;border-bottom:1px solid #E8E0D8}'+
+    '.agr-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;break-inside:avoid;page-break-inside:avoid}'+
+    '.agr-card{background:#F7F4EF;border-radius:7px;padding:9px 11px}'+
+    '.agr-card .al{font-size:9px;color:#72728A;font-weight:600;margin-bottom:2px}'+
+    '.agr-card .av{font-size:12px;font-weight:600;font-family:"IBM Plex Mono",monospace}'+
+    '.notice{background:#FDF3E3;border:.5px solid #E8D5A8;border-radius:7px;padding:8px 12px;font-size:10.5px;color:#7A4F00;margin-bottom:16px}'+
+    '.foot{text-align:center;font-size:9.5px;color:#A8A8C0;margin-top:16px;padding-top:10px;border-top:1px solid #E0DAD0}'+
+    '@page{size:A4;margin:13mm 11mm}'+
+    '@media print{body{background:#fff;padding:0}.wrap{box-shadow:none;border-radius:0;padding:12px}'+
+    '.stats{break-inside:avoid}.bt{break-inside:avoid}.agr-grid{break-inside:avoid}}</style></head>'+
+    '<body><div class="wrap">'+
+    '<div class="hdr">'+logo+'<div class="hdr-info"><h1>&#1603;&#1588;&#1601; &#1575;&#1604;&#1581;&#1587;&#1575;&#1576; &#1575;&#1604;&#1605;&#1575;&#1604;&#1610;</h1>'+
+    '<p>'+escHtml(proj.name)+'</p>'+
+    '<p>'+escHtml(proj.client||'')+'</p></div></div>'+
+    '<div class="notice">&#9888; &#1608;&#1579;&#1610;&#1602;&#1577; &#1587;&#1585;&#1610;&#1577; &#1604;&#1604;&#1575;&#1587;&#1578;&#1582;&#1583;&#1575;&#1605; &#1575;&#1604;&#1583;&#1575;&#1582;&#1604;&#1610; &#1601;&#1602;&#1591;</div>'+
+    '<div class="stats">'+
+    '<div class="stat" style="background:#E6EAF8;border-color:#C5D3F560"><div class="sl" style="color:#00197D">&#1602;&#1610;&#1605;&#1577; &#1575;&#1604;&#1593;&#1602;&#1583;</div><div class="sv" style="color:#00197D">'+fmt(s.contractNet)+' &#x631;.&#x633;</div></div>'+
+    '<div class="stat" style="background:#FDECEA;border-color:#F5C2BE60"><div class="sl" style="color:#8B1A0E">&#1575;&#1604;&#1605;&#1589;&#1575;&#1585;&#1610;&#1601;</div><div class="sv" style="color:#8B1A0E">'+fmt(s.expenses)+' &#x631;.&#x633;</div></div>'+
+    '<div class="stat" style="background:#EAF3EA;border-color:#B0D4B060"><div class="sl" style="color:#2C5F2D">&#1575;&#1604;&#1585;&#1576;&#1581;</div><div class="sv" style="color:#2C5F2D">'+fmt(s.profit)+' &#x631;.&#x633;</div></div>'+
+    '<div class="stat" style="background:#FDF3E3;border-color:#E8D5A860"><div class="sl" style="color:#B8841A">&#1575;&#1604;&#1605;&#1578;&#1576;&#1602;&#1610;</div><div class="sv" style="color:#B8841A">'+fmt(s.remaining)+' &#x631;.&#x633;</div></div>'+
+    '</div>'+
+    '<div class="sec-t">&#1578;&#1601;&#1575;&#1589;&#1610;&#1604; &#1575;&#1604;&#1575;&#1578;&#1601;&#1575;&#1602;</div>'+
+    '<div class="agr-grid">'+
+    '<div class="agr-card"><div class="al">&#1575;&#1604;&#1573;&#1580;&#1605;&#1575;&#1604;&#1610; &#1602;&#1576;&#1604; &#1575;&#1604;&#1590;&#1585;&#1610;&#1576;&#1577;</div><div class="av">'+fmt(s.contractNet)+' &#x631;.&#x633;</div></div>'+
+    '<div class="agr-card"><div class="al">&#1590;&#1585;&#1610;&#1576;&#1577; &#1602;.&#1605; ('+(s.vatPct||0)+'%)</div><div class="av">'+fmt(vatAmt)+' &#x631;.&#x633;</div></div>'+
+    '<div class="agr-card"><div class="al">&#1575;&#1604;&#1573;&#1580;&#1605;&#1575;&#1604;&#1610; &#1588;&#1575;&#1605;&#1604; &#1575;&#1604;&#1590;&#1585;&#1610;&#1576;&#1577;</div><div class="av">'+fmt(gross)+' &#x631;.&#x633;</div></div>'+
+    '<div class="agr-card"><div class="al">&#1585;&#1602;&#1605; &#1575;&#1604;&#1593;&#1602;&#1583;</div><div class="av">'+escHtml(f['c-no']||'—')+'</div></div>'+
+    '<div class="agr-card"><div class="al">&#1578;&#1575;&#1585;&#1610;&#1582; &#1575;&#1604;&#1593;&#1602;&#1583;</div><div class="av">'+escHtml(f['c-date']||'—')+'</div></div>'+
+    '<div class="agr-card"><div class="al">&#1575;&#1604;&#1580;&#1607;&#1577; &#1575;&#1604;&#1605;&#1578;&#1593;&#1575;&#1602;&#1583;&#1577;</div><div class="av">'+escHtml(f['cv-client-name']||proj.client||'—')+'</div></div>'+
+    (s.mkt>0?'<div class="agr-card"><div class="al">&#1575;&#1604;&#1578;&#1587;&#1608;&#1610;&#1602;</div><div class="av">'+fmt(s.mkt)+' &#x631;.&#x633;</div></div>':'')+
+    (s.cb>0?'<div class="agr-card"><div class="al">&#1575;&#1604;&#1603;&#1575;&#1588; &#1576;&#1575;&#1603;</div><div class="av">'+fmt(s.cb)+' &#x631;.&#x633;</div></div>':'')+
+    '</div>'+
+    (finRows?'<div class="sec-t">&#1576;&#1606;&#1608;&#1583; &#1575;&#1604;&#1605;&#1610;&#1586;&#1575;&#1606;&#1610;&#1577; &#1575;&#1604;&#1605;&#1582;&#1591;&#1591;&#1577;</div>'+
+      '<table class="bt"><thead><tr><th>&#1575;&#1604;&#1576;&#1606;&#1583;</th><th>&#1575;&#1604;&#1608;&#1581;&#1583;&#1577;</th><th>&#1575;&#1604;&#1603;&#1605;&#1610;&#1577;</th><th>&#1587;&#1593;&#1585; &#1575;&#1604;&#1608;&#1581;&#1583;&#1577;</th><th>&#1575;&#1604;&#1573;&#1580;&#1605;&#1575;&#1604;&#1610;</th><th>&#1575;&#1604;&#1580;&#1607;&#1577;</th></tr></thead><tbody>'+finRows+'</tbody></table>':'')+
+    (txnRows?'<div class="sec-t">&#1587;&#1580;&#1604; &#1575;&#1604;&#1605;&#1593;&#1575;&#1605;&#1604;&#1575;&#1578;</div>'+
+      '<table class="bt"><thead><tr><th>&#1575;&#1604;&#1578;&#1575;&#1585;&#1610;&#1582;</th><th>&#1575;&#1604;&#1576;&#1610;&#1575;&#1606;</th><th>&#1575;&#1604;&#1578;&#1589;&#1606;&#1610;&#1601;</th><th>&#1575;&#1604;&#1605;&#1576;&#1604;&#1594;</th><th>&#1575;&#1604;&#1580;&#1607;&#1577;</th><th>&#1575;&#1604;&#1581;&#1575;&#1604;&#1577;</th></tr></thead><tbody>'+txnRows+'</tbody></table>':'')+
+    '<div class="foot">&#1576;&#1615;&#1593;&#1618;&#1583; &#1575;&#1604;&#1578;&#1605;&#1603;&#1610;&#1606; &mdash; &#1608;&#1579;&#1610;&#1602;&#1577; &#1570;&#1604;&#1610;&#1577;</div>'+
+    '</div></body></html>';
+}
 
 
 document.addEventListener('DOMContentLoaded', function() {
