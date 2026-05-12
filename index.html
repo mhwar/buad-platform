@@ -282,6 +282,42 @@ body{font-family:"IBM Plex Sans Arabic",sans-serif;direction:rtl;background:var(
 .ob-row{display:flex;justify-content:space-between;align-items:center;padding:9px 12px;background:var(--sand);border-radius:8px;margin-bottom:5px}
 .ob-lbl{font-size:11px;color:var(--mu);font-weight:500}
 .ob-val{font-size:12px;font-weight:600;color:var(--tx);max-width:55%;text-align:left;direction:ltr}
+
+/* ═══ Finance Dashboard ═══ */
+.fin-table{width:100%;border-collapse:collapse;font-size:12.5px}
+.fin-table th{padding:9px 12px;background:var(--Nl);color:var(--N);font-weight:600;text-align:right;border-bottom:1.5px solid #C5D3F5;white-space:nowrap}
+.fin-table td{padding:9px 12px;border-bottom:.5px solid var(--bd);vertical-align:middle}
+.fin-table tbody tr:hover td{background:#F8F6FF}
+.fin-table .mn{font-family:"IBM Plex Mono",monospace;font-weight:500}
+.fp-badge{display:inline-block;padding:2px 10px;border-radius:9px;font-size:10px;font-weight:600;letter-spacing:.02em}
+.fin-bar-wrap{background:#EBEBEB;border-radius:5px;height:5px;width:68px;overflow:hidden;display:inline-block;vertical-align:middle}
+.fin-bar{height:100%;border-radius:5px;background:var(--N)}
+.fin-toolbar{display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.fin-search{border:.5px solid var(--bd);border-radius:8px;padding:6px 12px;font-size:12px;font-family:inherit;background:var(--w);color:var(--tx);outline:none}
+.fin-search:focus{border-color:var(--N)}
+.tb-btn-sm{border:.5px solid var(--bd);border-radius:7px;padding:5px 13px;font-size:11.5px;font-family:inherit;background:var(--w);cursor:pointer;color:var(--tx);transition:.15s;white-space:nowrap}
+.tb-btn-sm:hover{background:var(--Nl);border-color:var(--N)}
+.tb-btn-sm.prim{background:var(--N);color:#fff;border-color:var(--N)}
+.tb-btn-sm.prim:hover{background:#0022AA}
+.tb-btn-sm.suc{background:var(--Sl);color:var(--S);border-color:var(--S)}
+.tb-btn-sm.suc:hover{background:#d4edda}
+.et-exp{color:var(--R)}.et-inc{color:var(--S)}
+/* Finance detail modal */
+#fin-detail-modal{max-width:860px;width:min(860px,98vw);max-height:92vh;overflow:hidden;display:flex;flex-direction:column;border-radius:14px}
+.fdm-header{padding:18px 24px;border-bottom:.5px solid var(--bd);display:flex;align-items:flex-start;gap:12px;flex-shrink:0}
+.fdm-body{flex:1;overflow-y:auto;padding:20px 24px}
+.fdm-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px}
+.fdm-sc{border-radius:11px;padding:13px 15px;border:1px solid transparent}
+.fdm-sc-lbl{font-size:10px;font-weight:600;margin-bottom:4px;opacity:.85}
+.fdm-sc-val{font-size:18px;font-weight:600;font-family:"IBM Plex Mono",monospace}
+.fdm-toolbar{display:flex;align-items:center;gap:7px;margin-bottom:13px;flex-wrap:wrap}
+.fdm-footer{padding:12px 24px;border-top:.5px solid var(--bd);display:flex;justify-content:space-between;align-items:center;flex-shrink:0}
+/* Entry table */
+.entry-table{width:100%;border-collapse:collapse;font-size:11.5px}
+.entry-table th{padding:7px 10px;background:var(--sand);color:var(--mu);font-weight:600;text-align:right;border-bottom:1px solid var(--bd);white-space:nowrap}
+.entry-table td{padding:7px 10px;border-bottom:.5px solid var(--bd);vertical-align:middle}
+.entry-table tbody tr:hover td{background:var(--sand)}
+.entry-source-badge{font-size:9px;padding:1px 6px;border-radius:4px;font-weight:600}
 </style>
 </head>
 <body>
@@ -398,13 +434,45 @@ body{font-family:"IBM Plex Sans Arabic",sans-serif;direction:rtl;background:var(
       </div>
 
       <div class="page" id="page-finance">
-        <div class="stats-row">
-          <div class="sc"><div class="sc-ico ic-g">📈</div><div><div class="sc-num" id="f-total">—</div><div class="sc-lbl">إجمالي العقود (ر.س)</div></div></div>
-          <div class="sc"><div class="sc-ico ic-n">📁</div><div><div class="sc-num" id="f-count">—</div><div class="sc-lbl">عدد المشاريع</div></div></div>
-          <div class="sc"><div class="sc-ico ic-s">✅</div><div><div class="sc-num" id="f-active">—</div><div class="sc-lbl">نشطة</div></div></div>
-          <div class="sc"><div class="sc-ico ic-r">📊</div><div><div class="sc-num" id="f-avg">—</div><div class="sc-lbl">متوسط قيمة المشروع</div></div></div>
+        <div class="sec-head">
+          <h2>المالية</h2>
+          <div style="display:flex;gap:7px;align-items:center">
+            <button class="tb-btn-sm" onclick="exportAllFinExcel()" title="تصدير كل المشاريع">⬇ Excel</button>
+          </div>
         </div>
-        <div class="ac"><div class="ach">💰 تفصيل المشاريع</div><div id="fin-body"></div></div>
+        <div class="stats-row">
+          <div class="sc"><div class="sc-ico ic-n">💼</div><div><div class="sc-num mn" id="f-total">—</div><div class="sc-lbl">إجمالي العقود (ر.س)</div></div></div>
+          <div class="sc"><div class="sc-ico ic-s">📈</div><div><div class="sc-num mn" id="f-profit">—</div><div class="sc-lbl">الربح المتوقع</div></div></div>
+          <div class="sc"><div class="sc-ico ic-r">📉</div><div><div class="sc-num mn" id="f-expenses">—</div><div class="sc-lbl">إجمالي المصاريف</div></div></div>
+          <div class="sc"><div class="sc-ico ic-g">🏦</div><div><div class="sc-num mn" id="f-remaining">—</div><div class="sc-lbl">المتبقي غير المدفوع</div></div></div>
+        </div>
+        <div class="fin-toolbar">
+          <input class="fin-search" id="fin-search" placeholder="🔍  بحث عن مشروع أو جهة..." oninput="renderFinance()" style="min-width:220px">
+          <select class="fin-search" id="fin-status-filter" onchange="renderFinance()" style="min-width:130px">
+            <option value="">كل الحالات</option>
+            <option value="active">نشط</option>
+            <option value="pending">معلّق</option>
+            <option value="done">مكتمل</option>
+            <option value="draft">مسودة</option>
+          </select>
+        </div>
+        <div style="background:var(--w);border:.5px solid var(--bd);border-radius:12px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.05)">
+          <table class="fin-table">
+            <thead><tr>
+              <th style="width:22%">المشروع</th>
+              <th style="width:18%">الجهة</th>
+              <th style="width:12%">قيمة العقد</th>
+              <th style="width:10%">المصاريف</th>
+              <th style="width:10%">الربح</th>
+              <th style="width:16%">المتبقي</th>
+              <th style="width:8%">الحالة</th>
+              <th style="width:4%"></th>
+            </tr></thead>
+            <tbody id="fin-tbody">
+              <tr><td colspan="8" style="text-align:center;padding:28px;color:var(--mu);font-size:12px">جارٍ التحميل...</td></tr>
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <div class="page" id="page-products">
@@ -982,31 +1050,351 @@ function addAct(msg) {
 }
 
 // ── FINANCE / CLIENTS ────────────────────────────────────────────
-function renderFinance() {
-  var total = PROJECTS.reduce(function(s,p){ return s + (p.value||0); }, 0);
-  var avg   = PROJECTS.length ? Math.round(total / PROJECTS.length) : 0;
-  document.getElementById('f-total').textContent  = fmt(total);
-  document.getElementById('f-count').textContent  = PROJECTS.length;
-  document.getElementById('f-active').textContent = PROJECTS.filter(function(p){ return p.status==='active'; }).length;
-  document.getElementById('f-avg').textContent    = fmt(avg);
+// ══════════════ Finance Dashboard (rebuilt) ══════════════
+var _BUAD_LOGO_SRC = "data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4KPCEtLSBHZW5lcmF0b3I6IEFkb2JlIElsbHVzdHJhdG9yIDMwLjEuMCwgU1ZHIEV4cG9ydCBQbHVnLUluIC4gU1ZHIFZlcnNpb246IDkuMDMgQnVpbGQgMCkgIC0tPgo8c3ZnIHZlcnNpb249IjEuMSIgaWQ9IkxheWVyXzEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHg9IjBweCIgeT0iMHB4IgoJIHZpZXdCb3g9IjAgMCA4NDEuODkgNTk1LjI3NiIgc3R5bGU9ImVuYWJsZS1iYWNrZ3JvdW5kOm5ldyAwIDAgODQxLjg5IDU5NS4yNzY7IiB4bWw6c3BhY2U9InByZXNlcnZlIj4KPGc+Cgk8Zz4KCQk8cGF0aCBzdHlsZT0iZmlsbDojMDAxOTdEOyIgZD0iTTI4Mi4wOTYsMzU3LjQ4N2MtMS44MjgsMC0zLjQzOC0wLjMyMS00LjgzLTAuOTYyYy0xLjM5NC0wLjY0Mi0yLjU2My0xLjUyOC0zLjUwOS0yLjY2CgkJCWMtMC45NDYtMS4xMzEtMS42NTktMi40NDctMi4xMzYtMy45NDhjLTAuNDc5LTEuNTAxLTAuNzE4LTMuMTMzLTAuNzE4LTQuODk2YzAtMC44OTIsMC4wNjUtMS43OTUsMC4xOTUtMi43MDkKCQkJYzAuMTMtMC45MTQsMC4zMDQtMS43OTUsMC41MjMtMi42NDNsMy45ODEsMC43NWMtMC4xOTYsMC44MDUtMC4zNDIsMS41ODgtMC40NDEsMi4zNWMtMC4wOTgsMC43NjItMC4xNDcsMS41MTItMC4xNDcsMi4yNTIKCQkJYzAsMS42MzEsMC4yNjYsMy4wMjQsMC44LDQuMTc3YzAuNTMyLDEuMTUzLDEuMzI3LDIuMDI5LDIuMzgyLDIuNjI3YzEuMDU1LDAuNTk4LDIuMzU1LDAuODk3LDMuOSwwLjg5NwoJCQljMS41NjYsMCwyLjg4OC0wLjI5OSwzLjk2NS0wLjg5N2MxLjA3Ny0wLjU5OSwxLjg5OC0xLjQ3NCwyLjQ2NC0yLjYyN2MwLjU2Ni0xLjE1MywwLjg0OC0yLjU1NiwwLjg0OC00LjIxdi0xMi42M2g0LjExMnYxMi42MwoJCQljMCwxLjc2Mi0wLjI0NCwzLjQtMC43MzMsNC45MTFjLTAuNDksMS41MTItMS4yMjQsMi44MzQtMi4yMDQsMy45NjVjLTAuOTc4LDEuMTMyLTIuMTcsMi4wMTgtMy41NzMsMi42NgoJCQlDMjg1LjU3MSwzNTcuMTY2LDI4My45NDQsMzU3LjQ4NywyODIuMDk2LDM1Ny40ODd6IE0yODIuMTkzLDMzMi41ODdjLTAuNzE4LDAtMS4zMTctMC4yMzktMS43OTUtMC43MTgKCQkJYy0wLjQ3OS0wLjQ3OC0wLjcxNy0xLjA3Ny0wLjcxNy0xLjc5NWMwLTAuNzE3LDAuMjM5LTEuMzE2LDAuNzE3LTEuNzk1YzAuNDc4LTAuNDc4LDEuMDc3LTAuNzE3LDEuNzk1LTAuNzE3CgkJCWMwLjczOSwwLDEuMzQzLDAuMjM5LDEuODExLDAuNzE3YzAuNDY4LDAuNDc5LDAuNzAyLDEuMDc4LDAuNzAyLDEuNzk1YzAsMC43MTgtMC4yMzUsMS4zMTctMC43MDIsMS43OTUKCQkJQzI4My41MzYsMzMyLjM0NywyODIuOTMyLDMzMi41ODcsMjgyLjE5MywzMzIuNTg3eiBNMjk2LjYxOCwzNDguNTc4Yy0yLjExLDAtMy43NjQtMC40NzMtNC45NjEtMS40MgoJCQljLTEuMTk2LTAuOTQ3LTEuOTM2LTIuMzM0LTIuMjE5LTQuMTZsNC4wMTQtMS4yNzNjMC4wNjUsMC44NDgsMC4zMTEsMS40MTQsMC43MzQsMS42OTdjMC40MjQsMC4yODMsMS4yMzQsMC40MjUsMi40MzEsMC40MjUKCQkJaDEuMjczdjQuNzMySDI5Ni42MTh6IE0yOTcuODkxLDM0OC41Nzh2LTQuNzMyYzAuMjE4LDAsMC4zODEsMC4yMTIsMC40ODksMC42MzZjMC4xMDgsMC40MjUsMC4xNjQsMC45ODUsMC4xNjQsMS42ODEKCQkJYzAsMC43NC0wLjA1NSwxLjMyNy0wLjE2NCwxLjc2MkMyOTguMjcxLDM0OC4zNjEsMjk4LjEwOSwzNDguNTc4LDI5Ny44OTEsMzQ4LjU3OHoiLz4KCQk8cGF0aCBzdHlsZT0iZmlsbDojMDAxOTdEOyIgZD0iTTI5Ny44OTEsMzQ4LjU3OGMtMC4yMTcsMC0wLjM4MS0wLjIxNy0wLjQ4OS0wLjY1M2MtMC4xMDgtMC40MzUtMC4xNjQtMS4wMjItMC4xNjQtMS43NjIKCQkJYzAtMC43MTgsMC4wNTUtMS4yODMsMC4xNjQtMS42OTdjMC4xMDktMC40MTMsMC4yNzItMC42MiwwLjQ4OS0wLjYyVjM0OC41Nzh6IE0yOTcuODkxLDM0OC41Nzh2LTQuNzMyaDYuMzY0djQuNzMySDI5Ny44OTF6CgkJCSBNMzA0LjI1NSwzNDguNTc4di00LjczMmMwLjIxNywwLDAuMzgxLDAuMjEyLDAuNDg5LDAuNjM2YzAuMTA4LDAuNDI1LDAuMTYzLDAuOTg1LDAuMTYzLDEuNjgxYzAsMC43NC0wLjA1NCwxLjMyNy0wLjE2MywxLjc2MgoJCQlDMzA0LjYzNiwzNDguMzYxLDMwNC40NzIsMzQ4LjU3OCwzMDQuMjU1LDM0OC41Nzh6Ii8+CgkJPHBhdGggc3R5bGU9ImZpbGw6IzAwMTk3RDsiIGQ9Ik0zMDQuMjU1LDM0OC41NzhjLTAuMjE3LDAtMC4zODEtMC4yMTctMC40ODktMC42NTNjLTAuMTA4LTAuNDM1LTAuMTY0LTEuMDIyLTAuMTY0LTEuNzYyCgkJCWMwLTAuNzE4LDAuMDU1LTEuMjgzLDAuMTY0LTEuNjk3YzAuMTA5LTAuNDEzLDAuMjcyLTAuNjIsMC40ODktMC42MlYzNDguNTc4eiBNMzA0LjI1NSwzNDguNTc4di00LjczMmg2LjM2NHY0LjczMkgzMDQuMjU1egoJCQkgTTMxMC42MTksMzQ4LjU3OHYtNC43MzJjMC4yMTcsMCwwLjM4MSwwLjIxMiwwLjQ4OSwwLjYzNmMwLjEwOCwwLjQyNSwwLjE2MywwLjk4NSwwLjE2MywxLjY4MWMwLDAuNzQtMC4wNTQsMS4zMjctMC4xNjMsMS43NjIKCQkJQzMxMSwzNDguMzYxLDMxMC44MzYsMzQ4LjU3OCwzMTAuNjE5LDM0OC41Nzh6Ii8+CgkJPHBhdGggc3R5bGU9ImZpbGw6IzAwMTk3RDsiIGQ9Ik0zMTAuNjE5LDM0OC41NzhjLTAuMjE3LDAtMC4zODEtMC4yMTctMC40ODktMC42NTNjLTAuMTA4LTAuNDM1LTAuMTY0LTEuMDIyLTAuMTY0LTEuNzYyCgkJCWMwLTAuNzE4LDAuMDU1LTEuMjgzLDAuMTY0LTEuNjk3YzAuMTA5LTAuNDEzLDAuMjcyLTAuNjIsMC40ODktMC42MlYzNDguNTc4eiBNMzEwLjYxOSwzNDguNTc4di00LjczMmg2LjM2NHY0LjczMkgzMTAuNjE5egoJCQkgTTMxNi45ODMsMzQ4LjU3OHYtNC43MzJjMC4yMTcsMCwwLjM4MSwwLjIxMiwwLjQ4OSwwLjYzNmMwLjEwOCwwLjQyNSwwLjE2MywwLjk4NSwwLjE2MywxLjY4MWMwLDAuNzQtMC4wNTQsMS4zMjctMC4xNjMsMS43NjIKCQkJQzMxNy4zNjQsMzQ4LjM2MSwzMTcuMiwzNDguNTc4LDMxNi45ODMsMzQ4LjU3OHoiLz4KCQk8cGF0aCBzdHlsZT0iZmlsbDojMDAxOTdEOyIgZD0iTTMxNi45ODIsMzQ4LjU3OGMtMC4yMTcsMC0wLjM4LTAuMjE3LTAuNDg5LTAuNjUzYy0wLjEwOS0wLjQzNS0wLjE2NC0xLjAyMi0wLjE2NC0xLjc2MgoJCQljMC0wLjcxOCwwLjA1NS0xLjI4MywwLjE2NC0xLjY5N2MwLjEwOS0wLjQxMywwLjI3Mi0wLjYyLDAuNDg5LTAuNjJWMzQ4LjU3OHogTTMxNi45ODIsMzQ4LjU3OHYtNC43MzJoNi4zNjR2NC43MzJIMzE2Ljk4MnoKCQkJIE0zMjMuMzQ2LDM0OC41Nzh2LTQuNzMyYzAuMjE3LDAsMC4zODEsMC4yMTIsMC40OSwwLjYzNmMwLjEwOCwwLjQyNSwwLjE2MywwLjk4NSwwLjE2MywxLjY4MWMwLDAuNzQtMC4wNTQsMS4zMjctMC4xNjMsMS43NjIKCQkJQzMyMy43MjcsMzQ4LjM2MSwzMjMuNTYzLDM0OC41NzgsMzIzLjM0NiwzNDguNTc4eiIvPgoJCTxwYXRoIHN0eWxlPSJmaWxsOiMwMDE5N0Q7IiBkPSJNMzIzLjM0NiwzNDguNTc4Yy0wLjIxNywwLTAuMzgtMC4yMTctMC40ODktMC42NTNjLTAuMTA5LTAuNDM1LTAuMTY0LTEuMDIyLTAuMTY0LTEuNzYyCgkJCWMwLTAuNzE4LDAuMDU1LTEuMjgzLDAuMTY0LTEuNjk3YzAuMTA5LTAuNDEzLDAuMjcyLTAuNjIsMC40ODktMC42MlYzNDguNTc4eiBNMzIzLjM0NiwzNDguNTc4di00LjczMmgxLjczCgkJCWMwLjg5MiwwLDEuNTY2LTAuMDc3LDIuMDIzLTAuMjI5YzAuNDU3LTAuMTUyLDAuNzYxLTAuNDI0LDAuOTE0LTAuODE2YzAuMTUyLTAuMzkyLDAuMjI4LTAuOTU3LDAuMjI4LTEuNjk3di04Ljc0Nmg0LjE0NXY4Ljc0NgoJCQljMCwxLjYzMS0wLjI3MywzLjAwMi0wLjgxNyw0LjExMnMtMS4zNTQsMS45NDctMi40MzEsMi41MTNjLTEuMDc4LDAuNTY2LTIuNDMyLDAuODQ4LTQuMDYzLDAuODQ4SDMyMy4zNDZ6IE0zMjcuNjg3LDM1Ni41MDkKCQkJYy0wLjYwOSwwLTEuMTIxLTAuMjEyLTEuNTM0LTAuNjM3Yy0wLjQxMy0wLjQyNC0wLjYyLTAuOTMtMC42Mi0xLjUxN2MwLTAuNjUzLDAuMjA3LTEuMTgsMC42Mi0xLjU4MwoJCQljMC40MTMtMC40MDMsMC45MjUtMC42MDQsMS41MzQtMC42MDRjMC42MzEsMCwxLjE1MywwLjIwMSwxLjU2NywwLjYwNGMwLjQxMywwLjQwMiwwLjYyLDAuOTMsMC42MiwxLjU4MwoJCQljMCwwLjU4Ny0wLjIwNywxLjA5My0wLjYyLDEuNTE3QzMyOC44NCwzNTYuMjk3LDMyOC4zMTgsMzU2LjUwOSwzMjcuNjg3LDM1Ni41MDl6IE0zMzUuNTUyLDM0OC41NzgKCQkJYy0xLjYzMSwwLTIuOTg2LTAuMjgyLTQuMDYzLTAuODQ4cy0xLjg4OC0xLjQwNC0yLjQzMi0yLjUxM2MtMC41NDMtMS4xMDktMC44MTYtMi40ODEtMC44MTYtNC4xMTJoNC4xNDUKCQkJYzAsMC43NCwwLjA3NSwxLjMwNSwwLjIyOCwxLjY5N2MwLjE1MiwwLjM5MiwwLjQ1NiwwLjY2NCwwLjkxMywwLjgxNmMwLjQ1NywwLjE1MiwxLjEzMiwwLjIyOSwyLjAyNCwwLjIyOWgxLjI3MnY0LjczMkgzMzUuNTUyegoJCQkgTTMzMi42ODEsMzU2LjUwOWMtMC42MSwwLTEuMTIxLTAuMjEyLTEuNTM0LTAuNjM3Yy0wLjQxMy0wLjQyNC0wLjYyMS0wLjkzLTAuNjIxLTEuNTE3YzAtMC42NTMsMC4yMDgtMS4xOCwwLjYyMS0xLjU4MwoJCQljMC40MTItMC40MDMsMC45MjQtMC42MDQsMS41MzQtMC42MDRjMC42MywwLDEuMTUyLDAuMjAxLDEuNTY2LDAuNjA0YzAuNDEzLDAuNDAyLDAuNjIsMC45MywwLjYyLDEuNTgzCgkJCWMwLDAuNTg3LTAuMjA3LDEuMDkzLTAuNjIsMS41MTdDMzMzLjgzMywzNTYuMjk3LDMzMy4zMTEsMzU2LjUwOSwzMzIuNjgxLDM1Ni41MDl6IE0zMzYuODI0LDM0OC41Nzh2LTQuNzMyCgkJCWMwLjIxOCwwLDAuMzgyLDAuMjEyLDAuNDksMC42MzZjMC4xMDksMC40MjUsMC4xNjMsMC45ODUsMC4xNjMsMS42ODFjMCwwLjc0LTAuMDU0LDEuMzI3LTAuMTYzLDEuNzYyCgkJCUMzMzcuMjA2LDM0OC4zNjEsMzM3LjA0MiwzNDguNTc4LDMzNi44MjQsMzQ4LjU3OHoiLz4KCQk8cGF0aCBzdHlsZT0iZmlsbDojMDAxOTdEOyIgZD0iTTMzNi44MjUsMzQ4LjU3OGMtMC4yMTcsMC0wLjM4MS0wLjIxNy0wLjQ4OS0wLjY1M2MtMC4xMDgtMC40MzUtMC4xNjQtMS4wMjItMC4xNjQtMS43NjIKCQkJYzAtMC43MTgsMC4wNTUtMS4yODMsMC4xNjQtMS42OTdzMC4yNzItMC42MiwwLjQ4OS0wLjYyVjM0OC41Nzh6IE0zMzYuODI1LDM0OC41Nzh2LTQuNzMyaDYuMzY0djQuNzMySDMzNi44MjV6IE0zNDMuMTg5LDM0OC41NzgKCQkJdi00LjczMmMwLjIxNywwLDAuMzgxLDAuMjEyLDAuNDg5LDAuNjM2YzAuMTA5LDAuNDI1LDAuMTYzLDAuOTg1LDAuMTYzLDEuNjgxYzAsMC43NC0wLjA1NCwxLjMyNy0wLjE2MywxLjc2MgoJCQlDMzQzLjU3LDM0OC4zNjEsMzQzLjQwNiwzNDguNTc4LDM0My4xODksMzQ4LjU3OHoiLz4KCQk8cGF0aCBzdHlsZT0iZmlsbDojMDAxOTdEOyIgZD0iTTM0My4xODksMzQ4LjU3OGMtMC4yMTcsMC0wLjM4LTAuMjE3LTAuNDg5LTAuNjUzYy0wLjEwOC0wLjQzNS0wLjE2NC0xLjAyMi0wLjE2NC0xLjc2MgoJCQljMC0wLjcxOCwwLjA1NS0xLjI4MywwLjE2NC0xLjY5N2MwLjEwOS0wLjQxMywwLjI3Mi0wLjYyLDAuNDg5LTAuNjJWMzQ4LjU3OHogTTM0My4xODksMzQ4LjU3OHYtNC43MzJoNS42NzkKCQkJYzEuMDIxLDAsMS44ODgtMC4xMiwyLjU5NS0wLjM1OWMwLjcwNi0wLjIzOSwxLjI0NS0wLjU2LDEuNjE0LTAuOTYyYzAuMzctMC40MDMsMC41NTYtMC44NDQsMC41NTYtMS4zMjMKCQkJYzAtMC4zMjYtMC4wODgtMC42NTgtMC4yNjItMC45OTVjLTAuMTc0LTAuMzM3LTAuNTE2LTAuNzU2LTEuMDI3LTEuMjU2Yy0wLjUxMi0wLjUtMS4yNjgtMS4xNDItMi4yNjktMS45MjYKCQkJYy0xLjAwMS0wLjc4My0yLjMyNy0xLjc2Mi0zLjk4MS0yLjkzN2wtMS44OTMtMS40MzZsMi42NDMtMy42ODhsMi4yODUsMS42OTdjMS41MDEsMS4xMSwyLjc5NiwyLjEwMSwzLjg4NCwyLjk3MQoJCQljMS4wODgsMC44NywxLjk4LDEuNjk3LDIuNjc2LDIuNDhjMC42OTYsMC43ODQsMS4yMTIsMS41ODQsMS41NTEsMi4zOTljMC4zMzcsMC44MTYsMC41MDUsMS43MTQsMC41MDUsMi42OTIKCQkJYzAsMS41MjQtMC4zODEsMi44NC0xLjE0MiwzLjk0OWMtMC43NjIsMS4xMS0xLjgxNywxLjk1OS0zLjE2NiwyLjU0NnMtMi44NzEsMC44ODEtNC41NjgsMC44ODFIMzQzLjE4OXogTTM0NC4yMDEsMzMyLjY1MnYtNC41NjkKCQkJbDE1LjA0NS02LjkxOXY1LjEyNEwzNDQuMjAxLDMzMi42NTJ6IE0zNjAuOTQzLDM0OC41NzhjLTEuNjMyLDAtMi45ODctMC4yODItNC4wNjMtMC44NDhjLTEuMDc4LTAuNTY2LTEuODg4LTEuNDA0LTIuNDMyLTIuNTEzCgkJCWMtMC41NDQtMS4xMDktMC44MTYtMi40ODEtMC44MTYtNC4xMTJ2LTAuMDk4bDQuMTEyLDAuMTY0djAuMDY1YzAuMDIyLDAuNjk3LDAuMTE0LDEuMjM2LDAuMjc3LDEuNjE2CgkJCWMwLjE2NCwwLjM4MSwwLjQ3MywwLjY0MiwwLjkzMSwwLjc4M2MwLjQ1NywwLjE0MSwxLjEyMSwwLjIxMiwxLjk5MSwwLjIxMmgxLjI0djQuNzMySDM2MC45NDN6IE0zNjIuMTgzLDM0OC41Nzh2LTQuNzMyCgkJCWMwLjIzOSwwLDAuNDA4LDAuMjEyLDAuNTA1LDAuNjM2YzAuMDk4LDAuNDI1LDAuMTQ4LDAuOTg1LDAuMTQ4LDEuNjgxYzAsMC43NC0wLjA1LDEuMzI3LTAuMTQ4LDEuNzYyCgkJCUMzNjIuNTkxLDM0OC4zNjEsMzYyLjQyMiwzNDguNTc4LDM2Mi4xODMsMzQ4LjU3OHoiLz4KCQk8cGF0aCBzdHlsZT0iZmlsbDojMDAxOTdEOyIgZD0iTTM2Mi4xODMsMzQ4LjU3OGMtMC4yMTcsMC0wLjM4MS0wLjIxNy0wLjQ5LTAuNjUzYy0wLjEwOC0wLjQzNS0wLjE2My0xLjAyMi0wLjE2My0xLjc2MgoJCQljMC0wLjcxOCwwLjA1NC0xLjI4MywwLjE2My0xLjY5N2MwLjEwOS0wLjQxMywwLjI3My0wLjYyLDAuNDktMC42MlYzNDguNTc4eiBNMzYyLjE4MywzNDguNTc4di00LjczMmg2LjM2NHY0LjczMkgzNjIuMTgzegoJCQkgTTM2OC41NDgsMzQ4LjU3OHYtNC43MzJjMC4yMTcsMCwwLjM4LDAuMjEyLDAuNDg4LDAuNjM2YzAuMTA5LDAuNDI1LDAuMTY0LDAuOTg1LDAuMTY0LDEuNjgxYzAsMC43NC0wLjA1NCwxLjMyNy0wLjE2NCwxLjc2MgoJCQlDMzY4LjkyNywzNDguMzYxLDM2OC43NjUsMzQ4LjU3OCwzNjguNTQ4LDM0OC41Nzh6Ii8+CgkJPHBhdGggc3R5bGU9ImZpbGw6IzAwMTk3RDsiIGQ9Ik0zNjguNTQ4LDM0OC41NzhjLTAuMjE3LDAtMC4zODEtMC4yMTctMC40OS0wLjY1M2MtMC4xMDgtMC40MzUtMC4xNjMtMS4wMjItMC4xNjMtMS43NjIKCQkJYzAtMC43MTgsMC4wNTQtMS4yODMsMC4xNjMtMS42OTdjMC4xMDktMC40MTMsMC4yNzMtMC42MiwwLjQ5LTAuNjJWMzQ4LjU3OHogTTM2OC41NDgsMzQ4LjU3OHYtNC43MzIKCQkJYzAuOTc4LDAsMS44MDUtMC4xOCwyLjQ4MS0wLjUzOWMwLjY3My0wLjM1OSwxLjI3OC0wLjg3LDEuODExLTEuNTM0YzAuNTMzLTAuNjYzLDEuMDcxLTEuNDQxLDEuNjE1LTIuMzM0CgkJCWMwLjUyMi0wLjgyNiwxLjA4Mi0xLjY1OCwxLjY4MS0yLjQ5NmMwLjU5OS0wLjgzNywxLjI1Ni0xLjU5OSwxLjk3NC0yLjI4NGMwLjcxOC0wLjY4NiwxLjUxOC0xLjI0LDIuNC0xLjY2NQoJCQljMC44ODEtMC40MjQsMS44ODctMC42MzYsMy4wMTgtMC42MzZjMS4xNzUsMCwyLjE5NywwLjI1MSwzLjA2NywwLjc1YzAuODcsMC41MDEsMS41ODgsMS4xNzUsMi4xNTUsMi4wMjQKCQkJYzAuNTY1LDAuODQ4LDAuOTg0LDEuODIyLDEuMjU1LDIuOTJjMC4yNzMsMS4wOTksMC40MDksMi4yMzYsMC40MDksMy40MTFzLTAuMTUyLDIuNDY0LTAuNDU3LDMuODY3CgkJCWMtMC4zMDUsMS40MDQtMC43NzMsMi43MDQtMS40MDMsMy45bC0zLjc4Ni0xLjk1OWMwLjUwMS0wLjg3LDAuODgxLTEuOCwxLjE0My0yLjc5YzAuMjYxLTAuOTksMC4zOTEtMS45OTYsMC4zOTEtMy4wMTgKCQkJYzAtMS41MDEtMC4yNDQtMi42MTEtMC43MzMtMy4zMjljLTAuNDktMC43MTgtMS4xOC0xLjA3OC0yLjA3My0xLjA3OGMtMC41ODcsMC0xLjE2NSwwLjE1OC0xLjczLDAuNDczCgkJCWMtMC41NjUsMC4zMTYtMS4xNTgsMC44MzgtMS43NzgsMS41NjdjLTAuNjIsMC43My0xLjMxLDEuNzE0LTIuMDcyLDIuOTU0Yy0wLjk1OCwxLjQ4LTEuODgzLDIuNzAzLTIuNzc0LDMuNjcxCgkJCWMtMC44OTIsMC45NjgtMS44NiwxLjY4Ni0yLjkwNSwyLjE1NEMzNzEuMTkxLDM0OC4zNDQsMzY5Ljk2MiwzNDguNTc4LDM2OC41NDgsMzQ4LjU3OHogTTM4OC4zMjQsMzQ0LjQ5OWwwLjIyOCw0LjczMgoJCQljLTIuMDQ1LDAuMTMtMy44MjQsMC4xMTktNS4zMzUtMC4wMzNjLTEuNTEzLTAuMTUyLTIuODM1LTAuNDI1LTMuOTY2LTAuODE2Yy0xLjEzMi0wLjM5Mi0yLjEzOC0wLjg4Ny0zLjAxOS0xLjQ4NQoJCQljLTAuODgxLTAuNTk4LTEuNzAyLTEuMjg5LTIuNDY0LTIuMDczbDIuODQtMy4wNjdjMC43ODMsMC44MDQsMS42OTEsMS40MjUsMi43MjUsMS44NTljMS4wMzQsMC40MzYsMi4yODUsMC43MTgsMy43NTQsMC44NDkKCQkJQzM4NC41NTUsMzQ0LjU5NiwzODYuMywzNDQuNjA4LDM4OC4zMjQsMzQ0LjQ5OXogTTM5My41NDYsMzQ4LjU3OGMtMS41MjMsMC0yLjgtMC4yODItMy44MzUtMC44NDgKCQkJYy0xLjAzMy0wLjU2Ni0xLjgxNi0xLjQwNC0yLjM1LTIuNTEzcy0wLjc5OS0yLjQ4MS0wLjc5OS00LjExMnYtMC43MThsMy42ODcsMC4xNjRsMC4xMzEsMC43NQoJCQljMC4wMjIsMC42NzQsMC4xMTQsMS4xOTcsMC4yNzcsMS41NjdjMC4xNjQsMC4zNywwLjQ3MywwLjYyNiwwLjkzMSwwLjc2N2MwLjQ1NywwLjE0MSwxLjExLDAuMjEyLDEuOTU4LDAuMjEyaDEuMjc0djQuNzMyCgkJCUgzOTMuNTQ2eiBNMzk0LjgxOSwzNDguNTc4di00LjczMmMwLjIxNywwLDAuMzgsMC4yMTIsMC40ODgsMC42MzZjMC4xMDksMC40MjUsMC4xNjQsMC45ODUsMC4xNjQsMS42ODEKCQkJYzAsMC43NC0wLjA1NCwxLjMyNy0wLjE2NCwxLjc2MkMzOTUuMTk5LDM0OC4zNjEsMzk1LjAzNiwzNDguNTc4LDM5NC44MTksMzQ4LjU3OHoiLz4KCQk8cGF0aCBzdHlsZT0iZmlsbDojMDAxOTdEOyIgZD0iTTM5NC44MTksMzQ4LjU3OGMtMC4yMTcsMC0wLjM4MS0wLjIxNy0wLjQ4OS0wLjY1M2MtMC4xMDgtMC40MzUtMC4xNjQtMS4wMjItMC4xNjQtMS43NjIKCQkJYzAtMC43MTgsMC4wNTUtMS4yODMsMC4xNjQtMS42OTdjMC4xMDktMC40MTMsMC4yNzItMC42MiwwLjQ4OS0wLjYyVjM0OC41Nzh6IE0zOTQuODE5LDM0OC41Nzh2LTQuNzMyaDEuNzI5CgkJCWMwLjg5MiwwLDEuNTY3LTAuMDc3LDIuMDI0LTAuMjI5YzAuNDU2LTAuMTUyLDAuNzYxLTAuNDI0LDAuOTEzLTAuODE2YzAuMTUyLTAuMzkyLDAuMjI4LTAuOTU3LDAuMjI4LTEuNjk3di04Ljc0Nmg0LjE0NXY4Ljc0NgoJCQljMCwxLjYzMS0wLjI3MiwzLjAwMi0wLjgxNiw0LjExMmMtMC41NDQsMS4xMDktMS4zNTQsMS45NDctMi40MzIsMi41MTNjLTEuMDc3LDAuNTY2LTIuNDMxLDAuODQ4LTQuMDYzLDAuODQ4SDM5NC44MTl6CgkJCSBNMzk5LjE5MSwzMjguNzM2Yy0wLjYzLDAtMS4xNTItMC4yMDctMS41NjYtMC42MmMtMC40MTMtMC40MTMtMC42MjEtMC45MjQtMC42MjEtMS41MzRjMC0wLjY1MywwLjIwOC0xLjE4LDAuNjIxLTEuNTgzCgkJCXMwLjkzNS0wLjYwNCwxLjU2Ni0wLjYwNGMwLjYxLDAsMS4xMjEsMC4yMDIsMS41MzQsMC42MDRzMC42MjEsMC45MywwLjYyMSwxLjU4M2MwLDAuNjEtMC4yMDgsMS4xMjEtMC42MjEsMS41MzQKCQkJQzQwMC4zMTIsMzI4LjUyOSwzOTkuODAxLDMyOC43MzYsMzk5LjE5MSwzMjguNzM2eiBNNDA3LjAyNCwzNDguNTc4Yy0xLjYzMSwwLTIuOTg2LTAuMjgyLTQuMDYzLTAuODQ4CgkJCWMtMS4wNzctMC41NjYtMS44ODgtMS40MDQtMi40MzEtMi41MTNzLTAuODE3LTIuNDgxLTAuODE3LTQuMTEyaDQuMTQ1YzAsMC43NCwwLjA3NiwxLjMwNSwwLjIyOCwxLjY5NwoJCQljMC4xNTIsMC4zOTIsMC40NTYsMC42NjQsMC45MTQsMC44MTZjMC40NTcsMC4xNTIsMS4xMzEsMC4yMjksMi4wMjMsMC4yMjloMS4yNzN2NC43MzJINDA3LjAyNHogTTQwNC4xODUsMzI4LjczNgoJCQljLTAuNjMxLDAtMS4xNTMtMC4yMDctMS41NjctMC42MmMtMC40MTMtMC40MTMtMC42Mi0wLjkyNC0wLjYyLTEuNTM0YzAtMC42NTMsMC4yMDctMS4xOCwwLjYyLTEuNTgzczAuOTM1LTAuNjA0LDEuNTY3LTAuNjA0CgkJCWMwLjYwOSwwLDEuMTIsMC4yMDIsMS41MzQsMC42MDRjMC40MTMsMC40MDIsMC42MiwwLjkzLDAuNjIsMS41ODNjMCwwLjYxLTAuMjA4LDEuMTIxLTAuNjIsMS41MzQKCQkJQzQwNS4zMDUsMzI4LjUyOSw0MDQuNzk0LDMyOC43MzYsNDA0LjE4NSwzMjguNzM2eiBNNDA4LjI5NywzNDguNTc4di00LjczMmMwLjIxOCwwLDAuMzgxLDAuMjEyLDAuNDg5LDAuNjM2CgkJCWMwLjEwOSwwLjQyNSwwLjE2NCwwLjk4NSwwLjE2NCwxLjY4MWMwLDAuNzQtMC4wNTUsMS4zMjctMC4xNjQsMS43NjJDNDA4LjY3NywzNDguMzYxLDQwOC41MTUsMzQ4LjU3OCw0MDguMjk3LDM0OC41Nzh6Ii8+CgkJPHBhdGggc3R5bGU9ImZpbGw6IzAwMTk3RDsiIGQ9Ik00MDguMjk4LDM0OC41NzhjLTAuMjE3LDAtMC4zODEtMC4yMTctMC40OS0wLjY1M2MtMC4xMDgtMC40MzUtMC4xNjMtMS4wMjItMC4xNjMtMS43NjIKCQkJYzAtMC43MTgsMC4wNTQtMS4yODMsMC4xNjMtMS42OTdjMC4xMDktMC40MTMsMC4yNzMtMC42MiwwLjQ5LTAuNjJWMzQ4LjU3OHogTTQwOC4yOTgsMzQ4LjU3OHYtNC43MzJoNC40Mzh2LTIyLjc0OGg0LjExMnYyNy40NzkKCQkJSDQwOC4yOTh6Ii8+CgkJPHBhdGggc3R5bGU9ImZpbGw6IzAwMTk3RDsiIGQ9Ik00MjEuMjU0LDM0OC41Nzh2LTI3LjQ3OWg0LjE0NXYyNy40NzlINDIxLjI1NHoiLz4KCQk8cGF0aCBzdHlsZT0iZmlsbDojMDAxOTdEOyIgZD0iTTQzNy45MywzNDguNTc4di00LjczMmgxNS41Njd2NC43MzJINDM3LjkzeiBNNDUwLjUyOCwzNDguNTc4Yy0wLjAyMi0yLjMyOC0wLjQyNC00LjM5NC0xLjIwOC02LjIKCQkJYy0wLjc4My0xLjgwNi0xLjkxNS0zLjMxOC0zLjM5My00LjUzNmMtMS40OC0xLjIxOS0zLjI3Ni0yLjA2Ny01LjM4Ni0yLjU0NmwwLjkxNS00LjUzNmMyLjY5OCwwLjYxLDUuMDI1LDEuNzQxLDYuOTgzLDMuMzk0CgkJCXMzLjQ4MSwzLjcxLDQuNTY5LDYuMTY4YzEuMDg4LDIuNDU5LDEuNjQyLDUuMjEyLDEuNjY0LDguMjU3SDQ1MC41Mjh6IE00NTAuOTUyLDM0OC41Nzh2LTQuNzMyaDYuMjY2djQuNzMySDQ1MC45NTJ6CgkJCSBNNDU3LjIxOCwzNDguNTc4di00LjczMmMwLjIxNywwLDAuMzgsMC4yMTIsMC40OSwwLjYzNmMwLjEwOCwwLjQyNSwwLjE2MywwLjk4NSwwLjE2MywxLjY4MWMwLDAuNzQtMC4wNTQsMS4zMjctMC4xNjMsMS43NjIKCQkJQzQ1Ny41OTgsMzQ4LjM2MSw0NTcuNDM1LDM0OC41NzgsNDU3LjIxOCwzNDguNTc4eiIvPgoJCTxwYXRoIHN0eWxlPSJmaWxsOiMwMDE5N0Q7IiBkPSJNNDU3LjIxOCwzNDguNTc4Yy0wLjIxNywwLTAuMzgtMC4yMTctMC40OS0wLjY1M2MtMC4xMDgtMC40MzUtMC4xNjMtMS4wMjItMC4xNjMtMS43NjIKCQkJYzAtMC43MTgsMC4wNTQtMS4yODMsMC4xNjMtMS42OTdjMC4xMS0wLjQxMywwLjI3My0wLjYyLDAuNDktMC42MlYzNDguNTc4eiBNNDU3LjIxOCwzNDguNTc4di00LjczMmg2LjQ2MQoJCQljMC44MjcsMCwxLjczLTAuMTM2LDIuNzA5LTAuNDA4YzAuOTgtMC4yNzIsMS45NDctMC42MjYsMi45MDUtMS4wNjFjMC45NTctMC40MzUsMS44MzMtMC45MDgsMi42MjYtMS40MgoJCQljMC43OTUtMC41MTEsMS40MjUtMS4wMTIsMS44OTMtMS41MDFjMC40NjgtMC40OSwwLjcwMi0wLjkxOSwwLjcwMi0xLjI4OWMwLTAuMzctMC4yMzktMC43MTMtMC43MTctMS4wMjkKCQkJYy0wLjQ3OS0wLjMxNC0xLjE0OC0wLjU3Ni0yLjAwNy0wLjc4M2MtMC44Ni0wLjIwNy0xLjg1NS0wLjMxLTIuOTg3LTAuMzFjLTAuOTU4LDAtMS44NTUsMC4wODEtMi42OTIsMC4yNDQKCQkJYy0wLjgzOCwwLjE2NC0xLjcyNSwwLjM5OC0yLjY2LDAuNzAybC0xLjE3NSwxLjQ2OWwtMi41MTItMS4wNDVsMi45NjktNC44NjNjMC44OTItMC4yODMsMS44NS0wLjUyOCwyLjg3Mi0wLjczNAoJCQljMS4wMjItMC4yMDcsMi4xNjUtMC4zMSwzLjQyNy0wLjMxYzEuOTE1LDAsMy41OTUsMC4yNSw1LjA0MiwwLjc1YzEuNDQ2LDAuNTAxLDIuNTcyLDEuMTkyLDMuMzc4LDIuMDczCgkJCWMwLjgwNCwwLjg4MSwxLjIwOCwxLjkzMSwxLjIwOCwzLjE0OWMwLDEuMDAxLTAuMjczLDEuOTY5LTAuODE2LDIuOTA0Yy0wLjU0NCwwLjkzNi0xLjI3NCwxLjgxNy0yLjE4NywyLjY0MwoJCQljLTAuOTE0LDAuODI4LTEuOTQyLDEuNTc4LTMuMDg1LDIuMjUyYy0xLjE0MSwwLjY3NC0yLjMyMiwxLjI1Ni0zLjU0LDEuNzQ2Yy0xLjIxOSwwLjQ4OS0yLjQxLDAuODctMy41NzQsMS4xNDIKCQkJcy0yLjIxNCwwLjQwOC0zLjE0OSwwLjQwOEg0NTcuMjE4eiBNNDc1LjAwNSwzNDguNTc4Yy0yLjU2OCwwLTQuODg0LTAuNDYyLTYuOTUxLTEuMzg3Yy0yLjA2Ny0wLjkyNC0zLjgwOC0yLjIzLTUuMjIxLTMuOTE2CgkJCWMtMS40MTUtMS42ODUtMi40MzgtMy42MzgtMy4wNjgtNS44NThsMy4zMjgtMS45MjZjMC4zMDUsMS42NzYsMC45MzEsMy4xNDUsMS44NzcsNC40MDZjMC45NDYsMS4yNjIsMi4xNTQsMi4yMzUsMy42MjMsMi45MjEKCQkJYzEuNDY5LDAuNjg1LDMuMTA1LDEuMDI4LDQuOTExLDEuMDI4aDguMTI2djQuNzMySDQ3NS4wMDV6IE00ODEuNjMsMzQ4LjU3OHYtNC43MzJjMC4yMTcsMCwwLjM4MSwwLjIxMiwwLjQ4OSwwLjYzNgoJCQljMC4xMDgsMC40MjUsMC4xNjQsMC45ODUsMC4xNjQsMS42ODFjMCwwLjc0LTAuMDU1LDEuMzI3LTAuMTY0LDEuNzYyQzQ4Mi4wMSwzNDguMzYxLDQ4MS44NDcsMzQ4LjU3OCw0ODEuNjMsMzQ4LjU3OHoiLz4KCQk8cGF0aCBzdHlsZT0iZmlsbDojMDAxOTdEOyIgZD0iTTQ4MS42MywzNDguNTc4Yy0wLjIxNywwLTAuMzgxLTAuMjE3LTAuNDg5LTAuNjUzYy0wLjEwOS0wLjQzNS0wLjE2NC0xLjAyMi0wLjE2NC0xLjc2MgoJCQljMC0wLjcxOCwwLjA1NS0xLjI4MywwLjE2NC0xLjY5N2MwLjEwOC0wLjQxMywwLjI3Mi0wLjYyLDAuNDg5LTAuNjJWMzQ4LjU3OHogTTQ4MS42MywzNDguNTc4di00LjczMmg2LjM2NHY0LjczMkg0ODEuNjN6CgkJCSBNNDg3Ljk5NCwzNDguNTc4di00LjczMmMwLjIxNywwLDAuMzgxLDAuMjEyLDAuNDg5LDAuNjM2YzAuMTA4LDAuNDI1LDAuMTYzLDAuOTg1LDAuMTYzLDEuNjgxYzAsMC43NC0wLjA1NCwxLjMyNy0wLjE2MywxLjc2MgoJCQlDNDg4LjM3NCwzNDguMzYxLDQ4OC4yMTEsMzQ4LjU3OCw0ODcuOTk0LDM0OC41Nzh6Ii8+CgkJPHBhdGggc3R5bGU9ImZpbGw6IzAwMTk3RDsiIGQ9Ik00ODcuOTk0LDM0OC41NzhjLTAuMjE3LDAtMC4zODEtMC4yMTctMC40ODktMC42NTNjLTAuMTA5LTAuNDM1LTAuMTY0LTEuMDIyLTAuMTY0LTEuNzYyCgkJCWMwLTAuNzE4LDAuMDU1LTEuMjgzLDAuMTY0LTEuNjk3YzAuMTA4LTAuNDEzLDAuMjcyLTAuNjIsMC40ODktMC42MlYzNDguNTc4eiBNNDg3Ljk5NCwzNDguNTc4di00LjczMmg2LjM2NHY0LjczMkg0ODcuOTk0egoJCQkgTTQ5NC4zNTgsMzQ4LjU3OHYtNC43MzJjMC4yMTcsMCwwLjM4MSwwLjIxMiwwLjQ4OSwwLjYzNmMwLjEwOCwwLjQyNSwwLjE2MywwLjk4NSwwLjE2MywxLjY4MWMwLDAuNzQtMC4wNTQsMS4zMjctMC4xNjMsMS43NjIKCQkJQzQ5NC43MzgsMzQ4LjM2MSw0OTQuNTc1LDM0OC41NzgsNDk0LjM1OCwzNDguNTc4eiIvPgoJCTxwYXRoIHN0eWxlPSJmaWxsOiMwMDE5N0Q7IiBkPSJNNDk0LjM1NywzNDguNTc4Yy0wLjIxNywwLTAuMzgtMC4yMTctMC40ODktMC42NTNjLTAuMTA4LTAuNDM1LTAuMTY0LTEuMDIyLTAuMTY0LTEuNzYyCgkJCWMwLTAuNzE4LDAuMDU1LTEuMjgzLDAuMTY0LTEuNjk3YzAuMTA5LTAuNDEzLDAuMjcyLTAuNjIsMC40ODktMC42MlYzNDguNTc4eiBNNDk0LjM1NywzNDguNTc4di00LjczMmg2LjM2NHY0LjczMkg0OTQuMzU3egoJCQkgTTUwMC43MjEsMzQ4LjU3OHYtNC43MzJjMC4yMTcsMCwwLjM4MSwwLjIxMiwwLjQ5LDAuNjM2YzAuMTA4LDAuNDI1LDAuMTYzLDAuOTg1LDAuMTYzLDEuNjgxYzAsMC43NC0wLjA1NCwxLjMyNy0wLjE2MywxLjc2MgoJCQlDNTAxLjEwMiwzNDguMzYxLDUwMC45MzgsMzQ4LjU3OCw1MDAuNzIxLDM0OC41Nzh6Ii8+CgkJPHBhdGggc3R5bGU9ImZpbGw6IzAwMTk3RDsiIGQ9Ik01MDAuNzIxLDM0OC41NzhjLTAuMjE3LDAtMC4zOC0wLjIxNy0wLjQ4OS0wLjY1M2MtMC4xMDgtMC40MzUtMC4xNjQtMS4wMjItMC4xNjQtMS43NjIKCQkJYzAtMC43MTgsMC4wNTUtMS4yODMsMC4xNjQtMS42OTdjMC4xMDktMC40MTMsMC4yNzItMC42MiwwLjQ4OS0wLjYyVjM0OC41Nzh6IE01MDAuNzIxLDM0OC41Nzh2LTQuNzMyaDYuMzY0djQuNzMySDUwMC43MjF6CgkJCSBNNTA3LjA4NSwzNDguNTc4di00LjczMmMwLjIxNywwLDAuMzgxLDAuMjEyLDAuNDksMC42MzZjMC4xMDgsMC40MjUsMC4xNjMsMC45ODUsMC4xNjMsMS42ODFjMCwwLjc0LTAuMDU0LDEuMzI3LTAuMTYzLDEuNzYyCgkJCUM1MDcuNDY2LDM0OC4zNjEsNTA3LjMwMiwzNDguNTc4LDUwNy4wODUsMzQ4LjU3OHoiLz4KCQk8cGF0aCBzdHlsZT0iZmlsbDojMDAxOTdEOyIgZD0iTTUwNy4wODUsMzQ4LjU3OGMtMC4yMTcsMC0wLjM4LTAuMjE3LTAuNDg5LTAuNjUzYy0wLjEwOC0wLjQzNS0wLjE2NC0xLjAyMi0wLjE2NC0xLjc2MgoJCQljMC0wLjcxOCwwLjA1NS0xLjI4MywwLjE2NC0xLjY5N2MwLjEwOS0wLjQxMywwLjI3Mi0wLjYyLDAuNDg5LTAuNjJWMzQ4LjU3OHogTTUwNy4wODUsMzQ4LjU3OHYtNC43MzJoNi4zNjR2NC43MzJINTA3LjA4NXoKCQkJIE01MTMuNDQ5LDM0OC41Nzh2LTQuNzMyYzAuMjE3LDAsMC4zODEsMC4yMTIsMC40OSwwLjYzNmMwLjEwOSwwLjQyNSwwLjE2MywwLjk4NSwwLjE2MywxLjY4MWMwLDAuNzQtMC4wNTQsMS4zMjctMC4xNjMsMS43NjIKCQkJQzUxMy44MywzNDguMzYxLDUxMy42NjYsMzQ4LjU3OCw1MTMuNDQ5LDM0OC41Nzh6Ii8+CgkJPHBhdGggc3R5bGU9ImZpbGw6IzAwMTk3RDsiIGQ9Ik01MTkuMjI2LDMyOC4yNzhjLTAuNSwwLTEuMTI1LTAuMDYtMS44NzYtMC4xOGMtMC43NS0wLjExOS0xLjQ3NC0wLjI5OC0yLjE3LTAuNTM4bDAuNjUzLTEuOTI2CgkJCWMwLjQ5OSwwLjE3NCwxLjA2NiwwLjMxNSwxLjY5NywwLjQyNWMwLjYzLDAuMTA5LDEuMTk2LDAuMTYzLDEuNjk3LDAuMTYzYzAuMjYyLDAsMC41MTctMC4wMTYsMC43NjctMC4wNDkKCQkJYzAuMjUxLTAuMDMzLDAuNDg0LTAuMDgyLDAuNzAyLTAuMTQ3Yy0wLjM3LTAuMzkyLTAuNjQ3LTAuODA1LTAuODMyLTEuMjRjLTAuMTg1LTAuNDM1LTAuMjc4LTAuODYtMC4yNzgtMS4yNzMKCQkJYzAtMC41NDMsMC4xMjUtMS4wNDksMC4zNzYtMS41MTdjMC4yNS0wLjQ2OCwwLjYwMy0wLjg0NCwxLjA2MS0xLjEyNmMwLjQ1Ni0wLjI4MiwwLjk2Ny0wLjQyNSwxLjUzNC0wLjQyNQoJCQljMC43NjEsMCwxLjQxNCwwLjI2NywxLjk1OCwwLjhjMC41NDMsMC41MzMsMC44MTcsMS4yNjcsMC44MTcsMi4yMDNjMCwwLjk3OS0wLjI5NCwxLjgyOC0wLjg4MiwyLjU0NgoJCQljLTAuNTg3LDAuNzE3LTEuMzUsMS4yNzktMi4yODQsMS42ODFDNTIxLjIyNywzMjguMDc3LDUyMC4yNDksMzI4LjI3OCw1MTkuMjI2LDMyOC4yNzh6IE01MjIuNjIxLDMyNC45ODIKCQkJYzAuMjE3LTAuMjM5LDAuMzg1LTAuNDg5LDAuNTA1LTAuNzVjMC4xMi0wLjI2MSwwLjE4LTAuNTMzLDAuMTgtMC44MTdjMC0wLjMyNi0wLjA2NS0wLjU1OS0wLjE5Ni0wLjcwMgoJCQljLTAuMTMtMC4xNDEtMC4zMDUtMC4yMTItMC41MjItMC4yMTJjLTAuMjYsMC0wLjQ4OSwwLjA5NC0wLjY4NSwwLjI3OGMtMC4xOTYsMC4xODUtMC4yOTQsMC40My0wLjI5NCwwLjczNAoJCQljMCwwLjIzOSwwLjA4MSwwLjQ4NCwwLjI0NSwwLjczNEM1MjIuMDE3LDMyNC40OTksNTIyLjI3MiwzMjQuNzQzLDUyMi42MjEsMzI0Ljk4MnoiLz4KCQk8cGF0aCBzdHlsZT0iZmlsbDojMDAxOTdEOyIgZD0iTTUxMy40NDksMzQ4LjU3OGMtMC4yMTcsMC0wLjM4LTAuMjE3LTAuNDg5LTAuNjUzYy0wLjEwOS0wLjQzNS0wLjE2NC0xLjAyMi0wLjE2NC0xLjc2MgoJCQljMC0wLjcxOCwwLjA1NS0xLjI4MywwLjE2NC0xLjY5N2MwLjEwOS0wLjQxMywwLjI3Mi0wLjYyLDAuNDg5LTAuNjJWMzQ4LjU3OHogTTUxOC4xODIsMzMyLjM1OGg0LjE0NHYxNi4yMmgtOC44Nzd2LTQuNzMyaDQuNzMzCgkJCVYzMzIuMzU4eiBNNTE4LjczNywzNTcuNzE2Yy0wLjcxNywwLTEuMzE2LTAuMjQtMS43OTUtMC43MThjLTAuNDc5LTAuNDc5LTAuNzE4LTEuMDc3LTAuNzE4LTEuNzk1czAuMjM5LTEuMzE3LDAuNzE4LTEuNzk1CgkJCWMwLjQ3OS0wLjQ3OSwxLjA3OC0wLjcxOCwxLjc5NS0wLjcxOGMwLjc0LDAsMS4zNDMsMC4yMzksMS44MTIsMC43MThjMC40NjgsMC40NzgsMC43MDEsMS4wNzcsMC43MDEsMS43OTUKCQkJcy0wLjIzNCwxLjMxNi0wLjcwMSwxLjc5NUM1MjAuMDgsMzU3LjQ3Niw1MTkuNDc2LDM1Ny43MTYsNTE4LjczNywzNTcuNzE2eiIvPgoJPC9nPgoJPGc+CgkJPHBhdGggc3R5bGU9ImZpbGw6IzAwMTk3RDsiIGQ9Ik0yODIuMjc2LDM2NC4xNjdjMS42NDIsMCwzLjA0OCwwLjIyNCw0LjIyLDAuNjcyYzEuMTcyLDAuNDQ4LDIuMDc4LDEuMDkyLDIuNzE4LDEuOTM0CgkJCWMwLjYzOSwwLjg0MywwLjk1OSwxLjgzOSwwLjk1OSwyLjk4OWMwLDEuMjE1LTAuMzQ2LDIuMjcxLTEuMDM5LDMuMTY2Yy0wLjY5MiwwLjg5NS0xLjYzNiwxLjQ5Mi0yLjgyOSwxLjc5CgkJCWMxLjQ1LDAuMjU1LDIuNTk1LDAuODksMy40MzcsMS45MDJjMC44NDIsMS4wMTMsMS4yNjMsMi4yNjUsMS4yNjMsMy43NTdjMCwxLjI3OS0wLjM0MSwyLjM3Ny0xLjAyMywzLjI5MgoJCQljLTAuNjgyLDAuOTE4LTEuNjUyLDEuNjI2LTIuOTEsMi4xMjdjLTEuMjU3LDAuNS0yLjc0OSwwLjc1MS00LjQ3NiwwLjc1MWgtMTAuNDg4di0yMi4zODJIMjgyLjI3NnogTTI4Mi4wNTIsMzczLjI4CgkJCWMxLjAwMiwwLDEuNzktMC4yNCwyLjM2NS0wLjcxOWMwLjU3Ni0wLjQ4LDAuODYzLTEuMTM1LDAuODYzLTEuOTY3cy0wLjI4Ny0xLjQ3Ni0wLjg2My0xLjkzNAoJCQljLTAuNTc1LTAuNDU4LTEuMzY0LTAuNjc2LTIuMzY1LTAuNjU2aC01LjE0OHY1LjI3NkgyODIuMDUyeiBNMjgyLjA1MiwzODIuNzEyYzEuMjM2LDAuMDIxLDIuMjE3LTAuMjI5LDIuOTQyLTAuNzUxCgkJCWMwLjcyNC0wLjUyMywxLjA4Ny0xLjI1MiwxLjA4Ny0yLjE5MWMwLTAuODc0LTAuMzYzLTEuNTYxLTEuMDg3LTIuMDYyYy0wLjcyNS0wLjUtMS43MDYtMC43NC0yLjk0Mi0wLjcxOWgtNS4xNDh2NS43MjNIMjgyLjA1MnoiCgkJCS8+CgkJPHBhdGggc3R5bGU9ImZpbGw6IzAwMTk3RDsiIGQ9Ik0yOTcuNzUxLDM3Ny4zNGMwLDEuNzA2LDAuNDc5LDMuMDQ4LDEuNDM5LDQuMDI5YzAuOTU5LDAuOTgxLDIuMjA2LDEuNDcxLDMuNzQsMS40NzEKCQkJYzEuNTM1LDAsMi43Ni0wLjQ4NCwzLjY3OC0xLjQ1NWMwLjkxNi0wLjk2OSwxLjM3NC0yLjMxOCwxLjM3NC00LjA0NHYtMTMuMTczaDQuNzk2djEzLjE3M2MwLDEuOTQtMC4zOTksMy42MjktMS4xOTksNS4wNjgKCQkJYy0wLjc5OSwxLjQzOS0xLjkzNCwyLjU0Mi0zLjQwNSwzLjMwOWMtMS40NzEsMC43NjgtMy4yMTksMS4xNTEtNS4yNDQsMS4xNTFjLTIuMDQ2LDAtMy44MTUtMC4zODMtNS4zMDctMS4xNTEKCQkJYy0xLjQ5My0wLjc2Ny0yLjY0My0xLjg3MS0zLjQ1My0zLjMwOWMtMC44MS0xLjQzOS0xLjIxNS0zLjEyOC0xLjIxNS01LjA2OHYtMTMuMTczaDQuNzk2VjM3Ny4zNHoiLz4KCQk8cGF0aCBzdHlsZT0iZmlsbDojMDAxOTdEOyIgZD0iTTMyMi40OTgsMzY0LjE2N2g0LjkyNGw5LjU5MiwyMi4zODJoLTUuMTE1bC03LjA2Ni0xNy41ODVsLTcuMTMsMTcuNTg1aC00Ljk1NUwzMjIuNDk4LDM2NC4xNjd6CgkJCSBNMzE4LjA4NiwzNzguMTRoMTMuMjM3djMuNzcyaC0xMy4yMzdWMzc4LjE0eiIvPgoJCTxwYXRoIHN0eWxlPSJmaWxsOiMwMDE5N0Q7IiBkPSJNMzQ3LjQ3LDM2NC4xNjdjMS43MjcsMCwzLjMwNCwwLjI3Miw0LjczMiwwLjgxNmMxLjQyNywwLjU0MywyLjY2NCwxLjMxMSwzLjcwOSwyLjMwMgoJCQljMS4wNDUsMC45OTEsMS44NTUsMi4xNzUsMi40MywzLjU1YzAuNTc1LDEuMzc1LDAuODYzLDIuODgzLDAuODYzLDQuNTI0YzAsMS42NDItMC4yODgsMy4xMzktMC44NjMsNC40OTIKCQkJYy0wLjU3NSwxLjM1NC0xLjM5NiwyLjUzOC0yLjQ2MiwzLjU1Yy0xLjA2NiwxLjAxMy0yLjMyMywxLjc5LTMuNzczLDIuMzM0Yy0xLjQ1LDAuNTQzLTMuMDQ4LDAuODE2LTQuNzk2LDAuODE2aC05LjI3M3YtMjIuMzgyCgkJCUgzNDcuNDd6IE0zNDcuNTY1LDM4Mi42MTVjMC45OCwwLDEuODgxLTAuMTc2LDIuNzAyLTAuNTI4YzAuODItMC4zNTIsMS41MzUtMC44NDcsMi4xNDItMS40ODYKCQkJYzAuNjA4LTAuNjQsMS4wODEtMS40MDEsMS40MjMtMi4yODZjMC4zNDEtMC44ODUsMC41MTItMS44NTksMC41MTItMi45MjZjMC0xLjA4Ny0wLjE3Ni0yLjA3My0wLjUyOC0yLjk1OAoJCQljLTAuMzUyLTAuODg1LTAuODQyLTEuNjU3LTEuNDctMi4zMThjLTAuNjI5LTAuNjYxLTEuMzY1LTEuMTYyLTIuMjA2LTEuNTAzYy0wLjg0Mi0wLjM0LTEuNzY0LTAuNTEyLTIuNzY2LTAuNTEyaC00LjU0djE0LjUxNgoJCQlIMzQ3LjU2NXoiLz4KCQk8cGF0aCBzdHlsZT0iZmlsbDojMDAxOTdEOyIgZD0iTTM3NS41MTEsMzY0LjE2N2g0LjkyNGw5LjU5MiwyMi4zODJoLTUuMTE1bC03LjA2Ny0xNy41ODVsLTcuMTMsMTcuNTg1aC00Ljk1NUwzNzUuNTExLDM2NC4xNjd6CgkJCSBNMzcxLjA5OSwzNzguMTRoMTMuMjM3djMuNzcyaC0xMy4yMzdWMzc4LjE0eiIvPgoJCTxwYXRoIHN0eWxlPSJmaWxsOiMwMDE5N0Q7IiBkPSJNMzkxLjA1LDM2NC4xNjdoNC43OTZ2MTguMzUzaDkuNTkydjQuMDI5SDM5MS4wNVYzNjQuMTY3eiIvPgoJCTxwYXRoIHN0eWxlPSJmaWxsOiMwMDE5N0Q7IiBkPSJNNDA0Ljc5OCwzNjQuMTY3aDE4LjU0NXYzLjkzM2gtNi45MDd2MTguNDQ5aC00Ljc2NFYzNjguMWgtNi44NzVWMzY0LjE2N3oiLz4KCQk8cGF0aCBzdHlsZT0iZmlsbDojMDAxOTdEOyIgZD0iTTQyOS41MTQsMzY0LjE2N2g0LjkyNWw5LjU5MiwyMi4zODJoLTUuMTE2bC03LjA2Ni0xNy41ODVsLTcuMTMsMTcuNTg1aC00Ljk1Nkw0MjkuNTE0LDM2NC4xNjd6CgkJCSBNNDI1LjEwMiwzNzguMTRoMTMuMjM3djMuNzcyaC0xMy4yMzdWMzc4LjE0eiIvPgoJCTxwYXRoIHN0eWxlPSJmaWxsOiMwMDE5N0Q7IiBkPSJNNDQ1LjA1MywzNjQuMTY3aDUuMzcybDcuMTMsMTQuMjI4bDcuMDY2LTE0LjIyOGg1LjM0MXYyMi4zODJoLTQuMzE4di0xNS43NjNsLTYuNTg3LDEzLjQ2MQoJCQloLTMuMDY5bC02LjYxOC0xMy40NjF2MTUuNzYzaC00LjMxN1YzNjQuMTY3eiIvPgoJCTxwYXRoIHN0eWxlPSJmaWxsOiMwMDE5N0Q7IiBkPSJNNDczLjYzOCwzNjQuMTY3aDQuNzk2djEwLjkzNWw5LjU2LTEwLjkzNWg1LjU5NWwtMTUuMTU1LDE2LjY5djUuNjkyaC00Ljc5NlYzNjQuMTY3egoJCQkgTTQ4NC42NjksMzcyLjk5Mmw5LjQ2NSwxMy41NTdoLTUuNzIzbC02LjkzOC05Ljc4NEw0ODQuNjY5LDM3Mi45OTJ6Ii8+CgkJPHBhdGggc3R5bGU9ImZpbGw6IzAwMTk3RDsiIGQ9Ik00OTUuNjA0LDM2NC4xNjdoNC43OTZ2MjIuMzgyaC00Ljc5NlYzNjQuMTY3eiIvPgoJCTxwYXRoIHN0eWxlPSJmaWxsOiMwMDE5N0Q7IiBkPSJNNTA0LjA0NSwzNjQuMTY3aDQuNDEybDEyLjM3NCwxNi43MjJsLTEuMjQ3LDAuNDE2di0xNy4xMzhoNC41NHYyMi4zODJoLTQuNDEybC0xMi4zMS0xNi42OQoJCQlsMS4yNDctMC40MTV2MTcuMTA2aC00LjYwNFYzNjQuMTY3eiIvPgoJPC9nPgoJPGc+CgkJPGc+CgkJCTxwYXRoIHN0eWxlPSJmaWxsOiMwMDE5N0Q7IiBkPSJNNDM1LjM4LDIxOC43MjZjLTIuNzMsMC4xMzQtNS40NTksMC4yNzYtOC4xODgsMC40MjdjLTIxLjEzNCwxLjE2Ni00Mi4yMzksMi44MzgtNjMuMjI5LDUuNjQ1CgkJCQljMS4yNTgtNS45MDUsMi41MTctMTEuODExLDMuNzc1LTE3LjcxNmMxOC4xMDQsMi4zODQsMzYuMjk3LDMuODUxLDU0LjUyLDQuODg4YzIuOTM0LDAuMTY2LDUuODcsMC4zMjMsOC44MDYsMC40NjkKCQkJCUw0MzUuMzgsMjE4LjcyNnoiLz4KCQk8L2c+CgkJPGc+CgkJCTxwYXRoIHN0eWxlPSJmaWxsOiMwMDE5N0Q7IiBkPSJNMzU3LjE4NCwyNTYuNjA4YzI5LjQ3Mi0xNC44NjYsNjEuMjgyLTIzLjA4OSw5My42OTktMjguNTIyCgkJCQljLTEuMjU4LTEuODE0LTIuNTE3LTMuNjI4LTMuNzc1LTUuNDQyYy0yOS4xMzEsMy4wMjgtNTguMTMsNy41MDItODYuMTQ4LDE2LjI0OAoJCQkJQzM1OS43MDEsMjQ0Ljc5OCwzNTguNDQyLDI1MC43MDMsMzU3LjE4NCwyNTYuNjA4eiIvPgoJCTwvZz4KCQk8Zz4KCQkJPHBhdGggc3R5bGU9ImZpbGw6IzAwMTk3RDsiIGQ9Ik00NDIuODc5LDI0MS45OThjLTMzLjM3MSwxMC4wNzEtNjQuNzI0LDI0LjcwMS05Mi40NzQsNDYuNDE5CgkJCQljMS4yNTgtNS45MDQsMi41MTctMTEuODA5LDMuNzc1LTE3LjcxNWMyNi4xMS0xNi42MjksNTQuNzM2LTI3LjM3OSw4NC41MTUtMzQuNzk4TDQ0Mi44NzksMjQxLjk5OHoiLz4KCQk8L2c+CgkJPGc+CgkJCQoJCQkJPHJlY3QgeD0iMzk5LjgiIHk9IjI3MC45MzMiIHRyYW5zZm9ybT0ibWF0cml4KDAuNzA3MSAwLjcwNzEgLTAuNzA3MSAwLjcwNzEgMzE4LjE3NjcgLTIwNy4yODE3KSIgc3R5bGU9ImZpbGw6IzAwMTk3RDsiIHdpZHRoPSIxOC45OTkiIGhlaWdodD0iMTguOTk5Ii8+CgkJPC9nPgoJPC9nPgo8L2c+Cjwvc3ZnPgo=";
+var _finDetailProjId = null;
+var _addEntryType = 'expense';
 
-  var b = document.getElementById('fin-body');
-  b.innerHTML = '';
-  PROJECTS.forEach(function(p) {
-    var s = sm(p.status);
-    var d = document.createElement('div');
-    d.className = 'ai';
-    d.style.cursor = 'pointer';
-    d.setAttribute('data-pid', p.id);
-    d.addEventListener('click', function() { doOpenProj(p.id); });
-    d.innerHTML =
-      '<div class="ai-dot" style="background:' + s.dot + '"></div>' +
-      '<span style="flex:1;font-weight:500">' + escHtml(p.name) + '</span>' +
-      '<span style="font-size:11px;color:#72728A;margin-left:10px">' + escHtml(p.client) + '</span>' +
-      '<span style="font-family:monospace;font-size:12px;font-weight:600;color:#00197D;min-width:90px;text-align:left">' + fmt(p.value) + ' ر.س</span>' +
-      '<span style="background:' + s.dot + ';color:#fff;padding:2px 8px;border-radius:8px;font-size:9.5px;margin-right:8px">' + s.label + '</span>';
-    b.appendChild(d);
+function computeProjectFinSummary(proj) {
+  var d = null;
+  try { d = JSON.parse(localStorage.getItem('buad_data_' + proj.id) || 'null'); } catch(e){}
+  if (!d || typeof d !== 'object') {
+    return {contractNet:proj.value||0,expenses:0,profit:proj.value||0,
+             remaining:proj.value||0,paid:0,fin:[],spendItems:[],surplusDed:[],
+             dashEntries:[],form:{},mkt:0,cb:0,vatPct:0};
+  }
+  var fm = d.form || {};
+  var grossIn = parseFloat(fm['c-gross']) || proj.value || 0;
+  var vatPct  = parseFloat(fm['c-vat'])   || 0;
+  var vatIncl = !!fm['vat-included'];
+  var g = vatIncl ? grossIn / (1 + vatPct / 100) : grossIn;
+
+  var finTotal = (d.fin || []).reduce(function(s,i){return s+(i.a||0);}, 0);
+  var mktV = parseFloat(fm['i-mkt-v']) || 0;
+  var mktT = fm['i-mkt-t'] || 'pct';
+  var mkt  = mktT === 'pct' ? g * mktV / 100 : mktV;
+  var cbV  = parseFloat(fm['i-cb-v']) || 0;
+  var cbT  = fm['i-cb-t'] || 'pct';
+  var cb   = cbT === 'pct' ? g * cbV / 100 : cbV;
+
+  var paid = (d.spend_items||[]).reduce(function(s,i){return s+(i.paid||0);}, 0);
+
+  var dashEntries = Array.isArray(d.dash_entries) ? d.dash_entries : [];
+  var dashExp = dashEntries.filter(function(e){return e.type==='expense';}).reduce(function(s,e){return s+(e.amount||0);},0);
+  var dashInc = dashEntries.filter(function(e){return e.type==='income';}).reduce(function(s,e){return s+(e.amount||0);},0);
+
+  var expenses  = finTotal + dashExp;
+  var profit    = Math.max(0, g - finTotal - mkt - cb + dashInc - dashExp);
+  var remaining = g - paid + dashInc - dashExp;
+
+  return {contractNet:g, vatPct:vatPct, expenses:expenses, mkt:mkt, cb:cb,
+           profit:profit, paid:paid, remaining:remaining,
+           fin:d.fin||[], spendItems:d.spend_items||[],
+           surplusDed:d.surplus_deductions||[], dashEntries:dashEntries, form:fm};
+}
+
+function renderFinance() {
+  var query   = ((document.getElementById('fin-search')||{}).value||'').toLowerCase();
+  var statusF = (document.getElementById('fin-status-filter')||{}).value || '';
+  var filtered = PROJECTS.filter(function(p){
+    var mQ = !query || (p.name||'').toLowerCase().includes(query) || (p.client||'').toLowerCase().includes(query);
+    var mS = !statusF || p.status === statusF;
+    return mQ && mS;
   });
+
+  var totC=0, totP=0, totE=0, totR=0;
+  filtered.forEach(function(p){
+    var s = computeProjectFinSummary(p);
+    totC += s.contractNet; totP += s.profit; totE += s.expenses; totR += s.remaining;
+  });
+  var _se = function(id,v){var el=document.getElementById(id);if(el)el.textContent=v;};
+  _se('f-total',     fmt(totC));
+  _se('f-profit',    fmt(totP));
+  _se('f-expenses',  fmt(totE));
+  _se('f-remaining', fmt(totR));
+
+  var tb = document.getElementById('fin-tbody');
+  if (!tb) return;
+  if (!filtered.length) {
+    tb.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--mu);font-size:12px">لا توجد مشاريع تطابق البحث</td></tr>';
+    return;
+  }
+  tb.innerHTML = '';
+  filtered.forEach(function(p){
+    var s  = computeProjectFinSummary(p);
+    var st = sm(p.status);
+    var paidPct = s.contractNet > 0 ? Math.min(100, Math.round((s.contractNet - s.remaining) / s.contractNet * 100)) : 0;
+    var remColor = s.remaining < 0 ? 'var(--R)' : 'var(--S)';
+    var tr = document.createElement('tr');
+    tr.innerHTML =
+      '<td style="font-weight:500;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+escHtml(p.name)+'">'+escHtml(p.name)+'</td>'+
+      '<td style="color:var(--mu);font-size:11.5px;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+escHtml(p.client||'')+'">'+escHtml(p.client||'—')+'</td>'+
+      '<td class="mn" style="text-align:left;direction:ltr">'+fmt(s.contractNet)+' <span style="color:var(--mu);font-size:10px">ر.س</span></td>'+
+      '<td class="mn et-exp" style="text-align:left;direction:ltr">'+fmt(s.expenses)+' ر.س</td>'+
+      '<td class="mn et-inc" style="text-align:left;direction:ltr">'+fmt(s.profit)+' ر.س</td>'+
+      '<td><div style="display:flex;align-items:center;gap:6px"><div class="fin-bar-wrap"><div class="fin-bar" style="width:'+paidPct+'%"></div></div><span class="mn" style="font-size:10.5px;color:'+remColor+'">'+fmt(s.remaining)+' ر.س</span></div></td>'+
+      '<td><span class="fp-badge" style="background:'+st.dot+';color:#fff">'+st.label+'</span></td>'+
+      '<td><button class="tb-btn-sm" onclick="openFinDetail(this.dataset.pid)" data-pid="'+escHtml(p.id)+'" style="padding:4px 10px">تفاصيل</button></td>';
+    tb.appendChild(tr);
+  });
+}
+
+function _catLabel(cat){
+  var m={exec:'تنفيذ',mkt:'تسويق',cashback:'كاش باك',vat:'ضريبة',other:'أخرى',purchase:'مشتريات',service:'خدمة','صرف فعلي':'صرف فعلي'};
+  return m[cat]||cat||'—';
+}
+
+function openFinDetail(projId){
+  _finDetailProjId = projId;
+  var proj = PROJECTS.find(function(p){return p.id===projId;});
+  if (!proj) return;
+  var s  = computeProjectFinSummary(proj);
+  var st = sm(proj.status);
+  var _se = function(id,v){var el=document.getElementById(id);if(el)el.textContent=v;};
+  _se('fdm-title',    proj.name);
+  _se('fdm-subtitle', (proj.client||'')+(proj.type?' | '+proj.type:''));
+  var badge = document.getElementById('fdm-status-badge');
+  if (badge){badge.textContent=st.label;badge.style.background=st.dot;badge.style.color='#fff';}
+
+  // Stats cards
+  var statsEl = document.getElementById('fdm-stats');
+  if (statsEl) statsEl.innerHTML = [
+    ['قيمة العقد صافي',    fmt(s.contractNet)+' ر.س', '#E6EAF8','#00197D'],
+    ['إجمالي المصاريف',    fmt(s.expenses)+' ر.س',    '#FDECEA','#8B1A0E'],
+    ['الربح المتوقع',      fmt(s.profit)+' ر.س',      '#EAF3EA','#2C5F2D'],
+    ['المتبقي',            fmt(s.remaining)+' ر.س',   '#FDF3E3','#B8841A']
+  ].map(function(c){
+    return '<div class="fdm-sc" style="background:'+c[2]+';border-color:'+c[3]+'55">'+
+      '<div class="fdm-sc-lbl" style="color:'+c[3]+'">'+c[0]+'</div>'+
+      '<div class="fdm-sc-val" style="color:'+c[3]+'">'+c[1]+'</div></div>';
+  }).join('');
+
+  // Footer note
+  var fn = document.getElementById('fdm-footer-note');
+  if (fn) fn.textContent = 'المشروع: '+proj.name+' | '+fmt(s.contractNet)+' ر.س | ضريبة '+s.vatPct+'%';
+
+  _renderFinDetailEntries(s);
+  var bg = document.getElementById('fin-detail-modal-bg');
+  if (bg) bg.classList.add('open');
+}
+
+function closeFinDetail(){
+  var bg = document.getElementById('fin-detail-modal-bg');
+  if (bg) bg.classList.remove('open');
+}
+
+function _renderFinDetailEntries(s){
+  var rows = [];
+  // Planned budget (fin[])
+  (s.fin||[]).forEach(function(f){
+    if((f.a||0)===0) return;
+    rows.push({date:'—', desc:f.c||'—', catLabel:_catLabel(f.cat||'exec'), type:'expense',
+                amount:f.a||0, party:f.o||'—', status:'مخطط', src:'plan', editable:false});
+  });
+  // Actual spend (spend_items[])
+  (s.spendItems||[]).forEach(function(sp){
+    if((sp.paid||0)===0) return;
+    rows.push({date:'—', desc:sp.cat||'—', catLabel:'صرف فعلي', type:'expense',
+                amount:sp.paid||0, party:sp.party||'—', status:'مدفوع', src:'spend', editable:false});
+  });
+  // Manual dash entries
+  (s.dashEntries||[]).forEach(function(e,i){
+    rows.push({date:e.date||'—', desc:e.desc||'—', catLabel:_catLabel(e.category), type:e.type||'expense',
+                amount:e.amount||0, party:e.party||'—', status:e.status||'—', src:'manual', editable:true, idx:i});
+  });
+
+  var tb = document.getElementById('fdm-entries-body');
+  if (!tb) return;
+  if (!rows.length) {
+    tb.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--mu)">لا توجد بنود — أضف مصروفاً أو دخلاً للبدء</td></tr>';
+    return;
+  }
+  tb.innerHTML = '';
+  var srcColors={plan:'var(--Nl)',spend:'#FDF3E3',manual:'var(--Sl)'};
+  var srcLabels={plan:'مخطط',spend:'فعلي',manual:'يدوي'};
+  rows.forEach(function(r){
+    var tr = document.createElement('tr');
+    var amtColor = r.type==='income' ? 'var(--S)' : 'var(--R)';
+    var amtSign  = r.type==='income' ? '+' : '−';
+    tr.innerHTML =
+      '<td style="font-size:10.5px;color:var(--mu);font-family:\'IBM Plex Mono\',monospace">'+escHtml(r.date)+'</td>'+
+      '<td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+escHtml(r.desc)+'">'+escHtml(r.desc)+'</td>'+
+      '<td><span class="fp-badge" style="background:var(--Nl);color:var(--N);font-size:9px">'+escHtml(r.catLabel)+'</span></td>'+
+      '<td><span class="entry-source-badge" style="background:'+(srcColors[r.src]||'#eee')+';color:var(--mu)">'+escHtml(srcLabels[r.src]||r.src)+'</span></td>'+
+      '<td class="mn" style="color:'+amtColor+';text-align:left;direction:ltr;font-weight:600">'+amtSign+fmt(r.amount)+' ر.س</td>'+
+      '<td style="font-size:11px;color:var(--mu)">'+escHtml(r.party)+'</td>'+
+      '<td><span style="font-size:9.5px;color:var(--mu);padding:2px 6px;background:var(--sand);border-radius:5px">'+escHtml(r.status)+'</span></td>'+
+      (r.editable
+        ? '<td><button class="del" onclick="deleteFinEntry('+r.idx+')" title="حذف">×</button></td>'
+        : '<td></td>');
+    tb.appendChild(tr);
+  });
+}
+
+function openAddEntry(type){
+  _addEntryType = type || 'expense';
+  var titleEl = document.getElementById('add-entry-title');
+  if (titleEl) titleEl.textContent = type==='income' ? '+ إضافة دخل' : '+ إضافة مصروف';
+  var dateEl = document.getElementById('ae-date');
+  if (dateEl) dateEl.value = new Date().toISOString().split('T')[0];
+  ['ae-desc','ae-amount','ae-party'].forEach(function(id){
+    var el=document.getElementById(id); if(el) el.value='';
+  });
+  var st = document.getElementById('ae-status'); if(st) st.value='pending';
+  var bg = document.getElementById('add-entry-modal-bg');
+  if (bg) bg.classList.add('open');
+}
+
+function closeAddEntry(){
+  var bg = document.getElementById('add-entry-modal-bg');
+  if (bg) bg.classList.remove('open');
+}
+
+function saveAddEntry(){
+  if (!_finDetailProjId) return;
+  var _v = function(id){var el=document.getElementById(id);return el?el.value||'':'';}
+  var entry = {
+    date:     _v('ae-date'),
+    desc:     _v('ae-desc'),
+    category: _v('ae-category'),
+    type:     _addEntryType,
+    amount:   parseFloat(_v('ae-amount')) || 0,
+    party:    _v('ae-party'),
+    status:   _v('ae-status')
+  };
+  var d = null;
+  try { d = JSON.parse(localStorage.getItem('buad_data_' + _finDetailProjId) || 'null'); } catch(e){}
+  if (!d || typeof d !== 'object') d = {};
+  if (!Array.isArray(d.dash_entries)) d.dash_entries = [];
+  d.dash_entries.push(entry);
+  localStorage.setItem('buad_data_' + _finDetailProjId, JSON.stringify(d));
+  closeAddEntry();
+  var proj = PROJECTS.find(function(p){return p.id===_finDetailProjId;});
+  if (proj) { var s = computeProjectFinSummary(proj); _renderFinDetailEntries(s); openFinDetail(_finDetailProjId); }
+  renderFinance();
+}
+
+function deleteFinEntry(idx){
+  if (!_finDetailProjId) return;
+  var d = null;
+  try { d = JSON.parse(localStorage.getItem('buad_data_' + _finDetailProjId) || 'null'); } catch(e){}
+  if (!d || !Array.isArray(d.dash_entries)) return;
+  d.dash_entries.splice(idx, 1);
+  localStorage.setItem('buad_data_' + _finDetailProjId, JSON.stringify(d));
+  var proj = PROJECTS.find(function(p){return p.id===_finDetailProjId;});
+  if (proj) { var s = computeProjectFinSummary(proj); _renderFinDetailEntries(s); openFinDetail(_finDetailProjId); }
+  renderFinance();
+}
+
+function _buildExcelTable(title, headers, rows){
+  var tr0 = '<tr>'+headers.map(function(h){return '<th style="background:#00197D;color:#fff;padding:7px 10px;font-weight:600;text-align:right">'+h+'</th>';}).join('')+'</tr>';
+  var trs = rows.map(function(r){
+    return '<tr>'+r.map(function(c){return '<td style="padding:6px 10px;border-bottom:1px solid #ddd;text-align:right">'+c+'</td>';}).join('')+'</tr>';
+  }).join('');
+  return '<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="UTF-8">'+
+    '<style>body{font-family:Arial,sans-serif;direction:rtl}h2{color:#00197D;margin:12px 0 8px}'+
+    'table{border-collapse:collapse;width:100%}th,td{white-space:nowrap}</style></head>'+
+    '<body><h2>'+title+'</h2><table>'+tr0+trs+'</table></body></html>';
+}
+
+function _dlHtmlAsXls(html, filename){
+  var blob = new Blob([html], {type:'application/vnd.ms-excel;charset=utf-8'});
+  var url  = URL.createObjectURL(blob);
+  var a    = document.createElement('a');
+  a.href   = url; a.download = filename;
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a);
+  setTimeout(function(){URL.revokeObjectURL(url);}, 2000);
+}
+
+function exportProjExcel(){
+  if (!_finDetailProjId) return;
+  var proj = PROJECTS.find(function(p){return p.id===_finDetailProjId;});
+  if (!proj) return;
+  var s = computeProjectFinSummary(proj);
+  var headers = ['التاريخ','البيان','التصنيف','النوع','المبلغ (ر.س)','الجهة','الحالة'];
+  var rows = [];
+  (s.fin||[]).forEach(function(f){if((f.a||0)>0) rows.push([' — ',f.c||'',_catLabel(f.cat||'exec'),'مصروف',f.a||0,f.o||'','مخطط']);});
+  (s.spendItems||[]).forEach(function(sp){if((sp.paid||0)>0) rows.push([' — ',sp.cat||'','صرف فعلي','مصروف',sp.paid||0,sp.party||'','مدفوع']);});
+  (s.dashEntries||[]).forEach(function(e){rows.push([e.date||'',e.desc||'',_catLabel(e.category),e.type==='income'?'دخل':'مصروف',e.amount||0,e.party||'',e.status||'']);});
+  rows.push(['','','','','','','']);
+  rows.push(['','إجمالي العقد','','',fmt(s.contractNet),'','']);
+  rows.push(['','إجمالي المصاريف','','',fmt(s.expenses),'','']);
+  rows.push(['','الربح المتوقع','','',fmt(s.profit),'','']);
+  rows.push(['','المتبقي','','',fmt(s.remaining),'','']);
+  var html = _buildExcelTable('التقرير المالي — '+proj.name, headers, rows);
+  _dlHtmlAsXls(html, 'مالية-'+(proj.name||'مشروع').replace(/[\/\\]/g,'-')+'.xls');
+}
+
+function exportAllFinExcel(){
+  var headers = ['المشروع','الجهة','قيمة العقد','المصاريف','الربح','المتبقي','الحالة'];
+  var rows = PROJECTS.map(function(p){
+    var s  = computeProjectFinSummary(p);
+    var st = sm(p.status);
+    return [p.name||'',p.client||'',fmt(s.contractNet)+' ر.س',fmt(s.expenses)+' ر.س',
+            fmt(s.profit)+' ر.س',fmt(s.remaining)+' ر.س',st.label];
+  });
+  var html = _buildExcelTable('ملخص مالي — كل المشاريع', headers, rows);
+  _dlHtmlAsXls(html, 'ملخص-مالي-المشاريع.xls');
+}
+
+function exportProjAgreementPDF(){
+  if (!_finDetailProjId) return;
+  var proj = PROJECTS.find(function(p){return p.id===_finDetailProjId;});
+  if (!proj) return;
+  var s = computeProjectFinSummary(proj);
+  var logoHtml = _BUAD_LOGO_SRC ? '<img src="'+_BUAD_LOGO_SRC+'" style="height:52px;width:auto;object-fit:contain">' : '<div style="font-size:16px;font-weight:700;color:#00197D">بُعد التمكين</div>';
+  var vat = s.contractNet * s.vatPct / 100;
+  var finRows = (s.fin||[]).filter(function(f){return (f.a||0)>0;}).map(function(f){
+    return '<tr><td>'+escHtml(f.c||'')+'</td><td style="text-align:center;font-size:11px;color:#666">'+escHtml(f.u||'')+'</td>'+
+      '<td style="text-align:center">'+f.q+'</td><td class="mn" style="text-align:left">'+fmt(f.p||0)+'</td>'+
+      '<td class="mn" style="text-align:left;font-weight:600">'+fmt(f.a||0)+' ر.س</td>'+
+      '<td style="font-size:11px;color:#666">'+escHtml(f.o||'')+'</td></tr>';
+  }).join('');
+  var dashRows = (s.dashEntries||[]).map(function(e){
+    return '<tr style="background:'+(e.type==='income'?'#F0F7F0':'#FFF5F5')+'">'+
+      '<td>'+escHtml(e.desc||'')+'</td><td style="font-size:11px;color:#666">'+(e.date||'—')+'</td>'+
+      '<td colspan="2" style="text-align:center"><span style="padding:1px 8px;border-radius:6px;font-size:10px;background:'+(e.type==='income'?'#EAF3EA':'#FDECEA')+';color:'+(e.type==='income'?'#2C5F2D':'#8B1A0E')+'">'+_catLabel(e.category)+'</span></td>'+
+      '<td class="mn" style="font-weight:600;color:'+(e.type==='income'?'#2C5F2D':'#8B1A0E')+';text-align:left">'+(e.type==='income'?'+':'-')+fmt(e.amount||0)+' ر.س</td>'+
+      '<td style="font-size:11px;color:#666">'+escHtml(e.party||'')+'</td></tr>';
+  }).join('');
+  var html = '<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="UTF-8">'+
+    '<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">'+
+    '<style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:"IBM Plex Sans Arabic",sans-serif;direction:rtl;background:#F7F4EF;color:#1A1A2E;padding:24px;-webkit-print-color-adjust:exact;print-color-adjust:exact}'+
+    '.wrap{max-width:780px;margin:0 auto;background:#fff;border-radius:12px;padding:28px;box-shadow:0 4px 20px rgba(0,0,0,.1)}'+
+    '.mn{font-family:"IBM Plex Mono",monospace}.header{display:flex;align-items:center;gap:16px;margin-bottom:22px;padding-bottom:18px;border-bottom:2px solid #00197D}'+
+    '.header-info h1{font-size:17px;font-weight:600;color:#00197D;margin-bottom:3px}.header-info p{font-size:11px;color:#72728A}'+
+    '.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px}'+
+    '.stat{border-radius:9px;padding:11px 13px;border:1px solid transparent}'+
+    '.stat .sl{font-size:9.5px;font-weight:600;margin-bottom:3px;opacity:.8}.stat .sv{font-size:16px;font-weight:600}'+
+    '.section-title{font-size:13px;font-weight:600;color:#00197D;margin:16px 0 8px;border-bottom:1px solid #E0DAD0;padding-bottom:5px}'+
+    '.bt{width:100%;border-collapse:collapse;font-size:11.5px}.bt th{padding:6px 9px;background:#00197D;color:#fff;text-align:right;font-weight:600}.bt td{padding:6px 9px;border-bottom:1px solid #E0DAD0}'+
+    '.notice{background:#FDF3E3;border:.5px solid #E8D5A8;border-radius:8px;padding:9px 13px;font-size:11px;color:#7A4F00;margin-bottom:18px}'+
+    '.footer{text-align:center;font-size:10px;color:#A8A8C0;margin-top:18px;padding-top:12px;border-top:1px solid #E0DAD0}'+
+    '@page{size:A4;margin:14mm 12mm}@media print{body{background:#fff;padding:0}.wrap{box-shadow:none;border-radius:0;padding:14px}'+
+    '.stats{break-inside:avoid;page-break-inside:avoid}.bt{break-inside:avoid}.notice{break-inside:avoid}.section-title{break-inside:avoid}}</style></head>'+
+    '<body><div class="wrap">'+
+    '<div class="header">'+logoHtml+'<div class="header-info"><h1>الاتفاق المالي الداخلي</h1>'+
+    '<p>'+escHtml(proj.name)+'</p><p>'+escHtml(proj.client||'')+(s.vatPct?' | ضريبة '+s.vatPct+'%':'')+'</p></div></div>'+
+    '<div class="notice">⚠ وثيقة سرية للاستخدام الداخلي فقط — لا يُشارك محتواها مع الطرف الثاني.</div>'+
+    '<div class="stats">'+
+    ['قيمة العقد صافي','#E6EAF8','#00197D',fmt(s.contractNet)+' ر.س',
+     'إجمالي المصاريف','#FDECEA','#8B1A0E',fmt(s.expenses)+' ر.س',
+     'الربح المتوقع','#EAF3EA','#2C5F2D',fmt(s.profit)+' ر.س',
+     'المتبقي','#FDF3E3','#B8841A',fmt(s.remaining)+' ر.س'].reduce(function(acc,_,i,arr){
+       if(i%4===0) acc+=('<div class="stat" style="background:'+arr[i+1]+';border-color:'+arr[i+2]+'55">'+
+         '<div class="sl" style="color:'+arr[i+2]+'">'+arr[i]+'</div>'+
+         '<div class="sv mn" style="color:'+arr[i+2]+'">'+arr[i+3]+'</div></div>');
+       return acc;
+     },'')+
+    '</div>'+
+    (finRows ? '<div class="section-title">الميزانية التنفيذية المخططة</div><table class="bt"><thead><tr><th>البند</th><th>الوحدة</th><th>الكمية</th><th style="text-align:left">السعر</th><th style="text-align:left">الإجمالي</th><th>المسؤول</th></tr></thead><tbody>'+finRows+'</tbody></table>' : '')+
+    (dashRows ? '<div class="section-title">البنود المالية المُسجَّلة</div><table class="bt"><thead><tr><th>البيان</th><th>التاريخ</th><th colspan="2">التصنيف</th><th style="text-align:left">المبلغ</th><th>الجهة</th></tr></thead><tbody>'+dashRows+'</tbody></table>' : '')+
+    '<div class="footer">وثيقة سرية — بُعد التمكين للخدمات التنفيذية | '+new Date().toLocaleDateString("ar-SA")+'</div>'+
+    '</div></body></html>';
+
+  var w = window.open('','_blank','width=900,height=700');
+  if (w) { w.document.open(); w.document.write(html); w.document.close(); setTimeout(function(){w.print();},500); }
 }
 
 function renderClients() {
@@ -1483,5 +1871,105 @@ document.addEventListener('DOMContentLoaded', function() {
     </div>
   </div>
 </div>
+
+  <!-- ════ Finance Detail Modal ════ -->
+  <div class="modal-bg" id="fin-detail-modal-bg" onclick="if(event.target===this)closeFinDetail()" style="z-index:2100">
+    <div class="modal" id="fin-detail-modal">
+      <div class="fdm-header">
+        <div style="flex:1;min-width:0">
+          <div style="font-size:17px;font-weight:600;color:var(--tx);white-space:nowrap;overflow:hidden;text-overflow:ellipsis" id="fdm-title">—</div>
+          <div style="font-size:11.5px;color:var(--mu);margin-top:3px" id="fdm-subtitle">—</div>
+        </div>
+        <span id="fdm-status-badge" class="fp-badge" style="flex-shrink:0;align-self:center"></span>
+        <button onclick="doOpenProj(_finDetailProjId)" title="فتح المشروع كاملاً" style="margin-right:6px;margin-left:6px;padding:5px 12px;border:.5px solid var(--bd);border-radius:7px;background:var(--w);font-size:11.5px;cursor:pointer;flex-shrink:0;font-family:inherit">↗ فتح المشروع</button>
+        <button onclick="closeFinDetail()" style="font-size:20px;background:none;border:none;cursor:pointer;color:var(--mu);padding:0 4px;flex-shrink:0">×</button>
+      </div>
+      <div class="fdm-body">
+        <div class="fdm-stats" id="fdm-stats"></div>
+        <div class="fdm-toolbar">
+          <button class="tb-btn-sm prim" onclick="openAddEntry('expense')">+ مصروف</button>
+          <button class="tb-btn-sm suc" onclick="openAddEntry('income')">+ دخل</button>
+          <div style="flex:1"></div>
+          <button class="tb-btn-sm" onclick="exportProjExcel()" title="تصدير Excel">⬇ Excel</button>
+          <button class="tb-btn-sm prim" onclick="exportProjAgreementPDF()" title="تصدير الاتفاق المالي PDF">🖨 الاتفاق PDF</button>
+        </div>
+        <div style="background:var(--w);border:.5px solid var(--bd);border-radius:10px;overflow:hidden">
+          <table class="entry-table">
+            <thead>
+              <tr>
+                <th style="width:90px">التاريخ</th>
+                <th>البيان</th>
+                <th style="width:80px">التصنيف</th>
+                <th style="width:70px">النوع</th>
+                <th style="width:100px">المبلغ (ر.س)</th>
+                <th style="width:110px">الجهة</th>
+                <th style="width:72px">الحالة</th>
+                <th style="width:28px"></th>
+              </tr>
+            </thead>
+            <tbody id="fdm-entries-body">
+              <tr><td colspan="8" style="text-align:center;padding:22px;color:var(--mu)">لا توجد بنود</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="fdm-footer">
+        <span id="fdm-footer-note" style="font-size:11px;color:var(--mu)"></span>
+        <button onclick="closeFinDetail()" class="tb-btn-sm">إغلاق</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════ Add Entry Modal ════ -->
+  <div class="modal-bg" id="add-entry-modal-bg" onclick="if(event.target===this)closeAddEntry()" style="z-index:2200">
+    <div class="modal" style="width:min(440px,96vw)">
+      <div class="mh">
+        <div id="add-entry-title" style="font-weight:600;font-size:14px">إضافة بند</div>
+        <button onclick="closeAddEntry()" class="x-btn">×</button>
+      </div>
+      <div class="mb" style="padding:18px 22px">
+        <div class="mf-row">
+          <label class="mf-lbl">التاريخ</label>
+          <input type="date" class="mf-inp" id="ae-date">
+        </div>
+        <div class="mf-row">
+          <label class="mf-lbl">البيان</label>
+          <input type="text" class="mf-inp" id="ae-desc" placeholder="وصف المبلغ">
+        </div>
+        <div class="mf-row">
+          <label class="mf-lbl">التصنيف</label>
+          <select class="mf-inp" id="ae-category">
+            <option value="exec">تنفيذ</option>
+            <option value="mkt">تسويق</option>
+            <option value="cashback">كاش باك</option>
+            <option value="vat">ضريبة</option>
+            <option value="purchase">مشتريات</option>
+            <option value="service">خدمة</option>
+            <option value="other">أخرى</option>
+          </select>
+        </div>
+        <div class="mf-row">
+          <label class="mf-lbl">المبلغ (ر.س)</label>
+          <input type="number" class="mf-inp" id="ae-amount" min="0" step="any" placeholder="0.00">
+        </div>
+        <div class="mf-row">
+          <label class="mf-lbl">الجهة المستفيدة</label>
+          <input type="text" class="mf-inp" id="ae-party" placeholder="اسم الشركة أو الشخص">
+        </div>
+        <div class="mf-row">
+          <label class="mf-lbl">الحالة</label>
+          <select class="mf-inp" id="ae-status">
+            <option value="pending">معلّق</option>
+            <option value="approved">معتمد</option>
+            <option value="paid">مدفوع</option>
+          </select>
+        </div>
+      </div>
+      <div class="mfoot">
+        <button class="mf-cancel" onclick="closeAddEntry()">إلغاء</button>
+        <button class="mf-save" onclick="saveAddEntry()">حفظ البند</button>
+      </div>
+    </div>
+  </div>
 </body>
 </html>
