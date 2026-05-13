@@ -407,6 +407,24 @@ body{font-family:"IBM Plex Sans Arabic",sans-serif;direction:rtl;background:var(
   .content{padding:8px}
   .fpj-agr-grid{grid-template-columns:1fr 1fr}
 }
+/* ── FinProject mobile ── */
+#page-finproject .sec-head{row-gap:6px}
+.fpj-top-actions{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+@media(max-width:768px){
+  #fpj-stats-row{grid-template-columns:repeat(3,1fr)!important;gap:7px!important}
+  .sc{padding:9px 10px!important;gap:8px!important}
+  .sc-ico{width:30px!important;height:30px!important;font-size:13px!important;flex-shrink:0}
+  .sc-num{font-size:13px!important}
+  .sc-lbl{font-size:9px!important}
+  #page-finproject .tb-btn > span:not(:first-child){display:none}
+  #page-finproject .tb-btn{padding:6px 8px!important;min-width:36px;justify-content:center}
+  #page-finproject .tb-btn.sec > span:not(:first-child){display:inline}
+  .agr-popup-inner{max-height:88vh!important}
+  .entry-table th,.entry-table td{padding:6px 7px!important;font-size:10.5px!important}
+}
+@media(max-width:480px){
+  #fpj-stats-row{grid-template-columns:1fr 1fr!important}
+}
 </style>
 </head>
 <body>
@@ -585,22 +603,24 @@ body{font-family:"IBM Plex Sans Arabic",sans-serif;direction:rtl;background:var(
             <div style="font-size:11px;color:var(--mu);margin-top:2px" id="fpj-sub">—</div>
           </div>
           <span id="fpj-badge" class="fp-badge" style="align-self:center"></span>
-          <div style="position:relative" id="fpj-rpt-wrap">
-            <button class="tb-btn" onclick="toggleFpjReportsMenu()" style="display:flex;align-items:center;gap:5px">
-              <span style="font-size:13px">📊</span><span>التقارير</span><span style="font-size:9px;opacity:.55">▾</span>
-            </button>
-            <div id="fpj-rpt-menu" style="display:none;position:fixed;background:var(--w);border:.5px solid var(--bd);border-radius:10px;box-shadow:0 6px 24px rgba(0,0,0,.16);min-width:196px;z-index:9999;overflow:hidden">
-              <button class="fpj-mi" onclick="exportFinProjExcel();closeFpjReportsMenu()">📊 كشف الحساب Excel</button>
-              <button class="fpj-mi" onclick="exportFinProjPDF();closeFpjReportsMenu()">🖨 تقرير الاتفاق PDF</button>
-              <button class="fpj-mi" onclick="exportFinProjFullPDF();closeFpjReportsMenu()">📄 التقرير الكامل PDF</button>
+          <div class="fpj-top-actions">
+            <div style="position:relative" id="fpj-rpt-wrap">
+              <button class="tb-btn" onclick="toggleFpjReportsMenu()" style="display:flex;align-items:center;gap:5px">
+                <span style="font-size:13px">📊</span><span>التقارير</span><span style="font-size:9px;opacity:.55">▾</span>
+              </button>
+              <div id="fpj-rpt-menu" style="display:none;position:fixed;background:var(--w);border:.5px solid var(--bd);border-radius:10px;box-shadow:0 6px 24px rgba(0,0,0,.16);min-width:196px;z-index:9999;overflow:hidden">
+                <button class="fpj-mi" onclick="exportFinProjExcel();closeFpjReportsMenu()">📊 كشف الحساب Excel</button>
+                <button class="fpj-mi" onclick="exportFinProjPDF();closeFpjReportsMenu()">🖨 تقرير الاتفاق PDF</button>
+                <button class="fpj-mi" onclick="exportFinProjFullPDF();closeFpjReportsMenu()">📄 التقرير الكامل PDF</button>
+              </div>
             </div>
+            <button class="tb-btn" onclick="exportFinProjAgreementPDF()" style="display:flex;align-items:center;gap:5px">
+              <span style="font-size:13px">📋</span><span>العقد</span>
+            </button>
+            <button class="tb-btn sec" onclick="openFollowupSheet()" style="display:flex;align-items:center;gap:5px">
+              <span style="font-size:13px">✓</span><span>متابعة التنفيذ</span>
+            </button>
           </div>
-          <button class="tb-btn" onclick="exportFinProjAgreementPDF()" style="display:flex;align-items:center;gap:5px">
-            <span style="font-size:13px">📋</span><span>العقد</span>
-          </button>
-          <button class="tb-btn sec" onclick="openFollowupSheet()" style="display:flex;align-items:center;gap:5px">
-            <span style="font-size:13px">✓</span><span>متابعة التنفيذ</span>
-          </button>
         </div>
         <div class="stats-row" id="fpj-stats-row" style="margin-bottom:16px"></div>
         <!-- hidden data containers used by JS -->
@@ -641,8 +661,8 @@ body{font-family:"IBM Plex Sans Arabic",sans-serif;direction:rtl;background:var(
                   <input type="number" id="fpj-exec-v" placeholder="100" min="0" step="any" style="flex:1;font-family:inherit;border:.5px solid var(--bd);border-radius:8px;padding:7px 10px;font-size:12px;background:var(--w);color:var(--tx)">
                 </div>
                 <div class="base-seg" id="fpj-exec-base-seg">
-                  <button id="fpj-exec-base-gross" onclick="setBase('exec','gross')">من الإجمالي</button>
-                  <button id="fpj-exec-base-net"   onclick="setBase('exec','net')" class="act">من الصافي</button>
+                  <button id="fpj-exec-base-gross" onclick="setBase('exec','gross')" class="act">من الإجمالي</button>
+                  <button id="fpj-exec-base-net"   onclick="setBase('exec','net')">من الصافي</button>
                 </div>
               </div>
               <div class="fpj-form-field">
@@ -1287,6 +1307,7 @@ var _BUAD_LOGO_SRC = "data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNv
 var _finDetailProjId = null;
 var _addEntryType = 'expense';
 var _editEntryIdx = -1;
+var _fpjBases = {mkt:'gross', cb:'gross', exec:'gross'};
 
 function computeProjectFinSummary(proj) {
   var d = null;
@@ -1321,7 +1342,7 @@ function computeProjectFinSummary(proj) {
   var execT    = fm['i-exec-t']  || 'pct';
   var execRaw  = fm['i-exec-v'] !== undefined ? fm['i-exec-v'] : (fm['i-exec-pct'] || '100');
   var execV    = parseFloat(execRaw) || 100;
-  var execBase = fm['i-exec-base'] || 'net';
+  var execBase = fm['i-exec-base'] || 'gross';
   var execBV   = execBase === 'gross' ? grossTotal : g;
   var execAmt  = execT === 'pct' ? execBV * execV / 100 : execV;
   var execPct  = execT === 'pct' ? execV : (execBV > 0 ? execV / execBV * 100 : 100);
@@ -2082,7 +2103,6 @@ function renderFinProject() {
   badge.textContent = st.label; badge.style.background = st.dot; badge.style.color = '#fff';
 
   var statsRow = document.getElementById('fpj-stats-row');
-  statsRow.style.gridTemplateColumns = 'repeat(3,1fr)';
   var profitSub = s.profit > 0 ? '<div style="font-size:9.5px;color:var(--S);margin-top:2px">↑ ربح: '+fmt(s.profit)+' ر.س</div>' : '';
   statsRow.innerHTML = [
     {lbl:'قيمة العقد الإجمالية', val:fmt(s.grossTotal)+' ر.س', cls:'ic-n', col:'#00197D', sub:''},
@@ -2204,7 +2224,7 @@ function _populateFinAgreementForm() {
   _sv('fpj-cv-client', f['cv-client-name'] || '');
   _sv('fpj-exec-t',    f['i-exec-t']  || 'pct');
   _sv('fpj-exec-v',    f['i-exec-v'] !== undefined ? f['i-exec-v'] : (f['i-exec-pct'] || '100'));
-  setBase('exec', f['i-exec-base'] || 'net');
+  setBase('exec', f['i-exec-base'] || 'gross');
   updateBaseSegVisibility('exec');
   _sv('fpj-mkt-t',     f['i-mkt-t']        || 'pct');
   _sv('fpj-mkt-v',     f['i-mkt-v']        || '');
@@ -2671,7 +2691,7 @@ document.addEventListener('DOMContentLoaded', function() {
   window.saveNewFinProject = saveNewFinProject;
 
   // ── Base Selector helpers ─────────────────────────────────────
-  var _fpjBases = {mkt:'gross', cb:'gross', exec:'net'};
+  _fpjBases = {mkt:'gross', cb:'gross', exec:'gross'};
 
   window.setBase = function(field, val) {
     _fpjBases[field] = val;
@@ -3206,7 +3226,7 @@ document.addEventListener('DOMContentLoaded', function() {
   </div>
   <!-- ── Agreement View Popup ─────────────────────────────── -->
   <div id="agr-popup-bg" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.42);z-index:600;align-items:flex-end;justify-content:center" onclick="if(event.target===this)closeAgrPopup()">
-    <div id="agr-popup" style="background:var(--w);border-radius:16px 16px 0 0;width:100%;max-width:780px;max-height:82vh;display:flex;flex-direction:column;transform:translateY(105%);transition:transform .32s cubic-bezier(.4,0,.2,1);box-shadow:0 -8px 32px rgba(0,0,0,.18)">
+    <div id="agr-popup" class="agr-popup-inner" style="background:var(--w);border-radius:16px 16px 0 0;width:100%;max-width:780px;max-height:88vh;display:flex;flex-direction:column;transform:translateY(105%);transition:transform .32s cubic-bezier(.4,0,.2,1);box-shadow:0 -8px 32px rgba(0,0,0,.18)">
       <div style="padding:10px 14px;border-bottom:.5px solid var(--bd);display:flex;align-items:center;gap:8px;flex-shrink:0">
         <div style="width:36px;height:4px;background:var(--bd);border-radius:2px;flex-shrink:0"></div>
         <div style="display:flex;border:.5px solid var(--bd);border-radius:8px;overflow:hidden;flex:1">
