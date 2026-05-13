@@ -425,6 +425,40 @@ body{font-family:"IBM Plex Sans Arabic",sans-serif;direction:rtl;background:var(
 @media(max-width:480px){
   #fpj-stats-row{grid-template-columns:1fr 1fr!important}
 }
+/* ── Entry Table enhancements ── */
+.et-row-exp>td:first-child{box-shadow:inset 3px 0 0 var(--R)}
+.et-row-inc>td:first-child{box-shadow:inset 3px 0 0 var(--S)}
+.et-sts{display:inline-flex;align-items:center;padding:2px 8px;border-radius:10px;font-size:9.5px;font-weight:600;white-space:nowrap}
+.et-sts-pending{background:var(--Gl);color:var(--G)}
+.et-sts-approved{background:var(--Nl);color:var(--N)}
+.et-sts-paid{background:var(--Sl);color:var(--S)}
+.et-amt-exp{color:var(--R);font-family:"IBM Plex Mono",monospace;font-weight:600}
+.et-amt-inc{color:var(--S);font-family:"IBM Plex Mono",monospace;font-weight:600}
+.et-edit-btn,.et-del-btn{background:none;border:none;cursor:pointer;padding:3px 5px;border-radius:5px;line-height:1;transition:.15s}
+.et-edit-btn:hover{background:var(--Nl)}
+.et-del-btn:hover{background:var(--Rl)}
+/* ── FinProject action bar ── */
+.fpj-action-bar{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px}
+.fpj-ab-btn{font-family:inherit;display:inline-flex;align-items:center;gap:5px;padding:7px 13px;border-radius:8px;border:1px solid var(--bd);font-size:12px;font-weight:500;cursor:pointer;background:var(--w);color:var(--tx);transition:.15s;white-space:nowrap}
+.fpj-ab-btn:hover{background:var(--sand2)}
+.fpj-ab-btn.sec{background:var(--Sl);color:var(--S);border-color:#B0D4B0}
+.fpj-ab-btn.sec:hover{background:#D4EBD4}
+/* ── Add Entry Modal redesign ── */
+.ae-modal{width:min(460px,96vw)!important;max-height:92vh;display:flex!important;flex-direction:column;border-radius:14px!important}
+.ae-type-seg{display:inline-flex;border-radius:9px;overflow:hidden;border:.5px solid var(--bd);background:var(--w)}
+.ae-tog{font-family:inherit;padding:7px 20px;font-size:12px;font-weight:500;cursor:pointer;border:none;background:transparent;color:var(--mu);transition:.15s}
+.ae-tog.exp.act{background:var(--R);color:#fff}
+.ae-tog.inc.act{background:var(--S);color:#fff}
+.ae-body{padding:14px 18px;display:flex;flex-direction:column;gap:10px;overflow-y:auto;flex:1}
+.ae-row-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ae-field{display:flex;flex-direction:column;gap:3px}
+.ae-field>label{font-size:10px;font-weight:600;color:var(--mu)}
+.ae-field input,.ae-field select{font-family:inherit;direction:rtl;border:.5px solid var(--bd);border-radius:8px;padding:7px 10px;font-size:12px;background:var(--w);color:var(--tx);transition:.15s;width:100%}
+.ae-field input:focus,.ae-field select:focus{border-color:var(--N);outline:none}
+.ae-inv-wrap{background:var(--sand);border-radius:9px;padding:10px 12px;border:.5px solid var(--bd)}
+.ae-inv-lbl{display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer;font-weight:500;color:var(--tx)}
+.ae-chk-lbl{display:flex;align-items:center;gap:7px;font-size:11.5px;cursor:pointer;padding-top:6px;color:var(--mu)}
+@media(max-width:400px){.ae-row-2{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -710,8 +744,7 @@ body{font-family:"IBM Plex Sans Arabic",sans-serif;direction:rtl;background:var(
           <div class="fpj-sh">
             سجل المعاملات
             <div style="display:flex;gap:6px;margin-right:auto">
-              <button class="tb-btn-sm prim" onclick="openAddEntry('expense')">+ مصروف</button>
-              <button class="tb-btn-sm suc" onclick="openAddEntry('income')">+ دخل</button>
+              <button class="tb-btn-sm prim" onclick="openAddEntry('expense')">+ إضافة بند</button>
             </div>
           </div>
           <div class="entry-table-scroll">
@@ -2302,27 +2335,30 @@ function _renderFinProjEntries(s) {
     tb.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:22px;color:var(--mu)">لا توجد معاملات — أضف مصروفاً أو دخلاً</td></tr>';
     return;
   }
+  var _stMap = {pending:'معلّق', approved:'معتمد', paid:'مدفوع'};
+  var _stCls = {pending:'et-sts-pending', approved:'et-sts-approved', paid:'et-sts-paid'};
   tb.innerHTML = '';
   rows.forEach(function(r){
     var isInc = r.typeKey === 'income';
     var typeBadge = isInc
-      ? '<span style="font-size:10px;font-weight:600;color:var(--S)">دخل</span>'
-      : '<span style="font-size:10px;font-weight:600;color:var(--R)">مصروف'+(r.etype&&r.etype!=='exec'?' ('+(_etypeLbl[r.etype]||r.etype)+')':'')+'</span>';
+      ? '<span style="font-size:10px;font-weight:600;color:var(--S)">↑ دخل</span>'
+      : '<span style="font-size:10px;font-weight:600;color:var(--R)">↓ مصروف'+(r.etype&&r.etype!=='exec'?' ('+(_etypeLbl[r.etype]||r.etype)+')':'')+'</span>';
     var profitCell = (r.profitMargin > 0)
-      ? '<div style="font-size:10px;color:var(--S);margin-top:2px">↑ ربح: '+fmt(r.profitMargin)+' ر.س</div>' : '';
+      ? '<div style="font-size:9.5px;color:var(--S);margin-top:2px">↑ ربح: '+fmt(r.profitMargin)+' ر.س</div>' : '';
     var invBadge = (r.invoice && r.invoice.no)
       ? '<span class="inv-badge">🧾 '+escHtml(r.invoice.no)+(r.invoice.vat?' <span title="ضريبية قابلة للاسترداد" style="color:var(--S)">✓ض</span>':'')+'</span>'
       : '';
     var tr = document.createElement('tr');
+    tr.className = isInc ? 'et-row-inc' : 'et-row-exp';
     tr.innerHTML =
-      '<td style="font-size:11px;color:var(--mu)">'+r.date+'</td>'+
-      '<td>'+escHtml(r.desc)+profitCell+(invBadge?'<div style="margin-top:3px">'+invBadge+'</div>':'')+'</td>'+
-      '<td><span class="fp-badge" style="background:var(--Nl);color:var(--N);font-size:9.5px">'+r.cat+'</span></td>'+
+      '<td style="font-size:10.5px;color:var(--mu);white-space:nowrap">'+r.date+'</td>'+
+      '<td><div style="font-size:12px">'+escHtml(r.desc)+'</div>'+profitCell+(invBadge?'<div style="margin-top:3px">'+invBadge+'</div>':'')+'</td>'+
+      '<td><span class="fp-badge" style="background:var(--Nl);color:var(--N);font-size:9px">'+r.cat+'</span></td>'+
       '<td>'+typeBadge+'</td>'+
-      '<td class="mn '+(isInc?'et-inc':'et-exp')+'" style="text-align:left;direction:ltr">'+fmt(r.amount)+'</td>'+
-      '<td style="font-size:11px;color:var(--mu)">'+escHtml(r.party)+'</td>'+
-      '<td><span style="font-size:10px;color:var(--mu)">'+r.status+'</span></td>'+
-      (r.editable?'<td style="white-space:nowrap"><button style="background:none;border:none;cursor:pointer;color:var(--N);font-size:12px;padding:0 4px;line-height:1" onclick="editFinProjEntry('+r.idx+')" title="تعديل">✎</button><button style="background:none;border:none;cursor:pointer;color:var(--R);font-size:15px;padding:0 3px;line-height:1" onclick="deleteFinProjEntry('+r.idx+')" title="حذف">&#215;</button></td>':'<td></td>');
+      '<td style="text-align:left;direction:ltr"><span class="'+(isInc?'et-amt-inc':'et-amt-exp')+'">'+(isInc?'+ ':'− ')+fmt(r.amount)+'</span></td>'+
+      '<td style="font-size:10.5px;color:var(--mu)">'+escHtml(r.party)+'</td>'+
+      '<td><span class="et-sts '+(_stCls[r.status]||'et-sts-pending')+'">'+(_stMap[r.status]||r.status||'—')+'</span></td>'+
+      (r.editable?'<td style="text-align:center;white-space:nowrap"><button class="et-edit-btn" onclick="editFinProjEntry('+r.idx+')" title="تعديل" style="color:var(--N);font-size:13px">✎</button><button class="et-del-btn" onclick="deleteFinProjEntry('+r.idx+')" title="حذف" style="color:var(--R);font-size:14px">×</button></td>':'<td></td>');
     tb.appendChild(tr);
   });
 }
