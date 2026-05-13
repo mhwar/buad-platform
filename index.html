@@ -630,33 +630,31 @@ body{font-family:"IBM Plex Sans Arabic",sans-serif;direction:rtl;background:var(
         <div id="prod-grid" class="prod-pg-grid"></div>
       </div>
       <div class="page" id="page-finproject">
-        <div class="sec-head" style="align-items:center;flex-wrap:wrap;gap:8px">
+        <div class="sec-head" style="align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:14px">
           <button class="tb-btn" onclick="doGoPage('finance')" style="font-size:12px;padding:5px 12px">← العودة للمالية</button>
           <div style="flex:1;min-width:120px">
             <h2 id="fpj-name" style="font-size:15px;font-weight:600">—</h2>
             <div style="font-size:11px;color:var(--mu);margin-top:2px" id="fpj-sub">—</div>
           </div>
           <span id="fpj-badge" class="fp-badge" style="align-self:center"></span>
-          <div class="fpj-top-actions">
-            <div style="position:relative" id="fpj-rpt-wrap">
-              <button class="tb-btn" onclick="toggleFpjReportsMenu()" style="display:flex;align-items:center;gap:5px">
-                <span style="font-size:13px">📊</span><span>التقارير</span><span style="font-size:9px;opacity:.55">▾</span>
-              </button>
-              <div id="fpj-rpt-menu" style="display:none;position:fixed;background:var(--w);border:.5px solid var(--bd);border-radius:10px;box-shadow:0 6px 24px rgba(0,0,0,.16);min-width:196px;z-index:9999;overflow:hidden">
-                <button class="fpj-mi" onclick="exportFinProjExcel();closeFpjReportsMenu()">📊 كشف الحساب Excel</button>
-                <button class="fpj-mi" onclick="exportFinProjPDF();closeFpjReportsMenu()">🖨 تقرير الاتفاق PDF</button>
-                <button class="fpj-mi" onclick="exportFinProjFullPDF();closeFpjReportsMenu()">📄 التقرير الكامل PDF</button>
-              </div>
-            </div>
-            <button class="tb-btn" onclick="exportFinProjAgreementPDF()" style="display:flex;align-items:center;gap:5px">
-              <span style="font-size:13px">📋</span><span>العقد</span>
-            </button>
-            <button class="tb-btn sec" onclick="openFollowupSheet()" style="display:flex;align-items:center;gap:5px">
-              <span style="font-size:13px">✓</span><span>متابعة التنفيذ</span>
-            </button>
-          </div>
         </div>
-        <div class="stats-row" id="fpj-stats-row" style="margin-bottom:16px"></div>
+        <div class="stats-row" id="fpj-stats-row" style="margin-bottom:12px"></div>
+        <div class="fpj-action-bar" style="margin-bottom:16px">
+          <div style="position:relative" id="fpj-rpt-wrap">
+            <button class="fpj-ab-btn" onclick="toggleFpjReportsMenu()">
+              <span>📊</span><span>التقارير</span><span style="font-size:9px;opacity:.55">▾</span>
+            </button>
+            <div id="fpj-rpt-menu" style="display:none;position:fixed;background:var(--w);border:.5px solid var(--bd);border-radius:10px;box-shadow:0 6px 24px rgba(0,0,0,.16);min-width:196px;z-index:9999;overflow:hidden">
+              <button class="fpj-mi" onclick="exportFinProjExcel();closeFpjReportsMenu()">📊 كشف الحساب Excel</button>
+              <button class="fpj-mi" onclick="exportFinProjPDF();closeFpjReportsMenu()">🖨 تقرير الاتفاق PDF</button>
+              <button class="fpj-mi" onclick="exportFinProjFullPDF();closeFpjReportsMenu()">📄 التقرير الكامل PDF</button>
+            </div>
+          </div>
+          <button class="fpj-ab-btn" onclick="exportFinProjAgreementPDF()"><span>📋</span><span>تصدير العقد</span></button>
+          <button class="fpj-ab-btn" onclick="openAgrPopup('agr')"><span>📑</span><span>الاتفاق المالي</span></button>
+          <button class="fpj-ab-btn" onclick="openAgrPopup('dist')"><span>📊</span><span>توزيع العقد</span></button>
+          <button class="fpj-ab-btn sec" onclick="openFollowupSheet()"><span>✅</span><span>متابعة التنفيذ</span></button>
+        </div>
         <!-- hidden data containers used by JS -->
         <div id="fpj-agr-view" style="display:none"></div>
         <div id="fpj-agr-form" style="display:none">
@@ -712,6 +710,7 @@ body{font-family:"IBM Plex Sans Arabic",sans-serif;direction:rtl;background:var(
                   <button id="fpj-mkt-base-gross" onclick="setBase('mkt','gross')" class="act">من الإجمالي</button>
                   <button id="fpj-mkt-base-net"   onclick="setBase('mkt','net')">من الصافي</button>
                 </div>
+                <label class="fpj-form-check" style="margin-top:6px"><input type="checkbox" id="fpj-mkt-internal"> المسوّق داخلي (تُحتسب في الربح)</label>
               </div>
               <div class="fpj-form-field">
                 <label>قيمة الكاش باك</label>
@@ -735,11 +734,6 @@ body{font-family:"IBM Plex Sans Arabic",sans-serif;direction:rtl;background:var(
         </div>
         <div id="fpj-dist-body" style="display:none"></div>
         <div id="fpj-dist-section" style="display:none"></div>
-        <!-- Popup trigger buttons -->
-        <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
-          <button class="tb-btn" onclick="openAgrPopup('agr')" style="display:flex;align-items:center;gap:5px"><span>📋</span><span>الاتفاق المالي</span></button>
-          <button class="tb-btn" onclick="openAgrPopup('dist')" style="display:flex;align-items:center;gap:5px"><span>📊</span><span>توزيع قيمة العقد</span></button>
-        </div>
         <div class="fpj-section">
           <div class="fpj-sh">
             سجل المعاملات
@@ -1388,9 +1382,10 @@ function computeProjectFinSummary(proj) {
   var dashExp = dashEntries.filter(function(e){return e.type==='expense';}).reduce(function(s,e){return s+(e.amount||0);},0);
   var dashInc = dashEntries.filter(function(e){return e.type==='income';}).reduce(function(s,e){return s+(e.amount||0);},0);
   var profitFromEntries = dashEntries.reduce(function(s,e){ return s + (e.type==='expense' ? (e.profit_margin||0) : 0); }, 0);
+  var isInternalMkt = !!fm['mkt-internal'];
 
   var expenses  = finTotal + dashExp;
-  var profit    = Math.max(0, availableForWork - (finTotal + dashExp - profitFromEntries) + dashInc);
+  var profit    = Math.max(0, availableForWork - finTotal - dashExp + profitFromEntries + dashInc + (isInternalMkt ? mkt : 0));
   var remaining = grossTotal - finTotal - dashExp + dashInc;
 
   return {grossTotal:grossTotal, contractNet:g, vatAmt:vatAmt, vatPct:vatPct,
@@ -2264,6 +2259,7 @@ function _populateFinAgreementForm() {
   _sv('fpj-mkt-v',     f['i-mkt-v']        || '');
   setBase('mkt', f['i-mkt-base'] || 'gross');
   updateBaseSegVisibility('mkt');
+  _sc('fpj-mkt-internal', f['mkt-internal']);
   _sv('fpj-cb-t',      f['i-cb-t']         || 'pct');
   _sv('fpj-cb-v',      f['i-cb-v']         || '');
   setBase('cb', f['i-cb-base'] || 'gross');
@@ -2306,6 +2302,7 @@ function saveFinAgreement() {
   d.form['i-mkt-t']        = _gv('fpj-mkt-t');
   d.form['i-mkt-v']        = _gv('fpj-mkt-v');
   d.form['i-mkt-base']     = _fpjBases.mkt;
+  d.form['mkt-internal']   = _gc('fpj-mkt-internal');
   d.form['i-cb-t']         = _gv('fpj-cb-t');
   d.form['i-cb-v']         = _gv('fpj-cb-v');
   d.form['i-cb-base']      = _fpjBases.cb;
@@ -2318,13 +2315,13 @@ function _renderFinProjEntries(s) {
   var tb = document.getElementById('fpj-entries-body');
   if (!tb) return;
   var rows = [];
-  (s.fin||[]).forEach(function(f){
+  (s.fin||[]).forEach(function(f, _i){
     if ((f.a||0)<=0) return;
-    rows.push({date:'—',desc:f.c||'',cat:_catLabel(f.cat||'exec'),typeKey:'expense',amount:f.a||0,party:f.o||'—',status:'مخطط',editable:false});
+    rows.push({date:'—',desc:f.c||'',cat:_catLabel(f.cat||'exec'),typeKey:'expense',amount:f.a||0,party:f.o||'—',status:'مخطط',editable:false,deletable:true,delFn:'deleteFinProjBudgetItem('+_i+')'});
   });
-  (s.spendItems||[]).forEach(function(sp){
+  (s.spendItems||[]).forEach(function(sp, _i){
     if ((sp.paid||0)<=0) return;
-    rows.push({date:'—',desc:sp.cat||'مدفوع',cat:'صرف فعلي',typeKey:'expense',amount:sp.paid||0,party:sp.party||'—',status:'مدفوع',editable:false});
+    rows.push({date:'—',desc:sp.cat||'مدفوع',cat:'صرف فعلي',typeKey:'expense',amount:sp.paid||0,party:sp.party||'—',status:'مدفوع',editable:false,deletable:true,delFn:'deleteFinProjSpendItem('+_i+')'});
   });
   var _etypeLbl = {'exec':'تنفيذ','cashback':'كاش باك','other':'غيره'};
   (s.dashEntries||[]).forEach(function(e,i){
@@ -2359,7 +2356,7 @@ function _renderFinProjEntries(s) {
       '<td style="text-align:left;direction:ltr"><span class="'+(isInc?'et-amt-inc':'et-amt-exp')+'">'+(isInc?'+ ':'− ')+fmt(r.amount)+'</span></td>'+
       '<td style="font-size:10.5px;color:var(--mu)">'+escHtml(r.party)+'</td>'+
       '<td><span class="et-sts '+(_stCls[r.status]||'et-sts-pending')+'">'+(_stMap[r.status]||r.status||'—')+'</span></td>'+
-      (r.editable?'<td style="text-align:center;white-space:nowrap"><button class="et-edit-btn" onclick="editFinProjEntry('+r.idx+')" title="تعديل" style="color:var(--N);font-size:13px">✎</button><button class="et-del-btn" onclick="deleteFinProjEntry('+r.idx+')" title="حذف" style="color:var(--R);font-size:14px">×</button></td>':'<td></td>');
+      (r.editable?'<td style="text-align:center;white-space:nowrap"><button class="et-edit-btn" onclick="editFinProjEntry('+r.idx+')" title="تعديل" style="color:var(--N);font-size:13px">✎</button><button class="et-del-btn" onclick="deleteFinProjEntry('+r.idx+')" title="حذف" style="color:var(--R);font-size:14px">×</button></td>':r.deletable?'<td style="text-align:center;white-space:nowrap"><button class="et-del-btn" onclick="'+r.delFn+'" title="حذف" style="color:var(--R);font-size:14px">×</button></td>':'<td></td>');
     tb.appendChild(tr);
   });
 }
@@ -2390,6 +2387,28 @@ function deleteFinProjEntry(idx) {
   if (!_curFinProjId) return;
   _finDetailProjId = _curFinProjId;
   deleteFinEntry(idx);
+}
+
+function deleteFinProjBudgetItem(idx) {
+  if (!_curFinProjId) return;
+  if (!confirm('حذف هذا البند من الميزانية؟')) return;
+  var d = null;
+  try { d = JSON.parse(localStorage.getItem('buad_data_' + _curFinProjId) || 'null'); } catch(e){}
+  if (!d || !Array.isArray(d.fin)) return;
+  d.fin.splice(idx, 1);
+  localStorage.setItem('buad_data_' + _curFinProjId, JSON.stringify(d));
+  renderFinProject();
+}
+
+function deleteFinProjSpendItem(idx) {
+  if (!_curFinProjId) return;
+  if (!confirm('حذف هذا البند المدفوع؟')) return;
+  var d = null;
+  try { d = JSON.parse(localStorage.getItem('buad_data_' + _curFinProjId) || 'null'); } catch(e){}
+  if (!d || !Array.isArray(d.spend_items)) return;
+  d.spend_items.splice(idx, 1);
+  localStorage.setItem('buad_data_' + _curFinProjId, JSON.stringify(d));
+  renderFinProject();
 }
 
 function exportFinProjExcel() {
@@ -2874,11 +2893,12 @@ document.addEventListener('DOMContentLoaded', function() {
     if (etRow) etRow.style.display = isExp ? '' : 'none';
     if (prRow) prRow.style.display = (isExp && (e.etype||'exec')==='exec') ? '' : 'none';
     var titleEl = document.getElementById('add-entry-title');
-    if (titleEl) titleEl.textContent = 'تعديل بند';
+    if (titleEl) titleEl.textContent = isExp ? 'تعديل مصروف' : 'تعديل دخل';
     _editEntryIdx = idx;
     _addEntryType = e.type || 'expense';
-    var modal = document.getElementById('add-entry-modal');
-    if (modal) modal.classList.add('open');
+    _finDetailProjId = _curFinProjId;
+    var bg = document.getElementById('add-entry-modal-bg');
+    if (bg) bg.classList.add('open');
   };
 
   // ── Followup Bottom Sheet ─────────────────────────────────────
@@ -2938,27 +2958,43 @@ document.addEventListener('DOMContentLoaded', function() {
     if (!bd) return;
     var data = _getFupsTasks();
     var items = data[_fupsTab] || [];
-    if (!items.length) {
-      bd.innerHTML = '<div style="text-align:center;color:var(--mu);padding:28px;font-size:12px">لا توجد بنود — اضغط &quot;+ إضافة&quot;</div>';
+    var done = items.filter(function(it){return !!it.done;}).length;
+    var total = items.length;
+    if (!total) {
+      bd.innerHTML = '<div style="text-align:center;color:var(--mu);padding:28px;font-size:12px">لا توجد بنود — أضف بنداً أدناه</div>';
       return;
     }
-    bd.innerHTML = items.map(function(it, i){
+    var pct = total > 0 ? Math.round(done/total*100) : 0;
+    var header = '<div style="padding:10px 14px 6px;font-size:11px;color:var(--mu);display:flex;align-items:center;gap:8px">'
+      + '<span>'+done+' / '+total+' مكتمل</span>'
+      + '<div style="flex:1;height:4px;background:var(--bd);border-radius:3px;overflow:hidden"><div style="height:4px;width:'+pct+'%;background:var(--S);border-radius:3px;transition:.3s"></div></div>'
+      + '<span style="font-weight:600;color:var(--S)">'+pct+'%</span>'
+      + '</div>';
+    bd.innerHTML = header + items.map(function(it, i){
       var isDone = !!it.done;
+      var dateStr = it.date ? '<span style="font-size:9.5px;color:var(--mu);margin-right:6px">'+it.date+'</span>' : '';
       return '<div class="fups-item'+(isDone?' fups-done':'')+'">'
         + '<input type="checkbox"'+(isDone?' checked':'')+' onchange="toggleFupsItem('+i+')" style="margin-top:2px;flex-shrink:0;cursor:pointer">'
-        + '<div class="fups-item-text">'+escHtml(it.text)+'</div>'
-        + '<button style="background:none;border:none;cursor:pointer;color:var(--R);font-size:14px;padding:0 3px;line-height:1;flex-shrink:0" onclick="deleteFupsItem('+i+')">&#215;</button>'
+        + '<div class="fups-item-text" style="flex:1">'+escHtml(it.text)+dateStr+'</div>'
+        + '<button class="et-del-btn" onclick="deleteFupsItem('+i+')" title="حذف" style="color:var(--R);font-size:14px;flex-shrink:0">×</button>'
         + '</div>';
     }).join('');
   }
 
   window.openFollowupAdd = function() {
-    var text = prompt('أدخل نص البند:');
-    if (!text || !text.trim()) return;
+    var inp = document.getElementById('fups-new-text');
+    if (inp) { inp.focus(); inp.scrollIntoView({block:'nearest'}); }
+  };
+
+  window.saveFupsItem = function() {
+    var inp = document.getElementById('fups-new-text');
+    var text = inp ? inp.value.trim() : '';
+    if (!text) return;
     var data = _getFupsTasks();
     if (!Array.isArray(data[_fupsTab])) data[_fupsTab] = [];
-    data[_fupsTab].push({text: text.trim(), done: false});
+    data[_fupsTab].push({text: text, done: false, date: new Date().toISOString().split('T')[0]});
     _saveFupsTasks(data);
+    if (inp) inp.value = '';
     _renderFupsBody();
   };
 
@@ -3296,7 +3332,6 @@ document.addEventListener('DOMContentLoaded', function() {
     <div class="fups-head">
       <div class="fups-handle"></div>
       <div style="font-size:13px;font-weight:600;flex:1;padding-right:8px" id="fups-title">متابعة التنفيذ</div>
-      <button class="tb-btn-sm prim" onclick="openFollowupAdd()" style="font-size:11px">+ إضافة</button>
       <button class="x-btn" onclick="closeFollowupSheet()">×</button>
     </div>
     <div style="display:flex;border-bottom:.5px solid var(--bd);padding:0 14px;flex-shrink:0">
@@ -3304,8 +3339,10 @@ document.addEventListener('DOMContentLoaded', function() {
       <button class="ptab"    id="fups-tab-req-us" onclick="switchFupsTab('req-us')" style="font-size:11.5px">متطلباتنا</button>
       <button class="ptab"    id="fups-tab-req-cl" onclick="switchFupsTab('req-cl')" style="font-size:11.5px">من العميل</button>
     </div>
-    <div class="fups-body" id="fups-body">
-      <div style="text-align:center;color:var(--mu);padding:28px;font-size:12px">لا توجد بنود — اضغط "+ إضافة"</div>
+    <div class="fups-body" id="fups-body"></div>
+    <div style="padding:10px 14px;border-top:.5px solid var(--bd);display:flex;gap:8px;flex-shrink:0;background:var(--w)">
+      <input type="text" id="fups-new-text" placeholder="أدخل نص البند..." style="flex:1;font-family:inherit;border:.5px solid var(--bd);border-radius:8px;padding:7px 10px;font-size:12px;background:var(--w);color:var(--tx)" onkeydown="if(event.key==='Enter')saveFupsItem()">
+      <button class="tb-btn-sm prim" onclick="saveFupsItem()" style="flex-shrink:0">+ إضافة</button>
     </div>
   </div>
 </body>
