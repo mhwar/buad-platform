@@ -745,7 +745,7 @@ body{font-family:"IBM Plex Sans Arabic",sans-serif;direction:rtl;background:var(
           <div class="fpj-sh">
             سجل المعاملات
             <div style="display:flex;gap:6px;margin-right:auto">
-              <button class="tb-btn-sm prim" onclick="openAddEntry('expense')">+ إضافة بند</button>
+              <button class="fpj-ab-btn" onclick="openAddEntry('expense')" style="font-size:12px;padding:7px 14px;gap:4px"><span>＋</span><span>إضافة بند</span></button>
             </div>
           </div>
           <div class="entry-table-scroll">
@@ -1380,7 +1380,7 @@ function computeProjectFinSummary(proj) {
   var execBV   = execBase === 'gross' ? grossTotal : g;
   var execAmt  = execT === 'pct' ? execBV * execV / 100 : execV;
   var execPct  = execT === 'pct' ? execV : (execBV > 0 ? execV / execBV * 100 : 100);
-  var availableForWork = execAmt - mkt - cb;
+  var availableForWork = execAmt;
 
   var finTotal = (d.fin || []).reduce(function(s,i){return s+(i.a||0);}, 0);
   var paid = (d.spend_items||[]).reduce(function(s,i){return s+(i.paid||0);}, 0);
@@ -1392,7 +1392,7 @@ function computeProjectFinSummary(proj) {
   var isInternalMkt = !!fm['mkt-internal'];
 
   var expenses  = finTotal + dashExp;
-  var profit    = Math.max(0, availableForWork - dashExp + profitFromEntries + dashInc + (isInternalMkt ? mkt : 0));
+  var profit    = Math.max(0, execAmt - dashExp + profitFromEntries + dashInc + (isInternalMkt ? mkt : 0));
   var remaining = grossTotal - finTotal - dashExp + dashInc;
 
   return {grossTotal:grossTotal, contractNet:g, vatAmt:vatAmt, vatPct:vatPct,
@@ -2280,13 +2280,6 @@ function _renderFinProjDistribution(s) {
       '− '+fmt(s.vatAmt)+' ر.س', 'deduct sub');
   }
   rows += _row('صافي العقد (الأساس)', '', fmt(s.contractNet)+' ر.س', 'total');
-  if (s.execAmt < s.execBV - 0.01) {
-    var execBaseLbl2 = s.execBase === 'gross' ? 'إجمالي' : 'صافي';
-    var execFml = s.execT === 'fix'
-      ? '(قيمة ثابتة)'
-      : s.execV + '% × ' + fmt(s.execBV) + ' (' + execBaseLbl2 + ') = ' + fmt(s.execAmt);
-    rows += _row('قيمة التنفيذ' + (s.execT==='pct' ? ' ('+s.execV+'%)' : ''), execFml, fmt(s.execAmt)+' ر.س', 'sub');
-  }
   if (s.mkt > 0) {
     rows += _row('ناقص: أتعاب التسويق',
       _fmula(s.mktBV, s.mktT, s.mktV, s.mkt, s.mktBase==='net'?'صافي':'إجمالي'),
@@ -2297,13 +2290,20 @@ function _renderFinProjDistribution(s) {
       _fmula(s.cbBV, s.cbT, s.cbV, s.cb, s.cbBase==='net'?'صافي':'إجمالي'),
       '− '+fmt(s.cb)+' ر.س', 'deduct sub');
   }
-  rows += _row('المتاح للمصاريف والأرباح', '', fmt(s.availableForWork)+' ر.س', 'avail');
-  if (s.expenses > 0) {
-    rows += _row('المصاريف المسجّلة', '', '− '+fmt(s.expenses)+' ر.س', 'deduct sub');
+  var execBaseLbl2 = s.execBase === 'gross' ? 'إجمالي' : 'صافي';
+  var execFml = s.execT === 'fix'
+    ? '(قيمة ثابتة)'
+    : s.execV + '% × ' + fmt(s.execBV) + ' (' + execBaseLbl2 + ') = ' + fmt(s.execAmt);
+  rows += _row('أتعاب التنفيذ (الأرباح المتوقعة)' + (s.execT==='pct' ? ' ('+s.execV+'%)' : ''), execFml, fmt(s.execAmt)+' ر.س', 'avail');
+  if (s.expenses > 0 || s.profit > 0) {
+    var _dashExp = (s.dashEntries||[]).filter(function(e){return e.type==='expense';}).reduce(function(a,e){return a+(e.amount||0);},0);
+    if (_dashExp > 0) {
+      rows += _row('المصاريف المسجّلة من الأتعاب', '', '− '+fmt(_dashExp)+' ر.س', 'deduct sub');
+    }
     if (s.profitFromEntries > 0) {
       rows += _row('هوامش الربح المضافة من البنود', '', '+ '+fmt(s.profitFromEntries)+' ر.س', 'sub');
     }
-    rows += _row('الربح المتوقع', '', fmt(s.profit)+' ر.س', 'total');
+    rows += _row('صافي الربح المتوقع', '', fmt(s.profit)+' ر.س', 'total');
   }
   bd.innerHTML = rows;
 }
@@ -2461,7 +2461,6 @@ function deleteFinProjEntry(idx) {
 
 function deleteFinProjBudgetItem(idx) {
   if (!_curFinProjId) return;
-  if (!confirm('حذف هذا البند من الميزانية؟')) return;
   var d = null;
   try { d = JSON.parse(localStorage.getItem('buad_data_' + _curFinProjId) || 'null'); } catch(e){}
   if (!d || !Array.isArray(d.fin)) return;
@@ -2472,7 +2471,6 @@ function deleteFinProjBudgetItem(idx) {
 
 function deleteFinProjSpendItem(idx) {
   if (!_curFinProjId) return;
-  if (!confirm('حذف هذا البند المدفوع؟')) return;
   var d = null;
   try { d = JSON.parse(localStorage.getItem('buad_data_' + _curFinProjId) || 'null'); } catch(e){}
   if (!d || !Array.isArray(d.spend_items)) return;
