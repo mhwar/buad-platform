@@ -332,6 +332,17 @@ body{font-family:"IBM Plex Sans Arabic",sans-serif;direction:rtl;background:var(
 .fpj-form-field input,.fpj-form-field select{font-family:inherit;direction:rtl;border:.5px solid var(--bd);border-radius:8px;padding:7px 10px;font-size:12px;background:var(--w);color:var(--tx);transition:.15s}
 .fpj-form-field input:focus,.fpj-form-field select:focus{border-color:var(--N);outline:none}
 .fpj-form-check{display:flex;align-items:center;gap:6px;font-size:12px;margin-top:2px}
+.fpj-mi{display:block;width:100%;text-align:right;padding:9px 15px;font-size:12px;font-family:inherit;background:none;border:none;cursor:pointer;color:var(--tx)}
+.fpj-mi:hover{background:var(--sand)}
+.fpj-dist-row{display:flex;justify-content:space-between;align-items:baseline;padding:7px 16px;border-bottom:.5px solid var(--bd);font-size:12px;gap:8px}
+.fpj-dist-row:last-child{border-bottom:none}
+.fpj-dist-row.sub{color:var(--mu);font-size:11px}
+.fpj-dist-row.total{background:var(--sand);font-weight:600}
+.fpj-dist-row.avail{background:var(--Nl);color:var(--N);font-weight:700;font-size:13px}
+.fpj-dist-row.deduct .fpj-dist-v{color:var(--R)}
+.fpj-dist-lbl{flex:1}
+.fpj-dist-formula{font-size:10px;color:var(--mu);font-family:"IBM Plex Mono",monospace}
+.fpj-dist-v{font-family:"IBM Plex Mono",monospace;font-weight:600;white-space:nowrap}
 .sb-hamburger{display:none;background:none;border:none;cursor:pointer;padding:5px 7px;border-radius:7px;color:var(--mu);transition:.15s;flex-shrink:0;align-items:center;justify-content:center}
 .sb-hamburger:hover{background:var(--sand2)}
 .sb-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.48);z-index:199;opacity:0;transition:opacity .22s;-webkit-tap-highlight-color:transparent;pointer-events:none}
@@ -556,8 +567,16 @@ body{font-family:"IBM Plex Sans Arabic",sans-serif;direction:rtl;background:var(
             <div style="font-size:11px;color:var(--mu);margin-top:2px" id="fpj-sub">—</div>
           </div>
           <span id="fpj-badge" class="fp-badge" style="align-self:center"></span>
-          <button class="tb-btn" onclick="exportFinProjExcel()" title="تصدير كشف الحساب Excel">⬇ Excel</button>
-          <button class="tb-btn pri" onclick="exportFinProjPDF()" title="تصدير الاتفاق PDF">🖨 PDF</button>
+          <div style="position:relative" id="fpj-rpt-wrap">
+            <button class="tb-btn" onclick="toggleFpjReportsMenu()">📊 التقارير ▾</button>
+            <div id="fpj-rpt-menu" style="display:none;position:absolute;left:0;top:calc(100% + 5px);background:var(--w);border:.5px solid var(--bd);border-radius:10px;box-shadow:0 4px 18px rgba(0,0,0,.14);min-width:180px;z-index:400;overflow:hidden">
+              <button class="fpj-mi" onclick="exportFinProjExcel();closeFpjReportsMenu()">📊 كشف الحساب Excel</button>
+              <button class="fpj-mi" onclick="exportFinProjPDF();closeFpjReportsMenu()">🖨 تقرير الاتفاق PDF</button>
+              <button class="fpj-mi" onclick="exportFinProjFullPDF();closeFpjReportsMenu()">📄 التقرير الكامل PDF</button>
+            </div>
+          </div>
+          <button class="tb-btn" onclick="exportFinProjAgreementPDF()">📋 العقد</button>
+          <button class="tb-btn sec" onclick="doGoPage('projects')">✓ إغلاق ومتابعة</button>
         </div>
         <div class="stats-row" id="fpj-stats-row" style="margin-bottom:16px"></div>
         <div class="fpj-section" id="fpj-agr-section">
@@ -623,6 +642,10 @@ body{font-family:"IBM Plex Sans Arabic",sans-serif;direction:rtl;background:var(
             </div>
           </div>
         </div>
+        <div class="fpj-section" id="fpj-dist-section" style="display:none">
+          <div class="fpj-sh">توزيع قيمة العقد</div>
+          <div id="fpj-dist-body"></div>
+        </div>
         <div class="fpj-section">
           <div class="fpj-sh">
             سجل المعاملات
@@ -645,27 +668,6 @@ body{font-family:"IBM Plex Sans Arabic",sans-serif;direction:rtl;background:var(
               </tr></thead>
               <tbody id="fpj-entries-body">
                 <tr><td colspan="8" style="text-align:center;padding:22px;color:var(--mu)">لا توجد معاملات</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-        <div class="fpj-section" id="fpj-budget-section">
-          <div class="fpj-sh">
-            بنود الميزانية المخططة
-            <span style="font-size:10px;color:var(--mu);font-weight:400">(من ملف المشروع)</span>
-          </div>
-          <div class="entry-table-scroll">
-            <table class="entry-table">
-              <thead><tr>
-                <th>البند</th>
-                <th style="width:78px">الوحدة</th>
-                <th style="width:58px">الكمية</th>
-                <th style="width:108px">سعر الوحدة</th>
-                <th style="width:108px">الإجمالي (ر.س)</th>
-                <th style="width:118px">الجهة</th>
-              </tr></thead>
-              <tbody id="fpj-budget-body">
-                <tr><td colspan="6" style="text-align:center;padding:18px;color:var(--mu)">لا توجد بنود</td></tr>
               </tbody>
             </table>
           </div>
@@ -1248,39 +1250,52 @@ var _addEntryType = 'expense';
 function computeProjectFinSummary(proj) {
   var d = null;
   try { d = JSON.parse(localStorage.getItem('buad_data_' + proj.id) || 'null'); } catch(e){}
+  var _fallback = proj.value || 0;
   if (!d || typeof d !== 'object') {
-    return {contractNet:proj.value||0,expenses:0,profit:proj.value||0,
-             remaining:proj.value||0,paid:0,fin:[],spendItems:[],surplusDed:[],
-             dashEntries:[],form:{},mkt:0,cb:0,vatPct:0};
+    return {grossTotal:_fallback, contractNet:_fallback, vatAmt:0, vatPct:0,
+             mkt:0, mktV:0, mktT:'pct', cb:0, cbV:0, cbT:'pct',
+             execPct:100, execAmt:_fallback, availableForWork:_fallback,
+             expenses:0, profit:_fallback, remaining:_fallback, paid:0,
+             fin:[], spendItems:[], surplusDed:[], dashEntries:[], form:{}, profitFromEntries:0};
   }
   var fm = d.form || {};
   var grossIn = parseFloat(fm['c-gross']) || proj.value || 0;
   var vatPct  = parseFloat(fm['c-vat'])   || 0;
   var vatIncl = !!fm['vat-included'];
+  // g = صافي العقد (بدون الضريبة) — هو الأساس لحساب النسب
   var g = vatIncl ? grossIn / (1 + vatPct / 100) : grossIn;
+  var grossTotal = vatIncl ? grossIn : g * (1 + vatPct / 100);
+  var vatAmt = grossTotal - g;
 
-  var finTotal = (d.fin || []).reduce(function(s,i){return s+(i.a||0);}, 0);
   var mktV = parseFloat(fm['i-mkt-v']) || 0;
   var mktT = fm['i-mkt-t'] || 'pct';
   var mkt  = mktT === 'pct' ? g * mktV / 100 : mktV;
   var cbV  = parseFloat(fm['i-cb-v']) || 0;
   var cbT  = fm['i-cb-t'] || 'pct';
   var cb   = cbT === 'pct' ? g * cbV / 100 : cbV;
+  var execPct = parseFloat(fm['i-exec-pct']) || 100;
+  var execAmt = g * execPct / 100;
+  var availableForWork = execAmt - mkt - cb;
 
+  var finTotal = (d.fin || []).reduce(function(s,i){return s+(i.a||0);}, 0);
   var paid = (d.spend_items||[]).reduce(function(s,i){return s+(i.paid||0);}, 0);
 
   var dashEntries = Array.isArray(d.dash_entries) ? d.dash_entries : [];
   var dashExp = dashEntries.filter(function(e){return e.type==='expense';}).reduce(function(s,e){return s+(e.amount||0);},0);
   var dashInc = dashEntries.filter(function(e){return e.type==='income';}).reduce(function(s,e){return s+(e.amount||0);},0);
+  var profitFromEntries = dashEntries.reduce(function(s,e){ return s + (e.type==='expense' ? (e.profit_margin||0) : 0); }, 0);
 
   var expenses  = finTotal + dashExp;
-  var profit    = Math.max(0, g - finTotal - mkt - cb + dashInc - dashExp);
-  var remaining = g - paid + dashInc - dashExp;
+  var profit    = Math.max(0, availableForWork - (finTotal + dashExp - profitFromEntries) + dashInc);
+  var remaining = grossTotal - paid - dashExp + dashInc;
 
-  return {contractNet:g, vatPct:vatPct, expenses:expenses, mkt:mkt, cb:cb,
-           profit:profit, paid:paid, remaining:remaining,
+  return {grossTotal:grossTotal, contractNet:g, vatAmt:vatAmt, vatPct:vatPct,
+           mkt:mkt, mktV:mktV, mktT:mktT, cb:cb, cbV:cbV, cbT:cbT,
+           execPct:execPct, execAmt:execAmt, availableForWork:availableForWork,
+           expenses:expenses, profit:profit, paid:paid, remaining:remaining,
            fin:d.fin||[], spendItems:d.spend_items||[],
-           surplusDed:d.surplus_deductions||[], dashEntries:dashEntries, form:fm};
+           surplusDed:d.surplus_deductions||[], dashEntries:dashEntries, form:fm,
+           profitFromEntries:profitFromEntries};
 }
 
 function renderFinance() {
@@ -1421,16 +1436,29 @@ function _renderFinDetailEntries(s){
   });
 }
 
+function toggleAEProfitRow() {
+  var et = document.getElementById('ae-etype');
+  var pr = document.getElementById('ae-profit-row');
+  if (pr && et) pr.style.display = (et.value === 'exec') ? '' : 'none';
+}
+
 function openAddEntry(type){
   _addEntryType = type || 'expense';
+  var isExp = (_addEntryType === 'expense');
   var titleEl = document.getElementById('add-entry-title');
-  if (titleEl) titleEl.textContent = type==='income' ? '+ إضافة دخل' : '+ إضافة مصروف';
+  if (titleEl) titleEl.textContent = isExp ? '+ إضافة مصروف' : '+ إضافة دخل';
   var dateEl = document.getElementById('ae-date');
   if (dateEl) dateEl.value = new Date().toISOString().split('T')[0];
-  ['ae-desc','ae-amount','ae-party'].forEach(function(id){
+  ['ae-desc','ae-amount','ae-party','ae-profit-v'].forEach(function(id){
     var el=document.getElementById(id); if(el) el.value='';
   });
   var st = document.getElementById('ae-status'); if(st) st.value='pending';
+  var et = document.getElementById('ae-etype');   if(et) et.value='exec';
+  var pt = document.getElementById('ae-profit-t'); if(pt) pt.value='fix';
+  var etRow = document.getElementById('ae-etype-row');
+  var prRow = document.getElementById('ae-profit-row');
+  if (etRow) etRow.style.display = isExp ? '' : 'none';
+  if (prRow) prRow.style.display = isExp ? '' : 'none';
   var bg = document.getElementById('add-entry-modal-bg');
   if (bg) bg.classList.add('open');
 }
@@ -1443,14 +1471,23 @@ function closeAddEntry(){
 function saveAddEntry(){
   if (!_finDetailProjId) return;
   var _v = function(id){var el=document.getElementById(id);return el?el.value||'':'';}
+  var isExp = (_addEntryType === 'expense');
+  var etype = isExp ? (_v('ae-etype') || 'exec') : '';
+  var profitT = _v('ae-profit-t') || 'fix';
+  var profitV = parseFloat(_v('ae-profit-v')) || 0;
+  var amt = parseFloat(_v('ae-amount')) || 0;
+  var profitMargin = (isExp && etype === 'exec' && profitV > 0)
+    ? (profitT === 'pct' ? amt * profitV / 100 : profitV) : 0;
   var entry = {
-    date:     _v('ae-date'),
-    desc:     _v('ae-desc'),
-    category: _v('ae-category'),
-    type:     _addEntryType,
-    amount:   parseFloat(_v('ae-amount')) || 0,
-    party:    _v('ae-party'),
-    status:   _v('ae-status')
+    date:          _v('ae-date'),
+    desc:          _v('ae-desc'),
+    category:      _v('ae-category'),
+    type:          _addEntryType,
+    etype:         etype,
+    amount:        amt,
+    profit_margin: profitMargin,
+    party:         _v('ae-party'),
+    status:        _v('ae-status')
   };
   var d = null;
   try { d = JSON.parse(localStorage.getItem('buad_data_' + _finDetailProjId) || 'null'); } catch(e){}
@@ -1978,44 +2015,100 @@ function renderFinProject() {
 
   var statsRow = document.getElementById('fpj-stats-row');
   statsRow.innerHTML = [
-    {lbl:'قيمة العقد الصافية',  val:fmt(s.contractNet)+' ر.س', cls:'ic-n', col:'#00197D'},
-    {lbl:'إجمالي المصاريف',     val:fmt(s.expenses)+' ر.س',    cls:'ic-r', col:'#8B1A0E'},
-    {lbl:'الربح المتوقع',       val:fmt(s.profit)+' ر.س',      cls:'ic-s', col:'#2C5F2D'},
-    {lbl:'المتبقي غير المدفوع', val:fmt(s.remaining)+' ر.س',   cls:'ic-g', col:'#B8841A'}
+    {lbl:'قيمة العقد الإجمالية', val:fmt(s.grossTotal)+' ر.س', cls:'ic-n', col:'#00197D'},
+    {lbl:'إجمالي المصاريف',      val:fmt(s.expenses)+' ر.س',   cls:'ic-r', col:'#8B1A0E'},
+    {lbl:'الربح المتوقع',        val:fmt(s.profit)+' ر.س',     cls:'ic-s', col:'#2C5F2D'},
+    {lbl:'المتاح / المتبقي',     val:fmt(s.remaining)+' ر.س',  cls:'ic-g', col:'#B8841A'}
   ].map(function(c){
     return '<div class="sc"><div class="sc-ico '+c.cls+'"></div>'
       +'<div><div class="sc-num mn" style="color:'+c.col+'">'+c.val+'</div><div class="sc-lbl">'+c.lbl+'</div></div></div>';
   }).join('');
 
   _renderFinAgreementView(s, proj);
+  _renderFinProjDistribution(s);
   _renderFinProjEntries(s);
-  _renderFinProjBudget(s);
+}
+
+function _fmula(baseVal, typeKey, amtV, result) {
+  // typeKey: 'pct' → show "X% × base = result",  'fix' → show just value
+  if (typeKey === 'pct') return amtV+'% × '+fmt(baseVal)+' = '+fmt(result)+' ر.س';
+  return fmt(result)+' ر.س';
 }
 
 function _renderFinAgreementView(s, proj) {
   var vd = document.getElementById('fpj-agr-view');
   if (!vd) return;
   var f = s.form || {};
-  var vatIncl = !!f['vat-included'];
-  var vatAmt  = s.contractNet * (s.vatPct||0) / 100;
-  var gross   = vatIncl ? s.contractNet : s.contractNet + vatAmt;
-  var mktLbl  = (f['i-mkt-t']==='fix') ? fmt(s.mkt)+' ر.س' : (parseFloat(f['i-mkt-v'])||0)+'% = '+fmt(s.mkt)+' ر.س';
-  var cbLbl   = (f['i-cb-t']==='fix')  ? fmt(s.cb)+' ر.س'  : (parseFloat(f['i-cb-v'])||0)+'% = '+fmt(s.cb)+' ر.س';
+  var vatInclTxt = !!f['vat-included'] ? ' (مدمجة)' : '';
+  var vatFormula = s.vatPct > 0
+    ? s.vatPct + '% × ' + fmt(s.contractNet) + ' = ' + fmt(s.vatAmt) + ' ر.س' + vatInclTxt
+    : '—';
+  var mktFormula = s.mkt > 0 ? _fmula(s.contractNet, s.mktT, s.mktV, s.mkt) : '—';
+  var cbFormula  = s.cb  > 0 ? _fmula(s.contractNet, s.cbT,  s.cbV,  s.cb)  : '—';
+  var execFormula = s.execPct !== 100
+    ? s.execPct + '% × ' + fmt(s.contractNet) + ' = ' + fmt(s.execAmt) + ' ر.س'
+    : fmt(s.contractNet) + ' ر.س (كامل)';
   var items = [
-    {lbl:'الإجمالي قبل الضريبة',          val:fmt(s.contractNet)+' ر.س'},
-    {lbl:'ضريبة ق.م ('+(s.vatPct||0)+'%'+(vatIncl?' مدمجة':'')+')', val:vatAmt>0?fmt(vatAmt)+' ر.س':'—'},
-    {lbl:'الإجمالي شامل الضريبة',          val:fmt(gross)+' ر.س'},
-    {lbl:'رقم العقد',                      val:f['c-no']||'—'},
-    {lbl:'تاريخ العقد',                    val:f['c-date']||'—'},
-    {lbl:'الجهة المتعاقدة',                val:f['cv-client-name']||proj.client||'—'},
-    {lbl:'حصة التنفيذ',                    val:(f['i-exec-pct']||100)+'%'},
-    {lbl:'قيمة التسويق',                   val:s.mkt>0?mktLbl:'—'},
-    {lbl:'قيمة الكاش باك',                 val:s.cb>0?cbLbl:'—'}
+    {lbl:'قيمة العقد الإجمالية (شامل الضريبة)', val:fmt(s.grossTotal)+' ر.س'},
+    {lbl:'ضريبة القيمة المضافة ('+s.vatPct+'%)', val:vatFormula},
+    {lbl:'صافي العقد (الأساس للحسابات)',         val:fmt(s.contractNet)+' ر.س'},
+    {lbl:'رقم العقد',           val:f['c-no']||'—'},
+    {lbl:'تاريخ العقد',         val:f['c-date']||'—'},
+    {lbl:'الجهة المتعاقدة',     val:f['cv-client-name']||proj.client||'—'},
+    {lbl:'حصة التنفيذ ('+s.execPct+'%)', val:execFormula},
+    {lbl:'أتعاب التسويق',       val:mktFormula},
+    {lbl:'الكاش باك',           val:cbFormula}
   ];
   vd.innerHTML = '<div class="fpj-agr-grid">'
     + items.map(function(it){
-        return '<div class="fpj-agr-card"><div class="lac">'+it.lbl+'</div><div class="vac">'+it.val+'</div></div>';
+        return '<div class="fpj-agr-card"><div class="lac">'+it.lbl+'</div><div class="vac" style="font-size:12px">'+it.val+'</div></div>';
       }).join('') + '</div>';
+}
+
+function _renderFinProjDistribution(s) {
+  var sec = document.getElementById('fpj-dist-section');
+  var bd  = document.getElementById('fpj-dist-body');
+  if (!sec || !bd) return;
+  // only show if agreement has been filled
+  if (!s.grossTotal || s.grossTotal <= 0) { sec.style.display = 'none'; return; }
+  sec.style.display = '';
+  var rows = '';
+  var _row = function(lbl, formula, val, cls) {
+    return '<div class="fpj-dist-row'+(cls?' '+cls:'')+'">'
+      +'<div class="fpj-dist-lbl">'+lbl+(formula?'<div class="fpj-dist-formula">'+formula+'</div>':'')+'</div>'
+      +'<div class="fpj-dist-v">'+val+'</div></div>';
+  };
+  rows += _row('قيمة العقد الإجمالية', '', fmt(s.grossTotal)+' ر.س', 'total');
+  if (s.vatAmt > 0) {
+    rows += _row('ناقص: ضريبة القيمة المضافة ('+s.vatPct+'%)',
+      s.vatPct+'% × '+fmt(s.contractNet)+' = '+fmt(s.vatAmt),
+      '− '+fmt(s.vatAmt)+' ر.س', 'deduct sub');
+  }
+  rows += _row('صافي العقد (الأساس)', '', fmt(s.contractNet)+' ر.س', 'total');
+  if (s.execPct !== 100) {
+    rows += _row('حصة التنفيذ ('+s.execPct+'%)',
+      s.execPct+'% × '+fmt(s.contractNet)+' = '+fmt(s.execAmt),
+      fmt(s.execAmt)+' ر.س', 'sub');
+  }
+  if (s.mkt > 0) {
+    rows += _row('ناقص: أتعاب التسويق',
+      _fmula(s.contractNet, s.mktT, s.mktV, s.mkt),
+      '− '+fmt(s.mkt)+' ر.س', 'deduct sub');
+  }
+  if (s.cb > 0) {
+    rows += _row('ناقص: الكاش باك',
+      _fmula(s.contractNet, s.cbT, s.cbV, s.cb),
+      '− '+fmt(s.cb)+' ر.س', 'deduct sub');
+  }
+  rows += _row('المتاح للمصاريف والأرباح', '', fmt(s.availableForWork)+' ر.س', 'avail');
+  if (s.expenses > 0) {
+    rows += _row('المصاريف المسجّلة', '', '− '+fmt(s.expenses)+' ر.س', 'deduct sub');
+    if (s.profitFromEntries > 0) {
+      rows += _row('هوامش الربح المضافة من البنود', '', '+ '+fmt(s.profitFromEntries)+' ر.س', 'sub');
+    }
+    rows += _row('الربح المتوقع', '', fmt(s.profit)+' ر.س', 'total');
+  }
+  bd.innerHTML = rows;
 }
 
 function _populateFinAgreementForm() {
@@ -2095,8 +2188,11 @@ function _renderFinProjEntries(s) {
     if ((sp.paid||0)<=0) return;
     rows.push({date:'—',desc:sp.cat||'مدفوع',cat:'صرف فعلي',typeKey:'expense',amount:sp.paid||0,party:sp.party||'—',status:'مدفوع',editable:false});
   });
+  var _etypeLbl = {'exec':'تنفيذ','cashback':'كاش باك','other':'غيره'};
   (s.dashEntries||[]).forEach(function(e,i){
-    rows.push({date:e.date||'—',desc:e.desc||'',cat:_catLabel(e.category),typeKey:e.type,amount:e.amount||0,party:e.party||'—',status:e.status||'',editable:true,idx:i});
+    rows.push({date:e.date||'—',desc:e.desc||'',cat:_catLabel(e.category),typeKey:e.type,
+               etype:e.etype||'',amount:e.amount||0,profitMargin:e.profit_margin||0,
+               party:e.party||'—',status:e.status||'',editable:true,idx:i});
   });
   if (!rows.length) {
     tb.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:22px;color:var(--mu)">لا توجد معاملات — أضف مصروفاً أو دخلاً</td></tr>';
@@ -2105,12 +2201,17 @@ function _renderFinProjEntries(s) {
   tb.innerHTML = '';
   rows.forEach(function(r){
     var isInc = r.typeKey === 'income';
+    var typeBadge = isInc
+      ? '<span style="font-size:10px;font-weight:600;color:var(--S)">دخل</span>'
+      : '<span style="font-size:10px;font-weight:600;color:var(--R)">مصروف'+(r.etype&&r.etype!=='exec'?' ('+(_etypeLbl[r.etype]||r.etype)+')':'')+'</span>';
+    var profitCell = (r.profitMargin > 0)
+      ? '<div style="font-size:10px;color:var(--S);margin-top:2px">↑ ربح: '+fmt(r.profitMargin)+' ر.س</div>' : '';
     var tr = document.createElement('tr');
     tr.innerHTML =
       '<td style="font-size:11px;color:var(--mu)">'+r.date+'</td>'+
-      '<td>'+escHtml(r.desc)+'</td>'+
+      '<td>'+escHtml(r.desc)+profitCell+'</td>'+
       '<td><span class="fp-badge" style="background:var(--Nl);color:var(--N);font-size:9.5px">'+r.cat+'</span></td>'+
-      '<td><span style="font-size:10px;font-weight:600;color:'+(isInc?'var(--S)':'var(--R)')+'">'+(isInc?'دخل':'مصروف')+'</span></td>'+
+      '<td>'+typeBadge+'</td>'+
       '<td class="mn '+(isInc?'et-inc':'et-exp')+'" style="text-align:left;direction:ltr">'+fmt(r.amount)+'</td>'+
       '<td style="font-size:11px;color:var(--mu)">'+escHtml(r.party)+'</td>'+
       '<td><span style="font-size:10px;color:var(--mu)">'+r.status+'</span></td>'+
@@ -2172,6 +2273,43 @@ function exportFinProjExcel() {
   rows.push(['','المتبقي غير المدفوع','','',fmt(s.remaining)+' ر.س','','']);
   var xhtml = _buildExcelTable('كشف حساب — '+escHtml(proj.name), headers, rows);
   _dlHtmlAsXls(xhtml, 'كشف-حساب-'+(proj.name||'مشروع').replace(/[/\\]/g,'-')+'.xls');
+}
+
+// ── Reports menu helpers ─────────────────────────────────────────
+function toggleFpjReportsMenu() {
+  var m = document.getElementById('fpj-rpt-menu');
+  if (!m) return;
+  var isOpen = m.style.display !== 'none';
+  m.style.display = isOpen ? 'none' : 'block';
+  if (!isOpen) {
+    setTimeout(function(){ document.addEventListener('click', _fpjMenuClose, {once:true}); }, 10);
+  }
+}
+function closeFpjReportsMenu() {
+  var m = document.getElementById('fpj-rpt-menu');
+  if (m) m.style.display = 'none';
+}
+function _fpjMenuClose(e) {
+  var wrap = document.getElementById('fpj-rpt-wrap');
+  if (wrap && !wrap.contains(e.target)) closeFpjReportsMenu();
+}
+
+function exportFinProjAgreementPDF() {
+  // alias for the agreement-only PDF
+  exportFinProjPDF();
+}
+
+function exportFinProjFullPDF() {
+  if (!_curFinProjId) return;
+  var proj = PROJECTS.find(function(p){ return p.id === _curFinProjId; });
+  if (!proj) return;
+  var s = computeProjectFinSummary(proj);
+  var w = window.open('', '_blank');
+  if (!w) { alert('يرجى السماح بالنوافذ المنبثقة لتصدير PDF'); return; }
+  w.document.write(_buildFinProjFullPDFHtml(proj, s));
+  w.document.close();
+  w.focus();
+  setTimeout(function(){ w.print(); }, 700);
 }
 
 function exportFinProjPDF() {
@@ -2273,6 +2411,54 @@ function _buildFinProjPDFHtml(proj, s) {
       '<table class="bt"><thead><tr><th>&#1575;&#1604;&#1578;&#1575;&#1585;&#1610;&#1582;</th><th>&#1575;&#1604;&#1576;&#1610;&#1575;&#1606;</th><th>&#1575;&#1604;&#1578;&#1589;&#1606;&#1610;&#1601;</th><th>&#1575;&#1604;&#1605;&#1576;&#1604;&#1594;</th><th>&#1575;&#1604;&#1580;&#1607;&#1577;</th><th>&#1575;&#1604;&#1581;&#1575;&#1604;&#1577;</th></tr></thead><tbody>'+txnRows+'</tbody></table>':'')+
     '<div class="foot">&#1576;&#1615;&#1593;&#1618;&#1583; &#1575;&#1604;&#1578;&#1605;&#1603;&#1610;&#1606; &mdash; &#1608;&#1579;&#1610;&#1602;&#1577; &#1570;&#1604;&#1610;&#1577;</div>'+
     '</div></body></html>';
+}
+
+function _buildFinProjFullPDFHtml(proj, s) {
+  var f = s.form || {};
+  var logo = (typeof _BUAD_LOGO_SRC !== 'undefined' && _BUAD_LOGO_SRC)
+    ? '<img src="'+_BUAD_LOGO_SRC+'" style="height:44px;width:auto">' : '<b style="color:#00197D">بُعد التمكين</b>';
+  var _r = function(lbl,val,note){
+    return '<tr><td style="color:#555;width:40%">'+lbl+'</td><td style="font-weight:600">'+val+'</td>'+(note?'<td style="font-size:10px;color:#888;font-family:monospace">'+note+'</td>':'<td></td>')+'</tr>';
+  };
+  var distRows = '';
+  distRows += _r('قيمة العقد الإجمالية', fmt(s.grossTotal)+' ر.س', '');
+  if (s.vatAmt > 0) distRows += _r('ضريبة القيمة المضافة ('+s.vatPct+'%)', '− '+fmt(s.vatAmt)+' ر.س', s.vatPct+'% × '+fmt(s.contractNet));
+  distRows += _r('صافي العقد', fmt(s.contractNet)+' ر.س', '');
+  if (s.mkt > 0) distRows += _r('أتعاب التسويق', '− '+fmt(s.mkt)+' ر.س', _fmula(s.contractNet, s.mktT, s.mktV, s.mkt));
+  if (s.cb > 0)  distRows += _r('الكاش باك', '− '+fmt(s.cb)+' ر.س', _fmula(s.contractNet, s.cbT, s.cbV, s.cb));
+  distRows += _r('المتاح للمصاريف والأرباح', fmt(s.availableForWork)+' ر.س', '');
+  if (s.expenses > 0) distRows += _r('المصاريف المسجّلة', '− '+fmt(s.expenses)+' ر.س', '');
+  distRows += _r('الربح المتوقع', fmt(s.profit)+' ر.س', '');
+
+  var txnRows = '';
+  (s.dashEntries||[]).forEach(function(e){
+    var isInc = e.type==='income';
+    txnRows += '<tr>'
+      +'<td>'+(e.date||'—')+'</td><td>'+(e.desc||'')+'</td>'
+      +'<td>'+(isInc?'دخل':'مصروف')+'</td>'
+      +'<td style="font-family:monospace;font-weight:600;color:'+(isInc?'#2C5F2D':'#8B1A0E')+'">'+fmt(e.amount||0)+'</td>'
+      +'<td>'+(e.party||'—')+'</td><td>'+(e.status||'')+'</td>'
+      +(e.profit_margin>0?'<td style="color:#2C5F2D;font-size:10px">ربح: '+fmt(e.profit_margin)+'</td>':'<td></td>')
+      +'</tr>';
+  });
+  return '<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8">'
+    +'<title>'+proj.name+' — التقرير الكامل</title>'
+    +'<style>body{font-family:"Segoe UI",sans-serif;font-size:12px;color:#1A1A2E;margin:0;padding:20px}'
+    +'@page{size:A4;margin:20mm 15mm}h1{font-size:16px;color:#00197D;margin:0}h2{font-size:13px;color:#00197D;margin:16px 0 6px}'
+    +'table{width:100%;border-collapse:collapse;font-size:11.5px}td,th{padding:6px 10px;border:0.5px solid #ddd}'
+    +'th{background:#00197D;color:#fff;font-weight:600}.hi{background:#EAF3EA;font-weight:700}'
+    +'.hdr{display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #00197D;padding-bottom:10px;margin-bottom:16px}'
+    +'.foot{text-align:center;font-size:10px;color:#999;margin-top:20px;border-top:1px solid #eee;padding-top:8px}'
+    +'</style></head><body>'
+    +'<div class="hdr">'+logo+'<div style="text-align:left"><div style="font-size:11px;color:#555">التقرير الكامل للمشروع</div><div style="font-size:11px;color:#888">'+new Date().toLocaleDateString('ar-SA')+'</div></div></div>'
+    +'<h1>'+proj.name+'</h1>'
+    +'<div style="color:#555;font-size:11px;margin-bottom:14px">'+proj.client+(proj.type?' · '+proj.type:'')+'</div>'
+    +'<h2>توزيع قيمة العقد</h2>'
+    +'<table><thead><tr><th>البند</th><th>القيمة</th><th>المعادلة</th></tr></thead><tbody>'+distRows+'</tbody></table>'
+    +(txnRows?'<h2>سجل المعاملات</h2>'
+      +'<table><thead><tr><th>التاريخ</th><th>البيان</th><th>النوع</th><th>المبلغ</th><th>الجهة</th><th>الحالة</th><th>ربح</th></tr></thead><tbody>'+txnRows+'</tbody></table>':'')
+    +'<div class="foot">بُعد التمكين — وثيقة آلية</div>'
+    +'</body></html>';
 }
 
 
@@ -2560,9 +2746,27 @@ document.addEventListener('DOMContentLoaded', function() {
             <option value="other">أخرى</option>
           </select>
         </div>
+        <div class="mf-row" id="ae-etype-row" style="display:none">
+          <label class="mf-lbl">نوع المصروف</label>
+          <select class="mf-inp" id="ae-etype" onchange="toggleAEProfitRow()">
+            <option value="exec">مصروف تنفيذ</option>
+            <option value="cashback">كاش باك</option>
+            <option value="other">غيره</option>
+          </select>
+        </div>
         <div class="mf-row">
           <label class="mf-lbl">المبلغ (ر.س)</label>
           <input type="number" class="mf-inp" id="ae-amount" min="0" step="any" placeholder="0.00">
+        </div>
+        <div class="mf-row" id="ae-profit-row" style="display:none">
+          <label class="mf-lbl">هامش الربح من هذا البند</label>
+          <div style="display:flex;gap:7px">
+            <select class="mf-inp" id="ae-profit-t" style="width:72px;flex-shrink:0">
+              <option value="fix">ر.س</option>
+              <option value="pct">%</option>
+            </select>
+            <input type="number" class="mf-inp" id="ae-profit-v" placeholder="0" min="0" step="any">
+          </div>
         </div>
         <div class="mf-row">
           <label class="mf-lbl">الجهة المستفيدة</label>
