@@ -1430,8 +1430,14 @@ function computeProjectFinSummary(proj) {
   var profitFromEntries = dashEntries.reduce(function(s,e){ return s + (e.type==='expense' ? (e.profit_margin||0) : 0); }, 0);
   var isInternalMkt = !!fm['mkt-internal'];
 
+  var execIncomeReg = dashEntries.filter(function(e){return e.type==='income' && e.category==='exec';}).reduce(function(s,e){return s+(e.amount||0);},0);
+  var execHasIncome = execIncomeReg > 0;
+  // إذا تم تسجيل الأتعاب كدخل → يُستخدم الرقم الفعلي لتفادي التكرار
+  var otherInc = dashInc - execIncomeReg;
+  var profit = execHasIncome
+    ? Math.max(0, dashInc - dashExp + profitFromEntries + (isInternalMkt ? mkt : 0))
+    : Math.max(0, execAmt - dashExp + profitFromEntries + dashInc + (isInternalMkt ? mkt : 0));
   var expenses  = finTotal + dashExp;
-  var profit    = Math.max(0, execAmt - dashExp + profitFromEntries + dashInc + (isInternalMkt ? mkt : 0));
   var remaining = grossTotal - finTotal - dashExp + dashInc;
 
   return {grossTotal:grossTotal, contractNet:g, vatAmt:vatAmt, vatPct:vatPct,
@@ -1440,6 +1446,7 @@ function computeProjectFinSummary(proj) {
            execT:execT, execV:execV, execBase:execBase, execBV:execBV,
            execPct:execPct, execAmt:execAmt, availableForWork:availableForWork,
            expenses:expenses, profit:profit, paid:paid, remaining:remaining,
+           execIncomeReg:execIncomeReg, execHasIncome:execHasIncome,
            fin:d.fin||[], spendItems:d.spend_items||[],
            surplusDed:d.surplus_deductions||[], dashEntries:dashEntries, form:fm,
            profitFromEntries:profitFromEntries};
@@ -1636,26 +1643,45 @@ function _renderAgrItems() {
   var proj = PROJECTS.find(function(p){return p.id===_curFinProjId;});
   if (!proj) return;
   var s = computeProjectFinSummary(proj);
+  // تتبع ما تم تسجيله بالفعل
+  var regMap = {};
+  (s.dashEntries||[]).forEach(function(e){ regMap[e.category] = (regMap[e.category]||0) + (e.amount||0); });
   var items = [];
-  if (s.vatAmt > 0)  items.push({lbl:'ضريبة القيمة المضافة ('+s.vatPct+'%)', amt:s.vatAmt, cat:'vat',      type:'expense', party:''});
-  if (s.mkt  > 0)    items.push({lbl:'التسويق',  amt:s.mkt,  cat:'mkt',      type:'expense', party:''});
-  if (s.cb   > 0)    items.push({lbl:'الكاش باك', amt:s.cb,  cat:'cashback', type:'expense', party:''});
-  if (s.execAmt > 0) items.push({lbl:'أتعاب التنفيذ', amt:s.execAmt, cat:'exec', type:'expense', party:''});
+  if (s.vatAmt  > 0) items.push({lbl:'ضريبة القيمة المضافة', amt:s.vatAmt, cat:'vat',      type:'expense', party:'', icon:'🏛'});
+  if (s.mkt     > 0) items.push({lbl:'التسويق',               amt:s.mkt,   cat:'mkt',      type:'expense', party:'', icon:'📢'});
+  if (s.cb      > 0) items.push({lbl:'الكاش باك',             amt:s.cb,    cat:'cashback', type:'expense', party:'', icon:'↩'});
+  if (s.execAmt > 0) items.push({lbl:'أتعاب التنفيذ',         amt:s.execAmt, cat:'exec',   type:'income',  party:'', icon:'💰'});
   (s.fin||[]).forEach(function(f){
-    if ((f.a||0) > 0) items.push({lbl:f.c||'بند ميزانية', amt:f.a, cat:_catLabel(f.cat||'exec'), type:'expense', party:f.o||''});
+    if ((f.a||0) > 0) items.push({lbl:f.c||'بند ميزانية', amt:f.a, cat:_catLabel(f.cat||'exec'), type:'expense', party:f.o||'', icon:'📋'});
   });
   if (!items.length) {
     bd.innerHTML = '<div style="text-align:center;color:var(--mu);padding:24px;font-size:12px">لا توجد بنود في الاتفاقية — أكمل إعداد الاتفاق المالي أولاً</div>';
     bd._items = [];
     return;
   }
-  bd.innerHTML = items.map(function(it, i){
-    return '<div class="agr-item-row">'
-      + '<div class="agr-item-lbl">'+escHtml(it.lbl)+'</div>'
-      + '<div class="agr-item-amt">'+fmt(it.amt)+' ر.س</div>'
-      + '<button class="tb-btn-sm prim" style="flex-shrink:0;font-size:10.5px" onclick="registerAgrItem('+i+')">تسجيل</button>'
-      + '</div>';
-  }).join('');
+  // حساب المتبقي = قيمة العقد - المصاريف المسجّلة
+  var dashExpTotal = (s.dashEntries||[]).filter(function(e){return e.type==='expense';}).reduce(function(a,e){return a+(e.amount||0);},0);
+  var remAmt = s.grossTotal - dashExpTotal;
+  var remColor = remAmt < 0 ? 'var(--R)' : 'var(--S)';
+  bd.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0 12px;border-bottom:.5px solid var(--bd);margin-bottom:6px">'
+    + '<span style="font-size:10.5px;color:var(--mu)">بنود الاتفاقية</span>'
+    + '<span style="font-size:11px;font-weight:600;color:'+remColor+'">المتبقي: '+fmt(remAmt)+' ر.س</span>'
+    + '</div>'
+    + items.map(function(it, i){
+      var isReg = (regMap[it.cat]||0) >= it.amt * 0.99;
+      var typeTag = it.type === 'income'
+        ? '<span style="font-size:9px;background:#e8f5e9;color:var(--S);border-radius:4px;padding:1px 5px;margin-right:4px">دخل</span>'
+        : '<span style="font-size:9px;background:#fce8e8;color:var(--R);border-radius:4px;padding:1px 5px;margin-right:4px">مصروف</span>';
+      var regBadge = isReg ? '<span style="font-size:9px;color:var(--S);margin-right:4px">✓ مسجّل</span>' : '';
+      var btnHtml = isReg
+        ? '<span style="font-size:10px;color:var(--mu);flex-shrink:0">تم التسجيل</span>'
+        : '<button class="tb-btn-sm prim" style="flex-shrink:0;font-size:10.5px" onclick="registerAgrItem('+i+')">تسجيل</button>';
+      return '<div class="agr-item-row" style="'+(isReg?'opacity:.65;':'')+'">'
+        + '<div class="agr-item-lbl">'+typeTag+'<span>'+escHtml(it.lbl)+'</span>'+regBadge+'</div>'
+        + '<div class="agr-item-amt">'+fmt(it.amt)+' ر.س</div>'
+        + btnHtml
+        + '</div>';
+    }).join('');
   bd._items = items;
 }
 
@@ -1673,9 +1699,9 @@ window.registerAgrItem = function(i) {
   if (!Array.isArray(d.dash_entries)) d.dash_entries = [];
   d.dash_entries.push(entry);
   localStorage.setItem('buad_data_'+_curFinProjId, JSON.stringify(d));
-  closeAddEntry();
   _finDetailProjId = _curFinProjId;
   renderFinProject();
+  _renderAgrItems();
 };
 
 function closeAddEntry(){
@@ -2348,16 +2374,18 @@ function _renderFinProjDistribution(s) {
   var execFml = s.execT === 'fix'
     ? '(قيمة ثابتة)'
     : s.execV + '% × ' + fmt(s.execBV) + ' (' + execBaseLbl2 + ') = ' + fmt(s.execAmt);
-  rows += _row('أتعاب التنفيذ (الأرباح المتوقعة)' + (s.execT==='pct' ? ' ('+s.execV+'%)' : ''), execFml, fmt(s.execAmt)+' ر.س', 'avail');
-  if (s.expenses > 0 || s.profit > 0) {
-    var _dashExp = (s.dashEntries||[]).filter(function(e){return e.type==='expense';}).reduce(function(a,e){return a+(e.amount||0);},0);
-    if (_dashExp > 0) {
-      rows += _row('المصاريف المسجّلة من الأتعاب', '', '− '+fmt(_dashExp)+' ر.س', 'deduct sub');
-    }
-    if (s.profitFromEntries > 0) {
-      rows += _row('هوامش الربح المضافة من البنود', '', '+ '+fmt(s.profitFromEntries)+' ر.س', 'sub');
-    }
-    rows += _row('صافي الربح المتوقع', '', fmt(s.profit)+' ر.س', 'total');
+  var execLbl = 'أتعاب التنفيذ (دخل الشركة)' + (s.execT==='pct' ? ' ('+s.execV+'%)' : '');
+  var execRegNote = s.execHasIncome ? ' — مسجّل ✓' : ' — لم يُسجَّل بعد';
+  rows += _row(execLbl + execRegNote, execFml, fmt(s.execAmt)+' ر.س', 'avail');
+  var _dashExp = (s.dashEntries||[]).filter(function(e){return e.type==='expense';}).reduce(function(a,e){return a+(e.amount||0);},0);
+  if (_dashExp > 0) {
+    rows += _row('المصاريف المسجّلة', '', '− '+fmt(_dashExp)+' ر.س', 'deduct sub');
+  }
+  if (s.profitFromEntries > 0) {
+    rows += _row('هوامش ربح من البنود', '', '+ '+fmt(s.profitFromEntries)+' ر.س', 'sub');
+  }
+  if (s.profit > 0 || _dashExp > 0) {
+    rows += _row('صافي الربح', '', fmt(s.profit)+' ر.س', 'total');
   }
   bd.innerHTML = rows;
 }
