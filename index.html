@@ -416,12 +416,27 @@ body{font-family:"IBM Plex Sans Arabic",sans-serif;direction:rtl;background:var(
   .sc-ico{width:30px!important;height:30px!important;font-size:13px!important;flex-shrink:0}
   .sc-num{font-size:13px!important}
   .sc-lbl{font-size:9px!important}
+  #page-finproject .tb-btn > span:not(:first-child){display:none}
+  #page-finproject .tb-btn{padding:6px 8px!important;min-width:36px;justify-content:center}
+  #page-finproject .tb-btn.sec > span:not(:first-child){display:inline}
   .agr-popup-inner{max-height:88vh!important}
   .entry-table th,.entry-table td{padding:6px 7px!important;font-size:10.5px!important}
 }
 @media(max-width:480px){
   #fpj-stats-row{grid-template-columns:1fr 1fr!important}
 }
+/* ── Entry Table enhancements ── */
+.et-row-exp>td:first-child{box-shadow:inset 3px 0 0 var(--R)}
+.et-row-inc>td:first-child{box-shadow:inset 3px 0 0 var(--S)}
+.et-sts{display:inline-flex;align-items:center;padding:2px 8px;border-radius:10px;font-size:9.5px;font-weight:600;white-space:nowrap}
+.et-sts-pending{background:var(--Gl);color:var(--G)}
+.et-sts-approved{background:var(--Nl);color:var(--N)}
+.et-sts-paid{background:var(--Sl);color:var(--S)}
+.et-amt-exp{color:var(--R);font-family:"IBM Plex Mono",monospace;font-weight:600}
+.et-amt-inc{color:var(--S);font-family:"IBM Plex Mono",monospace;font-weight:600}
+.et-edit-btn,.et-del-btn{background:none;border:none;cursor:pointer;padding:3px 5px;border-radius:5px;line-height:1;transition:.15s}
+.et-edit-btn:hover{background:var(--Nl)}
+.et-del-btn:hover{background:var(--Rl)}
 /* ── FinProject action bar ── */
 .fpj-action-bar{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px}
 .fpj-ab-btn{font-family:inherit;display:inline-flex;align-items:center;gap:5px;padding:7px 13px;border-radius:8px;border:1px solid var(--bd);font-size:12px;font-weight:500;cursor:pointer;background:var(--w);color:var(--tx);transition:.15s;white-space:nowrap}
@@ -615,13 +630,31 @@ body{font-family:"IBM Plex Sans Arabic",sans-serif;direction:rtl;background:var(
         <div id="prod-grid" class="prod-pg-grid"></div>
       </div>
       <div class="page" id="page-finproject">
-        <div class="sec-head" style="align-items:center;flex-wrap:nowrap;gap:8px">
-          <button class="tb-btn" onclick="doGoPage('finance')" style="font-size:12px;padding:5px 10px;flex-shrink:0">← العودة</button>
-          <div style="flex:1;min-width:0;overflow:hidden">
-            <h2 id="fpj-name" style="font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">—</h2>
-            <div style="font-size:10px;color:var(--mu);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" id="fpj-sub">—</div>
+        <div class="sec-head" style="align-items:center;flex-wrap:wrap;gap:8px">
+          <button class="tb-btn" onclick="doGoPage('finance')" style="font-size:12px;padding:5px 12px">← العودة للمالية</button>
+          <div style="flex:1;min-width:120px">
+            <h2 id="fpj-name" style="font-size:15px;font-weight:600">—</h2>
+            <div style="font-size:11px;color:var(--mu);margin-top:2px" id="fpj-sub">—</div>
           </div>
-          <span id="fpj-badge" class="fp-badge" style="align-self:center;flex-shrink:0"></span>
+          <span id="fpj-badge" class="fp-badge" style="align-self:center"></span>
+          <div class="fpj-top-actions">
+            <div style="position:relative" id="fpj-rpt-wrap">
+              <button class="tb-btn" onclick="toggleFpjReportsMenu()" style="display:flex;align-items:center;gap:5px">
+                <span style="font-size:13px">📊</span><span>التقارير</span><span style="font-size:9px;opacity:.55">▾</span>
+              </button>
+              <div id="fpj-rpt-menu" style="display:none;position:fixed;background:var(--w);border:.5px solid var(--bd);border-radius:10px;box-shadow:0 6px 24px rgba(0,0,0,.16);min-width:196px;z-index:9999;overflow:hidden">
+                <button class="fpj-mi" onclick="exportFinProjExcel();closeFpjReportsMenu()">📊 كشف الحساب Excel</button>
+                <button class="fpj-mi" onclick="exportFinProjPDF();closeFpjReportsMenu()">🖨 تقرير الاتفاق PDF</button>
+                <button class="fpj-mi" onclick="exportFinProjFullPDF();closeFpjReportsMenu()">📄 التقرير الكامل PDF</button>
+              </div>
+            </div>
+            <button class="tb-btn" onclick="exportFinProjAgreementPDF()" style="display:flex;align-items:center;gap:5px">
+              <span style="font-size:13px">📋</span><span>العقد</span>
+            </button>
+            <button class="tb-btn sec" onclick="openFollowupSheet()" style="display:flex;align-items:center;gap:5px">
+              <span style="font-size:13px">✓</span><span>متابعة التنفيذ</span>
+            </button>
+          </div>
         </div>
         <div class="stats-row" id="fpj-stats-row" style="margin-bottom:16px"></div>
         <!-- hidden data containers used by JS -->
@@ -702,34 +735,16 @@ body{font-family:"IBM Plex Sans Arabic",sans-serif;direction:rtl;background:var(
         </div>
         <div id="fpj-dist-body" style="display:none"></div>
         <div id="fpj-dist-section" style="display:none"></div>
-        <!-- Action bar -->
-        <div class="fpj-action-bar">
-          <div style="position:relative" id="fpj-rpt-wrap">
-            <button class="fpj-ab-btn" onclick="toggleFpjReportsMenu()">
-              <span>📊</span><span>التقارير</span><span style="font-size:9px;opacity:.55">▾</span>
-            </button>
-            <div id="fpj-rpt-menu" style="display:none;position:fixed;background:var(--w);border:.5px solid var(--bd);border-radius:10px;box-shadow:0 6px 24px rgba(0,0,0,.16);min-width:196px;z-index:9999;overflow:hidden">
-              <button class="fpj-mi" onclick="exportFinProjExcel();closeFpjReportsMenu()">📊 كشف الحساب Excel</button>
-              <button class="fpj-mi" onclick="exportFinProjPDF();closeFpjReportsMenu()">🖨 تقرير الاتفاق PDF</button>
-              <button class="fpj-mi" onclick="exportFinProjFullPDF();closeFpjReportsMenu()">📄 التقرير الكامل PDF</button>
-            </div>
-          </div>
-          <button class="fpj-ab-btn" onclick="exportFinProjAgreementPDF()">
-            <span>📋</span><span>تصدير العقد</span>
-          </button>
-          <button class="fpj-ab-btn" onclick="openAgrPopup('agr')">
-            <span>📑</span><span>الاتفاق المالي</span>
-          </button>
-          <button class="fpj-ab-btn sec" onclick="openFollowupSheet()">
-            <span>✅</span><span>متابعة التنفيذ</span>
-          </button>
+        <!-- Popup trigger buttons -->
+        <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+          <button class="tb-btn" onclick="openAgrPopup('agr')" style="display:flex;align-items:center;gap:5px"><span>📋</span><span>الاتفاق المالي</span></button>
+          <button class="tb-btn" onclick="openAgrPopup('dist')" style="display:flex;align-items:center;gap:5px"><span>📊</span><span>توزيع قيمة العقد</span></button>
         </div>
         <div class="fpj-section">
           <div class="fpj-sh">
             سجل المعاملات
             <div style="display:flex;gap:6px;margin-right:auto">
-              <button class="tb-btn-sm prim" onclick="openAddEntry('expense')">+ مصروف</button>
-              <button class="tb-btn-sm suc" onclick="openAddEntry('income')">+ دخل</button>
+              <button class="tb-btn-sm prim" onclick="openAddEntry('expense')">+ إضافة بند</button>
             </div>
           </div>
           <div class="entry-table-scroll">
@@ -1530,29 +1545,15 @@ function _renderFinDetailEntries(s){
 function toggleAEProfitRow() {
   var et = document.getElementById('ae-etype');
   var pr = document.getElementById('ae-profit-row');
-  if (pr && et) pr.style.display = (_addEntryType === 'expense' && et.value === 'exec') ? '' : 'none';
-}
-
-function switchEntryType(type) {
-  _addEntryType = type;
-  var isExp = (type === 'expense');
-  var te = document.getElementById('ae-tog-expense');
-  var ti = document.getElementById('ae-tog-income');
-  if (te) te.classList.toggle('act', isExp);
-  if (ti) ti.classList.toggle('act', !isExp);
-  var etRow = document.getElementById('ae-etype-row');
-  var prRow = document.getElementById('ae-profit-row');
-  var partyLbl = document.getElementById('ae-party-lbl');
-  if (etRow) etRow.style.display = isExp ? '' : 'none';
-  if (partyLbl) partyLbl.textContent = isExp ? 'الجهة المستفيدة' : 'الجهة الدافعة';
-  if (prRow) {
-    var et = document.getElementById('ae-etype');
-    prRow.style.display = (isExp && et && et.value === 'exec') ? '' : 'none';
-  }
+  if (pr && et) pr.style.display = (et.value === 'exec') ? '' : 'none';
 }
 
 function openAddEntry(type){
   _editEntryIdx = -1;
+  _addEntryType = type || 'expense';
+  var isExp = (_addEntryType === 'expense');
+  var titleEl = document.getElementById('add-entry-title');
+  if (titleEl) titleEl.textContent = isExp ? '+ إضافة مصروف' : '+ إضافة دخل';
   var dateEl = document.getElementById('ae-date');
   if (dateEl) dateEl.value = new Date().toISOString().split('T')[0];
   ['ae-desc','ae-amount','ae-party','ae-profit-v','ae-invoice-no'].forEach(function(id){
@@ -1565,7 +1566,10 @@ function openAddEntry(type){
   var st = document.getElementById('ae-status'); if(st) st.value='pending';
   var et = document.getElementById('ae-etype');   if(et) et.value='exec';
   var pt = document.getElementById('ae-profit-t'); if(pt) pt.value='fix';
-  switchEntryType(type || 'expense');
+  var etRow = document.getElementById('ae-etype-row');
+  var prRow = document.getElementById('ae-profit-row');
+  if (etRow) etRow.style.display = isExp ? '' : 'none';
+  if (prRow) prRow.style.display = isExp ? '' : 'none';
   var bg = document.getElementById('add-entry-modal-bg');
   if (bg) bg.classList.add('open');
 }
@@ -2331,27 +2335,30 @@ function _renderFinProjEntries(s) {
     tb.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:22px;color:var(--mu)">لا توجد معاملات — أضف مصروفاً أو دخلاً</td></tr>';
     return;
   }
+  var _stMap = {pending:'معلّق', approved:'معتمد', paid:'مدفوع'};
+  var _stCls = {pending:'et-sts-pending', approved:'et-sts-approved', paid:'et-sts-paid'};
   tb.innerHTML = '';
   rows.forEach(function(r){
     var isInc = r.typeKey === 'income';
     var typeBadge = isInc
-      ? '<span style="font-size:10px;font-weight:600;color:var(--S)">دخل</span>'
-      : '<span style="font-size:10px;font-weight:600;color:var(--R)">مصروف'+(r.etype&&r.etype!=='exec'?' ('+(_etypeLbl[r.etype]||r.etype)+')':'')+'</span>';
+      ? '<span style="font-size:10px;font-weight:600;color:var(--S)">↑ دخل</span>'
+      : '<span style="font-size:10px;font-weight:600;color:var(--R)">↓ مصروف'+(r.etype&&r.etype!=='exec'?' ('+(_etypeLbl[r.etype]||r.etype)+')':'')+'</span>';
     var profitCell = (r.profitMargin > 0)
-      ? '<div style="font-size:10px;color:var(--S);margin-top:2px">↑ ربح: '+fmt(r.profitMargin)+' ر.س</div>' : '';
+      ? '<div style="font-size:9.5px;color:var(--S);margin-top:2px">↑ ربح: '+fmt(r.profitMargin)+' ر.س</div>' : '';
     var invBadge = (r.invoice && r.invoice.no)
       ? '<span class="inv-badge">🧾 '+escHtml(r.invoice.no)+(r.invoice.vat?' <span title="ضريبية قابلة للاسترداد" style="color:var(--S)">✓ض</span>':'')+'</span>'
       : '';
     var tr = document.createElement('tr');
+    tr.className = isInc ? 'et-row-inc' : 'et-row-exp';
     tr.innerHTML =
-      '<td style="font-size:11px;color:var(--mu)">'+r.date+'</td>'+
-      '<td>'+escHtml(r.desc)+profitCell+(invBadge?'<div style="margin-top:3px">'+invBadge+'</div>':'')+'</td>'+
-      '<td><span class="fp-badge" style="background:var(--Nl);color:var(--N);font-size:9.5px">'+r.cat+'</span></td>'+
+      '<td style="font-size:10.5px;color:var(--mu);white-space:nowrap">'+r.date+'</td>'+
+      '<td><div style="font-size:12px">'+escHtml(r.desc)+'</div>'+profitCell+(invBadge?'<div style="margin-top:3px">'+invBadge+'</div>':'')+'</td>'+
+      '<td><span class="fp-badge" style="background:var(--Nl);color:var(--N);font-size:9px">'+r.cat+'</span></td>'+
       '<td>'+typeBadge+'</td>'+
-      '<td class="mn '+(isInc?'et-inc':'et-exp')+'" style="text-align:left;direction:ltr">'+fmt(r.amount)+'</td>'+
-      '<td style="font-size:11px;color:var(--mu)">'+escHtml(r.party)+'</td>'+
-      '<td><span style="font-size:10px;color:var(--mu)">'+r.status+'</span></td>'+
-      (r.editable?'<td style="white-space:nowrap"><button style="background:none;border:none;cursor:pointer;color:var(--N);font-size:12px;padding:0 4px;line-height:1" onclick="editFinProjEntry('+r.idx+')" title="تعديل">✎</button><button style="background:none;border:none;cursor:pointer;color:var(--R);font-size:15px;padding:0 3px;line-height:1" onclick="deleteFinProjEntry('+r.idx+')" title="حذف">&#215;</button></td>':'<td></td>');
+      '<td style="text-align:left;direction:ltr"><span class="'+(isInc?'et-amt-inc':'et-amt-exp')+'">'+(isInc?'+ ':'− ')+fmt(r.amount)+'</span></td>'+
+      '<td style="font-size:10.5px;color:var(--mu)">'+escHtml(r.party)+'</td>'+
+      '<td><span class="et-sts '+(_stCls[r.status]||'et-sts-pending')+'">'+(_stMap[r.status]||r.status||'—')+'</span></td>'+
+      (r.editable?'<td style="text-align:center;white-space:nowrap"><button class="et-edit-btn" onclick="editFinProjEntry('+r.idx+')" title="تعديل" style="color:var(--N);font-size:13px">✎</button><button class="et-del-btn" onclick="deleteFinProjEntry('+r.idx+')" title="حذف" style="color:var(--R);font-size:14px">×</button></td>':'<td></td>');
     tb.appendChild(tr);
   });
 }
@@ -2414,7 +2421,7 @@ function exportFinProjExcel() {
 // ── Reports menu helpers ─────────────────────────────────────────
 function toggleFpjReportsMenu() {
   var m = document.getElementById('fpj-rpt-menu');
-  var btn = document.querySelector('#fpj-rpt-wrap .fpj-ab-btn') || document.querySelector('#fpj-rpt-wrap .tb-btn');
+  var btn = document.querySelector('#fpj-rpt-wrap .tb-btn');
   if (!m) return;
   if (m.style.display !== 'none') { closeFpjReportsMenu(); return; }
   if (btn) {
@@ -2861,13 +2868,15 @@ document.addEventListener('DOMContentLoaded', function() {
       _s('ae-invoice-no', '');
       var ivf2 = document.getElementById('ae-invoice-fields'); if(ivf2) ivf2.style.display='none';
     }
+    var etRow = document.getElementById('ae-etype-row');
+    var prRow = document.getElementById('ae-profit-row');
+    if (etRow) etRow.style.display = isExp ? '' : 'none';
+    if (prRow) prRow.style.display = (isExp && (e.etype||'exec')==='exec') ? '' : 'none';
     var titleEl = document.getElementById('add-entry-title');
     if (titleEl) titleEl.textContent = 'تعديل بند';
     _editEntryIdx = idx;
-    switchEntryType(e.type || 'expense');
-    var et = document.getElementById('ae-etype'); if(et) et.value = e.etype || 'exec';
-    toggleAEProfitRow();
-    var modal = document.getElementById('add-entry-modal-bg');
+    _addEntryType = e.type || 'expense';
+    var modal = document.getElementById('add-entry-modal');
     if (modal) modal.classList.add('open');
   };
 
@@ -3113,112 +3122,88 @@ document.addEventListener('DOMContentLoaded', function() {
 
   <!-- ════ Add Entry Modal ════ -->
   <div class="modal-bg" id="add-entry-modal-bg" onclick="if(event.target===this)closeAddEntry()" style="z-index:2200">
-    <div class="modal ae-modal">
-      <!-- Header -->
-      <div class="mh" style="flex-shrink:0">
-        <span id="add-entry-title" style="font-weight:600;font-size:14px">إضافة بند</span>
+    <div class="modal" style="width:min(440px,96vw)">
+      <div class="mh">
+        <div id="add-entry-title" style="font-weight:600;font-size:14px">إضافة بند</div>
         <button onclick="closeAddEntry()" class="x-btn">×</button>
       </div>
-      <!-- Type toggle -->
-      <div style="padding:10px 18px;border-bottom:.5px solid var(--bd);background:var(--sand);flex-shrink:0">
-        <div class="ae-type-seg">
-          <button id="ae-tog-expense" class="ae-tog exp act" onclick="switchEntryType('expense')">⬇ مصروف</button>
-          <button id="ae-tog-income"  class="ae-tog inc"     onclick="switchEntryType('income')">⬆ دخل</button>
+      <div class="mb" style="padding:18px 22px">
+        <div class="mf-row">
+          <label class="mf-lbl">التاريخ</label>
+          <input type="date" class="mf-inp" id="ae-date">
         </div>
-      </div>
-      <!-- Body -->
-      <div class="ae-body">
-        <!-- التاريخ + المبلغ -->
-        <div class="ae-row-2">
-          <div class="ae-field">
-            <label>التاريخ</label>
-            <input type="date" id="ae-date">
-          </div>
-          <div class="ae-field">
-            <label>المبلغ (ر.س)</label>
-            <input type="number" id="ae-amount" min="0" step="any" placeholder="0.00">
-          </div>
+        <div class="mf-row">
+          <label class="mf-lbl">البيان</label>
+          <input type="text" class="mf-inp" id="ae-desc" placeholder="وصف المبلغ">
         </div>
-        <!-- البيان -->
-        <div class="ae-field">
-          <label>البيان</label>
-          <input type="text" id="ae-desc" placeholder="وصف المبلغ">
+        <div class="mf-row">
+          <label class="mf-lbl">التصنيف</label>
+          <select class="mf-inp" id="ae-category">
+            <option value="exec">تنفيذ</option>
+            <option value="mkt">تسويق</option>
+            <option value="cashback">كاش باك</option>
+            <option value="vat">ضريبة</option>
+            <option value="purchase">مشتريات</option>
+            <option value="service">خدمة</option>
+            <option value="other">أخرى</option>
+          </select>
         </div>
-        <!-- التصنيف + الجهة -->
-        <div class="ae-row-2">
-          <div class="ae-field">
-            <label>التصنيف</label>
-            <select id="ae-category">
-              <option value="exec">تنفيذ</option>
-              <option value="mkt">تسويق</option>
-              <option value="cashback">كاش باك</option>
-              <option value="vat">ضريبة</option>
-              <option value="purchase">مشتريات</option>
-              <option value="service">خدمة</option>
-              <option value="other">أخرى</option>
-            </select>
-          </div>
-          <div class="ae-field">
-            <label id="ae-party-lbl">الجهة المستفيدة</label>
-            <input type="text" id="ae-party" placeholder="اسم الشركة أو الشخص">
-          </div>
+        <div class="mf-row" id="ae-etype-row" style="display:none">
+          <label class="mf-lbl">نوع المصروف</label>
+          <select class="mf-inp" id="ae-etype" onchange="toggleAEProfitRow()">
+            <option value="exec">مصروف تنفيذ</option>
+            <option value="cashback">كاش باك</option>
+            <option value="other">غيره</option>
+          </select>
         </div>
-        <!-- الحالة + نوع المصروف -->
-        <div class="ae-row-2">
-          <div class="ae-field">
-            <label>الحالة</label>
-            <select id="ae-status">
-              <option value="pending">معلّق</option>
-              <option value="approved">معتمد</option>
-              <option value="paid">مدفوع</option>
-            </select>
-          </div>
-          <div class="ae-field" id="ae-etype-row">
-            <label>نوع المصروف</label>
-            <select id="ae-etype" onchange="toggleAEProfitRow()">
-              <option value="exec">مصروف تنفيذ</option>
-              <option value="cashback">كاش باك</option>
-              <option value="other">غيره</option>
-            </select>
-          </div>
+        <div class="mf-row">
+          <label class="mf-lbl">المبلغ (ر.س)</label>
+          <input type="number" class="mf-inp" id="ae-amount" min="0" step="any" placeholder="0.00">
         </div>
-        <!-- هامش الربح -->
-        <div id="ae-profit-row" class="ae-field" style="display:none">
-          <label>هامش الربح من هذا البند</label>
+        <div class="mf-row" id="ae-profit-row" style="display:none">
+          <label class="mf-lbl">هامش الربح من هذا البند</label>
           <div style="display:flex;gap:7px">
-            <select id="ae-profit-t" style="width:72px;flex-shrink:0;font-family:inherit;border:.5px solid var(--bd);border-radius:8px;padding:7px 8px;font-size:12px;background:var(--w)">
+            <select class="mf-inp" id="ae-profit-t" style="width:72px;flex-shrink:0">
               <option value="fix">ر.س</option>
               <option value="pct">%</option>
             </select>
-            <input type="number" id="ae-profit-v" placeholder="0" min="0" step="any" style="flex:1;font-family:inherit;border:.5px solid var(--bd);border-radius:8px;padding:7px 10px;font-size:12px;background:var(--w);color:var(--tx)">
+            <input type="number" class="mf-inp" id="ae-profit-v" placeholder="0" min="0" step="any">
           </div>
         </div>
-        <!-- الفاتورة -->
-        <div class="ae-inv-wrap">
-          <label class="ae-inv-lbl">
-            <input type="checkbox" id="ae-has-invoice" onchange="toggleInvoiceFields()">
-            <span>يوجد فاتورة لهذا البند</span>
+        <div class="mf-row">
+          <label class="mf-lbl">الجهة المستفيدة</label>
+          <input type="text" class="mf-inp" id="ae-party" placeholder="اسم الشركة أو الشخص">
+        </div>
+        <div class="mf-row">
+          <label class="mf-lbl">الحالة</label>
+          <select class="mf-inp" id="ae-status">
+            <option value="pending">معلّق</option>
+            <option value="approved">معتمد</option>
+            <option value="paid">مدفوع</option>
+          </select>
+        </div>
+        <div class="mf-row">
+          <label class="mf-lbl">فاتورة</label>
+          <label style="display:flex;align-items:center;gap:7px;font-size:12px;cursor:pointer;padding:8px 0">
+            <input type="checkbox" id="ae-has-invoice" onchange="toggleInvoiceFields()"> يوجد فاتورة لهذا البند
           </label>
-          <div id="ae-invoice-fields" style="display:none;margin-top:10px">
-            <div class="ae-row-2">
-              <div class="ae-field">
-                <label>رقم الفاتورة</label>
-                <input type="text" id="ae-invoice-no" placeholder="INV-2025-001">
-              </div>
-              <div class="ae-field" style="justify-content:flex-end">
-                <label>&nbsp;</label>
-                <label class="ae-chk-lbl">
-                  <input type="checkbox" id="ae-vat-invoice"> فاتورة ضريبية
-                </label>
-              </div>
-            </div>
+        </div>
+        <div id="ae-invoice-fields" style="display:none">
+          <div class="mf-row">
+            <label class="mf-lbl">رقم الفاتورة</label>
+            <input type="text" class="mf-inp" id="ae-invoice-no" placeholder="INV-2025-001">
+          </div>
+          <div class="mf-row">
+            <label class="mf-lbl">نوع الفاتورة</label>
+            <label style="display:flex;align-items:center;gap:7px;font-size:12px;cursor:pointer;padding:8px 0">
+              <input type="checkbox" id="ae-vat-invoice"> فاتورة ضريبية (قابلة للاسترداد)
+            </label>
           </div>
         </div>
       </div>
-      <!-- Footer -->
-      <div class="mfoot" style="flex-shrink:0">
-        <button class="tb-btn" onclick="closeAddEntry()">إلغاء</button>
-        <button class="tb-btn pri" onclick="saveAddEntry()">حفظ البند</button>
+      <div class="mfoot">
+        <button class="mf-cancel" onclick="closeAddEntry()">إلغاء</button>
+        <button class="mf-save" onclick="saveAddEntry()">حفظ البند</button>
       </div>
     </div>
   </div>
