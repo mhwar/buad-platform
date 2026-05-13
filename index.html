@@ -437,6 +437,14 @@ body{font-family:"IBM Plex Sans Arabic",sans-serif;direction:rtl;background:var(
 .et-edit-btn,.et-del-btn{background:none;border:none;cursor:pointer;padding:3px 5px;border-radius:5px;line-height:1;transition:.15s}
 .et-edit-btn:hover{background:var(--Nl)}
 .et-del-btn:hover{background:var(--Rl)}
+/* ── Add Entry modal tabs ── */
+.ae-tabs{display:flex;border-bottom:.5px solid var(--bd);margin:-18px -22px 14px;padding:0 16px}
+.ae-tab{font-family:inherit;padding:8px 14px;font-size:12px;border:none;background:transparent;cursor:pointer;color:var(--mu);border-bottom:2px solid transparent;transition:.15s;white-space:nowrap}
+.ae-tab.act{color:var(--N);border-bottom-color:var(--N);font-weight:600}
+.agr-item-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:.5px solid var(--bd)}
+.agr-item-row:last-child{border-bottom:none}
+.agr-item-lbl{flex:1;font-size:12px;color:var(--tx)}
+.agr-item-amt{font-family:"IBM Plex Mono",monospace;font-size:12px;font-weight:600;color:var(--R);white-space:nowrap}
 /* ── FinProject action bar ── */
 .fpj-action-bar{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px}
 .fpj-ab-btn{font-family:inherit;display:inline-flex;align-items:center;gap:5px;padding:7px 13px;border-radius:8px;border:1px solid var(--bd);font-size:12px;font-weight:500;cursor:pointer;background:var(--w);color:var(--tx);transition:.15s;white-space:nowrap}
@@ -651,9 +659,8 @@ body{font-family:"IBM Plex Sans Arabic",sans-serif;direction:rtl;background:var(
             </div>
           </div>
           <button class="fpj-ab-btn" onclick="exportFinProjAgreementPDF()"><span>📋</span><span>تصدير العقد</span></button>
-          <button class="fpj-ab-btn" onclick="openAgrPopup('agr')"><span>📑</span><span>الاتفاق المالي</span></button>
-          <button class="fpj-ab-btn" onclick="openAgrPopup('dist')"><span>📊</span><span>توزيع العقد</span></button>
-          <button class="fpj-ab-btn sec" onclick="openFollowupSheet()"><span>✅</span><span>متابعة التنفيذ</span></button>
+          <button class="fpj-ab-btn" onclick="openAgrPopup('agr')"><span>📑</span><span>الاتفاقية والتوزيع</span></button>
+          <button class="fpj-ab-btn sec" onclick="openFollowupSheet()"><span>📋</span><span>المهام</span></button>
         </div>
         <!-- hidden data containers used by JS -->
         <div id="fpj-agr-view" style="display:none"></div>
@@ -1385,7 +1392,7 @@ function computeProjectFinSummary(proj) {
   var isInternalMkt = !!fm['mkt-internal'];
 
   var expenses  = finTotal + dashExp;
-  var profit    = Math.max(0, availableForWork - finTotal - dashExp + profitFromEntries + dashInc + (isInternalMkt ? mkt : 0));
+  var profit    = Math.max(0, availableForWork - dashExp + profitFromEntries + dashInc + (isInternalMkt ? mkt : 0));
   var remaining = grossTotal - finTotal - dashExp + dashInc;
 
   return {grossTotal:grossTotal, contractNet:g, vatAmt:vatAmt, vatPct:vatPct,
@@ -1567,7 +1574,70 @@ function openAddEntry(type){
   if (prRow) prRow.style.display = isExp ? '' : 'none';
   var bg = document.getElementById('add-entry-modal-bg');
   if (bg) bg.classList.add('open');
+  switchAeTab('new');
 }
+
+function switchAeTab(tab) {
+  var tabNew = document.getElementById('ae-tab-new');
+  var tabAgr = document.getElementById('ae-tab-agr');
+  var newBody = document.getElementById('ae-new-body');
+  var agrBody = document.getElementById('ae-agr-body');
+  var mfoot = document.querySelector('#add-entry-modal-bg .mfoot');
+  if (tabNew) tabNew.classList.toggle('act', tab==='new');
+  if (tabAgr) tabAgr.classList.toggle('act', tab==='agr');
+  if (newBody) newBody.style.display = tab==='new' ? '' : 'none';
+  if (agrBody) agrBody.style.display = tab==='agr' ? '' : 'none';
+  if (mfoot) mfoot.style.display = tab==='new' ? '' : 'none';
+  if (tab==='agr') _renderAgrItems();
+}
+
+function _renderAgrItems() {
+  var bd = document.getElementById('ae-agr-body');
+  if (!bd || !_curFinProjId) return;
+  var proj = PROJECTS.find(function(p){return p.id===_curFinProjId;});
+  if (!proj) return;
+  var s = computeProjectFinSummary(proj);
+  var items = [];
+  if (s.vatAmt > 0)  items.push({lbl:'ضريبة القيمة المضافة ('+s.vatPct+'%)', amt:s.vatAmt, cat:'vat',      type:'expense', party:''});
+  if (s.mkt  > 0)    items.push({lbl:'التسويق',  amt:s.mkt,  cat:'mkt',      type:'expense', party:''});
+  if (s.cb   > 0)    items.push({lbl:'الكاش باك', amt:s.cb,  cat:'cashback', type:'expense', party:''});
+  if (s.execAmt > 0) items.push({lbl:'أتعاب التنفيذ', amt:s.execAmt, cat:'exec', type:'expense', party:''});
+  (s.fin||[]).forEach(function(f){
+    if ((f.a||0) > 0) items.push({lbl:f.c||'بند ميزانية', amt:f.a, cat:_catLabel(f.cat||'exec'), type:'expense', party:f.o||''});
+  });
+  if (!items.length) {
+    bd.innerHTML = '<div style="text-align:center;color:var(--mu);padding:24px;font-size:12px">لا توجد بنود في الاتفاقية — أكمل إعداد الاتفاق المالي أولاً</div>';
+    bd._items = [];
+    return;
+  }
+  bd.innerHTML = items.map(function(it, i){
+    return '<div class="agr-item-row">'
+      + '<div class="agr-item-lbl">'+escHtml(it.lbl)+'</div>'
+      + '<div class="agr-item-amt">'+fmt(it.amt)+' ر.س</div>'
+      + '<button class="tb-btn-sm prim" style="flex-shrink:0;font-size:10.5px" onclick="registerAgrItem('+i+')">تسجيل</button>'
+      + '</div>';
+  }).join('');
+  bd._items = items;
+}
+
+window.registerAgrItem = function(i) {
+  var bd = document.getElementById('ae-agr-body');
+  var items = bd ? bd._items : null;
+  if (!items || !items[i] || !_curFinProjId) return;
+  var it = items[i];
+  var today = new Date().toISOString().split('T')[0];
+  var entry = {date:today, desc:it.lbl, category:it.cat, type:it.type, etype:'exec',
+               amount:it.amt, profit_margin:0, party:it.party||'', status:'pending', invoice:null};
+  var d = null;
+  try { d = JSON.parse(localStorage.getItem('buad_data_'+_curFinProjId)||'null'); } catch(e){}
+  if (!d || typeof d!=='object') d = {};
+  if (!Array.isArray(d.dash_entries)) d.dash_entries = [];
+  d.dash_entries.push(entry);
+  localStorage.setItem('buad_data_'+_curFinProjId, JSON.stringify(d));
+  closeAddEntry();
+  _finDetailProjId = _curFinProjId;
+  renderFinProject();
+};
 
 function closeAddEntry(){
   var bg = document.getElementById('add-entry-modal-bg');
@@ -2899,6 +2969,7 @@ document.addEventListener('DOMContentLoaded', function() {
     _finDetailProjId = _curFinProjId;
     var bg = document.getElementById('add-entry-modal-bg');
     if (bg) bg.classList.add('open');
+    switchAeTab('new');
   };
 
   // ── Followup Bottom Sheet ─────────────────────────────────────
@@ -2906,10 +2977,34 @@ document.addEventListener('DOMContentLoaded', function() {
 
   window.openFollowupSheet = function() {
     if (!_curFinProjId) return;
+    var data = _getFupsTasks();
+    var isEmpty = !(data.tasks && data.tasks.length) && !(data['req-us'] && data['req-us'].length) && !(data['req-cl'] && data['req-cl'].length);
+    if (isEmpty) {
+      data.tasks = [
+        {text:'توقيع العقد', done:false},
+        {text:'استلام الدفعة الأولى', done:false},
+        {text:'تسليم الوثائق والمستندات', done:false},
+        {text:'بدء التنفيذ', done:false},
+        {text:'متابعة سير العمل', done:false},
+        {text:'تسليم المخرجات', done:false},
+        {text:'الفاتورة الختامية', done:false},
+        {text:'استلام الدفعة الأخيرة', done:false},
+        {text:'إغلاق الملف', done:false}
+      ];
+      data['req-us'] = [
+        {text:'توثيق بيانات العميل', done:false},
+        {text:'الحصول على الموافقات اللازمة', done:false}
+      ];
+      data['req-cl'] = [
+        {text:'تقديم المستندات المطلوبة', done:false},
+        {text:'التوقيع على محاضر الاستلام', done:false}
+      ];
+      _saveFupsTasks(data);
+    }
     var proj = PROJECTS.find(function(p){ return p.id === _curFinProjId; });
     var title = proj ? proj.name : 'المشروع';
     var titleEl = document.getElementById('fups-title');
-    if (titleEl) titleEl.textContent = 'متابعة: ' + title;
+    if (titleEl) titleEl.textContent = 'مهام: ' + title;
     var bg = document.getElementById('fups-bg');
     var sh = document.getElementById('fups-sheet');
     if (!sh || !bg) return;
@@ -3164,7 +3259,12 @@ document.addEventListener('DOMContentLoaded', function() {
         <div id="add-entry-title" style="font-weight:600;font-size:14px">إضافة بند</div>
         <button onclick="closeAddEntry()" class="x-btn">×</button>
       </div>
-      <div class="mb" style="padding:18px 22px">
+      <div class="ae-tabs">
+        <button class="ae-tab act" id="ae-tab-new" onclick="switchAeTab('new')">بند جديد</button>
+        <button class="ae-tab"    id="ae-tab-agr" onclick="switchAeTab('agr')">من الاتفاقية</button>
+      </div>
+      <div id="ae-agr-body" style="display:none;padding:14px 22px 16px;overflow-y:auto;max-height:55vh"></div>
+      <div class="mb" id="ae-new-body" style="padding:18px 22px">
         <div class="mf-row">
           <label class="mf-lbl">التاريخ</label>
           <input type="date" class="mf-inp" id="ae-date">
