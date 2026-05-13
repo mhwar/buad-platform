@@ -666,18 +666,34 @@ body{font-family:"IBM Plex Sans Arabic",sans-serif;direction:rtl;background:var(
         <div id="fpj-agr-view" style="display:none"></div>
         <div id="fpj-agr-form" style="display:none">
           <div class="fpj-form-grid">
+              <!-- قيمة العقد + شامل/غير شامل الضريبة -->
+              <div class="fpj-form-field" style="grid-column:1/-1">
+                <label>قيمة العقد (ر.س)</label>
+                <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+                  <input type="number" id="fpj-c-gross" placeholder="0" min="0" step="any" oninput="_updateVatHint()" style="flex:1;min-width:120px">
+                  <div class="base-seg" style="margin:0">
+                    <button id="fpj-vat-excl-btn" onclick="setVatInclusion(false)" class="act">غير شامل الضريبة</button>
+                    <button id="fpj-vat-incl-btn" onclick="setVatInclusion(true)">شامل الضريبة</button>
+                  </div>
+                </div>
+                <div id="fpj-vat-hint" style="font-size:10px;color:var(--mu);margin-top:5px;min-height:14px"></div>
+              </div>
+              <!-- ضريبة القيمة المضافة -->
               <div class="fpj-form-field">
-                <label>قيمة العقد الإجمالية (ر.س)</label>
-                <input type="number" id="fpj-c-gross" placeholder="0" min="0" step="any">
+                <label>ضريبة القيمة المضافة</label>
+                <div style="display:flex;gap:6px">
+                  <select id="fpj-vat-t" onchange="updateBaseSegVisibility('vat');_updateVatHint()" style="font-family:inherit;border:.5px solid var(--bd);border-radius:8px;padding:7px 8px;font-size:12px;background:var(--w);width:72px">
+                    <option value="pct">%</option>
+                    <option value="fix">ر.س</option>
+                  </select>
+                  <input type="number" id="fpj-vat-v" placeholder="15" min="0" step="any" oninput="_updateVatHint()" style="flex:1;font-family:inherit;border:.5px solid var(--bd);border-radius:8px;padding:7px 10px;font-size:12px;background:var(--w);color:var(--tx)">
+                </div>
+                <div class="base-seg" id="fpj-vat-base-seg">
+                  <button id="fpj-vat-base-gross" onclick="setBase('vat','gross');_updateVatHint()" class="act">من الإجمالي</button>
+                  <button id="fpj-vat-base-net"   onclick="setBase('vat','net');_updateVatHint()">من الصافي</button>
+                </div>
               </div>
-              <div class="fpj-form-field">
-                <label>نسبة ضريبة القيمة المضافة (%)</label>
-                <input type="number" id="fpj-c-vat" placeholder="15" min="0" max="100" step="any">
-              </div>
-              <div class="fpj-form-field" style="justify-content:flex-end">
-                <label>&nbsp;</label>
-                <label class="fpj-form-check"><input type="checkbox" id="fpj-vat-incl"> ضريبة مدمجة في القيمة</label>
-              </div>
+              <!-- رقم العقد / تاريخ / الجهة -->
               <div class="fpj-form-field">
                 <label>رقم العقد</label>
                 <input type="text" id="fpj-c-no" placeholder="رقم العقد">
@@ -690,6 +706,7 @@ body{font-family:"IBM Plex Sans Arabic",sans-serif;direction:rtl;background:var(
                 <label>اسم الجهة في العقد</label>
                 <input type="text" id="fpj-cv-client" placeholder="الاسم الرسمي">
               </div>
+              <!-- قيمة التنفيذ -->
               <div class="fpj-form-field">
                 <label>قيمة التنفيذ</label>
                 <div style="display:flex;gap:6px">
@@ -704,6 +721,7 @@ body{font-family:"IBM Plex Sans Arabic",sans-serif;direction:rtl;background:var(
                   <button id="fpj-exec-base-net"   onclick="setBase('exec','net')">من الصافي</button>
                 </div>
               </div>
+              <!-- قيمة التسويق -->
               <div class="fpj-form-field">
                 <label>قيمة التسويق</label>
                 <div style="display:flex;gap:6px">
@@ -719,6 +737,7 @@ body{font-family:"IBM Plex Sans Arabic",sans-serif;direction:rtl;background:var(
                 </div>
                 <label class="fpj-form-check" style="margin-top:6px"><input type="checkbox" id="fpj-mkt-internal"> المسوّق داخلي (تُحتسب في الربح)</label>
               </div>
+              <!-- قيمة الكاش باك -->
               <div class="fpj-form-field">
                 <label>قيمة الكاش باك</label>
                 <div style="display:flex;gap:6px">
@@ -1341,7 +1360,8 @@ var _BUAD_LOGO_SRC = "data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNv
 var _finDetailProjId = null;
 var _addEntryType = 'expense';
 var _editEntryIdx = -1;
-var _fpjBases = {mkt:'gross', cb:'gross', exec:'gross'};
+var _fpjBases = {mkt:'gross', cb:'gross', exec:'gross', vat:'gross'};
+var _fpjVatIncl = false;
 
 function computeProjectFinSummary(proj) {
   var d = null;
@@ -1355,13 +1375,32 @@ function computeProjectFinSummary(proj) {
              fin:[], spendItems:[], surplusDed:[], dashEntries:[], form:{}, profitFromEntries:0};
   }
   var fm = d.form || {};
-  var grossIn = parseFloat(fm['c-gross']) || proj.value || 0;
-  var vatPct  = parseFloat(fm['c-vat'])   || 0;
-  var vatIncl = !!fm['vat-included'];
-  // g = صافي العقد (بدون الضريبة) — هو الأساس لحساب النسب
-  var g = vatIncl ? grossIn / (1 + vatPct / 100) : grossIn;
-  var grossTotal = vatIncl ? grossIn : g * (1 + vatPct / 100);
-  var vatAmt = grossTotal - g;
+  var grossIn  = parseFloat(fm['c-gross']) || proj.value || 0;
+  var vatIncl  = !!fm['vat-included'];
+  var vatT     = fm['i-vat-t']    || 'pct';
+  var vatV     = fm['i-vat-v'] !== undefined ? (parseFloat(fm['i-vat-v']) || 0) : (parseFloat(fm['c-vat']) || 0);
+  var vatBase  = fm['i-vat-base'] || 'gross';
+  var grossTotal, g, vatAmt, vatPct;
+  if (vatIncl) {
+    if (vatT === 'pct' && vatV > 0) {
+      g = grossIn / (1 + vatV / 100);
+      vatAmt = grossIn - g;
+      vatPct = vatV;
+    } else if (vatT === 'fix') {
+      g = grossIn - vatV;
+      vatAmt = vatV;
+      vatPct = g > 0 ? vatV / g * 100 : 0;
+    } else {
+      g = grossIn; vatAmt = 0; vatPct = 0;
+    }
+    grossTotal = grossIn;
+  } else {
+    g = grossIn;
+    var vatBV = vatBase === 'net' ? g : grossIn;
+    vatAmt = vatT === 'pct' ? vatBV * vatV / 100 : vatV;
+    vatPct = vatT === 'pct' ? vatV : (g > 0 ? vatAmt / g * 100 : 0);
+    grossTotal = g;
+  }
 
   var mktV    = parseFloat(fm['i-mkt-v'])   || 0;
   var mktT    = fm['i-mkt-t']    || 'pct';
@@ -2229,9 +2268,11 @@ function _renderFinAgreementView(s, proj) {
   var vd = document.getElementById('fpj-agr-view');
   if (!vd) return;
   var f = s.form || {};
-  var vatInclTxt = !!f['vat-included'] ? ' (مدمجة)' : '';
-  var vatFormula = s.vatPct > 0
-    ? s.vatPct + '% × ' + fmt(s.contractNet) + ' = ' + fmt(s.vatAmt) + ' ر.س' + vatInclTxt
+  var vatInclTxt = !!f['vat-included'] ? ' (مستخرجة من الإجمالي)' : '';
+  var vatT2 = f['i-vat-t'] || 'pct';
+  var vatBaseLbl2 = (f['i-vat-base']||'gross') === 'net' ? 'صافي' : 'إجمالي';
+  var vatFormula = s.vatAmt > 0
+    ? (vatT2 === 'pct' ? s.vatPct.toFixed(1).replace('.0','')+'% × '+fmt(s.contractNet)+' ('+vatBaseLbl2+') = '+fmt(s.vatAmt)+' ر.س'+vatInclTxt : fmt(s.vatAmt)+' ر.س (مبلغ ثابت)'+vatInclTxt)
     : '—';
   var mktBaseLbl = s.mktBase === 'net' ? 'صافي' : 'إجمالي';
   var cbBaseLbl  = s.cbBase  === 'net' ? 'صافي' : 'إجمالي';
@@ -2243,8 +2284,9 @@ function _renderFinAgreementView(s, proj) {
     : (s.execV < 100
       ? s.execV + '% × ' + fmt(s.execBV) + ' (' + execBaseLbl + ') = ' + fmt(s.execAmt) + ' ر.س'
       : fmt(s.execBV) + ' ر.س (كامل ' + execBaseLbl + ')');
+  var vatInclLabel = !!f['vat-included'] ? 'شامل الضريبة' : 'غير شامل الضريبة';
   var items = [
-    {lbl:'قيمة العقد الإجمالية (شامل الضريبة)', val:fmt(s.grossTotal)+' ر.س'},
+    {lbl:'قيمة العقد ('+vatInclLabel+')', val:fmt(s.grossTotal)+' ر.س'},
     {lbl:'ضريبة القيمة المضافة ('+s.vatPct+'%)', val:vatFormula},
     {lbl:'صافي العقد (الأساس للحسابات)',         val:fmt(s.contractNet)+' ر.س'},
     {lbl:'رقم العقد',           val:f['c-no']||'—'},
@@ -2273,13 +2315,25 @@ function _renderFinProjDistribution(s) {
       +'<div class="fpj-dist-lbl">'+lbl+(formula?'<div class="fpj-dist-formula">'+formula+'</div>':'')+'</div>'
       +'<div class="fpj-dist-v">'+val+'</div></div>';
   };
-  rows += _row('قيمة العقد الإجمالية', '', fmt(s.grossTotal)+' ر.س', 'total');
-  if (s.vatAmt > 0) {
-    rows += _row('ناقص: ضريبة القيمة المضافة ('+s.vatPct+'%)',
-      s.vatPct+'% × '+fmt(s.contractNet)+' = '+fmt(s.vatAmt),
-      '− '+fmt(s.vatAmt)+' ر.س', 'deduct sub');
+  var _vatIncl = !!(s.form && s.form['vat-included']);
+  var _vatT2   = (s.form && s.form['i-vat-t']) || 'pct';
+  var _vatBase2 = (s.form && s.form['i-vat-base']) || 'gross';
+  var _vatFml  = _vatT2 === 'pct'
+    ? s.vatPct.toFixed(1).replace('.0','')+'% × '+fmt(s.contractNet)+' = '+fmt(s.vatAmt)
+    : fmt(s.vatAmt)+' ر.س (مبلغ ثابت)';
+  if (_vatIncl) {
+    rows += _row('قيمة العقد (شامل الضريبة)', '', fmt(s.grossTotal)+' ر.س', 'total');
+    if (s.vatAmt > 0) {
+      rows += _row('ناقص: ضريبة القيمة المضافة', _vatFml, '− '+fmt(s.vatAmt)+' ر.س', 'deduct sub');
+    }
+    rows += _row('صافي العقد (الأساس)', '', fmt(s.contractNet)+' ر.س', 'total');
+  } else {
+    rows += _row('قيمة العقد (غير شامل الضريبة)', '', fmt(s.contractNet)+' ر.س', 'total');
+    if (s.vatAmt > 0) {
+      rows += _row('+ ضريبة القيمة المضافة', _vatFml, '+ '+fmt(s.vatAmt)+' ر.س', 'sub');
+      rows += _row('الإجمالي مع الضريبة', '', fmt(s.contractNet + s.vatAmt)+' ر.س', 'avail');
+    }
   }
-  rows += _row('صافي العقد (الأساس)', '', fmt(s.contractNet)+' ر.س', 'total');
   if (s.mkt > 0) {
     rows += _row('ناقص: أتعاب التسويق',
       _fmula(s.mktBV, s.mktT, s.mktV, s.mkt, s.mktBase==='net'?'صافي':'إجمالي'),
@@ -2316,24 +2370,32 @@ function _populateFinAgreementForm() {
   var _sv = function(id,val){ var el=document.getElementById(id); if(el) el.value=val||''; };
   var _sc = function(id,val){ var el=document.getElementById(id); if(el) el.checked=!!val; };
   _sv('fpj-c-gross',   f['c-gross']        || '');
-  _sv('fpj-c-vat',     f['c-vat']          || '15');
-  _sc('fpj-vat-incl',  f['vat-included']);
   _sv('fpj-c-no',      f['c-no']           || '');
   _sv('fpj-c-date',    f['c-date']         || '');
   _sv('fpj-cv-client', f['cv-client-name'] || '');
+  // ضريبة
+  _sv('fpj-vat-t',  f['i-vat-t'] || 'pct');
+  _sv('fpj-vat-v',  f['i-vat-v'] !== undefined ? f['i-vat-v'] : (f['c-vat'] || '15'));
+  setBase('vat', f['i-vat-base'] || 'gross');
+  updateBaseSegVisibility('vat');
+  setVatInclusion(!!f['vat-included']);
+  // تنفيذ
   _sv('fpj-exec-t',    f['i-exec-t']  || 'pct');
   _sv('fpj-exec-v',    f['i-exec-v'] !== undefined ? f['i-exec-v'] : (f['i-exec-pct'] || '100'));
   setBase('exec', f['i-exec-base'] || 'gross');
   updateBaseSegVisibility('exec');
+  // تسويق
   _sv('fpj-mkt-t',     f['i-mkt-t']        || 'pct');
   _sv('fpj-mkt-v',     f['i-mkt-v']        || '');
   setBase('mkt', f['i-mkt-base'] || 'gross');
   updateBaseSegVisibility('mkt');
   _sc('fpj-mkt-internal', f['mkt-internal']);
+  // كاش باك
   _sv('fpj-cb-t',      f['i-cb-t']         || 'pct');
   _sv('fpj-cb-v',      f['i-cb-v']         || '');
   setBase('cb', f['i-cb-base'] || 'gross');
   updateBaseSegVisibility('cb');
+  _updateVatHint();
 }
 
 function toggleFinAgreement() {
@@ -2361,11 +2423,13 @@ function saveFinAgreement() {
   if (!d || typeof d !== 'object') d = {};
   if (!d.form) d.form = {};
   d.form['c-gross']        = _gv('fpj-c-gross');
-  d.form['c-vat']          = _gv('fpj-c-vat');
-  d.form['vat-included']   = _gc('fpj-vat-incl');
   d.form['c-no']           = _gv('fpj-c-no');
   d.form['c-date']         = _gv('fpj-c-date');
   d.form['cv-client-name'] = _gv('fpj-cv-client');
+  d.form['i-vat-t']        = _gv('fpj-vat-t');
+  d.form['i-vat-v']        = _gv('fpj-vat-v');
+  d.form['i-vat-base']     = _fpjBases.vat;
+  d.form['vat-included']   = _fpjVatIncl;
   d.form['i-exec-t']       = _gv('fpj-exec-t');
   d.form['i-exec-v']       = _gv('fpj-exec-v');
   d.form['i-exec-base']    = _fpjBases.exec;
@@ -2815,7 +2879,8 @@ document.addEventListener('DOMContentLoaded', function() {
   window.saveNewFinProject = saveNewFinProject;
 
   // ── Base Selector helpers ─────────────────────────────────────
-  _fpjBases = {mkt:'gross', cb:'gross', exec:'gross'};
+  _fpjBases = {mkt:'gross', cb:'gross', exec:'gross', vat:'gross'};
+  _fpjVatIncl = false;
 
   window.setBase = function(field, val) {
     _fpjBases[field] = val;
@@ -2831,6 +2896,35 @@ document.addEventListener('DOMContentLoaded', function() {
     var seg = document.getElementById('fpj-'+field+'-base-seg');
     if (!seg || !t) return;
     seg.style.display = t.value === 'pct' ? '' : 'none';
+  };
+
+  window.setVatInclusion = function(incl) {
+    _fpjVatIncl = !!incl;
+    var exclBtn = document.getElementById('fpj-vat-excl-btn');
+    var inclBtn = document.getElementById('fpj-vat-incl-btn');
+    if (exclBtn) exclBtn.classList.toggle('act', !incl);
+    if (inclBtn) inclBtn.classList.toggle('act', !!incl);
+    _updateVatHint();
+  };
+
+  window._updateVatHint = function() {
+    var hint = document.getElementById('fpj-vat-hint');
+    if (!hint) return;
+    var grossIn = parseFloat((document.getElementById('fpj-c-gross')||{}).value) || 0;
+    var vatT    = (document.getElementById('fpj-vat-t')||{}).value || 'pct';
+    var vatV    = parseFloat((document.getElementById('fpj-vat-v')||{}).value) || 0;
+    if (!grossIn || !vatV) { hint.textContent = ''; return; }
+    var net, vatAmt;
+    if (_fpjVatIncl) {
+      if (vatT === 'pct') { net = grossIn / (1 + vatV / 100); vatAmt = grossIn - net; }
+      else { vatAmt = vatV; net = grossIn - vatAmt; }
+      hint.textContent = 'صافي العقد: ' + fmt(net) + ' ر.س  |  الضريبة المستخرجة: ' + fmt(vatAmt) + ' ر.س';
+    } else {
+      net = grossIn;
+      var vatBV = (_fpjBases.vat === 'net') ? net : grossIn;
+      vatAmt = vatT === 'pct' ? vatBV * vatV / 100 : vatV;
+      hint.textContent = 'صافي العقد: ' + fmt(net) + ' ر.س  |  الضريبة المضافة: ' + fmt(vatAmt) + ' ر.س  |  الإجمالي: ' + fmt(net + vatAmt) + ' ر.س';
+    }
   };
 
   // ── Invoice fields toggle ──────────────────────────────────────
