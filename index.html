@@ -1391,7 +1391,7 @@ function computeProjectFinSummary(proj) {
 
   var expenses  = finTotal + dashExp;
   var profit    = Math.max(0, availableForWork - (finTotal + dashExp - profitFromEntries) + dashInc);
-  var remaining = grossTotal - paid - dashExp + dashInc;
+  var remaining = grossTotal - finTotal - dashExp + dashInc;
 
   return {grossTotal:grossTotal, contractNet:g, vatAmt:vatAmt, vatPct:vatPct,
            mkt:mkt, mktV:mktV, mktT:mktT, mktBase:mktBase, mktBV:mktBV,
@@ -2136,11 +2136,12 @@ function renderFinProject() {
   badge.textContent = st.label; badge.style.background = st.dot; badge.style.color = '#fff';
 
   var statsRow = document.getElementById('fpj-stats-row');
-  var profitSub = s.profit > 0 ? '<div style="font-size:9.5px;color:var(--S);margin-top:2px">↑ ربح: '+fmt(s.profit)+' ر.س</div>' : '';
+  var remColor = s.remaining < 0 ? '#8B1A0E' : '#B8841A';
   statsRow.innerHTML = [
     {lbl:'قيمة العقد الإجمالية', val:fmt(s.grossTotal)+' ر.س', cls:'ic-n', col:'#00197D', sub:''},
-    {lbl:'إجمالي المصاريف',      val:fmt(s.expenses)+' ر.س',   cls:'ic-r', col:'#8B1A0E', sub:profitSub},
-    {lbl:'المتاح / المتبقي',     val:fmt(s.remaining)+' ر.س',  cls:'ic-g', col:'#B8841A', sub:''}
+    {lbl:'إجمالي المصاريف',      val:fmt(s.expenses)+' ر.س',   cls:'ic-r', col:'#8B1A0E', sub:''},
+    {lbl:'صافي الربح',           val:fmt(s.profit)+' ر.س',     cls:'ic-s', col:'#2C5F2D', sub:''},
+    {lbl:'المبلغ المتبقي',       val:fmt(s.remaining)+' ر.س',  cls:'ic-g', col:remColor,  sub:''}
   ].map(function(c){
     return '<div class="sc"><div class="sc-ico '+c.cls+'"></div>'
       +'<div><div class="sc-num mn" style="color:'+c.col+'">'+c.val+'</div><div class="sc-lbl">'+c.lbl+'</div>'+(c.sub||'')+'</div></div>';
