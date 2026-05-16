@@ -527,7 +527,11 @@ var FinCalc = {
     var execIncomeReg = entries.filter(function(e){ return e.type==='income' && e.cat==='exec'; })
       .reduce(function(s,e){ return s+(parseFloat(e.amount)||0); }, 0);
     var profitMargins = entries.filter(function(e){ return e.type==='expense'; })
-      .reduce(function(s,e){ return s+(parseFloat(e.profit_margin)||0)*(parseFloat(e.amount)||0)/100; }, 0);
+      .reduce(function(s,e){
+        var pm = parseFloat(e.profit_margin)||0;
+        var pmt = e.profit_margin_type||'pct';
+        return s + (pmt==='fixed' ? pm : pm*(parseFloat(e.amount)||0)/100);
+      }, 0);
     var nonExecInc = totalIncome - execIncomeReg;
 
     var execHasIncome = execIncomeReg > 0;
@@ -535,13 +539,15 @@ var FinCalc = {
       ? Math.max(0, execIncomeReg + profitMargins + nonExecInc + (isInternalMkt ? mkt : 0))
       : Math.max(0, execAmt + profitMargins + nonExecInc + (isInternalMkt ? mkt : 0));
 
-    var remaining = contractNet - budgetTotal - totalExpenses + nonExecInc;
+    // المتبقي = صافي العقد − الأتعاب − التسويق − الكاش باك − المصاريف الفعلية
+    var available  = contractNet - execAmt - mkt - cb;
+    var remaining  = available - totalExpenses + nonExecInc;
 
     return {
       cv:cv, vatIncluded:vatIncluded, vatPct:vatPct, vatAmt:vatAmt,
       contractNet:contractNet, grossTotal:grossTotal,
       execAmt:execAmt, mkt:mkt, cb:cb,
-      budgetTotal:budgetTotal,
+      budgetTotal:budgetTotal, available:available,
       totalExpenses:totalExpenses, totalIncome:totalIncome,
       execIncomeReg:execIncomeReg, nonExecInc:nonExecInc,
       profitMargins:profitMargins,
@@ -1266,7 +1272,7 @@ Pages.renderFinEntries = function(projId) {
         '<td><span class="fw-600">'+UI.escHtml(e.desc||'')+'</span></td>' +
         '<td>'+catLabel(e.cat)+'</td>' +
         '<td>'+typeBadge+'</td>' +
-        '<td class="mono fw-600">'+UI.fmt(e.amount)+' ر.س</td>' +
+        '<td class="mono fw-600">'+UI.fmt(e.amount)+' ر.س'+((e.profit_margin&&e.profit_margin>0)?'<div style="font-size:10px;color:var(--success)">ربح '+(e.profit_margin_type==='fixed'?UI.fmt(e.profit_margin)+' ر.س':e.profit_margin+'%')+'</div>':'')+'</td>' +
         '<td>'+(e.status?'<span class="badge gray">'+UI.escHtml(e.status)+'</span>':'—')+'</td>' +
         '<td>' +
           '<button class="btn btn-sm btn-danger" onclick="Pages.deleteEntry(\''+projId+'\',\''+e.id+'\')">حذف</button>' +
@@ -1275,14 +1281,13 @@ Pages.renderFinEntries = function(projId) {
     });
   }
 
-  var totalInc = entries.filter(function(e){ return e.type==='income'; }).reduce(function(s,e){ return s+(parseFloat(e.amount)||0); },0);
-  var totalExp = entries.filter(function(e){ return e.type==='expense'; }).reduce(function(s,e){ return s+(parseFloat(e.amount)||0); },0);
+  var r = FinCalc.calc(projId);
 
   document.getElementById('fin-tab-entries').innerHTML =
     '<div class="stat-cards" style="grid-template-columns:repeat(3,1fr);margin-bottom:16px">' +
-      '<div class="stat-card success"><div class="stat-card-label">إجمالي الدخل</div><div class="stat-card-value mono" style="font-size:17px">'+UI.fmt(totalInc)+'</div></div>' +
-      '<div class="stat-card danger"><div class="stat-card-label">إجمالي المصاريف</div><div class="stat-card-value mono" style="font-size:17px">'+UI.fmt(totalExp)+'</div></div>' +
-      '<div class="stat-card brand"><div class="stat-card-label">الصافي</div><div class="stat-card-value mono" style="font-size:17px">'+UI.fmt(totalInc-totalExp)+'</div></div>' +
+      '<div class="stat-card warn"><div class="stat-card-label">المتبقي من العقد</div><div class="stat-card-value mono" style="font-size:17px">'+UI.fmt(r.remaining)+'</div><div class="stat-card-sub">متاح '+UI.fmt(r.available)+' − مصاريف '+UI.fmt(r.totalExpenses)+'</div></div>' +
+      '<div class="stat-card danger"><div class="stat-card-label">إجمالي المصاريف</div><div class="stat-card-value mono" style="font-size:17px">'+UI.fmt(r.totalExpenses)+'</div></div>' +
+      '<div class="stat-card success"><div class="stat-card-label">صافي الربح</div><div class="stat-card-value mono" style="font-size:17px">'+UI.fmt(r.profit)+'</div><div class="stat-card-sub">أتعاب + هامش الربح</div></div>' +
     '</div>' +
     '<div class="filter-bar">' +
       '<select class="filter-select" onchange="window._entriesFilter=this.value;Pages.renderFinEntries(\''+projId+'\')">' +
@@ -1342,15 +1347,26 @@ Pages.addEntryModal = function(projId) {
             '</select></div>' +
           '<div class="form-group"><label class="field-label">المبلغ (ر.س)</label><input id="ent-amount" class="field-input" type="number" placeholder="0.00"></div>' +
         '</div>' +
-        '<div class="form-row">' +
-          '<div class="form-group"><label class="field-label">هامش الربح % (للمصاريف)</label><input id="ent-pm" class="field-input" type="number" placeholder="0"></div>' +
-          '<div class="form-group"><label class="field-label">الحالة</label>' +
-            '<select id="ent-status" class="field-input">' +
-              '<option value="">—</option>' +
-              '<option value="paid">مدفوع</option>' +
-              '<option value="pending">معلق</option>' +
-              '<option value="cancelled">ملغي</option>' +
-            '</select></div>' +
+        '<div class="form-group"><label class="field-label">الحالة</label>' +
+          '<select id="ent-status" class="field-input">' +
+            '<option value="">—</option>' +
+            '<option value="paid">مدفوع</option>' +
+            '<option value="pending">معلق</option>' +
+            '<option value="cancelled">ملغي</option>' +
+          '</select></div>' +
+        '<div class="form-group">' +
+          '<div class="toggle-row" style="padding:6px 0"><span class="toggle-label">يحتوي على ربح</span>' +
+            '<label class="toggle"><input type="checkbox" id="ent-has-pm" onchange="Pages.toggleProfitField()"><span class="toggle-slider"></span></label>' +
+          '</div>' +
+          '<div id="ent-profit-row" style="display:none">' +
+            '<div class="inline-group">' +
+              '<input id="ent-pm" class="field-input" type="number" placeholder="0" style="max-width:90px">' +
+              '<select id="ent-pmt" class="field-input" style="max-width:100px">' +
+                '<option value="pct">% نسبة</option>' +
+                '<option value="fixed">مبلغ ثابت</option>' +
+              '</select>' +
+            '</div>' +
+          '</div>' +
         '</div>' +
         '<div class="form-group"><label class="field-label">ملاحظة</label><input id="ent-note" class="field-input" placeholder="ملاحظة اختيارية"></div>' +
       '</div>' +
@@ -1361,6 +1377,12 @@ Pages.addEntryModal = function(projId) {
       '<button class="btn btn-primary" onclick="Pages.saveEntry(\''+projId+'\')">حفظ</button>' +
     '</div>'
   );
+};
+
+Pages.toggleProfitField = function() {
+  var has = document.getElementById('ent-has-pm');
+  var row = document.getElementById('ent-profit-row');
+  if (has && row) row.style.display = has.checked ? '' : 'none';
 };
 
 Pages.switchEntryTab = function(tab) {
@@ -1407,7 +1429,8 @@ Pages.saveEntry = function(projId) {
     cat: document.getElementById('ent-cat').value,
     type: document.getElementById('ent-type').value,
     amount: amount,
-    profit_margin: parseFloat(document.getElementById('ent-pm').value)||0,
+    profit_margin: (document.getElementById('ent-has-pm')&&document.getElementById('ent-has-pm').checked) ? (parseFloat(document.getElementById('ent-pm').value)||0) : 0,
+    profit_margin_type: (document.getElementById('ent-pmt') ? document.getElementById('ent-pmt').value : 'pct')||'pct',
     status: document.getElementById('ent-status').value,
     note: document.getElementById('ent-note').value.trim()
   });
@@ -1418,7 +1441,6 @@ Pages.saveEntry = function(projId) {
 };
 
 Pages.deleteEntry = function(projId, entId) {
-  if (!confirm('هل تريد حذف هذا القيد؟')) return;
   var fin = DB.getFin(projId);
   fin.entries = (fin.entries||[]).filter(function(e){ return e.id!==entId; });
   DB.saveFin(projId, fin);
