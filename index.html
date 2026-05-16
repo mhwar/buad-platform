@@ -334,6 +334,9 @@ select.field-input{cursor:pointer}
 .add-row-btn{font-size:12px;color:var(--brand);background:none;border:none;cursor:pointer;padding:6px 0;display:flex;align-items:center;gap:4px}
 .add-row-btn:hover{text-decoration:underline}
 .fee-calc-badge{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:700;color:var(--danger);background:var(--danger-light);padding:4px 8px;border-radius:6px;white-space:nowrap;flex-shrink:0}
+.ctrl-fees{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+.badge-registered{font-size:11px;font-weight:600;color:var(--success);background:var(--success-light);padding:3px 8px;border-radius:6px;display:inline-flex;align-items:center;gap:4px}
+@media(max-width:600px){.ctrl-fees{grid-template-columns:1fr}}
 .alert-notice{background:var(--warn-light);border:1px solid var(--warn);color:var(--warn);padding:10px 14px;border-radius:var(--radius-sm);font-size:12px;margin-bottom:12px;display:flex;align-items:center;gap:8px}
 
 /* ── Inline tab mini ── */
@@ -517,6 +520,7 @@ var FinCalc = {
     var execAmt = _applyFee(c.exec_v, c.exec_type||'pct', c.exec_base||'net', contractNet, grossTotal);
     var mkt     = _applyFee(c.mkt_v,  c.mkt_type||'pct',  c.mkt_base||'net',  contractNet, grossTotal);
     var cb      = _applyFee(c.cb_v,   c.cb_type||'pct',   c.cb_base||'net',   contractNet, grossTotal);
+    var cfAmt   = _applyFee(c.cf_v,   c.cf_type||'pct',   c.cf_base||'net',   contractNet, grossTotal);
 
     var budget = fin.budget || [];
     var budgetTotal = budget.reduce(function(s,b){ return s+(parseFloat(b.amount)||0); }, 0);
@@ -553,6 +557,7 @@ var FinCalc = {
     if (execAmt > 0 && regCats.indexOf('exec') < 0) missingItems.push('أتعاب التنفيذ');
     if (mkt > 0 && regCats.indexOf('mkt') < 0) missingItems.push('التسويق');
     if (cb > 0 && regCats.indexOf('cashback') < 0) missingItems.push('كاش باك');
+    if (cfAmt > 0 && regCats.indexOf('cf') < 0) missingItems.push(c.cf_name||'رسوم إضافية');
 
     return {
       cv:cv, vatIncluded:vatIncluded, vatPct:vatPct, vatAmt:vatAmt,
@@ -563,6 +568,7 @@ var FinCalc = {
       execIncomeReg:execIncomeReg, nonExecInc:nonExecInc,
       profitMargins:profitMargins,
       profit:profit, remaining:remaining,
+      cfAmt:cfAmt, cfName:c.cf_name||'',
       isInternalMkt:isInternalMkt, missingItems:missingItems
     };
   }
@@ -685,7 +691,7 @@ function clientTypeLabel(t) {
 }
 
 function catLabel(c) {
-  var map = {vat:'ضريبة', exec:'أتعاب', mkt:'تسويق', cashback:'كاش باك', salary:'رواتب', logistics:'لوجستيات', materials:'مواد', other:'أخرى'};
+  var map = {vat:'ضريبة', exec:'أتعاب', mkt:'تسويق', cashback:'كاش باك', cf:'رسوم إضافية', salary:'رواتب', logistics:'لوجستيات', materials:'مواد', other:'أخرى'};
   return map[c]||c||'—';
 }
 
@@ -1177,7 +1183,7 @@ Pages.renderFinCtrl = function(projId) {
     // ── Row 2: Fee distribution ──
     '<div class="card" style="margin-bottom:16px">' +
       '<div class="card-title">توزيع الأتعاب</div>' +
-      '<div class="ctrl-3col">' +
+      '<div class="ctrl-fees">' +
         '<div>' + feeGroup('أتعاب التنفيذ', 'fc-execv','fc-exect','fc-execb', c.exec_v, c.exec_type, c.exec_base, r.execAmt) + '</div>' +
         '<div>' + feeGroup('التسويق', 'fc-mktv','fc-mktt','fc-mktb', c.mkt_v, c.mkt_type, c.mkt_base, r.mkt) +
           '<div class="toggle-row" style="padding:4px 0"><span class="toggle-label" style="font-size:12px">داخلي (يُضاف للأرباح)</span>' +
@@ -1185,6 +1191,17 @@ Pages.renderFinCtrl = function(projId) {
           '</div>' +
         '</div>' +
         '<div>' + feeGroup('كاش باك', 'fc-cbv','fc-cbt','fc-cbb', c.cb_v, c.cb_type, c.cb_base, r.cb) + '</div>' +
+        '<div>' +
+          '<div class="form-group"><label class="field-label">رسوم إضافية — العنوان</label>' +
+            '<input id="fc-cfname" class="field-input" placeholder="مثال: ضريبة الدخل" value="'+UI.escHtml(c.cf_name||'')+'" oninput="'+ev+'" style="margin-bottom:6px">' +
+            '<div class="inline-group" style="flex-wrap:wrap">' +
+              '<input id="fc-cfv" class="field-input" type="number" value="'+(c.cf_v||0)+'" oninput="'+ev+'" style="max-width:76px">' +
+              '<select id="fc-cft" class="field-input" style="max-width:84px" onchange="'+ev+'">'+typeOpts(c.cf_type)+'</select>' +
+              '<select id="fc-cfb" class="field-input" style="max-width:110px" onchange="'+ev+'">'+baseOpts(c.cf_base)+'</select>' +
+              '<span id="fc-cfb-amt" class="fee-calc-badge">'+UI.fmt(r.cfAmt||0)+' ر.س</span>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
       '</div>' +
     '</div>' +
     // ── Row 3: Budget ──
@@ -1223,6 +1240,10 @@ Pages.autoSaveCtrl = function(projId) {
   fin.ctrl.cb_v           = parseFloat(g('fc-cbv'))||0;
   fin.ctrl.cb_type        = g('fc-cbt')||'pct';
   fin.ctrl.cb_base        = g('fc-cbb')||'net';
+  fin.ctrl.cf_name        = g('fc-cfname');
+  fin.ctrl.cf_v           = parseFloat(g('fc-cfv'))||0;
+  fin.ctrl.cf_type        = g('fc-cft')||'pct';
+  fin.ctrl.cf_base        = g('fc-cfb')||'net';
   DB.saveFin(projId, fin);
   var r = FinCalc.calc(projId);
   var c = fin.ctrl;
@@ -1245,6 +1266,7 @@ Pages.autoSaveCtrl = function(projId) {
   amtEl = document.getElementById('fc-execb-amt'); if(amtEl) amtEl.textContent = UI.fmt(r.execAmt)+' ر.س';
   amtEl = document.getElementById('fc-mktb-amt');  if(amtEl) amtEl.textContent = UI.fmt(r.mkt)+' ر.س';
   amtEl = document.getElementById('fc-cbb-amt');   if(amtEl) amtEl.textContent = UI.fmt(r.cb)+' ر.س';
+  amtEl = document.getElementById('fc-cfb-amt');   if(amtEl) amtEl.textContent = UI.fmt(r.cfAmt)+' ر.س';
 };
 
 Pages.addBudgetRow = function(projId) {
@@ -1308,7 +1330,8 @@ Pages.renderFinEntries = function(projId) {
         '<td>'+typeBadge+'</td>' +
         '<td class="mono fw-600">'+UI.fmt(e.amount)+' ر.س'+((e.profit_margin&&e.profit_margin>0)?'<div style="font-size:10px;color:var(--success)">ربح '+(e.profit_margin_type==='fixed'?UI.fmt(e.profit_margin)+' ر.س':e.profit_margin+'%')+'</div>':'')+'</td>' +
         '<td>'+(e.status?'<span class="badge gray">'+UI.escHtml(e.status)+'</span>':'—')+'</td>' +
-        '<td>' +
+        '<td style="white-space:nowrap">' +
+          '<button class="btn btn-sm btn-ghost" style="margin-left:4px" onclick="Pages.editEntryModal(\''+projId+'\',\''+e.id+'\')">تعديل</button>' +
           '<button class="btn btn-sm btn-danger" onclick="Pages.deleteEntry(\''+projId+'\',\''+e.id+'\')">حذف</button>' +
         '</td>' +
         '</tr>';
@@ -1346,13 +1369,22 @@ Pages.renderFinEntries = function(projId) {
 
 Pages.addEntryModal = function(projId) {
   var r = FinCalc.calc(projId);
+  var fin = DB.getFin(projId);
+  var agrCats = (fin.entries||[]).filter(function(e){ return e.note==='من الاتفاقية'; }).map(function(e){ return e.cat; });
+  function agrBtn(cat, amount, name) {
+    var already = agrCats.indexOf(cat) >= 0;
+    return already
+      ? '<span class="badge-registered">✓ مسجّل</span>'
+      : '<button class="btn btn-sm btn-primary" onclick="Pages.registerContractItem(\''+projId+'\',\''+cat+'\','+amount+',\''+UI.escHtml(name||'')+'\')">تسجيل</button>';
+  }
   var contractItems =
     '<div class="form-group"><div class="section-title" style="margin-bottom:10px">بنود الاتفاقية المتاحة</div>' +
     '<table class="data-table"><thead><tr><th>البند</th><th>المبلغ</th><th>النوع</th><th></th></tr></thead><tbody>' +
-    '<tr><td>أتعاب التنفيذ</td><td class="mono">'+UI.fmt(r.execAmt)+' ر.س</td><td><span class="badge success">دخل</span></td><td><button class="btn btn-sm btn-primary" onclick="Pages.registerContractItem(\''+projId+'\',\'exec\','+r.execAmt+')">تسجيل</button></td></tr>' +
-    '<tr><td>ضريبة القيمة المضافة</td><td class="mono">'+UI.fmt(r.vatAmt)+' ر.س</td><td><span class="badge brand">دخل</span></td><td><button class="btn btn-sm btn-primary" onclick="Pages.registerContractItem(\''+projId+'\',\'vat\','+r.vatAmt+')">تسجيل</button></td></tr>' +
-    (r.mkt>0?'<tr><td>التسويق</td><td class="mono">'+UI.fmt(r.mkt)+' ر.س</td><td><span class="badge warn">مصروف</span></td><td><button class="btn btn-sm btn-primary" onclick="Pages.registerContractItem(\''+projId+'\',\'mkt\','+r.mkt+')">تسجيل</button></td></tr>':'') +
-    (r.cb>0?'<tr><td>كاش باك</td><td class="mono">'+UI.fmt(r.cb)+' ر.س</td><td><span class="badge warn">مصروف</span></td><td><button class="btn btn-sm btn-primary" onclick="Pages.registerContractItem(\''+projId+'\',\'cashback\','+r.cb+')">تسجيل</button></td></tr>':'') +
+    '<tr><td>أتعاب التنفيذ</td><td class="mono">'+UI.fmt(r.execAmt)+' ر.س</td><td><span class="badge success">دخل</span></td><td>'+agrBtn('exec',r.execAmt,'أتعاب التنفيذ')+'</td></tr>' +
+    '<tr><td>ضريبة القيمة المضافة</td><td class="mono">'+UI.fmt(r.vatAmt)+' ر.س</td><td><span class="badge danger">مصروف</span></td><td>'+agrBtn('vat',r.vatAmt,'ضريبة القيمة المضافة')+'</td></tr>' +
+    (r.mkt>0?'<tr><td>التسويق</td><td class="mono">'+UI.fmt(r.mkt)+' ر.س</td><td><span class="badge warn">مصروف</span></td><td>'+agrBtn('mkt',r.mkt,'التسويق')+'</td></tr>':'') +
+    (r.cb>0?'<tr><td>كاش باك</td><td class="mono">'+UI.fmt(r.cb)+' ر.س</td><td><span class="badge warn">مصروف</span></td><td>'+agrBtn('cashback',r.cb,'كاش باك')+'</td></tr>':'') +
+    (r.cfAmt>0?'<tr><td>'+UI.escHtml(r.cfName||'رسوم إضافية')+'</td><td class="mono">'+UI.fmt(r.cfAmt)+' ر.س</td><td><span class="badge warn">مصروف</span></td><td>'+agrBtn('cf',r.cfAmt,r.cfName||'رسوم إضافية')+'</td></tr>':'') +
     '</tbody></table></div>';
 
   UI.openModal(
@@ -1379,6 +1411,7 @@ Pages.addEntryModal = function(projId) {
               '<option value="vat">ضريبة</option>' +
               '<option value="mkt">تسويق</option>' +
               '<option value="cashback">كاش باك</option>' +
+              '<option value="cf">رسوم إضافية</option>' +
               '<option value="salary">رواتب</option>' +
               '<option value="logistics">لوجستيات</option>' +
               '<option value="materials">مواد</option>' +
@@ -1432,17 +1465,17 @@ Pages.switchEntryTab = function(tab) {
   document.getElementById('etab-contract').classList.toggle('active',tab==='contract');
 };
 
-Pages.registerContractItem = function(projId, cat, amount) {
-  var typeMap = {exec:'income', vat:'income', mkt:'expense', cashback:'expense'};
+Pages.registerContractItem = function(projId, cat, amount, nameOverride) {
+  var typeMap = {exec:'income', vat:'expense', mkt:'expense', cashback:'expense', cf:'expense'};
   var descMap = {exec:'أتعاب التنفيذ', vat:'ضريبة القيمة المضافة', mkt:'تسويق', cashback:'كاش باك'};
   var fin = DB.getFin(projId);
   fin.entries = fin.entries||[];
   fin.entries.push({
     id: DB.uid(),
     date: new Date().toISOString().slice(0,10),
-    desc: descMap[cat]||cat,
+    desc: nameOverride || descMap[cat] || cat,
     cat: cat,
-    type: typeMap[cat]||'income',
+    type: typeMap[cat]||'expense',
     amount: amount,
     profit_margin: 0,
     status: 'paid',
@@ -1475,6 +1508,90 @@ Pages.saveEntry = function(projId) {
   });
   DB.saveFin(projId, fin);
   UI.toast('تم حفظ القيد','success');
+  UI.closeModalForce();
+  Pages.renderFinEntries(projId);
+};
+
+Pages.editEntryModal = function(projId, entId) {
+  var fin = DB.getFin(projId);
+  var e = (fin.entries||[]).find(function(x){ return x.id===entId; });
+  if (!e) return;
+  var hasPm = (parseFloat(e.profit_margin)||0) > 0;
+  var cats = ['exec','vat','mkt','cashback','cf','salary','logistics','materials','other'];
+  var catNames = {exec:'أتعاب',vat:'ضريبة',mkt:'تسويق',cashback:'كاش باك',cf:'رسوم إضافية',salary:'رواتب',logistics:'لوجستيات',materials:'مواد',other:'أخرى'};
+  var catOpts = cats.map(function(v){ return '<option value="'+v+'"'+(e.cat===v?' selected':'')+'>'+catNames[v]+'</option>'; }).join('');
+  var statusOpts = ['','paid','pending','cancelled'];
+  var statusNames = {'':'—',paid:'مدفوع',pending:'معلق',cancelled:'ملغي'};
+  var stOpts = statusOpts.map(function(v){ return '<option value="'+v+'"'+(e.status===v?' selected':'')+'>'+statusNames[v]+'</option>'; }).join('');
+  UI.openModal(
+    '<div class="modal-header"><h3>تعديل القيد</h3><button class="modal-close" onclick="UI.closeModalForce()">×</button></div>' +
+    '<div class="modal-body">' +
+      '<div class="form-row">' +
+        '<div class="form-group"><label class="field-label">التاريخ</label><input id="eed-date" class="field-input" type="date" value="'+(e.date||'')+'"></div>' +
+        '<div class="form-group"><label class="field-label">النوع</label>' +
+          '<select id="eed-type" class="field-input">' +
+            '<option value="expense"'+(e.type==='expense'?' selected':'')+'>مصروف</option>' +
+            '<option value="income"'+(e.type==='income'?' selected':'')+'>دخل</option>' +
+          '</select></div>' +
+      '</div>' +
+      '<div class="form-group"><label class="field-label">الوصف</label><input id="eed-desc" class="field-input" value="'+UI.escHtml(e.desc||'')+'"></div>' +
+      '<div class="form-row">' +
+        '<div class="form-group"><label class="field-label">التصنيف</label><select id="eed-cat" class="field-input">'+catOpts+'</select></div>' +
+        '<div class="form-group"><label class="field-label">المبلغ (ر.س)</label><input id="eed-amount" class="field-input" type="number" value="'+(e.amount||0)+'"></div>' +
+      '</div>' +
+      '<div class="form-group"><label class="field-label">الحالة</label><select id="eed-status" class="field-input">'+stOpts+'</select></div>' +
+      '<div class="form-group">' +
+        '<div class="toggle-row" style="padding:6px 0"><span class="toggle-label">يحتوي على ربح</span>' +
+          '<label class="toggle"><input type="checkbox" id="eed-has-pm"'+(hasPm?' checked':'')+' onchange="Pages.toggleEditPmField()"><span class="toggle-slider"></span></label>' +
+        '</div>' +
+        '<div id="eed-profit-row" style="display:'+(hasPm?'':'none')+'">' +
+          '<div class="inline-group">' +
+            '<input id="eed-pm" class="field-input" type="number" value="'+(e.profit_margin||0)+'" style="max-width:90px">' +
+            '<select id="eed-pmt" class="field-input" style="max-width:100px">' +
+              '<option value="pct"'+(e.profit_margin_type==='fixed'?'':' selected')+'>% نسبة</option>' +
+              '<option value="fixed"'+(e.profit_margin_type==='fixed'?' selected':'')+'>مبلغ ثابت</option>' +
+            '</select>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="form-group"><label class="field-label">ملاحظة</label><input id="eed-note" class="field-input" value="'+UI.escHtml(e.note||'')+'"></div>' +
+    '</div>' +
+    '<div class="modal-footer">' +
+      '<button class="btn btn-ghost" onclick="UI.closeModalForce()">إلغاء</button>' +
+      '<button class="btn btn-primary" onclick="Pages.updateEntry(\''+projId+'\',\''+entId+'\')">حفظ التعديل</button>' +
+    '</div>'
+  );
+};
+
+Pages.toggleEditPmField = function() {
+  var has = document.getElementById('eed-has-pm');
+  var row = document.getElementById('eed-profit-row');
+  if (has && row) row.style.display = has.checked ? '' : 'none';
+};
+
+Pages.updateEntry = function(projId, entId) {
+  var desc = (document.getElementById('eed-desc').value||'').trim();
+  var amount = parseFloat(document.getElementById('eed-amount').value)||0;
+  if (!desc) { UI.toast('الوصف مطلوب','danger'); return; }
+  if (amount<=0) { UI.toast('المبلغ يجب أن يكون أكبر من صفر','danger'); return; }
+  var fin = DB.getFin(projId);
+  fin.entries = fin.entries||[];
+  var idx = fin.entries.findIndex(function(e){ return e.id===entId; });
+  if (idx < 0) return;
+  var hasPm = document.getElementById('eed-has-pm').checked;
+  fin.entries[idx] = Object.assign({}, fin.entries[idx], {
+    date: document.getElementById('eed-date').value,
+    desc: desc,
+    cat: document.getElementById('eed-cat').value,
+    type: document.getElementById('eed-type').value,
+    amount: amount,
+    profit_margin: hasPm ? (parseFloat(document.getElementById('eed-pm').value)||0) : 0,
+    profit_margin_type: document.getElementById('eed-pmt').value||'pct',
+    status: document.getElementById('eed-status').value,
+    note: document.getElementById('eed-note').value
+  });
+  DB.saveFin(projId, fin);
+  UI.toast('تم حفظ التعديل','success');
   UI.closeModalForce();
   Pages.renderFinEntries(projId);
 };
