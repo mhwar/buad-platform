@@ -553,11 +553,10 @@ var FinCalc = {
     // اكتشاف بنود الاتفاقية غير المسجّلة
     var regCats = entries.map(function(e){ return e.cat; });
     var missingItems = [];
-    if (vatAmt > 0 && regCats.indexOf('vat') < 0) missingItems.push('ضريبة القيمة المضافة');
+    if (cfAmt > 0 && regCats.indexOf('cf') < 0) missingItems.push('ضريبة القيمة المضافة (الرسوم)');
     if (execAmt > 0 && regCats.indexOf('exec') < 0) missingItems.push('أتعاب التنفيذ');
     if (mkt > 0 && regCats.indexOf('mkt') < 0) missingItems.push('التسويق');
     if (cb > 0 && regCats.indexOf('cashback') < 0) missingItems.push('كاش باك');
-    if (cfAmt > 0 && regCats.indexOf('cf') < 0) missingItems.push(c.cf_name||'رسوم إضافية');
 
     return {
       cv:cv, vatIncluded:vatIncluded, vatPct:vatPct, vatAmt:vatAmt,
@@ -568,7 +567,7 @@ var FinCalc = {
       execIncomeReg:execIncomeReg, nonExecInc:nonExecInc,
       profitMargins:profitMargins,
       profit:profit, remaining:remaining,
-      cfAmt:cfAmt, cfName:c.cf_name||'',
+      cfAmt:cfAmt,
       isInternalMkt:isInternalMkt, missingItems:missingItems
     };
   }
@@ -691,7 +690,7 @@ function clientTypeLabel(t) {
 }
 
 function catLabel(c) {
-  var map = {vat:'ضريبة', exec:'أتعاب', mkt:'تسويق', cashback:'كاش باك', cf:'رسوم إضافية', salary:'رواتب', logistics:'لوجستيات', materials:'مواد', other:'أخرى'};
+  var map = {vat:'ضريبة', exec:'أتعاب', mkt:'تسويق', cashback:'كاش باك', cf:'ضريبة القيمة المضافة', salary:'رواتب', logistics:'لوجستيات', materials:'مواد', other:'أخرى'};
   return map[c]||c||'—';
 }
 
@@ -1192,8 +1191,8 @@ Pages.renderFinCtrl = function(projId) {
         '</div>' +
         '<div>' + feeGroup('كاش باك', 'fc-cbv','fc-cbt','fc-cbb', c.cb_v, c.cb_type, c.cb_base, r.cb) + '</div>' +
         '<div>' +
-          '<div class="form-group"><label class="field-label">رسوم إضافية — العنوان</label>' +
-            '<input id="fc-cfname" class="field-input" placeholder="مثال: ضريبة الدخل" value="'+UI.escHtml(c.cf_name||'')+'" oninput="'+ev+'" style="margin-bottom:6px">' +
+          '<div class="form-group">' +
+            '<label class="field-label">ضريبة القيمة المضافة</label>' +
             '<div class="inline-group" style="flex-wrap:wrap">' +
               '<input id="fc-cfv" class="field-input" type="number" value="'+(c.cf_v||0)+'" oninput="'+ev+'" style="max-width:76px">' +
               '<select id="fc-cft" class="field-input" style="max-width:84px" onchange="'+ev+'">'+typeOpts(c.cf_type)+'</select>' +
@@ -1240,7 +1239,6 @@ Pages.autoSaveCtrl = function(projId) {
   fin.ctrl.cb_v           = parseFloat(g('fc-cbv'))||0;
   fin.ctrl.cb_type        = g('fc-cbt')||'pct';
   fin.ctrl.cb_base        = g('fc-cbb')||'net';
-  fin.ctrl.cf_name        = g('fc-cfname');
   fin.ctrl.cf_v           = parseFloat(g('fc-cfv'))||0;
   fin.ctrl.cf_type        = g('fc-cft')||'pct';
   fin.ctrl.cf_base        = g('fc-cfb')||'net';
@@ -1381,10 +1379,9 @@ Pages.addEntryModal = function(projId) {
     '<div class="form-group"><div class="section-title" style="margin-bottom:10px">بنود الاتفاقية المتاحة</div>' +
     '<table class="data-table"><thead><tr><th>البند</th><th>المبلغ</th><th>النوع</th><th></th></tr></thead><tbody>' +
     '<tr><td>أتعاب التنفيذ</td><td class="mono">'+UI.fmt(r.execAmt)+' ر.س</td><td><span class="badge success">دخل</span></td><td>'+agrBtn('exec',r.execAmt,'أتعاب التنفيذ')+'</td></tr>' +
-    '<tr><td>ضريبة القيمة المضافة</td><td class="mono">'+UI.fmt(r.vatAmt)+' ر.س</td><td><span class="badge danger">مصروف</span></td><td>'+agrBtn('vat',r.vatAmt,'ضريبة القيمة المضافة')+'</td></tr>' +
+    (r.cfAmt>0?'<tr><td>ضريبة القيمة المضافة</td><td class="mono">'+UI.fmt(r.cfAmt)+' ر.س</td><td><span class="badge danger">مصروف</span></td><td>'+agrBtn('cf',r.cfAmt,'ضريبة القيمة المضافة')+'</td></tr>':'') +
     (r.mkt>0?'<tr><td>التسويق</td><td class="mono">'+UI.fmt(r.mkt)+' ر.س</td><td><span class="badge warn">مصروف</span></td><td>'+agrBtn('mkt',r.mkt,'التسويق')+'</td></tr>':'') +
     (r.cb>0?'<tr><td>كاش باك</td><td class="mono">'+UI.fmt(r.cb)+' ر.س</td><td><span class="badge warn">مصروف</span></td><td>'+agrBtn('cashback',r.cb,'كاش باك')+'</td></tr>':'') +
-    (r.cfAmt>0?'<tr><td>'+UI.escHtml(r.cfName||'رسوم إضافية')+'</td><td class="mono">'+UI.fmt(r.cfAmt)+' ر.س</td><td><span class="badge warn">مصروف</span></td><td>'+agrBtn('cf',r.cfAmt,r.cfName||'رسوم إضافية')+'</td></tr>':'') +
     '</tbody></table></div>';
 
   UI.openModal(
@@ -1467,7 +1464,7 @@ Pages.switchEntryTab = function(tab) {
 
 Pages.registerContractItem = function(projId, cat, amount, nameOverride) {
   var typeMap = {exec:'income', vat:'expense', mkt:'expense', cashback:'expense', cf:'expense'};
-  var descMap = {exec:'أتعاب التنفيذ', vat:'ضريبة القيمة المضافة', mkt:'تسويق', cashback:'كاش باك'};
+  var descMap = {exec:'أتعاب التنفيذ', vat:'ضريبة القيمة المضافة', mkt:'تسويق', cashback:'كاش باك', cf:'ضريبة القيمة المضافة'};
   var fin = DB.getFin(projId);
   fin.entries = fin.entries||[];
   fin.entries.push({
