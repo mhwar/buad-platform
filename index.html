@@ -545,10 +545,10 @@ var FinCalc = {
       ? Math.max(0, execIncomeReg + profitMargins + nonExecInc + (isInternalMkt ? mkt : 0))
       : Math.max(0, execAmt + profitMargins + nonExecInc + (isInternalMkt ? mkt : 0));
 
-    var available  = contractNet - execAmt - mkt - cb;
-    // المتبقي = إجمالي العقد − كل البنود المسجّلة (دخل+مصروف) − هوامش الربح
+    var available  = contractNet - execAmt - mkt - cb - cfAmt;
+    // المتبقي = إجمالي العقد − كل البنود المسجّلة (هامش الربح يُضاف للربح فقط ولا يُخصم مرة إضافية)
     var totalAllEntries = entries.reduce(function(s,e){ return s+(parseFloat(e.amount)||0); }, 0);
-    var remaining  = grossTotal - totalAllEntries - profitMargins;
+    var remaining  = grossTotal - totalAllEntries;
 
     // اكتشاف بنود الاتفاقية غير المسجّلة
     var regCats = entries.map(function(e){ return e.cat; });
@@ -1093,7 +1093,7 @@ function _calcTrailHtml(r, c) {
     '</div>';
   }
   var vatLabel = (r.vatPct||0) + '% ' + (r.vatIncluded ? 'مستخرجة' : 'مضافة');
-  var available = r.contractNet - r.execAmt - r.mkt - r.cb;
+  var available = r.contractNet - r.execAmt - r.mkt - r.cb - r.cfAmt;
   var html = '<div class="calc-trail" id="calc-trail-inner">';
   html += row('', 'قيمة العقد المدخلة', '', r.cv, 'brand');
   html += row('−', 'ضريبة القيمة المضافة', vatLabel, r.vatAmt, 'red');
@@ -1101,6 +1101,7 @@ function _calcTrailHtml(r, c) {
   if ((parseFloat(c.exec_v)||0) > 0) html += row('−', 'أتعاب التنفيذ', feeLabel(c.exec_v, c.exec_type||'pct', c.exec_base||'net'), r.execAmt, 'red');
   if ((parseFloat(c.mkt_v)||0) > 0)  html += row('−', 'التسويق', feeLabel(c.mkt_v, c.mkt_type||'pct', c.mkt_base||'net')+(c.mkt_internal?' — داخلي':''), r.mkt, 'red');
   if ((parseFloat(c.cb_v)||0) > 0)   html += row('−', 'كاش باك', feeLabel(c.cb_v, c.cb_type||'pct', c.cb_base||'net'), r.cb, 'red');
+  if ((parseFloat(c.cf_v)||0) > 0)   html += row('−', 'ضريبة القيمة المضافة', feeLabel(c.cf_v, c.cf_type||'pct', c.cf_base||'net'), r.cfAmt, 'red');
   html += row('=', 'المتاح للتنفيذ', '', available, available >= 0 ? 'green' : 'red', true);
   html += '</div>';
   return html;
@@ -1118,7 +1119,7 @@ Pages.renderFinCtrl = function(projId) {
       '<div class="stat-card brand"><div class="stat-card-label">صافي العقد</div><div class="stat-card-value mono" style="font-size:17px">'+UI.fmt(r.contractNet)+'</div><div class="stat-card-sub">'+UI.fmt(r.grossTotal)+' شاملاً الضريبة</div></div>' +
       '<div class="stat-card danger"><div class="stat-card-label">المصاريف الفعلية</div><div class="stat-card-value mono" style="font-size:17px">'+UI.fmt(r.totalExpenses)+'</div><div class="stat-card-sub" style="margin-top:6px"><div class="progress-bar-wrap"><div class="progress-bar" style="width:'+pct+'%"></div></div></div></div>' +
       '<div class="stat-card success"><div class="stat-card-label">صافي الربح</div><div class="stat-card-value mono" style="font-size:17px">'+UI.fmt(r.profit)+'</div><div class="stat-card-sub">أتعاب + هامش الربح</div></div>' +
-      '<div class="stat-card warn"><div class="stat-card-label">المتبقي</div><div class="stat-card-value mono" style="font-size:17px">'+UI.fmt(r.remaining)+'</div><div class="stat-card-sub">من إجمالي العقد '+UI.fmt(r.grossTotal)+(r.totalAllEntries>0?' − بنود '+UI.fmt(r.totalAllEntries):'')+'</div></div>' +
+      '<div class="stat-card '+(r.remaining<0?'danger':'warn')+'"><div class="stat-card-label">المتبقي'+(r.remaining<0?' ⚠️ تجاوز':'')+'</div><div class="stat-card-value mono" style="font-size:17px">'+UI.fmt(r.remaining)+'</div><div class="stat-card-sub">من إجمالي العقد '+UI.fmt(r.grossTotal)+(r.totalAllEntries>0?' − بنود '+UI.fmt(r.totalAllEntries):'')+'</div></div>' +
     '</div>';
 
   function baseOpts(sel) {
@@ -1345,7 +1346,7 @@ Pages.renderFinEntries = function(projId) {
   document.getElementById('fin-tab-entries').innerHTML =
     warnHtml +
     '<div class="stat-cards" style="grid-template-columns:repeat(3,1fr);margin-bottom:16px">' +
-      '<div class="stat-card warn"><div class="stat-card-label">المتبقي من العقد</div><div class="stat-card-value mono" style="font-size:17px">'+UI.fmt(r.remaining)+'</div><div class="stat-card-sub">من إجمالي العقد '+UI.fmt(r.grossTotal)+(r.totalAllEntries>0?' − بنود '+UI.fmt(r.totalAllEntries):'')+'</div></div>' +
+      '<div class="stat-card '+(r.remaining<0?'danger':'warn')+'"><div class="stat-card-label">المتبقي من العقد'+(r.remaining<0?' ⚠️ تجاوز':'')+'</div><div class="stat-card-value mono" style="font-size:17px">'+UI.fmt(r.remaining)+'</div><div class="stat-card-sub">من إجمالي العقد '+UI.fmt(r.grossTotal)+(r.totalAllEntries>0?' − بنود '+UI.fmt(r.totalAllEntries):'')+'</div></div>' +
       '<div class="stat-card danger"><div class="stat-card-label">إجمالي المصاريف</div><div class="stat-card-value mono" style="font-size:17px">'+UI.fmt(r.totalExpenses)+'</div></div>' +
       '<div class="stat-card success"><div class="stat-card-label">صافي الربح</div><div class="stat-card-value mono" style="font-size:17px">'+UI.fmt(r.profit)+'</div><div class="stat-card-sub">أتعاب + هامش الربح</div></div>' +
     '</div>' +
