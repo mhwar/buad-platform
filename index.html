@@ -317,6 +317,9 @@ select.field-input{cursor:pointer}
 .fin-summary-row:last-child{border-bottom:none;font-weight:700;font-size:13px}
 .fin-summary-row .lbl{color:var(--gray-500)}
 .fin-summary-row .val{font-family:"IBM Plex Mono",monospace;font-weight:600}
+/* ── Ctrl page grids ── */
+.ctrl-2col{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.ctrl-3col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
 /* ── Calc Trail (waterfall) ── */
 .calc-trail{padding:0}
 .calc-trail-row{display:flex;align-items:baseline;gap:8px;padding:7px 0;border-bottom:1px solid var(--gray-100);font-size:12.5px}
@@ -353,6 +356,9 @@ select.field-input{cursor:pointer}
   .stat-cards{grid-template-columns:repeat(2,1fr)}
   .form-row,.form-row-3{grid-template-columns:1fr}
   .client-grid{grid-template-columns:1fr}
+  .ctrl-2col,.ctrl-3col{grid-template-columns:1fr}
+  .calc-trail-row{font-size:12px}
+  .calc-trail-val{min-width:90px}
   .page{padding:14px}
   .sidebar.collapsed{width:var(--sidebar-w)}
 }
@@ -635,7 +641,7 @@ var UI = {
   },
   fmt: function(n) {
     n = parseFloat(n)||0;
-    return n.toLocaleString('ar-SA', {minimumFractionDigits:0, maximumFractionDigits:2});
+    return n.toLocaleString('en-US', {minimumFractionDigits:0, maximumFractionDigits:2});
   },
   escHtml: function(s) {
     return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -1124,7 +1130,7 @@ Pages.renderFinCtrl = function(projId) {
   document.getElementById('fin-tab-ctrl').innerHTML =
     statsHtml +
     // ── Row 1: Contract settings + Calc trail ──
-    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">' +
+    '<div class="ctrl-2col">' +
       '<div class="card">' +
         '<div class="card-title">إعدادات العقد</div>' +
         '<div class="form-row">' +
@@ -1150,7 +1156,7 @@ Pages.renderFinCtrl = function(projId) {
     // ── Row 2: Fee distribution ──
     '<div class="card" style="margin-bottom:16px">' +
       '<div class="card-title">توزيع الأتعاب</div>' +
-      '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px">' +
+      '<div class="ctrl-3col">' +
         '<div>' + feeGroup('أتعاب التنفيذ', 'fc-execv','fc-exect','fc-execb', c.exec_v, c.exec_type, c.exec_base) + '</div>' +
         '<div>' + feeGroup('التسويق', 'fc-mktv','fc-mktt','fc-mktb', c.mkt_v, c.mkt_type, c.mkt_base) +
           '<div class="toggle-row" style="padding:4px 0"><span class="toggle-label" style="font-size:12px">داخلي (يُضاف للأرباح)</span>' +
