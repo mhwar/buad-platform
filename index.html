@@ -536,6 +536,102 @@ select.field-input{cursor:pointer}
 .flex{display:flex}.flex-center{align-items:center}.justify-between{justify-content:space-between}
 .w-full{width:100%}
 .section-title{font-size:13px;font-weight:700;color:var(--gray-700);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--gray-200)}
+
+/* ── Dashboard v2 ── */
+.dash-greeting{
+  background:linear-gradient(135deg,#001a8c 0%,#0230e0 60%,#1a56fb 100%);
+  border-radius:var(--radius);padding:20px 24px;margin-bottom:20px;
+  display:flex;align-items:center;justify-content:space-between;gap:16px;
+  box-shadow:0 4px 20px rgba(0,25,140,.18);position:relative;overflow:hidden;
+}
+.dash-greeting::before{
+  content:'';position:absolute;left:-40px;top:-40px;width:160px;height:160px;
+  background:rgba(255,255,255,.05);border-radius:50%;
+}
+.dash-greeting::after{
+  content:'';position:absolute;left:60px;bottom:-60px;width:200px;height:200px;
+  background:rgba(255,255,255,.04);border-radius:50%;
+}
+.dash-greeting-text h2{font-size:17px;font-weight:700;color:#fff;margin-bottom:4px}
+.dash-greeting-text p{font-size:12px;color:rgba(255,255,255,.65)}
+.dash-greeting-actions{display:flex;gap:8px;flex-shrink:0;position:relative;z-index:1}
+.btn-white{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);color:#fff;border-radius:var(--radius-sm);padding:7px 14px;font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;transition:.15s;display:inline-flex;align-items:center;gap:6px}
+.btn-white:hover{background:rgba(255,255,255,.25)}
+.btn-white-solid{background:#fff;border:1px solid #fff;color:var(--brand);border-radius:var(--radius-sm);padding:7px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:.15s;display:inline-flex;align-items:center;gap:6px}
+.btn-white-solid:hover{background:#f0f4ff}
+
+/* KPI Cards */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+.kpi-card{
+  background:#fff;border:1px solid var(--gray-200);border-radius:var(--radius);
+  padding:18px;box-shadow:var(--shadow);position:relative;overflow:hidden;
+  transition:var(--transition);
+}
+.kpi-card:hover{box-shadow:var(--shadow-md);transform:translateY(-1px)}
+.kpi-card-accent{position:absolute;top:0;right:0;left:0;height:3px;border-radius:var(--radius) var(--radius) 0 0}
+.kpi-card-icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;margin-bottom:12px}
+.kpi-card-icon i[data-lucide]{width:18px;height:18px;stroke:currentColor}
+.kpi-card-label{font-size:11px;color:var(--gray-500);font-weight:500;margin-bottom:5px;text-transform:uppercase;letter-spacing:.4px}
+.kpi-card-value{font-size:22px;font-weight:700;font-family:"IBM Plex Mono",monospace;line-height:1.1;margin-bottom:6px}
+.kpi-card-sub{font-size:11px;color:var(--gray-400);display:flex;align-items:center;gap:4px}
+.kpi-trend-up{color:var(--success);font-weight:600}
+.kpi-trend-down{color:var(--danger);font-weight:600}
+
+/* Dashboard 2-col */
+.dash-2col{display:grid;grid-template-columns:1fr 340px;gap:16px;margin-bottom:20px}
+.dash-3col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:20px}
+
+/* Project status donut */
+.donut-wrap{display:flex;flex-direction:column;align-items:center;gap:14px;padding:4px 0}
+.donut-legend{width:100%;display:flex;flex-direction:column;gap:7px}
+.donut-legend-item{display:flex;align-items:center;justify-content:space-between;font-size:12px}
+.donut-legend-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-left:8px}
+.donut-legend-lbl{flex:1;color:var(--gray-700)}
+.donut-legend-val{font-family:"IBM Plex Mono",monospace;font-weight:600;color:var(--gray-900);font-size:11px}
+
+/* Horizontal bar chart */
+.hbar-item{margin-bottom:10px}
+.hbar-label{display:flex;justify-content:space-between;margin-bottom:4px;font-size:12px}
+.hbar-name{color:var(--gray-700);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:65%}
+.hbar-val{font-family:"IBM Plex Mono",monospace;font-weight:600;color:var(--gray-900);font-size:11px;white-space:nowrap}
+.hbar-track{background:var(--gray-100);border-radius:20px;height:7px;overflow:hidden}
+.hbar-fill{height:100%;border-radius:20px;transition:width .5s ease}
+
+/* Activity feed */
+.activity-feed{display:flex;flex-direction:column;gap:0}
+.activity-item{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--gray-100);font-size:12px}
+.activity-item:last-child{border-bottom:none}
+.activity-dot{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.activity-dot i[data-lucide]{width:13px;height:13px;stroke:currentColor}
+.activity-body{flex:1;min-width:0}
+.activity-title{font-weight:600;color:var(--gray-900);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.activity-meta{color:var(--gray-400);font-size:11px}
+
+/* Quick actions */
+.quick-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.qa-btn{
+  background:var(--gray-50);border:1px solid var(--gray-200);border-radius:var(--radius-sm);
+  padding:11px 12px;cursor:pointer;font-family:inherit;font-size:12px;font-weight:500;
+  color:var(--gray-700);transition:var(--transition);display:flex;align-items:center;gap:8px;
+  text-align:right;
+}
+.qa-btn:hover{background:var(--brand-light);border-color:var(--brand);color:var(--brand)}
+.qa-btn i[data-lucide]{width:15px;height:15px;flex-shrink:0}
+
+/* Dash section header */
+.dash-sec-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.dash-sec-hdr h3{font-size:13px;font-weight:700;color:var(--gray-900);display:flex;align-items:center;gap:6px}
+.dash-sec-hdr h3 i[data-lucide]{width:14px;height:14px;color:var(--gray-400)}
+
+@media(max-width:900px){
+  .dash-2col{grid-template-columns:1fr}
+  .kpi-grid{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:480px){
+  .kpi-grid{grid-template-columns:1fr 1fr}
+  .dash-greeting{flex-direction:column;align-items:flex-start}
+  .quick-actions{grid-template-columns:1fr}
+}
 </style>
 </head>
 <body>
@@ -860,53 +956,238 @@ function fmtDate(d) {
 ═══════════════════════════════════════════ */
 var Pages = {};
 
-/* ─── DASHBOARD ─── */
+/* ─── DASHBOARD v2 ─── */
 Pages.render_dash = function() {
-  var clients = DB.getClients();
+  var clients  = DB.getClients();
   var projects = DB.getProjects();
-  var active = projects.filter(function(p){ return p.status==='active'; });
-  var totalContract = 0;
-  projects.forEach(function(p){
-    var fin = DB.getFin(p.id);
-    totalContract += parseFloat((fin.ctrl||{}).contract_value)||0;
-  });
-  var recent = projects.slice().sort(function(a,b){ return (b.created||'').localeCompare(a.created||''); }).slice(0,5);
 
-  var recentRows = '';
-  if (recent.length === 0) {
-    recentRows = '<tr><td colspan="5"><div class="empty-state" style="padding:24px"><p>لا توجد مشاريع بعد</p></div></td></tr>';
+  /* ── KPIs ── */
+  var activeProj    = projects.filter(function(p){ return p.status==='active'; });
+  var completedProj = projects.filter(function(p){ return p.status==='completed'; });
+  var pausedProj    = projects.filter(function(p){ return p.status==='paused'; });
+  var cancelledProj = projects.filter(function(p){ return p.status==='cancelled'; });
+
+  var totalContract = 0, totalProfit = 0, totalExpenses = 0;
+  projects.forEach(function(p){
+    var r = FinCalc.calc(p.id);
+    totalContract += r.grossTotal      || 0;
+    totalProfit   += r.profit          || 0;
+    totalExpenses += r.totalExpenses   || 0;
+  });
+  var profitMargin = totalContract > 0 ? (totalProfit / totalContract * 100).toFixed(1) : '0';
+
+  /* ── Date ── */
+  var now = new Date();
+  var days   = ['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
+  var months = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+  var dateStr = days[now.getDay()] + '، ' + now.getDate() + ' ' + months[now.getMonth()] + ' ' + now.getFullYear();
+
+  /* ── Top projects by contract value (horizontal bars) ── */
+  var topProjects = projects.map(function(p){
+    var r = FinCalc.calc(p.id);
+    return { p:p, val:r.grossTotal||0, profit:r.profit||0 };
+  }).sort(function(a,b){ return b.val - a.val; }).slice(0,5);
+  var maxVal = topProjects.length ? topProjects[0].val : 1;
+  var barColors = ['#00197D','#0230e0','#1a56fb','#4c7afc','#80a3fd'];
+
+  var hbarRows = '';
+  if (topProjects.length === 0) {
+    hbarRows = '<div style="text-align:center;padding:28px 0;color:var(--gray-400);font-size:12px">لا توجد مشاريع بعد</div>';
   } else {
-    recent.forEach(function(p){
-      var cl = DB.getClients().find(function(c){ return c.id===p.client_id; });
-      recentRows += '<tr>' +
-        '<td><span class="fw-600">'+UI.escHtml(p.name)+'</span></td>' +
-        '<td>'+UI.escHtml(cl?cl.name:'—')+'</td>' +
-        '<td>'+typeLabel(p.type)+'</td>' +
-        '<td>'+statusBadge(p.status)+'</td>' +
-        '<td><button class="btn btn-sm btn-ghost" onclick="Nav.go(\'fin\',{projId:\''+p.id+'\'})">فتح</button></td>' +
-        '</tr>';
+    topProjects.forEach(function(item, i){
+      var pct = maxVal > 0 ? Math.round(item.val / maxVal * 100) : 0;
+      hbarRows +=
+        '<div class="hbar-item" onclick="Nav.go(\'fin\',{projId:\''+item.p.id+'\'})" style="cursor:pointer">' +
+          '<div class="hbar-label">' +
+            '<span class="hbar-name" title="'+UI.escHtml(item.p.name)+'">'+UI.escHtml(item.p.name)+'</span>' +
+            '<span class="hbar-val">'+UI.fmt(item.val)+' ر.س</span>' +
+          '</div>' +
+          '<div class="hbar-track"><div class="hbar-fill" style="width:'+pct+'%;background:'+barColors[i%5]+'"></div></div>' +
+        '</div>';
     });
   }
 
-  document.getElementById('pg-dash').innerHTML =
-    '<div class="stat-cards">' +
-      '<div class="stat-card brand"><div class="stat-card-label">إجمالي العملاء</div><div class="stat-card-value mono">'+clients.length+'</div><div class="stat-card-sub">عميل مسجل</div></div>' +
-      '<div class="stat-card"><div class="stat-card-label">إجمالي المشاريع</div><div class="stat-card-value mono">'+projects.length+'</div><div class="stat-card-sub">مشروع</div></div>' +
-      '<div class="stat-card success"><div class="stat-card-label">المشاريع النشطة</div><div class="stat-card-value mono">'+active.length+'</div><div class="stat-card-sub">قيد التنفيذ</div></div>' +
-      '<div class="stat-card warn"><div class="stat-card-label">إجمالي العقود</div><div class="stat-card-value mono" style="font-size:17px">'+UI.fmt(totalContract)+'</div><div class="stat-card-sub">ريال سعودي</div></div>' +
-    '</div>' +
-    '<div class="card">' +
-      '<div class="flex flex-center justify-between mb-12"><div class="card-title" style="margin-bottom:0">آخر المشاريع</div>' +
-        '<button class="btn btn-sm btn-primary" onclick="Nav.go(\'projects\')">كل المشاريع</button>' +
-      '</div>' +
-      '<div style="overflow-x:auto">' +
-        '<table class="data-table"><thead><tr>' +
-          '<th>اسم المشروع</th><th>العميل</th><th>النوع</th><th>الحالة</th><th></th>' +
-        '</tr></thead><tbody>'+recentRows+'</tbody></table>' +
-      '</div>' +
+  /* ── Donut SVG ── */
+  var statusData = [
+    {label:'نشط',   count:activeProj.length,    color:'#1a7f37'},
+    {label:'مكتمل', count:completedProj.length,  color:'#00197D'},
+    {label:'متوقف', count:pausedProj.length,     color:'#B8841A'},
+    {label:'ملغي',  count:cancelledProj.length,  color:'#c0392b'}
+  ].filter(function(d){ return d.count > 0; });
+  var donutSvg  = _buildDonut(statusData, projects.length);
+  var legendHtml = statusData.length ? statusData.map(function(d){
+    return '<div class="donut-legend-item">' +
+      '<span class="donut-legend-dot" style="background:'+d.color+'"></span>' +
+      '<span class="donut-legend-lbl">'+d.label+'</span>' +
+      '<span class="donut-legend-val">'+d.count+'</span>' +
     '</div>';
+  }).join('') : '<div style="font-size:12px;color:var(--gray-400);text-align:center;padding:12px 0">لا توجد بيانات</div>';
+
+  /* ── Activity feed ── */
+  var feedItems = projects.slice().sort(function(a,b){
+    return (b.created||'').localeCompare(a.created||'');
+  }).slice(0, 6);
+  var stColors = {active:'rgba(26,127,55,.1)',completed:'rgba(0,25,125,.08)',paused:'rgba(184,132,26,.1)',cancelled:'rgba(192,57,43,.1)'};
+  var stIcons  = {active:'play-circle',completed:'check-circle',paused:'pause-circle',cancelled:'x-circle'};
+  var stStroke = {active:'#1a7f37',completed:'#00197D',paused:'#B8841A',cancelled:'#c0392b'};
+
+  var activityHtml = '';
+  if (feedItems.length === 0) {
+    activityHtml = '<div style="text-align:center;padding:24px 0;color:var(--gray-400);font-size:12px">لا يوجد نشاط بعد</div>';
+  } else {
+    feedItems.forEach(function(p){
+      var cl = clients.find(function(c){ return c.id===p.client_id; });
+      var icon = stIcons[p.status]||'circle';
+      activityHtml +=
+        '<div class="activity-item" onclick="Nav.go(\'fin\',{projId:\''+p.id+'\'})" style="cursor:pointer">' +
+          '<div class="activity-dot" style="background:'+(stColors[p.status]||'var(--gray-100)')+';color:'+(stStroke[p.status]||'var(--gray-400)')+'">' +
+            '<i data-lucide="'+icon+'"></i>' +
+          '</div>' +
+          '<div class="activity-body">' +
+            '<div class="activity-title">'+UI.escHtml(p.name)+'</div>' +
+            '<div class="activity-meta">'+(cl?UI.escHtml(cl.name)+' · ':'')+typeLabel(p.type)+'</div>' +
+          '</div>' +
+          statusBadge(p.status) +
+        '</div>';
+    });
+  }
+
+  /* ── Render ── */
+  document.getElementById('pg-dash').innerHTML =
+
+    /* Greeting banner */
+    '<div class="dash-greeting">' +
+      '<div class="dash-greeting-text">' +
+        '<h2>مرحباً بك في بُعد</h2>' +
+        '<p>'+dateStr+' &nbsp;·&nbsp; '+projects.length+' مشروع، '+activeProj.length+' نشط حالياً</p>' +
+      '</div>' +
+      '<div class="dash-greeting-actions">' +
+        '<button class="btn-white" onclick="Nav.go(\'projects\')"><i data-lucide="folder-open" style="width:14px;height:14px"></i>المشاريع</button>' +
+        '<button class="btn-white-solid" onclick="Pages.addProjectModal(null)"><i data-lucide="plus" style="width:14px;height:14px"></i>مشروع جديد</button>' +
+      '</div>' +
+    '</div>' +
+
+    /* KPI Cards */
+    '<div class="kpi-grid">' +
+
+      '<div class="kpi-card">' +
+        '<div class="kpi-card-accent" style="background:#00197D"></div>' +
+        '<div class="kpi-card-icon" style="background:#E8EBFF;color:#00197D"><i data-lucide="briefcase"></i></div>' +
+        '<div class="kpi-card-label">إجمالي قيمة العقود</div>' +
+        '<div class="kpi-card-value" style="color:#00197D">'+UI.fmt(totalContract)+'</div>' +
+        '<div class="kpi-card-sub">ريال سعودي</div>' +
+      '</div>' +
+
+      '<div class="kpi-card">' +
+        '<div class="kpi-card-accent" style="background:#1a7f37"></div>' +
+        '<div class="kpi-card-icon" style="background:#E8F5E9;color:#1a7f37"><i data-lucide="trending-up"></i></div>' +
+        '<div class="kpi-card-label">صافي الأرباح</div>' +
+        '<div class="kpi-card-value" style="color:#1a7f37">'+UI.fmt(totalProfit)+'</div>' +
+        '<div class="kpi-card-sub"><span class="kpi-trend-up">'+profitMargin+'%</span>&nbsp;هامش الربح</div>' +
+      '</div>' +
+
+      '<div class="kpi-card">' +
+        '<div class="kpi-card-accent" style="background:#0230e0"></div>' +
+        '<div class="kpi-card-icon" style="background:#E8EBFF;color:#0230e0"><i data-lucide="activity"></i></div>' +
+        '<div class="kpi-card-label">المشاريع النشطة</div>' +
+        '<div class="kpi-card-value" style="color:#0230e0">'+activeProj.length+'</div>' +
+        '<div class="kpi-card-sub">من إجمالي '+projects.length+' مشروع</div>' +
+      '</div>' +
+
+      '<div class="kpi-card">' +
+        '<div class="kpi-card-accent" style="background:#B8841A"></div>' +
+        '<div class="kpi-card-icon" style="background:#FFF3E0;color:#B8841A"><i data-lucide="users"></i></div>' +
+        '<div class="kpi-card-label">العملاء المسجلون</div>' +
+        '<div class="kpi-card-value" style="color:#B8841A">'+clients.length+'</div>' +
+        '<div class="kpi-card-sub">'+completedProj.length+' مشروع مكتمل</div>' +
+      '</div>' +
+
+    '</div>' +
+
+    /* Row 2: Top Projects + Donut */
+    '<div class="dash-2col">' +
+
+      '<div class="card">' +
+        '<div class="dash-sec-hdr">' +
+          '<h3><i data-lucide="bar-chart-2"></i>أعلى المشاريع قيمةً</h3>' +
+          '<button class="btn btn-sm btn-ghost" onclick="Nav.go(\'projects\')">عرض الكل</button>' +
+        '</div>' +
+        hbarRows +
+      '</div>' +
+
+      '<div class="card">' +
+        '<div class="dash-sec-hdr"><h3><i data-lucide="pie-chart"></i>توزيع المشاريع</h3></div>' +
+        '<div class="donut-wrap">' + donutSvg +
+          '<div class="donut-legend">'+legendHtml+'</div>' +
+        '</div>' +
+      '</div>' +
+
+    '</div>' +
+
+    /* Row 3: Activity + Quick Actions */
+    '<div class="dash-2col">' +
+
+      '<div class="card">' +
+        '<div class="dash-sec-hdr">' +
+          '<h3><i data-lucide="clock"></i>آخر المشاريع</h3>' +
+          '<button class="btn btn-sm btn-ghost" onclick="Nav.go(\'projects\')">عرض الكل</button>' +
+        '</div>' +
+        '<div class="activity-feed">'+activityHtml+'</div>' +
+      '</div>' +
+
+      '<div class="card">' +
+        '<div class="dash-sec-hdr"><h3><i data-lucide="zap"></i>إجراءات سريعة</h3></div>' +
+        '<div class="quick-actions">' +
+          '<button class="qa-btn" onclick="Pages.addProjectModal(null)"><i data-lucide="folder-plus"></i>مشروع جديد</button>' +
+          '<button class="qa-btn" onclick="Pages.addClientModal()"><i data-lucide="user-plus"></i>عميل جديد</button>' +
+          '<button class="qa-btn" onclick="Nav.go(\'projects\')"><i data-lucide="layout-list"></i>كل المشاريع</button>' +
+          '<button class="qa-btn" onclick="Nav.go(\'clients\')"><i data-lucide="users"></i>كل العملاء</button>' +
+        '</div>' +
+        '<div class="divider"></div>' +
+        '<div style="display:flex;flex-direction:column;gap:0">' +
+          '<div style="display:flex;justify-content:space-between;font-size:12px;padding:8px 0;border-bottom:1px solid var(--gray-100)">' +
+            '<span style="color:var(--gray-500)">المصاريف الإجمالية</span>' +
+            '<span class="mono fw-600" style="color:var(--danger)">'+UI.fmt(totalExpenses)+' ر.س</span>' +
+          '</div>' +
+          '<div style="display:flex;justify-content:space-between;font-size:12px;padding:8px 0;border-bottom:1px solid var(--gray-100)">' +
+            '<span style="color:var(--gray-500)">مشاريع مكتملة</span>' +
+            '<span class="mono fw-600">'+completedProj.length+'</span>' +
+          '</div>' +
+          '<div style="display:flex;justify-content:space-between;font-size:12px;padding:8px 0">' +
+            '<span style="color:var(--gray-500)">مشاريع متوقفة</span>' +
+            '<span class="mono fw-600" style="color:var(--warn)">'+pausedProj.length+'</span>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+
+    '</div>';
+
   document.getElementById('top-actions').innerHTML='';
+  if (window.lucide) lucide.createIcons();
 };
+
+function _buildDonut(segments, total) {
+  if (!segments || segments.length === 0 || !total) {
+    return '<svg width="110" height="110" viewBox="0 0 110 110"><circle cx="55" cy="55" r="40" fill="none" stroke="#E2E8F0" stroke-width="14"/><text x="55" y="60" text-anchor="middle" font-size="14" fill="#A0AEC0">0</text></svg>';
+  }
+  var r = 40, cx = 55, cy = 55, sw = 14;
+  var circ = 2 * Math.PI * r;
+  var offset = 0, paths = '';
+  segments.forEach(function(seg){
+    var pct   = seg.count / total;
+    var dash  = pct * circ;
+    var gap   = circ - dash;
+    var angle = (offset / total) * 360 - 90;
+    paths += '<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="none" stroke="'+seg.color+'" stroke-width="'+sw+'" stroke-dasharray="'+dash.toFixed(2)+' '+gap.toFixed(2)+'" transform="rotate('+angle.toFixed(2)+' '+cx+' '+cy+')"/>';
+    offset += seg.count;
+  });
+  return '<svg width="110" height="110" viewBox="0 0 110 110">' +
+    '<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="none" stroke="#F0F2F5" stroke-width="'+sw+'"/>' +
+    paths +
+    '<text x="'+cx+'" y="'+(cy-5)+'" text-anchor="middle" font-size="18" font-weight="700" fill="#1A202C">'+total+'</text>' +
+    '<text x="'+cx+'" y="'+(cy+12)+'" text-anchor="middle" font-size="10" fill="#A0AEC0">مشروع</text>' +
+    '</svg>';
+}
 
 /* ─── CLIENTS ─── */
 Pages.render_clients = function() {
