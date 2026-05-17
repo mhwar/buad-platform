@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>بُعد — إدارة مالية</title>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 <style>
 :root {
   --brand: #00197D;
@@ -66,9 +67,11 @@ a{text-decoration:none;color:inherit;cursor:pointer}
   background:none;border:none;color:rgba(255,255,255,.55);
   font-size:20px;cursor:pointer;padding:4px 6px;border-radius:6px;
   transition:var(--transition);flex-shrink:0;line-height:1;
+  display:flex;align-items:center;justify-content:center;
 }
 .sb-toggle:hover{background:rgba(255,255,255,.1);color:#fff}
-.sidebar.collapsed .sb-toggle{transform:scaleX(-1)}
+.sb-toggle i[data-lucide]{width:18px;height:18px;stroke:currentColor;transition:transform var(--transition)}
+.sidebar.collapsed .sb-toggle i[data-lucide]{transform:scaleX(-1)}
 .sb-nav{flex:1;padding:10px 8px;overflow-y:auto;overflow-x:hidden}
 .sb-nav::-webkit-scrollbar{width:3px}
 .sb-nav::-webkit-scrollbar-thumb{background:rgba(255,255,255,.15);border-radius:2px}
@@ -97,6 +100,7 @@ a{text-decoration:none;color:inherit;cursor:pointer}
   display:flex;align-items:center;justify-content:center;
   font-size:15px;flex-shrink:0;transition:var(--transition);
 }
+.sb-icon i[data-lucide]{width:16px;height:16px;stroke:currentColor;display:block}
 .sb-item:hover .sb-icon{background:rgba(255,255,255,.12)}
 .sb-item.active .sb-icon{background:rgba(255,255,255,.18)}
 .sb-label{transition:opacity var(--transition)}
@@ -121,7 +125,9 @@ a{text-decoration:none;color:inherit;cursor:pointer}
 .top-bar-menu{
   display:none;background:none;border:none;cursor:pointer;
   font-size:18px;color:var(--gray-700);padding:4px 6px;border-radius:6px;
+  align-items:center;justify-content:center;
 }
+.top-bar-menu i[data-lucide]{width:20px;height:20px;stroke:currentColor;display:block}
 .top-bar-menu:hover{background:var(--gray-100)}
 .top-bar-breadcrumb{flex:1;font-size:12px;color:var(--gray-500)}
 .top-bar-breadcrumb span{cursor:default}
@@ -239,7 +245,7 @@ a{text-decoration:none;color:inherit;cursor:pointer}
 
 /* ── Badges ── */
 .badge{
-  display:inline-flex;align-items:center;
+  display:inline-flex;align-items:center;gap:4px;
   padding:3px 10px;border-radius:20px;font-size:11px;font-weight:500;
 }
 .badge.success{background:var(--success-light);color:var(--success)}
@@ -247,6 +253,14 @@ a{text-decoration:none;color:inherit;cursor:pointer}
 .badge.warn{background:var(--warn-light);color:var(--warn)}
 .badge.danger{background:var(--danger-light);color:var(--danger)}
 .badge.gray{background:var(--gray-100);color:var(--gray-500)}
+/* Extended badge palette */
+.badge.purple{background:#EDE9FE;color:#7C3AED}
+.badge.amber{background:#FEF3C7;color:#D97706}
+.badge.emerald{background:#D1FAE5;color:#059669}
+.badge.indigo{background:#E0E7FF;color:#4338CA}
+.badge.rose{background:#FFE4E6;color:#E11D48}
+.badge.cyan{background:#CFFAFE;color:#0891B2}
+.badge i[data-lucide]{width:11px;height:11px;flex-shrink:0}
 
 /* ── Forms ── */
 .form-group{margin-bottom:14px}
@@ -336,7 +350,8 @@ select.field-input{cursor:pointer}
 
 /* ── Empty state ── */
 .empty-state{text-align:center;padding:48px 24px;color:var(--gray-400)}
-.empty-state-icon{font-size:40px;margin-bottom:12px;opacity:.5}
+.empty-state-icon{font-size:40px;margin-bottom:12px;opacity:.5;display:flex;justify-content:center}
+.empty-state-icon i[data-lucide]{width:44px;height:44px;stroke:var(--gray-300);stroke-width:1.5}
 .empty-state h3{font-size:14px;font-weight:600;color:var(--gray-500);margin-bottom:6px}
 .empty-state p{font-size:12px;color:var(--gray-400)}
 
@@ -532,25 +547,25 @@ select.field-input{cursor:pointer}
         <div class="sb-logo-icon">ب</div>
         <span class="sb-logo-text">بُعد</span>
       </div>
-      <button class="sb-toggle" id="sb-toggle" onclick="Nav.toggleSidebar()">&#8249;</button>
+      <button class="sb-toggle" id="sb-toggle" onclick="Nav.toggleSidebar()"><i data-lucide="chevron-right"></i></button>
     </div>
     <nav class="sb-nav">
       <div class="sb-section-label">القائمة</div>
       <a class="sb-item" id="nav-dash" onclick="Nav.go('dash')">
-        <span class="sb-icon">⊞</span>
+        <span class="sb-icon"><i data-lucide="layout-dashboard"></i></span>
         <span class="sb-label">الرئيسية</span>
       </a>
       <a class="sb-item" id="nav-clients" onclick="Nav.go('clients')">
-        <span class="sb-icon">👥</span>
+        <span class="sb-icon"><i data-lucide="users"></i></span>
         <span class="sb-label">العملاء</span>
       </a>
       <a class="sb-item" id="nav-projects" onclick="Nav.go('projects')">
-        <span class="sb-icon">📁</span>
+        <span class="sb-icon"><i data-lucide="folder-open"></i></span>
         <span class="sb-label">المشاريع</span>
       </a>
       <div class="sb-section-label">الحساب</div>
       <a class="sb-item" id="nav-settings" onclick="Nav.go('settings')">
-        <span class="sb-icon">⚙</span>
+        <span class="sb-icon"><i data-lucide="settings"></i></span>
         <span class="sb-label">الإعدادات</span>
       </a>
     </nav>
@@ -560,7 +575,7 @@ select.field-input{cursor:pointer}
   <!-- Main -->
   <main id="main">
     <div class="top-bar">
-      <button class="top-bar-menu" id="top-menu-btn" onclick="Nav.openSidebar()">☰</button>
+      <button class="top-bar-menu" id="top-menu-btn" onclick="Nav.openSidebar()"><i data-lucide="menu"></i></button>
       <div class="top-bar-breadcrumb" id="breadcrumb"></div>
       <div class="top-bar-actions" id="top-actions"></div>
     </div>
@@ -729,6 +744,7 @@ var Nav = {
     var m = document.getElementById('pg-'+page);
     if (m) m.scrollTop = 0;
     Nav.closeSidebar();
+    if (window.lucide) lucide.createIcons();
   },
   updateBreadcrumb: function(page, params) {
     var bc = document.getElementById('breadcrumb');
@@ -899,7 +915,7 @@ Pages.render_clients = function() {
 
   var cards = '';
   if (clients.length===0) {
-    cards = '<div class="empty-state"><div class="empty-state-icon">👥</div><h3>لا يوجد عملاء</h3><p>أضف أول عميل للبدء</p></div>';
+    cards = '<div class="empty-state"><div class="empty-state-icon"><i data-lucide="users"></i></div><h3>لا يوجد عملاء</h3><p>أضف أول عميل للبدء</p></div>';
   } else {
     clients.forEach(function(cl){
       var pCount = projects.filter(function(p){ return p.client_id===cl.id; }).length;
@@ -1009,7 +1025,7 @@ Pages.render_client = function(params) {
 
   var projCards = '';
   if (projects.length===0) {
-    projCards = '<div class="empty-state"><div class="empty-state-icon">📁</div><h3>لا توجد مشاريع</h3><p>أضف أول مشروع لهذا العميل</p></div>';
+    projCards = '<div class="empty-state"><div class="empty-state-icon"><i data-lucide="folder-open"></i></div><h3>لا توجد مشاريع</h3><p>أضف أول مشروع لهذا العميل</p></div>';
   } else {
     projects.forEach(function(p){
       projCards += '<tr>' +
@@ -1057,7 +1073,7 @@ Pages.render_projects = function() {
 
   var rows = '';
   if (filtered.length===0) {
-    rows = '<tr><td colspan="6"><div class="empty-state" style="padding:24px"><div class="empty-state-icon">📁</div><h3>لا توجد مشاريع</h3></div></td></tr>';
+    rows = '<tr><td colspan="6"><div class="empty-state" style="padding:24px"><div class="empty-state-icon"><i data-lucide="folder-open"></i></div><h3>لا توجد مشاريع</h3></div></td></tr>';
   } else {
     filtered.slice().sort(function(a,b){ return (b.created||'').localeCompare(a.created||''); }).forEach(function(p){
       var cl = clients.find(function(c){ return c.id===p.client_id; });
@@ -1505,7 +1521,7 @@ Pages.renderFinEntries = function(projId) {
 
   var rows = '';
   if (filtered.length===0) {
-    rows = '<tr><td colspan="4"><div class="empty-state" style="padding:32px"><div class="empty-state-icon">📋</div><h3>لا توجد قيود</h3><p>أضف أول بند مالي</p></div></td></tr>';
+    rows = '<tr><td colspan="4"><div class="empty-state" style="padding:32px"><div class="empty-state-icon"><i data-lucide="receipt"></i></div><h3>لا توجد قيود</h3><p>أضف أول بند مالي</p></div></td></tr>';
   } else {
     var statusLabel = {paid:'مدفوع', pending:'معلق', cancelled:'ملغي'};
     filtered.slice().sort(function(a,b){ return (b.date||'').localeCompare(a.date||''); }).forEach(function(e){
@@ -2265,6 +2281,7 @@ Pages.loadSampleData = function() {
   window._entriesSearch = '';
   Pages._finTab = 'overview';
   Nav.go('dash');
+  if (window.lucide) lucide.createIcons();
 })();
 </script>
 
