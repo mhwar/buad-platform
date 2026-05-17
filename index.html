@@ -43,7 +43,8 @@ a{text-decoration:none;color:inherit;cursor:pointer}
 /* ── Sidebar ── */
 .sidebar{
   width:var(--sidebar-w);flex-shrink:0;
-  background:linear-gradient(160deg,#001E9A 0%,#000C58 100%);
+  background:#fff;
+  border-left:1px solid var(--gray-200);
   display:flex;flex-direction:column;
   transition:width var(--transition);
   overflow:hidden;position:relative;z-index:200;
@@ -51,58 +52,58 @@ a{text-decoration:none;color:inherit;cursor:pointer}
 .sidebar.collapsed{width:var(--sidebar-col)}
 .sb-header{
   display:flex;align-items:center;justify-content:space-between;
-  padding:16px 14px 14px;border-bottom:1px solid rgba(255,255,255,.08);
+  padding:14px 14px 13px;border-bottom:1px solid var(--gray-200);
   flex-shrink:0;min-height:60px;
 }
 .sb-logo{display:flex;align-items:center;gap:10px;overflow:hidden;white-space:nowrap}
 .sb-logo-icon{
-  width:36px;height:36px;border-radius:10px;
-  background:rgba(255,255,255,.15);
+  width:34px;height:34px;border-radius:10px;
+  background:var(--brand);
   display:flex;align-items:center;justify-content:center;
-  font-size:18px;font-weight:700;color:#fff;flex-shrink:0;
+  font-size:17px;font-weight:700;color:#fff;flex-shrink:0;
 }
-.sb-logo-text{font-size:17px;font-weight:700;color:#fff;opacity:1;transition:opacity var(--transition)}
+.sb-logo-text{font-size:16px;font-weight:700;color:var(--gray-900);opacity:1;transition:opacity var(--transition)}
 .sidebar.collapsed .sb-logo-text{opacity:0;pointer-events:none;width:0;overflow:hidden}
 .sb-toggle{
-  background:none;border:none;color:rgba(255,255,255,.55);
+  background:none;border:none;color:var(--gray-400);
   font-size:20px;cursor:pointer;padding:4px 6px;border-radius:6px;
   transition:var(--transition);flex-shrink:0;line-height:1;
   display:flex;align-items:center;justify-content:center;
 }
-.sb-toggle:hover{background:rgba(255,255,255,.1);color:#fff}
+.sb-toggle:hover{background:var(--gray-100);color:var(--gray-700)}
 .sb-toggle i[data-lucide]{width:18px;height:18px;stroke:currentColor;transition:transform var(--transition)}
 .sidebar.collapsed .sb-toggle i[data-lucide]{transform:scaleX(-1)}
 .sb-nav{flex:1;padding:10px 8px;overflow-y:auto;overflow-x:hidden}
 .sb-nav::-webkit-scrollbar{width:3px}
-.sb-nav::-webkit-scrollbar-thumb{background:rgba(255,255,255,.15);border-radius:2px}
+.sb-nav::-webkit-scrollbar-thumb{background:var(--gray-200);border-radius:2px}
 .sb-section-label{
   font-size:9.5px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;
-  color:rgba(255,255,255,.28);padding:10px 10px 4px;
+  color:var(--gray-400);padding:10px 10px 4px;
   white-space:nowrap;overflow:hidden;transition:opacity var(--transition);
 }
 .sidebar.collapsed .sb-section-label{opacity:0}
 .sb-item{
   display:flex;align-items:center;gap:10px;
   padding:9px 10px;border-radius:9px;cursor:pointer;
-  color:rgba(255,255,255,.55);font-size:12px;font-weight:500;
+  color:var(--gray-500);font-size:12.5px;font-weight:500;
   transition:var(--transition);margin-bottom:2px;
   white-space:nowrap;overflow:hidden;position:relative;
 }
-.sb-item:hover{background:rgba(255,255,255,.08);color:rgba(255,255,255,.9)}
-.sb-item.active{background:rgba(255,255,255,.14);color:#fff}
+.sb-item:hover{background:var(--gray-100);color:var(--gray-900)}
+.sb-item.active{background:var(--brand-light);color:var(--brand);font-weight:600}
 .sb-item.active::after{
   content:'';position:absolute;right:0;top:20%;bottom:20%;
-  width:3px;background:rgba(255,255,255,.7);border-radius:2px 0 0 2px;
+  width:3px;background:var(--brand);border-radius:2px 0 0 2px;
 }
 .sb-icon{
   width:30px;height:30px;border-radius:7px;
-  background:rgba(255,255,255,.07);
+  background:var(--gray-100);
   display:flex;align-items:center;justify-content:center;
   font-size:15px;flex-shrink:0;transition:var(--transition);
 }
 .sb-icon i[data-lucide]{width:16px;height:16px;stroke:currentColor;display:block}
-.sb-item:hover .sb-icon{background:rgba(255,255,255,.12)}
-.sb-item.active .sb-icon{background:rgba(255,255,255,.18)}
+.sb-item:hover .sb-icon{background:var(--gray-200)}
+.sb-item.active .sb-icon{background:rgba(0,25,125,.12);color:var(--brand)}
 .sb-label{transition:opacity var(--transition)}
 .sidebar.collapsed .sb-label{opacity:0;width:0;overflow:hidden}
 
@@ -119,18 +120,27 @@ a{text-decoration:none;color:inherit;cursor:pointer}
 /* ── Top bar ── */
 .top-bar{
   background:#fff;border-bottom:1px solid var(--gray-200);
-  padding:10px 20px;display:flex;align-items:center;gap:12px;
-  flex-shrink:0;min-height:54px;
+  padding:0 20px;display:flex;align-items:center;gap:12px;
+  flex-shrink:0;height:56px;
+  box-shadow:0 1px 4px rgba(0,0,0,.04);
 }
 .top-bar-menu{
   display:none;background:none;border:none;cursor:pointer;
-  font-size:18px;color:var(--gray-700);padding:4px 6px;border-radius:6px;
-  align-items:center;justify-content:center;
+  color:var(--gray-700);padding:6px;border-radius:8px;
+  align-items:center;justify-content:center;transition:var(--transition);
 }
 .top-bar-menu i[data-lucide]{width:20px;height:20px;stroke:currentColor;display:block}
 .top-bar-menu:hover{background:var(--gray-100)}
-.top-bar-breadcrumb{flex:1;font-size:12px;color:var(--gray-500)}
+.top-bar-divider{width:1px;height:24px;background:var(--gray-200);flex-shrink:0}
+.top-bar-breadcrumb{
+  flex:1;font-size:12.5px;color:var(--gray-500);
+  display:flex;align-items:center;gap:6px;
+}
 .top-bar-breadcrumb span{cursor:default}
+.top-bar-breadcrumb .bc-page{
+  font-weight:600;color:var(--gray-900);font-size:13px;
+}
+.top-bar-breadcrumb .bc-sep{color:var(--gray-300)}
 .top-bar-actions{display:flex;align-items:center;gap:8px}
 
 /* ── Pages ── */
@@ -495,29 +505,63 @@ select.field-input{cursor:pointer}
 
 /* ── Project hero header ── */
 .proj-hero{background:#fff;border:1px solid var(--gray-200);border-radius:var(--radius);overflow:hidden;margin-bottom:16px;box-shadow:var(--shadow)}
-.proj-hero-band{background:linear-gradient(135deg,#001a8c 0%,#0230e0 100%);padding:16px 20px 14px}
-.proj-hero-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
-.proj-hero-badges{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:7px}
-.proj-hero-badge{border-radius:20px;padding:3px 10px;font-size:10.5px;font-weight:600;display:inline-block;border:1px solid transparent}
+.proj-hero-band{
+  background:linear-gradient(135deg,#001260 0%,#0230e0 70%,#1a56fb 100%);
+  padding:20px 22px 18px;position:relative;overflow:hidden;
+}
+.proj-hero-band::before{
+  content:'';position:absolute;right:-60px;top:-60px;width:200px;height:200px;
+  background:rgba(255,255,255,.04);border-radius:50%;
+}
+.proj-hero-band::after{
+  content:'';position:absolute;right:80px;bottom:-80px;width:240px;height:240px;
+  background:rgba(255,255,255,.03);border-radius:50%;
+}
+.proj-hero-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;position:relative;z-index:1}
+.proj-hero-badges{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.proj-hero-badge{border-radius:20px;padding:3px 11px;font-size:10.5px;font-weight:600;display:inline-flex;align-items:center;gap:4px;border:1px solid transparent}
 .proj-hero-badge-status{background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.2)}
-.proj-hero-badge-status.st-active{background:rgba(30,160,70,.3);border-color:rgba(50,200,80,.4)}
-.proj-hero-badge-status.st-completed{background:rgba(0,120,255,.2);border-color:rgba(0,150,255,.3)}
-.proj-hero-badge-status.st-paused{background:rgba(200,140,0,.25);border-color:rgba(200,160,0,.35)}
-.proj-hero-badge-type{background:rgba(255,255,255,.1);color:rgba(255,255,255,.78);border-color:rgba(255,255,255,.12)}
-.proj-hero-name{font-size:19px;font-weight:700;color:#fff;line-height:1.2;margin-bottom:6px}
-.proj-hero-meta{font-size:11px;color:rgba(255,255,255,.62);display:flex;flex-wrap:wrap;gap:4px 12px}
-.proj-hero-edit{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);color:#fff;border-radius:var(--radius-sm);padding:5px 14px;font-size:11.5px;font-weight:500;cursor:pointer;font-family:inherit;transition:.15s;white-space:nowrap;flex-shrink:0;margin-top:2px}
+.proj-hero-badge-status.st-active{background:rgba(30,200,80,.25);border-color:rgba(50,220,80,.35);color:#a7f3c8}
+.proj-hero-badge-status.st-completed{background:rgba(100,200,255,.2);border-color:rgba(100,200,255,.3);color:#bfefff}
+.proj-hero-badge-status.st-paused{background:rgba(255,190,0,.2);border-color:rgba(255,200,0,.3);color:#fde68a}
+.proj-hero-badge-type{background:rgba(255,255,255,.08);color:rgba(255,255,255,.7);border-color:rgba(255,255,255,.1)}
+.proj-hero-name{font-size:20px;font-weight:700;color:#fff;line-height:1.2;margin-bottom:7px;letter-spacing:-.2px}
+.proj-hero-meta{font-size:11.5px;color:rgba(255,255,255,.6);display:flex;flex-wrap:wrap;gap:4px 14px;align-items:center}
+.proj-hero-meta-item{display:flex;align-items:center;gap:4px}
+.proj-hero-meta-item i[data-lucide]{width:12px;height:12px;opacity:.7}
+.proj-hero-actions{display:flex;gap:8px;flex-shrink:0;margin-top:2px;position:relative;z-index:1}
+.proj-hero-edit{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);color:#fff;border-radius:var(--radius-sm);padding:6px 14px;font-size:11.5px;font-weight:500;cursor:pointer;font-family:inherit;transition:.15s;white-space:nowrap;display:inline-flex;align-items:center;gap:5px}
 .proj-hero-edit:hover{background:rgba(255,255,255,.22)}
-.proj-hero-stats{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--gray-200)}
-.phs{padding:11px 16px;border-left:1px solid var(--gray-200);min-width:0}
+
+/* Progress bar in hero */
+.proj-hero-progress{margin-top:14px;position:relative;z-index:1}
+.proj-hero-progress-labels{display:flex;justify-content:space-between;font-size:10px;color:rgba(255,255,255,.55);margin-bottom:5px}
+.proj-hero-progress-track{background:rgba(255,255,255,.12);border-radius:20px;height:5px;overflow:hidden}
+.proj-hero-progress-fill{height:100%;border-radius:20px;background:linear-gradient(90deg,rgba(255,255,255,.7),rgba(255,255,255,.9));transition:width .5s ease}
+.proj-hero-progress-fill.overspent{background:linear-gradient(90deg,#f87171,#ef4444)}
+
+/* Stats strip */
+.proj-hero-stats{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--gray-200)}
+.phs{padding:12px 16px;border-left:1px solid var(--gray-200);min-width:0;position:relative}
 .phs:last-child{border-left:none}
-.phs-lbl{font-size:10px;color:var(--gray-400);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.phs-lbl{font-size:10px;color:var(--gray-400);margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500;letter-spacing:.2px}
 .phs-val{font-size:15px;font-weight:700;font-family:'IBM Plex Mono',monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2}
+.phs::before{content:'';position:absolute;top:0;right:0;left:0;height:2px}
+.phs.ph-brand::before{background:var(--brand)}
+.phs.ph-danger::before{background:var(--danger)}
+.phs.ph-success::before{background:var(--success)}
+.phs.ph-warn::before{background:var(--warn)}
 .phs.ph-brand .phs-val{color:var(--brand)}
 .phs.ph-danger .phs-val{color:var(--danger)}
 .phs.ph-success .phs-val{color:var(--success)}
 .phs.ph-warn .phs-val{color:var(--warn)}
-@media(max-width:500px){.proj-hero-band{padding:13px 14px 11px}.proj-hero-name{font-size:16px}.phs{padding:9px 12px}.phs-val{font-size:13px}}
+@media(max-width:600px){
+  .proj-hero-band{padding:14px 14px 12px}
+  .proj-hero-name{font-size:16px}
+  .proj-hero-stats{grid-template-columns:repeat(2,1fr)}
+  .phs{padding:10px 12px}
+  .phs-val{font-size:13px}
+}
 
 /* ── Entry table date column ── */
 .entry-tbl .col-date{width:82px;font-size:12px;color:var(--gray-500)}
@@ -673,6 +717,7 @@ select.field-input{cursor:pointer}
     <div class="top-bar">
       <button class="top-bar-menu" id="top-menu-btn" onclick="Nav.openSidebar()"><i data-lucide="menu"></i></button>
       <div class="top-bar-breadcrumb" id="breadcrumb"></div>
+      <div class="top-bar-divider"></div>
       <div class="top-bar-actions" id="top-actions"></div>
     </div>
     <div id="pg-dash"     class="page"></div>
@@ -845,18 +890,23 @@ var Nav = {
   updateBreadcrumb: function(page, params) {
     var bc = document.getElementById('breadcrumb');
     if (!bc) return;
+    var icons = {dash:'layout-dashboard', clients:'users', projects:'folder-open', settings:'settings'};
     var labels = {dash:'الرئيسية', clients:'العملاء', projects:'المشاريع', settings:'الإعدادات'};
-    if (labels[page]) { bc.innerHTML='<span>'+labels[page]+'</span>'; return; }
+    function iconHtml(n){ return n ? '<i data-lucide="'+n+'" style="width:13px;height:13px;opacity:.5;flex-shrink:0"></i>' : ''; }
+    if (labels[page]) {
+      bc.innerHTML = iconHtml(icons[page])+'<span class="bc-page">'+labels[page]+'</span>';
+      return;
+    }
     if (page==='client' && params && params.clientId) {
       var clients = DB.getClients();
       var cl = clients.find(function(c){ return c.id===params.clientId; });
-      bc.innerHTML = '<span onclick="Nav.go(\'clients\')" style="cursor:pointer;color:var(--brand)">العملاء</span> / <span>'+(cl?UI.escHtml(cl.name):'عميل')+'</span>';
+      bc.innerHTML = iconHtml('users')+'<span onclick="Nav.go(\'clients\')" style="cursor:pointer;color:var(--brand)">العملاء</span><span class="bc-sep">/</span><span class="bc-page">'+(cl?UI.escHtml(cl.name):'عميل')+'</span>';
       return;
     }
     if (page==='fin' && params && params.projId) {
       var projects = DB.getProjects();
       var pr = projects.find(function(p){ return p.id===params.projId; });
-      bc.innerHTML = '<span onclick="Nav.go(\'projects\')" style="cursor:pointer;color:var(--brand)">المشاريع</span> / <span>'+(pr?UI.escHtml(pr.name):'مشروع')+'</span>';
+      bc.innerHTML = iconHtml('folder-open')+'<span onclick="Nav.go(\'projects\')" style="cursor:pointer;color:var(--brand)">المشاريع</span><span class="bc-sep">/</span><span class="bc-page">'+(pr?UI.escHtml(pr.name):'مشروع')+'</span>';
       return;
     }
     bc.innerHTML='';
@@ -1475,29 +1525,45 @@ Pages.render_fin = function(params) {
   var stMap = {active:['st-active','نشط'],completed:['st-completed','مكتمل'],paused:['st-paused','متوقف'],cancelled:['','ملغي']};
   var stInfo = stMap[proj.status]||['',''];
 
+  var profitPct = r.grossTotal > 0 ? (r.profit / r.grossTotal * 100).toFixed(1) : '0';
+  var expPct    = r.contractNet > 0 ? Math.min(100, Math.round(r.totalExpenses / r.contractNet * 100)) : 0;
+  var overspent = r.remaining < 0;
+
   var heroHtml =
     '<div class="proj-hero">' +
       '<div class="proj-hero-band">' +
         '<div class="proj-hero-top">' +
           '<div style="flex:1;min-width:0">' +
             '<div class="proj-hero-badges">' +
-              '<span class="proj-hero-badge proj-hero-badge-status '+stInfo[0]+'">● '+stInfo[1]+'</span>' +
+              '<span class="proj-hero-badge proj-hero-badge-status '+stInfo[0]+'">'+stInfo[1]+'</span>' +
               '<span class="proj-hero-badge proj-hero-badge-type">'+typeLabel(proj.type)+'</span>' +
             '</div>' +
             '<div class="proj-hero-name">'+UI.escHtml(proj.name)+'</div>' +
             '<div class="proj-hero-meta">' +
-              (cl?'<span>👥 '+UI.escHtml(cl.name)+'</span>':'') +
-              (c.contract_no?'<span>📄 '+UI.escHtml(c.contract_no)+'</span>':'') +
-              (c.contract_date?'<span>📅 '+fmtDate(c.contract_date)+'</span>':'') +
+              (cl?'<span class="proj-hero-meta-item"><i data-lucide="building-2"></i>'+UI.escHtml(cl.name)+'</span>':'') +
+              (c.contract_no?'<span class="proj-hero-meta-item"><i data-lucide="file-text"></i>'+UI.escHtml(c.contract_no)+'</span>':'') +
+              (c.contract_date?'<span class="proj-hero-meta-item"><i data-lucide="calendar"></i>'+fmtDate(c.contract_date)+'</span>':'') +
             '</div>' +
           '</div>' +
-          '<button class="proj-hero-edit" onclick="Pages.editProjectStatusModal(\''+projId+'\')">تعديل</button>' +
+          '<div class="proj-hero-actions">' +
+            '<button class="proj-hero-edit" onclick="Pages.editProjectStatusModal(\''+projId+'\')"><i data-lucide="edit-3" style="width:13px;height:13px"></i>تعديل</button>' +
+          '</div>' +
+        '</div>' +
+        '<div class="proj-hero-progress">' +
+          '<div class="proj-hero-progress-labels">' +
+            '<span>المصاريف: '+UI.fmt(r.totalExpenses)+' ر.س</span>' +
+            '<span>'+expPct+'% من صافي العقد</span>' +
+          '</div>' +
+          '<div class="proj-hero-progress-track">' +
+            '<div class="proj-hero-progress-fill'+(overspent?' overspent':'')+'" style="width:'+expPct+'%"></div>' +
+          '</div>' +
         '</div>' +
       '</div>' +
       '<div class="proj-hero-stats">' +
-        '<div class="phs ph-brand"><div class="phs-lbl">قيمة العقد</div><div class="phs-val" id="phs-contract">'+UI.fmt(r.grossTotal)+'</div></div>' +
-        '<div class="phs '+(r.remaining<0?'ph-danger':'ph-warn')+'"><div class="phs-lbl">المتبقي</div><div class="phs-val" id="phs-remaining">'+UI.fmt(r.remaining)+'</div></div>' +
+        '<div class="phs ph-brand"><div class="phs-lbl">قيمة العقد الإجمالية</div><div class="phs-val" id="phs-contract">'+UI.fmt(r.grossTotal)+'</div></div>' +
         '<div class="phs ph-success"><div class="phs-lbl">صافي الربح</div><div class="phs-val" id="phs-profit">'+UI.fmt(r.profit)+'</div></div>' +
+        '<div class="phs '+(overspent?'ph-danger':'ph-warn')+'"><div class="phs-lbl">المتبقي'+(overspent?' ▲ تجاوز':'')+' </div><div class="phs-val" id="phs-remaining">'+UI.fmt(r.remaining)+'</div></div>' +
+        '<div class="phs ph-'+(parseFloat(profitPct)>=20?'success':parseFloat(profitPct)>=0?'warn':'danger')+'"><div class="phs-lbl">هامش الربح</div><div class="phs-val">'+profitPct+'%</div></div>' +
       '</div>' +
     '</div>';
 
@@ -1513,7 +1579,7 @@ Pages.render_fin = function(params) {
     '<div id="fin-tab-ctrl" class="tab-content'+(tab==='ctrl'?' active':'')+'"></div>';
 
   document.getElementById('top-actions').innerHTML =
-    '<button class="btn btn-sm" onclick="Nav.go(\'projects\')">← المشاريع</button>';
+    '<button class="btn btn-sm" onclick="Nav.go(\'projects\')" style="display:inline-flex;align-items:center;gap:5px"><i data-lucide="arrow-right" style="width:13px;height:13px"></i>المشاريع</button>';
 
   Pages._finProjId = projId;
   if (tab==='overview') Pages.renderFinOverview(projId);
