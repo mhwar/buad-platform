@@ -478,6 +478,35 @@ select.field-input{cursor:pointer}
   .stat-cards{grid-template-columns:1fr}
 }
 
+/* ── Project hero header ── */
+.proj-hero{background:#fff;border:1px solid var(--gray-200);border-radius:var(--radius);overflow:hidden;margin-bottom:16px;box-shadow:var(--shadow)}
+.proj-hero-band{background:linear-gradient(135deg,#001a8c 0%,#0230e0 100%);padding:16px 20px 14px}
+.proj-hero-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.proj-hero-badges{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:7px}
+.proj-hero-badge{border-radius:20px;padding:3px 10px;font-size:10.5px;font-weight:600;display:inline-block;border:1px solid transparent}
+.proj-hero-badge-status{background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.2)}
+.proj-hero-badge-status.st-active{background:rgba(30,160,70,.3);border-color:rgba(50,200,80,.4)}
+.proj-hero-badge-status.st-completed{background:rgba(0,120,255,.2);border-color:rgba(0,150,255,.3)}
+.proj-hero-badge-status.st-paused{background:rgba(200,140,0,.25);border-color:rgba(200,160,0,.35)}
+.proj-hero-badge-type{background:rgba(255,255,255,.1);color:rgba(255,255,255,.78);border-color:rgba(255,255,255,.12)}
+.proj-hero-name{font-size:19px;font-weight:700;color:#fff;line-height:1.2;margin-bottom:6px}
+.proj-hero-meta{font-size:11px;color:rgba(255,255,255,.62);display:flex;flex-wrap:wrap;gap:4px 12px}
+.proj-hero-edit{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);color:#fff;border-radius:var(--radius-sm);padding:5px 14px;font-size:11.5px;font-weight:500;cursor:pointer;font-family:inherit;transition:.15s;white-space:nowrap;flex-shrink:0;margin-top:2px}
+.proj-hero-edit:hover{background:rgba(255,255,255,.22)}
+.proj-hero-stats{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--gray-200)}
+.phs{padding:11px 16px;border-left:1px solid var(--gray-200);min-width:0}
+.phs:last-child{border-left:none}
+.phs-lbl{font-size:10px;color:var(--gray-400);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.phs-val{font-size:15px;font-weight:700;font-family:'IBM Plex Mono',monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2}
+.phs.ph-brand .phs-val{color:var(--brand)}
+.phs.ph-danger .phs-val{color:var(--danger)}
+.phs.ph-success .phs-val{color:var(--success)}
+.phs.ph-warn .phs-val{color:var(--warn)}
+@media(max-width:500px){.proj-hero-band{padding:13px 14px 11px}.proj-hero-name{font-size:16px}.phs{padding:9px 12px}.phs-val{font-size:13px}}
+
+/* ── Entry table date column ── */
+.entry-tbl .col-date{width:82px;font-size:12px;color:var(--gray-500)}
+
 /* ── Utility ── */
 .text-muted{color:var(--gray-400)}
 .text-right{text-align:left}/* in RTL left = visual right */
@@ -1139,45 +1168,77 @@ Pages.render_fin = function(params) {
   var proj = projects.find(function(p){ return p.id===projId; });
   if (!proj) { document.getElementById('pg-fin').innerHTML='<div class="empty-state"><h3>المشروع غير موجود</h3></div>'; return; }
 
+  var clients = DB.getClients();
+  var cl = clients.find(function(c){ return c.id===proj.client_id; });
+  var fin = DB.getFin(projId);
+  var r = FinCalc.calc(projId);
+  var c = fin.ctrl||{};
   var tab = Pages._finTab || 'overview';
+
+  var stMap = {active:['st-active','نشط'],completed:['st-completed','مكتمل'],paused:['st-paused','متوقف'],cancelled:['','ملغي']};
+  var stInfo = stMap[proj.status]||['',''];
+
+  var heroHtml =
+    '<div class="proj-hero">' +
+      '<div class="proj-hero-band">' +
+        '<div class="proj-hero-top">' +
+          '<div style="flex:1;min-width:0">' +
+            '<div class="proj-hero-badges">' +
+              '<span class="proj-hero-badge proj-hero-badge-status '+stInfo[0]+'">● '+stInfo[1]+'</span>' +
+              '<span class="proj-hero-badge proj-hero-badge-type">'+typeLabel(proj.type)+'</span>' +
+            '</div>' +
+            '<div class="proj-hero-name">'+UI.escHtml(proj.name)+'</div>' +
+            '<div class="proj-hero-meta">' +
+              (cl?'<span>👥 '+UI.escHtml(cl.name)+'</span>':'') +
+              (c.contract_no?'<span>📄 '+UI.escHtml(c.contract_no)+'</span>':'') +
+              (c.contract_date?'<span>📅 '+fmtDate(c.contract_date)+'</span>':'') +
+            '</div>' +
+          '</div>' +
+          '<button class="proj-hero-edit" onclick="Pages.editProjectStatusModal(\''+projId+'\')">تعديل</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="proj-hero-stats">' +
+        '<div class="phs ph-brand"><div class="phs-lbl">قيمة العقد</div><div class="phs-val" id="phs-contract">'+UI.fmt(r.grossTotal)+'</div></div>' +
+        '<div class="phs '+(r.remaining<0?'ph-danger':'ph-warn')+'"><div class="phs-lbl">المتبقي</div><div class="phs-val" id="phs-remaining">'+UI.fmt(r.remaining)+'</div></div>' +
+        '<div class="phs ph-success"><div class="phs-lbl">صافي الربح</div><div class="phs-val" id="phs-profit">'+UI.fmt(r.profit)+'</div></div>' +
+      '</div>' +
+    '</div>';
+
   document.getElementById('pg-fin').innerHTML =
-    '<div class="page-header">' +
-      '<div><h1>'+UI.escHtml(proj.name)+'</h1>' +
-        '<div class="page-header-sub">'+typeLabel(proj.type)+' · '+statusBadge(proj.status)+'</div>' +
-      '</div>' +
-      '<div class="flex gap-8">' +
-        '<button class="btn" onclick="Pages.editProjectStatusModal(\''+projId+'\')">تعديل الحالة</button>' +
-      '</div>' +
-    '</div>' +
+    heroHtml +
     '<div class="tabs">' +
       '<button class="tab-btn'+(tab==='overview'?' active':'')+'" onclick="Pages.switchFinTab(\'overview\',\''+projId+'\')">نظرة عامة</button>' +
       '<button class="tab-btn'+(tab==='entries'?' active':'')+'" onclick="Pages.switchFinTab(\'entries\',\''+projId+'\')">سجل المعاملات</button>' +
+      '<button class="tab-btn'+(tab==='ctrl'?' active':'')+'" onclick="Pages.switchFinTab(\'ctrl\',\''+projId+'\')">مركز التحكم</button>' +
     '</div>' +
     '<div id="fin-tab-overview" class="tab-content'+(tab==='overview'?' active':'')+'"></div>' +
-    '<div id="fin-tab-entries" class="tab-content'+(tab==='entries'?' active':'')+'"></div>';
+    '<div id="fin-tab-entries" class="tab-content'+(tab==='entries'?' active':'')+'"></div>' +
+    '<div id="fin-tab-ctrl" class="tab-content'+(tab==='ctrl'?' active':'')+'"></div>';
 
   document.getElementById('top-actions').innerHTML =
     '<button class="btn btn-sm" onclick="Nav.go(\'projects\')">← المشاريع</button>';
 
+  Pages._finProjId = projId;
   if (tab==='overview') Pages.renderFinOverview(projId);
-  else Pages.renderFinEntries(projId);
+  else if (tab==='entries') Pages.renderFinEntries(projId);
+  else { Pages._ctrlContainer = 'fin-tab-ctrl'; Pages.renderFinCtrl(projId); }
 };
 
 Pages.switchFinTab = function(tab, projId) {
   Pages._finTab = tab;
   document.querySelectorAll('#pg-fin .tab-btn').forEach(function(b){
-    b.classList.remove('active');
-    if ((tab==='overview'&&b.textContent==='نظرة عامة')||(tab==='entries'&&b.textContent==='سجل المعاملات'))
-      b.classList.add('active');
+    var match = (tab==='overview'&&b.textContent==='نظرة عامة') ||
+                (tab==='entries'&&b.textContent==='سجل المعاملات') ||
+                (tab==='ctrl'&&b.textContent==='مركز التحكم');
+    b.classList.toggle('active', match);
   });
-  ['overview','entries'].forEach(function(t){
+  ['overview','entries','ctrl'].forEach(function(t){
     var el = document.getElementById('fin-tab-'+t);
     if (el) el.className = 'tab-content'+(t===tab?' active':'');
   });
-  var fab = document.getElementById('ctrl-fab-btn');
-  if (fab) fab.className = 'ctrl-fab'+(tab==='entries'?' visible':'');
   if (tab==='overview') Pages.renderFinOverview(projId);
-  else Pages.renderFinEntries(projId);
+  else if (tab==='entries') Pages.renderFinEntries(projId);
+  else { Pages._ctrlContainer = 'fin-tab-ctrl'; Pages.renderFinCtrl(projId); }
 };
 
 Pages._ctrlContainer = 'ctrl-drawer-body';
@@ -1268,7 +1329,7 @@ Pages.renderFinCtrl = function(projId) {
     '</tr>';
   });
 
-  document.getElementById('ctrl-drawer-body').innerHTML =
+  document.getElementById(Pages._ctrlContainer||'ctrl-drawer-body').innerHTML =
     statsHtml +
     // ── Row 1: Contract settings + Calc trail ──
     '<div class="ctrl-2col">' +
@@ -1363,17 +1424,24 @@ Pages.autoSaveCtrl = function(projId) {
   DB.saveFin(projId, fin);
   var r = FinCalc.calc(projId);
   var c = fin.ctrl;
-  // Update stat cards
+  // Update stat cards in control panel
+  var ctrlBox = document.getElementById(Pages._ctrlContainer||'ctrl-drawer-body');
   var statVals = [r.contractNet, r.totalExpenses, r.profit, r.remaining];
-  document.querySelectorAll('#ctrl-drawer-body .stat-card .stat-card-value').forEach(function(el,i){
-    if (statVals[i]!==undefined) el.textContent = UI.fmt(statVals[i]);
-  });
-  document.querySelectorAll('#ctrl-drawer-body .stat-card:first-child .stat-card-sub').forEach(function(el){
-    el.textContent = UI.fmt(r.grossTotal)+' شاملاً الضريبة';
-  });
-  document.querySelectorAll('#ctrl-drawer-body .stat-card:last-child .stat-card-sub').forEach(function(el){
-    el.textContent = 'من إجمالي العقد '+UI.fmt(r.grossTotal)+(r.totalAllEntries>0?' − بنود '+UI.fmt(r.totalAllEntries):'');
-  });
+  if (ctrlBox) {
+    ctrlBox.querySelectorAll('.stat-card .stat-card-value').forEach(function(el,i){
+      if (statVals[i]!==undefined) el.textContent = UI.fmt(statVals[i]);
+    });
+    ctrlBox.querySelectorAll('.stat-card:first-child .stat-card-sub').forEach(function(el){
+      el.textContent = UI.fmt(r.grossTotal)+' شاملاً الضريبة';
+    });
+    ctrlBox.querySelectorAll('.stat-card:last-child .stat-card-sub').forEach(function(el){
+      el.textContent = 'من إجمالي العقد '+UI.fmt(r.grossTotal)+(r.totalAllEntries>0?' − بنود '+UI.fmt(r.totalAllEntries):'');
+    });
+  }
+  // Update hero stats bar
+  var phsC = document.getElementById('phs-contract'); if(phsC) phsC.textContent = UI.fmt(r.grossTotal);
+  var phsR = document.getElementById('phs-remaining'); if(phsR) phsR.textContent = UI.fmt(r.remaining);
+  var phsP = document.getElementById('phs-profit'); if(phsP) phsP.textContent = UI.fmt(r.profit);
   // Update calc trail
   var oldTrail = document.getElementById('calc-trail-inner');
   if (oldTrail) oldTrail.outerHTML = _calcTrailHtml(r, c);
@@ -1437,7 +1505,7 @@ Pages.renderFinEntries = function(projId) {
 
   var rows = '';
   if (filtered.length===0) {
-    rows = '<tr><td colspan="5"><div class="empty-state" style="padding:32px"><div class="empty-state-icon">📋</div><h3>لا توجد قيود</h3><p>أضف أول بند مالي</p></div></td></tr>';
+    rows = '<tr><td colspan="4"><div class="empty-state" style="padding:32px"><div class="empty-state-icon">📋</div><h3>لا توجد قيود</h3><p>أضف أول بند مالي</p></div></td></tr>';
   } else {
     var statusLabel = {paid:'مدفوع', pending:'معلق', cancelled:'ملغي'};
     filtered.slice().sort(function(a,b){ return (b.date||'').localeCompare(a.date||''); }).forEach(function(e){
@@ -1450,20 +1518,20 @@ Pages.renderFinEntries = function(projId) {
       var pmText = pm>0 ? (e.profit_margin_type==='fixed'?UI.fmt(pm)+' ر.س':pm+'%') : '';
       var stBadge = statusLabel[e.status] ? '<span class="badge gray" style="font-size:10px;padding:2px 7px">'+statusLabel[e.status]+'</span>' : '<span style="color:var(--gray-300)">—</span>';
       var agrMark = e.note==='من الاتفاقية' ? ' <span class="badge brand" style="font-size:9px;padding:1px 5px;vertical-align:middle">اتفاقية</span>' : '';
-      // Main compact row
+      // Main compact row — البيان first, then المبلغ, then التاريخ
       rows +=
         '<tr class="er '+(isIncome?'income-row':'expense-row')+'" id="er-'+e.id+'" onclick="Pages.toggleEntryRow(\''+e.id+'\')">' +
-          '<td class="col-type">'+typeBadge+'</td>' +
           '<td style="overflow:hidden;text-overflow:ellipsis;font-weight:600;max-width:0">'+UI.escHtml(e.desc||'')+agrMark+'</td>' +
-          '<td class="col-amt mono '+amtCls+'">'+amtSign+' '+UI.fmt(e.amount)+' ر.س</td>' +
-          '<td class="col-status">'+stBadge+'</td>' +
+          '<td class="col-amt mono '+amtCls+'">'+amtSign+' '+UI.fmt(e.amount)+'</td>' +
+          '<td class="col-date">'+fmtDate(e.date)+'</td>' +
           '<td class="col-chev"><i class="entry-chev" id="chev-'+e.id+'">▾</i></td>' +
         '</tr>' +
         // Expandable detail row
         '<tr class="ed" id="ed-'+e.id+'">' +
-          '<td colspan="5">' +
+          '<td colspan="4">' +
             '<div class="entry-detail-grid">' +
-              '<div class="entry-detail-item"><div class="edi-lbl">التاريخ</div><div class="edi-val">'+fmtDate(e.date)+'</div></div>' +
+              '<div class="entry-detail-item"><div class="edi-lbl">النوع</div><div class="edi-val">'+typeBadge+'</div></div>' +
+              '<div class="entry-detail-item"><div class="edi-lbl">الحالة</div><div class="edi-val">'+stBadge+'</div></div>' +
               '<div class="entry-detail-item"><div class="edi-lbl">التصنيف</div><div class="edi-val">'+catLabel(e.cat)+'</div></div>' +
               (pmText?'<div class="entry-detail-item"><div class="edi-lbl">هامش الربح</div><div class="edi-val" style="color:var(--success)">'+pmText+'</div></div>':'') +
               (e.note&&e.note!=='من الاتفاقية'?'<div class="entry-detail-item"><div class="edi-lbl">ملاحظة</div><div class="edi-val">'+UI.escHtml(e.note)+'</div></div>':'') +
@@ -1519,16 +1587,14 @@ Pages.renderFinEntries = function(projId) {
     '<div class="card" style="padding:0;overflow:hidden">' +
       '<div class="tbl-responsive"><table class="entry-tbl">' +
         '<thead><tr>' +
-          '<th class="col-type">النوع</th>' +
           '<th>البيان</th>' +
           '<th class="col-amt" style="text-align:left">المبلغ</th>' +
-          '<th class="col-status">الحالة</th>' +
+          '<th class="col-date">التاريخ</th>' +
           '<th class="col-chev"></th>' +
         '</tr></thead>' +
         '<tbody>'+rows+'</tbody>' +
       '</table></div>' +
-    '</div>' +
-    '<button class="ctrl-fab visible" id="ctrl-fab-btn" onclick="Pages.openCtrlDrawer(\''+projId+'\')" title="مركز التحكم">⚙️</button>';
+    '</div>';
 };
 
 Pages.toggleEntryRow = function(id) {
