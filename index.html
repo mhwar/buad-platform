@@ -339,6 +339,45 @@ select.field-input{cursor:pointer}
 @media(max-width:600px){.ctrl-fees{grid-template-columns:1fr}}
 .alert-notice{background:var(--warn-light);border:1px solid var(--warn);color:var(--warn);padding:10px 14px;border-radius:var(--radius-sm);font-size:12px;margin-bottom:12px;display:flex;align-items:center;gap:8px}
 
+/* ── Ctrl Drawer ── */
+.ctrl-drawer-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:900;opacity:0;pointer-events:none;transition:opacity .2s}
+.ctrl-drawer-overlay.active{opacity:1;pointer-events:all}
+.ctrl-drawer{position:fixed;top:0;right:0;height:100%;width:min(480px,96vw);background:#fff;z-index:901;transform:translateX(100%);transition:transform .3s ease;overflow-y:auto;box-shadow:-4px 0 24px rgba(0,0,0,.12)}
+.ctrl-drawer.active{transform:translateX(0)}
+.ctrl-drawer-header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--gray-200);position:sticky;top:0;background:#fff;z-index:2}
+.ctrl-drawer-header h3{font-size:14px;font-weight:700;color:var(--gray-900)}
+.ctrl-drawer-body{padding:16px}
+.ctrl-fab{position:fixed;bottom:28px;left:28px;width:50px;height:50px;border-radius:50%;background:var(--brand);color:#fff;border:none;font-size:20px;cursor:pointer;box-shadow:0 4px 14px rgba(0,25,125,.35);z-index:800;display:none;align-items:center;justify-content:center;transition:.2s}
+.ctrl-fab:hover{background:#0021a0;transform:scale(1.07)}
+.ctrl-fab.visible{display:flex}
+
+/* ── Table enhancements ── */
+.data-table tbody tr.income-row td:first-child{border-right:3px solid var(--success)}
+.data-table tbody tr.expense-row td:first-child{border-right:3px solid var(--danger)}
+.amount-income{color:var(--success)!important;font-weight:700}
+.amount-expense{color:var(--danger)!important;font-weight:700}
+
+/* ── Report tabs ── */
+.report-tabs{display:flex;gap:0;margin-bottom:18px;border:1px solid var(--gray-200);border-radius:var(--radius-sm);overflow:hidden;width:fit-content}
+.report-tab{padding:8px 20px;font-size:13px;font-weight:500;cursor:pointer;background:#fff;color:var(--gray-500);border:none;font-family:inherit;transition:.15s}
+.report-tab.active{background:var(--brand);color:#fff}
+
+/* ── Waterfall ── */
+.wf-table{width:100%;font-size:12.5px}
+.wf-row{display:flex;align-items:center;padding:8px 0;border-bottom:1px solid var(--gray-100)}
+.wf-row:last-child{border-bottom:none}
+.wf-row.wf-total{border-top:2px solid var(--gray-300);margin-top:4px;font-weight:700}
+.wf-lbl{flex:1;color:var(--gray-700)}
+.wf-formula{font-size:11px;color:var(--gray-400);margin-right:6px}
+.wf-val{font-family:'IBM Plex Mono',monospace;font-weight:600;min-width:110px;text-align:left}
+
+/* ── Stat mini ── */
+.stat-mini-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.stat-mini{background:#fff;border:1px solid var(--gray-200);border-radius:var(--radius-sm);padding:12px 14px;box-shadow:var(--shadow)}
+.stat-mini-label{font-size:10px;color:var(--gray-500);margin-bottom:4px}
+.stat-mini-val{font-size:15px;font-weight:700;font-family:'IBM Plex Mono',monospace}
+@media(max-width:600px){.stat-mini-grid{grid-template-columns:repeat(2,1fr)}}
+
 /* ── Inline tab mini ── */
 .mini-tabs{display:flex;gap:0;margin-bottom:14px;border:1px solid var(--gray-200);border-radius:var(--radius-sm);overflow:hidden;width:fit-content}
 .mini-tab{padding:6px 14px;font-size:12px;font-weight:500;cursor:pointer;background:#fff;color:var(--gray-500);border:none;font-family:inherit;transition:var(--transition)}
@@ -1022,7 +1061,7 @@ Pages.saveProject = function(presetClientId) {
 };
 
 /* ─── FINANCIAL PAGE ─── */
-Pages._finTab = 'ctrl';
+Pages._finTab = 'entries';
 
 Pages.render_fin = function(params) {
   params = params||{};
@@ -1041,41 +1080,50 @@ Pages.render_fin = function(params) {
       '</div>' +
     '</div>' +
     '<div class="tabs">' +
-      '<button class="tab-btn'+(Pages._finTab==='ctrl'?' active':'')+'" onclick="Pages.switchFinTab(\'ctrl\',\''+projId+'\')">مركز التحكم</button>' +
       '<button class="tab-btn'+(Pages._finTab==='entries'?' active':'')+'" onclick="Pages.switchFinTab(\'entries\',\''+projId+'\')">سجل المعاملات</button>' +
       '<button class="tab-btn'+(Pages._finTab==='report'?' active':'')+'" onclick="Pages.switchFinTab(\'report\',\''+projId+'\')">التقارير</button>' +
     '</div>' +
-    '<div id="fin-tab-ctrl"   class="tab-content'+(Pages._finTab==='ctrl'?' active':'')+'"></div>' +
     '<div id="fin-tab-entries" class="tab-content'+(Pages._finTab==='entries'?' active':'')+'"></div>' +
     '<div id="fin-tab-report" class="tab-content'+(Pages._finTab==='report'?' active':'')+'"></div>';
 
   document.getElementById('top-actions').innerHTML =
     '<button class="btn btn-sm" onclick="Nav.go(\'projects\')">← المشاريع</button>';
 
-  if (Pages._finTab==='ctrl') Pages.renderFinCtrl(projId);
-  else if (Pages._finTab==='entries') Pages.renderFinEntries(projId);
+  if (Pages._finTab==='entries') Pages.renderFinEntries(projId);
   else if (Pages._finTab==='report') Pages.renderFinReport(projId);
+  else Pages.renderFinEntries(projId);
 };
 
 Pages.switchFinTab = function(tab, projId) {
   Pages._finTab = tab;
-  document.querySelectorAll('#pg-fin .tab-btn').forEach(function(b,i){
-    b.classList.toggle('active', [b.textContent].join('')===({ctrl:'مركز التحكم',entries:'سجل المعاملات',report:'التقارير'}[tab]));
+  document.querySelectorAll('#pg-fin .tab-btn').forEach(function(b){
+    b.classList.remove('active');
+    if ((tab==='entries'&&b.textContent==='سجل المعاملات')||(tab==='report'&&b.textContent==='التقارير'))
+      b.classList.add('active');
   });
-  var tabs = ['ctrl','entries','report'];
-  tabs.forEach(function(t){
+  ['entries','report'].forEach(function(t){
     var el = document.getElementById('fin-tab-'+t);
     if (el) el.className = 'tab-content'+(t===tab?' active':'');
   });
-  // Fix tab button active state properly
-  document.querySelectorAll('#pg-fin .tab-btn').forEach(function(b){
-    b.classList.remove('active');
-    if ((tab==='ctrl'&&b.textContent==='مركز التحكم')||(tab==='entries'&&b.textContent==='سجل المعاملات')||(tab==='report'&&b.textContent==='التقارير'))
-      b.classList.add('active');
-  });
-  if (tab==='ctrl') Pages.renderFinCtrl(projId);
-  else if (tab==='entries') Pages.renderFinEntries(projId);
+  var fab = document.getElementById('ctrl-fab-btn');
+  if (fab) fab.className = 'ctrl-fab'+(tab==='entries'?' visible':'');
+  if (tab==='entries') Pages.renderFinEntries(projId);
   else if (tab==='report') Pages.renderFinReport(projId);
+};
+
+Pages._ctrlContainer = 'ctrl-drawer-body';
+
+Pages.openCtrlDrawer = function(projId) {
+  Pages._ctrlContainer = 'ctrl-drawer-body';
+  document.getElementById('ctrl-drawer-overlay').classList.add('active');
+  document.getElementById('ctrl-drawer').classList.add('active');
+  Pages.renderFinCtrl(projId);
+};
+
+Pages.closeCtrlDrawer = function() {
+  document.getElementById('ctrl-drawer-overlay').classList.remove('active');
+  document.getElementById('ctrl-drawer').classList.remove('active');
+  Pages._ctrlContainer = 'ctrl-drawer-body';
 };
 
 function _calcTrailHtml(r, c) {
@@ -1151,7 +1199,7 @@ Pages.renderFinCtrl = function(projId) {
     '</tr>';
   });
 
-  document.getElementById('fin-tab-ctrl').innerHTML =
+  document.getElementById('ctrl-drawer-body').innerHTML =
     statsHtml +
     // ── Row 1: Contract settings + Calc trail ──
     '<div class="ctrl-2col">' +
@@ -1248,13 +1296,13 @@ Pages.autoSaveCtrl = function(projId) {
   var c = fin.ctrl;
   // Update stat cards
   var statVals = [r.contractNet, r.totalExpenses, r.profit, r.remaining];
-  document.querySelectorAll('#fin-tab-ctrl .stat-card .stat-card-value').forEach(function(el,i){
+  document.querySelectorAll('#ctrl-drawer-body .stat-card .stat-card-value').forEach(function(el,i){
     if (statVals[i]!==undefined) el.textContent = UI.fmt(statVals[i]);
   });
-  document.querySelectorAll('#fin-tab-ctrl .stat-card:first-child .stat-card-sub').forEach(function(el){
+  document.querySelectorAll('#ctrl-drawer-body .stat-card:first-child .stat-card-sub').forEach(function(el){
     el.textContent = UI.fmt(r.grossTotal)+' شاملاً الضريبة';
   });
-  document.querySelectorAll('#fin-tab-ctrl .stat-card:last-child .stat-card-sub').forEach(function(el){
+  document.querySelectorAll('#ctrl-drawer-body .stat-card:last-child .stat-card-sub').forEach(function(el){
     el.textContent = 'من إجمالي العقد '+UI.fmt(r.grossTotal)+(r.totalAllEntries>0?' − بنود '+UI.fmt(r.totalAllEntries):'');
   });
   // Update calc trail
@@ -1314,21 +1362,28 @@ Pages.renderFinEntries = function(projId) {
     return typeOk && searchOk;
   });
 
+  var r = FinCalc.calc(projId);
+
   var rows = '';
   if (filtered.length===0) {
     rows = '<tr><td colspan="7"><div class="empty-state" style="padding:24px"><div class="empty-state-icon">📋</div><h3>لا توجد قيود</h3></div></td></tr>';
   } else {
+    var statusLabel = {paid:'مدفوع', pending:'معلق', cancelled:'ملغي'};
     filtered.slice().sort(function(a,b){ return (b.date||'').localeCompare(a.date||''); }).forEach(function(e){
-      var typeBadge = e.type==='income'
-        ? '<span class="badge success">دخل</span>'
-        : '<span class="badge danger">مصروف</span>';
-      rows += '<tr>' +
-        '<td>'+fmtDate(e.date)+'</td>' +
-        '<td><span class="fw-600">'+UI.escHtml(e.desc||'')+'</span></td>' +
-        '<td>'+catLabel(e.cat)+'</td>' +
+      var isIncome = e.type==='income';
+      var typeBadge = isIncome ? '<span class="badge success">دخل</span>' : '<span class="badge danger">مصروف</span>';
+      var amtCls = isIncome ? 'amount-income' : 'amount-expense';
+      var amtSign = isIncome ? '+' : '−';
+      var pmHtml = (e.profit_margin&&e.profit_margin>0)
+        ? '<div style="font-size:10px;color:var(--success);margin-top:2px">هامش '+(e.profit_margin_type==='fixed'?UI.fmt(e.profit_margin)+' ر.س':e.profit_margin+'%')+'</div>' : '';
+      var stBadge = e.status&&statusLabel[e.status] ? '<span class="badge gray">'+statusLabel[e.status]+'</span>' : '—';
+      rows += '<tr class="'+(isIncome?'income-row':'expense-row')+'">' +
+        '<td style="color:var(--gray-500);font-size:11.5px;white-space:nowrap">'+fmtDate(e.date)+'</td>' +
+        '<td><span class="fw-600">'+UI.escHtml(e.desc||'')+'</span>'+(e.note&&e.note!=='من الاتفاقية'?'<div style="font-size:10px;color:var(--gray-400)">'+UI.escHtml(e.note)+'</div>':'')+(e.note==='من الاتفاقية'?'<span class="badge brand" style="font-size:9px;padding:1px 6px;margin-right:4px">اتفاقية</span>':'')+'</td>' +
+        '<td><span style="font-size:11px;color:var(--gray-500)">'+catLabel(e.cat)+'</span></td>' +
         '<td>'+typeBadge+'</td>' +
-        '<td class="mono fw-600">'+UI.fmt(e.amount)+' ر.س'+((e.profit_margin&&e.profit_margin>0)?'<div style="font-size:10px;color:var(--success)">ربح '+(e.profit_margin_type==='fixed'?UI.fmt(e.profit_margin)+' ر.س':e.profit_margin+'%')+'</div>':'')+'</td>' +
-        '<td>'+(e.status?'<span class="badge gray">'+UI.escHtml(e.status)+'</span>':'—')+'</td>' +
+        '<td class="mono '+amtCls+'">'+amtSign+' '+UI.fmt(e.amount)+' ر.س'+pmHtml+'</td>' +
+        '<td>'+stBadge+'</td>' +
         '<td style="white-space:nowrap">' +
           '<button class="btn btn-sm btn-ghost" style="margin-left:4px" onclick="Pages.editEntryModal(\''+projId+'\',\''+e.id+'\')">تعديل</button>' +
           '<button class="btn btn-sm btn-danger" onclick="Pages.deleteEntry(\''+projId+'\',\''+e.id+'\')">حذف</button>' +
@@ -1337,33 +1392,44 @@ Pages.renderFinEntries = function(projId) {
     });
   }
 
-  var r = FinCalc.calc(projId);
   var warnHtml = '';
   if (r.missingItems && r.missingItems.length > 0) {
-    warnHtml = '<div class="alert-notice">⚠️ لم تُسجَّل بعد في القائمة: '+r.missingItems.join('، ')+'</div>';
+    warnHtml = '<div class="alert-notice">⚠️ لم تُسجَّل بعد: '+r.missingItems.join('، ')+' — <button class="btn btn-sm" style="padding:2px 10px;margin-right:8px" onclick="Pages.addEntryModal(\''+projId+'\');Pages.switchEntryTab(\'contract\')">تسجيل الآن</button></div>';
   }
+
+  var spentPct = r.grossTotal>0 ? Math.min(100,Math.round(r.totalAllEntries/r.grossTotal*100)) : 0;
+  var profitPct = r.contractNet>0 ? (r.profit/r.contractNet*100).toFixed(1) : '0';
 
   document.getElementById('fin-tab-entries').innerHTML =
     warnHtml +
-    '<div class="stat-cards" style="grid-template-columns:repeat(3,1fr);margin-bottom:16px">' +
-      '<div class="stat-card '+(r.remaining<0?'danger':'warn')+'"><div class="stat-card-label">المتبقي من العقد'+(r.remaining<0?' ⚠️ تجاوز':'')+'</div><div class="stat-card-value mono" style="font-size:17px">'+UI.fmt(r.remaining)+'</div><div class="stat-card-sub">من إجمالي العقد '+UI.fmt(r.grossTotal)+(r.totalAllEntries>0?' − بنود '+UI.fmt(r.totalAllEntries):'')+'</div></div>' +
-      '<div class="stat-card danger"><div class="stat-card-label">إجمالي المصاريف</div><div class="stat-card-value mono" style="font-size:17px">'+UI.fmt(r.totalExpenses)+'</div></div>' +
-      '<div class="stat-card success"><div class="stat-card-label">صافي الربح</div><div class="stat-card-value mono" style="font-size:17px">'+UI.fmt(r.profit)+'</div><div class="stat-card-sub">أتعاب + هامش الربح</div></div>' +
+    // صف 1: 3 بطاقات رئيسية
+    '<div class="stat-cards" style="grid-template-columns:repeat(3,1fr);margin-bottom:10px">' +
+      '<div class="stat-card '+(r.remaining<0?'danger':'warn')+'"><div class="stat-card-label">المتبقي'+(r.remaining<0?' ⚠️':'')+'</div><div class="stat-card-value mono">'+UI.fmt(r.remaining)+'</div><div class="stat-card-sub">من '+UI.fmt(r.grossTotal)+' إجمالي</div></div>' +
+      '<div class="stat-card danger"><div class="stat-card-label">المصاريف</div><div class="stat-card-value mono">'+UI.fmt(r.totalExpenses)+'</div><div class="stat-card-sub">'+entries.filter(function(e){return e.type==='expense';}).length+' بنود</div></div>' +
+      '<div class="stat-card success"><div class="stat-card-label">صافي الربح</div><div class="stat-card-value mono">'+UI.fmt(r.profit)+'</div><div class="stat-card-sub">هامش '+profitPct+'%</div></div>' +
+    '</div>' +
+    // صف 2: 3 بطاقات ثانوية
+    '<div class="stat-mini-grid" style="margin-bottom:16px">' +
+      '<div class="stat-mini"><div class="stat-mini-label">إجمالي الدخل</div><div class="stat-mini-val" style="color:var(--success)">'+UI.fmt(r.totalIncome)+' ر.س</div></div>' +
+      '<div class="stat-mini"><div class="stat-mini-label">عدد البنود</div><div class="stat-mini-val" style="color:var(--brand)">'+entries.length+'</div></div>' +
+      '<div class="stat-mini"><div class="stat-mini-label">نسبة الإنفاق</div><div class="stat-mini-val" style="color:var(--warn)">'+spentPct+'%</div><div style="margin-top:4px"><div class="progress-bar-wrap"><div class="progress-bar" style="width:'+spentPct+'%;background:var(--warn)"></div></div></div></div>' +
     '</div>' +
     '<div class="filter-bar">' +
       '<select class="filter-select" onchange="window._entriesFilter=this.value;Pages.renderFinEntries(\''+projId+'\')">' +
-        '<option value="all"'+(filter==='all'?' selected':'')+'>الكل</option>' +
+        '<option value="all"'+(filter==='all'?' selected':'')+'>الكل ('+entries.length+')</option>' +
         '<option value="income"'+(filter==='income'?' selected':'')+'>دخل</option>' +
         '<option value="expense"'+(filter==='expense'?' selected':'')+'>مصروف</option>' +
       '</select>' +
-      '<input class="field-input" style="max-width:200px" placeholder="بحث..." value="'+UI.escHtml(search)+'" oninput="window._entriesSearch=this.value;Pages.renderFinEntries(\''+projId+'\')">' +
+      '<input class="field-input" style="max-width:200px" placeholder="🔍 بحث..." value="'+UI.escHtml(search)+'" oninput="window._entriesSearch=this.value;Pages.renderFinEntries(\''+projId+'\')">' +
       '<button class="btn btn-primary" style="margin-right:auto" onclick="Pages.addEntryModal(\''+projId+'\')">+ إضافة بند</button>' +
     '</div>' +
     '<div class="card" style="padding:0;overflow:hidden">' +
       '<div style="overflow-x:auto"><table class="data-table"><thead><tr>' +
-        '<th>التاريخ</th><th>الوصف</th><th>التصنيف</th><th>النوع</th><th>المبلغ</th><th>الحالة</th><th></th>' +
+        '<th>التاريخ</th><th>البيان</th><th>التصنيف</th><th>النوع</th><th>المبلغ</th><th>الحالة</th><th></th>' +
       '</tr></thead><tbody>'+rows+'</tbody></table></div>' +
-    '</div>';
+    '</div>' +
+    // FAB
+    '<button class="ctrl-fab visible" id="ctrl-fab-btn" onclick="Pages.openCtrlDrawer(\''+projId+'\')" title="مركز التحكم">⚙️</button>';
 };
 
 Pages.addEntryModal = function(projId) {
@@ -1603,7 +1669,12 @@ Pages.deleteEntry = function(projId, entId) {
 };
 
 /* ─── REPORT TAB ─── */
-Pages.renderFinReport = function(projId) {
+Pages._reportSection = 'overview';
+
+Pages.renderFinReport = function(projId, section) {
+  if (section) Pages._reportSection = section;
+  var sec = Pages._reportSection || 'overview';
+
   var projects = DB.getProjects();
   var proj = projects.find(function(p){ return p.id===projId; });
   var clients = DB.getClients();
@@ -1612,44 +1683,131 @@ Pages.renderFinReport = function(projId) {
   var r = FinCalc.calc(projId);
   var c = fin.ctrl||{};
 
-  var entryRows = (fin.entries||[]).map(function(e){
-    return '<tr><td>'+fmtDate(e.date)+'</td><td>'+UI.escHtml(e.desc||'')+'</td><td>'+catLabel(e.cat)+'</td>' +
-      '<td>'+(e.type==='income'?'دخل':'مصروف')+'</td><td class="mono">'+UI.fmt(e.amount)+'</td></tr>';
-  }).join('');
+  var tabsHtml =
+    '<div class="report-tabs" style="margin-bottom:18px">' +
+      '<button class="report-tab'+(sec==='overview'?' active':'')+'" onclick="Pages.renderFinReport(\''+projId+'\',\'overview\')">نظرة عامة</button>' +
+      '<button class="report-tab'+(sec==='items'?' active':'')+'" onclick="Pages.renderFinReport(\''+projId+'\',\'items\')">البنود والمصاريف</button>' +
+    '</div>';
 
-  var budgetRows = (fin.budget||[]).map(function(b){
-    return '<tr><td>'+UI.escHtml(b.name||'')+'</td><td class="mono">'+UI.fmt(b.amount)+'</td><td>'+UI.escHtml(b.note||'')+'</td></tr>';
-  }).join('');
-
-  document.getElementById('fin-tab-report').innerHTML =
+  var actionsHtml =
     '<div class="flex gap-8 mb-12" style="justify-content:flex-end">' +
       '<button class="btn btn-sm" onclick="Pages.exportCSV(\''+projId+'\')">تصدير CSV</button>' +
       '<button class="btn btn-sm btn-primary" onclick="window.print()">طباعة</button>' +
-    '</div>' +
-    '<div class="card" id="report-content">' +
-      '<div style="text-align:center;margin-bottom:20px">' +
-        '<div style="font-size:20px;font-weight:700;color:var(--brand)">تقرير مالي</div>' +
-        '<div style="font-size:13px;color:var(--gray-500);margin-top:4px">'+(proj?UI.escHtml(proj.name):'')+'</div>' +
-        (cl?'<div style="font-size:12px;color:var(--gray-400)">'+UI.escHtml(cl.name)+'</div>':'') +
-        '<div style="font-size:11px;color:var(--gray-400);margin-top:4px">رقم العقد: '+(c.contract_no||'—')+' · تاريخ العقد: '+fmtDate(c.contract_date)+'</div>' +
+    '</div>';
+
+  var headerHtml =
+    '<div style="border-bottom:1px solid var(--gray-200);padding-bottom:14px;margin-bottom:16px">' +
+      '<div style="font-size:18px;font-weight:700;color:var(--brand)">'+(proj?UI.escHtml(proj.name):'تقرير مالي')+'</div>' +
+      (cl?'<div style="font-size:12px;color:var(--gray-500);margin-top:2px">'+UI.escHtml(cl.name)+'</div>':'') +
+      '<div style="font-size:11px;color:var(--gray-400);margin-top:4px">رقم العقد: '+(c.contract_no||'—')+' · '+fmtDate(c.contract_date)+'</div>' +
+    '</div>';
+
+  var bodyHtml = '';
+
+  if (sec === 'overview') {
+    var profitPct = r.contractNet>0 ? (r.profit/r.contractNet*100).toFixed(1) : '0';
+    var spentPct  = r.grossTotal>0  ? Math.min(100,Math.round(r.totalAllEntries/r.grossTotal*100)) : 0;
+    var usagePct  = r.available>0   ? Math.min(100,Math.round(r.totalExpenses/r.available*100)) : 0;
+    var available = r.contractNet - r.execAmt - r.mkt - r.cb - r.cfAmt;
+
+    // 4 بطاقات كبيرة
+    var bigCards =
+      '<div class="stat-cards" style="grid-template-columns:repeat(2,1fr);gap:14px;margin-bottom:16px">' +
+        '<div class="stat-card brand"><div class="stat-card-label">قيمة العقد الإجمالية</div><div class="stat-card-value mono">'+UI.fmt(r.grossTotal)+'</div><div class="stat-card-sub">صافي '+UI.fmt(r.contractNet)+' ر.س</div></div>' +
+        '<div class="stat-card danger"><div class="stat-card-label">المصاريف الفعلية</div><div class="stat-card-value mono">'+UI.fmt(r.totalExpenses)+'</div><div class="stat-card-sub">'+fin.entries.filter(function(e){return e.type==='expense';}).length+' بنود مصروف</div></div>' +
+        '<div class="stat-card success"><div class="stat-card-label">صافي الربح</div><div class="stat-card-value mono">'+UI.fmt(r.profit)+'</div><div class="stat-card-sub">هامش الربحية '+profitPct+'%</div></div>' +
+        '<div class="stat-card '+(r.remaining<0?'danger':'warn')+'"><div class="stat-card-label">المتبقي'+(r.remaining<0?' ⚠️':'')+'</div><div class="stat-card-value mono">'+UI.fmt(r.remaining)+'</div><div class="stat-card-sub">'+spentPct+'% تم إنفاقه</div></div>' +
+      '</div>';
+
+    // Waterfall توزيع قيمة العقد
+    function wfRow(sign, lbl, val, col, total) {
+      var vc = col==='red'?'var(--danger)':col==='green'?'var(--success)':col==='brand'?'var(--brand)':'var(--gray-900)';
+      var pct2 = total>0&&val ? Math.min(100,Math.round(Math.abs(val)/total*100)) : 0;
+      return '<div class="wf-row'+(total?'':' wf-total')+'">' +
+        '<span class="wf-lbl">'+lbl+'</span>' +
+        (total?'<div class="progress-bar-wrap" style="width:60px;flex-shrink:0;margin:0 8px"><div class="progress-bar" style="width:'+pct2+'%;background:'+vc+'"></div></div>':'') +
+        '<span class="wf-val" style="color:'+vc+'">'+(sign?sign+' ':'')+UI.fmt(Math.abs(val))+' ر.س</span>' +
+      '</div>';
+    }
+    var wf =
+      '<div class="card" style="margin-bottom:16px">' +
+        '<div class="card-title">توزيع قيمة العقد</div>' +
+        wfRow('', 'قيمة العقد المدخلة', r.cv, 'brand', r.grossTotal) +
+        (r.vatAmt>0?wfRow('−', 'ضريبة القيمة المضافة ('+r.vatPct+'%)', r.vatAmt, 'red', r.grossTotal):'') +
+        wfRow('=', 'صافي العقد', r.contractNet, '', 0) +
+        (r.execAmt>0?wfRow('−', 'أتعاب التنفيذ', r.execAmt, 'red', r.grossTotal):'') +
+        (r.mkt>0?wfRow('−', 'التسويق', r.mkt, 'red', r.grossTotal):'') +
+        (r.cb>0?wfRow('−', 'كاش باك', r.cb, 'red', r.grossTotal):'') +
+        (r.cfAmt>0?wfRow('−', 'ضريبة القيمة المضافة (الرسوم)', r.cfAmt, 'red', r.grossTotal):'') +
+        wfRow('=', 'المتاح للتنفيذ', available, available>=0?'green':'red', 0) +
+      '</div>';
+
+    // مؤشرات
+    var indicators =
+      '<div class="card">' +
+        '<div class="card-title">مؤشرات الأداء</div>' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">' +
+          '<div><div style="font-size:11px;color:var(--gray-500);margin-bottom:6px">نسبة إنفاق الميزانية</div>' +
+            '<div class="progress-bar-wrap"><div class="progress-bar" style="width:'+usagePct+'%;background:'+(usagePct>90?'var(--danger)':'var(--brand)')+'"></div></div>' +
+            '<div style="font-size:11px;font-weight:600;margin-top:4px;color:var(--gray-700)">'+usagePct+'% ('+UI.fmt(r.totalExpenses)+' / '+UI.fmt(available)+')</div>' +
+          '</div>' +
+          '<div><div style="font-size:11px;color:var(--gray-500);margin-bottom:6px">هامش الربحية</div>' +
+            '<div class="progress-bar-wrap"><div class="progress-bar" style="width:'+Math.min(100,parseFloat(profitPct))+'%;background:var(--success)"></div></div>' +
+            '<div style="font-size:11px;font-weight:600;margin-top:4px;color:var(--success)">'+profitPct+'% ('+UI.fmt(r.profit)+' ر.س)</div>' +
+          '</div>' +
+          '<div><div style="font-size:11px;color:var(--gray-500);margin-bottom:4px">إجمالي الدخل المسجّل</div><div style="font-size:16px;font-weight:700;color:var(--success);font-family:\'IBM Plex Mono\',monospace">'+UI.fmt(r.totalIncome)+' ر.س</div></div>' +
+          '<div><div style="font-size:11px;color:var(--gray-500);margin-bottom:4px">عدد المعاملات</div><div style="font-size:16px;font-weight:700;color:var(--brand);font-family:\'IBM Plex Mono\',monospace">'+fin.entries.length+'</div></div>' +
+        '</div>' +
+      '</div>';
+
+    bodyHtml = bigCards + wf + indicators;
+
+  } else {
+    // قسم البنود
+    var entFilter = window._rptFilter||'all';
+    var entRows = (fin.entries||[])
+      .filter(function(e){ return entFilter==='all'||e.type===entFilter; })
+      .slice().sort(function(a,b){ return (b.date||'').localeCompare(a.date||''); })
+      .map(function(e){
+        var isInc = e.type==='income';
+        return '<tr class="'+(isInc?'income-row':'expense-row')+'">' +
+          '<td style="font-size:11.5px;color:var(--gray-500)">'+fmtDate(e.date)+'</td>' +
+          '<td class="fw-600">'+UI.escHtml(e.desc||'')+'</td>' +
+          '<td style="font-size:11px;color:var(--gray-500)">'+catLabel(e.cat)+'</td>' +
+          '<td>'+(isInc?'<span class="badge success">دخل</span>':'<span class="badge danger">مصروف</span>')+'</td>' +
+          '<td class="mono '+(isInc?'amount-income':'amount-expense')+'">'+(isInc?'+':'−')+' '+UI.fmt(e.amount)+' ر.س</td>' +
+          '<td><span class="badge gray">'+(e.status||'—')+'</span></td>' +
+        '</tr>';
+      }).join('') || '<tr><td colspan="6"><div class="empty-state" style="padding:20px"><h3>لا توجد بنود</h3></div></td></tr>';
+
+    var sumExp = (fin.entries||[]).filter(function(e){return e.type==='expense';}).reduce(function(s,e){return s+(parseFloat(e.amount)||0);},0);
+    var sumInc = (fin.entries||[]).filter(function(e){return e.type==='income';}).reduce(function(s,e){return s+(parseFloat(e.amount)||0);},0);
+
+    bodyHtml =
+      '<div class="filter-bar" style="margin-bottom:12px">' +
+        '<select class="filter-select" onchange="window._rptFilter=this.value;Pages.renderFinReport(\''+projId+'\',\'items\')">' +
+          '<option value="all"'+(entFilter==='all'?' selected':'')+'>الكل</option>' +
+          '<option value="income"'+(entFilter==='income'?' selected':'')+'>دخل فقط</option>' +
+          '<option value="expense"'+(entFilter==='expense'?' selected':'')+'>مصاريف فقط</option>' +
+        '</select>' +
       '</div>' +
-      '<div class="divider"></div>' +
-      '<div class="section-title">الملخص المالي</div>' +
-      '<table class="data-table"><tbody>' +
-        '<tr><td>قيمة العقد الإجمالية</td><td class="mono fw-600">'+UI.fmt(r.cv)+' ر.س</td></tr>' +
-        '<tr><td>ضريبة القيمة المضافة ('+r.vatPct+'%)</td><td class="mono">'+UI.fmt(r.vatAmt)+' ر.س</td></tr>' +
-        '<tr><td>صافي العقد</td><td class="mono fw-600">'+UI.fmt(r.contractNet)+' ر.س</td></tr>' +
-        '<tr><td>أتعاب التنفيذ</td><td class="mono">'+UI.fmt(r.execAmt)+' ر.س</td></tr>' +
-        '<tr><td>التسويق</td><td class="mono">'+UI.fmt(r.mkt)+' ر.س</td></tr>' +
-        '<tr><td>كاش باك</td><td class="mono">'+UI.fmt(r.cb)+' ر.س</td></tr>' +
-        '<tr><td>الميزانية المخططة</td><td class="mono">'+UI.fmt(r.budgetTotal)+' ر.س</td></tr>' +
-        '<tr><td>المصاريف الفعلية</td><td class="mono" style="color:var(--danger)">'+UI.fmt(r.totalExpenses)+' ر.س</td></tr>' +
-        '<tr><td>الإيرادات المسجلة</td><td class="mono" style="color:var(--success)">'+UI.fmt(r.totalIncome)+' ر.س</td></tr>' +
-        '<tr style="background:var(--brand-light)"><td class="fw-600">صافي الربح</td><td class="mono fw-600" style="color:var(--brand)">'+UI.fmt(r.profit)+' ر.س</td></tr>' +
-        '<tr><td>المتبقي</td><td class="mono fw-600" style="color:var(--warn)">'+UI.fmt(r.remaining)+' ر.س</td></tr>' +
-      '</tbody></table>' +
-      (budgetRows?'<div class="divider"></div><div class="section-title">بنود الميزانية</div><table class="data-table"><thead><tr><th>البند</th><th>المبلغ</th><th>ملاحظة</th></tr></thead><tbody>'+budgetRows+'</tbody></table>':'') +
-      (entryRows?'<div class="divider"></div><div class="section-title">سجل المعاملات</div><table class="data-table"><thead><tr><th>التاريخ</th><th>الوصف</th><th>التصنيف</th><th>النوع</th><th>المبلغ</th></tr></thead><tbody>'+entryRows+'</tbody></table>':'') +
+      '<div class="card" style="padding:0;overflow:hidden;margin-bottom:16px">' +
+        '<div style="overflow-x:auto"><table class="data-table"><thead><tr>' +
+          '<th>التاريخ</th><th>البيان</th><th>التصنيف</th><th>النوع</th><th>المبلغ</th><th>الحالة</th>' +
+        '</tr></thead><tbody>'+entRows+'</tbody>' +
+        '<tfoot style="background:var(--gray-50)"><tr>' +
+          '<td colspan="3" class="fw-600" style="padding:10px 14px;font-size:12px">الإجمالي</td>' +
+          '<td></td>' +
+          '<td class="mono" style="padding:10px 14px"><span style="color:var(--success)">+ '+UI.fmt(sumInc)+'</span><br><span style="color:var(--danger)">− '+UI.fmt(sumExp)+'</span></td>' +
+          '<td></td>' +
+        '</tr></tfoot></table></div>' +
+      '</div>';
+  }
+
+  document.getElementById('fin-tab-report').innerHTML =
+    tabsHtml + actionsHtml +
+    '<div class="card" id="report-content">' +
+      headerHtml + bodyHtml +
     '</div>';
 };
 
@@ -1857,5 +2015,15 @@ Pages.loadSampleData = function() {
   Nav.go('dash');
 })();
 </script>
+
+<!-- Ctrl Drawer -->
+<div id="ctrl-drawer-overlay" class="ctrl-drawer-overlay" onclick="Pages.closeCtrlDrawer()"></div>
+<div id="ctrl-drawer" class="ctrl-drawer">
+  <div class="ctrl-drawer-header">
+    <h3>⚙️ مركز التحكم</h3>
+    <button class="modal-close" onclick="Pages.closeCtrlDrawer()">×</button>
+  </div>
+  <div class="ctrl-drawer-body" id="ctrl-drawer-body"></div>
+</div>
 </body>
 </html>
