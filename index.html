@@ -162,6 +162,22 @@
   --shadow:       var(--shadow-sm);
 }
 
+/* Dark mode token stubs (v2.1 ready — auto-activates on prefers-color-scheme:dark) */
+@media (prefers-color-scheme: dark) {
+  /* Activate by uncommenting in v2.1
+  :root {
+    --bg-app:      #0A0E1A;
+    --bg-elevated: #131927;
+    --bg-subtle:   #1A2235;
+    --border:      #232D44;
+    --text:        #F1F5F9;
+    --text-strong: #FFFFFF;
+    --text-muted:  #94A3B8;
+    --text-subtle: #64748B;
+  }
+  */
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: .01ms !important;
@@ -1632,7 +1648,7 @@ Pages.render_dash = function() {
     return { p:p, val:r.grossTotal||0, profit:r.profit||0 };
   }).sort(function(a,b){ return b.val - a.val; }).slice(0,5);
   var maxVal = topProjects.length ? topProjects[0].val : 1;
-  var barColors = ['#00197D','#0230e0','#1a56fb','#4c7afc','#80a3fd'];
+  var barColors = ['#4338CA','#4F46E5','#6366F1','#818CF8','#A5B4FC'];
 
   var hbarRows = '';
   if (topProjects.length === 0) {
@@ -1653,10 +1669,10 @@ Pages.render_dash = function() {
 
   /* ── Donut SVG ── */
   var statusData = [
-    {label:'نشط',   count:activeProj.length,    color:'#1a7f37'},
-    {label:'مكتمل', count:completedProj.length,  color:'#00197D'},
-    {label:'متوقف', count:pausedProj.length,     color:'#B8841A'},
-    {label:'ملغي',  count:cancelledProj.length,  color:'#c0392b'}
+    {label:'نشط',   count:activeProj.length,    color:'#059669'},
+    {label:'مكتمل', count:completedProj.length,  color:'#4F46E5'},
+    {label:'متوقف', count:pausedProj.length,     color:'#D97706'},
+    {label:'ملغي',  count:cancelledProj.length,  color:'#E11D48'}
   ].filter(function(d){ return d.count > 0; });
   var donutSvg  = _buildDonut(statusData, projects.length);
   var legendHtml = statusData.length ? statusData.map(function(d){
@@ -1671,11 +1687,11 @@ Pages.render_dash = function() {
   var feedItems = projects.slice().sort(function(a,b){
     return (b.created||'').localeCompare(a.created||'');
   }).slice(0, 6);
-  var stColors = {active:'rgba(26,127,55,.1)',completed:'rgba(0,25,125,.08)',paused:'rgba(184,132,26,.1)',cancelled:'rgba(192,57,43,.1)'};
+  var stColors = {active:'var(--success-50)',completed:'var(--primary-50)',paused:'var(--warning-50)',cancelled:'var(--danger-50)'};
   var stIcons  = {active:'play-circle',completed:'check-circle',paused:'pause-circle',cancelled:'x-circle'};
   /* Phosphor weight for status icons */
   var stWeight = {active:'ph-fill',completed:'ph-fill',paused:'ph-fill',cancelled:'ph-fill'};
-  var stStroke = {active:'#1a7f37',completed:'#00197D',paused:'#B8841A',cancelled:'#c0392b'};
+  var stStroke = {active:'#059669',completed:'#4F46E5',paused:'#D97706',cancelled:'#E11D48'};
 
   var activityHtml = '';
   if (feedItems.length === 0) {
@@ -3048,26 +3064,26 @@ Pages.printReport = function(projId) {
     '</tr>';
   }
   var wfHtml =
-    wfTr('', 'قيمة العقد المدخلة', r.cv, '#00197D', false) +
-    (r.vatAmt>0 ? wfTr('−', 'ضريبة القيمة المضافة ('+r.vatPct+'%)', r.vatAmt, '#c0392b', false) : '') +
+    wfTr('', 'قيمة العقد المدخلة', r.cv, '#4F46E5', false) +
+    (r.vatAmt>0 ? wfTr('−', 'ضريبة القيمة المضافة ('+r.vatPct+'%)', r.vatAmt, '#E11D48', false) : '') +
     wfTr('=', 'صافي العقد', r.contractNet, '#1A202C', true) +
-    (r.execAmt>0 ? wfTr('−', 'أتعاب التنفيذ', r.execAmt, '#c0392b', false) : '') +
-    (r.mkt>0     ? wfTr('−', 'التسويق', r.mkt, '#c0392b', false) : '') +
-    (r.cb>0      ? wfTr('−', 'كاش باك', r.cb, '#c0392b', false) : '') +
-    (r.cfAmt>0   ? wfTr('−', 'ضريبة القيمة المضافة (الرسوم)', r.cfAmt, '#c0392b', false) : '') +
-    wfTr('=', 'المتاح للتنفيذ', available, available>=0?'#1a7f37':'#c0392b', true);
+    (r.execAmt>0 ? wfTr('−', 'أتعاب التنفيذ', r.execAmt, '#E11D48', false) : '') +
+    (r.mkt>0     ? wfTr('−', 'التسويق', r.mkt, '#E11D48', false) : '') +
+    (r.cb>0      ? wfTr('−', 'كاش باك', r.cb, '#E11D48', false) : '') +
+    (r.cfAmt>0   ? wfTr('−', 'ضريبة القيمة المضافة (الرسوم)', r.cfAmt, '#E11D48', false) : '') +
+    wfTr('=', 'المتاح للتنفيذ', available, available>=0?'#059669':'#E11D48', true);
 
   /* ── Entry rows ── */
   var entryHtml = entries.map(function(e, i){
     var isInc = e.type==='income';
     var bg = i%2===0 ? '#fff' : '#FAFBFF';
-    var borderL = isInc ? 'border-right:3px solid #1a7f37' : 'border-right:3px solid #c0392b';
+    var borderL = isInc ? 'border-right:3px solid #059669' : 'border-right:3px solid #E11D48';
     return '<tr style="background:'+bg+'">' +
       '<td style="padding:7px 12px;'+borderL+';font-size:9.5pt;color:#718096;white-space:nowrap">'+fmtDate(e.date)+'</td>' +
       '<td style="padding:7px 12px;font-size:9.5pt;font-weight:600;color:#1A202C">'+UI.escHtml(e.desc||'')+'</td>' +
       '<td style="padding:7px 12px;font-size:9pt;color:#718096">'+catLabel(e.cat)+'</td>' +
-      '<td style="padding:7px 12px;font-size:9.5pt;font-weight:600;color:'+(isInc?'#1a7f37':'#c0392b')+'">'+(isInc?'دخل':'مصروف')+'</td>' +
-      '<td style="padding:7px 12px;text-align:left;font-family:\'IBM Plex Mono\',monospace;font-size:9.5pt;font-weight:700;color:'+(isInc?'#1a7f37':'#c0392b')+'">'+(isInc?'+ ':'− ')+UI.fmt(e.amount)+'</td>' +
+      '<td style="padding:7px 12px;font-size:9.5pt;font-weight:600;color:'+(isInc?'#059669':'#E11D48')+'">'+(isInc?'دخل':'مصروف')+'</td>' +
+      '<td style="padding:7px 12px;text-align:left;font-family:\'IBM Plex Mono\',monospace;font-size:9.5pt;font-weight:700;color:'+(isInc?'#059669':'#E11D48')+'">'+(isInc?'+ ':'− ')+UI.fmt(e.amount)+'</td>' +
       '<td style="padding:7px 12px;font-size:9pt;color:#718096">'+(e.status==='paid'?'مدفوع':e.status==='pending'?'معلق':e.status==='cancelled'?'ملغي':'—')+'</td>' +
     '</tr>';
   }).join('') || '<tr><td colspan="6" style="padding:24px;text-align:center;color:#A0AEC0;font-size:10pt">لا توجد قيود مسجّلة</td></tr>';
@@ -3081,7 +3097,7 @@ Pages.printReport = function(projId) {
     '.wrap{max-width:830px;margin:0 auto;padding:40px 44px}' +
 
     /* ── Cover band ── */
-    '.cover{background:linear-gradient(135deg,#001260 0%,#0230e0 100%);color:#fff;border-radius:12px;padding:28px 32px;margin-bottom:28px;display:flex;justify-content:space-between;align-items:flex-start}' +
+    '.cover{background:linear-gradient(135deg,#3730A3 0%,#4F46E5 60%,#6366F1 100%);color:#fff;border-radius:16px;padding:32px 36px;margin-bottom:28px;display:flex;justify-content:space-between;align-items:flex-start;box-shadow:0 12px 30px -10px rgba(67,56,202,.4)}' +
     '.cover-brand{font-size:28px;font-weight:700;letter-spacing:-1px;color:#fff}' +
     '.cover-brand-sub{font-size:10pt;color:rgba(255,255,255,.6);margin-top:3px}' +
     '.cover-right{text-align:left}' +
@@ -3098,8 +3114,8 @@ Pages.printReport = function(projId) {
     '.kbox-sub{font-size:8.5pt;color:#A0AEC0;margin-top:4px}' +
 
     /* ── Section headings ── */
-    'h2{font-size:11pt;font-weight:700;color:#00197D;margin:26px 0 12px;padding-bottom:6px;border-bottom:2px solid #E8EBFF;display:flex;align-items:center;gap:8px}' +
-    'h2 .h2-num{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:#00197D;color:#fff;font-size:8.5pt;font-weight:700;flex-shrink:0}' +
+    'h2{font-size:11pt;font-weight:700;color:#4F46E5;margin:26px 0 12px;padding-bottom:6px;border-bottom:2px solid #E8EBFF;display:flex;align-items:center;gap:8px}' +
+    'h2 .h2-num{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:#4F46E5;color:#fff;font-size:8.5pt;font-weight:700;flex-shrink:0}' +
 
     /* ── Tables ── */
     'table{width:100%;border-collapse:collapse;font-size:9.5pt}' +
@@ -3137,10 +3153,10 @@ Pages.printReport = function(projId) {
 
     /* ── KPI Cards ── */
     '<div class="kpi4">' +
-      '<div class="kbox"><div class="kbox-accent" style="background:#00197D"></div><div class="kbox-lbl">إجمالي العقد</div><div class="kbox-val" style="color:#00197D">'+UI.fmt(r.grossTotal)+'</div><div class="kbox-sub">صافي '+UI.fmt(r.contractNet)+' ر.س</div></div>' +
-      '<div class="kbox"><div class="kbox-accent" style="background:#c0392b"></div><div class="kbox-lbl">المصاريف</div><div class="kbox-val" style="color:#c0392b">'+UI.fmt(r.totalExpenses)+'</div><div class="kbox-sub">'+expCount+' بنود</div></div>' +
-      '<div class="kbox"><div class="kbox-accent" style="background:#1a7f37"></div><div class="kbox-lbl">صافي الربح</div><div class="kbox-val" style="color:#1a7f37">'+UI.fmt(r.profit)+'</div><div class="kbox-sub">هامش '+profitPct+'%</div></div>' +
-      '<div class="kbox"><div class="kbox-accent" style="background:'+(r.remaining<0?'#c0392b':'#B8841A')+'"></div><div class="kbox-lbl">المتبقي</div><div class="kbox-val" style="color:'+(r.remaining<0?'#c0392b':'#B8841A')+'">'+UI.fmt(r.remaining)+'</div><div class="kbox-sub">'+incCount+' بنود دخل · '+entries.length+' معاملة</div></div>' +
+      '<div class="kbox"><div class="kbox-accent" style="background:#4F46E5"></div><div class="kbox-lbl">إجمالي العقد</div><div class="kbox-val" style="color:#4F46E5">'+UI.fmt(r.grossTotal)+'</div><div class="kbox-sub">صافي '+UI.fmt(r.contractNet)+' ر.س</div></div>' +
+      '<div class="kbox"><div class="kbox-accent" style="background:#E11D48"></div><div class="kbox-lbl">المصاريف</div><div class="kbox-val" style="color:#E11D48">'+UI.fmt(r.totalExpenses)+'</div><div class="kbox-sub">'+expCount+' بنود</div></div>' +
+      '<div class="kbox"><div class="kbox-accent" style="background:#059669"></div><div class="kbox-lbl">صافي الربح</div><div class="kbox-val" style="color:#059669">'+UI.fmt(r.profit)+'</div><div class="kbox-sub">هامش '+profitPct+'%</div></div>' +
+      '<div class="kbox"><div class="kbox-accent" style="background:'+(r.remaining<0?'#E11D48':'#D97706')+'"></div><div class="kbox-lbl">المتبقي</div><div class="kbox-val" style="color:'+(r.remaining<0?'#E11D48':'#D97706')+'">'+UI.fmt(r.remaining)+'</div><div class="kbox-sub">'+incCount+' بنود دخل · '+entries.length+' معاملة</div></div>' +
     '</div>' +
 
     /* ── Waterfall ── */
@@ -3156,9 +3172,9 @@ Pages.printReport = function(projId) {
     '<tfoot><tr class="tfoot-row">' +
       '<td colspan="3">الإجمالي</td>' +
       '<td colspan="2" style="text-align:left">' +
-        '<span style="color:#1a7f37">+ '+UI.fmt(r.totalIncome)+' ر.س دخل</span>' +
+        '<span style="color:#059669">+ '+UI.fmt(r.totalIncome)+' ر.س دخل</span>' +
         ' &nbsp;|&nbsp; ' +
-        '<span style="color:#c0392b">− '+UI.fmt(r.totalExpenses)+' ر.س مصروف</span>' +
+        '<span style="color:#E11D48">− '+UI.fmt(r.totalExpenses)+' ر.س مصروف</span>' +
       '</td>' +
       '<td></td>' +
     '</tr></tfoot></table>' +
