@@ -988,63 +988,102 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
 }
 
 /* ── Project hero header ── */
-.proj-hero{background:#fff;border:1px solid var(--gray-200);border-radius:var(--radius);overflow:hidden;margin-bottom:16px;box-shadow:var(--shadow)}
+/* ── Project hero (v2) ── */
+.proj-hero{
+  background:var(--bg-elevated);border:1px solid var(--border);
+  border-radius:var(--radius-xl);overflow:hidden;
+  margin-bottom:var(--space-5);box-shadow:var(--shadow-sm);
+}
 .proj-hero-band{
-  background:linear-gradient(135deg,#001260 0%,#0230e0 70%,#1a56fb 100%);
-  padding:20px 22px 18px;position:relative;overflow:hidden;
+  background:linear-gradient(135deg,var(--primary-800) 0%,var(--primary-600) 60%,var(--primary-500) 100%);
+  padding:var(--space-6);position:relative;overflow:hidden;color:#fff;
 }
 .proj-hero-band::before{
-  content:'';position:absolute;right:-60px;top:-60px;width:200px;height:200px;
-  background:rgba(255,255,255,.04);border-radius:50%;
+  content:'';position:absolute;right:-80px;top:-80px;width:240px;height:240px;
+  background:radial-gradient(circle,rgba(255,255,255,.08),transparent 70%);border-radius:50%;
 }
 .proj-hero-band::after{
-  content:'';position:absolute;right:80px;bottom:-80px;width:240px;height:240px;
-  background:rgba(255,255,255,.03);border-radius:50%;
+  content:'';position:absolute;right:30%;bottom:-120px;width:320px;height:320px;
+  background:radial-gradient(circle,rgba(255,255,255,.05),transparent 70%);border-radius:50%;
 }
-.proj-hero-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;position:relative;z-index:1}
-.proj-hero-badges{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
-.proj-hero-badge{border-radius:20px;padding:3px 11px;font-size:10.5px;font-weight:600;display:inline-flex;align-items:center;gap:4px;border:1px solid transparent}
-.proj-hero-badge-status{background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.2)}
-.proj-hero-badge-status.st-active{background:rgba(30,200,80,.25);border-color:rgba(50,220,80,.35);color:#a7f3c8}
-.proj-hero-badge-status.st-completed{background:rgba(100,200,255,.2);border-color:rgba(100,200,255,.3);color:#bfefff}
-.proj-hero-badge-status.st-paused{background:rgba(255,190,0,.2);border-color:rgba(255,200,0,.3);color:#fde68a}
-.proj-hero-badge-type{background:rgba(255,255,255,.08);color:rgba(255,255,255,.7);border-color:rgba(255,255,255,.1)}
-.proj-hero-name{font-size:20px;font-weight:700;color:#fff;line-height:1.2;margin-bottom:7px;letter-spacing:-.2px}
-.proj-hero-meta{font-size:11.5px;color:rgba(255,255,255,.6);display:flex;flex-wrap:wrap;gap:4px 14px;align-items:center}
-.proj-hero-meta-item{display:flex;align-items:center;gap:4px}
-.proj-hero-meta-item i[class*="ph-"]{font-size:12px;opacity:.85}
-.proj-hero-actions{display:flex;gap:8px;flex-shrink:0;margin-top:2px;position:relative;z-index:1}
-.proj-hero-edit{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);color:#fff;border-radius:var(--radius-sm);padding:6px 14px;font-size:11.5px;font-weight:500;cursor:pointer;font-family:inherit;transition:.15s;white-space:nowrap;display:inline-flex;align-items:center;gap:5px}
-.proj-hero-edit:hover{background:rgba(255,255,255,.22)}
+.proj-hero-top{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--space-3);position:relative;z-index:1}
+.proj-hero-badges{display:flex;gap:var(--space-1_5);flex-wrap:wrap;margin-bottom:var(--space-2)}
+.proj-hero-badge{
+  border-radius:var(--radius-full);padding:4px 12px;
+  font-size:var(--font-2xs);font-weight:700;letter-spacing:.3px;
+  display:inline-flex;align-items:center;gap:5px;border:1px solid transparent;
+}
+.proj-hero-badge-status{background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.22);backdrop-filter:blur(8px)}
+.proj-hero-badge-status.st-active{background:rgba(16,185,129,.25);border-color:rgba(16,185,129,.45);color:#A7F3D0}
+.proj-hero-badge-status.st-completed{background:rgba(99,102,241,.25);border-color:rgba(165,180,252,.45);color:#C7D2FE}
+.proj-hero-badge-status.st-paused{background:rgba(245,158,11,.25);border-color:rgba(245,158,11,.45);color:#FDE68A}
+.proj-hero-badge-type{background:rgba(255,255,255,.08);color:rgba(255,255,255,.78);border-color:rgba(255,255,255,.14)}
+.proj-hero-name{
+  font-size:var(--font-2xl);font-weight:800;color:#fff;
+  line-height:var(--lh-tight);margin-bottom:var(--space-2);letter-spacing:-.3px;
+}
+.proj-hero-meta{
+  font-size:var(--font-xs);color:rgba(255,255,255,.7);
+  display:flex;flex-wrap:wrap;gap:var(--space-1) var(--space-4);align-items:center;
+}
+.proj-hero-meta-item{display:flex;align-items:center;gap:5px}
+.proj-hero-meta-item i[class*="ph-"]{font-size:13px;opacity:.85}
+.proj-hero-actions{display:flex;gap:var(--space-2);flex-shrink:0;position:relative;z-index:1}
+.proj-hero-edit{
+  background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.22);
+  color:#fff;border-radius:var(--radius-sm);padding:8px 14px;
+  font-size:var(--font-xs);font-weight:600;cursor:pointer;font-family:inherit;
+  transition:var(--transition-fast);white-space:nowrap;
+  display:inline-flex;align-items:center;gap:5px;backdrop-filter:blur(8px);
+}
+.proj-hero-edit:hover{background:rgba(255,255,255,.24);border-color:rgba(255,255,255,.32)}
 
 /* Progress bar in hero */
-.proj-hero-progress{margin-top:14px;position:relative;z-index:1}
-.proj-hero-progress-labels{display:flex;justify-content:space-between;font-size:10px;color:rgba(255,255,255,.55);margin-bottom:5px}
-.proj-hero-progress-track{background:rgba(255,255,255,.12);border-radius:20px;height:5px;overflow:hidden}
-.proj-hero-progress-fill{height:100%;border-radius:20px;background:linear-gradient(90deg,rgba(255,255,255,.7),rgba(255,255,255,.9));transition:width .5s ease}
-.proj-hero-progress-fill.overspent{background:linear-gradient(90deg,#f87171,#ef4444)}
+.proj-hero-progress{margin-top:var(--space-4);position:relative;z-index:1}
+.proj-hero-progress-labels{display:flex;justify-content:space-between;font-size:var(--font-2xs);color:rgba(255,255,255,.65);margin-bottom:var(--space-1);font-weight:600}
+.proj-hero-progress-track{background:rgba(255,255,255,.15);border-radius:var(--radius-full);height:6px;overflow:hidden}
+.proj-hero-progress-fill{
+  height:100%;border-radius:var(--radius-full);
+  background:linear-gradient(90deg,rgba(255,255,255,.8),#fff);
+  transition:width .8s cubic-bezier(.16,1,.3,1);
+}
+.proj-hero-progress-fill.overspent{background:linear-gradient(90deg,#FCA5A5,#F87171)}
 
 /* Stats strip */
-.proj-hero-stats{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--gray-200)}
-.phs{padding:12px 16px;border-left:1px solid var(--gray-200);min-width:0;position:relative}
+.proj-hero-stats{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--border)}
+.phs{
+  padding:var(--space-4);border-left:1px solid var(--neutral-100);
+  min-width:0;position:relative;transition:background var(--transition-fast);
+}
+.phs:hover{background:var(--neutral-50)}
 .phs:last-child{border-left:none}
-.phs-lbl{font-size:10px;color:var(--gray-400);margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500;letter-spacing:.2px}
-.phs-val{font-size:15px;font-weight:700;font-family:'IBM Plex Mono',monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2}
-.phs::before{content:'';position:absolute;top:0;right:0;left:0;height:2px}
-.phs.ph-brand::before{background:var(--brand)}
-.phs.ph-danger::before{background:var(--danger)}
-.phs.ph-success::before{background:var(--success)}
-.phs.ph-warn::before{background:var(--warn)}
-.phs.ph-brand .phs-val{color:var(--brand)}
-.phs.ph-danger .phs-val{color:var(--danger)}
-.phs.ph-success .phs-val{color:var(--success)}
-.phs.ph-warn .phs-val{color:var(--warn)}
+.phs-lbl{
+  font-size:var(--font-2xs);color:var(--text-muted);
+  margin-bottom:var(--space-1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  font-weight:700;letter-spacing:.4px;text-transform:uppercase;
+}
+.phs-val{
+  font-size:var(--font-xl);font-weight:800;font-family:var(--font-mono);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  line-height:var(--lh-tight);letter-spacing:-.5px;
+}
+.phs::before{content:'';position:absolute;top:0;right:0;left:0;height:3px}
+.phs.ph-brand::before{background:var(--primary-500)}
+.phs.ph-danger::before{background:var(--danger-500)}
+.phs.ph-success::before{background:var(--success-500)}
+.phs.ph-warn::before{background:var(--warning-500)}
+.phs.ph-brand .phs-val{color:var(--primary-600)}
+.phs.ph-danger .phs-val{color:var(--danger-600)}
+.phs.ph-success .phs-val{color:var(--success-600)}
+.phs.ph-warn .phs-val{color:var(--warning-600)}
 @media(max-width:600px){
-  .proj-hero-band{padding:14px 14px 12px}
-  .proj-hero-name{font-size:16px}
+  .proj-hero-band{padding:var(--space-4)}
+  .proj-hero-name{font-size:var(--font-xl)}
   .proj-hero-stats{grid-template-columns:repeat(2,1fr)}
-  .phs{padding:10px 12px}
-  .phs-val{font-size:13px}
+  .phs{padding:var(--space-3)}
+  .phs:nth-child(2){border-left:none}
+  .phs:nth-child(1),.phs:nth-child(2){border-bottom:1px solid var(--neutral-100)}
+  .phs-val{font-size:var(--font-lg)}
 }
 
 /* ── Entry table date column ── */
@@ -1066,90 +1105,137 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
 .section-title{font-size:13px;font-weight:700;color:var(--gray-700);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--gray-200)}
 
 /* ── Dashboard v2 ── */
+/* ── Dashboard greeting (v2) ── */
 .dash-greeting{
-  background:linear-gradient(135deg,#001a8c 0%,#0230e0 60%,#1a56fb 100%);
-  border-radius:var(--radius);padding:20px 24px;margin-bottom:20px;
-  display:flex;align-items:center;justify-content:space-between;gap:16px;
-  box-shadow:0 4px 20px rgba(0,25,140,.18);position:relative;overflow:hidden;
+  background:linear-gradient(135deg,var(--primary-700) 0%,var(--primary-600) 55%,var(--primary-500) 100%);
+  border-radius:var(--radius-xl);padding:var(--space-6) var(--space-6);
+  margin-bottom:var(--space-5);
+  display:flex;align-items:center;justify-content:space-between;
+  gap:var(--space-4);box-shadow:var(--shadow-brand),var(--shadow-md);
+  position:relative;overflow:hidden;color:#fff;
 }
 .dash-greeting::before{
-  content:'';position:absolute;left:-40px;top:-40px;width:160px;height:160px;
-  background:rgba(255,255,255,.05);border-radius:50%;
+  content:'';position:absolute;left:-60px;top:-60px;width:200px;height:200px;
+  background:radial-gradient(circle,rgba(255,255,255,.08),transparent 70%);border-radius:50%;
 }
 .dash-greeting::after{
-  content:'';position:absolute;left:60px;bottom:-60px;width:200px;height:200px;
-  background:rgba(255,255,255,.04);border-radius:50%;
+  content:'';position:absolute;left:30%;bottom:-100px;width:280px;height:280px;
+  background:radial-gradient(circle,rgba(255,255,255,.06),transparent 70%);border-radius:50%;
 }
-.dash-greeting-text h2{font-size:17px;font-weight:700;color:#fff;margin-bottom:4px}
-.dash-greeting-text p{font-size:12px;color:rgba(255,255,255,.65)}
-.dash-greeting-actions{display:flex;gap:8px;flex-shrink:0;position:relative;z-index:1}
-.btn-white{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);color:#fff;border-radius:var(--radius-sm);padding:7px 14px;font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;transition:.15s;display:inline-flex;align-items:center;gap:6px}
-.btn-white:hover{background:rgba(255,255,255,.25)}
-.btn-white-solid{background:#fff;border:1px solid #fff;color:var(--brand);border-radius:var(--radius-sm);padding:7px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:.15s;display:inline-flex;align-items:center;gap:6px}
-.btn-white-solid:hover{background:#f0f4ff}
+.dash-greeting > * {position:relative;z-index:1}
+.dash-greeting-text h2{
+  font-size:var(--font-2xl);font-weight:800;color:#fff;
+  margin-bottom:var(--space-1);letter-spacing:-.3px;line-height:var(--lh-tight);
+}
+.dash-greeting-text p{font-size:var(--font-xs);color:rgba(255,255,255,.7);font-weight:500}
+.dash-greeting-actions{display:flex;gap:var(--space-2);flex-shrink:0;flex-wrap:wrap}
 
-/* KPI Cards */
-.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
-.kpi-card{
-  background:#fff;border:1px solid var(--gray-200);border-radius:var(--radius);
-  padding:18px;box-shadow:var(--shadow);position:relative;overflow:hidden;
-  transition:var(--transition);
+.btn-white{
+  background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);
+  color:#fff;border-radius:var(--radius-sm);padding:9px 16px;
+  font-size:var(--font-sm);font-weight:600;cursor:pointer;
+  font-family:inherit;transition:var(--transition);
+  display:inline-flex;align-items:center;gap:6px;backdrop-filter:blur(8px);
 }
-.kpi-card:hover{box-shadow:var(--shadow-md);transform:translateY(-1px)}
-.kpi-card-accent{position:absolute;top:0;right:0;left:0;height:3px;border-radius:var(--radius) var(--radius) 0 0}
-.kpi-card-icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;margin-bottom:12px}
-.kpi-card-icon i[class*="ph-"]{font-size:18px}
-.kpi-card-label{font-size:11px;color:var(--gray-500);font-weight:500;margin-bottom:5px;text-transform:uppercase;letter-spacing:.4px}
-.kpi-card-value{font-size:22px;font-weight:700;font-family:"IBM Plex Mono",monospace;line-height:1.1;margin-bottom:6px}
-.kpi-card-sub{font-size:11px;color:var(--gray-400);display:flex;align-items:center;gap:4px}
-.kpi-trend-up{color:var(--success);font-weight:600}
-.kpi-trend-down{color:var(--danger);font-weight:600}
+.btn-white:hover{background:rgba(255,255,255,.22);border-color:rgba(255,255,255,.35)}
+.btn-white-solid{
+  background:#fff;border:1px solid #fff;color:var(--primary-700);
+  border-radius:var(--radius-sm);padding:9px 16px;
+  font-size:var(--font-sm);font-weight:700;cursor:pointer;
+  font-family:inherit;transition:var(--transition);
+  display:inline-flex;align-items:center;gap:6px;
+  box-shadow:var(--shadow-sm);
+}
+.btn-white-solid:hover{background:var(--primary-50);transform:translateY(-1px);box-shadow:var(--shadow-md)}
+
+/* ── KPI Cards (v2) ── */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--space-4);margin-bottom:var(--space-5)}
+.kpi-card{
+  background:var(--bg-elevated);border:1px solid var(--border);
+  border-radius:var(--radius-lg);padding:var(--space-5);
+  box-shadow:var(--shadow-sm);position:relative;overflow:hidden;
+  transition:box-shadow var(--transition),border-color var(--transition),transform var(--transition);
+}
+.kpi-card:hover{box-shadow:var(--shadow-md);border-color:var(--neutral-300);transform:translateY(-2px)}
+.kpi-card-accent{position:absolute;top:0;right:0;left:0;height:3px;border-radius:var(--radius-lg) var(--radius-lg) 0 0}
+.kpi-card-icon{
+  width:44px;height:44px;border-radius:var(--radius-md);
+  display:flex;align-items:center;justify-content:center;
+  margin-bottom:var(--space-3);
+}
+.kpi-card-icon i[class*="ph-"]{font-size:22px}
+.kpi-card-label{
+  font-size:var(--font-2xs);color:var(--text-muted);font-weight:700;
+  margin-bottom:var(--space-1);text-transform:uppercase;letter-spacing:.5px;
+}
+.kpi-card-value{
+  font-size:var(--font-3xl);font-weight:800;
+  font-family:var(--font-mono);line-height:var(--lh-tight);
+  margin-bottom:var(--space-1);letter-spacing:-1px;
+}
+.kpi-card-sub{font-size:var(--font-2xs);color:var(--text-subtle);display:flex;align-items:center;gap:var(--space-1);font-weight:500}
+.kpi-trend-up{color:var(--success-600);font-weight:700;background:var(--success-50);padding:1px 6px;border-radius:var(--radius-xs)}
+.kpi-trend-down{color:var(--danger-600);font-weight:700;background:var(--danger-50);padding:1px 6px;border-radius:var(--radius-xs)}
 
 /* Dashboard 2-col */
-.dash-2col{display:grid;grid-template-columns:1fr 340px;gap:16px;margin-bottom:20px}
-.dash-3col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:20px}
+.dash-2col{display:grid;grid-template-columns:1fr 340px;gap:var(--space-4);margin-bottom:var(--space-5)}
+.dash-3col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:var(--space-4);margin-bottom:var(--space-5)}
 
 /* Project status donut */
-.donut-wrap{display:flex;flex-direction:column;align-items:center;gap:14px;padding:4px 0}
-.donut-legend{width:100%;display:flex;flex-direction:column;gap:7px}
-.donut-legend-item{display:flex;align-items:center;justify-content:space-between;font-size:12px}
-.donut-legend-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-left:8px}
-.donut-legend-lbl{flex:1;color:var(--gray-700)}
-.donut-legend-val{font-family:"IBM Plex Mono",monospace;font-weight:600;color:var(--gray-900);font-size:11px}
+.donut-wrap{display:flex;flex-direction:column;align-items:center;gap:var(--space-4);padding:var(--space-1) 0}
+.donut-legend{width:100%;display:flex;flex-direction:column;gap:var(--space-2)}
+.donut-legend-item{display:flex;align-items:center;justify-content:space-between;font-size:var(--font-xs)}
+.donut-legend-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-left:var(--space-2)}
+.donut-legend-lbl{flex:1;color:var(--text-strong);font-weight:500}
+.donut-legend-val{font-family:var(--font-mono);font-weight:700;color:var(--text);font-size:var(--font-2xs);background:var(--neutral-100);padding:2px 8px;border-radius:var(--radius-xs)}
 
 /* Horizontal bar chart */
-.hbar-item{margin-bottom:10px}
-.hbar-label{display:flex;justify-content:space-between;margin-bottom:4px;font-size:12px}
-.hbar-name{color:var(--gray-700);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:65%}
-.hbar-val{font-family:"IBM Plex Mono",monospace;font-weight:600;color:var(--gray-900);font-size:11px;white-space:nowrap}
-.hbar-track{background:var(--gray-100);border-radius:20px;height:7px;overflow:hidden}
-.hbar-fill{height:100%;border-radius:20px;transition:width .5s ease}
+.hbar-item{margin-bottom:var(--space-3);cursor:pointer;padding:6px 8px;border-radius:var(--radius-sm);transition:background var(--transition-fast);margin-right:-8px;margin-left:-8px}
+.hbar-item:hover{background:var(--neutral-50)}
+.hbar-label{display:flex;justify-content:space-between;margin-bottom:5px;font-size:var(--font-xs)}
+.hbar-name{color:var(--text-strong);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:65%}
+.hbar-val{font-family:var(--font-mono);font-weight:700;color:var(--text);font-size:var(--font-2xs);white-space:nowrap}
+.hbar-track{background:var(--neutral-100);border-radius:var(--radius-full);height:8px;overflow:hidden}
+.hbar-fill{height:100%;border-radius:var(--radius-full);transition:width .5s cubic-bezier(.16,1,.3,1)}
 
 /* Activity feed */
 .activity-feed{display:flex;flex-direction:column;gap:0}
-.activity-item{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--gray-100);font-size:12px}
+.activity-item{
+  display:flex;gap:var(--space-3);padding:var(--space-3) 0;
+  border-bottom:1px solid var(--neutral-100);font-size:var(--font-xs);
+  transition:background var(--transition-fast);align-items:center;
+}
+.activity-item:hover{background:var(--neutral-50);margin:0 calc(var(--space-3) * -1);padding-left:var(--space-3);padding-right:var(--space-3);border-radius:var(--radius-sm)}
 .activity-item:last-child{border-bottom:none}
-.activity-dot{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
-.activity-dot i[class*="ph-"]{font-size:13px}
+.activity-dot{
+  width:36px;height:36px;border-radius:var(--radius-sm);
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.activity-dot i[class*="ph-"]{font-size:16px}
 .activity-body{flex:1;min-width:0}
-.activity-title{font-weight:600;color:var(--gray-900);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.activity-meta{color:var(--gray-400);font-size:11px}
+.activity-title{font-weight:700;color:var(--text);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:var(--font-sm)}
+.activity-meta{color:var(--text-muted);font-size:var(--font-2xs)}
 
 /* Quick actions */
-.quick-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.quick-actions{display:grid;grid-template-columns:1fr 1fr;gap:var(--space-2)}
 .qa-btn{
-  background:var(--gray-50);border:1px solid var(--gray-200);border-radius:var(--radius-sm);
-  padding:11px 12px;cursor:pointer;font-family:inherit;font-size:12px;font-weight:500;
-  color:var(--gray-700);transition:var(--transition);display:flex;align-items:center;gap:8px;
-  text-align:right;
+  background:var(--neutral-50);border:1px solid var(--border);
+  border-radius:var(--radius-md);padding:var(--space-3);
+  cursor:pointer;font-family:inherit;font-size:var(--font-xs);font-weight:600;
+  color:var(--text-strong);transition:var(--transition-fast);
+  display:flex;align-items:center;gap:var(--space-2);text-align:right;
+  min-height:48px;
 }
-.qa-btn:hover{background:var(--brand-light);border-color:var(--brand);color:var(--brand)}
-.qa-btn i[class*="ph-"]{font-size:15px}
+.qa-btn:hover{background:var(--primary-50);border-color:var(--primary-300);color:var(--primary-700);transform:translateY(-1px)}
+.qa-btn i[class*="ph-"]{font-size:18px;flex-shrink:0;color:var(--primary-600)}
 
 /* Dash section header */
-.dash-sec-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
-.dash-sec-hdr h3{font-size:13px;font-weight:700;color:var(--gray-900);display:flex;align-items:center;gap:6px}
-.dash-sec-hdr h3 i[class*="ph-"]{font-size:14px;color:var(--neutral-400)}
+.dash-sec-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--space-4)}
+.dash-sec-hdr h3{
+  font-size:var(--font-md);font-weight:700;color:var(--text);
+  display:flex;align-items:center;gap:var(--space-2);letter-spacing:-.1px;
+}
+.dash-sec-hdr h3 i[class*="ph-"]{font-size:18px;color:var(--primary-600)}
 
 @media(max-width:900px){
   .dash-2col{grid-template-columns:1fr}
@@ -1481,8 +1567,8 @@ var UI = {
 ═══════════════════════════════════════════ */
 function statusBadge(s) {
   var map = {active:'نشط', completed:'مكتمل', paused:'متوقف', cancelled:'ملغي'};
-  var cls = {active:'success', completed:'brand', paused:'warn', cancelled:'danger'};
-  return '<span class="badge '+(cls[s]||'gray')+'">'+( map[s]||UI.escHtml(s))+'</span>';
+  var cls = {active:'success', completed:'brand', paused:'warn', cancelled:'gray'};
+  return '<span class="badge with-dot '+(cls[s]||'gray')+'">'+( map[s]||UI.escHtml(s))+'</span>';
 }
 
 function typeLabel(t) {
@@ -1632,34 +1718,34 @@ Pages.render_dash = function() {
     '<div class="kpi-grid">' +
 
       '<div class="kpi-card">' +
-        '<div class="kpi-card-accent" style="background:#00197D"></div>' +
-        '<div class="kpi-card-icon" style="background:#E8EBFF;color:#00197D"><i class="ph-duotone ph-briefcase"></i></div>' +
+        '<div class="kpi-card-accent" style="background:var(--primary-600)"></div>' +
+        '<div class="kpi-card-icon" style="background:var(--primary-50);color:var(--primary-600)"><i class="ph-duotone ph-briefcase"></i></div>' +
         '<div class="kpi-card-label">إجمالي قيمة العقود</div>' +
-        '<div class="kpi-card-value" style="color:#00197D">'+UI.fmt(totalContract)+'</div>' +
+        '<div class="kpi-card-value" style="color:var(--primary-700)">'+UI.fmt(totalContract)+'</div>' +
         '<div class="kpi-card-sub">ريال سعودي</div>' +
       '</div>' +
 
       '<div class="kpi-card">' +
-        '<div class="kpi-card-accent" style="background:#1a7f37"></div>' +
-        '<div class="kpi-card-icon" style="background:#E8F5E9;color:#1a7f37"><i class="ph-bold ph-trend-up"></i></div>' +
+        '<div class="kpi-card-accent" style="background:var(--success-500)"></div>' +
+        '<div class="kpi-card-icon" style="background:var(--success-50);color:var(--success-600)"><i class="ph-bold ph-trend-up"></i></div>' +
         '<div class="kpi-card-label">صافي الأرباح</div>' +
-        '<div class="kpi-card-value" style="color:#1a7f37">'+UI.fmt(totalProfit)+'</div>' +
+        '<div class="kpi-card-value" style="color:var(--success-700)">'+UI.fmt(totalProfit)+'</div>' +
         '<div class="kpi-card-sub"><span class="kpi-trend-up">'+profitMargin+'%</span>&nbsp;هامش الربح</div>' +
       '</div>' +
 
       '<div class="kpi-card">' +
-        '<div class="kpi-card-accent" style="background:#0230e0"></div>' +
-        '<div class="kpi-card-icon" style="background:#E8EBFF;color:#0230e0"><i class="ph ph-pulse"></i></div>' +
+        '<div class="kpi-card-accent" style="background:var(--accent-500)"></div>' +
+        '<div class="kpi-card-icon" style="background:var(--accent-50);color:var(--accent-600)"><i class="ph ph-pulse"></i></div>' +
         '<div class="kpi-card-label">المشاريع النشطة</div>' +
-        '<div class="kpi-card-value" style="color:#0230e0">'+activeProj.length+'</div>' +
+        '<div class="kpi-card-value" style="color:var(--accent-700)">'+activeProj.length+'</div>' +
         '<div class="kpi-card-sub">من إجمالي '+projects.length+' مشروع</div>' +
       '</div>' +
 
       '<div class="kpi-card">' +
-        '<div class="kpi-card-accent" style="background:#B8841A"></div>' +
-        '<div class="kpi-card-icon" style="background:#FFF3E0;color:#B8841A"><i class="ph-duotone ph-users-three"></i></div>' +
+        '<div class="kpi-card-accent" style="background:var(--warning-500)"></div>' +
+        '<div class="kpi-card-icon" style="background:var(--warning-50);color:var(--warning-600)"><i class="ph-duotone ph-users-three"></i></div>' +
         '<div class="kpi-card-label">العملاء المسجلون</div>' +
-        '<div class="kpi-card-value" style="color:#B8841A">'+clients.length+'</div>' +
+        '<div class="kpi-card-value" style="color:var(--warning-700)">'+clients.length+'</div>' +
         '<div class="kpi-card-sub">'+completedProj.length+' مشروع مكتمل</div>' +
       '</div>' +
 
@@ -1756,26 +1842,58 @@ Pages.render_clients = function() {
 
   var cards = '';
   if (clients.length===0) {
-    cards = '<div class="empty-state"><div class="empty-state-icon"><i class="ph-duotone ph-users-three"></i></div><h3>لا يوجد عملاء</h3><p>أضف أول عميل للبدء</p></div>';
+    cards = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-state-icon"><i class="ph-duotone ph-users-three"></i></div><h3>لا يوجد عملاء بعد</h3><p>ابدأ بإضافة أول عميل لتسجيل المشاريع تحت اسمه</p><button class="btn btn-primary" style="margin-top:var(--space-4)" onclick="Pages.addClientModal()"><i class="ph-bold ph-user-plus"></i>إضافة عميل</button></div>';
   } else {
+    /* gradient avatar palette — assign by stable hash of client id */
+    var avatarPalette = [
+      ['var(--primary-500)','var(--primary-700)'],
+      ['var(--accent-500)','var(--accent-700)'],
+      ['var(--success-500)','var(--success-700)'],
+      ['var(--warning-500)','var(--warning-700)'],
+      ['#A78BFA','#7C3AED'],
+      ['#F472B6','#BE185D'],
+      ['#22D3EE','#0E7490']
+    ];
+    function hashStr(s){var h=0;for(var i=0;i<s.length;i++){h=((h<<5)-h)+s.charCodeAt(i);h|=0}return Math.abs(h)}
+
     clients.forEach(function(cl){
       var pCount = projects.filter(function(p){ return p.client_id===cl.id; }).length;
+      var activeCount = projects.filter(function(p){ return p.client_id===cl.id && p.status==='active'; }).length;
+      var av = avatarPalette[hashStr(cl.id||cl.name||'x') % avatarPalette.length];
+      var initial = (cl.name||'?').trim().charAt(0);
+
       cards += '<div class="client-card">' +
-        '<div class="client-card-name">'+UI.escHtml(cl.name)+'</div>' +
-        '<div class="client-card-meta">'+clientTypeLabel(cl.type)+(cl.city?' · '+UI.escHtml(cl.city):'')+'</div>' +
-        '<div class="client-card-meta" style="margin-bottom:12px">'+pCount+' مشروع'+( cl.email?' · '+UI.escHtml(cl.email):'')+'</div>' +
+        /* Header row: avatar + name + type */
+        '<div style="display:flex;align-items:center;gap:var(--space-3);margin-bottom:var(--space-3)">' +
+          '<div style="width:44px;height:44px;flex-shrink:0;border-radius:var(--radius-md);background:linear-gradient(135deg,'+av[0]+','+av[1]+');display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:var(--font-lg);letter-spacing:-.5px;box-shadow:var(--shadow-sm)">'+UI.escHtml(initial)+'</div>' +
+          '<div style="flex:1;min-width:0">' +
+            '<div class="client-card-name" style="margin-bottom:0">'+UI.escHtml(cl.name)+'</div>' +
+            '<div style="font-size:var(--font-2xs);color:var(--text-muted);margin-top:2px">'+clientTypeLabel(cl.type)+(cl.city?' · '+UI.escHtml(cl.city):'')+'</div>' +
+          '</div>' +
+        '</div>' +
+        /* Meta row */
+        '<div style="display:flex;gap:var(--space-2);margin-bottom:var(--space-4);flex-wrap:wrap">' +
+          '<span class="badge brand sm"><i class="ph-duotone ph-briefcase"></i>'+pCount+' مشروع</span>' +
+          (activeCount>0 ? '<span class="badge success sm with-dot">'+activeCount+' نشط</span>' : '') +
+        '</div>' +
+        (cl.email ? '<div style="font-size:var(--font-2xs);color:var(--text-muted);margin-bottom:var(--space-3);display:flex;align-items:center;gap:5px"><i class="ph ph-envelope" style="font-size:13px"></i>'+UI.escHtml(cl.email)+'</div>' : '') +
+        /* Actions */
         '<div class="client-card-actions">' +
-          '<button class="btn btn-sm btn-primary" onclick="Nav.go(\'client\',{clientId:\''+cl.id+'\'})">عرض</button>' +
-          '<button class="btn btn-sm" onclick="Pages.editClientModal(\''+cl.id+'\')">تعديل</button>' +
-          '<button class="btn btn-sm btn-danger" onclick="Pages.deleteClient(\''+cl.id+'\')">حذف</button>' +
+          '<button class="btn btn-sm btn-primary" style="flex:1" onclick="Nav.go(\'client\',{clientId:\''+cl.id+'\'})"><i class="ph-bold ph-arrow-left"></i>عرض</button>' +
+          '<button class="btn btn-sm btn-icon" onclick="Pages.editClientModal(\''+cl.id+'\')" title="تعديل"><i class="ph ph-pencil-simple"></i></button>' +
+          '<button class="btn btn-sm btn-icon btn-danger" onclick="Pages.deleteClient(\''+cl.id+'\')" title="حذف"><i class="ph ph-trash"></i></button>' +
         '</div>' +
       '</div>';
     });
   }
 
   document.getElementById('pg-clients').innerHTML =
-    '<div class="page-header"><div><h1>العملاء</h1><div class="page-header-sub">'+clients.length+' عميل مسجل</div></div>' +
-      '<button class="btn btn-primary" onclick="Pages.addClientModal()">+ إضافة عميل</button>' +
+    '<div class="page-header">' +
+      '<div>' +
+        '<h1>العملاء</h1>' +
+        '<div class="page-header-sub">'+clients.length+' عميل مسجَّل في النظام</div>' +
+      '</div>' +
+      '<button class="btn btn-primary" onclick="Pages.addClientModal()"><i class="ph-bold ph-user-plus"></i>إضافة عميل</button>' +
     '</div>' +
     '<div class="client-grid">'+cards+'</div>';
   document.getElementById('top-actions').innerHTML='';
@@ -1930,13 +2048,21 @@ Pages.render_projects = function() {
   }
 
   var filterOpts = [{v:'all',l:'الكل'},{v:'active',l:'نشط'},{v:'completed',l:'مكتمل'},{v:'paused',l:'متوقف'},{v:'cancelled',l:'ملغي'}];
-  var filterHtml = filterOpts.map(function(o){
-    return '<button class="btn btn-sm'+(filterStatus===o.v?' btn-primary':'')+'" onclick="window._projFilter=\''+o.v+'\';Pages.render_projects()">'+o.l+'</button>';
-  }).join('');
+  var filterHtml = '<div style="display:inline-flex;gap:2px;background:var(--neutral-100);border-radius:10px;padding:3px">' +
+    filterOpts.map(function(o){
+      var active = filterStatus===o.v;
+      var count = o.v==='all' ? projects.length : projects.filter(function(p){return p.status===o.v}).length;
+      return '<button class="tab-btn'+(active?' active':'')+'" style="padding:6px 14px;font-size:var(--font-xs);min-height:32px" onclick="window._projFilter=\''+o.v+'\';Pages.render_projects()">'+o.l+'<span style="font-family:var(--font-mono);font-size:10px;margin-right:4px;opacity:.7">'+count+'</span></button>';
+    }).join('') +
+    '</div>';
 
   document.getElementById('pg-projects').innerHTML =
-    '<div class="page-header"><div><h1>المشاريع</h1><div class="page-header-sub">'+projects.length+' مشروع إجمالاً</div></div>' +
-      '<button class="btn btn-primary" onclick="Pages.addProjectModal(null)">+ إضافة مشروع</button>' +
+    '<div class="page-header">' +
+      '<div>' +
+        '<h1>المشاريع</h1>' +
+        '<div class="page-header-sub">'+projects.length+' مشروع · '+filtered.length+' معروض</div>' +
+      '</div>' +
+      '<button class="btn btn-primary" onclick="Pages.addProjectModal(null)"><i class="ph-bold ph-plus"></i>مشروع جديد</button>' +
     '</div>' +
     '<div class="filter-bar">'+filterHtml+'</div>' +
     '<div class="card" style="padding:0;overflow:hidden">' +
@@ -3192,34 +3318,95 @@ Pages.deleteProjectConfirm = function(projId) {
 Pages.render_settings = function() {
   var clients = DB.getClients();
   var projects = DB.getProjects();
+  var activeCount = projects.filter(function(p){return p.status==='active';}).length;
+  var completedCount = projects.filter(function(p){return p.status==='completed';}).length;
+
   document.getElementById('pg-settings').innerHTML =
-    '<div class="page-header"><h1>الإعدادات</h1></div>' +
-    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">' +
-      '<div class="card">' +
-        '<div class="card-title">إحصائيات النظام</div>' +
-        '<div class="fin-summary-row"><span class="lbl">إجمالي العملاء</span><span class="val mono">'+clients.length+'</span></div>' +
-        '<div class="fin-summary-row"><span class="lbl">إجمالي المشاريع</span><span class="val mono">'+projects.length+'</span></div>' +
-        '<div class="fin-summary-row"><span class="lbl">المشاريع النشطة</span><span class="val mono">'+projects.filter(function(p){return p.status==='active';}).length+'</span></div>' +
+    '<div class="page-header">' +
+      '<div>' +
+        '<h1>الإعدادات</h1>' +
+        '<div class="page-header-sub">إدارة بيانات التطبيق وإحصائيات النظام</div>' +
       '</div>' +
+    '</div>' +
+
+    /* Stats grid */
+    '<div class="kpi-grid" style="margin-bottom:var(--space-5)">' +
+      '<div class="kpi-card">' +
+        '<div class="kpi-card-accent" style="background:var(--primary-500)"></div>' +
+        '<div class="kpi-card-icon" style="background:var(--primary-50);color:var(--primary-600)"><i class="ph-duotone ph-users-three"></i></div>' +
+        '<div class="kpi-card-label">العملاء</div>' +
+        '<div class="kpi-card-value" style="color:var(--primary-600)">'+clients.length+'</div>' +
+        '<div class="kpi-card-sub">عميل مسجل</div>' +
+      '</div>' +
+      '<div class="kpi-card">' +
+        '<div class="kpi-card-accent" style="background:var(--accent-500)"></div>' +
+        '<div class="kpi-card-icon" style="background:var(--accent-50);color:var(--accent-600)"><i class="ph-duotone ph-briefcase"></i></div>' +
+        '<div class="kpi-card-label">المشاريع</div>' +
+        '<div class="kpi-card-value" style="color:var(--accent-600)">'+projects.length+'</div>' +
+        '<div class="kpi-card-sub">مشروع إجمالاً</div>' +
+      '</div>' +
+      '<div class="kpi-card">' +
+        '<div class="kpi-card-accent" style="background:var(--success-500)"></div>' +
+        '<div class="kpi-card-icon" style="background:var(--success-50);color:var(--success-600)"><i class="ph-bold ph-pulse"></i></div>' +
+        '<div class="kpi-card-label">النشطة</div>' +
+        '<div class="kpi-card-value" style="color:var(--success-600)">'+activeCount+'</div>' +
+        '<div class="kpi-card-sub">قيد التنفيذ</div>' +
+      '</div>' +
+      '<div class="kpi-card">' +
+        '<div class="kpi-card-accent" style="background:var(--info-500)"></div>' +
+        '<div class="kpi-card-icon" style="background:var(--info-50);color:var(--info-600)"><i class="ph-fill ph-check-circle"></i></div>' +
+        '<div class="kpi-card-label">المكتملة</div>' +
+        '<div class="kpi-card-value" style="color:var(--info-600)">'+completedCount+'</div>' +
+        '<div class="kpi-card-sub">مشروع منجَز</div>' +
+      '</div>' +
+    '</div>' +
+
+    /* Data management */
+    '<div class="dash-2col" style="margin-bottom:var(--space-5)">' +
       '<div class="card">' +
-        '<div class="card-title">إدارة البيانات</div>' +
-        '<p style="font-size:12px;color:var(--gray-500);margin-bottom:14px">تصدير واستيراد وحذف بيانات التطبيق</p>' +
-        '<div class="flex gap-8" style="flex-wrap:wrap">' +
-          '<button class="btn btn-sm btn-primary" onclick="Pages.exportData()">تصدير البيانات</button>' +
-          '<label class="btn btn-sm" style="cursor:pointer">استيراد البيانات<input type="file" accept=".json" style="display:none" onchange="Pages.importData(event)"></label>' +
-          '<button class="btn btn-sm btn-danger" onclick="Pages.clearData()">مسح كل البيانات</button>' +
+        '<div class="dash-sec-hdr">' +
+          '<h3><i class="ph-duotone ph-database"></i>إدارة البيانات</h3>' +
+        '</div>' +
+        '<p style="font-size:var(--font-xs);color:var(--text-muted);margin-bottom:var(--space-4);line-height:var(--lh-normal)">' +
+          'تصدير بيانات التطبيق إلى ملف JSON كنسخة احتياطية، أو استيراد بيانات سابقة. هذه العمليات لا تؤثر على بيانات التطبيقات الأخرى.' +
+        '</p>' +
+        '<div style="display:flex;gap:var(--space-2);flex-wrap:wrap">' +
+          '<button class="btn btn-primary" onclick="Pages.exportData()"><i class="ph-bold ph-download-simple"></i>تصدير البيانات</button>' +
+          '<label class="btn" style="cursor:pointer"><i class="ph-bold ph-upload-simple"></i>استيراد<input type="file" accept=".json" style="display:none" onchange="Pages.importData(event)"></label>' +
+          '<button class="btn btn-danger" onclick="Pages.clearData()"><i class="ph ph-trash"></i>مسح الكل</button>' +
         '</div>' +
       '</div>' +
+      '<div class="card">' +
+        '<div class="dash-sec-hdr">' +
+          '<h3><i class="ph-duotone ph-flask"></i>بيانات تجريبية</h3>' +
+        '</div>' +
+        '<p style="font-size:var(--font-xs);color:var(--text-muted);margin-bottom:var(--space-4);line-height:var(--lh-normal)">' +
+          'تحميل مجموعة من البيانات النموذجية لاستكشاف ميزات التطبيق بسرعة.' +
+        '</p>' +
+        '<button class="btn btn-outline" onclick="Pages.loadSampleData()"><i class="ph-bold ph-lightning"></i>تحميل بيانات تجريبية</button>' +
+      '</div>' +
     '</div>' +
-    '<div class="card mt-16">' +
-      '<div class="card-title">بيانات تجريبية</div>' +
-      '<p style="font-size:12px;color:var(--gray-500);margin-bottom:14px">إضافة بيانات تجريبية للتطبيق</p>' +
-      '<button class="btn btn-primary" onclick="Pages.loadSampleData()">تحميل بيانات تجريبية</button>' +
-    '</div>' +
-    '<div class="card mt-16">' +
-      '<div class="card-title">عن التطبيق</div>' +
-      '<div class="fin-summary-row"><span class="lbl">الإصدار</span><span class="val mono">2.0.0</span></div>' +
-      '<div class="fin-summary-row"><span class="lbl">التطوير</span><span class="val">بُعد للإدارة المالية</span></div>' +
+
+    /* About */
+    '<div class="card">' +
+      '<div class="dash-sec-hdr">' +
+        '<h3><i class="ph-duotone ph-info"></i>عن التطبيق</h3>' +
+        '<span class="badge brand">v2.0</span>' +
+      '</div>' +
+      '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:var(--space-4)">' +
+        '<div>' +
+          '<div style="font-size:var(--font-2xs);color:var(--text-muted);font-weight:700;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px">الإصدار</div>' +
+          '<div style="font-family:var(--font-mono);font-weight:700;color:var(--text);font-size:var(--font-md)">v2.0 — Design System</div>' +
+        '</div>' +
+        '<div>' +
+          '<div style="font-size:var(--font-2xs);color:var(--text-muted);font-weight:700;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px">الهوية</div>' +
+          '<div style="font-weight:600;color:var(--text)">Modern Arabic Fintech</div>' +
+        '</div>' +
+        '<div>' +
+          '<div style="font-size:var(--font-2xs);color:var(--text-muted);font-weight:700;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px">المكتبات</div>' +
+          '<div style="font-weight:600;color:var(--text);font-size:var(--font-xs)">Phosphor Icons · Tajawal · IBM Plex Mono</div>' +
+        '</div>' +
+      '</div>' +
     '</div>';
   document.getElementById('top-actions').innerHTML='';
 };
