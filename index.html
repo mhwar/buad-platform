@@ -2,40 +2,200 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#4F46E5">
 <title>بُعد — إدارة مالية</title>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
-<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Tajawal:wght@400;500;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/duotone/style.css">
 <style>
 :root {
-  --brand: #00197D;
-  --brand-light: #E8EBFF;
-  --brand-hover: #001560;
-  --success: #1a7f37;
-  --success-light: #E8F5E9;
-  --danger: #c0392b;
-  --danger-light: #FDECEA;
-  --warn: #B8841A;
-  --warn-light: #FFF3E0;
-  --gray-50: #F8F9FA;
-  --gray-100: #F0F2F5;
-  --gray-200: #E2E8F0;
-  --gray-400: #A0AEC0;
-  --gray-500: #718096;
-  --gray-700: #4A5568;
-  --gray-900: #1A202C;
-  --sidebar-w: 260px;
-  --sidebar-col: 68px;
-  --radius: 12px;
-  --radius-sm: 8px;
-  --shadow: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.04);
-  --shadow-md: 0 4px 6px -1px rgba(0,0,0,.1), 0 2px 4px -1px rgba(0,0,0,.06);
-  --transition: .18s ease;
+  /* ── Primary: Indigo (modern fintech) ── */
+  --primary-50:  #EEF2FF;
+  --primary-100: #E0E7FF;
+  --primary-200: #C7D2FE;
+  --primary-300: #A5B4FC;
+  --primary-400: #818CF8;
+  --primary-500: #6366F1;
+  --primary-600: #4F46E5;
+  --primary-700: #4338CA;
+  --primary-800: #3730A3;
+  --primary-900: #312E81;
+  --primary-950: #1E1B4B;
+
+  /* ── Neutral: Slate ── */
+  --neutral-0:   #FFFFFF;
+  --neutral-50:  #F8FAFC;
+  --neutral-100: #F1F5F9;
+  --neutral-200: #E2E8F0;
+  --neutral-300: #CBD5E1;
+  --neutral-400: #94A3B8;
+  --neutral-500: #64748B;
+  --neutral-600: #475569;
+  --neutral-700: #334155;
+  --neutral-800: #1E293B;
+  --neutral-900: #0F172A;
+  --neutral-950: #020617;
+
+  /* ── Semantic ── */
+  --success-50:  #ECFDF5;
+  --success-100: #D1FAE5;
+  --success-500: #10B981;
+  --success-600: #059669;
+  --success-700: #047857;
+  --warning-50:  #FFFBEB;
+  --warning-100: #FEF3C7;
+  --warning-500: #F59E0B;
+  --warning-600: #D97706;
+  --warning-700: #B45309;
+  --danger-50:   #FFF1F2;
+  --danger-100:  #FFE4E6;
+  --danger-500:  #F43F5E;
+  --danger-600:  #E11D48;
+  --danger-700:  #BE123C;
+  --info-50:     #F0F9FF;
+  --info-100:    #E0F2FE;
+  --info-500:    #0EA5E9;
+  --info-600:    #0284C7;
+  --info-700:    #0369A1;
+
+  /* ── Accent (teal) ── */
+  --accent-50:  #F0FDFA;
+  --accent-500: #14B8A6;
+  --accent-600: #0D9488;
+  --accent-700: #0F766E;
+
+  /* ── Surface aliases ── */
+  --bg-app:       var(--neutral-50);
+  --bg-elevated:  var(--neutral-0);
+  --bg-subtle:    var(--neutral-100);
+  --bg-muted:     var(--neutral-200);
+  --border:       var(--neutral-200);
+  --border-hover: var(--neutral-300);
+  --text:         var(--neutral-900);
+  --text-strong:  var(--neutral-800);
+  --text-muted:   var(--neutral-500);
+  --text-subtle:  var(--neutral-400);
+
+  /* ── Typography Scale ── */
+  --font-2xs:  11px;
+  --font-xs:   12px;
+  --font-sm:   13px;
+  --font-base: 14px;
+  --font-md:   15px;
+  --font-lg:   16px;
+  --font-xl:   18px;
+  --font-2xl:  22px;
+  --font-3xl:  clamp(22px, 2.4vw + 14px, 28px);
+  --font-4xl:  clamp(26px, 4vw + 16px, 34px);
+  --font-5xl:  clamp(32px, 5vw + 18px, 42px);
+
+  --lh-tight:   1.2;
+  --lh-snug:    1.4;
+  --lh-normal:  1.6;
+  --lh-relaxed: 1.75;
+
+  --font-ui:    "Tajawal", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono:  "IBM Plex Mono", "Menlo", "Consolas", monospace;
+  --font-latin: "Inter", system-ui, sans-serif;
+
+  /* ── Spacing (4px base) ── */
+  --space-0_5: 2px;   --space-1: 4px;    --space-1_5: 6px;
+  --space-2:   8px;   --space-3: 12px;   --space-4:   16px;
+  --space-5:   20px;  --space-6: 24px;   --space-8:   32px;
+  --space-10:  40px;  --space-12:48px;   --space-16:  64px;
+  --space-20:  80px;
+
+  /* ── Radii ── */
+  --radius-xs:   4px;
+  --radius-sm:   8px;
+  --radius-md:   12px;
+  --radius-lg:   16px;
+  --radius-xl:   20px;
+  --radius-2xl:  28px;
+  --radius-full: 9999px;
+
+  /* ── Shadows ── */
+  --shadow-xs:    0 1px 2px rgba(15, 23, 42, .04);
+  --shadow-sm:    0 1px 3px rgba(15, 23, 42, .06), 0 1px 2px rgba(15, 23, 42, .04);
+  --shadow-md:    0 4px 12px rgba(15, 23, 42, .08), 0 2px 4px rgba(15, 23, 42, .04);
+  --shadow-lg:    0 12px 28px rgba(15, 23, 42, .10), 0 4px 10px rgba(15, 23, 42, .05);
+  --shadow-xl:    0 24px 48px rgba(15, 23, 42, .12), 0 8px 20px rgba(15, 23, 42, .06);
+  --shadow-focus: 0 0 0 4px rgba(99, 102, 241, .20);
+  --shadow-brand: 0 8px 24px -8px rgba(79, 70, 229, .40);
+
+  /* ── Motion ── */
+  --transition-fast: .12s ease;
+  --transition:      .2s cubic-bezier(.16,1,.3,1);
+  --transition-slow: .4s cubic-bezier(.16,1,.3,1);
+
+  /* ── Layout ── */
+  --sidebar-w:   268px;
+  --sidebar-col: 72px;
+  --topbar-h:    60px;
+  --container-pad: clamp(16px, 3vw, 28px);
+
+  /* ── Backwards-compat aliases (will be removed in phase 6) ── */
+  --brand:        var(--primary-600);
+  --brand-light:  var(--primary-50);
+  --brand-hover:  var(--primary-700);
+  --success:      var(--success-600);
+  --success-light:var(--success-50);
+  --danger:       var(--danger-600);
+  --danger-light: var(--danger-50);
+  --warn:         var(--warning-600);
+  --warn-light:   var(--warning-50);
+  --gray-50:      var(--neutral-50);
+  --gray-100:     var(--neutral-100);
+  --gray-200:     var(--neutral-200);
+  --gray-300:     var(--neutral-300);
+  --gray-400:     var(--neutral-400);
+  --gray-500:     var(--neutral-500);
+  --gray-700:     var(--neutral-700);
+  --gray-800:     var(--neutral-800);
+  --gray-900:     var(--neutral-900);
+  --radius:       var(--radius-md);
+  --shadow:       var(--shadow-sm);
 }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    transition-duration: .01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;overflow:hidden}
-body{font-family:"Tajawal",system-ui,sans-serif;direction:rtl;background:var(--gray-50);color:var(--gray-900);font-size:14px;line-height:1.6}
+html{-webkit-text-size-adjust:100%;text-rendering:optimizeLegibility;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+body{
+  font-family:var(--font-ui);direction:rtl;
+  background:var(--bg-app);color:var(--text);
+  font-size:var(--font-sm);line-height:var(--lh-normal);
+  font-feature-settings:"kern" 1, "liga" 1;
+}
 a{text-decoration:none;color:inherit;cursor:pointer}
+button{font-family:inherit}
+
+/* Focus ring (a11y) */
+:focus-visible{outline:none;box-shadow:var(--shadow-focus);border-radius:var(--radius-sm)}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{box-shadow:var(--shadow-focus)}
+
+/* Skip-to-content for keyboard users */
+.skip-link{position:absolute;top:-40px;right:8px;background:var(--primary-600);color:#fff;padding:8px 16px;border-radius:var(--radius-sm);z-index:9999;font-size:var(--font-sm);font-weight:600;transition:top var(--transition)}
+.skip-link:focus{top:8px}
+
+/* Phosphor icon base styling */
+.ph,.ph-bold,.ph-fill,.ph-duotone,.ph-thin,.ph-light{
+  display:inline-flex;align-items:center;justify-content:center;
+  font-size:1em;line-height:1;flex-shrink:0;
+}
+i[class*="ph-"]{vertical-align:middle}
 
 /* ── App shell ── */
 #app{display:flex;height:100vh;overflow:hidden}
@@ -71,8 +231,8 @@ a{text-decoration:none;color:inherit;cursor:pointer}
   display:flex;align-items:center;justify-content:center;
 }
 .sb-toggle:hover{background:var(--gray-100);color:var(--gray-700)}
-.sb-toggle i[data-lucide]{width:18px;height:18px;stroke:currentColor;transition:transform var(--transition)}
-.sidebar.collapsed .sb-toggle i[data-lucide]{transform:scaleX(-1)}
+.sb-toggle i[class*="ph-"]{font-size:18px;transition:transform var(--transition)}
+.sidebar.collapsed .sb-toggle i[class*="ph-"]{transform:scaleX(-1)}
 .sb-nav{flex:1;padding:10px 8px;overflow-y:auto;overflow-x:hidden}
 .sb-nav::-webkit-scrollbar{width:3px}
 .sb-nav::-webkit-scrollbar-thumb{background:var(--gray-200);border-radius:2px}
@@ -101,7 +261,7 @@ a{text-decoration:none;color:inherit;cursor:pointer}
   display:flex;align-items:center;justify-content:center;
   font-size:15px;flex-shrink:0;transition:var(--transition);
 }
-.sb-icon i[data-lucide]{width:16px;height:16px;stroke:currentColor;display:block}
+.sb-icon i[class*="ph-"]{font-size:16px}
 .sb-item:hover .sb-icon{background:var(--gray-200)}
 .sb-item.active .sb-icon{background:rgba(0,25,125,.12);color:var(--brand)}
 .sb-label{transition:opacity var(--transition)}
@@ -129,7 +289,7 @@ a{text-decoration:none;color:inherit;cursor:pointer}
   color:var(--gray-700);padding:6px;border-radius:8px;
   align-items:center;justify-content:center;transition:var(--transition);
 }
-.top-bar-menu i[data-lucide]{width:20px;height:20px;stroke:currentColor;display:block}
+.top-bar-menu i[class*="ph-"]{font-size:20px}
 .top-bar-menu:hover{background:var(--gray-100)}
 .top-bar-divider{width:1px;height:24px;background:var(--gray-200);flex-shrink:0}
 .top-bar-breadcrumb{
@@ -250,9 +410,9 @@ a{text-decoration:none;color:inherit;cursor:pointer}
 .entry-tbl .col-status{width:78px}
 .entry-tbl .col-chev{width:34px;text-align:center;color:var(--gray-400)}
 .entry-chev{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;transition:all .18s;color:var(--gray-400)}
-.entry-chev i[data-lucide]{width:12px;height:12px;stroke:currentColor;transition:transform .18s}
+.entry-chev i[class*="ph-"]{font-size:12px;transition:transform var(--transition)}
 .entry-chev.open{background:var(--brand-light);color:var(--brand)}
-.entry-chev.open i[data-lucide]{transform:rotate(180deg)}
+.entry-chev.open i[class*="ph-"]{transform:rotate(180deg)}
 .entry-detail-grid{display:flex;gap:16px;flex-wrap:wrap;align-items:center;font-size:12px}
 .entry-detail-item{min-width:80px}
 .entry-detail-item .edi-lbl{font-size:10px;color:var(--gray-400);margin-bottom:2px;font-weight:500;text-transform:uppercase;letter-spacing:.3px}
@@ -275,7 +435,7 @@ a{text-decoration:none;color:inherit;cursor:pointer}
 .badge.indigo{background:#E0E7FF;color:#4338CA}
 .badge.rose{background:#FFE4E6;color:#E11D48}
 .badge.cyan{background:#CFFAFE;color:#0891B2}
-.badge i[data-lucide]{width:11px;height:11px;flex-shrink:0}
+.badge i[class*="ph-"]{font-size:11px}
 
 /* ── Forms ── */
 .form-group{margin-bottom:14px}
@@ -350,7 +510,7 @@ select.field-input{cursor:pointer}
 }
 .tab-btn:hover{background:rgba(255,255,255,.7);color:var(--gray-800)}
 .tab-btn.active{background:#fff;color:var(--brand);font-weight:600;box-shadow:0 1px 4px rgba(0,0,0,.08)}
-.tab-btn i[data-lucide]{width:14px;height:14px;flex-shrink:0}
+.tab-btn i[class*="ph-"]{font-size:14px}
 .tab-content{display:none}
 .tab-content.active{display:block}
 
@@ -370,7 +530,7 @@ select.field-input{cursor:pointer}
 /* ── Empty state ── */
 .empty-state{text-align:center;padding:48px 24px;color:var(--gray-400)}
 .empty-state-icon{font-size:40px;margin-bottom:12px;opacity:.5;display:flex;justify-content:center}
-.empty-state-icon i[data-lucide]{width:44px;height:44px;stroke:var(--gray-300);stroke-width:1.5}
+.empty-state-icon i[class*="ph-"]{font-size:44px;color:var(--neutral-300)}
 .empty-state h3{font-size:14px;font-weight:600;color:var(--gray-500);margin-bottom:6px}
 .empty-state p{font-size:12px;color:var(--gray-400)}
 
@@ -482,7 +642,7 @@ select.field-input{cursor:pointer}
 .btn-dl-csv:hover{background:#dcfce7}
 .btn-dl-print{background:var(--brand-light);border-color:#c7d2fe;color:var(--brand)}
 .btn-dl-print:hover{background:#dde4ff}
-.btn-dl i[data-lucide]{width:13px;height:13px;flex-shrink:0}
+.btn-dl i[class*="ph-"]{font-size:13px}
 
 /* ── Overview report layout ── */
 .ov-2col{display:grid;grid-template-columns:1fr 320px;gap:16px;margin-bottom:16px}
@@ -574,7 +734,7 @@ select.field-input{cursor:pointer}
 .proj-hero-name{font-size:20px;font-weight:700;color:#fff;line-height:1.2;margin-bottom:7px;letter-spacing:-.2px}
 .proj-hero-meta{font-size:11.5px;color:rgba(255,255,255,.6);display:flex;flex-wrap:wrap;gap:4px 14px;align-items:center}
 .proj-hero-meta-item{display:flex;align-items:center;gap:4px}
-.proj-hero-meta-item i[data-lucide]{width:12px;height:12px;opacity:.7}
+.proj-hero-meta-item i[class*="ph-"]{font-size:12px;opacity:.85}
 .proj-hero-actions{display:flex;gap:8px;flex-shrink:0;margin-top:2px;position:relative;z-index:1}
 .proj-hero-edit{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);color:#fff;border-radius:var(--radius-sm);padding:6px 14px;font-size:11.5px;font-weight:500;cursor:pointer;font-family:inherit;transition:.15s;white-space:nowrap;display:inline-flex;align-items:center;gap:5px}
 .proj-hero-edit:hover{background:rgba(255,255,255,.22)}
@@ -660,7 +820,7 @@ select.field-input{cursor:pointer}
 .kpi-card:hover{box-shadow:var(--shadow-md);transform:translateY(-1px)}
 .kpi-card-accent{position:absolute;top:0;right:0;left:0;height:3px;border-radius:var(--radius) var(--radius) 0 0}
 .kpi-card-icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;margin-bottom:12px}
-.kpi-card-icon i[data-lucide]{width:18px;height:18px;stroke:currentColor}
+.kpi-card-icon i[class*="ph-"]{font-size:18px}
 .kpi-card-label{font-size:11px;color:var(--gray-500);font-weight:500;margin-bottom:5px;text-transform:uppercase;letter-spacing:.4px}
 .kpi-card-value{font-size:22px;font-weight:700;font-family:"IBM Plex Mono",monospace;line-height:1.1;margin-bottom:6px}
 .kpi-card-sub{font-size:11px;color:var(--gray-400);display:flex;align-items:center;gap:4px}
@@ -692,7 +852,7 @@ select.field-input{cursor:pointer}
 .activity-item{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--gray-100);font-size:12px}
 .activity-item:last-child{border-bottom:none}
 .activity-dot{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
-.activity-dot i[data-lucide]{width:13px;height:13px;stroke:currentColor}
+.activity-dot i[class*="ph-"]{font-size:13px}
 .activity-body{flex:1;min-width:0}
 .activity-title{font-weight:600;color:var(--gray-900);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .activity-meta{color:var(--gray-400);font-size:11px}
@@ -706,12 +866,12 @@ select.field-input{cursor:pointer}
   text-align:right;
 }
 .qa-btn:hover{background:var(--brand-light);border-color:var(--brand);color:var(--brand)}
-.qa-btn i[data-lucide]{width:15px;height:15px;flex-shrink:0}
+.qa-btn i[class*="ph-"]{font-size:15px}
 
 /* Dash section header */
 .dash-sec-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
 .dash-sec-hdr h3{font-size:13px;font-weight:700;color:var(--gray-900);display:flex;align-items:center;gap:6px}
-.dash-sec-hdr h3 i[data-lucide]{width:14px;height:14px;color:var(--gray-400)}
+.dash-sec-hdr h3 i[class*="ph-"]{font-size:14px;color:var(--neutral-400)}
 
 @media(max-width:900px){
   .dash-2col{grid-template-columns:1fr}
@@ -733,25 +893,25 @@ select.field-input{cursor:pointer}
         <div class="sb-logo-icon">ب</div>
         <span class="sb-logo-text">بُعد</span>
       </div>
-      <button class="sb-toggle" id="sb-toggle" onclick="Nav.toggleSidebar()"><i data-lucide="chevron-right"></i></button>
+      <button class="sb-toggle" id="sb-toggle" onclick="Nav.toggleSidebar()"><i class="ph-bold ph-caret-right"></i></button>
     </div>
     <nav class="sb-nav">
       <div class="sb-section-label">القائمة</div>
       <a class="sb-item" id="nav-dash" onclick="Nav.go('dash')">
-        <span class="sb-icon"><i data-lucide="layout-dashboard"></i></span>
+        <span class="sb-icon"><i class="ph-duotone ph-squares-four"></i></span>
         <span class="sb-label">الرئيسية</span>
       </a>
       <a class="sb-item" id="nav-clients" onclick="Nav.go('clients')">
-        <span class="sb-icon"><i data-lucide="users"></i></span>
+        <span class="sb-icon"><i class="ph-duotone ph-users-three"></i></span>
         <span class="sb-label">العملاء</span>
       </a>
       <a class="sb-item" id="nav-projects" onclick="Nav.go('projects')">
-        <span class="sb-icon"><i data-lucide="folder-open"></i></span>
+        <span class="sb-icon"><i class="ph-duotone ph-folder-open"></i></span>
         <span class="sb-label">المشاريع</span>
       </a>
       <div class="sb-section-label">الحساب</div>
       <a class="sb-item" id="nav-settings" onclick="Nav.go('settings')">
-        <span class="sb-icon"><i data-lucide="settings"></i></span>
+        <span class="sb-icon"><i class="ph ph-gear-six"></i></span>
         <span class="sb-label">الإعدادات</span>
       </a>
     </nav>
@@ -761,7 +921,7 @@ select.field-input{cursor:pointer}
   <!-- Main -->
   <main id="main">
     <div class="top-bar">
-      <button class="top-bar-menu" id="top-menu-btn" onclick="Nav.openSidebar()"><i data-lucide="menu"></i></button>
+      <button class="top-bar-menu" id="top-menu-btn" onclick="Nav.openSidebar()"><i class="ph-bold ph-list"></i></button>
       <div class="top-bar-breadcrumb" id="breadcrumb"></div>
       <div class="top-bar-divider"></div>
       <div class="top-bar-actions" id="top-actions"></div>
@@ -931,14 +1091,13 @@ var Nav = {
     var m = document.getElementById('pg-'+page);
     if (m) m.scrollTop = 0;
     Nav.closeSidebar();
-    if (window.lucide) lucide.createIcons();
   },
   updateBreadcrumb: function(page, params) {
     var bc = document.getElementById('breadcrumb');
     if (!bc) return;
-    var icons = {dash:'layout-dashboard', clients:'users', projects:'folder-open', settings:'settings'};
+    var icons = {dash:'squares-four', clients:'users-three', projects:'briefcase', settings:'gear-six'};
     var labels = {dash:'الرئيسية', clients:'العملاء', projects:'المشاريع', settings:'الإعدادات'};
-    function iconHtml(n){ return n ? '<i data-lucide="'+n+'" style="width:13px;height:13px;opacity:.5;flex-shrink:0"></i>' : ''; }
+    function iconHtml(n){ return n ? '<i class="ph-duotone ph-'+n+'" style="font-size:13px;opacity:.7;flex-shrink:0"></i>' : ''; }
     if (labels[page]) {
       bc.innerHTML = iconHtml(icons[page])+'<span class="bc-page">'+labels[page]+'</span>';
       return;
@@ -946,13 +1105,13 @@ var Nav = {
     if (page==='client' && params && params.clientId) {
       var clients = DB.getClients();
       var cl = clients.find(function(c){ return c.id===params.clientId; });
-      bc.innerHTML = iconHtml('users')+'<span onclick="Nav.go(\'clients\')" style="cursor:pointer;color:var(--brand)">العملاء</span><span class="bc-sep">/</span><span class="bc-page">'+(cl?UI.escHtml(cl.name):'عميل')+'</span>';
+      bc.innerHTML = iconHtml('users-three')+'<span onclick="Nav.go(\'clients\')" style="cursor:pointer;color:var(--primary-600)">العملاء</span><span class="bc-sep">/</span><span class="bc-page">'+(cl?UI.escHtml(cl.name):'عميل')+'</span>';
       return;
     }
     if (page==='fin' && params && params.projId) {
       var projects = DB.getProjects();
       var pr = projects.find(function(p){ return p.id===params.projId; });
-      bc.innerHTML = iconHtml('folder-open')+'<span onclick="Nav.go(\'projects\')" style="cursor:pointer;color:var(--brand)">المشاريع</span><span class="bc-sep">/</span><span class="bc-page">'+(pr?UI.escHtml(pr.name):'مشروع')+'</span>';
+      bc.innerHTML = iconHtml('briefcase')+'<span onclick="Nav.go(\'projects\')" style="cursor:pointer;color:var(--primary-600)">المشاريع</span><span class="bc-sep">/</span><span class="bc-page">'+(pr?UI.escHtml(pr.name):'مشروع')+'</span>';
       return;
     }
     bc.innerHTML='';
@@ -1125,6 +1284,8 @@ Pages.render_dash = function() {
   }).slice(0, 6);
   var stColors = {active:'rgba(26,127,55,.1)',completed:'rgba(0,25,125,.08)',paused:'rgba(184,132,26,.1)',cancelled:'rgba(192,57,43,.1)'};
   var stIcons  = {active:'play-circle',completed:'check-circle',paused:'pause-circle',cancelled:'x-circle'};
+  /* Phosphor weight for status icons */
+  var stWeight = {active:'ph-fill',completed:'ph-fill',paused:'ph-fill',cancelled:'ph-fill'};
   var stStroke = {active:'#1a7f37',completed:'#00197D',paused:'#B8841A',cancelled:'#c0392b'};
 
   var activityHtml = '';
@@ -1134,10 +1295,11 @@ Pages.render_dash = function() {
     feedItems.forEach(function(p){
       var cl = clients.find(function(c){ return c.id===p.client_id; });
       var icon = stIcons[p.status]||'circle';
+      var wt   = stWeight[p.status]||'ph';
       activityHtml +=
         '<div class="activity-item" onclick="Nav.go(\'fin\',{projId:\''+p.id+'\'})" style="cursor:pointer">' +
           '<div class="activity-dot" style="background:'+(stColors[p.status]||'var(--gray-100)')+';color:'+(stStroke[p.status]||'var(--gray-400)')+'">' +
-            '<i data-lucide="'+icon+'"></i>' +
+            '<i class="'+wt+' ph-'+icon+'"></i>' +
           '</div>' +
           '<div class="activity-body">' +
             '<div class="activity-title">'+UI.escHtml(p.name)+'</div>' +
@@ -1158,8 +1320,8 @@ Pages.render_dash = function() {
         '<p>'+dateStr+' &nbsp;·&nbsp; '+projects.length+' مشروع، '+activeProj.length+' نشط حالياً</p>' +
       '</div>' +
       '<div class="dash-greeting-actions">' +
-        '<button class="btn-white" onclick="Nav.go(\'projects\')"><i data-lucide="folder-open" style="width:14px;height:14px"></i>المشاريع</button>' +
-        '<button class="btn-white-solid" onclick="Pages.addProjectModal(null)"><i data-lucide="plus" style="width:14px;height:14px"></i>مشروع جديد</button>' +
+        '<button class="btn-white" onclick="Nav.go(\'projects\')"><i class="ph-duotone ph-folder-open" style="font-size:14px"></i>المشاريع</button>' +
+        '<button class="btn-white-solid" onclick="Pages.addProjectModal(null)"><i class="ph-bold ph-plus" style="font-size:14px"></i>مشروع جديد</button>' +
       '</div>' +
     '</div>' +
 
@@ -1168,7 +1330,7 @@ Pages.render_dash = function() {
 
       '<div class="kpi-card">' +
         '<div class="kpi-card-accent" style="background:#00197D"></div>' +
-        '<div class="kpi-card-icon" style="background:#E8EBFF;color:#00197D"><i data-lucide="briefcase"></i></div>' +
+        '<div class="kpi-card-icon" style="background:#E8EBFF;color:#00197D"><i class="ph-duotone ph-briefcase"></i></div>' +
         '<div class="kpi-card-label">إجمالي قيمة العقود</div>' +
         '<div class="kpi-card-value" style="color:#00197D">'+UI.fmt(totalContract)+'</div>' +
         '<div class="kpi-card-sub">ريال سعودي</div>' +
@@ -1176,7 +1338,7 @@ Pages.render_dash = function() {
 
       '<div class="kpi-card">' +
         '<div class="kpi-card-accent" style="background:#1a7f37"></div>' +
-        '<div class="kpi-card-icon" style="background:#E8F5E9;color:#1a7f37"><i data-lucide="trending-up"></i></div>' +
+        '<div class="kpi-card-icon" style="background:#E8F5E9;color:#1a7f37"><i class="ph-bold ph-trend-up"></i></div>' +
         '<div class="kpi-card-label">صافي الأرباح</div>' +
         '<div class="kpi-card-value" style="color:#1a7f37">'+UI.fmt(totalProfit)+'</div>' +
         '<div class="kpi-card-sub"><span class="kpi-trend-up">'+profitMargin+'%</span>&nbsp;هامش الربح</div>' +
@@ -1184,7 +1346,7 @@ Pages.render_dash = function() {
 
       '<div class="kpi-card">' +
         '<div class="kpi-card-accent" style="background:#0230e0"></div>' +
-        '<div class="kpi-card-icon" style="background:#E8EBFF;color:#0230e0"><i data-lucide="activity"></i></div>' +
+        '<div class="kpi-card-icon" style="background:#E8EBFF;color:#0230e0"><i class="ph ph-pulse"></i></div>' +
         '<div class="kpi-card-label">المشاريع النشطة</div>' +
         '<div class="kpi-card-value" style="color:#0230e0">'+activeProj.length+'</div>' +
         '<div class="kpi-card-sub">من إجمالي '+projects.length+' مشروع</div>' +
@@ -1192,7 +1354,7 @@ Pages.render_dash = function() {
 
       '<div class="kpi-card">' +
         '<div class="kpi-card-accent" style="background:#B8841A"></div>' +
-        '<div class="kpi-card-icon" style="background:#FFF3E0;color:#B8841A"><i data-lucide="users"></i></div>' +
+        '<div class="kpi-card-icon" style="background:#FFF3E0;color:#B8841A"><i class="ph-duotone ph-users-three"></i></div>' +
         '<div class="kpi-card-label">العملاء المسجلون</div>' +
         '<div class="kpi-card-value" style="color:#B8841A">'+clients.length+'</div>' +
         '<div class="kpi-card-sub">'+completedProj.length+' مشروع مكتمل</div>' +
@@ -1205,14 +1367,14 @@ Pages.render_dash = function() {
 
       '<div class="card">' +
         '<div class="dash-sec-hdr">' +
-          '<h3><i data-lucide="bar-chart-2"></i>أعلى المشاريع قيمةً</h3>' +
+          '<h3><i class="ph-duotone ph-chart-bar"></i>أعلى المشاريع قيمةً</h3>' +
           '<button class="btn btn-sm btn-ghost" onclick="Nav.go(\'projects\')">عرض الكل</button>' +
         '</div>' +
         hbarRows +
       '</div>' +
 
       '<div class="card">' +
-        '<div class="dash-sec-hdr"><h3><i data-lucide="pie-chart"></i>توزيع المشاريع</h3></div>' +
+        '<div class="dash-sec-hdr"><h3><i class="ph-duotone ph-chart-pie-slice"></i>توزيع المشاريع</h3></div>' +
         '<div class="donut-wrap">' + donutSvg +
           '<div class="donut-legend">'+legendHtml+'</div>' +
         '</div>' +
@@ -1225,19 +1387,19 @@ Pages.render_dash = function() {
 
       '<div class="card">' +
         '<div class="dash-sec-hdr">' +
-          '<h3><i data-lucide="clock"></i>آخر المشاريع</h3>' +
+          '<h3><i class="ph ph-clock"></i>آخر المشاريع</h3>' +
           '<button class="btn btn-sm btn-ghost" onclick="Nav.go(\'projects\')">عرض الكل</button>' +
         '</div>' +
         '<div class="activity-feed">'+activityHtml+'</div>' +
       '</div>' +
 
       '<div class="card">' +
-        '<div class="dash-sec-hdr"><h3><i data-lucide="zap"></i>إجراءات سريعة</h3></div>' +
+        '<div class="dash-sec-hdr"><h3><i class="ph-fill ph-lightning"></i>إجراءات سريعة</h3></div>' +
         '<div class="quick-actions">' +
-          '<button class="qa-btn" onclick="Pages.addProjectModal(null)"><i data-lucide="folder-plus"></i>مشروع جديد</button>' +
-          '<button class="qa-btn" onclick="Pages.addClientModal()"><i data-lucide="user-plus"></i>عميل جديد</button>' +
-          '<button class="qa-btn" onclick="Nav.go(\'projects\')"><i data-lucide="layout-list"></i>كل المشاريع</button>' +
-          '<button class="qa-btn" onclick="Nav.go(\'clients\')"><i data-lucide="users"></i>كل العملاء</button>' +
+          '<button class="qa-btn" onclick="Pages.addProjectModal(null)"><i class="ph-duotone ph-folder-plus"></i>مشروع جديد</button>' +
+          '<button class="qa-btn" onclick="Pages.addClientModal()"><i class="ph-bold ph-user-plus"></i>عميل جديد</button>' +
+          '<button class="qa-btn" onclick="Nav.go(\'projects\')"><i class="ph-bold ph-list-bullets"></i>كل المشاريع</button>' +
+          '<button class="qa-btn" onclick="Nav.go(\'clients\')"><i class="ph-duotone ph-users-three"></i>كل العملاء</button>' +
         '</div>' +
         '<div class="divider"></div>' +
         '<div style="display:flex;flex-direction:column;gap:0">' +
@@ -1259,7 +1421,6 @@ Pages.render_dash = function() {
     '</div>';
 
   document.getElementById('top-actions').innerHTML='';
-  if (window.lucide) lucide.createIcons();
 };
 
 function _buildDonut(segments, total) {
@@ -1292,7 +1453,7 @@ Pages.render_clients = function() {
 
   var cards = '';
   if (clients.length===0) {
-    cards = '<div class="empty-state"><div class="empty-state-icon"><i data-lucide="users"></i></div><h3>لا يوجد عملاء</h3><p>أضف أول عميل للبدء</p></div>';
+    cards = '<div class="empty-state"><div class="empty-state-icon"><i class="ph-duotone ph-users-three"></i></div><h3>لا يوجد عملاء</h3><p>أضف أول عميل للبدء</p></div>';
   } else {
     clients.forEach(function(cl){
       var pCount = projects.filter(function(p){ return p.client_id===cl.id; }).length;
@@ -1402,7 +1563,7 @@ Pages.render_client = function(params) {
 
   var projCards = '';
   if (projects.length===0) {
-    projCards = '<div class="empty-state"><div class="empty-state-icon"><i data-lucide="folder-open"></i></div><h3>لا توجد مشاريع</h3><p>أضف أول مشروع لهذا العميل</p></div>';
+    projCards = '<div class="empty-state"><div class="empty-state-icon"><i class="ph-duotone ph-folder-open"></i></div><h3>لا توجد مشاريع</h3><p>أضف أول مشروع لهذا العميل</p></div>';
   } else {
     projects.forEach(function(p){
       projCards += '<tr>' +
@@ -1450,7 +1611,7 @@ Pages.render_projects = function() {
 
   var rows = '';
   if (filtered.length===0) {
-    rows = '<tr><td colspan="6"><div class="empty-state" style="padding:24px"><div class="empty-state-icon"><i data-lucide="folder-open"></i></div><h3>لا توجد مشاريع</h3></div></td></tr>';
+    rows = '<tr><td colspan="6"><div class="empty-state" style="padding:24px"><div class="empty-state-icon"><i class="ph-duotone ph-folder-open"></i></div><h3>لا توجد مشاريع</h3></div></td></tr>';
   } else {
     filtered.slice().sort(function(a,b){ return (b.created||'').localeCompare(a.created||''); }).forEach(function(p){
       var cl = clients.find(function(c){ return c.id===p.client_id; });
@@ -1586,13 +1747,13 @@ Pages.render_fin = function(params) {
             '</div>' +
             '<div class="proj-hero-name">'+UI.escHtml(proj.name)+'</div>' +
             '<div class="proj-hero-meta">' +
-              (cl?'<span class="proj-hero-meta-item"><i data-lucide="building-2"></i>'+UI.escHtml(cl.name)+'</span>':'') +
-              (c.contract_no?'<span class="proj-hero-meta-item"><i data-lucide="file-text"></i>'+UI.escHtml(c.contract_no)+'</span>':'') +
-              (c.contract_date?'<span class="proj-hero-meta-item"><i data-lucide="calendar"></i>'+fmtDate(c.contract_date)+'</span>':'') +
+              (cl?'<span class="proj-hero-meta-item"><i class="ph-duotone ph-buildings"></i>'+UI.escHtml(cl.name)+'</span>':'') +
+              (c.contract_no?'<span class="proj-hero-meta-item"><i class="ph-duotone ph-file-pdf"></i>'+UI.escHtml(c.contract_no)+'</span>':'') +
+              (c.contract_date?'<span class="proj-hero-meta-item"><i class="ph ph-calendar-blank"></i>'+fmtDate(c.contract_date)+'</span>':'') +
             '</div>' +
           '</div>' +
           '<div class="proj-hero-actions">' +
-            '<button class="proj-hero-edit" onclick="Pages.editProjectStatusModal(\''+projId+'\')"><i data-lucide="edit-3" style="width:13px;height:13px"></i>تعديل</button>' +
+            '<button class="proj-hero-edit" onclick="Pages.editProjectStatusModal(\''+projId+'\')"><i class="ph ph-pencil-simple" style="font-size:13px"></i>تعديل</button>' +
           '</div>' +
         '</div>' +
         '<div class="proj-hero-progress">' +
@@ -1616,16 +1777,16 @@ Pages.render_fin = function(params) {
   document.getElementById('pg-fin').innerHTML =
     heroHtml +
     '<div class="tabs">' +
-      '<button class="tab-btn'+(tab==='overview'?' active':'')+'" onclick="Pages.switchFinTab(\'overview\',\''+projId+'\')"><i data-lucide="layout-dashboard"></i>نظرة عامة</button>' +
-      '<button class="tab-btn'+(tab==='entries'?' active':'')+'" onclick="Pages.switchFinTab(\'entries\',\''+projId+'\')"><i data-lucide="receipt"></i>سجل المعاملات</button>' +
-      '<button class="tab-btn'+(tab==='ctrl'?' active':'')+'" onclick="Pages.switchFinTab(\'ctrl\',\''+projId+'\')"><i data-lucide="sliders"></i>مركز التحكم</button>' +
+      '<button class="tab-btn'+(tab==='overview'?' active':'')+'" onclick="Pages.switchFinTab(\'overview\',\''+projId+'\')"><i class="ph-duotone ph-squares-four"></i>نظرة عامة</button>' +
+      '<button class="tab-btn'+(tab==='entries'?' active':'')+'" onclick="Pages.switchFinTab(\'entries\',\''+projId+'\')"><i class="ph-duotone ph-receipt"></i>سجل المعاملات</button>' +
+      '<button class="tab-btn'+(tab==='ctrl'?' active':'')+'" onclick="Pages.switchFinTab(\'ctrl\',\''+projId+'\')"><i class="ph ph-sliders-horizontal"></i>مركز التحكم</button>' +
     '</div>' +
     '<div id="fin-tab-overview" class="tab-content'+(tab==='overview'?' active':'')+'"></div>' +
     '<div id="fin-tab-entries" class="tab-content'+(tab==='entries'?' active':'')+'"></div>' +
     '<div id="fin-tab-ctrl" class="tab-content'+(tab==='ctrl'?' active':'')+'"></div>';
 
   document.getElementById('top-actions').innerHTML =
-    '<button class="btn btn-sm" onclick="Nav.go(\'projects\')" style="display:inline-flex;align-items:center;gap:5px"><i data-lucide="arrow-right" style="width:13px;height:13px"></i>المشاريع</button>';
+    '<button class="btn btn-sm" onclick="Nav.go(\'projects\')" style="display:inline-flex;align-items:center;gap:5px"><i class="ph ph-arrow-right" style="font-size:13px"></i>المشاريع</button>';
 
   Pages._finProjId = projId;
   if (tab==='overview') Pages.renderFinOverview(projId);
@@ -1914,7 +2075,7 @@ Pages.renderFinEntries = function(projId) {
 
   var rows = '';
   if (filtered.length===0) {
-    rows = '<tr><td colspan="4"><div class="empty-state" style="padding:32px"><div class="empty-state-icon"><i data-lucide="receipt"></i></div><h3>لا توجد قيود</h3><p>أضف أول بند مالي</p></div></td></tr>';
+    rows = '<tr><td colspan="4"><div class="empty-state" style="padding:32px"><div class="empty-state-icon"><i class="ph-duotone ph-receipt"></i></div><h3>لا توجد قيود</h3><p>أضف أول بند مالي</p></div></td></tr>';
   } else {
     var statusLabel = {paid:'مدفوع', pending:'معلق', cancelled:'ملغي'};
     filtered.slice().sort(function(a,b){ return (b.date||'').localeCompare(a.date||''); }).forEach(function(e){
@@ -1939,7 +2100,7 @@ Pages.renderFinEntries = function(projId) {
           '</td>' +
           '<td class="col-amt mono '+amtCls+'" style="font-size:13px;letter-spacing:-.3px">'+amtSign+' '+UI.fmt(e.amount)+'</td>' +
           '<td class="col-date" style="font-size:11.5px;color:var(--gray-400)">'+fmtDate(e.date)+'</td>' +
-          '<td class="col-chev"><span class="entry-chev" id="chev-'+e.id+'"><i data-lucide="chevron-down"></i></span></td>' +
+          '<td class="col-chev"><span class="entry-chev" id="chev-'+e.id+'"><i class="ph-bold ph-caret-down"></i></span></td>' +
         '</tr>' +
         // Expandable detail row
         '<tr class="ed" id="ed-'+e.id+'">' +
@@ -1950,8 +2111,8 @@ Pages.renderFinEntries = function(projId) {
               (pmText?'<div class="entry-detail-item"><div class="edi-lbl">هامش الربح</div><div class="edi-val" style="color:var(--success);font-family:monospace">'+pmText+'</div></div>':'') +
               (e.note&&e.note!=='من الاتفاقية'?'<div class="entry-detail-item"><div class="edi-lbl">ملاحظة</div><div class="edi-val">'+UI.escHtml(e.note)+'</div></div>':'') +
               '<div style="margin-right:auto;display:flex;gap:6px;align-items:center">' +
-                '<button class="btn btn-sm" onclick="event.stopPropagation();Pages.editEntryModal(\''+projId+'\',\''+e.id+'\')" style="display:inline-flex;align-items:center;gap:4px"><i data-lucide="edit-3" style="width:12px;height:12px"></i>تعديل</button>' +
-                '<button class="btn btn-sm btn-danger" onclick="event.stopPropagation();Pages.deleteEntry(\''+projId+'\',\''+e.id+'\')" style="display:inline-flex;align-items:center;gap:4px"><i data-lucide="trash-2" style="width:12px;height:12px"></i>حذف</button>' +
+                '<button class="btn btn-sm" onclick="event.stopPropagation();Pages.editEntryModal(\''+projId+'\',\''+e.id+'\')" style="display:inline-flex;align-items:center;gap:4px"><i class="ph ph-pencil-simple" style="font-size:12px"></i>تعديل</button>' +
+                '<button class="btn btn-sm btn-danger" onclick="event.stopPropagation();Pages.deleteEntry(\''+projId+'\',\''+e.id+'\')" style="display:inline-flex;align-items:center;gap:4px"><i class="ph ph-trash" style="font-size:12px"></i>حذف</button>' +
               '</div>' +
             '</div>' +
           '</td>' +
@@ -2003,14 +2164,14 @@ Pages.renderFinEntries = function(projId) {
       '</div>' +
       /* Search */
       '<div style="position:relative;flex:1;min-width:140px;max-width:220px">' +
-        '<i data-lucide="search" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);width:13px;height:13px;color:var(--gray-400);pointer-events:none"></i>' +
+        '<i class="ph ph-magnifying-glass" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);width:13px;height:13px;color:var(--gray-400);pointer-events:none"></i>' +
         '<input class="field-input" style="padding-right:32px;width:100%;font-size:12px" placeholder="بحث في البيانات..." value="'+UI.escHtml(search)+'" oninput="window._entriesSearch=this.value;Pages.renderFinEntries(\''+projId+'\')">' +
       '</div>' +
       /* Actions */
       '<div style="margin-right:auto;display:flex;gap:6px;align-items:center">' +
-        '<button class="btn btn-sm" onclick="Pages.exportCSV(\''+projId+'\')" title="تصدير CSV" style="display:inline-flex;align-items:center;gap:5px"><i data-lucide="download" style="width:13px;height:13px"></i>تصدير</button>' +
+        '<button class="btn btn-sm" onclick="Pages.exportCSV(\''+projId+'\')" title="تصدير CSV" style="display:inline-flex;align-items:center;gap:5px"><i class="ph-bold ph-download-simple" style="font-size:13px"></i>تصدير</button>' +
         '<button class="btn btn-sm btn-primary" onclick="Pages.addEntryModal(\''+projId+'\')" style="display:inline-flex;align-items:center;gap:6px;font-size:12.5px;padding:7px 16px">' +
-          '<i data-lucide="plus-circle" style="width:15px;height:15px"></i>إضافة بند' +
+          '<i class="ph-fill ph-plus-circle" style="font-size:15px"></i>إضافة بند' +
         '</button>' +
       '</div>' +
     '</div>' +
@@ -2032,7 +2193,6 @@ Pages.renderFinEntries = function(projId) {
     /* Empty state if needed */
     (filtered.length===0&&entries.length>0?'<div style="text-align:center;padding:12px 0;font-size:12px;color:var(--gray-400)">لا توجد نتائج للفلتر الحالي</div>':'');
 
-  if (window.lucide) lucide.createIcons();
 };
 
 Pages.toggleEntryRow = function(id) {
@@ -2042,7 +2202,6 @@ Pages.toggleEntryRow = function(id) {
   var open = ed.classList.toggle('open');
   if (chev) {
     chev.classList.toggle('open', open);
-    if (window.lucide) lucide.createIcons();
   }
 };
 
@@ -2310,8 +2469,8 @@ Pages.renderFinOverview = function(projId) {
         (c.contract_no?' &nbsp;·&nbsp; عقد: '+UI.escHtml(c.contract_no):'') +
       '</div>' +
       '<div class="dl-panel-btns">' +
-        '<button class="btn-dl btn-dl-csv" onclick="Pages.exportCSV(\''+projId+'\')"><i data-lucide="file-spreadsheet"></i>CSV</button>' +
-        '<button class="btn-dl btn-dl-pdf" onclick="Pages.printReport(\''+projId+'\')"><i data-lucide="file-text"></i>PDF / طباعة</button>' +
+        '<button class="btn-dl btn-dl-csv" onclick="Pages.exportCSV(\''+projId+'\')"><i class="ph-duotone ph-microsoft-excel-logo"></i>CSV</button>' +
+        '<button class="btn-dl btn-dl-pdf" onclick="Pages.printReport(\''+projId+'\')"><i class="ph-duotone ph-file-pdf"></i>PDF / طباعة</button>' +
       '</div>' +
     '</div>';
 
@@ -2321,7 +2480,7 @@ Pages.renderFinOverview = function(projId) {
 
       '<div class="kpi-card">' +
         '<div class="kpi-card-accent" style="background:var(--brand)"></div>' +
-        '<div class="kpi-card-icon" style="background:#E8EBFF;color:var(--brand)"><i data-lucide="file-check"></i></div>' +
+        '<div class="kpi-card-icon" style="background:#E8EBFF;color:var(--brand)"><i class="ph-duotone ph-file-text"></i></div>' +
         '<div class="kpi-card-label">إجمالي قيمة العقد</div>' +
         '<div class="kpi-card-value" style="color:var(--brand)">'+UI.fmt(r.grossTotal)+'</div>' +
         '<div class="kpi-card-sub">صافي '+UI.fmt(r.contractNet)+' ر.س</div>' +
@@ -2329,7 +2488,7 @@ Pages.renderFinOverview = function(projId) {
 
       '<div class="kpi-card">' +
         '<div class="kpi-card-accent" style="background:var(--danger)"></div>' +
-        '<div class="kpi-card-icon" style="background:#FDECEA;color:var(--danger)"><i data-lucide="trending-down"></i></div>' +
+        '<div class="kpi-card-icon" style="background:#FDECEA;color:var(--danger)"><i class="ph-bold ph-trend-down"></i></div>' +
         '<div class="kpi-card-label">إجمالي المصاريف</div>' +
         '<div class="kpi-card-value" style="color:var(--danger)">'+UI.fmt(r.totalExpenses)+'</div>' +
         '<div class="kpi-card-sub">'+expCount+' بنود مصروف · '+expPct+'% من العقد</div>' +
@@ -2337,7 +2496,7 @@ Pages.renderFinOverview = function(projId) {
 
       '<div class="kpi-card">' +
         '<div class="kpi-card-accent" style="background:var(--success)"></div>' +
-        '<div class="kpi-card-icon" style="background:#E8F5E9;color:var(--success)"><i data-lucide="trending-up"></i></div>' +
+        '<div class="kpi-card-icon" style="background:#E8F5E9;color:var(--success)"><i class="ph-bold ph-trend-up"></i></div>' +
         '<div class="kpi-card-label">صافي الربح</div>' +
         '<div class="kpi-card-value" style="color:var(--success)">'+UI.fmt(r.profit)+'</div>' +
         '<div class="kpi-card-sub"><span class="kpi-trend-up">'+profitPct+'%</span> هامش الربحية</div>' +
@@ -2345,7 +2504,7 @@ Pages.renderFinOverview = function(projId) {
 
       '<div class="kpi-card">' +
         '<div class="kpi-card-accent" style="background:'+(r.remaining<0?'var(--danger)':'var(--warn)')+'"></div>' +
-        '<div class="kpi-card-icon" style="background:'+(r.remaining<0?'#FDECEA':'#FFF3E0')+';color:'+(r.remaining<0?'var(--danger)':'var(--warn)')+'"><i data-lucide="wallet"></i></div>' +
+        '<div class="kpi-card-icon" style="background:'+(r.remaining<0?'#FDECEA':'#FFF3E0')+';color:'+(r.remaining<0?'var(--danger)':'var(--warn)')+'"><i class="ph-duotone ph-wallet"></i></div>' +
         '<div class="kpi-card-label">المتبقي'+(r.remaining<0?' — تجاوز':'')+'</div>' +
         '<div class="kpi-card-value" style="color:'+(r.remaining<0?'var(--danger)':'var(--warn)')+'">'+UI.fmt(r.remaining)+'</div>' +
         '<div class="kpi-card-sub">'+incCount+' بنود دخل · '+fin.entries.length+' معاملة</div>' +
@@ -2420,16 +2579,15 @@ Pages.renderFinOverview = function(projId) {
     kpis +
     '<div class="ov-2col">' +
       '<div class="card">' +
-        '<div class="dash-sec-hdr"><h3><i data-lucide="git-branch-plus"></i>توزيع قيمة العقد</h3></div>' +
+        '<div class="dash-sec-hdr"><h3><i class="ph-duotone ph-tree-structure"></i>توزيع قيمة العقد</h3></div>' +
         '<div class="wf-table">' + wfHtml + '</div>' +
       '</div>' +
       '<div class="card">' +
-        '<div class="dash-sec-hdr"><h3><i data-lucide="bar-chart-2"></i>الدخل مقابل المصاريف</h3></div>' +
+        '<div class="dash-sec-hdr"><h3><i class="ph-duotone ph-chart-bar"></i>الدخل مقابل المصاريف</h3></div>' +
         incExpChart +
       '</div>' +
     '</div>';
 
-  if (window.lucide) lucide.createIcons();
 };
 
 Pages.printReport = function(projId) {
@@ -2855,7 +3013,6 @@ Pages.loadSampleData = function() {
   window._entriesSearch = '';
   Pages._finTab = 'overview';
   Nav.go('dash');
-  if (window.lucide) lucide.createIcons();
 })();
 </script>
 
