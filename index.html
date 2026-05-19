@@ -496,65 +496,62 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 /* ── Tables (v2 — desktop) ── */
 .data-table{width:100%;border-collapse:collapse;font-size:var(--font-sm)}
 .data-table th{
-  text-align:right;padding:var(--space-3) var(--space-4);
-  font-size:10px;font-weight:700;color:var(--text-subtle);
-  background:var(--neutral-50);letter-spacing:.8px;text-transform:uppercase;
-  border-bottom:2px solid var(--border);white-space:nowrap;
+  text-align:right;padding:var(--space-2_5) var(--space-4);
+  font-size:var(--font-xs);font-weight:500;color:var(--fg-3);
+  background:var(--neutral-50);letter-spacing:0;
+  border-bottom:1px solid var(--border);white-space:nowrap;
 }
 .data-table td{
-  padding:var(--space-3_5,14px) var(--space-4);
-  border-bottom:1px solid var(--neutral-100);
-  color:var(--text-strong);vertical-align:middle;
+  padding:var(--space-3) var(--space-4);
+  border-bottom:1px solid var(--border-subtle);
+  color:var(--fg-1);vertical-align:middle;
 }
 .data-table tr{transition:background var(--transition-fast)}
-.data-table tr:hover td{background:var(--iris-50)}
+.data-table tr:hover td{background:var(--neutral-50)}
 .data-table tr:last-child td{border-bottom:none}
 
 /* ── Entry table (compact, fixed layout, expandable) ── */
 .entry-tbl{width:100%;border-collapse:collapse;table-layout:fixed}
 .entry-tbl th{
-  text-align:right;padding:var(--space-3) var(--space-4);
-  font-size:10.5px;font-weight:700;color:var(--text-muted);
-  background:var(--neutral-50);letter-spacing:.5px;text-transform:uppercase;
+  text-align:right;padding:var(--space-2_5) var(--space-4);
+  font-size:var(--font-xs);font-weight:500;color:var(--fg-3);
+  background:var(--neutral-50);letter-spacing:0;
   border-bottom:1px solid var(--border);white-space:nowrap;
 }
 .entry-tbl td{
-  padding:0 var(--space-4);height:52px;
-  border-bottom:1px solid var(--neutral-100);
+  padding:0 var(--space-4);height:44px;
+  border-bottom:1px solid var(--border-subtle);
   vertical-align:middle;white-space:nowrap;
   overflow:hidden;text-overflow:ellipsis;
-  color:var(--text-strong);
+  color:var(--fg-1);
 }
 .entry-tbl .er{cursor:pointer;transition:background var(--transition-fast)}
-.entry-tbl .er:hover td{background:var(--iris-50)}
-.entry-tbl .er.income-row td:first-child{border-right:3px solid var(--success-500)}
-.entry-tbl .er.expense-row td:first-child{border-right:3px solid var(--danger-500)}
+.entry-tbl .er:hover td{background:var(--neutral-50)}
 .entry-tbl .ed{display:none}
 .entry-tbl .ed.open{display:table-row}
 .entry-tbl .ed > td{
-  background:var(--iris-50);padding:var(--space-4) var(--space-4);
+  background:var(--neutral-50);padding:var(--space-4) var(--space-4);
   white-space:normal;height:auto;
-  border-bottom:2px solid var(--iris-100);
-  border-inline-end:3px solid var(--iris-300);
+  border-bottom:1px solid var(--border-subtle);
 }
 .entry-tbl .col-type{width:80px}
 .entry-tbl .col-cat{width:100px}
 .entry-tbl .col-amt{width:155px;text-align:left}
 .entry-tbl .col-status{width:80px}
-.entry-tbl .col-chev{width:42px;text-align:center;color:var(--text-subtle)}
+.entry-tbl .col-chev{width:42px;text-align:center;color:var(--fg-3)}
 .entry-chev{
   display:inline-flex;align-items:center;justify-content:center;
-  width:26px;height:26px;border-radius:50%;
-  transition:all var(--transition-fast);color:var(--text-subtle);
+  width:24px;height:24px;border-radius:var(--radius-sm);
+  transition:all var(--transition-fast);color:var(--fg-3);
   background:var(--neutral-100);
 }
 .entry-chev [data-lucide]{font-size:11px;transition:transform var(--transition)}
-.entry-chev.open{background:var(--iris-500);color:#fff}
+.entry-chev.open{background:var(--iris-50);color:var(--iris-600)}
 .entry-chev.open [data-lucide]{transform:rotate(180deg)}
 .entry-detail-grid{display:flex;gap:var(--space-4);flex-wrap:wrap;align-items:center;font-size:var(--font-xs)}
 .entry-detail-item{min-width:80px}
-.entry-detail-item .edi-lbl{font-size:10px;color:var(--text-subtle);margin-bottom:2px;font-weight:600;text-transform:uppercase;letter-spacing:.4px}
-.entry-detail-item .edi-val{font-weight:600;color:var(--text);font-size:var(--font-sm)}
+.entry-detail-item .edi-lbl{font-size:var(--font-2xs);color:var(--fg-3);margin-bottom:2px;font-weight:500}
+.entry-detail-item .edi-val{font-weight:600;color:var(--fg-1);font-size:var(--font-sm)}
 
 /* ── Tables responsive (mobile card transform) ── */
 @media (max-width: 767px) {
@@ -582,9 +579,8 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
   .data-table td:last-child { border-bottom: none; }
   .data-table td::before {
     content: attr(data-label);
-    font-size: 10px; font-weight: 700;
-    color: var(--text-subtle); text-transform: uppercase;
-    letter-spacing: .4px; flex-shrink: 0;
+    font-size: var(--font-2xs); font-weight: 500;
+    color: var(--fg-3); flex-shrink: 0;
   }
 
   /* entry-tbl → cards */
@@ -613,15 +609,14 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
     font-size: var(--font-md); font-weight: 700; text-align: right;
     display: block; border-right: none !important;
   }
-  .entry-tbl .er.income-row { border-right: 3px solid var(--success-500); }
-  .entry-tbl .er.expense-row { border-right: 3px solid var(--danger-500); }
+  .entry-tbl .er.income-row { border-right: none; }
+  .entry-tbl .er.expense-row { border-right: none; }
   .entry-tbl .er td:last-child { border-bottom: none; position:absolute; top:var(--space-3); left:var(--space-3); width:auto !important; }
   .entry-tbl .er .col-amt { text-align: left; font-size: var(--font-lg); font-weight: 700; }
   .entry-tbl .er td::before {
     content: attr(data-label);
-    font-size: 10px; font-weight: 700;
-    color: var(--text-subtle); text-transform: uppercase;
-    letter-spacing: .4px;
+    font-size: var(--font-2xs); font-weight: 500;
+    color: var(--fg-3);
   }
   .entry-tbl .er td:first-child::before { display: none; }
   .entry-tbl .er td:last-child::before { display: none; }
@@ -924,10 +919,8 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
 .ctrl-fab [data-lucide]{font-size:22px}
 
 /* ── Table enhancements ── */
-.data-table tbody tr.income-row td:first-child{border-right:3px solid var(--success-600)}
-.data-table tbody tr.expense-row td:first-child{border-right:3px solid var(--danger-600)}
-.amount-income{color:var(--success-600)!important;font-weight:700}
-.amount-expense{color:var(--danger-600)!important;font-weight:700}
+.amount-income{color:var(--success-700)!important;font-weight:600}
+.amount-expense{color:var(--danger-700)!important;font-weight:600}
 
 /* ── Report tabs ── */
 .report-tabs{display:flex;gap:0;margin-bottom:18px;border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;width:fit-content}
@@ -1000,8 +993,9 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
 .divider{height:1px;background:var(--border);margin:var(--space-4) 0;border:none}
 
 /* ── Scrollable table wrapper ── */
-.tbl-responsive{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:var(--radius-sm)}
+.tbl-responsive{overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--border);border-radius:var(--radius-md)}
 .tbl-responsive .data-table{min-width:560px}
+.tbl-responsive .entry-tbl tr:last-child td{border-bottom:none}
 
 /* ── Print ── */
 @media print{
