@@ -3,179 +3,191 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#4F46E5">
+<meta name="theme-color" content="#7C3AED">
 <title>بُعد — إدارة مالية</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Tajawal:wght@400;500;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
-<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css">
-<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
-<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/duotone/style.css">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 <style>
 :root {
-  /* ── Primary: Indigo (modern fintech) ── */
-  --primary-50:  #EEF2FF;
-  --primary-100: #E0E7FF;
-  --primary-200: #C7D2FE;
-  --primary-300: #A5B4FC;
-  --primary-400: #818CF8;
-  --primary-500: #6366F1;
-  --primary-600: #4F46E5;
-  --primary-700: #4338CA;
-  --primary-800: #3730A3;
-  --primary-900: #312E81;
-  --primary-950: #1E1B4B;
+  /* ── Iris — accent (Axis Design System) ── */
+  --iris-50:  oklch(0.97 0.025 275);
+  --iris-100: oklch(0.93 0.05  275);
+  --iris-200: oklch(0.86 0.10  275);
+  --iris-300: oklch(0.78 0.15  275);
+  --iris-500: oklch(0.62 0.21  275);
+  --iris-600: oklch(0.56 0.21  275);
+  --iris-700: oklch(0.48 0.19  275);
 
-  /* ── Neutral: Slate ── */
-  --neutral-0:   #FFFFFF;
-  --neutral-50:  #F8FAFC;
-  --neutral-100: #F1F5F9;
-  --neutral-200: #E2E8F0;
-  --neutral-300: #CBD5E1;
-  --neutral-400: #94A3B8;
-  --neutral-500: #64748B;
-  --neutral-600: #475569;
-  --neutral-700: #334155;
-  --neutral-800: #1E293B;
-  --neutral-900: #0F172A;
-  --neutral-950: #020617;
+  /* ── Neutrals — cool cast ── */
+  --neutral-50:  oklch(0.985 0.003 260);
+  --neutral-100: oklch(0.97  0.004 260);
+  --neutral-200: oklch(0.93  0.005 260);
+  --neutral-300: oklch(0.88  0.006 260);
+  --neutral-400: oklch(0.74  0.008 260);
+  --neutral-500: oklch(0.60  0.010 260);
+  --neutral-600: oklch(0.49  0.011 260);
+  --neutral-700: oklch(0.38  0.012 260);
+  --neutral-800: oklch(0.28  0.012 260);
+  --neutral-900: oklch(0.20  0.012 260);
+  --neutral-950: oklch(0.14  0.012 260);
 
   /* ── Semantic ── */
-  --success-50:  #ECFDF5;
-  --success-100: #D1FAE5;
-  --success-500: #10B981;
-  --success-600: #059669;
-  --success-700: #047857;
-  --warning-50:  #FFFBEB;
-  --warning-100: #FEF3C7;
-  --warning-500: #F59E0B;
-  --warning-600: #D97706;
-  --warning-700: #B45309;
-  --danger-50:   #FFF1F2;
-  --danger-100:  #FFE4E6;
-  --danger-500:  #F43F5E;
-  --danger-600:  #E11D48;
-  --danger-700:  #BE123C;
-  --info-50:     #F0F9FF;
-  --info-100:    #E0F2FE;
-  --info-500:    #0EA5E9;
-  --info-600:    #0284C7;
-  --info-700:    #0369A1;
+  --success-500: oklch(0.68 0.16 155);
+  --success-600: oklch(0.62 0.16 155);
+  --success-700: oklch(0.55 0.15 155);
+  --success-50:  oklch(0.97 0.04 155);
+  --success-100: oklch(0.94 0.06 155);
+  --warning-500: oklch(0.78 0.16  75);
+  --warning-600: oklch(0.70 0.15  75);
+  --warning-700: oklch(0.60 0.14  75);
+  --warning-50:  oklch(0.98 0.04  75);
+  --warning-100: oklch(0.95 0.07  75);
+  --danger-500:  oklch(0.62 0.21  25);
+  --danger-600:  oklch(0.55 0.21  25);
+  --danger-700:  oklch(0.47 0.19  25);
+  --danger-50:   oklch(0.97 0.04  25);
+  --danger-100:  oklch(0.94 0.07  25);
+  --info-500:    oklch(0.68 0.14 230);
+  --info-600:    oklch(0.60 0.14 230);
+  --info-50:     oklch(0.97 0.04 230);
+  --info-100:    oklch(0.94 0.06 230);
 
-  /* ── Accent (teal) ── */
-  --accent-50:  #F0FDFA;
-  --accent-500: #14B8A6;
-  --accent-600: #0D9488;
-  --accent-700: #0F766E;
+  /* ── Accent (teal — secondary) ── */
+  --accent-50:  oklch(0.97 0.04 185);
+  --accent-500: oklch(0.68 0.16 185);
+  --accent-600: oklch(0.60 0.15 185);
+  --accent-700: oklch(0.52 0.14 185);
 
-  /* ── Surface aliases ── */
-  --bg-app:       var(--neutral-50);
-  --bg-elevated:  var(--neutral-0);
-  --bg-subtle:    var(--neutral-100);
-  --bg-muted:     var(--neutral-200);
-  --border:       var(--neutral-200);
-  --border-hover: var(--neutral-300);
-  --text:         var(--neutral-900);
-  --text-strong:  var(--neutral-800);
-  --text-muted:   var(--neutral-500);
-  --text-subtle:  var(--neutral-400);
+  /* ── Surfaces ── */
+  --surface-0: var(--neutral-50);
+  --surface-1: white;
+  --surface-2: white;
 
-  /* ── Typography Scale ── */
-  --font-2xs:  11px;
-  --font-xs:   12px;
-  --font-sm:   13px;
+  /* ── Foreground ── */
+  --fg-1: var(--neutral-950);
+  --fg-2: var(--neutral-700);
+  --fg-3: var(--neutral-500);
+  --fg-4: var(--neutral-400);
+
+  /* ── Borders ── */
+  --border-subtle:  var(--neutral-200);
+  --border-default: var(--neutral-300);
+
+  /* ── Fonts (Axis) ── */
+  --font-sans:  'Inter', 'IBM Plex Sans Arabic', system-ui, sans-serif;
+  --font-mono:  'JetBrains Mono', 'IBM Plex Mono', ui-monospace, monospace;
+
+  /* ── Typography Scale (Axis: 12/13/14/16/18/20/24/30/36) ── */
+  --font-2xs:  12px;
+  --font-xs:   13px;
+  --font-sm:   14px;
   --font-base: 14px;
-  --font-md:   15px;
-  --font-lg:   16px;
-  --font-xl:   18px;
-  --font-2xl:  22px;
-  --font-3xl:  clamp(22px, 2.4vw + 14px, 28px);
-  --font-4xl:  clamp(26px, 4vw + 16px, 34px);
-  --font-5xl:  clamp(32px, 5vw + 18px, 42px);
+  --font-md:   16px;
+  --font-lg:   18px;
+  --font-xl:   20px;
+  --font-2xl:  24px;
+  --font-3xl:  clamp(24px, 2.4vw + 14px, 30px);
+  --font-4xl:  clamp(28px, 4vw + 16px, 36px);
+  --font-5xl:  clamp(34px, 5vw + 18px, 48px);
 
   --lh-tight:   1.2;
   --lh-snug:    1.4;
-  --lh-normal:  1.6;
+  --lh-normal:  1.65;
   --lh-relaxed: 1.75;
 
-  --font-ui:    "Tajawal", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-mono:  "IBM Plex Mono", "Menlo", "Consolas", monospace;
-  --font-latin: "Inter", system-ui, sans-serif;
-
-  /* ── Spacing (4px base) ── */
+  /* ── Spacing (8pt grid) ── */
   --space-0_5: 2px;   --space-1: 4px;    --space-1_5: 6px;
   --space-2:   8px;   --space-3: 12px;   --space-4:   16px;
   --space-5:   20px;  --space-6: 24px;   --space-8:   32px;
-  --space-10:  40px;  --space-12:48px;   --space-16:  64px;
-  --space-20:  80px;
+  --space-10:  40px;  --space-12: 48px;  --space-16:  64px;
 
-  /* ── Radii ── */
+  /* ── Radii (Axis) ── */
   --radius-xs:   4px;
-  --radius-sm:   8px;
-  --radius-md:   12px;
-  --radius-lg:   16px;
-  --radius-xl:   20px;
-  --radius-2xl:  28px;
+  --radius-sm:   6px;
+  --radius-md:   8px;
+  --radius-lg:   12px;
+  --radius-xl:   16px;
+  --radius-2xl:  20px;
   --radius-full: 9999px;
 
-  /* ── Shadows ── */
-  --shadow-xs:    0 1px 2px rgba(15, 23, 42, .04);
-  --shadow-sm:    0 1px 3px rgba(15, 23, 42, .06), 0 1px 2px rgba(15, 23, 42, .04);
-  --shadow-md:    0 4px 12px rgba(15, 23, 42, .08), 0 2px 4px rgba(15, 23, 42, .04);
-  --shadow-lg:    0 12px 28px rgba(15, 23, 42, .10), 0 4px 10px rgba(15, 23, 42, .05);
-  --shadow-xl:    0 24px 48px rgba(15, 23, 42, .12), 0 8px 20px rgba(15, 23, 42, .06);
-  --shadow-focus: 0 0 0 4px rgba(99, 102, 241, .20);
-  --shadow-brand: 0 8px 24px -8px rgba(79, 70, 229, .40);
+  /* ── Shadows (Axis oklch-based) ── */
+  --shadow-xs:    0 1px 2px oklch(0.14 0.012 260 / 0.06);
+  --shadow-sm:    0 1px 3px oklch(0.14 0.012 260 / 0.08), 0 1px 2px -1px oklch(0.14 0.012 260 / 0.04);
+  --shadow-md:    0 4px 8px -2px oklch(0.14 0.012 260 / 0.10), 0 2px 4px -2px oklch(0.14 0.012 260 / 0.06);
+  --shadow-lg:    0 12px 24px -6px oklch(0.14 0.012 260 / 0.12);
+  --shadow-xl:    0 24px 48px -12px oklch(0.14 0.012 260 / 0.14);
+  --shadow-focus: 0 0 0 3px oklch(0.62 0.21 275 / 0.25);
+  --shadow-brand: 0 8px 24px -8px oklch(0.62 0.21 275 / 0.40);
 
-  /* ── Motion ── */
-  --transition-fast: .12s ease;
-  --transition:      .2s cubic-bezier(.16,1,.3,1);
-  --transition-slow: .4s cubic-bezier(.16,1,.3,1);
+  /* ── Motion (Axis) ── */
+  --duration-micro: 120ms;
+  --duration-small: 200ms;
+  --duration-large: 320ms;
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --transition-fast: var(--duration-micro) var(--ease-out);
+  --transition:      var(--duration-small) var(--ease-out);
+  --transition-slow: var(--duration-large) var(--ease-out);
 
   /* ── Layout ── */
-  --sidebar-w:   268px;
-  --sidebar-col: 72px;
-  --topbar-h:    60px;
+  --sidebar-w:   260px;
+  --sidebar-col: 64px;
+  --topbar-h:    56px;
   --container-pad: clamp(16px, 3vw, 28px);
 
-  /* ── Backwards-compat aliases (will be removed in phase 6) ── */
-  --brand:        var(--primary-600);
-  --brand-light:  var(--primary-50);
-  --brand-hover:  var(--primary-700);
-  --success:      var(--success-600);
+  /* ── Backward-compat aliases ── */
+  --primary-50:  var(--iris-50);
+  --primary-100: var(--iris-100);
+  --primary-200: var(--iris-200);
+  --primary-300: var(--iris-300);
+  --primary-400: var(--iris-300);
+  --primary-500: var(--iris-500);
+  --primary-600: var(--iris-500);
+  --primary-700: var(--iris-600);
+  --primary-800: var(--iris-700);
+  --primary-900: var(--iris-700);
+  --primary-950: var(--iris-700);
+  --neutral-0:   white;
+  --bg-app:      var(--surface-0);
+  --bg-elevated: var(--surface-1);
+  --bg-subtle:   var(--neutral-100);
+  --bg-muted:    var(--neutral-200);
+  --border:      var(--border-subtle);
+  --border-hover:var(--border-default);
+  --text:        var(--fg-1);
+  --text-strong: var(--fg-1);
+  --text-muted:  var(--fg-2);
+  --text-subtle: var(--fg-3);
+  --font-ui:     var(--font-sans);
+  --font-latin:  var(--font-sans);
+  --brand:       var(--iris-500);
+  --brand-light: var(--iris-50);
+  --brand-hover: var(--iris-600);
+  --success:     var(--success-500);
   --success-light:var(--success-50);
-  --danger:       var(--danger-600);
-  --danger-light: var(--danger-50);
-  --warn:         var(--warning-600);
-  --warn-light:   var(--warning-50);
-  --gray-50:      var(--neutral-50);
-  --gray-100:     var(--neutral-100);
-  --gray-200:     var(--neutral-200);
-  --gray-300:     var(--neutral-300);
-  --gray-400:     var(--neutral-400);
-  --gray-500:     var(--neutral-500);
-  --gray-700:     var(--neutral-700);
-  --gray-800:     var(--neutral-800);
-  --gray-900:     var(--neutral-900);
-  --radius:       var(--radius-md);
-  --shadow:       var(--shadow-sm);
+  --danger:      var(--danger-500);
+  --danger-light:var(--danger-50);
+  --warn:        var(--warning-500);
+  --warn-light:  var(--warning-50);
+  --gray-50:  var(--neutral-50);  --gray-100: var(--neutral-100);
+  --gray-200: var(--neutral-200); --gray-300: var(--neutral-300);
+  --gray-400: var(--neutral-400); --gray-500: var(--neutral-500);
+  --gray-700: var(--neutral-700); --gray-800: var(--neutral-800);
+  --gray-900: var(--neutral-900);
+  --radius:   var(--radius-md);
+  --shadow:   var(--shadow-sm);
 }
 
-/* Dark mode token stubs (v2.1 ready — auto-activates on prefers-color-scheme:dark) */
-@media (prefers-color-scheme: dark) {
-  /* Activate by uncommenting in v2.1
-  :root {
-    --bg-app:      #0A0E1A;
-    --bg-elevated: #131927;
-    --bg-subtle:   #1A2235;
-    --border:      #232D44;
-    --text:        #F1F5F9;
-    --text-strong: #FFFFFF;
-    --text-muted:  #94A3B8;
-    --text-subtle: #64748B;
-  }
-  */
+/* Dark mode (Axis) */
+[data-theme="dark"] {
+  --surface-0: var(--neutral-950);
+  --surface-1: oklch(0.18 0.012 260);
+  --fg-1: var(--neutral-50);
+  --fg-2: var(--neutral-300);
+  --fg-3: var(--neutral-500);
+  --border-subtle:  oklch(0.27 0.012 260);
+  --border-default: oklch(0.35 0.012 260);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -190,28 +202,29 @@
 html,body{height:100%;overflow:hidden}
 html{-webkit-text-size-adjust:100%;text-rendering:optimizeLegibility;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
 body{
-  font-family:var(--font-ui);direction:rtl;
-  background:var(--bg-app);color:var(--text);
+  font-family:var(--font-sans);direction:rtl;
+  background:var(--surface-0);color:var(--fg-1);
   font-size:var(--font-sm);line-height:var(--lh-normal);
-  font-feature-settings:"kern" 1, "liga" 1;
+  font-feature-settings:"kern" 1,"liga" 1,"lnum" 1;
 }
 a{text-decoration:none;color:inherit;cursor:pointer}
 button{font-family:inherit}
 
-/* Focus ring (a11y) */
+/* Focus ring (Axis) */
 :focus-visible{outline:none;box-shadow:var(--shadow-focus);border-radius:var(--radius-sm)}
 button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{box-shadow:var(--shadow-focus)}
 
-/* Skip-to-content for keyboard users */
-.skip-link{position:absolute;top:-40px;right:8px;background:var(--primary-600);color:#fff;padding:8px 16px;border-radius:var(--radius-sm);z-index:9999;font-size:var(--font-sm);font-weight:600;transition:top var(--transition)}
+/* Skip-to-content */
+.skip-link{position:absolute;top:-40px;inset-inline-start:8px;background:var(--iris-500);color:#fff;padding:8px 16px;border-radius:var(--radius-sm);z-index:9999;font-size:var(--font-sm);font-weight:600;transition:top var(--transition)}
 .skip-link:focus{top:8px}
 
-/* Phosphor icon base styling */
-.ph,.ph-bold,.ph-fill,.ph-duotone,.ph-thin,.ph-light{
+/* Lucide icon base (Axis) */
+[data-lucide]{
   display:inline-flex;align-items:center;justify-content:center;
-  font-size:1em;line-height:1;flex-shrink:0;
+  width:1em;height:1em;stroke-width:1.5;
+  vertical-align:middle;flex-shrink:0;
+  pointer-events:none;
 }
-i[class*="ph-"]{vertical-align:middle}
 
 /* ── App shell ── */
 #app{display:flex;height:100vh;overflow:hidden}
@@ -252,8 +265,8 @@ i[class*="ph-"]{vertical-align:middle}
   display:flex;align-items:center;justify-content:center;
 }
 .sb-toggle:hover{background:var(--neutral-100);color:var(--neutral-700)}
-.sb-toggle i[class*="ph-"]{font-size:18px;transition:transform var(--transition)}
-.sidebar.collapsed .sb-toggle i[class*="ph-"]{transform:scaleX(-1)}
+.sb-toggle [data-lucide]{font-size:18px;transition:transform var(--transition)}
+.sidebar.collapsed .sb-toggle [data-lucide]{transform:scaleX(-1)}
 
 .sb-nav{flex:1;padding:var(--space-3) var(--space-2);overflow-y:auto;overflow-x:hidden}
 .sb-nav::-webkit-scrollbar{width:4px}
@@ -278,8 +291,8 @@ i[class*="ph-"]{vertical-align:middle}
 }
 .sb-item:hover{background:var(--neutral-100);color:var(--text)}
 .sb-item.active{
-  background:var(--primary-50);color:var(--primary-700);font-weight:700;
-  border-right-color:var(--primary-600);
+  background:var(--iris-50);color:var(--iris-600);font-weight:600;
+  border-inline-end-color:var(--iris-500);
 }
 
 .sb-icon{
@@ -289,9 +302,9 @@ i[class*="ph-"]{vertical-align:middle}
   flex-shrink:0;transition:var(--transition-fast);
   color:var(--neutral-400);
 }
-.sb-icon i[class*="ph-"]{font-size:18px}
-.sb-item:hover .sb-icon{color:var(--neutral-700)}
-.sb-item.active .sb-icon{color:var(--primary-600)}
+.sb-icon [data-lucide]{font-size:18px;width:18px;height:18px}
+.sb-item:hover .sb-icon{color:var(--fg-2)}
+.sb-item.active .sb-icon{color:var(--iris-500)}
 
 .sb-label{transition:opacity var(--transition);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
 .sidebar.collapsed .sb-label{opacity:0;width:0;overflow:hidden}
@@ -302,7 +315,7 @@ i[class*="ph-"]{vertical-align:middle}
   padding:2px 7px;border-radius:var(--radius-full);
   min-width:22px;text-align:center;flex-shrink:0;letter-spacing:.5px;
 }
-.sb-item.active .sb-badge{background:var(--primary-100);color:var(--primary-700)}
+.sb-item.active .sb-badge{background:var(--iris-100);color:var(--iris-700)}
 .sidebar.collapsed .sb-badge{opacity:0;width:0;padding:0;overflow:hidden}
 
 .sb-footer{
@@ -335,7 +348,7 @@ i[class*="ph-"]{vertical-align:middle}
   color:var(--text-strong);width:36px;height:36px;border-radius:var(--radius-sm);
   align-items:center;justify-content:center;transition:var(--transition-fast);
 }
-.top-bar-menu i[class*="ph-"]{font-size:20px}
+.top-bar-menu [data-lucide]{font-size:20px}
 .top-bar-menu:hover{background:var(--neutral-100)}
 .top-bar-divider{width:1px;height:24px;background:var(--border);flex-shrink:0}
 
@@ -359,7 +372,7 @@ i[class*="ph-"]{vertical-align:middle}
   flex-shrink:0;
 }
 .tb-icon-btn:hover{background:var(--neutral-100);color:var(--neutral-800)}
-.tb-icon-btn i[class*="ph-"]{font-size:18px}
+.tb-icon-btn [data-lucide]{font-size:18px}
 .tb-user{
   width:36px;height:36px;border-radius:50%;flex-shrink:0;
   background:linear-gradient(135deg, var(--primary-400), var(--primary-700));
@@ -390,16 +403,16 @@ i[class*="ph-"]{vertical-align:middle}
 .btn:disabled,.btn[disabled]{opacity:.5;cursor:not-allowed;pointer-events:none}
 
 /* Solid variants */
-.btn-primary{background:var(--primary-600);color:#fff;border-color:var(--primary-600);box-shadow:var(--shadow-xs),inset 0 1px 0 rgba(255,255,255,.12)}
-.btn-primary:hover{background:var(--primary-700);border-color:var(--primary-700);box-shadow:var(--shadow-brand)}
-.btn-success-solid{background:var(--success-600);color:#fff;border-color:var(--success-600)}
-.btn-success-solid:hover{background:var(--success-700);border-color:var(--success-700)}
-.btn-danger-solid{background:var(--danger-600);color:#fff;border-color:var(--danger-600)}
-.btn-danger-solid:hover{background:var(--danger-700);border-color:var(--danger-700)}
+.btn-primary{background:var(--iris-500);color:#fff;border-color:var(--iris-500);box-shadow:var(--shadow-xs)}
+.btn-primary:hover{background:var(--iris-600);border-color:var(--iris-600)}
+.btn-success-solid{background:var(--success-500);color:#fff;border-color:var(--success-500)}
+.btn-success-solid:hover{background:var(--success-600);border-color:var(--success-600)}
+.btn-danger-solid{background:var(--danger-500);color:#fff;border-color:var(--danger-500)}
+.btn-danger-solid:hover{background:var(--danger-600);border-color:var(--danger-600)}
 
-/* Soft variants (tinted background, brand color text) */
-.btn-soft{background:var(--primary-50);color:var(--primary-700);border-color:transparent}
-.btn-soft:hover{background:var(--primary-100);color:var(--primary-800)}
+/* Soft variants */
+.btn-soft{background:var(--iris-50);color:var(--iris-600);border-color:transparent}
+.btn-soft:hover{background:var(--iris-100);color:var(--iris-700)}
 .btn-danger{background:var(--danger-50);color:var(--danger-700);border-color:transparent}
 .btn-danger:hover{background:var(--danger-100);color:var(--danger-700)}
 .btn-success{background:var(--success-50);color:var(--success-700);border-color:transparent}
@@ -407,9 +420,9 @@ i[class*="ph-"]{vertical-align:middle}
 .btn-warning{background:var(--warning-50);color:var(--warning-700);border-color:transparent}
 .btn-warning:hover{background:var(--warning-100)}
 
-/* Outline variant — neutral default already; primary outline */
-.btn-outline{background:transparent;color:var(--primary-600);border-color:var(--primary-200)}
-.btn-outline:hover{background:var(--primary-50);border-color:var(--primary-300);color:var(--primary-700)}
+/* Outline variant */
+.btn-outline{background:transparent;color:var(--iris-500);border-color:var(--iris-200)}
+.btn-outline:hover{background:var(--iris-50);border-color:var(--iris-300);color:var(--iris-600)}
 
 /* Ghost (no border, no background until hover) */
 .btn-ghost{background:transparent;border-color:transparent;color:var(--neutral-500);box-shadow:none}
@@ -496,7 +509,7 @@ i[class*="ph-"]{vertical-align:middle}
   color:var(--text-strong);vertical-align:middle;
 }
 .data-table tr{transition:background var(--transition-fast)}
-.data-table tr:hover td{background:var(--primary-50)}
+.data-table tr:hover td{background:var(--iris-50)}
 .data-table tr:last-child td{border-bottom:none}
 
 /* ── Entry table (compact, fixed layout, expandable) ── */
@@ -515,16 +528,16 @@ i[class*="ph-"]{vertical-align:middle}
   color:var(--text-strong);
 }
 .entry-tbl .er{cursor:pointer;transition:background var(--transition-fast)}
-.entry-tbl .er:hover td{background:var(--primary-50)}
+.entry-tbl .er:hover td{background:var(--iris-50)}
 .entry-tbl .er.income-row td:first-child{border-right:3px solid var(--success-500)}
 .entry-tbl .er.expense-row td:first-child{border-right:3px solid var(--danger-500)}
 .entry-tbl .ed{display:none}
 .entry-tbl .ed.open{display:table-row}
 .entry-tbl .ed > td{
-  background:var(--primary-50);padding:var(--space-4) var(--space-4);
+  background:var(--iris-50);padding:var(--space-4) var(--space-4);
   white-space:normal;height:auto;
-  border-bottom:2px solid var(--primary-100);
-  border-right:3px solid var(--primary-300);
+  border-bottom:2px solid var(--iris-100);
+  border-inline-end:3px solid var(--iris-300);
 }
 .entry-tbl .col-type{width:80px}
 .entry-tbl .col-cat{width:100px}
@@ -537,9 +550,9 @@ i[class*="ph-"]{vertical-align:middle}
   transition:all var(--transition-fast);color:var(--text-subtle);
   background:var(--neutral-100);
 }
-.entry-chev i[class*="ph-"]{font-size:11px;transition:transform var(--transition)}
-.entry-chev.open{background:var(--primary-600);color:#fff}
-.entry-chev.open i[class*="ph-"]{transform:rotate(180deg)}
+.entry-chev [data-lucide]{font-size:11px;transition:transform var(--transition)}
+.entry-chev.open{background:var(--iris-500);color:#fff}
+.entry-chev.open [data-lucide]{transform:rotate(180deg)}
 .entry-detail-grid{display:flex;gap:var(--space-4);flex-wrap:wrap;align-items:center;font-size:var(--font-xs)}
 .entry-detail-item{min-width:80px}
 .entry-detail-item .edi-lbl{font-size:10px;color:var(--text-subtle);margin-bottom:2px;font-weight:600;text-transform:uppercase;letter-spacing:.4px}
@@ -636,7 +649,7 @@ i[class*="ph-"]{vertical-align:middle}
   background:currentColor;flex-shrink:0;
 }
 .badge.success{background:var(--success-50);color:var(--success-700);border-color:rgba(16,185,129,.18)}
-.badge.brand{background:var(--primary-50);color:var(--primary-700);border-color:rgba(99,102,241,.2)}
+.badge.brand{background:var(--iris-50);color:var(--iris-700);border-color:oklch(0.62 0.21 275 / 0.2)}
 .badge.warn{background:var(--warning-50);color:var(--warning-700);border-color:rgba(245,158,11,.2)}
 .badge.danger{background:var(--danger-50);color:var(--danger-700);border-color:rgba(244,63,94,.2)}
 .badge.gray{background:var(--neutral-100);color:var(--neutral-600);border-color:var(--neutral-200)}
@@ -656,7 +669,7 @@ i[class*="ph-"]{vertical-align:middle}
 /* Sizes */
 .badge.lg{padding:5px 12px;font-size:var(--font-xs);gap:6px}
 .badge.sm{padding:1px 7px;font-size:10px;gap:3px}
-.badge i[class*="ph-"]{font-size:11px;line-height:1}
+.badge [data-lucide]{font-size:11px;line-height:1}
 
 /* ── Forms (v2) ── */
 .form-group{margin-bottom:var(--space-4)}
@@ -678,7 +691,7 @@ i[class*="ph-"]{vertical-align:middle}
 }
 .field-input::placeholder{color:var(--text-subtle)}
 .field-input:hover{border-color:var(--border-hover)}
-.field-input:focus{border-color:var(--primary-500);box-shadow:var(--shadow-focus)}
+.field-input:focus{border-color:var(--iris-500);box-shadow:var(--shadow-focus)}
 .field-input.error{border-color:var(--danger-500)}
 .field-input.error:focus{box-shadow:0 0 0 4px rgba(244,63,94,.15)}
 .field-input:disabled{background:var(--neutral-50);color:var(--text-muted);cursor:not-allowed}
@@ -701,7 +714,7 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
   bottom:3px;right:3px;background:#fff;border-radius:50%;
   transition:var(--transition);box-shadow:var(--shadow-sm);
 }
-.toggle input:checked + .toggle-slider{background:var(--primary-600)}
+.toggle input:checked + .toggle-slider{background:var(--iris-500)}
 .toggle input:checked + .toggle-slider:before{transform:translateX(-16px)}
 .toggle input:focus-visible + .toggle-slider{box-shadow:var(--shadow-focus)}
 .inline-group{display:flex;gap:6px;align-items:center}
@@ -771,10 +784,10 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
 }
 .tab-btn:hover{background:rgba(255,255,255,.8);color:var(--text-strong)}
 .tab-btn.active{
-  background:var(--bg-elevated);color:var(--primary-700);font-weight:700;
+  background:var(--surface-1);color:var(--iris-600);font-weight:600;
   box-shadow:var(--shadow-sm);
 }
-.tab-btn i[class*="ph-"]{font-size:15px}
+.tab-btn [data-lucide]{font-size:15px}
 .tab-content{display:none}
 .tab-content.active{display:block}
 
@@ -807,7 +820,7 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
   background:var(--neutral-100);border-radius:var(--radius-full);
   color:var(--neutral-400);
 }
-.empty-state-icon i[class*="ph-"]{font-size:36px;color:var(--neutral-400)}
+.empty-state-icon [data-lucide]{font-size:36px;color:var(--neutral-400)}
 .empty-state h3{font-size:var(--font-md);font-weight:700;color:var(--text-strong);margin-bottom:var(--space-1)}
 .empty-state p{font-size:var(--font-xs);color:var(--text-muted);max-width:320px;margin:0 auto}
 
@@ -902,9 +915,9 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
 .ctrl-drawer-header h3{font-size:14px;font-weight:700;color:var(--text)}
 .ctrl-drawer-body{padding:16px}
 .ctrl-fab{
-  position:fixed;bottom:24px;left:24px;
+  position:fixed;bottom:24px;inset-inline-start:24px;
   width:54px;height:54px;border-radius:50%;
-  background:linear-gradient(135deg,var(--primary-500),var(--primary-700));color:#fff;
+  background:var(--iris-500);color:#fff;
   border:none;font-size:22px;cursor:pointer;
   box-shadow:var(--shadow-lg),var(--shadow-brand);
   z-index:800;display:none;align-items:center;justify-content:center;
@@ -913,7 +926,7 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
 .ctrl-fab:hover{transform:scale(1.08) translateY(-2px);box-shadow:var(--shadow-xl),var(--shadow-brand)}
 .ctrl-fab:active{transform:scale(.96)}
 .ctrl-fab.visible{display:flex}
-.ctrl-fab i[class*="ph-"]{font-size:22px}
+.ctrl-fab [data-lucide]{font-size:22px}
 
 /* ── Table enhancements ── */
 .data-table tbody tr.income-row td:first-child{border-right:3px solid var(--success-600)}
@@ -924,7 +937,7 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
 /* ── Report tabs ── */
 .report-tabs{display:flex;gap:0;margin-bottom:18px;border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;width:fit-content}
 .report-tab{padding:8px 20px;font-size:13px;font-weight:500;cursor:pointer;background:var(--bg-elevated);color:var(--text-muted);border:none;font-family:inherit;transition:.15s}
-.report-tab.active{background:var(--primary-600);color:#fff}
+.report-tab.active{background:var(--iris-500);color:#fff}
 
 /* ── Waterfall ── */
 .wf-table{width:100%;font-size:12.5px}
@@ -960,7 +973,7 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
 .btn-dl-csv:hover{background:var(--success-100)}
 .btn-dl-print{background:var(--primary-50);border-color:var(--primary-200);color:var(--primary-700)}
 .btn-dl-print:hover{background:var(--primary-100)}
-.btn-dl i[class*="ph-"]{font-size:13px}
+.btn-dl [data-lucide]{font-size:13px}
 
 /* ── Overview report layout ── */
 .ov-2col{display:grid;grid-template-columns:1fr 320px;gap:16px;margin-bottom:16px}
@@ -982,11 +995,11 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
 /* ── Inline tab mini ── */
 .mini-tabs{display:flex;gap:0;margin-bottom:14px;border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;width:fit-content}
 .mini-tab{padding:6px 14px;font-size:12px;font-weight:500;cursor:pointer;background:var(--bg-elevated);color:var(--text-muted);border:none;font-family:inherit;transition:var(--transition)}
-.mini-tab.active{background:var(--primary-600);color:#fff}
+.mini-tab.active{background:var(--iris-500);color:#fff}
 
 /* ── Progress bar ── */
 .progress-bar-wrap{background:var(--neutral-100);border-radius:var(--radius-full);height:6px;overflow:hidden;margin-top:var(--space-1)}
-.progress-bar{height:100%;border-radius:var(--radius-full);background:linear-gradient(90deg,var(--primary-500),var(--primary-600));transition:width .5s ease}
+.progress-bar{height:100%;border-radius:var(--radius-full);background:var(--iris-500);transition:width .5s var(--ease-out)}
 
 /* ── Divider ── */
 .divider{height:1px;background:var(--border);margin:var(--space-4) 0;border:none}
@@ -1035,19 +1048,15 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
   margin-bottom:var(--space-5);box-shadow:var(--shadow-sm);
 }
 .proj-hero-band{
-  background:linear-gradient(135deg,#1e1b4b 0%,var(--primary-800) 30%,var(--primary-600) 70%,var(--primary-500) 100%);
-  padding:var(--space-6);position:relative;overflow:hidden;color:#fff;
+  background:var(--iris-50);
+  padding:var(--space-6);position:relative;overflow:hidden;color:var(--fg-1);
+  border-bottom:1px solid var(--border-subtle);
 }
-/* Grid overlay in hero */
 .proj-hero-band::before{
-  content:'';position:absolute;inset:0;
-  background-image:linear-gradient(rgba(255,255,255,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.04) 1px,transparent 1px);
-  background-size:28px 28px;pointer-events:none;z-index:0;
+  content:'';position:absolute;inset-inline-end:-60px;top:-60px;width:220px;height:220px;
+  background:radial-gradient(circle,var(--iris-100),transparent 70%);border-radius:50%;pointer-events:none;z-index:0;
 }
-.proj-hero-band::after{
-  content:'';position:absolute;right:-80px;top:-80px;width:280px;height:280px;
-  background:radial-gradient(circle,rgba(255,255,255,.1),transparent 65%);border-radius:50%;z-index:0;
-}
+.proj-hero-band::after{display:none}
 .proj-hero-top{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--space-3);position:relative;z-index:1}
 .proj-hero-badges{display:flex;gap:var(--space-1_5);flex-wrap:wrap;margin-bottom:var(--space-2)}
 .proj-hero-badge{
@@ -1061,35 +1070,36 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
 .proj-hero-badge-status.st-paused{background:rgba(245,158,11,.25);border-color:rgba(245,158,11,.45);color:#FDE68A}
 .proj-hero-badge-type{background:rgba(255,255,255,.08);color:rgba(255,255,255,.78);border-color:rgba(255,255,255,.14)}
 .proj-hero-name{
-  font-size:var(--font-2xl);font-weight:800;color:#fff;
-  line-height:var(--lh-tight);margin-bottom:var(--space-2);letter-spacing:-.3px;
+  font-size:var(--font-2xl);font-weight:700;color:var(--fg-1);
+  line-height:var(--lh-tight);margin-bottom:var(--space-2);letter-spacing:-0.015em;
 }
 .proj-hero-meta{
-  font-size:var(--font-xs);color:rgba(255,255,255,.7);
+  font-size:var(--font-xs);color:var(--fg-2);
   display:flex;flex-wrap:wrap;gap:var(--space-1) var(--space-4);align-items:center;
 }
 .proj-hero-meta-item{display:flex;align-items:center;gap:5px}
-.proj-hero-meta-item i[class*="ph-"]{font-size:13px;opacity:.85}
+.proj-hero-meta-item [data-lucide]{font-size:13px;opacity:.85}
 .proj-hero-actions{display:flex;gap:var(--space-2);flex-shrink:0;position:relative;z-index:1}
 .proj-hero-edit{
-  background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.22);
-  color:#fff;border-radius:var(--radius-sm);padding:8px 14px;
-  font-size:var(--font-xs);font-weight:600;cursor:pointer;font-family:inherit;
+  background:var(--surface-1);border:1px solid var(--border-subtle);
+  color:var(--fg-1);border-radius:var(--radius-sm);padding:8px 14px;
+  font-size:var(--font-xs);font-weight:500;cursor:pointer;font-family:inherit;
   transition:var(--transition-fast);white-space:nowrap;
-  display:inline-flex;align-items:center;gap:5px;backdrop-filter:blur(8px);
+  display:inline-flex;align-items:center;gap:5px;
+  box-shadow:var(--shadow-xs);
 }
-.proj-hero-edit:hover{background:rgba(255,255,255,.24);border-color:rgba(255,255,255,.32)}
+.proj-hero-edit:hover{background:var(--neutral-100);border-color:var(--border-default)}
 
 /* Progress bar in hero */
 .proj-hero-progress{margin-top:var(--space-4);position:relative;z-index:1}
-.proj-hero-progress-labels{display:flex;justify-content:space-between;font-size:var(--font-2xs);color:rgba(255,255,255,.65);margin-bottom:var(--space-1);font-weight:600}
-.proj-hero-progress-track{background:rgba(255,255,255,.15);border-radius:var(--radius-full);height:6px;overflow:hidden}
+.proj-hero-progress-labels{display:flex;justify-content:space-between;font-size:var(--font-2xs);color:var(--fg-3);margin-bottom:var(--space-1);font-weight:600}
+.proj-hero-progress-track{background:var(--neutral-200);border-radius:var(--radius-full);height:6px;overflow:hidden}
 .proj-hero-progress-fill{
   height:100%;border-radius:var(--radius-full);
-  background:linear-gradient(90deg,rgba(255,255,255,.8),#fff);
-  transition:width .8s cubic-bezier(.16,1,.3,1);
+  background:var(--iris-500);
+  transition:width .6s var(--ease-out);
 }
-.proj-hero-progress-fill.overspent{background:linear-gradient(90deg,#FCA5A5,#F87171)}
+.proj-hero-progress-fill.overspent{background:var(--danger-500)}
 
 /* Stats strip */
 .proj-hero-stats{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--border)}
@@ -1147,55 +1157,49 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
 .section-title{font-size:13px;font-weight:700;color:var(--text-strong);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border)}
 
 /* ── Dashboard v2 ── */
-/* ── Dashboard greeting (v2) ── */
+/* ── Dashboard greeting (Axis — white card, iris accent) ── */
 .dash-greeting{
-  background:linear-gradient(135deg,#1e1b4b 0%,var(--primary-800) 30%,var(--primary-600) 70%,var(--primary-400) 100%);
-  border-radius:var(--radius-xl);padding:var(--space-8) var(--space-6);
+  background:var(--surface-1);
+  border:1px solid var(--border-subtle);
+  border-radius:var(--radius-xl);padding:var(--space-6) var(--space-6);
   margin-bottom:var(--space-5);
   display:flex;align-items:center;justify-content:space-between;
   gap:var(--space-4);
-  box-shadow:0 20px 40px -12px rgba(79,70,229,.5),var(--shadow-md);
-  position:relative;overflow:hidden;color:#fff;
+  box-shadow:var(--shadow-sm);
+  position:relative;overflow:hidden;
 }
+/* Subtle iris tint at top-right */
 .dash-greeting::before{
-  content:'';position:absolute;left:-80px;top:-80px;width:280px;height:280px;
-  background:radial-gradient(circle,rgba(255,255,255,.1),transparent 65%);border-radius:50%;
+  content:'';position:absolute;inset-inline-end:-60px;top:-60px;width:200px;height:200px;
+  background:radial-gradient(circle,var(--iris-100),transparent 70%);border-radius:50%;pointer-events:none;
 }
-.dash-greeting::after{
-  content:'';position:absolute;left:40%;bottom:-120px;width:360px;height:360px;
-  background:radial-gradient(circle,rgba(255,255,255,.06),transparent 65%);border-radius:50%;
-}
-/* Grid lines overlay for depth */
-.dash-greeting-grid{
-  position:absolute;inset:0;
-  background-image:linear-gradient(rgba(255,255,255,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.04) 1px,transparent 1px);
-  background-size:32px 32px;pointer-events:none;z-index:0;border-radius:var(--radius-xl);
-}
+.dash-greeting-grid{display:none}
 .dash-greeting > * {position:relative;z-index:1}
 .dash-greeting-text h2{
-  font-size:var(--font-2xl);font-weight:800;color:#fff;
-  margin-bottom:var(--space-1);letter-spacing:-.5px;line-height:var(--lh-tight);
+  font-size:var(--font-2xl);font-weight:700;color:var(--fg-1);
+  margin-bottom:var(--space-1);letter-spacing:-0.015em;line-height:var(--lh-tight);
 }
-.dash-greeting-text p{font-size:var(--font-sm);color:rgba(255,255,255,.65);font-weight:500}
+.dash-greeting-text p{font-size:var(--font-sm);color:var(--fg-3);font-weight:400}
 .dash-greeting-actions{display:flex;gap:var(--space-2);flex-shrink:0;flex-wrap:wrap}
 
+/* Replaced btn-white/btn-white-solid with standard btn variants */
 .btn-white{
-  background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);
-  color:#fff;border-radius:var(--radius-sm);padding:9px 16px;
-  font-size:var(--font-sm);font-weight:600;cursor:pointer;
+  background:var(--surface-1);border:1px solid var(--border-subtle);
+  color:var(--fg-1);border-radius:var(--radius-sm);padding:9px 16px;
+  font-size:var(--font-sm);font-weight:500;cursor:pointer;
   font-family:inherit;transition:var(--transition);
-  display:inline-flex;align-items:center;gap:6px;backdrop-filter:blur(8px);
+  display:inline-flex;align-items:center;gap:6px;
 }
-.btn-white:hover{background:rgba(255,255,255,.22);border-color:rgba(255,255,255,.35)}
+.btn-white:hover{background:var(--neutral-100);border-color:var(--border-default)}
 .btn-white-solid{
-  background:#fff;border:1px solid #fff;color:var(--primary-700);
+  background:var(--iris-500);border:1px solid var(--iris-500);color:#fff;
   border-radius:var(--radius-sm);padding:9px 16px;
-  font-size:var(--font-sm);font-weight:700;cursor:pointer;
+  font-size:var(--font-sm);font-weight:600;cursor:pointer;
   font-family:inherit;transition:var(--transition);
   display:inline-flex;align-items:center;gap:6px;
   box-shadow:var(--shadow-sm);
 }
-.btn-white-solid:hover{background:var(--primary-50);transform:translateY(-1px);box-shadow:var(--shadow-md)}
+.btn-white-solid:hover{background:var(--iris-600);border-color:var(--iris-600)}
 
 /* ── KPI Cards (v2) ── */
 .kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--space-4);margin-bottom:var(--space-5)}
@@ -1213,7 +1217,7 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
   margin-bottom:var(--space-4);
   box-shadow:var(--shadow-xs);
 }
-.kpi-card-icon i[class*="ph-"]{font-size:24px}
+.kpi-card-icon [data-lucide]{font-size:24px}
 .kpi-card-label{
   font-size:var(--font-2xs);color:var(--text-muted);font-weight:700;
   margin-bottom:var(--space-2);text-transform:uppercase;letter-spacing:.6px;
@@ -1224,8 +1228,8 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
   margin-bottom:var(--space-2);letter-spacing:-1.5px;
 }
 .kpi-card-sub{font-size:var(--font-xs);color:var(--text-subtle);display:flex;align-items:center;gap:var(--space-1);font-weight:500}
-.kpi-trend-up{color:var(--success-600);font-weight:700;background:var(--success-50);padding:2px 8px;border-radius:var(--radius-full);font-size:var(--font-2xs)}
-.kpi-trend-down{color:var(--danger-600);font-weight:700;background:var(--danger-50);padding:2px 8px;border-radius:var(--radius-full);font-size:var(--font-2xs)}
+.kpi-trend-up{color:var(--success-500);font-weight:600;background:var(--success-50);padding:2px 8px;border-radius:var(--radius-full);font-size:var(--font-2xs)}
+.kpi-trend-down{color:var(--danger-500);font-weight:600;background:var(--danger-50);padding:2px 8px;border-radius:var(--radius-full);font-size:var(--font-2xs)}
 
 /* Dashboard 2-col */
 .dash-2col{display:grid;grid-template-columns:1fr 340px;gap:var(--space-4);margin-bottom:var(--space-5)}
@@ -1261,7 +1265,7 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
   width:36px;height:36px;border-radius:var(--radius-sm);
   display:flex;align-items:center;justify-content:center;flex-shrink:0;
 }
-.activity-dot i[class*="ph-"]{font-size:16px}
+.activity-dot [data-lucide]{font-size:16px}
 .activity-body{flex:1;min-width:0}
 .activity-title{font-weight:700;color:var(--text);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:var(--font-sm)}
 .activity-meta{color:var(--text-muted);font-size:var(--font-2xs)}
@@ -1276,8 +1280,8 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
   display:flex;flex-direction:column;align-items:flex-start;gap:var(--space-2);text-align:right;
   min-height:76px;
 }
-.qa-btn:hover{background:var(--primary-50);border-color:var(--primary-200);color:var(--primary-700);transform:translateY(-2px);box-shadow:var(--shadow-sm)}
-.qa-btn i[class*="ph-"]{font-size:22px;flex-shrink:0;color:var(--primary-600)}
+.qa-btn:hover{background:var(--iris-50);border-color:var(--iris-200);color:var(--iris-600);box-shadow:var(--shadow-sm)}
+.qa-btn [data-lucide]{width:22px;height:22px;flex-shrink:0;color:var(--iris-500)}
 
 /* Dash section header */
 .dash-sec-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--space-4)}
@@ -1285,7 +1289,7 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
   font-size:var(--font-md);font-weight:700;color:var(--text);
   display:flex;align-items:center;gap:var(--space-2);letter-spacing:-.1px;
 }
-.dash-sec-hdr h3 i[class*="ph-"]{font-size:18px;color:var(--primary-600)}
+.dash-sec-hdr h3 [data-lucide]{width:18px;height:18px;color:var(--iris-500)}
 
 @media(max-width:900px){
   .dash-2col{grid-template-columns:1fr}
@@ -1308,27 +1312,27 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
         <div class="sb-logo-icon">ب</div>
         <span class="sb-logo-text">بُعد</span>
       </div>
-      <button class="sb-toggle" id="sb-toggle" onclick="Nav.toggleSidebar()"><i class="ph-bold ph-caret-right"></i></button>
+      <button class="sb-toggle" id="sb-toggle" onclick="Nav.toggleSidebar()"><i data-lucide="chevron-right"></i></button>
     </div>
     <nav class="sb-nav">
       <div class="sb-section-label">القائمة</div>
       <a class="sb-item" id="nav-dash" onclick="Nav.go('dash')">
-        <span class="sb-icon"><i class="ph-duotone ph-squares-four"></i></span>
+        <span class="sb-icon"><i data-lucide="layout-dashboard"></i></span>
         <span class="sb-label">الرئيسية</span>
       </a>
       <a class="sb-item" id="nav-clients" onclick="Nav.go('clients')">
-        <span class="sb-icon"><i class="ph-duotone ph-users-three"></i></span>
+        <span class="sb-icon"><i data-lucide="users"></i></span>
         <span class="sb-label">العملاء</span>
         <span class="sb-badge" id="sb-badge-clients">0</span>
       </a>
       <a class="sb-item" id="nav-projects" onclick="Nav.go('projects')">
-        <span class="sb-icon"><i class="ph-duotone ph-briefcase"></i></span>
+        <span class="sb-icon"><i data-lucide="briefcase"></i></span>
         <span class="sb-label">المشاريع</span>
         <span class="sb-badge" id="sb-badge-projects">0</span>
       </a>
       <div class="sb-section-label">الحساب</div>
       <a class="sb-item" id="nav-settings" onclick="Nav.go('settings')">
-        <span class="sb-icon"><i class="ph ph-gear-six"></i></span>
+        <span class="sb-icon"><i data-lucide="settings-2"></i></span>
         <span class="sb-label">الإعدادات</span>
       </a>
     </nav>
@@ -1347,11 +1351,11 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
   <!-- Main -->
   <main id="main">
     <div class="top-bar">
-      <button class="top-bar-menu" id="top-menu-btn" onclick="Nav.openSidebar()"><i class="ph-bold ph-list"></i></button>
+      <button class="top-bar-menu" id="top-menu-btn" onclick="Nav.openSidebar()"><i data-lucide="menu"></i></button>
       <div class="top-bar-breadcrumb" id="breadcrumb"></div>
       <div class="top-bar-actions" id="top-actions"></div>
       <div class="top-bar-divider"></div>
-      <button class="tb-icon-btn" title="الإعدادات" onclick="Nav.go('settings')"><i class="ph ph-gear-six"></i></button>
+      <button class="tb-icon-btn" title="الإعدادات" onclick="Nav.go('settings')"><i data-lucide="settings-2"></i></button>
       <div class="tb-user" title="منصة بُعد">ب</div>
     </div>
     <div id="pg-dash"     class="page"></div>
@@ -1515,6 +1519,7 @@ var Nav = {
     if (page==='client') { var ni=document.getElementById('nav-clients'); if(ni) ni.classList.add('active'); }
     if (page==='fin') { var ni2=document.getElementById('nav-projects'); if(ni2) ni2.classList.add('active'); }
     if (Pages['render_'+page]) Pages['render_'+page](params);
+    if (typeof lucide !== 'undefined') lucide.createIcons();
     Nav.updateBreadcrumb(page, params);
     Nav.updateBadges();
     var m = document.getElementById('pg-'+page);
@@ -1534,23 +1539,26 @@ var Nav = {
   updateBreadcrumb: function(page, params) {
     var bc = document.getElementById('breadcrumb');
     if (!bc) return;
-    var icons = {dash:'squares-four', clients:'users-three', projects:'briefcase', settings:'gear-six'};
+    var icons = {dash:'layout-dashboard', clients:'users', projects:'briefcase', settings:'settings-2'};
     var labels = {dash:'الرئيسية', clients:'العملاء', projects:'المشاريع', settings:'الإعدادات'};
-    function iconHtml(n){ return n ? '<i class="ph-duotone ph-'+n+'" style="font-size:13px;opacity:.7;flex-shrink:0"></i>' : ''; }
+    function iconHtml(n){ return n ? '<i data-lucide="'+n+'" style="width:14px;height:14px;opacity:.6;flex-shrink:0"></i>' : ''; }
     if (labels[page]) {
       bc.innerHTML = iconHtml(icons[page])+'<span class="bc-page">'+labels[page]+'</span>';
+      if (typeof lucide !== 'undefined') lucide.createIcons({rootElement: bc});
       return;
     }
     if (page==='client' && params && params.clientId) {
       var clients = DB.getClients();
       var cl = clients.find(function(c){ return c.id===params.clientId; });
-      bc.innerHTML = iconHtml('users-three')+'<span onclick="Nav.go(\'clients\')" style="cursor:pointer;color:var(--primary-600)">العملاء</span><span class="bc-sep">/</span><span class="bc-page">'+(cl?UI.escHtml(cl.name):'عميل')+'</span>';
+      bc.innerHTML = iconHtml('users')+'<span onclick="Nav.go(\'clients\')" style="cursor:pointer;color:var(--iris-500)">العملاء</span><span class="bc-sep">/</span><span class="bc-page">'+(cl?UI.escHtml(cl.name):'عميل')+'</span>';
+      if (typeof lucide !== 'undefined') lucide.createIcons({rootElement: bc});
       return;
     }
     if (page==='fin' && params && params.projId) {
       var projects = DB.getProjects();
       var pr = projects.find(function(p){ return p.id===params.projId; });
-      bc.innerHTML = iconHtml('briefcase')+'<span onclick="Nav.go(\'projects\')" style="cursor:pointer;color:var(--primary-600)">المشاريع</span><span class="bc-sep">/</span><span class="bc-page">'+(pr?UI.escHtml(pr.name):'مشروع')+'</span>';
+      bc.innerHTML = iconHtml('briefcase')+'<span onclick="Nav.go(\'projects\')" style="cursor:pointer;color:var(--iris-500)">المشاريع</span><span class="bc-sep">/</span><span class="bc-page">'+(pr?UI.escHtml(pr.name):'مشروع')+'</span>';
+      if (typeof lucide !== 'undefined') lucide.createIcons({rootElement: bc});
       return;
     }
     bc.innerHTML='';
@@ -1584,6 +1592,7 @@ var Nav = {
 var UI = {
   openModal: function(html) {
     document.getElementById('modal-box').innerHTML = html;
+    if (typeof lucide !== 'undefined') lucide.createIcons({rootElement: document.getElementById('modal-box')});
     document.getElementById('modal-overlay').classList.add('active');
   },
   closeModal: function(e) {
@@ -1723,8 +1732,6 @@ Pages.render_dash = function() {
   }).slice(0, 6);
   var stColors = {active:'var(--success-50)',completed:'var(--primary-50)',paused:'var(--warning-50)',cancelled:'var(--danger-50)'};
   var stIcons  = {active:'play-circle',completed:'check-circle',paused:'pause-circle',cancelled:'x-circle'};
-  /* Phosphor weight for status icons */
-  var stWeight = {active:'ph-fill',completed:'ph-fill',paused:'ph-fill',cancelled:'ph-fill'};
   var stStroke = {active:'#059669',completed:'#4F46E5',paused:'#D97706',cancelled:'#E11D48'};
 
   var activityHtml = '';
@@ -1734,11 +1741,10 @@ Pages.render_dash = function() {
     feedItems.forEach(function(p){
       var cl = clients.find(function(c){ return c.id===p.client_id; });
       var icon = stIcons[p.status]||'circle';
-      var wt   = stWeight[p.status]||'ph';
       activityHtml +=
         '<div class="activity-item" onclick="Nav.go(\'fin\',{projId:\''+p.id+'\'})" style="cursor:pointer">' +
           '<div class="activity-dot" style="background:'+(stColors[p.status]||'var(--gray-100)')+';color:'+(stStroke[p.status]||'var(--gray-400)')+'">' +
-            '<i class="'+wt+' ph-'+icon+'"></i>' +
+            '<i data-lucide="'+icon+'"></i>' +
           '</div>' +
           '<div class="activity-body">' +
             '<div class="activity-title">'+UI.escHtml(p.name)+'</div>' +
@@ -1760,8 +1766,8 @@ Pages.render_dash = function() {
         '<p>'+dateStr+' &nbsp;·&nbsp; '+projects.length+' مشروع، '+activeProj.length+' نشط حالياً</p>' +
       '</div>' +
       '<div class="dash-greeting-actions">' +
-        '<button class="btn-white" onclick="Nav.go(\'projects\')"><i class="ph-duotone ph-folder-open" style="font-size:14px"></i>المشاريع</button>' +
-        '<button class="btn-white-solid" onclick="Pages.addProjectModal(null)"><i class="ph-bold ph-plus" style="font-size:14px"></i>مشروع جديد</button>' +
+        '<button class="btn-white" onclick="Nav.go(\'projects\')"><i data-lucide="folder-open" style="font-size:14px"></i>المشاريع</button>' +
+        '<button class="btn-white-solid" onclick="Pages.addProjectModal(null)"><i data-lucide="plus" style="font-size:14px"></i>مشروع جديد</button>' +
       '</div>' +
     '</div>' +
 
@@ -1770,7 +1776,7 @@ Pages.render_dash = function() {
 
       '<div class="kpi-card">' +
         '<div class="kpi-card-accent" style="background:var(--primary-600)"></div>' +
-        '<div class="kpi-card-icon" style="background:var(--primary-50);color:var(--primary-600)"><i class="ph-duotone ph-briefcase"></i></div>' +
+        '<div class="kpi-card-icon" style="background:var(--primary-50);color:var(--primary-600)"><i data-lucide="briefcase"></i></div>' +
         '<div class="kpi-card-label">إجمالي قيمة العقود</div>' +
         '<div class="kpi-card-value" style="color:var(--primary-700)">'+UI.fmt(totalContract)+'</div>' +
         '<div class="kpi-card-sub">ريال سعودي</div>' +
@@ -1778,7 +1784,7 @@ Pages.render_dash = function() {
 
       '<div class="kpi-card">' +
         '<div class="kpi-card-accent" style="background:var(--success-500)"></div>' +
-        '<div class="kpi-card-icon" style="background:var(--success-50);color:var(--success-600)"><i class="ph-bold ph-trend-up"></i></div>' +
+        '<div class="kpi-card-icon" style="background:var(--success-50);color:var(--success-600)"><i data-lucide="trending-up"></i></div>' +
         '<div class="kpi-card-label">صافي الأرباح</div>' +
         '<div class="kpi-card-value" style="color:var(--success-700)">'+UI.fmt(totalProfit)+'</div>' +
         '<div class="kpi-card-sub"><span class="kpi-trend-up">'+profitMargin+'%</span>&nbsp;هامش الربح</div>' +
@@ -1786,7 +1792,7 @@ Pages.render_dash = function() {
 
       '<div class="kpi-card">' +
         '<div class="kpi-card-accent" style="background:var(--accent-500)"></div>' +
-        '<div class="kpi-card-icon kpi-icon-accent"><i class="ph ph-activity"></i></div>' +
+        '<div class="kpi-card-icon kpi-icon-accent"><i data-lucide="activity"></i></div>' +
         '<div class="kpi-card-label">المشاريع النشطة</div>' +
         '<div class="kpi-card-value" style="color:var(--accent-700)">'+activeProj.length+'</div>' +
         '<div class="kpi-card-sub">من إجمالي '+projects.length+' مشروع</div>' +
@@ -1794,7 +1800,7 @@ Pages.render_dash = function() {
 
       '<div class="kpi-card">' +
         '<div class="kpi-card-accent" style="background:var(--warning-500)"></div>' +
-        '<div class="kpi-card-icon" style="background:var(--warning-50);color:var(--warning-600)"><i class="ph-duotone ph-users-three"></i></div>' +
+        '<div class="kpi-card-icon" style="background:var(--warning-50);color:var(--warning-600)"><i data-lucide="users"></i></div>' +
         '<div class="kpi-card-label">العملاء المسجلون</div>' +
         '<div class="kpi-card-value" style="color:var(--warning-700)">'+clients.length+'</div>' +
         '<div class="kpi-card-sub">'+completedProj.length+' مشروع مكتمل</div>' +
@@ -1807,14 +1813,14 @@ Pages.render_dash = function() {
 
       '<div class="card">' +
         '<div class="dash-sec-hdr">' +
-          '<h3><i class="ph-duotone ph-chart-bar"></i>أعلى المشاريع قيمةً</h3>' +
+          '<h3><i data-lucide="bar-chart-2"></i>أعلى المشاريع قيمةً</h3>' +
           '<button class="btn btn-sm btn-ghost" onclick="Nav.go(\'projects\')">عرض الكل</button>' +
         '</div>' +
         hbarRows +
       '</div>' +
 
       '<div class="card">' +
-        '<div class="dash-sec-hdr"><h3><i class="ph-duotone ph-chart-pie-slice"></i>توزيع المشاريع</h3></div>' +
+        '<div class="dash-sec-hdr"><h3><i data-lucide="pie-chart"></i>توزيع المشاريع</h3></div>' +
         '<div class="donut-wrap">' + donutSvg +
           '<div class="donut-legend">'+legendHtml+'</div>' +
         '</div>' +
@@ -1827,19 +1833,19 @@ Pages.render_dash = function() {
 
       '<div class="card">' +
         '<div class="dash-sec-hdr">' +
-          '<h3><i class="ph ph-clock"></i>آخر المشاريع</h3>' +
+          '<h3><i data-lucide="clock"></i>آخر المشاريع</h3>' +
           '<button class="btn btn-sm btn-ghost" onclick="Nav.go(\'projects\')">عرض الكل</button>' +
         '</div>' +
         '<div class="activity-feed">'+activityHtml+'</div>' +
       '</div>' +
 
       '<div class="card">' +
-        '<div class="dash-sec-hdr"><h3><i class="ph-fill ph-lightning"></i>إجراءات سريعة</h3></div>' +
+        '<div class="dash-sec-hdr"><h3><i data-lucide="zap"></i>إجراءات سريعة</h3></div>' +
         '<div class="quick-actions">' +
-          '<button class="qa-btn" onclick="Pages.addProjectModal(null)"><i class="ph-duotone ph-folder-plus"></i>مشروع جديد</button>' +
-          '<button class="qa-btn" onclick="Pages.addClientModal()"><i class="ph-bold ph-user-plus"></i>عميل جديد</button>' +
-          '<button class="qa-btn" onclick="Nav.go(\'projects\')"><i class="ph-bold ph-list-bullets"></i>كل المشاريع</button>' +
-          '<button class="qa-btn" onclick="Nav.go(\'clients\')"><i class="ph-duotone ph-users-three"></i>كل العملاء</button>' +
+          '<button class="qa-btn" onclick="Pages.addProjectModal(null)"><i data-lucide="folder-plus"></i>مشروع جديد</button>' +
+          '<button class="qa-btn" onclick="Pages.addClientModal()"><i data-lucide="user-plus"></i>عميل جديد</button>' +
+          '<button class="qa-btn" onclick="Nav.go(\'projects\')"><i data-lucide="list"></i>كل المشاريع</button>' +
+          '<button class="qa-btn" onclick="Nav.go(\'clients\')"><i data-lucide="users"></i>كل العملاء</button>' +
         '</div>' +
         '<div class="divider"></div>' +
         '<div style="display:flex;flex-direction:column;gap:0">' +
@@ -1893,7 +1899,7 @@ Pages.render_clients = function() {
 
   var cards = '';
   if (clients.length===0) {
-    cards = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-state-icon"><i class="ph-duotone ph-users-three"></i></div><h3>لا يوجد عملاء بعد</h3><p>ابدأ بإضافة أول عميل لتسجيل المشاريع تحت اسمه</p><button class="btn btn-primary" style="margin-top:var(--space-4)" onclick="Pages.addClientModal()"><i class="ph-bold ph-user-plus"></i>إضافة عميل</button></div>';
+    cards = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-state-icon"><i data-lucide="users"></i></div><h3>لا يوجد عملاء بعد</h3><p>ابدأ بإضافة أول عميل لتسجيل المشاريع تحت اسمه</p><button class="btn btn-primary" style="margin-top:var(--space-4)" onclick="Pages.addClientModal()"><i data-lucide="user-plus"></i>إضافة عميل</button></div>';
   } else {
     /* gradient avatar palette — assign by stable hash of client id */
     var avatarPalette = [
@@ -1924,15 +1930,15 @@ Pages.render_clients = function() {
         '</div>' +
         /* Meta row */
         '<div style="display:flex;gap:var(--space-2);margin-bottom:var(--space-4);flex-wrap:wrap">' +
-          '<span class="badge brand sm"><i class="ph-duotone ph-briefcase"></i>'+pCount+' مشروع</span>' +
+          '<span class="badge brand sm"><i data-lucide="briefcase"></i>'+pCount+' مشروع</span>' +
           (activeCount>0 ? '<span class="badge success sm with-dot">'+activeCount+' نشط</span>' : '') +
         '</div>' +
-        (cl.email ? '<div style="font-size:var(--font-2xs);color:var(--text-muted);margin-bottom:var(--space-3);display:flex;align-items:center;gap:5px"><i class="ph ph-envelope" style="font-size:13px"></i>'+UI.escHtml(cl.email)+'</div>' : '') +
+        (cl.email ? '<div style="font-size:var(--font-2xs);color:var(--text-muted);margin-bottom:var(--space-3);display:flex;align-items:center;gap:5px"><i data-lucide="mail" style="font-size:13px"></i>'+UI.escHtml(cl.email)+'</div>' : '') +
         /* Actions */
         '<div class="client-card-actions">' +
-          '<button class="btn btn-sm btn-primary" style="flex:1" onclick="Nav.go(\'client\',{clientId:\''+cl.id+'\'})"><i class="ph-bold ph-arrow-left"></i>عرض</button>' +
-          '<button class="btn btn-sm btn-icon" onclick="Pages.editClientModal(\''+cl.id+'\')" title="تعديل"><i class="ph ph-pencil-simple"></i></button>' +
-          '<button class="btn btn-sm btn-icon btn-danger" onclick="Pages.deleteClient(\''+cl.id+'\')" title="حذف"><i class="ph ph-trash"></i></button>' +
+          '<button class="btn btn-sm btn-primary" style="flex:1" onclick="Nav.go(\'client\',{clientId:\''+cl.id+'\'})"><i data-lucide="arrow-left"></i>عرض</button>' +
+          '<button class="btn btn-sm btn-icon" onclick="Pages.editClientModal(\''+cl.id+'\')" title="تعديل"><i data-lucide="pencil"></i></button>' +
+          '<button class="btn btn-sm btn-icon btn-danger" onclick="Pages.deleteClient(\''+cl.id+'\')" title="حذف"><i data-lucide="trash-2"></i></button>' +
         '</div>' +
       '</div>';
     });
@@ -1944,7 +1950,7 @@ Pages.render_clients = function() {
         '<h1>العملاء</h1>' +
         '<div class="page-header-sub">'+clients.length+' عميل مسجَّل في النظام</div>' +
       '</div>' +
-      '<button class="btn btn-primary" onclick="Pages.addClientModal()"><i class="ph-bold ph-user-plus"></i>إضافة عميل</button>' +
+      '<button class="btn btn-primary" onclick="Pages.addClientModal()"><i data-lucide="user-plus"></i>إضافة عميل</button>' +
     '</div>' +
     '<div class="client-grid">'+cards+'</div>';
   document.getElementById('top-actions').innerHTML='';
@@ -2035,7 +2041,7 @@ Pages.render_client = function(params) {
 
   var projCards = '';
   if (projects.length===0) {
-    projCards = '<div class="empty-state"><div class="empty-state-icon"><i class="ph-duotone ph-folder-open"></i></div><h3>لا توجد مشاريع</h3><p>أضف أول مشروع لهذا العميل</p></div>';
+    projCards = '<div class="empty-state"><div class="empty-state-icon"><i data-lucide="folder-open"></i></div><h3>لا توجد مشاريع</h3><p>أضف أول مشروع لهذا العميل</p></div>';
   } else {
     projects.forEach(function(p){
       projCards += '<tr>' +
@@ -2083,7 +2089,7 @@ Pages.render_projects = function() {
 
   var rows = '';
   if (filtered.length===0) {
-    rows = '<tr><td colspan="6"><div class="empty-state" style="padding:24px"><div class="empty-state-icon"><i class="ph-duotone ph-folder-open"></i></div><h3>لا توجد مشاريع</h3></div></td></tr>';
+    rows = '<tr><td colspan="6"><div class="empty-state" style="padding:24px"><div class="empty-state-icon"><i data-lucide="folder-open"></i></div><h3>لا توجد مشاريع</h3></div></td></tr>';
   } else {
     filtered.slice().sort(function(a,b){ return (b.created||'').localeCompare(a.created||''); }).forEach(function(p){
       var cl = clients.find(function(c){ return c.id===p.client_id; });
@@ -2113,7 +2119,7 @@ Pages.render_projects = function() {
         '<h1>المشاريع</h1>' +
         '<div class="page-header-sub">'+projects.length+' مشروع · '+filtered.length+' معروض</div>' +
       '</div>' +
-      '<button class="btn btn-primary" onclick="Pages.addProjectModal(null)"><i class="ph-bold ph-plus"></i>مشروع جديد</button>' +
+      '<button class="btn btn-primary" onclick="Pages.addProjectModal(null)"><i data-lucide="plus"></i>مشروع جديد</button>' +
     '</div>' +
     '<div class="filter-bar">'+filterHtml+'</div>' +
     '<div class="card" style="padding:0;overflow:hidden">' +
@@ -2227,13 +2233,13 @@ Pages.render_fin = function(params) {
             '</div>' +
             '<div class="proj-hero-name">'+UI.escHtml(proj.name)+'</div>' +
             '<div class="proj-hero-meta">' +
-              (cl?'<span class="proj-hero-meta-item"><i class="ph-duotone ph-buildings"></i>'+UI.escHtml(cl.name)+'</span>':'') +
-              (c.contract_no?'<span class="proj-hero-meta-item"><i class="ph-duotone ph-file-pdf"></i>'+UI.escHtml(c.contract_no)+'</span>':'') +
-              (c.contract_date?'<span class="proj-hero-meta-item"><i class="ph ph-calendar-blank"></i>'+fmtDate(c.contract_date)+'</span>':'') +
+              (cl?'<span class="proj-hero-meta-item"><i data-lucide="building-2"></i>'+UI.escHtml(cl.name)+'</span>':'') +
+              (c.contract_no?'<span class="proj-hero-meta-item"><i data-lucide="file"></i>'+UI.escHtml(c.contract_no)+'</span>':'') +
+              (c.contract_date?'<span class="proj-hero-meta-item"><i data-lucide="calendar"></i>'+fmtDate(c.contract_date)+'</span>':'') +
             '</div>' +
           '</div>' +
           '<div class="proj-hero-actions">' +
-            '<button class="proj-hero-edit" onclick="Pages.editProjectStatusModal(\''+projId+'\')"><i class="ph ph-pencil-simple" style="font-size:13px"></i>تعديل</button>' +
+            '<button class="proj-hero-edit" onclick="Pages.editProjectStatusModal(\''+projId+'\')"><i data-lucide="pencil" style="font-size:13px"></i>تعديل</button>' +
           '</div>' +
         '</div>' +
         '<div class="proj-hero-progress">' +
@@ -2257,16 +2263,16 @@ Pages.render_fin = function(params) {
   document.getElementById('pg-fin').innerHTML =
     heroHtml +
     '<div class="tabs">' +
-      '<button class="tab-btn'+(tab==='overview'?' active':'')+'" onclick="Pages.switchFinTab(\'overview\',\''+projId+'\')"><i class="ph-duotone ph-squares-four"></i>نظرة عامة</button>' +
-      '<button class="tab-btn'+(tab==='entries'?' active':'')+'" onclick="Pages.switchFinTab(\'entries\',\''+projId+'\')"><i class="ph-duotone ph-receipt"></i>سجل المعاملات</button>' +
-      '<button class="tab-btn'+(tab==='ctrl'?' active':'')+'" onclick="Pages.switchFinTab(\'ctrl\',\''+projId+'\')"><i class="ph ph-sliders-horizontal"></i>مركز التحكم</button>' +
+      '<button class="tab-btn'+(tab==='overview'?' active':'')+'" onclick="Pages.switchFinTab(\'overview\',\''+projId+'\')"><i data-lucide="layout-dashboard"></i>نظرة عامة</button>' +
+      '<button class="tab-btn'+(tab==='entries'?' active':'')+'" onclick="Pages.switchFinTab(\'entries\',\''+projId+'\')"><i data-lucide="receipt"></i>سجل المعاملات</button>' +
+      '<button class="tab-btn'+(tab==='ctrl'?' active':'')+'" onclick="Pages.switchFinTab(\'ctrl\',\''+projId+'\')"><i data-lucide="sliders-horizontal"></i>مركز التحكم</button>' +
     '</div>' +
     '<div id="fin-tab-overview" class="tab-content'+(tab==='overview'?' active':'')+'"></div>' +
     '<div id="fin-tab-entries" class="tab-content'+(tab==='entries'?' active':'')+'"></div>' +
     '<div id="fin-tab-ctrl" class="tab-content'+(tab==='ctrl'?' active':'')+'"></div>';
 
   document.getElementById('top-actions').innerHTML =
-    '<button class="btn btn-sm" onclick="Nav.go(\'projects\')" style="display:inline-flex;align-items:center;gap:5px"><i class="ph ph-arrow-right" style="font-size:13px"></i>المشاريع</button>';
+    '<button class="btn btn-sm" onclick="Nav.go(\'projects\')" style="display:inline-flex;align-items:center;gap:5px"><i data-lucide="arrow-right"></i>المشاريع</button>';
 
   Pages._finProjId = projId;
   if (tab==='overview') Pages.renderFinOverview(projId);
@@ -2445,6 +2451,7 @@ Pages.renderFinCtrl = function(projId) {
         '</table>' +
       '</div>' +
     '</div>';
+  if (typeof lucide !== 'undefined') lucide.createIcons({rootElement: document.getElementById(Pages._ctrlContainer||'ctrl-drawer-body')});
 };
 
 Pages.autoSaveCtrl = function(projId) {
@@ -2555,7 +2562,7 @@ Pages.renderFinEntries = function(projId) {
 
   var rows = '';
   if (filtered.length===0) {
-    rows = '<tr><td colspan="4"><div class="empty-state" style="padding:32px"><div class="empty-state-icon"><i class="ph-duotone ph-receipt"></i></div><h3>لا توجد قيود</h3><p>أضف أول بند مالي</p></div></td></tr>';
+    rows = '<tr><td colspan="4"><div class="empty-state" style="padding:32px"><div class="empty-state-icon"><i data-lucide="receipt"></i></div><h3>لا توجد قيود</h3><p>أضف أول بند مالي</p></div></td></tr>';
   } else {
     var statusLabel = {paid:'مدفوع', pending:'معلق', cancelled:'ملغي'};
     filtered.slice().sort(function(a,b){ return (b.date||'').localeCompare(a.date||''); }).forEach(function(e){
@@ -2580,7 +2587,7 @@ Pages.renderFinEntries = function(projId) {
           '</td>' +
           '<td data-label="المبلغ" class="col-amt mono '+amtCls+'" style="font-size:var(--font-sm);letter-spacing:-.3px">'+amtSign+' '+UI.fmt(e.amount)+'</td>' +
           '<td data-label="التاريخ" class="col-date" style="font-size:var(--font-xs);color:var(--text-muted);font-family:var(--font-mono)">'+fmtDate(e.date)+'</td>' +
-          '<td data-label="" class="col-chev"><span class="entry-chev" id="chev-'+e.id+'"><i class="ph-bold ph-caret-down"></i></span></td>' +
+          '<td data-label="" class="col-chev"><span class="entry-chev" id="chev-'+e.id+'"><i data-lucide="chevron-down"></i></span></td>' +
         '</tr>' +
         // Expandable detail row
         '<tr class="ed" id="ed-'+e.id+'">' +
@@ -2591,8 +2598,8 @@ Pages.renderFinEntries = function(projId) {
               (pmText?'<div class="entry-detail-item"><div class="edi-lbl">هامش الربح</div><div class="edi-val" style="color:var(--success);font-family:monospace">'+pmText+'</div></div>':'') +
               (e.note&&e.note!=='من الاتفاقية'?'<div class="entry-detail-item"><div class="edi-lbl">ملاحظة</div><div class="edi-val">'+UI.escHtml(e.note)+'</div></div>':'') +
               '<div style="margin-right:auto;display:flex;gap:6px;align-items:center">' +
-                '<button class="btn btn-sm" onclick="event.stopPropagation();Pages.editEntryModal(\''+projId+'\',\''+e.id+'\')" style="display:inline-flex;align-items:center;gap:4px"><i class="ph ph-pencil-simple" style="font-size:12px"></i>تعديل</button>' +
-                '<button class="btn btn-sm btn-danger" onclick="event.stopPropagation();Pages.deleteEntry(\''+projId+'\',\''+e.id+'\')" style="display:inline-flex;align-items:center;gap:4px"><i class="ph ph-trash" style="font-size:12px"></i>حذف</button>' +
+                '<button class="btn btn-sm" onclick="event.stopPropagation();Pages.editEntryModal(\''+projId+'\',\''+e.id+'\')" style="display:inline-flex;align-items:center;gap:4px"><i data-lucide="pencil"></i>تعديل</button>' +
+                '<button class="btn btn-sm btn-danger" onclick="event.stopPropagation();Pages.deleteEntry(\''+projId+'\',\''+e.id+'\')" style="display:inline-flex;align-items:center;gap:4px"><i data-lucide="trash-2"></i>حذف</button>' +
               '</div>' +
             '</div>' +
           '</td>' +
@@ -2644,14 +2651,14 @@ Pages.renderFinEntries = function(projId) {
       '</div>' +
       /* Search */
       '<div style="position:relative;flex:1;min-width:140px;max-width:220px">' +
-        '<i class="ph ph-magnifying-glass" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);width:13px;height:13px;color:var(--gray-400);pointer-events:none"></i>' +
+        '<i data-lucide="search" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);width:13px;height:13px;color:var(--gray-400);pointer-events:none"></i>' +
         '<input class="field-input" style="padding-right:32px;width:100%;font-size:12px" placeholder="بحث في البيانات..." value="'+UI.escHtml(search)+'" oninput="window._entriesSearch=this.value;Pages.renderFinEntries(\''+projId+'\')">' +
       '</div>' +
       /* Actions */
       '<div style="margin-right:auto;display:flex;gap:6px;align-items:center">' +
-        '<button class="btn btn-sm" onclick="Pages.exportCSV(\''+projId+'\')" title="تصدير CSV" style="display:inline-flex;align-items:center;gap:5px"><i class="ph-bold ph-download-simple" style="font-size:13px"></i>تصدير</button>' +
+        '<button class="btn btn-sm" onclick="Pages.exportCSV(\''+projId+'\')" title="تصدير CSV" style="display:inline-flex;align-items:center;gap:5px"><i data-lucide="download"></i>تصدير</button>' +
         '<button class="btn btn-sm btn-primary" onclick="Pages.addEntryModal(\''+projId+'\')" style="display:inline-flex;align-items:center;gap:6px;font-size:12.5px;padding:7px 16px">' +
-          '<i class="ph-fill ph-plus-circle" style="font-size:15px"></i>إضافة بند' +
+          '<i data-lucide="plus-circle"></i>إضافة بند' +
         '</button>' +
       '</div>' +
     '</div>' +
@@ -2672,7 +2679,7 @@ Pages.renderFinEntries = function(projId) {
 
     /* Empty state if needed */
     (filtered.length===0&&entries.length>0?'<div style="text-align:center;padding:12px 0;font-size:12px;color:var(--gray-400)">لا توجد نتائج للفلتر الحالي</div>':'');
-
+  if (typeof lucide !== 'undefined') lucide.createIcons({rootElement: document.getElementById('fin-tab-entries')});
 };
 
 Pages.toggleEntryRow = function(id) {
@@ -2949,8 +2956,8 @@ Pages.renderFinOverview = function(projId) {
         (c.contract_no?' &nbsp;·&nbsp; عقد: '+UI.escHtml(c.contract_no):'') +
       '</div>' +
       '<div class="dl-panel-btns">' +
-        '<button class="btn-dl btn-dl-csv" onclick="Pages.exportCSV(\''+projId+'\')"><i class="ph-duotone ph-microsoft-excel-logo"></i>CSV</button>' +
-        '<button class="btn-dl btn-dl-pdf" onclick="Pages.printReport(\''+projId+'\')"><i class="ph-duotone ph-file-pdf"></i>PDF / طباعة</button>' +
+        '<button class="btn-dl btn-dl-csv" onclick="Pages.exportCSV(\''+projId+'\')"><i data-lucide="file-spreadsheet"></i>CSV</button>' +
+        '<button class="btn-dl btn-dl-pdf" onclick="Pages.printReport(\''+projId+'\')"><i data-lucide="file"></i>PDF / طباعة</button>' +
       '</div>' +
     '</div>';
 
@@ -2960,7 +2967,7 @@ Pages.renderFinOverview = function(projId) {
 
       '<div class="kpi-card">' +
         '<div class="kpi-card-accent" style="background:var(--primary-600)"></div>' +
-        '<div class="kpi-card-icon kpi-icon-brand"><i class="ph-duotone ph-file-text"></i></div>' +
+        '<div class="kpi-card-icon kpi-icon-brand"><i data-lucide="file-text"></i></div>' +
         '<div class="kpi-card-label">إجمالي قيمة العقد</div>' +
         '<div class="kpi-card-value kpi-val-brand">'+UI.fmt(r.grossTotal)+'</div>' +
         '<div class="kpi-card-sub">صافي '+UI.fmt(r.contractNet)+' ر.س</div>' +
@@ -2968,7 +2975,7 @@ Pages.renderFinOverview = function(projId) {
 
       '<div class="kpi-card">' +
         '<div class="kpi-card-accent" style="background:var(--danger-600)"></div>' +
-        '<div class="kpi-card-icon kpi-icon-danger"><i class="ph-bold ph-trend-down"></i></div>' +
+        '<div class="kpi-card-icon kpi-icon-danger"><i data-lucide="trending-down"></i></div>' +
         '<div class="kpi-card-label">إجمالي المصاريف</div>' +
         '<div class="kpi-card-value kpi-val-danger">'+UI.fmt(r.totalExpenses)+'</div>' +
         '<div class="kpi-card-sub">'+expCount+' بنود مصروف · '+expPct+'% من العقد</div>' +
@@ -2976,7 +2983,7 @@ Pages.renderFinOverview = function(projId) {
 
       '<div class="kpi-card">' +
         '<div class="kpi-card-accent" style="background:var(--success-600)"></div>' +
-        '<div class="kpi-card-icon kpi-icon-success"><i class="ph-bold ph-trend-up"></i></div>' +
+        '<div class="kpi-card-icon kpi-icon-success"><i data-lucide="trending-up"></i></div>' +
         '<div class="kpi-card-label">صافي الربح</div>' +
         '<div class="kpi-card-value kpi-val-success">'+UI.fmt(r.profit)+'</div>' +
         '<div class="kpi-card-sub"><span class="kpi-trend-up">'+profitPct+'%</span> هامش الربحية</div>' +
@@ -2984,7 +2991,7 @@ Pages.renderFinOverview = function(projId) {
 
       '<div class="kpi-card">' +
         '<div class="kpi-card-accent" style="background:'+(r.remaining<0?'var(--danger-600)':'var(--warning-600)')+'"></div>' +
-        '<div class="kpi-card-icon '+(r.remaining<0?'kpi-icon-danger':'kpi-icon-warn')+'"><i class="ph-duotone ph-wallet"></i></div>' +
+        '<div class="kpi-card-icon '+(r.remaining<0?'kpi-icon-danger':'kpi-icon-warn')+'"><i data-lucide="wallet"></i></div>' +
         '<div class="kpi-card-label">المتبقي'+(r.remaining<0?' — تجاوز':'')+'</div>' +
         '<div class="kpi-card-value '+(r.remaining<0?'kpi-val-danger':'kpi-val-warn')+'">'+UI.fmt(r.remaining)+'</div>' +
         '<div class="kpi-card-sub">'+incCount+' بنود دخل · '+fin.entries.length+' معاملة</div>' +
@@ -3059,15 +3066,15 @@ Pages.renderFinOverview = function(projId) {
     kpis +
     '<div class="ov-2col">' +
       '<div class="card">' +
-        '<div class="dash-sec-hdr"><h3><i class="ph-duotone ph-tree-structure"></i>توزيع قيمة العقد</h3></div>' +
+        '<div class="dash-sec-hdr"><h3><i data-lucide="git-branch"></i>توزيع قيمة العقد</h3></div>' +
         '<div class="wf-table">' + wfHtml + '</div>' +
       '</div>' +
       '<div class="card">' +
-        '<div class="dash-sec-hdr"><h3><i class="ph-duotone ph-chart-bar"></i>الدخل مقابل المصاريف</h3></div>' +
+        '<div class="dash-sec-hdr"><h3><i data-lucide="bar-chart-2"></i>الدخل مقابل المصاريف</h3></div>' +
         incExpChart +
       '</div>' +
     '</div>';
-
+  if (typeof lucide !== 'undefined') lucide.createIcons({rootElement: document.getElementById('fin-tab-overview')});
 };
 
 Pages.printReport = function(projId) {
@@ -3384,28 +3391,28 @@ Pages.render_settings = function() {
     '<div class="kpi-grid" style="margin-bottom:var(--space-5)">' +
       '<div class="kpi-card">' +
         '<div class="kpi-card-accent" style="background:var(--primary-500)"></div>' +
-        '<div class="kpi-card-icon" style="background:var(--primary-50);color:var(--primary-600)"><i class="ph-duotone ph-users-three"></i></div>' +
+        '<div class="kpi-card-icon" style="background:var(--primary-50);color:var(--primary-600)"><i data-lucide="users"></i></div>' +
         '<div class="kpi-card-label">العملاء</div>' +
         '<div class="kpi-card-value" style="color:var(--primary-600)">'+clients.length+'</div>' +
         '<div class="kpi-card-sub">عميل مسجل</div>' +
       '</div>' +
       '<div class="kpi-card">' +
         '<div class="kpi-card-accent" style="background:var(--accent-500)"></div>' +
-        '<div class="kpi-card-icon" style="background:var(--accent-50);color:var(--accent-600)"><i class="ph-duotone ph-briefcase"></i></div>' +
+        '<div class="kpi-card-icon" style="background:var(--accent-50);color:var(--accent-600)"><i data-lucide="briefcase"></i></div>' +
         '<div class="kpi-card-label">المشاريع</div>' +
         '<div class="kpi-card-value" style="color:var(--accent-600)">'+projects.length+'</div>' +
         '<div class="kpi-card-sub">مشروع إجمالاً</div>' +
       '</div>' +
       '<div class="kpi-card">' +
         '<div class="kpi-card-accent" style="background:var(--success-500)"></div>' +
-        '<div class="kpi-card-icon kpi-icon-success"><i class="ph-bold ph-activity"></i></div>' +
+        '<div class="kpi-card-icon kpi-icon-success"><i data-lucide="activity"></i></div>' +
         '<div class="kpi-card-label">النشطة</div>' +
         '<div class="kpi-card-value" style="color:var(--success-600)">'+activeCount+'</div>' +
         '<div class="kpi-card-sub">قيد التنفيذ</div>' +
       '</div>' +
       '<div class="kpi-card">' +
         '<div class="kpi-card-accent" style="background:var(--info-500)"></div>' +
-        '<div class="kpi-card-icon" style="background:var(--info-50);color:var(--info-600)"><i class="ph-fill ph-check-circle"></i></div>' +
+        '<div class="kpi-card-icon" style="background:var(--info-50);color:var(--info-600)"><i data-lucide="check-circle"></i></div>' +
         '<div class="kpi-card-label">المكتملة</div>' +
         '<div class="kpi-card-value" style="color:var(--info-600)">'+completedCount+'</div>' +
         '<div class="kpi-card-sub">مشروع منجَز</div>' +
@@ -3416,32 +3423,32 @@ Pages.render_settings = function() {
     '<div class="dash-2col" style="margin-bottom:var(--space-5)">' +
       '<div class="card">' +
         '<div class="dash-sec-hdr">' +
-          '<h3><i class="ph-duotone ph-database"></i>إدارة البيانات</h3>' +
+          '<h3><i data-lucide="database"></i>إدارة البيانات</h3>' +
         '</div>' +
         '<p style="font-size:var(--font-xs);color:var(--text-muted);margin-bottom:var(--space-4);line-height:var(--lh-normal)">' +
           'تصدير بيانات التطبيق إلى ملف JSON كنسخة احتياطية، أو استيراد بيانات سابقة. هذه العمليات لا تؤثر على بيانات التطبيقات الأخرى.' +
         '</p>' +
         '<div style="display:flex;gap:var(--space-2);flex-wrap:wrap">' +
-          '<button class="btn btn-primary" onclick="Pages.exportData()"><i class="ph-bold ph-download-simple"></i>تصدير البيانات</button>' +
-          '<label class="btn" style="cursor:pointer"><i class="ph-bold ph-upload-simple"></i>استيراد<input type="file" accept=".json" style="display:none" onchange="Pages.importData(event)"></label>' +
-          '<button class="btn btn-danger" onclick="Pages.clearData()"><i class="ph ph-trash"></i>مسح الكل</button>' +
+          '<button class="btn btn-primary" onclick="Pages.exportData()"><i data-lucide="download"></i>تصدير البيانات</button>' +
+          '<label class="btn" style="cursor:pointer"><i data-lucide="upload"></i>استيراد<input type="file" accept=".json" style="display:none" onchange="Pages.importData(event)"></label>' +
+          '<button class="btn btn-danger" onclick="Pages.clearData()"><i data-lucide="trash-2"></i>مسح الكل</button>' +
         '</div>' +
       '</div>' +
       '<div class="card">' +
         '<div class="dash-sec-hdr">' +
-          '<h3><i class="ph-duotone ph-flask"></i>بيانات تجريبية</h3>' +
+          '<h3><i data-lucide="flask-conical"></i>بيانات تجريبية</h3>' +
         '</div>' +
         '<p style="font-size:var(--font-xs);color:var(--text-muted);margin-bottom:var(--space-4);line-height:var(--lh-normal)">' +
           'تحميل مجموعة من البيانات النموذجية لاستكشاف ميزات التطبيق بسرعة.' +
         '</p>' +
-        '<button class="btn btn-outline" onclick="Pages.loadSampleData()"><i class="ph-bold ph-lightning"></i>تحميل بيانات تجريبية</button>' +
+        '<button class="btn btn-outline" onclick="Pages.loadSampleData()"><i data-lucide="zap"></i>تحميل بيانات تجريبية</button>' +
       '</div>' +
     '</div>' +
 
     /* About */
     '<div class="card">' +
       '<div class="dash-sec-hdr">' +
-        '<h3><i class="ph-duotone ph-info"></i>عن التطبيق</h3>' +
+        '<h3><i data-lucide="info"></i>عن التطبيق</h3>' +
         '<span class="badge brand">v2.0</span>' +
       '</div>' +
       '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:var(--space-4)">' +
