@@ -736,7 +736,9 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
   .entry-tbl .col-amt{width:108px}
   .entry-tbl .col-chev{width:32px}
   /* allow desc to wrap on narrow screens */
-  .entry-tbl tbody td:nth-child(2){white-space:normal;overflow:visible;height:auto;padding-top:10px;padding-bottom:10px;line-height:var(--lh-snug)}
+  .entry-tbl tbody td:nth-child(2){white-space:normal;overflow:visible;height:auto;padding-top:10px;padding-bottom:10px;line-height:var(--lh-snug);padding-inline-start:var(--space-3)}
+  /* proper margin for first visible column on mobile */
+  .entry-tbl thead th:nth-child(2){padding-inline-start:var(--space-3)}
 }
 
 /* ── Badges (v2 — with dot/icon/sizes) ── */
@@ -2128,6 +2130,22 @@ Pages.addClientModal = function(editId) {
   );
 };
 
+Pages.saveClientNotes = function(clientId) {
+  var ta = document.getElementById('cl-notes-area');
+  if (!ta) return;
+  var clients = DB.getClients();
+  var cl = clients.find(function(c){ return c.id===clientId; });
+  if (!cl) return;
+  cl.notes = ta.value.trim();
+  DB.saveClients(clients);
+};
+Pages.saveClientField = function(clientId, field, value) {
+  var clients = DB.getClients();
+  var cl = clients.find(function(c){ return c.id===clientId; });
+  if (!cl) return;
+  cl[field] = value.trim();
+  DB.saveClients(clients);
+};
 Pages.editClientModal = function(id) { Pages.addClientModal(id); };
 
 Pages.saveClient = function(editId) {
@@ -2234,9 +2252,24 @@ Pages.render_client = function(params) {
     '</div>' +
 
     /* ── Projects table ── */
-    '<div class="card">' +
+    '<div class="card" style="margin-bottom:var(--space-4)">' +
       '<div class="card-title">المشاريع</div>' +
       projCards +
+    '</div>' +
+
+    /* ── Notes section ── */
+    '<div class="card">' +
+      '<div class="dash-sec-hdr"><h3><i data-lucide="file-text"></i>ملاحظات وتفاصيل</h3></div>' +
+      '<div class="form-group" style="margin-bottom:var(--space-3)">' +
+        '<label class="field-label">ملاحظات</label>' +
+        '<textarea id="cl-notes-area" class="field-input" style="min-height:88px;resize:vertical" placeholder="أضف ملاحظات عن العميل..." onblur="Pages.saveClientNotes(\''+cl.id+'\')">' +
+          UI.escHtml(cl.notes||'') +
+        '</textarea>' +
+      '</div>' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-3)">' +
+        '<div class="form-group" style="margin-bottom:0"><label class="field-label">رقم السجل / الترخيص</label><input class="field-input" value="'+UI.escHtml(cl.reg_no||'')+'" placeholder="—" onblur="Pages.saveClientField(\''+cl.id+'\',\'reg_no\',this.value)"></div>' +
+        '<div class="form-group" style="margin-bottom:0"><label class="field-label">الموقع الإلكتروني</label><input class="field-input" value="'+UI.escHtml(cl.website||'')+'" placeholder="—" onblur="Pages.saveClientField(\''+cl.id+'\',\'website\',this.value)"></div>' +
+      '</div>' +
     '</div>';
   document.getElementById('top-actions').innerHTML = '';
 };
@@ -2779,7 +2812,7 @@ Pages.renderFinEntries = function(projId) {
 
       /* ── Main clickable row ── */
       rows +=
-        '<tr class="er" id="er-'+e.id+'" onclick="Pages.toggleEntryExpand(\''+e.id+'\')" style="cursor:pointer">' +
+        '<tr class="er" id="er-'+e.id+'" onclick="Pages.openEntryDetail(\''+projId+'\',\''+e.id+'\')" style="cursor:pointer">' +
           '<td class="col-dot" style="overflow:visible;padding:0 var(--space-2)">' +
             '<span class="entry-type-dot '+(isIncome?'income':'expense')+'"></span>' +
           '</td>' +
@@ -2791,35 +2824,13 @@ Pages.renderFinEntries = function(projId) {
             amtSign+' '+UI.fmt(e.amount)+' <span style="font-size:10px;font-weight:400;color:var(--fg-4)">ر.س</span>' +
           '</td>' +
           '<td class="col-chev">' +
-            '<button class="entry-chev-btn" id="chev-'+e.id+'" onclick="event.stopPropagation();Pages.toggleEntryExpand(\''+e.id+'\')" title="تفاصيل">' +
+            '<button class="entry-chev-btn" onclick="event.stopPropagation();Pages.openEntryDetail(\''+projId+'\',\''+e.id+'\')" title="تفاصيل">' +
               '<i data-lucide="chevron-down"></i>' +
             '</button>' +
           '</td>' +
         '</tr>' +
 
-        /* ── Expand row (hidden by default) ── */
-        '<tr class="entry-expand-row" id="expand-'+e.id+'" hidden>' +
-          '<td colspan="5">' +
-            '<div class="entry-expand-panel">' +
-              /* meta: date + status + pm */
-              '<div class="entry-expand-meta">' +
-                '<span style="display:inline-flex;align-items:center;gap:4px"><i data-lucide="calendar" style="width:12px;height:12px;opacity:.6"></i>'+fmtDate(e.date)+'</span>' +
-                (stBadge ? stBadge : '') +
-                (pmBadge ? pmBadge : '') +
-              '</div>' +
-              /* notes */
-              '<div>' +
-                '<div class="entry-expand-lbl">ملاحظات</div>' +
-                '<textarea class="entry-expand-note" id="note-'+e.id+'" placeholder="أضف ملاحظة..." onblur="Pages.saveEntryNote(\''+projId+'\',\''+e.id+'\')">'+noteVal+'</textarea>' +
-              '</div>' +
-              /* actions */
-              '<div class="entry-expand-actions">' +
-                '<button class="btn btn-sm" onclick="Pages.editEntryModal(\''+projId+'\',\''+e.id+'\')" style="display:inline-flex;align-items:center;gap:var(--space-1_5)"><i data-lucide="pencil"></i>تعديل</button>' +
-                '<button class="btn btn-sm" style="display:inline-flex;align-items:center;gap:var(--space-1_5);color:var(--danger-600);border-color:var(--danger-200)" onclick="Pages.deleteEntry(\''+projId+'\',\''+e.id+'\')"><i data-lucide="trash-2"></i>حذف</button>' +
-              '</div>' +
-            '</div>' +
-          '</td>' +
-        '</tr>';
+        '';
     });
   }
 
@@ -2847,30 +2858,6 @@ Pages.renderFinEntries = function(projId) {
 
   document.getElementById('fin-tab-entries').innerHTML =
     warnHtml +
-
-    /* ── KPI strip ── */
-    '<div class="fin-stat-strip">' +
-      '<div class="fsi fsi-brand">' +
-        '<div class="fsi-lbl">إجمالي العقد</div>' +
-        '<div class="fsi-val">'+UI.fmt(r.grossTotal)+'</div>' +
-        '<div class="fsi-sub">ر.س</div>' +
-      '</div>' +
-      '<div class="fsi fsi-success">' +
-        '<div class="fsi-lbl">إجمالي الدخل</div>' +
-        '<div class="fsi-val">'+UI.fmt(r.totalIncome)+'</div>' +
-        '<div class="fsi-sub">'+incCount+' بند</div>' +
-      '</div>' +
-      '<div class="fsi fsi-danger">' +
-        '<div class="fsi-lbl">إجمالي المصاريف</div>' +
-        '<div class="fsi-val">'+UI.fmt(r.totalExpenses)+'</div>' +
-        '<div class="fsi-sub">'+expCount+' بند</div>' +
-      '</div>' +
-      '<div class="fsi '+(r.remaining<0?'fsi-danger':'fsi-warn')+'">' +
-        '<div class="fsi-lbl">المتبقي'+(r.remaining<0?' ⚠':'')+'</div>' +
-        '<div class="fsi-val">'+UI.fmt(r.remaining)+'</div>' +
-        '<div class="fsi-sub">هامش '+profitPct+'%</div>' +
-      '</div>' +
-    '</div>' +
 
     /* ── Toolbar ── */
     '<div style="display:flex;align-items:center;gap:var(--space-3);margin-bottom:var(--space-4);flex-wrap:wrap">' +
@@ -2907,25 +2894,72 @@ Pages.renderFinEntries = function(projId) {
   if (typeof lucide !== 'undefined') lucide.createIcons({rootElement: document.getElementById('fin-tab-entries')});
 };
 
-Pages.toggleEntryExpand = function(entryId) {
-  var expandRow = document.getElementById('expand-'+entryId);
-  var mainRow   = document.getElementById('er-'+entryId);
-  var chevBtn   = document.getElementById('chev-'+entryId);
-  if (!expandRow) return;
-  var opening = expandRow.hidden;
-  expandRow.hidden = !opening;
-  if (chevBtn)  chevBtn.classList.toggle('open', opening);
-  if (mainRow)  mainRow.classList.toggle('expanded', opening);
-};
-
-Pages.saveEntryNote = function(projId, entryId) {
-  var textarea = document.getElementById('note-'+entryId);
-  if (!textarea) return;
+Pages.openEntryDetail = function(projId, entryId) {
   var fin = DB.getFin(projId);
   var entry = (fin.entries||[]).find(function(e){ return e.id===entryId; });
   if (!entry) return;
-  entry.note = textarea.value.trim();
+  var isIncome = entry.type==='income';
+  var amtColor = isIncome ? 'var(--success-700)' : 'var(--danger-700)';
+  var amtSign  = isIncome ? '+' : '−';
+  var stLabelMap   = {paid:'مدفوع', pending:'معلق', cancelled:'ملغي'};
+  var stBadgeClass = {paid:'emerald', pending:'amber', cancelled:'gray'};
+  var stKey   = stBadgeClass[entry.status];
+  var stBadge = stKey ? '<span class="badge '+stKey+' sm">'+stLabelMap[entry.status]+'</span>' : '<span style="color:var(--fg-4)">—</span>';
+  var pm = parseFloat(entry.profit_margin)||0;
+  var pmText = pm>0 ? (entry.profit_margin_type==='fixed' ? UI.fmt(pm)+' ر.س' : pm+'%') : '—';
+  var noteVal = (entry.note && entry.note!=='من الاتفاقية') ? UI.escHtml(entry.note) : '';
+  var agrBadge = entry.note==='من الاتفاقية' ? '<span class="badge purple sm">اتفاقية</span>' : '';
+
+  UI.openModal(
+    '<div class="modal-header" style="border-bottom:1px solid var(--border-subtle)">' +
+      '<div style="display:flex;align-items:center;gap:var(--space-2);min-width:0">' +
+        '<span class="entry-type-dot '+(isIncome?'income':'expense')+'" style="width:9px;height:9px;flex-shrink:0"></span>' +
+        '<h3 style="font-size:var(--font-md);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+UI.escHtml(entry.desc||'')+'</h3>' +
+        agrBadge +
+      '</div>' +
+      '<button class="modal-close" onclick="UI.closeModalForce()">×</button>' +
+    '</div>' +
+    '<div class="modal-body" style="padding:0">' +
+      /* Amount hero */
+      '<div style="text-align:center;padding:var(--space-5) var(--space-4) var(--space-4);border-bottom:1px solid var(--border-subtle);background:var(--neutral-50)">' +
+        '<div style="font-size:clamp(26px,6vw,36px);font-weight:700;font-family:var(--font-mono);color:'+amtColor+';letter-spacing:-.5px">'+amtSign+UI.fmt(entry.amount)+'</div>' +
+        '<div style="font-size:var(--font-xs);color:var(--fg-3);margin-top:4px">ريال سعودي</div>' +
+      '</div>' +
+      /* Details */
+      '<div style="padding:var(--space-4);display:grid;grid-template-columns:1fr 1fr;gap:var(--space-3);border-bottom:1px solid var(--border-subtle)">' +
+        '<div><div style="font-size:var(--font-2xs);color:var(--fg-3);margin-bottom:4px;font-weight:500">التصنيف</div><div style="font-size:var(--font-sm);font-weight:500">'+catLabel(entry.cat)+'</div></div>' +
+        '<div><div style="font-size:var(--font-2xs);color:var(--fg-3);margin-bottom:4px;font-weight:500">التاريخ</div><div style="font-family:var(--font-mono);font-size:var(--font-xs)">'+fmtDate(entry.date)+'</div></div>' +
+        '<div><div style="font-size:var(--font-2xs);color:var(--fg-3);margin-bottom:4px;font-weight:500">الحالة</div>'+stBadge+'</div>' +
+        '<div><div style="font-size:var(--font-2xs);color:var(--fg-3);margin-bottom:4px;font-weight:500">هامش الربح</div><div style="font-family:var(--font-mono);font-size:var(--font-xs)">'+pmText+'</div></div>' +
+      '</div>' +
+      /* Notes */
+      '<div style="padding:var(--space-4)">' +
+        '<label class="field-label">ملاحظات</label>' +
+        '<textarea id="entry-modal-note" class="field-input" style="min-height:76px;resize:vertical;width:100%;box-sizing:border-box" placeholder="أضف ملاحظة...">'+noteVal+'</textarea>' +
+      '</div>' +
+    '</div>' +
+    '<div class="modal-footer" style="display:flex;justify-content:space-between;align-items:center">' +
+      '<button class="btn btn-sm" style="color:var(--danger-600);border-color:var(--danger-200);display:inline-flex;align-items:center;gap:var(--space-1_5)" onclick="if(confirm(\'حذف هذا البند؟\')){Pages.deleteEntry(\''+projId+'\',\''+entryId+'\');UI.closeModalForce()}"><i data-lucide="trash-2"></i>حذف</button>' +
+      '<div style="display:flex;gap:var(--space-2)">' +
+        '<button class="btn btn-sm" onclick="Pages.editEntryModal(\''+projId+'\',\''+entryId+'\');UI.closeModalForce()" style="display:inline-flex;align-items:center;gap:var(--space-1_5)"><i data-lucide="pencil"></i>تعديل</button>' +
+        '<button class="btn btn-sm btn-primary" onclick="Pages.saveEntryDetail(\''+projId+'\',\''+entryId+'\')" style="display:inline-flex;align-items:center;gap:var(--space-1_5)"><i data-lucide="check"></i>حفظ</button>' +
+      '</div>' +
+    '</div>'
+  );
+  if (typeof lucide !== 'undefined') lucide.createIcons({rootElement: document.querySelector('.modal-box')});
+};
+
+Pages.saveEntryDetail = function(projId, entryId) {
+  var ta = document.getElementById('entry-modal-note');
+  if (!ta) return;
+  var fin = DB.getFin(projId);
+  var entry = (fin.entries||[]).find(function(e){ return e.id===entryId; });
+  if (!entry) return;
+  entry.note = ta.value.trim();
   DB.saveFin(projId, fin);
+  UI.toast('تم الحفظ', 'success');
+  UI.closeModalForce();
+  Pages.renderFinEntries(projId);
 };
 
 
