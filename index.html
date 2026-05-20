@@ -558,16 +558,26 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
   border:1px solid var(--border);border-radius:var(--radius-lg);
   overflow:hidden;margin-bottom:var(--space-4);
 }
-.fsi{flex:1;padding:var(--space-4) var(--space-5);border-inline-start:1px solid var(--border-subtle);position:relative;min-width:0;transition:background var(--transition-fast)}
+.fsi{flex:1;padding:var(--space-3) var(--space-4);border-inline-start:1px solid var(--border-subtle);position:relative;min-width:0;transition:background var(--transition-fast);display:flex;flex-direction:column;justify-content:center}
 .fsi:hover{background:var(--neutral-50)}
 .fsi:last-child{border-inline-start:none}
-.fsi-lbl{font-size:var(--font-2xs);color:var(--fg-3);margin-bottom:var(--space-1_5);font-weight:500}
-.fsi-val{font-size:clamp(16px,2.2vw,22px);font-weight:700;font-family:var(--font-mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:var(--lh-tight);letter-spacing:-.5px}
+.fsi-lbl{font-size:var(--font-2xs);color:var(--fg-3);margin-bottom:var(--space-1);font-weight:500;white-space:nowrap}
+.fsi-val{font-size:clamp(14px,1.9vw,20px);font-weight:700;font-family:var(--font-mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:var(--lh-tight);letter-spacing:-.3px}
 .fsi.fsi-danger .fsi-val{color:var(--danger-600)}
 .fsi.fsi-success .fsi-val{color:var(--success-600)}
 .fsi.fsi-warn .fsi-val{color:var(--warning-600)}
 .fsi.fsi-brand .fsi-val{color:var(--iris-600)}
-.fsi-sub{font-size:var(--font-2xs);color:var(--fg-3);margin-top:var(--space-1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fsi-sub{font-size:var(--font-2xs);color:var(--fg-3);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* mobile: 2×2 grid, horizontal layout per cell */
+@media(max-width:600px){
+  .fin-stat-strip{flex-wrap:wrap}
+  .fsi{flex:0 0 50%;flex-direction:row;align-items:center;gap:var(--space-2_5);padding:var(--space-3)}
+  .fsi:nth-child(2){border-inline-start:none;border-inline-end:1px solid var(--border-subtle)}
+  .fsi:nth-child(3),.fsi:nth-child(4){border-top:1px solid var(--border-subtle)}
+  .fsi-lbl{margin-bottom:0;flex-shrink:0;max-width:52px;white-space:normal;line-height:1.3}
+  .fsi-val{font-size:13px;letter-spacing:-.2px}
+  .fsi-sub{font-size:10px;margin-top:1px}
+}
 
 /* ── Page header ── */
 .page-header{
@@ -717,10 +727,13 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
     color: var(--fg-3); flex-shrink: 0;
   }
 
-  /* entry-tbl → horizontal scroll on mobile */
-  .entry-tbl{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch}
-  .entry-tbl table{min-width:400px}
+  /* entry-tbl → hide extras, let description breathe */
   .entry-tbl .col-dot{display:none}
+  .entry-tbl .col-cat{display:none}
+  .entry-tbl .col-amt{width:108px}
+  .entry-tbl .col-chev{width:32px}
+  /* allow desc to wrap on narrow screens */
+  .entry-tbl tbody td:nth-child(2){white-space:normal;overflow:visible;height:auto;padding-top:10px;padding-bottom:10px;line-height:var(--lh-snug)}
 }
 
 /* ── Badges (v2 — with dot/icon/sizes) ── */
@@ -1058,17 +1071,13 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
 .report-tab.active{background:var(--iris-500);color:#fff}
 
 /* ── Waterfall ── */
-.wf-table{width:100%;font-size:12.5px}
-.wf-row{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;margin-bottom:3px}
+.wf-table{width:100%;font-size:var(--font-xs)}
+.wf-row{display:flex;align-items:center;gap:var(--space-2);padding:7px 12px;border-radius:var(--radius-sm);margin-bottom:2px}
 .wf-row:hover{background:var(--neutral-50)}
-.wf-row.wf-total{background:var(--neutral-50);border:1px solid var(--border);font-weight:700;margin-top:6px}
-.wf-sign{width:18px;text-align:center;font-family:'IBM Plex Mono',monospace;font-weight:700;color:var(--text-subtle);flex-shrink:0;font-size:13px}
-.wf-lbl{flex:1;color:var(--text-strong);font-size:12.5px}
-.wf-formula{font-size:11px;color:var(--text-subtle)}
-.wf-bar-wrap{width:80px;flex-shrink:0}
-.wf-bar-track{background:var(--neutral-100);border-radius:20px;height:5px;overflow:hidden}
-.wf-bar-fill{height:100%;border-radius:20px;transition:width .4s}
-.wf-val{font-family:'IBM Plex Mono',monospace;font-weight:700;min-width:120px;text-align:left;font-size:12.5px}
+.wf-row.wf-total{background:var(--neutral-50);border:1px solid var(--border);font-weight:700;margin-top:var(--space-2);border-radius:var(--radius-md)}
+.wf-sign{width:16px;text-align:center;font-family:var(--font-mono);font-weight:700;color:var(--fg-3);flex-shrink:0;font-size:var(--font-xs)}
+.wf-lbl{flex:1;color:var(--fg-2);font-size:var(--font-xs);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.wf-val{font-family:var(--font-mono);font-weight:700;white-space:nowrap;font-size:var(--font-xs);text-align:left;flex-shrink:0}
 
 /* ── Download panel ── */
 .dl-panel{
@@ -1125,6 +1134,10 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
 /* ── Scrollable table wrapper ── */
 .tbl-responsive{overflow-x:auto;-webkit-overflow-scrolling:touch}
 .tbl-responsive .data-table{min-width:560px}
+/* entry table on mobile: no scroll, hide extras */
+@media(max-width:767px){
+  .tbl-responsive:has(.entry-tbl){overflow-x:visible}
+}
 .entry-tbl tbody tr:last-child td{border-bottom:none}
 
 /* ── Print ── */
@@ -3215,13 +3228,10 @@ Pages.renderFinOverview = function(projId) {
 
   /* ── Waterfall with visual bars ── */
   function wfRow(sign, lbl, val, col, isTotal) {
-    var vc = col==='red'?'var(--danger-700)':col==='green'?'var(--success-700)':col==='brand'?'var(--iris-700)':'var(--fg-1)';
-    var barColor = col==='red'?'var(--danger-500)':col==='green'?'var(--success-500)':col==='brand'?'var(--iris-500)':'var(--neutral-400)';
-    var barPct = r.grossTotal>0&&!isTotal ? Math.min(100,Math.round(Math.abs(val)/r.grossTotal*100)) : 0;
+    var vc = col==='red'?'var(--danger-700)':col==='green'?'var(--success-700)':col==='brand'?'var(--iris-600)':'var(--fg-1)';
     return '<div class="wf-row'+(isTotal?' wf-total':'')+'">' +
       '<span class="wf-sign">'+(sign||'')+'</span>' +
       '<span class="wf-lbl">'+lbl+'</span>' +
-      (!isTotal?'<div class="wf-bar-wrap"><div class="wf-bar-track"><div class="wf-bar-fill" style="width:'+barPct+'%;background:'+barColor+'"></div></div></div>':'') +
       '<span class="wf-val" style="color:'+vc+'">'+UI.fmt(Math.abs(val))+' ر.س</span>' +
     '</div>';
   }
