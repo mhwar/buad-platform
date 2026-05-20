@@ -325,19 +325,20 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 
 .sb-item{
   display:flex;align-items:center;gap:var(--space-2_5);
-  padding:7px var(--space-2_5);
+  padding:8px var(--space-3);
   border:1px solid transparent;
-  border-radius:var(--radius-sm);cursor:pointer;
+  border-radius:var(--radius-md);cursor:pointer;
   color:var(--fg-2);font-size:var(--font-sm);font-weight:500;
-  transition:var(--transition-fast);margin-bottom:1px;
+  transition:var(--transition-fast);margin-bottom:2px;
   white-space:nowrap;overflow:hidden;position:relative;
-  min-height:36px;
+  min-height:38px;text-decoration:none;
 }
 .sb-item:hover{background:var(--neutral-100);color:var(--fg-1)}
 .sb-item.active{
   background:var(--bg-elevated);
   border-color:var(--border);
   color:var(--fg-1);font-weight:600;
+  box-shadow:0 1px 2px oklch(0 0 0 / 0.04);
 }
 
 .sb-icon{
@@ -374,43 +375,86 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 
 /* ── Sidebar footer (user profile) ── */
 .sb-footer{
-  padding:var(--space-2) var(--space-2) var(--space-3);
+  padding:var(--space-2_5) var(--space-2);
   border-top:1px solid var(--border-subtle);flex-shrink:0;
+  position:relative;
 }
 .sb-user{
   display:flex;align-items:center;gap:var(--space-2_5);
   padding:var(--space-2) var(--space-2_5);
-  border-radius:var(--radius-sm);
+  border-radius:var(--radius-md);
   cursor:pointer;transition:var(--transition-fast);
+  border:1px solid transparent;
 }
-.sb-user:hover{background:var(--neutral-100)}
+.sb-user:hover{background:var(--neutral-100);border-color:var(--border-subtle)}
+.sb-user.menu-open{background:var(--bg-elevated);border-color:var(--border)}
 .sb-user-avatar{
-  width:30px;height:30px;border-radius:50%;
+  width:34px;height:34px;border-radius:50%;
   background:var(--iris-500);color:#fff;
   display:flex;align-items:center;justify-content:center;
-  font-size:12px;font-weight:600;flex-shrink:0;letter-spacing:-.3px;
+  font-size:13px;font-weight:700;flex-shrink:0;letter-spacing:-.3px;
 }
-.sb-user-info{flex:1;min-width:0;line-height:1.3;transition:opacity var(--transition)}
+.sb-user-info{flex:1;min-width:0;line-height:1.3;transition:opacity var(--transition);text-align:start}
 .sb-user-name{
-  font-size:var(--font-xs);font-weight:600;color:var(--fg-1);
+  font-size:var(--font-sm);font-weight:600;color:var(--fg-1);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  letter-spacing:-.1px;
 }
 .sb-user-sub{
   font-size:var(--font-2xs);color:var(--fg-3);font-weight:400;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-  margin-top:1px;
+  margin-top:2px;
 }
 .sb-user-action{
   background:transparent;border:none;cursor:pointer;
-  width:24px;height:24px;border-radius:var(--radius-xs);
+  width:26px;height:26px;border-radius:var(--radius-xs);
   color:var(--fg-4);flex-shrink:0;
   display:flex;align-items:center;justify-content:center;
   transition:var(--transition-fast);
 }
-.sb-user-action:hover{background:var(--neutral-200);color:var(--fg-2)}
+.sb-user:hover .sb-user-action{color:var(--fg-2)}
 .sb-user-action [data-lucide]{width:14px;height:14px;stroke-width:1.5}
 .sidebar.collapsed .sb-user-info,
 .sidebar.collapsed .sb-user-action{opacity:0;width:0;overflow:hidden;pointer-events:none}
+
+/* ── User profile dropdown menu ── */
+.sb-user-menu{
+  position:absolute;bottom:calc(100% + 4px);inset-inline-start:var(--space-2);inset-inline-end:var(--space-2);
+  background:var(--bg-elevated);border:1px solid var(--border);
+  border-radius:var(--radius-md);box-shadow:var(--shadow-lg);
+  padding:var(--space-1_5);z-index:50;
+  opacity:0;transform:translateY(4px);pointer-events:none;
+  transition:opacity var(--transition-fast),transform var(--transition-fast);
+}
+.sb-user-menu.open{opacity:1;transform:translateY(0);pointer-events:all}
+.sb-user-menu-header{
+  display:flex;align-items:center;gap:var(--space-2_5);
+  padding:var(--space-2) var(--space-2_5);
+  border-bottom:1px solid var(--border-subtle);margin-bottom:var(--space-1_5);
+}
+.sb-user-menu-header-avatar{
+  width:32px;height:32px;border-radius:50%;
+  background:var(--iris-500);color:#fff;
+  display:flex;align-items:center;justify-content:center;
+  font-size:12px;font-weight:700;flex-shrink:0;letter-spacing:-.3px;
+}
+.sb-user-menu-header-info{flex:1;min-width:0;line-height:1.3}
+.sb-user-menu-header-name{font-size:var(--font-xs);font-weight:600;color:var(--fg-1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sb-user-menu-header-mail{font-size:var(--font-2xs);color:var(--fg-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
+.sb-user-menu-item{
+  display:flex;align-items:center;gap:var(--space-2_5);
+  padding:7px var(--space-2);width:100%;
+  background:transparent;border:none;cursor:pointer;
+  color:var(--fg-2);font-size:var(--font-xs);font-weight:500;
+  font-family:inherit;border-radius:var(--radius-sm);
+  transition:var(--transition-fast);text-align:start;
+}
+.sb-user-menu-item:hover{background:var(--neutral-100);color:var(--fg-1)}
+.sb-user-menu-item.danger{color:var(--danger-600)}
+.sb-user-menu-item.danger:hover{background:var(--danger-50);color:var(--danger-700)}
+.sb-user-menu-item [data-lucide]{width:14px;height:14px;stroke-width:1.5;flex-shrink:0;color:var(--fg-4)}
+.sb-user-menu-item:hover [data-lucide]{color:currentColor}
+.sb-user-menu-sep{height:1px;background:var(--border-subtle);margin:var(--space-1_5) 0}
 
 /* Sidebar overlay for mobile */
 .sb-overlay{
@@ -1564,13 +1608,28 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
       </a>
     </nav>
     <div class="sb-footer">
-      <div class="sb-user">
-        <div class="sb-user-avatar">ب</div>
+      <div class="sb-user" id="sb-user-btn" onclick="Nav.toggleUserMenu(event)">
+        <div class="sb-user-avatar">س</div>
         <div class="sb-user-info">
-          <div class="sb-user-name">منصة بُعد</div>
-          <div class="sb-user-sub">الإدارة المالية</div>
+          <div class="sb-user-name">سلطان عسيري</div>
+          <div class="sb-user-sub">بُعد · الإدارة</div>
         </div>
-        <button class="sb-user-action" aria-label="خيارات الحساب"><i data-lucide="chevrons-up-down"></i></button>
+        <button class="sb-user-action" aria-label="خيارات الحساب" tabindex="-1"><i data-lucide="chevrons-up-down"></i></button>
+      </div>
+      <div class="sb-user-menu" id="sb-user-menu">
+        <div class="sb-user-menu-header">
+          <div class="sb-user-menu-header-avatar">س</div>
+          <div class="sb-user-menu-header-info">
+            <div class="sb-user-menu-header-name">سلطان عسيري</div>
+            <div class="sb-user-menu-header-mail">sultan@buad.app</div>
+          </div>
+        </div>
+        <button class="sb-user-menu-item" onclick="Nav.go('settings');Nav.closeUserMenu()"><i data-lucide="user"></i>الملف الشخصي</button>
+        <button class="sb-user-menu-item" onclick="Nav.go('settings');Nav.closeUserMenu()"><i data-lucide="settings-2"></i>الإعدادات</button>
+        <button class="sb-user-menu-item" onclick="Nav.closeUserMenu();UI.toast('قريباً')"><i data-lucide="bell"></i>الإشعارات</button>
+        <div class="sb-user-menu-sep"></div>
+        <button class="sb-user-menu-item" onclick="Nav.closeUserMenu();UI.toast('قريباً')"><i data-lucide="help-circle"></i>المساعدة والدعم</button>
+        <button class="sb-user-menu-item danger" onclick="Nav.closeUserMenu();UI.toast('تم تسجيل الخروج')"><i data-lucide="log-out"></i>تسجيل الخروج</button>
       </div>
     </div>
   </aside>
@@ -1584,7 +1643,7 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
       <div class="top-bar-actions" id="top-actions"></div>
       <div class="top-bar-divider"></div>
       <button class="tb-icon-btn" title="الإعدادات" onclick="Nav.go('settings')"><i data-lucide="settings-2"></i></button>
-      <div class="tb-user" title="منصة بُعد">ب</div>
+      <div class="tb-user" title="سلطان عسيري">س</div>
     </div>
     <div id="pg-dash"     class="page"></div>
     <div id="pg-clients"  class="page"></div>
@@ -1811,6 +1870,33 @@ var Nav = {
     var sb = document.getElementById('sidebar');
     sb.classList.remove('mobile-open');
     document.getElementById('sb-overlay').classList.remove('active');
+  },
+  toggleUserMenu: function(e) {
+    if (e) e.stopPropagation();
+    var menu = document.getElementById('sb-user-menu');
+    var btn  = document.getElementById('sb-user-btn');
+    if (!menu) return;
+    var isOpen = menu.classList.toggle('open');
+    if (btn) btn.classList.toggle('menu-open', isOpen);
+    if (isOpen) {
+      setTimeout(function(){
+        document.addEventListener('click', Nav._userMenuOutside);
+      }, 0);
+    }
+  },
+  closeUserMenu: function() {
+    var menu = document.getElementById('sb-user-menu');
+    var btn  = document.getElementById('sb-user-btn');
+    if (menu) menu.classList.remove('open');
+    if (btn) btn.classList.remove('menu-open');
+    document.removeEventListener('click', Nav._userMenuOutside);
+  },
+  _userMenuOutside: function(e) {
+    var menu = document.getElementById('sb-user-menu');
+    var btn  = document.getElementById('sb-user-btn');
+    if (menu && !menu.contains(e.target) && btn && !btn.contains(e.target)) {
+      Nav.closeUserMenu();
+    }
   },
   search: function(q) {
     var query = (q||'').trim().toLowerCase();
