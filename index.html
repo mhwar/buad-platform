@@ -536,21 +536,24 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .card-sub{font-size:var(--font-xs);color:var(--text-muted);margin-top:var(--space-1)}
 
 /* ── Stat cards (v2 — legacy compat) ── */
-.stat-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--space-4);margin-bottom:var(--space-5)}
+.stat-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--space-3);margin-bottom:var(--space-4)}
 .stat-card{
   background:var(--bg-elevated);border:1px solid var(--border);
-  border-radius:var(--radius-lg);padding:var(--space-5);
+  border-radius:var(--radius-md);padding:var(--space-4);
   position:relative;overflow:hidden;
   transition:border-color var(--transition);
 }
 .stat-card:hover{border-color:var(--neutral-300)}
-.stat-card-label{font-size:var(--font-2xs);color:var(--text-muted);margin-bottom:var(--space-2);font-weight:600;letter-spacing:.2px}
-.stat-card-value{font-size:clamp(20px,2.5vw,28px);font-weight:800;color:var(--text);font-family:var(--font-mono);line-height:var(--lh-tight);letter-spacing:-1px}
-.stat-card-sub{font-size:var(--font-2xs);color:var(--text-subtle);margin-top:var(--space-1_5)}
-.stat-card.brand .stat-card-value{color:var(--primary-600)}
+.stat-card-label{font-size:var(--font-2xs);color:var(--fg-3);margin-bottom:var(--space-1_5);font-weight:500}
+.stat-card-value{font-size:clamp(16px,2vw,22px);font-weight:700;color:var(--fg-1);font-family:var(--font-mono);line-height:var(--lh-tight);letter-spacing:-.5px}
+.stat-card-sub{font-size:var(--font-2xs);color:var(--fg-3);margin-top:var(--space-1)}
+.stat-card.brand .stat-card-value{color:var(--iris-600)}
 .stat-card.success .stat-card-value{color:var(--success-600)}
 .stat-card.danger .stat-card-value{color:var(--danger-600)}
 .stat-card.warn .stat-card-value{color:var(--warning-600)}
+/* ctrl drawer always uses narrow layout */
+.ctrl-drawer .stat-cards{grid-template-columns:1fr 1fr}
+.ctrl-drawer .ctrl-2col{grid-template-columns:1fr}
 
 /* ── Fin stat strip (entries tab) ── */
 .fin-stat-strip{
@@ -966,7 +969,10 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
 .chs-lbl{font-size:var(--font-2xs);color:var(--fg-3);font-weight:500;margin-bottom:var(--space-1)}
 .chs-val{font-size:clamp(16px,2vw,22px);font-weight:700;font-family:var(--font-mono);letter-spacing:-.5px;line-height:var(--lh-tight)}
 @media(max-width:600px){
-  .client-hero-band{flex-direction:column;gap:var(--space-3);padding:var(--space-4)}
+  .client-hero-band{align-items:flex-start;padding:var(--space-4);gap:var(--space-3)}
+  .client-hero-avatar{width:44px;height:44px;font-size:var(--font-lg)}
+  .client-hero-name{font-size:var(--font-xl)}
+  .client-hero-actions{flex-wrap:wrap;gap:var(--space-1_5)}
   .client-hero-stats{grid-template-columns:repeat(2,1fr)}
   .chs:nth-child(2){border-inline-start:none}
   .chs:nth-child(1),.chs:nth-child(2){border-bottom:1px solid var(--border-subtle)}
@@ -2181,15 +2187,15 @@ Pages.render_client = function(params) {
     projCards = '<div class="empty-state"><div class="empty-state-icon"><i data-lucide="folder-open"></i></div><h3>لا توجد مشاريع</h3><p>أضف أول مشروع لهذا العميل</p></div>';
   } else {
     projects.forEach(function(p){
-      projCards += '<tr>' +
-        '<td><span class="fw-600">'+UI.escHtml(p.name)+'</span></td>' +
-        '<td>'+typeLabel(p.type)+'</td>' +
-        '<td>'+statusBadge(p.status)+'</td>' +
-        '<td>'+fmtDate(p.created)+'</td>' +
-        '<td><button class="btn btn-sm btn-primary" onclick="Nav.go(\'fin\',{projId:\''+p.id+'\'})">فتح المالي</button></td>' +
+      var r2 = FinCalc.calc(p.id);
+      projCards += '<tr onclick="Nav.go(\'fin\',{projId:\''+p.id+'\'})" style="cursor:pointer">' +
+        '<td data-label="المشروع"><span style="font-weight:600;color:var(--fg-1)">'+UI.escHtml(p.name)+'</span></td>' +
+        '<td data-label="النوع" style="color:var(--fg-3)">'+typeLabel(p.type)+'</td>' +
+        '<td data-label="الحالة">'+statusBadge(p.status)+'</td>' +
+        '<td data-label="قيمة العقد" style="font-family:var(--font-mono);font-size:var(--font-xs)">'+UI.fmt(r2.grossTotal)+' ر.س</td>' +
         '</tr>';
     });
-    projCards = '<div style="overflow-x:auto"><table class="data-table"><thead><tr><th>اسم المشروع</th><th>النوع</th><th>الحالة</th><th>تاريخ الإنشاء</th><th></th></tr></thead><tbody>'+projCards+'</tbody></table></div>';
+    projCards = '<div class="tbl-responsive"><table class="data-table"><thead><tr><th>اسم المشروع</th><th>النوع</th><th>الحالة</th><th>قيمة العقد</th></tr></thead><tbody>'+projCards+'</tbody></table></div>';
   }
 
   var initial = (cl.name||'?').trim().charAt(0);
