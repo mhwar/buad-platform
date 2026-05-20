@@ -733,8 +733,8 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
   /* entry-tbl → hide extras, let description breathe */
   .entry-tbl .col-dot{display:none}
   .entry-tbl .col-cat{display:none}
-  .entry-tbl .col-amt{width:108px}
-  .entry-tbl .col-chev{width:32px}
+  .entry-tbl .col-amt{width:126px;padding-inline-start:var(--space-2);padding-inline-end:var(--space-2)}
+  .entry-tbl .col-chev{width:36px;padding-inline-start:4px;padding-inline-end:4px}
   /* allow desc to wrap on narrow screens */
   .entry-tbl tbody td:nth-child(2){white-space:normal;overflow:visible;height:auto;padding-top:10px;padding-bottom:10px;line-height:var(--lh-snug);padding-inline-start:var(--space-3)}
   /* proper margin for first visible column on mobile */
@@ -1263,9 +1263,36 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
   .proj-hero-name{font-size:var(--font-xl)}
   .proj-hero-stats{grid-template-columns:repeat(2,1fr)}
   .phs{padding:var(--space-3)}
-  .phs:nth-child(2){border-left:none}
-  .phs:nth-child(1),.phs:nth-child(2){border-bottom:1px solid var(--neutral-100)}
+  .phs:nth-child(2){border-inline-start:none}
+  .phs:nth-child(1),.phs:nth-child(2){border-bottom:1px solid var(--border-subtle)}
   .phs-val{font-size:var(--font-lg)}
+}
+
+/* ── Client avatar in project hero ── */
+.proj-client-avatar{
+  width:44px;height:44px;flex-shrink:0;border-radius:var(--radius-md);
+  background:var(--iris-500);color:#fff;font-weight:800;font-size:var(--font-xl);
+  display:inline-flex;align-items:center;justify-content:center;
+  cursor:pointer;transition:opacity var(--transition-fast);user-select:none;
+}
+.proj-client-avatar:hover{opacity:.85}
+@media(max-width:600px){
+  .proj-client-avatar{width:36px;height:36px;font-size:var(--font-base)}
+  .proj-hero-actions{gap:var(--space-1_5)}
+  .proj-hero-edit{padding:6px 10px;font-size:11px}
+}
+
+/* ── Budget item card (replaces table rows) ── */
+.budget-item{
+  border:1px solid var(--border);border-radius:var(--radius-md);
+  padding:var(--space-3);margin-bottom:var(--space-2);
+  background:var(--neutral-50);
+}
+.budget-item:last-child{margin-bottom:0}
+
+/* ── Page safe-area bottom on mobile ── */
+@media(max-width:767px){
+  .page{padding-bottom:max(var(--container-pad), env(safe-area-inset-bottom, 20px))}
 }
 
 /* ── Entry table date column ── */
@@ -2444,10 +2471,13 @@ Pages.render_fin = function(params) {
   var expPct    = r.contractNet > 0 ? Math.min(100, Math.round(r.totalExpenses / r.contractNet * 100)) : 0;
   var overspent = r.remaining < 0;
 
+  var clInitial = cl ? UI.escHtml((cl.name||'?')[0]) : '';
+  var clId = cl ? cl.id : '';
   var heroHtml =
     '<div class="proj-hero">' +
       '<div class="proj-hero-band">' +
         '<div class="proj-hero-top">' +
+          (cl ? '<div class="proj-client-avatar" onclick="Nav.go(\'client\',{clientId:\''+clId+'\'})" title="عرض ملف العميل">'+clInitial+'</div>' : '') +
           '<div style="flex:1;min-width:0">' +
             '<div class="proj-hero-badges">' +
               '<span class="proj-hero-badge proj-hero-badge-status '+stInfo[0]+'">'+stInfo[1]+'</span>' +
@@ -2455,7 +2485,7 @@ Pages.render_fin = function(params) {
             '</div>' +
             '<div class="proj-hero-name">'+UI.escHtml(proj.name)+'</div>' +
             '<div class="proj-hero-meta">' +
-              (cl?'<span class="proj-hero-meta-item"><i data-lucide="building-2"></i>'+UI.escHtml(cl.name)+'</span>':'') +
+              (cl?'<span class="proj-hero-meta-item" style="cursor:pointer;color:var(--iris-600)" onclick="Nav.go(\'client\',{clientId:\''+clId+'\'})"><i data-lucide="building-2"></i>'+UI.escHtml(cl.name)+'</span>':'') +
               (c.contract_no?'<span class="proj-hero-meta-item"><i data-lucide="file"></i>'+UI.escHtml(c.contract_no)+'</span>':'') +
               (c.contract_date?'<span class="proj-hero-meta-item"><i data-lucide="calendar"></i>'+fmtDate(c.contract_date)+'</span>':'') +
             '</div>' +
@@ -2586,10 +2616,12 @@ Pages.renderFinCtrl = function(projId) {
   }
   function feeGroup(label, idV, idT, idB, vv, vt, vb, calcAmt) {
     return '<div class="form-group"><label class="field-label">'+label+'</label>' +
-      '<div class="inline-group" style="flex-wrap:wrap">' +
-        '<input id="'+idV+'" class="field-input" type="number" value="'+(vv||0)+'" oninput="'+ev+'" style="max-width:76px">' +
-        '<select id="'+idT+'" class="field-input" style="max-width:84px" onchange="'+ev+'">'+typeOpts(vt)+'</select>' +
-        '<select id="'+idB+'" class="field-input" style="max-width:110px" onchange="'+ev+'">'+baseOpts(vb)+'</select>' +
+      '<div style="display:grid;grid-template-columns:80px 1fr;gap:6px;margin-bottom:6px">' +
+        '<input id="'+idV+'" class="field-input" type="number" value="'+(vv||0)+'" oninput="'+ev+'" placeholder="0">' +
+        '<select id="'+idT+'" class="field-input" onchange="'+ev+'">'+typeOpts(vt)+'</select>' +
+      '</div>' +
+      '<div style="display:grid;grid-template-columns:1fr auto;gap:6px;align-items:center">' +
+        '<select id="'+idB+'" class="field-input" onchange="'+ev+'">'+baseOpts(vb)+'</select>' +
         '<span id="'+idB+'-amt" class="fee-calc-badge">'+UI.fmt(calcAmt||0)+' ر.س</span>' +
       '</div>' +
     '</div>';
@@ -2597,12 +2629,19 @@ Pages.renderFinCtrl = function(projId) {
 
   var budgetRows = '';
   (fin.budget||[]).forEach(function(b,i){
-    budgetRows += '<tr>' +
-      '<td><input class="field-input" style="min-width:150px" value="'+UI.escHtml(b.name||'')+'" oninput="Pages.updateBudget(\''+projId+'\','+i+',\'name\',this.value)"></td>' +
-      '<td><input class="field-input" type="number" style="width:120px" value="'+(b.amount||0)+'" oninput="Pages.updateBudget(\''+projId+'\','+i+',\'amount\',this.value)"></td>' +
-      '<td><input class="field-input" style="min-width:110px" value="'+UI.escHtml(b.note||'')+'" oninput="Pages.updateBudget(\''+projId+'\','+i+',\'note\',this.value)"></td>' +
-      '<td><button class="btn btn-sm btn-danger" onclick="Pages.deleteBudgetRow(\''+projId+'\','+i+')">حذف</button></td>' +
-    '</tr>';
+    budgetRows +=
+      '<div class="budget-item">' +
+        '<div class="form-row" style="margin-bottom:var(--space-2)">' +
+          '<div class="form-group" style="margin-bottom:0"><label class="field-label">البند</label>' +
+            '<input class="field-input" value="'+UI.escHtml(b.name||'')+'" oninput="Pages.updateBudget(\''+projId+'\','+i+',\'name\',this.value)" placeholder="اسم البند"></div>' +
+          '<div class="form-group" style="margin-bottom:0"><label class="field-label">المبلغ (ر.س)</label>' +
+            '<input class="field-input" type="number" value="'+(b.amount||0)+'" oninput="Pages.updateBudget(\''+projId+'\','+i+',\'amount\',this.value)"></div>' +
+        '</div>' +
+        '<div style="display:flex;align-items:center;gap:var(--space-2)">' +
+          '<input class="field-input" value="'+UI.escHtml(b.note||'')+'" oninput="Pages.updateBudget(\''+projId+'\','+i+',\'note\',this.value)" placeholder="ملاحظة" style="flex:1">' +
+          '<button class="btn btn-sm btn-danger btn-icon" onclick="Pages.deleteBudgetRow(\''+projId+'\','+i+')" title="حذف"><i data-lucide="trash-2"></i></button>' +
+        '</div>' +
+      '</div>';
   });
 
   document.getElementById(Pages._ctrlContainer||'ctrl-drawer-body').innerHTML =
@@ -2623,9 +2662,9 @@ Pages.renderFinCtrl = function(projId) {
           '<label class="toggle"><input type="checkbox" id="fc-vatinc"'+(c.vat_included?' checked':'')+' onchange="'+ev+'"><span class="toggle-slider"></span></label>' +
         '</div>' +
         '<div class="form-group" style="margin-top:8px"><label class="field-label">نسبة الضريبة</label>' +
-          '<div class="inline-group">' +
-            '<input id="fc-vatp" class="field-input" type="number" value="'+(c.vat_pct||15)+'" oninput="'+ev+'" style="max-width:76px">' +
-            '<span style="color:var(--gray-500);font-size:13px;padding:0 4px">%</span>' +
+          '<div style="display:flex;align-items:center;gap:8px">' +
+            '<input id="fc-vatp" class="field-input" type="number" value="'+(c.vat_pct||15)+'" oninput="'+ev+'" style="max-width:80px">' +
+            '<span style="color:var(--fg-3);font-size:var(--font-sm);font-weight:600">%</span>' +
           '</div>' +
         '</div>' +
       '</div>' +
@@ -2648,10 +2687,12 @@ Pages.renderFinCtrl = function(projId) {
         '<div>' +
           '<div class="form-group">' +
             '<label class="field-label">ضريبة القيمة المضافة</label>' +
-            '<div class="inline-group" style="flex-wrap:wrap">' +
-              '<input id="fc-cfv" class="field-input" type="number" value="'+(c.cf_v||0)+'" oninput="'+ev+'" style="max-width:76px">' +
-              '<select id="fc-cft" class="field-input" style="max-width:84px" onchange="'+ev+'">'+typeOpts(c.cf_type)+'</select>' +
-              '<select id="fc-cfb" class="field-input" style="max-width:110px" onchange="'+ev+'">'+baseOpts(c.cf_base)+'</select>' +
+            '<div style="display:grid;grid-template-columns:80px 1fr;gap:6px;margin-bottom:6px">' +
+              '<input id="fc-cfv" class="field-input" type="number" value="'+(c.cf_v||0)+'" oninput="'+ev+'" placeholder="0">' +
+              '<select id="fc-cft" class="field-input" onchange="'+ev+'">'+typeOpts(c.cf_type)+'</select>' +
+            '</div>' +
+            '<div style="display:grid;grid-template-columns:1fr auto;gap:6px;align-items:center">' +
+              '<select id="fc-cfb" class="field-input" onchange="'+ev+'">'+baseOpts(c.cf_base)+'</select>' +
               '<span id="fc-cfb-amt" class="fee-calc-badge">'+UI.fmt(r.cfAmt||0)+' ر.س</span>' +
             '</div>' +
           '</div>' +
@@ -2662,14 +2703,15 @@ Pages.renderFinCtrl = function(projId) {
     '<div class="card">' +
       '<div class="flex flex-center justify-between mb-12">' +
         '<div class="card-title" style="margin-bottom:0">بنود الميزانية المخططة</div>' +
-        '<button class="btn btn-sm btn-primary" onclick="Pages.addBudgetRow(\''+projId+'\')">+ إضافة بند</button>' +
+        '<button class="btn btn-sm btn-primary" onclick="Pages.addBudgetRow(\''+projId+'\')"><i data-lucide="plus"></i>إضافة</button>' +
       '</div>' +
-      '<div class="budget-table-wrap">' +
-        '<table class="data-table"><thead><tr><th>البند</th><th>المبلغ (ر.س)</th><th>ملاحظة</th><th></th></tr></thead>' +
-        '<tbody id="budget-tbody">'+budgetRows+'</tbody>' +
-        '<tfoot><tr><td colspan="2" style="padding:8px 14px;font-size:12px;font-weight:700;color:var(--gray-700)">الإجمالي: '+UI.fmt(r.budgetTotal)+' ر.س</td><td colspan="2"></td></tr></tfoot>' +
-        '</table>' +
+      '<div id="budget-list">' +
+        (budgetRows || '<div style="text-align:center;padding:var(--space-5) 0;color:var(--fg-4);font-size:var(--font-xs)">لا توجد بنود مخططة بعد</div>') +
       '</div>' +
+      (r.budgetTotal>0 ? '<div style="border-top:1px solid var(--border);margin-top:var(--space-2);padding-top:var(--space-2);display:flex;justify-content:space-between;font-size:var(--font-xs);font-weight:700;color:var(--fg-2)">' +
+        '<span>الإجمالي المخطط</span>' +
+        '<span class="mono" style="color:var(--iris-600)">'+UI.fmt(r.budgetTotal)+' ر.س</span>' +
+      '</div>' : '') +
     '</div>';
   if (typeof lucide !== 'undefined') lucide.createIcons({rootElement: document.getElementById(Pages._ctrlContainer||'ctrl-drawer-body')});
 };
@@ -3232,38 +3274,29 @@ Pages.renderFinOverview = function(projId) {
       '</div>' +
     '</div>';
 
-  /* ── KPI Cards ── */
+  /* ── Summary strip (different from hero — shows recorded income/expenses/count) ── */
   var kpis =
-    '<div class="kpi-grid" style="margin-bottom:16px">' +
-
-      '<div class="kpi-card">' +
-        '<div class="kpi-card-icon" style="background:var(--iris-50);color:var(--iris-600)"><i data-lucide="file-text"></i></div>' +
-        '<div class="kpi-card-label">إجمالي قيمة العقد</div>' +
-        '<div class="kpi-card-value" style="color:var(--iris-600)">'+UI.fmt(r.grossTotal)+'</div>' +
-        '<div class="kpi-card-sub">صافي '+UI.fmt(r.contractNet)+' ر.س</div>' +
+    '<div class="fin-stat-strip" style="margin-bottom:var(--space-4)">' +
+      '<div class="fsi fsi-success">' +
+        '<div class="fsi-lbl">الدخل المسجّل</div>' +
+        '<div class="fsi-val">'+UI.fmt(r.totalIncome)+'</div>' +
+        '<div class="fsi-sub">'+incCount+' بند</div>' +
       '</div>' +
-
-      '<div class="kpi-card">' +
-        '<div class="kpi-card-icon" style="background:var(--danger-50);color:var(--danger-600)"><i data-lucide="trending-down"></i></div>' +
-        '<div class="kpi-card-label">إجمالي المصاريف</div>' +
-        '<div class="kpi-card-value" style="color:var(--danger-600)">'+UI.fmt(r.totalExpenses)+'</div>' +
-        '<div class="kpi-card-sub">'+expCount+' بند · '+expPct+'% من العقد</div>' +
+      '<div class="fsi fsi-danger">' +
+        '<div class="fsi-lbl">المصاريف</div>' +
+        '<div class="fsi-val">'+UI.fmt(r.totalExpenses)+'</div>' +
+        '<div class="fsi-sub">'+expCount+' بند · '+expPct+'% من العقد</div>' +
       '</div>' +
-
-      '<div class="kpi-card">' +
-        '<div class="kpi-card-icon" style="background:var(--success-50);color:var(--success-600)"><i data-lucide="trending-up"></i></div>' +
-        '<div class="kpi-card-label">صافي الربح</div>' +
-        '<div class="kpi-card-value" style="color:var(--success-600)">'+UI.fmt(r.profit)+'</div>' +
-        '<div class="kpi-card-sub"><span class="kpi-trend-up">'+profitPct+'%</span> هامش الربحية</div>' +
+      '<div class="fsi '+(available>=0?'fsi-brand':'fsi-danger')+'">' +
+        '<div class="fsi-lbl">المتاح للتنفيذ</div>' +
+        '<div class="fsi-val">'+UI.fmt(available)+'</div>' +
+        '<div class="fsi-sub">بعد خصم الأتعاب</div>' +
       '</div>' +
-
-      '<div class="kpi-card">' +
-        '<div class="kpi-card-icon" style="background:'+(r.remaining<0?'var(--danger-50)':'var(--warning-50)')+';color:'+(r.remaining<0?'var(--danger-600)':'var(--warning-600)')+'"><i data-lucide="wallet"></i></div>' +
-        '<div class="kpi-card-label">المتبقي'+(r.remaining<0?' — تجاوز':'')+'</div>' +
-        '<div class="kpi-card-value" style="color:'+(r.remaining<0?'var(--danger-600)':'var(--warning-600)')+'">'+UI.fmt(r.remaining)+'</div>' +
-        '<div class="kpi-card-sub">'+incCount+' بند دخل · '+fin.entries.length+' معاملة</div>' +
+      '<div class="fsi">' +
+        '<div class="fsi-lbl">إجمالي المعاملات</div>' +
+        '<div class="fsi-val" style="font-family:var(--font-mono)">'+fin.entries.length+'</div>' +
+        '<div class="fsi-sub">'+incCount+' دخل · '+expCount+' مصروف</div>' +
       '</div>' +
-
     '</div>';
 
   /* ── Waterfall with visual bars ── */
