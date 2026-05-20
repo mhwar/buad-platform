@@ -1277,9 +1277,16 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
 }
 .proj-client-avatar:hover{opacity:.85}
 @media(max-width:600px){
-  .proj-client-avatar{width:36px;height:36px;font-size:var(--font-base)}
-  .proj-hero-actions{gap:var(--space-1_5)}
-  .proj-hero-edit{padding:6px 10px;font-size:11px}
+  .proj-client-avatar{width:38px;height:38px;font-size:var(--font-base);flex-shrink:0}
+  /* move action buttons to their own row below the title area */
+  .proj-hero-top{flex-wrap:wrap;gap:var(--space-2)}
+  .proj-hero-actions{
+    width:100%;order:10;
+    border-top:1px solid var(--border-subtle);
+    padding-top:var(--space-2_5);margin-top:2px;
+    gap:var(--space-2);
+  }
+  .proj-hero-edit{flex:1;justify-content:center;padding:7px 10px;font-size:var(--font-xs)}
 }
 
 /* ── Budget item card (replaces table rows) ── */
@@ -3274,28 +3281,22 @@ Pages.renderFinOverview = function(projId) {
       '</div>' +
     '</div>';
 
-  /* ── Summary strip (different from hero — shows recorded income/expenses/count) ── */
+  /* ── Summary card — vertical wf-style (no truncation, has title) ── */
+  function ovRow(sign, lbl, sub, val, color, isTotal) {
+    return '<div class="wf-row'+(isTotal?' wf-total':'')+'">' +
+      '<span class="wf-sign">'+(sign||'')+'</span>' +
+      '<span class="wf-lbl">'+lbl+(sub?'<span style="color:var(--fg-4);font-weight:400;margin-inline-start:6px;font-size:11px">'+sub+'</span>':'')+'</span>' +
+      '<span class="wf-val" style="color:'+color+'">'+val+'</span>' +
+    '</div>';
+  }
   var kpis =
-    '<div class="fin-stat-strip" style="margin-bottom:var(--space-4)">' +
-      '<div class="fsi fsi-success">' +
-        '<div class="fsi-lbl">الدخل المسجّل</div>' +
-        '<div class="fsi-val">'+UI.fmt(r.totalIncome)+'</div>' +
-        '<div class="fsi-sub">'+incCount+' بند</div>' +
-      '</div>' +
-      '<div class="fsi fsi-danger">' +
-        '<div class="fsi-lbl">المصاريف</div>' +
-        '<div class="fsi-val">'+UI.fmt(r.totalExpenses)+'</div>' +
-        '<div class="fsi-sub">'+expCount+' بند · '+expPct+'% من العقد</div>' +
-      '</div>' +
-      '<div class="fsi '+(available>=0?'fsi-brand':'fsi-danger')+'">' +
-        '<div class="fsi-lbl">المتاح للتنفيذ</div>' +
-        '<div class="fsi-val">'+UI.fmt(available)+'</div>' +
-        '<div class="fsi-sub">بعد خصم الأتعاب</div>' +
-      '</div>' +
-      '<div class="fsi">' +
-        '<div class="fsi-lbl">إجمالي المعاملات</div>' +
-        '<div class="fsi-val" style="font-family:var(--font-mono)">'+fin.entries.length+'</div>' +
-        '<div class="fsi-sub">'+incCount+' دخل · '+expCount+' مصروف</div>' +
+    '<div class="card" style="margin-bottom:var(--space-4)">' +
+      '<div class="dash-sec-hdr" style="margin-bottom:var(--space-3)"><h3><i data-lucide="activity"></i>الملخص المالي</h3></div>' +
+      '<div class="wf-table">' +
+        ovRow('', 'الدخل المسجّل', incCount+' بند', '+'+UI.fmt(r.totalIncome)+' ر.س', 'var(--success-700)') +
+        ovRow('', 'إجمالي المصاريف', expCount+' بند · '+expPct+'% من العقد', '−'+UI.fmt(r.totalExpenses)+' ر.س', 'var(--danger-700)') +
+        ovRow('=', 'المتاح للتنفيذ', 'بعد خصم الأتعاب', UI.fmt(available)+' ر.س', available>=0?'var(--success-700)':'var(--danger-700)', true) +
+        ovRow('', 'إجمالي المعاملات', '', fin.entries.length+' معاملة', 'var(--fg-1)') +
       '</div>' +
     '</div>';
 
@@ -3321,39 +3322,20 @@ Pages.renderFinOverview = function(projId) {
 
   /* ── Income vs Expenses chart ── */
   var incExpChart =
-    '<div style="margin-bottom:16px">' +
+    '<div>' +
       '<div class="ov-bar-row">' +
         '<div class="ov-bar-label">' +
-          '<span style="color:var(--success);font-weight:600;display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:50%;background:var(--success);display:inline-block"></span>إجمالي الدخل المسجّل</span>' +
-          '<span class="mono" style="font-size:12px;font-weight:700;color:var(--success)">'+UI.fmt(r.totalIncome)+'</span>' +
+          '<span style="color:var(--success-700);font-weight:600;display:flex;align-items:center;gap:5px"><span style="width:8px;height:8px;border-radius:50%;background:var(--success-500);display:inline-block;flex-shrink:0"></span>الدخل المسجّل</span>' +
+          '<span class="mono" style="font-size:var(--font-xs);font-weight:700;color:var(--success-700)">'+UI.fmt(r.totalIncome)+' ر.س</span>' +
         '</div>' +
-        '<div class="ov-bar-track"><div class="ov-bar-fill" style="width:'+incBarPct+'%;background:var(--success)"></div></div>' +
+        '<div class="ov-bar-track"><div class="ov-bar-fill" style="width:'+incBarPct+'%;background:var(--success-500)"></div></div>' +
       '</div>' +
       '<div class="ov-bar-row">' +
         '<div class="ov-bar-label">' +
-          '<span style="color:var(--danger);font-weight:600;display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:50%;background:var(--danger);display:inline-block"></span>إجمالي المصاريف</span>' +
-          '<span class="mono" style="font-size:12px;font-weight:700;color:var(--danger)">'+UI.fmt(r.totalExpenses)+'</span>' +
+          '<span style="color:var(--danger-700);font-weight:600;display:flex;align-items:center;gap:5px"><span style="width:8px;height:8px;border-radius:50%;background:var(--danger-500);display:inline-block;flex-shrink:0"></span>إجمالي المصاريف</span>' +
+          '<span class="mono" style="font-size:var(--font-xs);font-weight:700;color:var(--danger-700)">'+UI.fmt(r.totalExpenses)+' ر.س</span>' +
         '</div>' +
-        '<div class="ov-bar-track"><div class="ov-bar-fill" style="width:'+expBarPct+'%;background:var(--danger)"></div></div>' +
-      '</div>' +
-    '</div>' +
-    /* Stats list */
-    '<div style="display:flex;flex-direction:column;gap:0">' +
-      '<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--gray-100);font-size:12px">' +
-        '<span style="color:var(--gray-500)">عدد المعاملات</span>' +
-        '<span class="mono fw-600">'+fin.entries.length+'</span>' +
-      '</div>' +
-      '<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--gray-100);font-size:12px">' +
-        '<span style="color:var(--gray-500)">بنود دخل</span>' +
-        '<span class="mono fw-600" style="color:var(--success)">'+incCount+'</span>' +
-      '</div>' +
-      '<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--gray-100);font-size:12px">' +
-        '<span style="color:var(--gray-500)">بنود مصروف</span>' +
-        '<span class="mono fw-600" style="color:var(--danger)">'+expCount+'</span>' +
-      '</div>' +
-      '<div style="display:flex;justify-content:space-between;padding:8px 0;font-size:12px">' +
-        '<span style="color:var(--gray-500)">المتاح للتنفيذ</span>' +
-        '<span class="mono fw-600" style="color:'+(available>=0?'var(--success)':'var(--danger)')+'">'+UI.fmt(available)+' ر.س</span>' +
+        '<div class="ov-bar-track"><div class="ov-bar-fill" style="width:'+expBarPct+'%;background:var(--danger-500)"></div></div>' +
       '</div>' +
     '</div>';
 
