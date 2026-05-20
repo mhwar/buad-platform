@@ -942,6 +942,69 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
 .client-card-meta{font-size:var(--font-xs);color:var(--text-muted);margin-bottom:var(--space-3);line-height:var(--lh-snug)}
 .client-card-actions{display:flex;gap:var(--space-1_5);margin-top:auto}
 
+/* ── Project row card (unified list item) ── */
+.proj-row-list{display:flex;flex-direction:column;gap:var(--space-2)}
+.proj-row-card{
+  display:flex;align-items:center;gap:var(--space-3);
+  background:var(--bg-elevated);border:1px solid var(--border);
+  border-radius:var(--radius-md);padding:var(--space-3) var(--space-4);
+  cursor:pointer;transition:border-color var(--transition-fast),background var(--transition-fast);
+  min-width:0;text-decoration:none;color:inherit;
+}
+.proj-row-card:hover{border-color:var(--neutral-300);background:var(--neutral-50)}
+.prc-status-dot{
+  width:8px;height:8px;border-radius:50%;flex-shrink:0;
+  background:var(--neutral-300);align-self:center;
+}
+.prc-status-dot.active{background:var(--success-500)}
+.prc-status-dot.completed{background:var(--iris-500)}
+.prc-status-dot.paused{background:var(--warning-500)}
+.prc-status-dot.cancelled{background:var(--neutral-400)}
+.prc-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.prc-title-row{display:flex;align-items:center;gap:var(--space-2);flex-wrap:wrap}
+.prc-name{font-size:var(--font-sm);font-weight:600;color:var(--fg-1);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.prc-meta{display:flex;align-items:center;gap:var(--space-3);font-size:var(--font-2xs);color:var(--fg-3);flex-wrap:wrap}
+.prc-meta-item{display:inline-flex;align-items:center;gap:4px;min-width:0}
+.prc-meta-item [data-lucide]{width:12px;height:12px;opacity:.7;stroke-width:1.75}
+.prc-client-link{color:var(--iris-600);font-weight:500;cursor:pointer}
+.prc-client-link:hover{color:var(--iris-700);text-decoration:underline}
+.prc-value-wrap{text-align:left;flex-shrink:0;min-width:0}
+.prc-value{
+  font-family:var(--font-mono);font-size:var(--font-sm);font-weight:700;
+  color:var(--fg-1);white-space:nowrap;letter-spacing:-.2px;line-height:var(--lh-tight);
+}
+.prc-value-sub{font-size:10px;color:var(--fg-4);font-weight:400;font-family:var(--font-sans);margin-top:2px;white-space:nowrap}
+.prc-arrow{
+  width:32px;height:32px;flex-shrink:0;border-radius:var(--radius-xs);
+  background:transparent;border:none;cursor:pointer;color:var(--fg-3);
+  display:inline-flex;align-items:center;justify-content:center;
+  transition:var(--transition-fast);
+}
+.proj-row-card:hover .prc-arrow{background:var(--iris-50);color:var(--iris-600)}
+.prc-arrow [data-lucide]{width:14px;height:14px;stroke-width:1.5}
+.proj-row-empty{
+  padding:var(--space-8) var(--space-4);text-align:center;
+  color:var(--fg-3);font-size:var(--font-sm);
+  background:var(--neutral-50);border:1px dashed var(--border);
+  border-radius:var(--radius-md);
+}
+@media(max-width:600px){
+  .proj-row-card{padding:var(--space-3);gap:var(--space-2)}
+  .prc-value{font-size:var(--font-xs)}
+  .prc-value-sub{display:none}
+  .prc-meta{font-size:11px;gap:var(--space-2)}
+  .prc-arrow{width:28px;height:28px}
+}
+
+/* ── Status distribution bar (client overview) ── */
+.status-dist{display:flex;flex-direction:column;gap:var(--space-2_5)}
+.status-dist-row{display:flex;align-items:center;gap:var(--space-2);font-size:var(--font-xs)}
+.status-dist-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.status-dist-lbl{flex:1;color:var(--fg-2);min-width:0;overflow:hidden;text-overflow:ellipsis}
+.status-dist-track{flex:2;background:var(--neutral-100);border-radius:var(--radius-full);height:6px;overflow:hidden;min-width:60px}
+.status-dist-fill{height:100%;border-radius:var(--radius-full);transition:width .5s var(--ease-out)}
+.status-dist-val{font-family:var(--font-mono);font-weight:700;color:var(--fg-1);font-size:var(--font-xs);min-width:24px;text-align:left;flex-shrink:0}
+
 /* ── Client hero ── */
 .client-hero{
   background:var(--neutral-50);border:1px solid var(--border-subtle);
@@ -2226,6 +2289,12 @@ Pages.deleteClient = function(id) {
 };
 
 /* ─── CLIENT DETAIL ─── */
+Pages._clientTab = 'overview';
+Pages.switchClientTab = function(tab, clientId) {
+  Pages._clientTab = tab;
+  Pages.render_client({clientId: clientId});
+};
+
 Pages.render_client = function(params) {
   params = params||{};
   var clientId = params.clientId;
@@ -2234,32 +2303,20 @@ Pages.render_client = function(params) {
   if (!cl) { document.getElementById('pg-client').innerHTML='<div class="empty-state"><h3>العميل غير موجود</h3></div>'; return; }
   var projects = DB.getProjects().filter(function(p){ return p.client_id===clientId; });
 
-  var projCards = '';
-  if (projects.length===0) {
-    projCards = '<div class="empty-state"><div class="empty-state-icon"><i data-lucide="folder-open"></i></div><h3>لا توجد مشاريع</h3><p>أضف أول مشروع لهذا العميل</p></div>';
-  } else {
-    projects.forEach(function(p){
-      var r2 = FinCalc.calc(p.id);
-      projCards += '<tr onclick="Nav.go(\'fin\',{projId:\''+p.id+'\'})" style="cursor:pointer">' +
-        '<td data-label="المشروع"><span style="font-weight:600;color:var(--fg-1)">'+UI.escHtml(p.name)+'</span></td>' +
-        '<td data-label="النوع" style="color:var(--fg-3)">'+typeLabel(p.type)+'</td>' +
-        '<td data-label="الحالة">'+statusBadge(p.status)+'</td>' +
-        '<td data-label="قيمة العقد" style="font-family:var(--font-mono);font-size:var(--font-xs)">'+UI.fmt(r2.grossTotal)+' ر.س</td>' +
-        '</tr>';
-    });
-    projCards = '<div class="tbl-responsive"><table class="data-table"><thead><tr><th>اسم المشروع</th><th>النوع</th><th>الحالة</th><th>قيمة العقد</th></tr></thead><tbody>'+projCards+'</tbody></table></div>';
-  }
-
   var initial = (cl.name||'?').trim().charAt(0);
-  var activeProjs  = projects.filter(function(p){ return p.status==='active'; }).length;
+  var activeProjs    = projects.filter(function(p){ return p.status==='active'; }).length;
   var completedProjs = projects.filter(function(p){ return p.status==='completed'; }).length;
-  var totalContract = projects.reduce(function(sum,p){
+  var pausedProjs    = projects.filter(function(p){ return p.status==='paused'; }).length;
+  var cancelledProjs = projects.filter(function(p){ return p.status==='cancelled'; }).length;
+  var totalContract  = projects.reduce(function(sum,p){
     var r = FinCalc.calc(p.id);
     return sum + (r.grossTotal||0);
   }, 0);
 
-  document.getElementById('pg-client').innerHTML =
-    /* ── Client Hero ── */
+  var tab = Pages._clientTab || 'overview';
+
+  /* ── Hero ── */
+  var heroHtml =
     '<div class="client-hero">' +
       '<div class="client-hero-band">' +
         '<div class="client-hero-avatar">'+UI.escHtml(initial)+'</div>' +
@@ -2283,74 +2340,185 @@ Pages.render_client = function(params) {
         '<div class="chs"><div class="chs-lbl">مشاريع مكتملة</div><div class="chs-val" style="color:var(--iris-600)">'+completedProjs+'</div></div>' +
         '<div class="chs"><div class="chs-lbl">إجمالي قيمة العقود</div><div class="chs-val" style="font-size:clamp(13px,1.8vw,18px)">'+UI.fmt(totalContract)+' <span style="font-size:10px;font-weight:400;color:var(--fg-4)">ر.س</span></div></div>' +
       '</div>' +
-    '</div>' +
-
-    /* ── Projects table ── */
-    '<div class="card" style="margin-bottom:var(--space-4)">' +
-      '<div class="card-title">المشاريع</div>' +
-      projCards +
-    '</div>' +
-
-    /* ── Notes section ── */
-    '<div class="card">' +
-      '<div class="dash-sec-hdr"><h3><i data-lucide="file-text"></i>ملاحظات وتفاصيل</h3></div>' +
-      '<div class="form-group" style="margin-bottom:var(--space-3)">' +
-        '<label class="field-label">ملاحظات</label>' +
-        '<textarea id="cl-notes-area" class="field-input" style="min-height:88px;resize:vertical" placeholder="أضف ملاحظات عن العميل..." onblur="Pages.saveClientNotes(\''+cl.id+'\')">' +
-          UI.escHtml(cl.notes||'') +
-        '</textarea>' +
-      '</div>' +
-      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-3)">' +
-        '<div class="form-group" style="margin-bottom:0"><label class="field-label">رقم السجل / الترخيص</label><input class="field-input" value="'+UI.escHtml(cl.reg_no||'')+'" placeholder="—" onblur="Pages.saveClientField(\''+cl.id+'\',\'reg_no\',this.value)"></div>' +
-        '<div class="form-group" style="margin-bottom:0"><label class="field-label">الموقع الإلكتروني</label><input class="field-input" value="'+UI.escHtml(cl.website||'')+'" placeholder="—" onblur="Pages.saveClientField(\''+cl.id+'\',\'website\',this.value)"></div>' +
-      '</div>' +
     '</div>';
+
+  /* ── Tabs ── */
+  var tabsHtml =
+    '<div class="tabs">' +
+      '<button class="tab-btn'+(tab==='overview'?' active':'')+'" onclick="Pages.switchClientTab(\'overview\',\''+cl.id+'\')"><i data-lucide="layout-dashboard"></i>نظرة عامة</button>' +
+      '<button class="tab-btn'+(tab==='projects'?' active':'')+'" onclick="Pages.switchClientTab(\'projects\',\''+cl.id+'\')"><i data-lucide="briefcase"></i>المشاريع <span class="proj-filter-count" style="margin-inline-start:4px">'+projects.length+'</span></button>' +
+      '<button class="tab-btn'+(tab==='info'?' active':'')+'" onclick="Pages.switchClientTab(\'info\',\''+cl.id+'\')"><i data-lucide="file-text"></i>معلومات وملاحظات</button>' +
+    '</div>';
+
+  /* ── Tab content ── */
+  var tabContent = '';
+
+  if (tab === 'overview') {
+    // Recent projects (latest 3) + status distribution + contact summary
+    var recentProjs = projects.slice().sort(function(a,b){ return (b.created||'').localeCompare(a.created||''); }).slice(0,3);
+    var recentHtml = '';
+    if (recentProjs.length===0) {
+      recentHtml = '<div class="proj-row-empty">لا توجد مشاريع بعد · <a style="color:var(--iris-600);cursor:pointer;text-decoration:underline" onclick="Pages.addProjectModal(\''+cl.id+'\')">إضافة أول مشروع</a></div>';
+    } else {
+      recentHtml = '<div class="proj-row-list">' +
+        recentProjs.map(function(p){ return Pages._projRowCard(p, null, {hideClient:true}); }).join('') +
+      '</div>';
+      if (projects.length>3) {
+        recentHtml += '<div style="text-align:center;margin-top:var(--space-3)">' +
+          '<button class="btn btn-sm btn-ghost" onclick="Pages.switchClientTab(\'projects\',\''+cl.id+'\')"><i data-lucide="arrow-left"></i>عرض كل المشاريع ('+projects.length+')</button>' +
+        '</div>';
+      }
+    }
+
+    // Status distribution
+    var maxCount = Math.max(activeProjs, completedProjs, pausedProjs, cancelledProjs, 1);
+    function distRow(lbl, count, color, dotColor){
+      var pct = count>0 ? Math.round(count/maxCount*100) : 0;
+      return '<div class="status-dist-row">' +
+        '<span class="status-dist-dot" style="background:'+dotColor+'"></span>' +
+        '<span class="status-dist-lbl">'+lbl+'</span>' +
+        '<div class="status-dist-track"><div class="status-dist-fill" style="width:'+pct+'%;background:'+color+'"></div></div>' +
+        '<span class="status-dist-val">'+count+'</span>' +
+      '</div>';
+    }
+    var distHtml = projects.length>0 ? (
+      '<div class="status-dist">' +
+        distRow('نشط', activeProjs, 'var(--success-500)', 'var(--success-500)') +
+        distRow('مكتمل', completedProjs, 'var(--iris-500)', 'var(--iris-500)') +
+        distRow('متوقف', pausedProjs, 'var(--warning-500)', 'var(--warning-500)') +
+        distRow('ملغي', cancelledProjs, 'var(--neutral-400)', 'var(--neutral-400)') +
+      '</div>'
+    ) : '<div style="text-align:center;color:var(--fg-4);font-size:var(--font-xs);padding:var(--space-4) 0">لا توجد بيانات للعرض</div>';
+
+    tabContent =
+      '<div class="card" style="margin-bottom:var(--space-4)">' +
+        '<div class="dash-sec-hdr"><h3><i data-lucide="briefcase"></i>أحدث المشاريع</h3></div>' +
+        recentHtml +
+      '</div>' +
+      '<div class="ov-2col">' +
+        '<div class="card">' +
+          '<div class="dash-sec-hdr"><h3><i data-lucide="bar-chart-2"></i>توزيع المشاريع حسب الحالة</h3></div>' +
+          distHtml +
+        '</div>' +
+        '<div class="card">' +
+          '<div class="dash-sec-hdr"><h3><i data-lucide="phone"></i>معلومات التواصل</h3></div>' +
+          '<div style="display:flex;flex-direction:column;gap:var(--space-2_5);font-size:var(--font-xs)">' +
+            '<div style="display:flex;justify-content:space-between;align-items:center;gap:var(--space-2)"><span style="color:var(--fg-3)">النوع</span><span style="color:var(--fg-1);font-weight:500">'+clientTypeLabel(cl.type)+'</span></div>' +
+            '<div style="display:flex;justify-content:space-between;align-items:center;gap:var(--space-2)"><span style="color:var(--fg-3)">المدينة</span><span style="color:var(--fg-1);font-weight:500">'+(cl.city?UI.escHtml(cl.city):'<span style="color:var(--fg-4)">—</span>')+'</span></div>' +
+            '<div style="display:flex;justify-content:space-between;align-items:center;gap:var(--space-2)"><span style="color:var(--fg-3)">البريد</span><span style="color:var(--fg-1);font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0">'+(cl.email?UI.escHtml(cl.email):'<span style="color:var(--fg-4)">—</span>')+'</span></div>' +
+            '<div style="display:flex;justify-content:space-between;align-items:center;gap:var(--space-2)"><span style="color:var(--fg-3)">الجوال</span><span style="color:var(--fg-1);font-weight:500;font-family:var(--font-mono)">'+(cl.phone?UI.escHtml(cl.phone):'<span style="color:var(--fg-4)">—</span>')+'</span></div>' +
+            (cl.website?'<div style="display:flex;justify-content:space-between;align-items:center;gap:var(--space-2)"><span style="color:var(--fg-3)">الموقع</span><a href="'+UI.escHtml(cl.website)+'" target="_blank" style="color:var(--iris-600);font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0">'+UI.escHtml(cl.website)+'</a></div>':'') +
+          '</div>' +
+        '</div>' +
+      '</div>';
+  }
+  else if (tab === 'projects') {
+    var projList;
+    if (projects.length===0) {
+      projList = '<div class="empty-state" style="padding:var(--space-8)">' +
+        '<div class="empty-state-icon"><i data-lucide="folder-open"></i></div>' +
+        '<h3>لا توجد مشاريع</h3>' +
+        '<p>ابدأ بإضافة أول مشروع لهذا العميل</p>' +
+        '<button class="btn btn-primary" onclick="Pages.addProjectModal(\''+cl.id+'\')" style="margin-top:var(--space-3)"><i data-lucide="plus"></i>إضافة مشروع</button>' +
+      '</div>';
+    } else {
+      projList = '<div class="proj-row-list">' +
+        projects.slice().sort(function(a,b){ return (b.created||'').localeCompare(a.created||''); }).map(function(p){
+          return Pages._projRowCard(p, null, {hideClient:true});
+        }).join('') +
+      '</div>';
+    }
+    tabContent = projList;
+  }
+  else if (tab === 'info') {
+    tabContent =
+      '<div class="card">' +
+        '<div class="dash-sec-hdr"><h3><i data-lucide="file-text"></i>ملاحظات وتفاصيل</h3></div>' +
+        '<div class="form-group" style="margin-bottom:var(--space-3)">' +
+          '<label class="field-label">ملاحظات</label>' +
+          '<textarea id="cl-notes-area" class="field-input" style="min-height:120px;resize:vertical" placeholder="أضف ملاحظات عن العميل..." onblur="Pages.saveClientNotes(\''+cl.id+'\')">' +
+            UI.escHtml(cl.notes||'') +
+          '</textarea>' +
+        '</div>' +
+        '<div class="form-row" style="margin-bottom:var(--space-3)">' +
+          '<div class="form-group" style="margin-bottom:0"><label class="field-label">رقم السجل / الترخيص</label><input class="field-input" value="'+UI.escHtml(cl.reg_no||'')+'" placeholder="—" onblur="Pages.saveClientField(\''+cl.id+'\',\'reg_no\',this.value)"></div>' +
+          '<div class="form-group" style="margin-bottom:0"><label class="field-label">الموقع الإلكتروني</label><input class="field-input" value="'+UI.escHtml(cl.website||'')+'" placeholder="—" onblur="Pages.saveClientField(\''+cl.id+'\',\'website\',this.value)"></div>' +
+        '</div>' +
+        '<div class="form-row">' +
+          '<div class="form-group" style="margin-bottom:0"><label class="field-label">البريد الإلكتروني</label><input class="field-input" type="email" value="'+UI.escHtml(cl.email||'')+'" placeholder="—" onblur="Pages.saveClientField(\''+cl.id+'\',\'email\',this.value)"></div>' +
+          '<div class="form-group" style="margin-bottom:0"><label class="field-label">رقم الهاتف</label><input class="field-input" type="tel" value="'+UI.escHtml(cl.phone||'')+'" placeholder="—" onblur="Pages.saveClientField(\''+cl.id+'\',\'phone\',this.value)"></div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="card" style="margin-top:var(--space-4);border-color:var(--danger-100)">' +
+        '<div class="dash-sec-hdr"><h3 style="color:var(--danger-700)"><i data-lucide="alert-triangle"></i>منطقة الخطر</h3></div>' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;gap:var(--space-3);flex-wrap:wrap">' +
+          '<div style="font-size:var(--font-xs);color:var(--fg-3);flex:1;min-width:200px">حذف العميل يحذف جميع مشاريعه وبياناتهم المالية. لا يمكن التراجع.</div>' +
+          '<button class="btn btn-sm btn-danger" onclick="Pages.deleteClient(\''+cl.id+'\')"><i data-lucide="trash-2"></i>حذف العميل</button>' +
+        '</div>' +
+      '</div>';
+  }
+
+  document.getElementById('pg-client').innerHTML = heroHtml + tabsHtml + tabContent;
   document.getElementById('top-actions').innerHTML = '';
 };
 
 /* ─── PROJECTS ─── */
+Pages._projRowCard = function(p, cl, opts) {
+  opts = opts||{};
+  var r = FinCalc.calc(p.id);
+  var stClass = p.status || 'cancelled';
+  var clHtml = cl
+    ? '<span class="prc-meta-item"><i data-lucide="building-2"></i>' +
+        '<span class="prc-client-link" onclick="event.stopPropagation();Nav.go(\'client\',{clientId:\''+cl.id+'\'})">'+UI.escHtml(cl.name)+'</span>' +
+      '</span>'
+    : (opts.hideClient ? '' : '<span class="prc-meta-item" style="color:var(--fg-4)">—</span>');
+  var valHtml = r.grossTotal>0
+    ? '<div class="prc-value-wrap">' +
+        '<div class="prc-value">'+UI.fmt(r.grossTotal)+'</div>' +
+        '<div class="prc-value-sub">ر.س قيمة العقد</div>' +
+      '</div>'
+    : '';
+  return '<div class="proj-row-card" onclick="Nav.go(\'fin\',{projId:\''+p.id+'\'})">' +
+    '<span class="prc-status-dot '+stClass+'" title="'+statusLabel(p.status)+'"></span>' +
+    '<div class="prc-main">' +
+      '<div class="prc-title-row">' +
+        '<span class="prc-name">'+UI.escHtml(p.name)+'</span>' +
+        '<span class="badge gray sm">'+typeLabel(p.type)+'</span>' +
+        statusBadge(p.status) +
+      '</div>' +
+      '<div class="prc-meta">' +
+        clHtml +
+        '<span class="prc-meta-item"><i data-lucide="calendar"></i>'+fmtDate(p.created)+'</span>' +
+      '</div>' +
+    '</div>' +
+    valHtml +
+    '<button class="prc-arrow" onclick="event.stopPropagation();Nav.go(\'fin\',{projId:\''+p.id+'\'})" title="فتح المشروع"><i data-lucide="arrow-left"></i></button>' +
+  '</div>';
+};
+
 Pages.render_projects = function() {
   var projects = DB.getProjects();
   var clients = DB.getClients();
   var filterStatus = window._projFilter||'all';
   var filtered = filterStatus==='all' ? projects : projects.filter(function(p){ return p.status===filterStatus; });
 
-  var rows = '';
+  var listHtml = '';
   if (projects.length===0) {
-    rows = '<tr><td colspan="6">' +
-      '<div class="empty-state" style="padding:var(--space-10)">' +
-        '<div class="empty-state-icon"><i data-lucide="briefcase"></i></div>' +
-        '<h3>لا توجد مشاريع بعد</h3>' +
-        '<p>أضف أول مشروع لبدء تتبع أعمالك</p>' +
-        '<button class="btn btn-primary" onclick="Pages.addProjectModal(null)" style="margin-top:var(--space-4);display:inline-flex;align-items:center;gap:var(--space-1_5)"><i data-lucide="plus"></i>مشروع جديد</button>' +
-      '</div></td></tr>';
+    listHtml = '<div class="empty-state" style="padding:var(--space-10)">' +
+      '<div class="empty-state-icon"><i data-lucide="briefcase"></i></div>' +
+      '<h3>لا توجد مشاريع بعد</h3>' +
+      '<p>أضف أول مشروع لبدء تتبع أعمالك</p>' +
+      '<button class="btn btn-primary" onclick="Pages.addProjectModal(null)" style="margin-top:var(--space-4);display:inline-flex;align-items:center;gap:var(--space-1_5)"><i data-lucide="plus"></i>مشروع جديد</button>' +
+    '</div>';
   } else if (filtered.length===0) {
-    rows = '<tr><td colspan="6"><div style="text-align:center;padding:var(--space-8);color:var(--fg-3);font-size:var(--font-sm)">لا توجد مشاريع بهذه الحالة</div></td></tr>';
+    listHtml = '<div class="proj-row-empty">لا توجد مشاريع بهذه الحالة</div>';
   } else {
-    var stMap = {active:'emerald',completed:'purple',paused:'amber',cancelled:'rose'};
-    filtered.slice().sort(function(a,b){ return (b.created||'').localeCompare(a.created||''); }).forEach(function(p){
-      var cl = clients.find(function(c){ return c.id===p.client_id; });
-      var stClass = stMap[p.status]||'gray';
-      rows +=
-        '<tr style="cursor:pointer" onclick="Nav.go(\'fin\',{projId:\''+p.id+'\'})">' +
-          '<td data-label="المشروع">' +
-            '<span style="font-weight:600;color:var(--fg-1)">'+UI.escHtml(p.name)+'</span>' +
-          '</td>' +
-          '<td data-label="العميل">' +
-            (cl
-              ? '<span style="color:var(--iris-600);font-weight:500;cursor:pointer" onclick="event.stopPropagation();Nav.go(\'client\',{clientId:\''+cl.id+'\'})">'+UI.escHtml(cl.name)+'</span>'
-              : '<span style="color:var(--fg-4)">—</span>') +
-          '</td>' +
-          '<td data-label="النوع"><span class="badge gray sm">'+typeLabel(p.type)+'</span></td>' +
-          '<td data-label="الحالة"><span class="badge '+stClass+' sm">'+statusLabel(p.status)+'</span></td>' +
-          '<td data-label="تاريخ الإنشاء" style="font-family:var(--font-mono);color:var(--fg-3);font-size:var(--font-xs)">'+fmtDate(p.created)+'</td>' +
-          '<td data-label="" style="text-align:center">' +
-            '<button class="entry-action-btn" onclick="event.stopPropagation();Nav.go(\'fin\',{projId:\''+p.id+'\'})" title="فتح المشروع">' +
-              '<i data-lucide="arrow-left"></i>' +
-            '</button>' +
-          '</td>' +
-        '</tr>';
-    });
+    listHtml = '<div class="proj-row-list">' +
+      filtered.slice().sort(function(a,b){ return (b.created||'').localeCompare(a.created||''); }).map(function(p){
+        var cl = clients.find(function(c){ return c.id===p.client_id; });
+        return Pages._projRowCard(p, cl);
+      }).join('') +
+    '</div>';
   }
 
   var filterOpts = [
@@ -2378,11 +2546,7 @@ Pages.render_projects = function() {
       '<button class="btn btn-primary" onclick="Pages.addProjectModal(null)" style="display:inline-flex;align-items:center;gap:var(--space-1_5)"><i data-lucide="plus"></i>مشروع جديد</button>' +
     '</div>' +
     pillsHtml +
-    '<div class="card" style="padding:0;overflow:hidden">' +
-      '<div style="overflow-x:auto"><table class="data-table" style="min-width:560px"><thead><tr>' +
-        '<th>اسم المشروع</th><th>العميل</th><th>النوع</th><th>الحالة</th><th>تاريخ الإنشاء</th><th></th>' +
-      '</tr></thead><tbody>'+rows+'</tbody></table></div>' +
-    '</div>';
+    listHtml;
   document.getElementById('top-actions').innerHTML='';
 };
 
