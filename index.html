@@ -1605,6 +1605,262 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
   .dash-greeting{flex-direction:column;align-items:flex-start}
   .quick-actions{grid-template-columns:1fr}
 }
+
+/* ══════════════════════════════════════════
+   CONTRACT EDITOR — layout + A4 canvas
+══════════════════════════════════════════ */
+.contract-editor-page{padding:0!important;overflow:hidden}
+.contract-editor-page.active{display:flex!important;flex-direction:row}
+.contract-sidebar{
+  width:260px;flex-shrink:0;overflow-y:auto;
+  background:var(--bg-elevated);
+  border-inline-start:1px solid var(--border);
+  display:flex;flex-direction:column;
+}
+.contract-sidebar-left{border-inline-start:none;border-inline-end:1px solid var(--border)}
+.contract-sidebar-header{
+  padding:var(--space-3) var(--space-4);
+  border-bottom:1px solid var(--border);
+  font-size:var(--font-xs);font-weight:600;color:var(--fg-2);
+  position:sticky;top:0;background:var(--bg-elevated);z-index:1;
+  display:flex;align-items:center;justify-content:space-between;flex-shrink:0;
+}
+.contract-sidebar-body{padding:var(--space-3);flex:1;overflow-y:auto}
+.contract-sidebar-right{width:300px}
+.contract-canvas-area{
+  flex:1;overflow-y:auto;background:oklch(0.94 0.008 260);
+  padding:40px 20px;display:flex;flex-direction:column;align-items:center;
+  min-width:0;
+}
+
+/* A4 Document */
+.contract-doc{
+  width:794px;max-width:100%;background:#fff;
+  box-shadow:0 4px 32px oklch(0 0 0 / 0.12);
+  font-family:'IBM Plex Sans Arabic','Tajawal',system-ui,sans-serif;
+  font-size:12pt;line-height:1.9;color:#1F2937;direction:rtl;
+  margin-bottom:40px;
+}
+
+/* Cover Page */
+.cov-page{
+  padding:0;position:relative;
+  min-height:1122px;
+  display:flex;flex-direction:column;
+  page-break-after:always;
+}
+.cov-frame-wrap{
+  flex:1;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  text-align:center;padding:60px 50px;
+}
+.cov-frame-modern .cov-frame-wrap{
+  border:2.5px solid #0F2A4A;margin:24px;border-radius:4px;
+}
+.cov-frame-classical .cov-frame-wrap{
+  border:2px solid #B8860B;outline:6px double #B8860B;outline-offset:-12px;margin:20px;padding:50px;
+}
+.cov-frame-minimal .cov-frame-wrap{
+  border-top:4px solid #0F2A4A;border-bottom:1px solid #E5E7EB;
+  margin:0;padding:60px 60px;
+}
+.cov-logo-slot{
+  width:80px;height:80px;border-radius:12px;
+  background:var(--iris-50);border:2px dashed var(--iris-300);
+  display:flex;align-items:center;justify-content:center;
+  margin:0 auto 24px;color:var(--iris-400);font-size:11px;cursor:pointer;
+}
+.cov-title{font-size:26pt;font-weight:700;color:#0F2A4A;line-height:1.3;margin-bottom:12px}
+.cov-subtitle{font-size:12pt;color:#6B7280;margin-bottom:40px}
+.cov-parties-box{
+  border:1px solid #E5E7EB;border-radius:6px;padding:20px 32px;
+  max-width:420px;text-align:right;font-size:11pt;
+}
+.cov-parties-row{padding:6px 0;border-bottom:1px solid #F3F4F6;color:#374151}
+.cov-parties-row:last-child{border-bottom:none}
+.cov-parties-row strong{color:#0F2A4A;display:block;font-size:10pt;color:#6B7280;font-weight:500}
+.cov-ref-line{margin-top:32px;font-size:10pt;color:#9CA3AF}
+
+/* Doc header (shown on body pages, hidden on cover) */
+.contract-doc-header{
+  display:none;
+  padding:10px 50px;border-bottom:1.5px solid #0F2A4A;
+  font-size:9pt;color:#4B5563;
+  align-items:center;justify-content:space-between;
+}
+.contract-doc-footer{
+  padding:8px 50px;border-top:1px solid #E5E7EB;
+  font-size:9pt;color:#9CA3AF;
+  display:flex;align-items:center;justify-content:space-between;
+  background:#FAFAFA;
+}
+
+/* Article / Clause block */
+.clause-block{
+  padding:20px 50px 20px 50px;
+  border-bottom:1px solid #E5E7EB;
+  position:relative;
+}
+.clause-block:last-child{border-bottom:none}
+.clause-block-inner{padding-inline-start:24px}
+.clause-title{
+  font-size:13pt;font-weight:700;color:#0F2A4A;
+  margin-bottom:10px;cursor:default;
+}
+.clause-body{
+  outline:none;min-height:60px;font-size:12pt;line-height:1.9;
+  color:#1F2937;white-space:pre-wrap;word-wrap:break-word;
+}
+.clause-body:focus{
+  background:oklch(0.97 0.02 275 / 0.35);
+  border-radius:4px;padding:4px;margin:-4px;
+}
+/* Clause controls */
+.clause-controls{
+  position:absolute;inset-inline-end:12px;top:18px;
+  display:flex;gap:3px;
+  opacity:0;transition:opacity 150ms;
+}
+.clause-block:hover .clause-controls{opacity:1}
+.clause-ctrl-btn{
+  width:26px;height:26px;border-radius:var(--radius-xs);
+  border:1px solid var(--border);background:var(--bg-elevated);
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  color:var(--fg-3);padding:0;
+  transition:var(--transition-fast);
+}
+.clause-ctrl-btn:hover{background:var(--neutral-100);color:var(--fg-1)}
+.clause-ctrl-btn.danger:hover{background:var(--danger-50);color:var(--danger-600)}
+.clause-ctrl-btn [data-lucide]{width:13px;height:13px}
+
+/* Variable chip */
+.var-chip{
+  display:inline;background:#FEF3C7;color:#92400E;
+  border-radius:3px;padding:0 4px;font-weight:500;font-size:0.95em;
+}
+.var-chip.empty{background:var(--danger-50);color:var(--danger-700);text-decoration:underline dotted}
+
+/* Signature page */
+.sig-page{padding:50px;page-break-before:always}
+.sig-page-title{font-size:14pt;font-weight:700;color:#0F2A4A;text-align:center;margin-bottom:8px}
+.sig-page-sub{font-size:10pt;color:#6B7280;text-align:center;margin-bottom:40px}
+.sig-grid{display:grid;grid-template-columns:1fr 1fr;gap:40px}
+.sig-block{border:1px solid #E5E7EB;border-radius:6px;padding:24px;text-align:center}
+.sig-block-title{font-size:11pt;font-weight:700;color:#0F2A4A;margin-bottom:4px}
+.sig-block-name{font-size:10pt;color:#6B7280;margin-bottom:60px}
+.sig-line{border-bottom:1.5px solid #374151;width:180px;margin:0 auto 8px}
+.sig-line-label{font-size:9pt;color:#9CA3AF}
+.sig-stamp-area{
+  margin-top:16px;width:80px;height:80px;
+  border-radius:50%;border:1.5px dashed #D1D5DB;
+  margin-inline:auto;display:flex;align-items:center;justify-content:center;
+  font-size:9pt;color:#9CA3AF;
+}
+
+/* Clause library sidebar items */
+.clause-lib-item{
+  padding:8px 10px;border-radius:var(--radius-sm);
+  border:1px solid var(--border);margin-bottom:5px;
+  font-size:var(--font-xs);color:var(--fg-2);
+  display:flex;align-items:center;justify-content:space-between;gap:var(--space-2);
+  cursor:pointer;transition:var(--transition-fast);background:var(--bg-elevated);
+}
+.clause-lib-item:hover{border-color:var(--iris-300);background:var(--iris-50);color:var(--iris-700)}
+.clause-lib-add-btn{
+  width:20px;height:20px;border-radius:50%;border:none;
+  background:var(--iris-100);color:var(--iris-600);
+  font-size:16px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  font-family:inherit;padding:0;
+}
+
+/* Variable fields in right sidebar */
+.var-field{margin-bottom:10px}
+.var-field-lbl{font-size:var(--font-2xs);color:var(--fg-3);margin-bottom:3px;font-weight:500}
+.var-field-inp{
+  width:100%;padding:6px 8px;border-radius:var(--radius-xs);
+  border:1px solid var(--border);background:var(--bg-elevated);
+  font-family:inherit;font-size:var(--font-xs);color:var(--fg-1);
+  outline:none;box-sizing:border-box;
+}
+.var-field-inp:focus{border-color:var(--iris-400);box-shadow:var(--shadow-focus)}
+.var-field-inp.auto-val{
+  background:oklch(0.96 0.02 275);border-color:var(--iris-200);color:var(--iris-700);
+}
+
+/* Contract card in project page (contract list) */
+.contract-card{
+  display:flex;align-items:center;gap:var(--space-3);
+  background:var(--bg-elevated);border:1px solid var(--border);
+  border-radius:var(--radius-md);padding:var(--space-3) var(--space-4);
+  margin-bottom:var(--space-2);transition:border-color var(--transition-fast);
+}
+.contract-card:hover{border-color:var(--neutral-300)}
+.contract-card-icon{
+  width:40px;height:40px;flex-shrink:0;border-radius:var(--radius-sm);
+  background:var(--iris-50);color:var(--iris-600);
+  display:flex;align-items:center;justify-content:center;
+}
+.contract-card-main{flex:1;min-width:0}
+.contract-card-title{font-size:var(--font-sm);font-weight:600;color:var(--fg-1);margin-bottom:2px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.contract-card-meta{font-size:var(--font-2xs);color:var(--fg-3);display:flex;gap:var(--space-3)}
+
+/* Preview / Print mode */
+.contract-editor-page.cep-preview .clause-controls,
+.contract-editor-page.cep-preview .contract-sidebar-left{display:none!important}
+.contract-editor-page.cep-preview .clause-body{pointer-events:none}
+.contract-editor-page.cep-preview .contract-doc-header{display:flex}
+
+/* Responsive: hide sidebars on small screens */
+@media(max-width:1100px){
+  .contract-sidebar-left{display:none}
+}
+@media(max-width:900px){
+  .contract-sidebar-right{display:none}
+}
+
+/* A4 Print rules */
+@media print{
+  body > *:not(#app){display:none!important}
+  #app .page:not(.contract-editor-page){display:none!important}
+  .contract-editor-page{display:flex!important}
+  .contract-sidebar,#top-bar-wrap,.top-bar,.ctrl-fab,
+  .modal-overlay,.ctrl-drawer,.ctrl-drawer-overlay,
+  .clause-controls{display:none!important}
+  .contract-canvas-area{background:white!important;padding:0!important;overflow:visible!important}
+  .contract-doc{box-shadow:none!important;width:210mm!important;max-width:none!important}
+  @page{size:A4 portrait;margin:2.5cm 2cm 2.5cm 2cm}
+  .cov-page{page-break-after:always;min-height:auto}
+  .sig-page{page-break-before:always}
+  .clause-block{page-break-inside:avoid;break-inside:avoid}
+  .sig-grid{page-break-inside:avoid;break-inside:avoid}
+  .contract-doc-header{display:flex!important}
+}
+
+/* Template picker cards in modal */
+.tpl-pick-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--space-3);margin-bottom:var(--space-4)}
+.tpl-pick-card{
+  border:2px solid var(--border);border-radius:var(--radius-md);padding:var(--space-4);
+  cursor:pointer;text-align:center;transition:var(--transition-fast);
+  background:var(--bg-elevated);
+}
+.tpl-pick-card:hover{border-color:var(--iris-400);background:var(--iris-50)}
+.tpl-pick-card.selected{border-color:var(--iris-500);background:var(--iris-50)}
+.tpl-pick-icon{
+  width:44px;height:44px;border-radius:var(--radius-sm);
+  background:var(--iris-100);color:var(--iris-600);
+  display:flex;align-items:center;justify-content:center;margin:0 auto var(--space-2);
+}
+.tpl-pick-name{font-size:var(--font-xs);font-weight:600;color:var(--fg-1)}
+.tpl-pick-sub{font-size:11px;color:var(--fg-3);margin-top:3px}
+@media(max-width:600px){
+  .tpl-pick-grid{grid-template-columns:1fr 1fr}
+  .clause-ctrl-btn{width:22px;height:22px}
+  .contract-doc{width:100%}
+  .clause-block{padding:16px 20px}
+  .clause-block-inner{padding-inline-start:0}
+  .sig-grid{grid-template-columns:1fr}
+}
 </style>
 </head>
 <body>
@@ -1690,6 +1946,7 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
     <div id="pg-client"   class="page"></div>
     <div id="pg-projects" class="page"></div>
     <div id="pg-fin"      class="page"></div>
+    <div id="pg-contract" class="page contract-editor-page"></div>
     <div id="pg-settings" class="page"></div>
   </main>
 </div>
@@ -1855,6 +2112,7 @@ var Nav = {
   _cur: 'dash', _params: {},
   go: function(page, params) {
     Nav._cur = page; Nav._params = params||{};
+    if (Pages._contractAutosaveTimer) { clearInterval(Pages._contractAutosaveTimer); Pages._contractAutosaveTimer = null; }
     document.querySelectorAll('.page').forEach(function(p){ p.classList.remove('active'); });
     document.querySelectorAll('.sb-item').forEach(function(a){ a.classList.remove('active'); });
     var el = document.getElementById('pg-'+page);
@@ -1863,6 +2121,8 @@ var Nav = {
     if (navEl) navEl.classList.add('active');
     if (page==='client') { var ni=document.getElementById('nav-clients'); if(ni) ni.classList.add('active'); }
     if (page==='fin') { var ni2=document.getElementById('nav-projects'); if(ni2) ni2.classList.add('active'); }
+    if (page==='contract') { var ni3=document.getElementById('nav-projects'); if(ni3) ni3.classList.add('active'); }
+    if (page==='fin' && params && params.tab) { Pages._finTab = params.tab; }
     if (Pages['render_'+page]) Pages['render_'+page](params);
     if (typeof lucide !== 'undefined') lucide.createIcons();
     Nav.updateBreadcrumb(page, params);
@@ -1903,6 +2163,17 @@ var Nav = {
       var projects = DB.getProjects();
       var pr = projects.find(function(p){ return p.id===params.projId; });
       bc.innerHTML = iconHtml('briefcase')+'<span onclick="Nav.go(\'projects\')" style="cursor:pointer;color:var(--iris-500)">المشاريع</span><span class="bc-sep">/</span><span class="bc-page">'+(pr?UI.escHtml(pr.name):'مشروع')+'</span>';
+      if (typeof lucide !== 'undefined') lucide.createIcons({rootElement: bc});
+      return;
+    }
+    if (page==='contract' && params && params.projId) {
+      var pp = DB.getProjects().find(function(p){return p.id===params.projId;});
+      var cc = pp ? DB.getContracts(params.projId).find(function(c){return c.id===params.contractId;}) : null;
+      bc.innerHTML = iconHtml('briefcase')+
+        '<span onclick="Nav.go(\'projects\')" style="cursor:pointer;color:var(--iris-500)">المشاريع</span>' +
+        '<span class="bc-sep">←</span>' +
+        (pp?'<span onclick="Nav.go(\'fin\',{projId:\''+params.projId+'\',tab:\'contracts\'})" style="cursor:pointer;color:var(--iris-500)">'+UI.escHtml(pp.name)+'</span><span class="bc-sep">←</span>':'') +
+        '<span class="bc-page">'+(cc?UI.escHtml(cc.title):'عقد')+'</span>';
       if (typeof lucide !== 'undefined') lucide.createIcons({rootElement: bc});
       return;
     }
@@ -2052,6 +2323,234 @@ function fmtDate(d) {
     return d;
   } catch(e){ return d; }
 }
+
+/* ═══════════════════════════════════════════
+   CONTRACT TEMPLATES & CLAUSE LIBRARY
+═══════════════════════════════════════════ */
+var CONTRACT_ORDINALS = ['الأولى','الثانية','الثالثة','الرابعة','الخامسة','السادسة','السابعة','الثامنة','التاسعة','العاشرة','الحادية عشرة','الثانية عشرة','الثالثة عشرة','الرابعة عشرة','الخامسة عشرة','السادسة عشرة','السابعة عشرة','الثامنة عشرة','التاسعة عشرة','العشرون'];
+
+var CONTRACT_TEMPLATES = {
+  service: {
+    title: 'عقد تقديم خدمات',
+    clauses: [
+      {
+        key: 'preamble',
+        baseTitle: 'التمهيد وأطراف العقد',
+        content: 'إنه في يوم {{contract_date_gregorian}}م، بمدينة {{contract_city}}، تم الاتفاق والتعاقد بين كل من:\n\nأولاً — الطرف الأول (مقدم الخدمة): {{party_a_name}}، وثيقة الهوية / السجل التجاري رقم {{party_a_id}}، وعنوانه: {{party_a_address}}.\n\nثانياً — الطرف الثاني (مستفيد الخدمة): {{party_b_name}}، وثيقة الهوية / السجل التجاري رقم {{party_b_id}}، وعنوانه: {{party_b_address}}.\n\nوقد اتفق الطرفان بملء إرادتهما ودون أي إكراه على إبرام هذا العقد وفقاً للشروط والأحكام المنصوص عليها أدناه.'
+      },
+      {
+        key: 'subject',
+        baseTitle: 'موضوع العقد',
+        content: 'يتعهد الطرف الأول بتقديم خدمات {{subject}} للطرف الثاني وفقاً للمواصفات والشروط المتفق عليها بين الطرفين، وذلك خلال المدة المحددة في هذا العقد.\n\nتشمل نطاق الخدمات جميع المهام والتسليمات المتفق عليها، ويلتزم الطرف الأول بتنفيذ هذه الخدمات بالمستوى المهني اللازم ووفق أفضل الممارسات المعتمدة في المجال، مع الالتزام بمعايير الجودة المتفق عليها.'
+      },
+      {
+        key: 'financial',
+        baseTitle: 'المقابل المالي وشروط الدفع',
+        content: 'اتفق الطرفان على أن يكون المقابل المالي الإجمالي لهذا العقد مبلغ وقدره {{contract_amount}} {{currency}} ({{contract_amount}} {{currency}} فقط لا غير).\n\nتتم عملية الدفع عن طريق {{payment_method}}، ويلتزم الطرف الثاني بسداد المستحقات في مواعيدها المقررة.\n\nفي حال التأخر في السداد لأكثر من (٣٠) يوماً من تاريخ الاستحقاق، يحق للطرف الأول إيقاف الخدمات حتى تسوية المبالغ المستحقة، مع الاحتفاظ بحقه في المطالبة بالتعويض عن أي أضرار ناجمة عن التأخير.'
+      },
+      {
+        key: 'duration',
+        baseTitle: 'مدة العقد',
+        content: 'تبدأ مدة هذا العقد من تاريخ توقيعه وتمتد لمدة {{duration_months}} شهراً ميلادياً، وتنتهي بانتهاء هذه المدة ما لم يجدد الطرفان الاتفاق كتابياً قبل انتهائها بمدة لا تقل عن ثلاثين (٣٠) يوماً.\n\nيجوز تمديد مدة العقد باتفاق خطي موقع من الطرفين، ويُعدّ التمديد نافذاً فقط بعد توقيع ملحق رسمي من الطرفين.'
+      },
+      {
+        key: 'confidentiality',
+        baseTitle: 'السرية وعدم الإفصاح',
+        content: 'يلتزم كلا الطرفين بالحفاظ على سرية جميع المعلومات والبيانات والوثائق التي يطلع عليها أي منهما بموجب هذا العقد، ويُحظر على أي منهما الإفصاح عنها لأي طرف ثالث دون الحصول على موافقة خطية مسبقة من الطرف الآخر.\n\nتستمر التزامات السرية المنصوص عليها في هذه المادة لمدة ثلاث (٣) سنوات بعد انتهاء هذا العقد أو إنهائه لأي سبب كان.\n\nلا تسري أحكام السرية على المعلومات التي أصبحت متاحة للعموم بصورة مشروعة، أو التي تم الإفصاح عنها بموجب أمر قضائي أو تنظيمي.'
+      },
+      {
+        key: 'termination',
+        baseTitle: 'إنهاء العقد',
+        content: 'يحق لأي من الطرفين إنهاء هذا العقد في الحالات الآتية:\nأولاً: بالاتفاق المشترك بين الطرفين في أي وقت.\nثانياً: بموجب إشعار كتابي مسبق لا يقل عن ثلاثين (٣٠) يوماً.\nثالثاً: في حالة إخلال أي من الطرفين بالتزاماته الجوهرية بموجب هذا العقد وعدم معالجة هذا الإخلال خلال (١٥) يوماً من تاريخ إخطاره كتابياً.\n\nعند إنهاء العقد، يستحق الطرف الأول أتعاباً عن الأعمال المنجزة حتى تاريخ الإنهاء، ويلتزم الطرف الثاني بسداد هذه المستحقات خلال (٣٠) يوماً من تاريخ الإنهاء.'
+      },
+      {
+        key: 'governing_law',
+        baseTitle: 'القانون المطبق والاختصاص القضائي',
+        content: 'يخضع هذا العقد ويُفسَّر وفقاً لأنظمة وتشريعات المملكة العربية السعودية، وتختص محاكم مدينة {{contract_city}} بالنظر في أي نزاع ينشأ عن تطبيقه أو تفسيره ما لم يتفق الطرفان على اللجوء إلى التحكيم.\n\nفي حال وجود أي تعارض بين بنود هذا العقد والأنظمة والتشريعات السارية في المملكة العربية السعودية، تسود الأنظمة والتشريعات السارية.'
+      },
+      {
+        key: 'general',
+        baseTitle: 'أحكام عامة',
+        content: 'أولاً — الاتفاقية الكاملة: يمثل هذا العقد الاتفاقية الكاملة بين الطرفين بشأن الموضوع المتعاقد عليه، ويلغي ويحل محل جميع الاتفاقيات والتفاهمات السابقة سواء كانت شفهية أم كتابية.\n\nثانياً — التعديلات: لا يجوز تعديل أي بند من بنود هذا العقد إلا بموجب وثيقة خطية موقعة من الطرفين.\n\nثالثاً — قابلية الفصل: إذا تبيّن أن أي بند من بنود هذا العقد باطل أو غير نافذ لأي سبب، فلا يؤثر ذلك على صحة ونفاذ باقي البنود.\n\nرابعاً — النسخ: حرر هذا العقد من نسختين أصليتين بالعربية لكل طرف نسخة تحمل حجيتها القانونية ذاتها.'
+      }
+    ]
+  },
+  nda: {
+    title: 'اتفاقية عدم إفصاح وسرية المعلومات',
+    clauses: [
+      {
+        key: 'preamble',
+        baseTitle: 'التمهيد وأطراف الاتفاقية',
+        content: 'إنه في يوم {{contract_date_gregorian}}م، بمدينة {{contract_city}}، أبرمت هذه الاتفاقية بين:\n\nالطرف الأول (المُفصِح): {{party_a_name}}، وثيقة الهوية / السجل التجاري رقم {{party_a_id}}، وعنوانه: {{party_a_address}}.\n\nالطرف الثاني (المُستقبِل): {{party_b_name}}، وثيقة الهوية / السجل التجاري رقم {{party_b_id}}، وعنوانه: {{party_b_address}}.\n\nرغبةً من الطرفين في حماية المعلومات السرية التي سيُفصح عنها في إطار العلاقة المهنية والتجارية بينهما، اتفقا على الشروط والأحكام الآتية.'
+      },
+      {
+        key: 'definitions',
+        baseTitle: 'تعريف المعلومات السرية',
+        content: 'تعني "المعلومات السرية" في هذه الاتفاقية جميع البيانات والمعلومات والوثائق والأسرار التجارية والتقنية والمالية وغيرها مما يُفصح عنه الطرف الأول للطرف الثاني، سواء كانت مكتوبة أو شفهية أو إلكترونية أو بأي شكل آخر، وسواء أُشير إليها صراحةً بأنها سرية أم لا، متى كان من طبيعتها أن تُعدّ معلومات ذات حساسية تجارية.\n\nتستثنى من ذلك المعلومات التي: (أ) أصبحت متاحة للعموم بصورة مشروعة دون إخلال من الطرف الثاني، (ب) كانت في حوزة الطرف الثاني قبل الإفصاح وبصورة مشروعة، (ج) أُفصح عنها من مصدر ثالث مشروع، (د) طُلب الإفصاح عنها بموجب أمر قضائي أو تنظيمي.'
+      },
+      {
+        key: 'obligations_b',
+        baseTitle: 'التزامات الطرف الثاني',
+        content: 'يلتزم الطرف الثاني بما يلي:\nأولاً: الحفاظ على سرية المعلومات السرية التي يتلقاها من الطرف الأول وحمايتها بنفس الدرجة التي يحمي بها معلوماته السرية الخاصة، وبما لا يقل عن معيار العناية المعقولة.\nثانياً: عدم استخدام المعلومات السرية لأي غرض آخر غير الغرض المحدد في هذه الاتفاقية.\nثالثاً: تقييد الوصول إلى المعلومات السرية على موظفيه ومستشاريه الذين يحتاجون إليها فعلاً لأداء مهامهم، وأن يلتزموا هم أيضاً بالتزامات مماثلة للسرية.\nرابعاً: إخطار الطرف الأول فوراً في حال علمه بأي كشف غير مصرح به للمعلومات السرية.'
+      },
+      {
+        key: 'duration',
+        baseTitle: 'مدة الاتفاقية والسرية',
+        content: 'تسري هذه الاتفاقية لمدة {{duration_months}} شهراً من تاريخ توقيعها، وتستمر التزامات السرية سارية المفعول لمدة خمس (٥) سنوات بعد انتهاء هذه الاتفاقية أو إنهائها، سواء انتهت بمرور المدة أو بأي سبب آخر.\n\nيجوز للطرفين تمديد مدة الاتفاقية باتفاق خطي موقع من كليهما قبل انتهاء المدة الأصلية بما لا يقل عن (١٥) يوماً.'
+      },
+      {
+        key: 'ip',
+        baseTitle: 'الملكية الفكرية',
+        content: 'لا تُفسَّر هذه الاتفاقية على أنها منح للطرف الثاني أي ترخيص أو حق في الملكية الفكرية للطرف الأول، بما في ذلك براءات الاختراع والعلامات التجارية وحقوق النشر والأسرار التجارية.\n\nتبقى جميع المعلومات السرية المُفصَح عنها ملكاً خالصاً للطرف الأول، ولا يكتسب الطرف الثاني أي حق فيها بموجب هذه الاتفاقية إلا في حدود ما هو مصرح به صراحةً.'
+      },
+      {
+        key: 'indemnity',
+        baseTitle: 'التعويض عن الإخلال',
+        content: 'في حال إخلال الطرف الثاني بأي من التزاماته بموجب هذه الاتفاقية، يلتزم بتعويض الطرف الأول عن جميع الأضرار والخسائر المباشرة وغير المباشرة الناجمة عن ذلك الإخلال، بما فيها الأتعاب القانونية.\n\nيُقرّ الطرف الثاني بأن الإخلال بهذه الاتفاقية قد يُلحق بالطرف الأول ضرراً بالغاً لا يمكن تعويضه بالكامل بالمقابل المادي، ويوافق على حق الطرف الأول في طلب أوامر الإنصاف التحفظية والقضائية المناسبة.'
+      },
+      {
+        key: 'governing_law',
+        baseTitle: 'القانون المطبق والاختصاص القضائي',
+        content: 'تخضع هذه الاتفاقية لأنظمة وتشريعات المملكة العربية السعودية وتُفسَّر وفقاً لها، وتختص محاكم مدينة {{contract_city}} بالفصل في أي نزاع ينشأ عن تطبيقها أو تفسيرها، ما لم يتفق الطرفان كتابياً على اللجوء إلى التحكيم.\n\nحرر هذا العقد من نسختين أصليتين باللغة العربية لكل طرف نسخة تحمل حجيتها القانونية ذاتها، بتاريخ {{contract_date_gregorian}}م في مدينة {{contract_city}}.'
+      }
+    ]
+  },
+  employment: {
+    title: 'عقد عمل',
+    clauses: [
+      {
+        key: 'preamble',
+        baseTitle: 'أطراف عقد العمل',
+        content: 'إنه في يوم {{contract_date_gregorian}}م، بمدينة {{contract_city}}، تم إبرام عقد العمل هذا بين:\n\nصاحب العمل (الطرف الأول): {{party_a_name}}، السجل التجاري / رقم الهوية {{party_a_id}}، العنوان: {{party_a_address}}.\n\nالموظف (الطرف الثاني): {{party_b_name}}، وثيقة الهوية رقم {{party_b_id}}، العنوان: {{party_b_address}}.\n\nوقد اتفق الطرفان على الشروط والأحكام التالية وفقاً لنظام العمل السعودي الصادر بالمرسوم الملكي ولوائحه التنفيذية.'
+      },
+      {
+        key: 'subject',
+        baseTitle: 'طبيعة العمل والمسمى الوظيفي',
+        content: 'يُعيَّن الطرف الثاني لدى الطرف الأول بمسمى وظيفي: {{subject}}، ويضطلع بجميع المهام والواجبات المرتبطة بهذا المنصب وما يُكلَّف به من أعمال تدخل ضمن نطاق مؤهلاته ومهاراته.\n\nيلتزم الطرف الثاني بأداء مهامه بكل أمانة وإتقان، والالتزام بالسياسات الداخلية والتعليمات الصادرة عن الإدارة، وبذل العناية اللازمة في تأدية واجباته الوظيفية.'
+      },
+      {
+        key: 'financial',
+        baseTitle: 'الراتب والمزايا المالية',
+        content: 'يتقاضى الطرف الثاني راتباً شهرياً إجمالياً قدره {{contract_amount}} {{currency}}، يُصرف في نهاية كل شهر ميلادي عن طريق {{payment_method}}.\n\nيشمل الراتب جميع المزايا المتفق عليها، ويُراجَع سنوياً بناءً على تقييم الأداء ووفق سياسات الشركة المعتمدة. تخضع جميع المستحقات المالية لأحكام نظام العمل السعودي والأنظمة الضريبية السارية.'
+      },
+      {
+        key: 'duration',
+        baseTitle: 'مدة العقد وساعات العمل',
+        content: 'يبدأ سريان هذا العقد من تاريخ {{contract_date_gregorian}}م لمدة {{duration_months}} شهراً، قابلة للتجديد باتفاق الطرفين.\n\nساعات العمل الرسمية وفق ما تحدده إدارة الطرف الأول، مع مراعاة أحكام نظام العمل السعودي المتعلقة بساعات العمل والراحة الأسبوعية وأيام الإجازات الرسمية.\n\nيستحق الطرف الثاني إجازة سنوية مدفوعة الأجر وفق أحكام نظام العمل السعودي.'
+      },
+      {
+        key: 'confidentiality',
+        baseTitle: 'السرية وحماية المعلومات',
+        content: 'يلتزم الطرف الثاني بالمحافظة على سرية جميع المعلومات والبيانات والأسرار التجارية التي يطلع عليها بحكم عمله لدى الطرف الأول، ويحظر عليه الإفصاح عنها لأي طرف خارجي دون موافقة خطية مسبقة.\n\nتستمر هذه الالتزامات سارية المفعول لمدة ثلاث (٣) سنوات بعد انتهاء هذه العلاقة الوظيفية لأي سبب كان.'
+      },
+      {
+        key: 'termination',
+        baseTitle: 'إنهاء العقد',
+        content: 'يخضع إنهاء هذا العقد لأحكام نظام العمل السعودي السارية، وفيما يلي الأحكام التفصيلية:\n\nأولاً: يحق لأي من الطرفين إنهاء العقد بإشعار خطي مسبق لا يقل عن ثلاثين (٣٠) يوماً.\nثانياً: يحق للطرف الأول إنهاء العقد فوراً في حالات الإخلال الجسيم بالواجبات الوظيفية المنصوص عليها في نظام العمل.\nثالثاً: يستحق الطرف الثاني عند انتهاء العقد جميع مستحقاته المالية المقررة نظاماً، بما فيها مكافأة نهاية الخدمة وفق نظام العمل.'
+      },
+      {
+        key: 'governing_law',
+        baseTitle: 'القانون المطبق',
+        content: 'يخضع هذا العقد لأحكام نظام العمل السعودي ولوائحه التنفيذية، وتفصل في أي نزاع ينشأ عنه المحاكم العمالية المختصة في مدينة {{contract_city}}.\n\nفي حال وجود أي تعارض بين بنود هذا العقد وأحكام نظام العمل، تُطبَّق أحكام النظام باعتبارها الحد الأدنى الواجب التطبيق.\n\nحرر هذا العقد من نسختين أصليتين تحمل كل منهما حجيتها القانونية، وقّع عليهما الطرفان بتاريخ {{contract_date_gregorian}}م.'
+      }
+    ]
+  },
+  consulting: {
+    title: 'عقد تقديم خدمات استشارية',
+    clauses: [
+      {
+        key: 'preamble',
+        baseTitle: 'أطراف عقد الاستشارة',
+        content: 'إنه في يوم {{contract_date_gregorian}}م، بمدينة {{contract_city}}، أُبرم هذا العقد الاستشاري بين:\n\nالطرف الأول (المستشار): {{party_a_name}}، وثيقة الهوية / السجل التجاري رقم {{party_a_id}}، وعنوانه: {{party_a_address}}.\n\nالطرف الثاني (العميل): {{party_b_name}}، وثيقة الهوية / السجل التجاري رقم {{party_b_id}}، وعنوانه: {{party_b_address}}.\n\nبناءً على رغبة الطرف الثاني في الاستفادة من خبرات الطرف الأول ومؤهلاته المهنية، اتفق الطرفان على ما يلي.'
+      },
+      {
+        key: 'subject',
+        baseTitle: 'نطاق الخدمات الاستشارية',
+        content: 'يتعهد الطرف الأول بتقديم خدمات استشارية متخصصة في مجال {{subject}} للطرف الثاني، وتشمل هذه الخدمات على سبيل المثال لا الحصر:\n— تقديم التوصيات والمشورة المهنية المتخصصة في مجال الاستشارة.\n— إعداد التقارير والدراسات والتحليلات اللازمة.\n— المشاركة في الاجتماعات والجلسات التشاورية المتفق عليها.\n— تقديم الدعم والمتابعة خلال مرحلة التطبيق عند الاتفاق على ذلك.\n\nيلتزم الطرف الأول بتنفيذ خدماته الاستشارية بالمستوى المهني المناسب لخبراته ومؤهلاته.'
+      },
+      {
+        key: 'financial',
+        baseTitle: 'الأتعاب الاستشارية وشروط الدفع',
+        content: 'تبلغ الأتعاب الاستشارية الإجمالية مبلغ {{contract_amount}} {{currency}} ({{contract_amount}} {{currency}} فقط لا غير) مقابل الخدمات المحددة في هذا العقد.\n\nيتم سداد الأتعاب عن طريق {{payment_method}} وفق الجدول الزمني المتفق عليه:\n— دفعة أولى: ٤٠٪ من الأتعاب عند توقيع العقد.\n— دفعة ثانية: ٣٠٪ عند اكتمال منتصف مدة العقد.\n— دفعة ثالثة: ٣٠٪ عند تسليم المخرجات النهائية والحصول على قبول الطرف الثاني.\n\nتُعدّ الأتعاب شاملة لجميع مصاريف تقديم الخدمة إلا إذا اتفق الطرفان كتابياً على خلاف ذلك.'
+      },
+      {
+        key: 'obligations_a',
+        baseTitle: 'التزامات المستشار',
+        content: 'يلتزم الطرف الأول (المستشار) بما يلي:\nأولاً: تخصيص الوقت والجهد الكافيين لتنفيذ الخدمات الاستشارية بالمستوى المهني المطلوب.\nثانياً: الالتزام بالمواعيد والجداول الزمنية المتفق عليها.\nثالثاً: الإفصاح لأي تعارض في المصالح فور علمه بوجوده.\nرابعاً: الحفاظ على سرية جميع المعلومات المتعلقة بأعمال الطرف الثاني.\nخامساً: التعاون مع فريق الطرف الثاني وتوفير التوجيهات والإرشادات اللازمة.'
+      },
+      {
+        key: 'duration',
+        baseTitle: 'مدة عقد الاستشارة',
+        content: 'تمتد مدة هذا العقد الاستشاري لمدة {{duration_months}} شهراً تبدأ من تاريخ {{contract_date_gregorian}}م وتنتهي بانتهاء هذه المدة.\n\nيجوز للطرفين تمديد مدة العقد بموافقة خطية مبرمة قبل انتهاء المدة الأصلية بمدة لا تقل عن (١٤) يوماً، مع تحديد الأتعاب الإضافية المتفق عليها للمدة الممددة.'
+      },
+      {
+        key: 'ip',
+        baseTitle: 'ملكية المخرجات الاستشارية',
+        content: 'تؤول ملكية جميع المخرجات والتقارير والدراسات التي يُعدّها الطرف الأول بموجب هذا العقد إلى الطرف الثاني بعد سداد كامل الأتعاب المستحقة.\n\nيحتفظ الطرف الأول بحقه في استخدام المنهجيات والأدوات والخبرات العامة المطورة خلال فترة الاستشارة بصورة لا تتعارض مع التزامات السرية الواردة في هذا العقد.\n\nلا يحق للطرف الثاني إعادة بيع أو نقل ملكية المخرجات لطرف ثالث دون موافقة خطية مسبقة من الطرف الأول.'
+      },
+      {
+        key: 'termination',
+        baseTitle: 'إنهاء العقد الاستشاري',
+        content: 'يحق لأي من الطرفين إنهاء هذا العقد الاستشاري في الحالات التالية:\nأولاً: بالاتفاق المشترك الموثق كتابياً.\nثانياً: بإشعار خطي مسبق لا يقل عن (٢١) يوماً.\nثالثاً: في حال الإخلال الجوهري بالتزامات العقد وعدم تصحيح هذا الإخلال خلال (١٠) أيام من الإشعار الكتابي.\n\nعند الإنهاء، يستحق الطرف الأول أتعاباً بنسبة الأعمال المنجزة فعلياً، وتُسوَّى المستحقات خلال (١٤) يوم عمل من تاريخ الإنهاء.'
+      },
+      {
+        key: 'governing_law',
+        baseTitle: 'القانون المطبق والنزاعات',
+        content: 'يخضع هذا العقد لأنظمة وتشريعات المملكة العربية السعودية، وفي حال نشوء أي نزاع يحاول الطرفان تسويته ودياً خلال (٣٠) يوماً، فإن تعذر ذلك تختص محاكم مدينة {{contract_city}} بالفصل فيه.\n\nحرر هذا العقد من نسختين أصليتين موقعتين من الطرفين، لكل طرف نسخة بتاريخ {{contract_date_gregorian}}م.'
+      }
+    ]
+  },
+  blank: {
+    title: 'عقد (نموذج فارغ)',
+    clauses: [
+      {
+        key: 'preamble',
+        baseTitle: 'أطراف العقد',
+        content: 'إنه في يوم {{contract_date_gregorian}}م، بمدينة {{contract_city}}، تم الاتفاق والتعاقد بين:\n\nالطرف الأول: {{party_a_name}}، وثيقة الهوية / السجل التجاري رقم {{party_a_id}}، وعنوانه: {{party_a_address}}.\n\nالطرف الثاني: {{party_b_name}}، وثيقة الهوية / السجل التجاري رقم {{party_b_id}}، وعنوانه: {{party_b_address}}.\n\nوقد اتفق الطرفان على إبرام هذا العقد وفقاً للشروط والأحكام المنصوص عليها فيه.'
+      },
+      {
+        key: 'subject',
+        baseTitle: 'موضوع العقد',
+        content: '{{subject}}\n\nيلتزم الطرفان بتنفيذ موضوع هذا العقد وفق ما اتُّفق عليه من شروط وأحكام.'
+      },
+      {
+        key: 'financial',
+        baseTitle: 'المقابل المالي',
+        content: 'اتفق الطرفان على مبلغ {{contract_amount}} {{currency}} يُسدَّد عن طريق {{payment_method}} وفق الجدول الزمني المتفق عليه.'
+      },
+      {
+        key: 'duration',
+        baseTitle: 'مدة العقد',
+        content: 'تمتد مدة هذا العقد لـ {{duration_months}} شهراً من تاريخ توقيعه.'
+      },
+      {
+        key: 'general',
+        baseTitle: 'أحكام عامة',
+        content: 'يخضع هذا العقد لأنظمة وتشريعات المملكة العربية السعودية، وتختص محاكم مدينة {{contract_city}} بالفصل في أي نزاع ينشأ عنه.\n\nحرر هذا العقد من نسختين أصليتين لكل طرف نسخة.'
+      }
+    ]
+  }
+};
+
+var CLAUSE_LIBRARY = [
+  {key:'preamble', title:'التمهيد'},
+  {key:'definitions', title:'التعريفات'},
+  {key:'subject', title:'موضوع العقد'},
+  {key:'obligations_a', title:'التزامات الطرف الأول'},
+  {key:'obligations_b', title:'التزامات الطرف الثاني'},
+  {key:'financial', title:'المقابل المالي وشروط الدفع'},
+  {key:'duration', title:'مدة العقد'},
+  {key:'confidentiality', title:'السرية وعدم الإفصاح'},
+  {key:'ip', title:'الملكية الفكرية'},
+  {key:'force_majeure', title:'القوة القاهرة'},
+  {key:'termination', title:'إنهاء العقد'},
+  {key:'indemnity', title:'التعويض'},
+  {key:'disputes', title:'حل النزاعات'},
+  {key:'governing_law', title:'القانون المطبق والاختصاص القضائي'},
+  {key:'notices', title:'التبليغات والإشعارات'},
+  {key:'general', title:'أحكام عامة'},
+  {key:'signatures', title:'التوقيعات'}
+];
 
 /* ═══════════════════════════════════════════
    PAGES
@@ -2778,6 +3277,7 @@ Pages.render_fin = function(params) {
   var r = FinCalc.calc(projId);
   var c = fin.ctrl||{};
   var tab = (Pages._finTab==='ctrl'||!Pages._finTab) ? 'overview' : Pages._finTab;
+  var contracts = DB.getContracts(projId);
 
   var stMap = {active:['st-active','نشط'],completed:['st-completed','مكتمل'],paused:['st-paused','متوقف'],cancelled:['','ملغي']};
   var stInfo = stMap[proj.status]||['',''];
@@ -2833,15 +3333,18 @@ Pages.render_fin = function(params) {
     '<div class="hero-tab-bar">' +
       '<button class="hero-tab-pill'+(tab==='overview'?' active':'')+'" onclick="Pages.switchFinTab(\'overview\',\''+projId+'\')"><i data-lucide="layout-dashboard"></i>نظرة عامة</button>' +
       '<button class="hero-tab-pill'+(tab==='entries'?' active':'')+'" onclick="Pages.switchFinTab(\'entries\',\''+projId+'\')"><i data-lucide="receipt"></i>سجل المعاملات</button>' +
+      '<button class="hero-tab-pill'+(tab==='contracts'?' active':'')+'" onclick="Pages.switchFinTab(\'contracts\',\''+projId+'\')"><i data-lucide="file-text"></i>العقود'+(contracts.length?'<span class="hero-tab-count">'+contracts.length+'</span>':'')+' </button>' +
     '</div>' +
     '<div id="fin-tab-overview" class="tab-content'+(tab==='overview'?' active':'')+'"></div>' +
-    '<div id="fin-tab-entries" class="tab-content'+(tab==='entries'?' active':'')+'"></div>';
+    '<div id="fin-tab-entries" class="tab-content'+(tab==='entries'?' active':'')+'"></div>' +
+    '<div id="fin-tab-contracts" class="tab-content'+(tab==='contracts'?' active':'')+'"></div>';
 
   document.getElementById('top-actions').innerHTML =
     '<button class="btn btn-sm" onclick="Nav.go(\'projects\')" style="display:inline-flex;align-items:center;gap:5px"><i data-lucide="arrow-right"></i>المشاريع</button>';
 
   Pages._finProjId = projId;
   if (tab==='entries') Pages.renderFinEntries(projId);
+  else if (tab==='contracts') Pages.renderFinContracts(projId);
   else Pages.renderFinOverview(projId);
 };
 
@@ -2849,15 +3352,162 @@ Pages.switchFinTab = function(tab, projId) {
   Pages._finTab = tab;
   document.querySelectorAll('#pg-fin .hero-tab-pill').forEach(function(b){
     var match = (tab==='overview' && b.textContent.indexOf('نظرة عامة')>=0) ||
-                (tab==='entries' && b.textContent.indexOf('سجل المعاملات')>=0);
+                (tab==='entries' && b.textContent.indexOf('سجل المعاملات')>=0) ||
+                (tab==='contracts' && b.textContent.indexOf('العقود')>=0);
     b.classList.toggle('active', match);
   });
-  ['overview','entries'].forEach(function(t){
+  ['overview','entries','contracts'].forEach(function(t){
     var el = document.getElementById('fin-tab-'+t);
     if (el) el.className = 'tab-content'+(t===tab?' active':'');
   });
   if (tab==='overview') Pages.renderFinOverview(projId);
+  else if (tab==='contracts') Pages.renderFinContracts(projId);
   else Pages.renderFinEntries(projId);
+};
+
+Pages.renderFinContracts = function(projId) {
+  var contracts = DB.getContracts(projId);
+  var tplNames = {service:'عقد تقديم خدمات', nda:'اتفاقية عدم إفصاح', employment:'عقد عمل', consulting:'عقد استشارات', blank:'نموذج فارغ'};
+  var statusLabel = {draft:'مسودة', final:'نهائي'};
+  var statusBadge = {draft:'amber', final:'emerald'};
+
+  var cardsHtml = '';
+  if (contracts.length === 0) {
+    cardsHtml = '<div class="proj-row-empty" style="margin-bottom:var(--space-4)">' +
+      '<div style="margin-bottom:var(--space-3)"><i data-lucide="file-text" style="width:32px;height:32px;opacity:.3"></i></div>' +
+      '<p style="margin-bottom:var(--space-3)">لم يتم إنشاء أي عقد لهذا المشروع بعد</p>' +
+      '<button class="btn btn-primary btn-sm" onclick="Pages.addContractModal(\''+projId+'\')" style="display:inline-flex;align-items:center;gap:6px"><i data-lucide="plus"></i>إنشاء عقد جديد</button>' +
+      '</div>';
+  } else {
+    contracts.forEach(function(c) {
+      var sKey = statusBadge[c.status] || 'gray';
+      cardsHtml += '<div class="contract-card">' +
+        '<div class="contract-card-icon"><i data-lucide="file-text"></i></div>' +
+        '<div class="contract-card-main">' +
+          '<div class="contract-card-title">'+UI.escHtml(c.title)+'</div>' +
+          '<div class="contract-card-meta">' +
+            '<span>'+UI.escHtml(tplNames[c.template_type]||c.template_type)+'</span>' +
+            '<span>'+UI.escHtml(c.updated||c.created||'')+'</span>' +
+          '</div>' +
+        '</div>' +
+        '<span class="badge '+sKey+' sm">'+UI.escHtml(statusLabel[c.status]||c.status)+'</span>' +
+        '<button class="btn btn-sm" onclick="Nav.go(\'contract\',{projId:\''+projId+'\',contractId:\''+c.id+'\'})" style="display:inline-flex;align-items:center;gap:5px"><i data-lucide="arrow-left"></i>فتح</button>' +
+        '<button class="btn btn-sm" onclick="Pages.deleteContractConfirm(\''+projId+'\',\''+c.id+'\')" style="color:var(--danger-600)"><i data-lucide="trash-2"></i></button>' +
+      '</div>';
+    });
+  }
+
+  document.getElementById('fin-tab-contracts').innerHTML =
+    '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--space-4)">' +
+      '<div>' +
+        '<h3 style="font-size:var(--font-md);font-weight:700;color:var(--fg-1)">عقود المشروع</h3>' +
+        '<div style="font-size:var(--font-xs);color:var(--fg-3);margin-top:2px">'+contracts.length+' عقد</div>' +
+      '</div>' +
+      '<button class="btn btn-primary btn-sm" onclick="Pages.addContractModal(\''+projId+'\')" style="display:inline-flex;align-items:center;gap:6px"><i data-lucide="plus"></i>عقد جديد</button>' +
+    '</div>' +
+    cardsHtml;
+
+  if (typeof lucide !== 'undefined') lucide.createIcons({rootElement: document.getElementById('fin-tab-contracts')});
+};
+
+Pages.deleteContractConfirm = function(projId, contractId) {
+  var contracts = DB.getContracts(projId);
+  var c = contracts.find(function(x){return x.id===contractId;});
+  if (!c) return;
+  UI.openModal(
+    '<div class="modal-header"><h3>حذف العقد</h3><button class="modal-close" onclick="UI.closeModalForce()">×</button></div>' +
+    '<div class="modal-body"><p style="color:var(--fg-2)">هل تريد حذف عقد "<strong>'+UI.escHtml(c.title)+'</strong>"؟ لا يمكن التراجع.</p></div>' +
+    '<div class="modal-footer" style="display:flex;gap:var(--space-2);justify-content:flex-end">' +
+      '<button class="btn btn-sm" onclick="UI.closeModalForce()">إلغاء</button>' +
+      '<button class="btn btn-sm btn-danger" onclick="DB.deleteContract(\''+projId+'\',\''+contractId+'\');UI.closeModalForce();Pages.renderFinContracts(\''+projId+'\')">حذف</button>' +
+    '</div>'
+  );
+};
+
+Pages.addContractModal = function(projId) {
+  var templates = [
+    {key:'service', name:'عقد تقديم خدمات', sub:'للخدمات والمشاريع', icon:'briefcase'},
+    {key:'nda', name:'اتفاقية عدم إفصاح', sub:'حماية المعلومات السرية', icon:'shield'},
+    {key:'employment', name:'عقد عمل', sub:'توظيف وعمالة', icon:'user'},
+    {key:'consulting', name:'عقد استشارات', sub:'الاستشارات والخبرات', icon:'lightbulb'},
+    {key:'blank', name:'نموذج فارغ', sub:'ابدأ من الصفر', icon:'file-plus'}
+  ];
+  var cardsHtml = templates.map(function(t) {
+    return '<div class="tpl-pick-card" onclick="Pages._selectTpl=\''+t.key+'\';document.querySelectorAll(\'.tpl-pick-card\').forEach(function(x){x.classList.remove(\'selected\')});this.classList.add(\'selected\')">' +
+      '<div class="tpl-pick-icon"><i data-lucide="'+t.icon+'"></i></div>' +
+      '<div class="tpl-pick-name">'+t.name+'</div>' +
+      '<div class="tpl-pick-sub">'+t.sub+'</div>' +
+    '</div>';
+  }).join('');
+
+  Pages._selectTpl = 'service';
+
+  UI.openModal(
+    '<div class="modal-header"><h3>إنشاء عقد جديد</h3><button class="modal-close" onclick="UI.closeModalForce()">×</button></div>' +
+    '<div class="modal-body">' +
+      '<p style="color:var(--fg-3);font-size:var(--font-xs);margin-bottom:var(--space-4)">اختر قالب العقد — يمكنك تعديل جميع البنود لاحقاً</p>' +
+      '<div class="tpl-pick-grid">'+cardsHtml+'</div>' +
+    '</div>' +
+    '<div class="modal-footer" style="display:flex;gap:var(--space-2);justify-content:flex-end">' +
+      '<button class="btn btn-sm" onclick="UI.closeModalForce()">إلغاء</button>' +
+      '<button class="btn btn-sm btn-primary" onclick="Pages.createContract(\''+projId+'\',Pages._selectTpl)">إنشاء وفتح المحرر</button>' +
+    '</div>'
+  );
+  if (typeof lucide !== 'undefined') lucide.createIcons({rootElement: document.getElementById('modal-box')});
+};
+
+Pages.createContract = function(projId, tplKey) {
+  var tpl = CONTRACT_TEMPLATES[tplKey] || CONTRACT_TEMPLATES['blank'];
+  var projects = DB.getProjects();
+  var proj = projects.find(function(p){return p.id===projId;});
+  var clients = DB.getClients();
+  var cl = proj ? clients.find(function(c){return c.id===proj.client_id;}) : null;
+  var fin = DB.getFin(projId);
+  var r = FinCalc.calc(projId);
+  var today = (new Date()).toISOString().slice(0,10);
+
+  var vars = {
+    party_a_name: '',
+    party_a_id: '',
+    party_a_address: '',
+    party_b_name: cl ? cl.name : '',
+    party_b_id: cl ? (cl.reg_no||'') : '',
+    party_b_address: cl ? (cl.city||'') : '',
+    contract_date_gregorian: fin.ctrl && fin.ctrl.contract_date ? fin.ctrl.contract_date : today,
+    contract_city: cl ? (cl.city||'الرياض') : 'الرياض',
+    contract_amount: r.grossTotal > 0 ? Math.round(r.grossTotal).toString() : '',
+    currency: 'ر.س',
+    duration_months: '12',
+    subject: proj ? proj.name : '',
+    payment_method: 'تحويل بنكي'
+  };
+
+  var clauses = tpl.clauses.map(function(cl, i) {
+    return {
+      id: DB.uid(),
+      key: cl.key,
+      title: 'المادة ' + (CONTRACT_ORDINALS[i] || (i+1).toString()) + ': ' + cl.baseTitle,
+      content: cl.content,
+      enabled: true
+    };
+  });
+
+  var contract = {
+    id: DB.uid(),
+    template_type: tplKey,
+    title: tpl.title,
+    status: 'draft',
+    created: today,
+    updated: today,
+    variables: vars,
+    clauses: clauses,
+    cover: { frame_style: 'modern' },
+    footer_label: 'سري'
+  };
+
+  DB.saveContract(projId, contract);
+  UI.closeModalForce();
+  Nav.go('contract', {projId: projId, contractId: contract.id});
 };
 
 Pages._ctrlContainer = 'ctrl-drawer-body';
@@ -3957,6 +4607,420 @@ Pages.deleteProjectConfirm = function(projId) {
   UI.toast('تم الحذف');
   UI.closeModalForce();
   Nav.go('projects');
+};
+
+/* ─── CONTRACT EDITOR ─── */
+Pages.render_contract = function(params) {
+  params = params||{};
+  var projId = params.projId;
+  var contractId = params.contractId;
+  var proj = DB.getProjects().find(function(p){return p.id===projId;});
+  if (!proj) { document.getElementById('pg-contract').innerHTML='<div class="empty-state"><h3>المشروع غير موجود</h3></div>'; return; }
+
+  var contracts = DB.getContracts(projId);
+  var contract = contracts.find(function(c){return c.id===contractId;});
+  if (!contract) { document.getElementById('pg-contract').innerHTML='<div class="empty-state"><h3>العقد غير موجود</h3></div>'; return; }
+
+  Pages._contractId = contractId;
+  Pages._contractProjId = projId;
+  Pages._contractPreview = false;
+
+  var vars = contract.variables || {};
+
+  // === LEFT SIDEBAR: Clause Library ===
+  var libHtml = CLAUSE_LIBRARY.map(function(cl) {
+    var alreadyIn = contract.clauses.some(function(c){return c.key===cl.key && c.enabled!==false;});
+    return '<div class="clause-lib-item">' +
+      '<span style="'+(alreadyIn?'opacity:.5':'')+'">'+cl.title+'</span>' +
+      '<button class="clause-lib-add-btn" onclick="Pages.addClauseFromLib(\''+projId+'\',\''+contractId+'\',\''+cl.key+'\')" title="إضافة للعقد">+</button>' +
+    '</div>';
+  }).join('');
+
+  // === RIGHT SIDEBAR: Variables ===
+  var varDefs = [
+    {key:'party_a_name', label:'اسم الطرف الأول (مقدم الخدمة)', auto:false},
+    {key:'party_a_id', label:'رقم هوية / سجل تجاري الطرف الأول', auto:false},
+    {key:'party_a_address', label:'عنوان الطرف الأول', auto:false},
+    {key:'party_b_name', label:'اسم الطرف الثاني (مستقبل الخدمة)', auto:true},
+    {key:'party_b_id', label:'رقم هوية / سجل تجاري الطرف الثاني', auto:true},
+    {key:'party_b_address', label:'عنوان / مدينة الطرف الثاني', auto:true},
+    {key:'contract_date_gregorian', label:'تاريخ العقد الميلادي', auto:true},
+    {key:'contract_city', label:'مدينة الإبرام', auto:true},
+    {key:'subject', label:'موضوع العقد', auto:true},
+    {key:'contract_amount', label:'قيمة العقد', auto:true},
+    {key:'currency', label:'العملة', auto:true},
+    {key:'duration_months', label:'مدة العقد (شهور)', auto:false},
+    {key:'payment_method', label:'طريقة الدفع', auto:false}
+  ];
+
+  var varHtml = varDefs.map(function(def) {
+    var val = vars[def.key] || '';
+    return '<div class="var-field">' +
+      '<div class="var-field-lbl">'+def.label+(def.auto?' <span style="color:var(--iris-500);font-size:10px">مُعبأ تلقائياً</span>':'')+'</div>' +
+      '<input class="var-field-inp'+(val&&def.auto?' auto-val':'')+'" value="'+UI.escHtml(val)+'" placeholder="'+def.label+'" oninput="Pages.updateContractVar(\''+projId+'\',\''+contractId+'\',\''+def.key+'\',this.value)">' +
+    '</div>';
+  }).join('');
+
+  var settingsHtml =
+    '<div style="margin-top:var(--space-4);padding-top:var(--space-4);border-top:1px solid var(--border)">' +
+      '<div class="contract-sidebar-header" style="padding:0;margin-bottom:var(--space-3);position:static">إعدادات الوثيقة</div>' +
+      '<div class="var-field">' +
+        '<div class="var-field-lbl">إطار الغلاف</div>' +
+        '<select class="var-field-inp" onchange="Pages.updateContractCover(\''+projId+'\',\''+contractId+'\',\'frame_style\',this.value)">' +
+          ['modern','classical','minimal'].map(function(s){
+            return '<option value="'+s+'"'+(contract.cover&&contract.cover.frame_style===s?' selected':'')+'>'+{modern:'حديث',classical:'كلاسيكي',minimal:'بسيط'}[s]+'</option>';
+          }).join('') +
+        '</select>' +
+      '</div>' +
+      '<div class="var-field">' +
+        '<div class="var-field-lbl">تصنيف التذييل</div>' +
+        '<select class="var-field-inp" onchange="Pages.updateContractCover(\''+projId+'\',\''+contractId+'\',\'footer_label\',this.value)">' +
+          ['سري','مسودة','نسخة طبق الأصل','نهائي'].map(function(s){
+            return '<option value="'+s+'"'+(contract.footer_label===s?' selected':'')+'>'+s+'</option>';
+          }).join('') +
+        '</select>' +
+      '</div>' +
+      '<div class="var-field">' +
+        '<div class="var-field-lbl">حالة العقد</div>' +
+        '<select class="var-field-inp" onchange="Pages.updateContractStatus(\''+projId+'\',\''+contractId+'\',this.value)">' +
+          '<option value="draft"'+(contract.status==='draft'?' selected':'')+'>مسودة</option>' +
+          '<option value="final"'+(contract.status==='final'?' selected':'')+'>نهائي</option>' +
+        '</select>' +
+      '</div>' +
+    '</div>';
+
+  var docHtml = Pages._renderContractDoc(contract);
+
+  var pageEl = document.getElementById('pg-contract');
+  pageEl.innerHTML =
+    '<div class="contract-sidebar contract-sidebar-left">' +
+      '<div class="contract-sidebar-header">مكتبة البنود</div>' +
+      '<div class="contract-sidebar-body">'+libHtml+'</div>' +
+    '</div>' +
+    '<div class="contract-canvas-area" id="contract-canvas-area">' +
+      docHtml +
+    '</div>' +
+    '<div class="contract-sidebar contract-sidebar-right">' +
+      '<div class="contract-sidebar-header">المتغيرات والإعدادات</div>' +
+      '<div class="contract-sidebar-body">'+varHtml+settingsHtml+'</div>' +
+    '</div>';
+
+  document.getElementById('top-actions').innerHTML =
+    '<button class="btn btn-sm" onclick="Nav.go(\'fin\',{projId:\''+projId+'\',tab:\'contracts\'})" style="display:inline-flex;align-items:center;gap:5px"><i data-lucide="arrow-right"></i>العودة للمشروع</button>' +
+    '<button class="btn btn-sm" id="contract-preview-btn" onclick="Pages.toggleContractPreview()" style="display:inline-flex;align-items:center;gap:5px"><i data-lucide="eye"></i>معاينة</button>' +
+    '<button class="btn btn-sm btn-primary" onclick="Pages.printContract()" style="display:inline-flex;align-items:center;gap:5px"><i data-lucide="printer"></i>طباعة PDF</button>';
+
+  if (Pages._contractAutosaveTimer) clearInterval(Pages._contractAutosaveTimer);
+  Pages._contractAutosaveTimer = setInterval(function() {
+    Pages.saveContractNow(true);
+  }, 15000);
+
+  if (typeof lucide !== 'undefined') lucide.createIcons({rootElement: pageEl});
+  if (typeof lucide !== 'undefined') lucide.createIcons({rootElement: document.getElementById('top-actions')});
+};
+
+Pages._renderContractDoc = function(contract) {
+  var vars = contract.variables || {};
+  var frameClass = 'cov-frame-' + (contract.cover && contract.cover.frame_style ? contract.cover.frame_style : 'modern');
+
+  var covHtml =
+    '<div class="cov-page '+frameClass+'">' +
+      '<div class="cov-frame-wrap">' +
+        '<div class="cov-logo-slot"><i data-lucide="building-2"></i><span style="display:block;font-size:9px;margin-top:4px">شعار</span></div>' +
+        '<div class="cov-title">'+UI.escHtml(contract.title)+'</div>' +
+        '<div class="cov-subtitle">المملكة العربية السعودية</div>' +
+        '<div class="cov-parties-box">' +
+          '<div class="cov-parties-row"><strong>الطرف الأول</strong>'+(vars.party_a_name?UI.escHtml(vars.party_a_name):'<span style="color:#9CA3AF">اسم الطرف الأول</span>')+'</div>' +
+          '<div class="cov-parties-row"><strong>الطرف الثاني</strong>'+(vars.party_b_name?UI.escHtml(vars.party_b_name):'<span style="color:#9CA3AF">اسم الطرف الثاني</span>')+'</div>' +
+        '</div>' +
+        '<div class="cov-ref-line">'+(vars.contract_date_gregorian?UI.escHtml(vars.contract_date_gregorian):'')+(vars.contract_city?' · '+UI.escHtml(vars.contract_city):'')+'</div>' +
+      '</div>' +
+    '</div>';
+
+  var docHeaderHtml =
+    '<div class="contract-doc-header">' +
+      '<span>'+UI.escHtml(contract.title)+'</span>' +
+      '<span style="color:#9CA3AF;font-size:8pt">سري وخاص</span>' +
+    '</div>';
+
+  var enabledClauses = contract.clauses.filter(function(c){return c.enabled!==false;});
+  var clausesHtml = '';
+  enabledClauses.forEach(function(cl, i) {
+    var contentHtml = Pages._contractPreview
+      ? Pages._applyVars(UI.escHtml(cl.content), contract.variables)
+      : UI.escHtml(cl.content);
+    clausesHtml +=
+      '<div class="clause-block" id="clause-'+cl.id+'">' +
+        '<div class="clause-controls">' +
+          (i>0 ? '<button class="clause-ctrl-btn" onclick="Pages.moveClause(\''+Pages._contractProjId+'\',\''+Pages._contractId+'\','+i+',\'up\')" title="للأعلى"><i data-lucide="chevron-up"></i></button>' : '') +
+          (i<enabledClauses.length-1 ? '<button class="clause-ctrl-btn" onclick="Pages.moveClause(\''+Pages._contractProjId+'\',\''+Pages._contractId+'\','+i+',\'down\')" title="للأسفل"><i data-lucide="chevron-down"></i></button>' : '') +
+          '<button class="clause-ctrl-btn danger" onclick="Pages.deleteClause(\''+Pages._contractProjId+'\',\''+Pages._contractId+'\','+i+')" title="حذف البند"><i data-lucide="x"></i></button>' +
+        '</div>' +
+        '<div class="clause-block-inner">' +
+          '<div class="clause-title">'+UI.escHtml(cl.title)+'</div>' +
+          '<div class="clause-body" contenteditable="true" data-clause-idx="'+i+'" onblur="Pages.saveClauseContent(\''+Pages._contractProjId+'\',\''+Pages._contractId+'\','+i+',this)">'+contentHtml+'</div>' +
+        '</div>' +
+      '</div>';
+  });
+
+  var sigHtml =
+    '<div class="sig-page">' +
+      '<div class="sig-page-title">صفحة التوقيعات</div>' +
+      '<div class="sig-page-sub">وقّع الطرفان على هذه الاتفاقية بتاريخ '+UI.escHtml(vars.contract_date_gregorian||'___________')+'</div>' +
+      '<div class="sig-grid">' +
+        '<div class="sig-block">' +
+          '<div class="sig-block-title">الطرف الأول</div>' +
+          '<div class="sig-block-name">'+UI.escHtml(vars.party_a_name||'_______________')+'</div>' +
+          '<div class="sig-line"></div>' +
+          '<div class="sig-line-label">التوقيع</div>' +
+          '<div class="sig-stamp-area">ختم</div>' +
+        '</div>' +
+        '<div class="sig-block">' +
+          '<div class="sig-block-title">الطرف الثاني</div>' +
+          '<div class="sig-block-name">'+UI.escHtml(vars.party_b_name||'_______________')+'</div>' +
+          '<div class="sig-line"></div>' +
+          '<div class="sig-line-label">التوقيع</div>' +
+          '<div class="sig-stamp-area">ختم</div>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+
+  var docFooterHtml =
+    '<div class="contract-doc-footer">' +
+      '<span>'+UI.escHtml(contract.footer_label||'سري')+'</span>' +
+      '<span>وثيقة خاصة وسرية</span>' +
+    '</div>';
+
+  return '<div class="contract-doc" id="contract-doc">' +
+    covHtml + docHeaderHtml +
+    '<div id="contract-clauses-body">'+clausesHtml+'</div>' +
+    sigHtml + docFooterHtml +
+  '</div>';
+};
+
+Pages._applyVars = function(text, vars) {
+  if (!vars) return text;
+  return text.replace(/\{\{(\w+)\}\}/g, function(match, key) {
+    var val = vars[key];
+    if (val && val.trim()) {
+      return '<span class="var-chip">'+UI.escHtml(val)+'</span>';
+    }
+    return '<span class="var-chip empty">'+match+'</span>';
+  });
+};
+
+Pages.updateContractVar = function(projId, contractId, key, value) {
+  var contracts = DB.getContracts(projId);
+  var c = contracts.find(function(x){return x.id===contractId;});
+  if (!c) return;
+  if (!c.variables) c.variables = {};
+  c.variables[key] = value;
+  c.updated = (new Date()).toISOString().slice(0,10);
+  DB.saveContract(projId, c);
+  Pages._refreshContractCover(c);
+  var inp = document.querySelector('.var-field-inp[oninput*="\''+key+'\'"]');
+  if (inp) inp.classList.toggle('auto-val', !!value);
+};
+
+Pages._refreshContractCover = function(contract) {
+  var docEl = document.getElementById('contract-doc');
+  if (!docEl) return;
+  var vars = contract.variables||{};
+  var covParties = docEl.querySelectorAll('.cov-parties-row');
+  if (covParties[0]) covParties[0].innerHTML = '<strong>الطرف الأول</strong>'+(vars.party_a_name?UI.escHtml(vars.party_a_name):'<span style="color:#9CA3AF">اسم الطرف الأول</span>');
+  if (covParties[1]) covParties[1].innerHTML = '<strong>الطرف الثاني</strong>'+(vars.party_b_name?UI.escHtml(vars.party_b_name):'<span style="color:#9CA3AF">اسم الطرف الثاني</span>');
+  var refLine = docEl.querySelector('.cov-ref-line');
+  if (refLine) refLine.textContent = (vars.contract_date_gregorian||'')+(vars.contract_city?' · '+vars.contract_city:'');
+  var sigNames = docEl.querySelectorAll('.sig-block-name');
+  if (sigNames[0]) sigNames[0].textContent = vars.party_a_name||'_______________';
+  if (sigNames[1]) sigNames[1].textContent = vars.party_b_name||'_______________';
+  var sigDate = docEl.querySelector('.sig-page-sub');
+  if (sigDate) sigDate.textContent = 'وقّع الطرفان على هذه الاتفاقية بتاريخ '+(vars.contract_date_gregorian||'___________');
+};
+
+Pages.moveClause = function(projId, contractId, clauseIdx, dir) {
+  var contracts = DB.getContracts(projId);
+  var c = contracts.find(function(x){return x.id===contractId;});
+  if (!c) return;
+  var enabledClauses = c.clauses.filter(function(x){return x.enabled!==false;});
+  var newIdx = dir==='up' ? clauseIdx-1 : clauseIdx+1;
+  if (newIdx<0||newIdx>=enabledClauses.length) return;
+  var realIdx = c.clauses.indexOf(enabledClauses[clauseIdx]);
+  var realNewIdx = c.clauses.indexOf(enabledClauses[newIdx]);
+  if (realIdx<0||realNewIdx<0) return;
+  var tmp = c.clauses[realIdx]; c.clauses[realIdx]=c.clauses[realNewIdx]; c.clauses[realNewIdx]=tmp;
+  var ordI = 0;
+  c.clauses.forEach(function(cl) {
+    if (cl.enabled!==false) {
+      var base = cl.title.replace(/^المادة\s+\S+\s*:\s*/,'');
+      cl.title = 'المادة '+(CONTRACT_ORDINALS[ordI]||(ordI+1).toString())+': '+base;
+      ordI++;
+    }
+  });
+  c.updated = (new Date()).toISOString().slice(0,10);
+  DB.saveContract(projId, c);
+  Pages.render_contract({projId:projId, contractId:contractId});
+};
+
+Pages.deleteClause = function(projId, contractId, clauseIdx) {
+  var contracts = DB.getContracts(projId);
+  var c = contracts.find(function(x){return x.id===contractId;});
+  if (!c) return;
+  var enabledClauses = c.clauses.filter(function(x){return x.enabled!==false;});
+  var cl = enabledClauses[clauseIdx];
+  if (!cl) return;
+  cl.enabled = false;
+  c.updated = (new Date()).toISOString().slice(0,10);
+  DB.saveContract(projId, c);
+  var el = document.getElementById('clause-'+cl.id);
+  if (el) el.remove();
+};
+
+Pages.addClauseFromLib = function(projId, contractId, clauseKey) {
+  var contracts = DB.getContracts(projId);
+  var c = contracts.find(function(x){return x.id===contractId;});
+  if (!c) return;
+  var libClause = null;
+  for (var tKey in CONTRACT_TEMPLATES) {
+    var tpl = CONTRACT_TEMPLATES[tKey];
+    var found = tpl.clauses.find(function(cl){return cl.key===clauseKey;});
+    if (found) { libClause = found; break; }
+  }
+  var libItem = CLAUSE_LIBRARY.find(function(x){return x.key===clauseKey;});
+  if (!libClause) {
+    libClause = {key:clauseKey, baseTitle: libItem ? libItem.title : clauseKey, content:''};
+  }
+  var enabledCount = c.clauses.filter(function(x){return x.enabled!==false;}).length;
+  var newClause = {
+    id: DB.uid(),
+    key: clauseKey,
+    title: 'المادة '+(CONTRACT_ORDINALS[enabledCount]||(enabledCount+1).toString())+': '+(libClause.baseTitle||libItem&&libItem.title||clauseKey),
+    content: libClause.content||'',
+    enabled: true
+  };
+  c.clauses.push(newClause);
+  c.updated = (new Date()).toISOString().slice(0,10);
+  DB.saveContract(projId, c);
+  var clausesBody = document.getElementById('contract-clauses-body');
+  if (clausesBody) {
+    var div = document.createElement('div');
+    div.innerHTML = Pages._renderSingleClause(newClause, enabledCount, enabledCount);
+    clausesBody.appendChild(div.firstChild);
+    if (typeof lucide !== 'undefined') lucide.createIcons({rootElement: clausesBody.lastElementChild});
+  }
+};
+
+Pages._renderSingleClause = function(cl, idx, total) {
+  return '<div class="clause-block" id="clause-'+cl.id+'">' +
+    '<div class="clause-controls">' +
+      (idx>0 ? '<button class="clause-ctrl-btn" onclick="Pages.moveClause(\''+Pages._contractProjId+'\',\''+Pages._contractId+'\','+idx+',\'up\')" title="للأعلى"><i data-lucide="chevron-up"></i></button>' : '') +
+      (idx<total ? '<button class="clause-ctrl-btn" onclick="Pages.moveClause(\''+Pages._contractProjId+'\',\''+Pages._contractId+'\','+idx+',\'down\')" title="للأسفل"><i data-lucide="chevron-down"></i></button>' : '') +
+      '<button class="clause-ctrl-btn danger" onclick="Pages.deleteClause(\''+Pages._contractProjId+'\',\''+Pages._contractId+'\','+idx+')" title="حذف"><i data-lucide="x"></i></button>' +
+    '</div>' +
+    '<div class="clause-block-inner">' +
+      '<div class="clause-title">'+UI.escHtml(cl.title)+'</div>' +
+      '<div class="clause-body" contenteditable="true" data-clause-idx="'+idx+'" onblur="Pages.saveClauseContent(\''+Pages._contractProjId+'\',\''+Pages._contractId+'\','+idx+',this)">'+UI.escHtml(cl.content)+'</div>' +
+    '</div>' +
+  '</div>';
+};
+
+Pages.saveClauseContent = function(projId, contractId, clauseIdx, el) {
+  var contracts = DB.getContracts(projId);
+  var c = contracts.find(function(x){return x.id===contractId;});
+  if (!c) return;
+  var enabledClauses = c.clauses.filter(function(x){return x.enabled!==false;});
+  var cl = enabledClauses[clauseIdx];
+  if (!cl) return;
+  cl.content = el.innerText || el.textContent || '';
+  c.updated = (new Date()).toISOString().slice(0,10);
+  DB.saveContract(projId, c);
+};
+
+Pages.updateContractCover = function(projId, contractId, key, value) {
+  var contracts = DB.getContracts(projId);
+  var c = contracts.find(function(x){return x.id===contractId;});
+  if (!c) return;
+  if (key === 'footer_label') {
+    c.footer_label = value;
+  } else {
+    if (!c.cover) c.cover = {};
+    c.cover[key] = value;
+  }
+  c.updated = (new Date()).toISOString().slice(0,10);
+  DB.saveContract(projId, c);
+  if (key === 'frame_style') {
+    var covPage = document.querySelector('.cov-page');
+    if (covPage) {
+      covPage.className = 'cov-page cov-frame-'+value;
+    }
+  }
+};
+
+Pages.updateContractStatus = function(projId, contractId, value) {
+  var contracts = DB.getContracts(projId);
+  var c = contracts.find(function(x){return x.id===contractId;});
+  if (!c) return;
+  c.status = value;
+  c.updated = (new Date()).toISOString().slice(0,10);
+  DB.saveContract(projId, c);
+};
+
+Pages.toggleContractPreview = function() {
+  Pages._contractPreview = !Pages._contractPreview;
+  var page = document.getElementById('pg-contract');
+  var btn = document.getElementById('contract-preview-btn');
+  if (page) page.classList.toggle('cep-preview', Pages._contractPreview);
+  if (btn) {
+    btn.innerHTML = Pages._contractPreview
+      ? '<i data-lucide="pencil"></i>تحرير'
+      : '<i data-lucide="eye"></i>معاينة';
+    if (typeof lucide !== 'undefined') lucide.createIcons({rootElement: btn});
+  }
+  if (Pages._contractPreview) {
+    var contracts = DB.getContracts(Pages._contractProjId);
+    var c = contracts.find(function(x){return x.id===Pages._contractId;});
+    if (c) {
+      document.querySelectorAll('.clause-body').forEach(function(el, i) {
+        var enabledClauses = c.clauses.filter(function(x){return x.enabled!==false;});
+        var cl = enabledClauses[i];
+        if (cl) {
+          el.innerHTML = Pages._applyVars(UI.escHtml(cl.content), c.variables);
+        }
+      });
+    }
+  } else {
+    var contracts2 = DB.getContracts(Pages._contractProjId);
+    var c2 = contracts2.find(function(x){return x.id===Pages._contractId;});
+    if (c2) {
+      document.querySelectorAll('.clause-body').forEach(function(el, i) {
+        var enabledClauses = c2.clauses.filter(function(x){return x.enabled!==false;});
+        var cl = enabledClauses[i];
+        if (cl) el.textContent = cl.content;
+      });
+    }
+  }
+};
+
+Pages.printContract = function() {
+  Pages.saveContractNow(true);
+  if (!Pages._contractPreview) Pages.toggleContractPreview();
+  setTimeout(function(){ window.print(); }, 150);
+};
+
+Pages.saveContractNow = function(silent) {
+  if (!Pages._contractProjId || !Pages._contractId) return;
+  var contracts = DB.getContracts(Pages._contractProjId);
+  var c = contracts.find(function(x){return x.id===Pages._contractId;});
+  if (!c) return;
+  document.querySelectorAll('.clause-body[data-clause-idx]').forEach(function(el) {
+    var idx = parseInt(el.getAttribute('data-clause-idx'), 10);
+    var enabledClauses = c.clauses.filter(function(x){return x.enabled!==false;});
+    var cl = enabledClauses[idx];
+    if (cl) cl.content = el.innerText || el.textContent || '';
+  });
+  c.updated = (new Date()).toISOString().slice(0,10);
+  DB.saveContract(Pages._contractProjId, c);
+  if (!silent && UI.toast) UI.toast('تم الحفظ');
 };
 
 /* ─── SETTINGS ─── */
