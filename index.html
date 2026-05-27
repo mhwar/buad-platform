@@ -1737,12 +1737,30 @@ var DB = {
       },
       budget: [],
       entries: [],
-      tasks: { tasks:[], 'req-us':[], 'req-cl':[] }
+      tasks: { tasks:[], 'req-us':[], 'req-cl':[] },
+      contracts: []
     };
   },
   saveFin: function(pid, d) {
     localStorage.setItem('buad2_fin_'+pid, JSON.stringify(d));
   }
+};
+DB.getContracts = function(pid) {
+  var fin = DB.getFin(pid);
+  return fin.contracts || [];
+};
+DB.saveContract = function(pid, c) {
+  var fin = DB.getFin(pid);
+  if (!fin.contracts) fin.contracts = [];
+  var idx = -1;
+  for(var i=0;i<fin.contracts.length;i++){ if(fin.contracts[i].id===c.id){idx=i;break;} }
+  if (idx>=0) fin.contracts[idx]=c; else fin.contracts.push(c);
+  DB.saveFin(pid, fin);
+};
+DB.deleteContract = function(pid, cid) {
+  var fin = DB.getFin(pid);
+  fin.contracts = (fin.contracts||[]).filter(function(x){ return x.id!==cid; });
+  DB.saveFin(pid, fin);
 };
 
 /* ═══════════════════════════════════════════
