@@ -1638,7 +1638,7 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
   width:794px;max-width:100%;background:#fff;
   box-shadow:0 4px 32px oklch(0 0 0 / 0.12);
   font-family:'IBM Plex Sans Arabic','Tajawal',system-ui,sans-serif;
-  font-size:12pt;line-height:1.9;color:#1F2937;direction:rtl;
+  font-size:14pt;line-height:1.5;color:#1F2937;direction:rtl;
   margin-bottom:40px;
 }
 
@@ -1670,7 +1670,7 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
   display:flex;align-items:center;justify-content:center;
   margin:0 auto 24px;color:var(--iris-400);font-size:11px;cursor:pointer;
 }
-.cov-title{font-size:26pt;font-weight:700;color:#0F2A4A;line-height:1.3;margin-bottom:12px}
+.cov-title{font-size:18pt;font-weight:700;color:#0F2A4A;line-height:1.3;margin-bottom:12px}
 .cov-subtitle{font-size:12pt;color:#6B7280;margin-bottom:40px}
 .cov-parties-box{
   border:1px solid #E5E7EB;border-radius:6px;padding:20px 32px;
@@ -1721,6 +1721,10 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
   display:flex;align-items:center;justify-content:space-between;
   background:#FAFAFA;
 }
+.contract-hdr-img-band{width:100%;display:block;margin:0}
+.contract-hdr-img-band img{width:100%;display:block;object-fit:contain}
+.contract-ftr-img-band{width:100%;display:block;margin:0}
+.contract-ftr-img-band img{width:100%;display:block;object-fit:contain}
 
 /* Article / Clause block */
 .clause-block{
@@ -1731,12 +1735,12 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
 .clause-block:last-child{border-bottom:none}
 .clause-block-inner{padding-inline-start:24px}
 .clause-title{
-  font-size:13pt;font-weight:700;color:#0F2A4A;
+  font-size:14pt;font-weight:700;color:#0F2A4A;
   margin-bottom:10px;cursor:default;
 }
 .clause-body{
-  outline:none;min-height:60px;font-size:12pt;line-height:1.9;
-  color:#1F2937;white-space:pre-wrap;word-wrap:break-word;
+  outline:none;min-height:60px;font-size:14pt;line-height:1.5;
+  color:#1F2937;white-space:pre-wrap;word-wrap:break-word;text-align:justify;
 }
 .clause-body:focus{
   background:oklch(0.97 0.02 275 / 0.35);
@@ -1857,17 +1861,25 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
   .contract-canvas-area{background:white!important;padding:0!important;overflow:visible!important;flex:1}
   .contract-doc{
     box-shadow:none!important;width:100%!important;max-width:none!important;
-    font-size:12pt!important;line-height:1.9!important;
+    font-size:14pt!important;line-height:1.5!important;
   }
-  .clause-body{font-size:12pt!important;line-height:1.9!important;text-align:justify!important}
-  .clause-title{font-size:13pt!important;font-weight:700!important}
-  .cov-title{font-size:24pt!important}
+  .clause-body{font-size:14pt!important;line-height:1.5!important;text-align:justify!important}
+  .clause-title{font-size:14pt!important;font-weight:700!important}
+  .cov-title{font-size:18pt!important}
   .cov-subtitle{font-size:11pt!important}
   .cov-parties-box{font-size:11pt!important}
   .sig-block-title{font-size:12pt!important}
-  @page{size:A4 portrait;margin:2.5cm 3cm 2.5cm 2cm} /* wider right for RTL binding */
+  @page{
+    size:A4 portrait;
+    margin:2.5cm 3cm 2.5cm 2.5cm;
+    @bottom-center{
+      content:"الصفحة " counter(page) " من " counter(pages);
+      font-family:'IBM Plex Sans Arabic',system-ui,sans-serif;
+      font-size:10pt;color:#9CA3AF;direction:rtl;
+    }
+  }
   .cov-page{page-break-after:always!important;min-height:auto!important;page:cover-page}
-  @page cover-page{margin:0}
+  @page cover-page{margin:0;@bottom-center{content:none}}
   .sig-page{page-break-before:always!important}
   .clause-block{page-break-inside:avoid!important;break-inside:avoid!important;orphans:4!important;widows:4!important}
   .sig-grid{page-break-inside:avoid!important;break-inside:avoid!important}
@@ -3646,10 +3658,11 @@ Pages.createContract = function(projId, tplKey) {
     clauses: clauses,
     cover: contract_cover,
     footer_label: contract_footer,
-    doc_style: { font_size: 12, line_height: 1.9 },
+    doc_style: { font_size: 14, line_height: 1.5 },
     page_layout: {
       header: {
         show: true,
+        image: '',
         show_logo: false,
         title: '',
         doc_number: '',
@@ -3657,6 +3670,7 @@ Pages.createContract = function(projId, tplKey) {
       },
       footer: {
         show: true,
+        image: '',
         left_text: '',
         center_text: '',
         show_page_num: true,
@@ -4822,7 +4836,7 @@ Pages.render_contract = function(params) {
     '</div>';
   }).join('');
 
-  var ds = contract.doc_style || {font_size:12, line_height:1.9};
+  var ds = contract.doc_style || {font_size:14, line_height:1.5};
   var pl = contract.page_layout || {};
   var plh = pl.header || {};
   var plf = pl.footer || {};
@@ -4892,6 +4906,16 @@ Pages.render_contract = function(params) {
         '</label>' +
       '</div>' +
       '<div class="var-field">' +
+        '<div class="var-field-lbl">صورة الرأس (كاملة العرض)</div>' +
+        (plh.image
+          ? '<img src="'+plh.image+'" style="width:100%;max-height:50px;object-fit:contain;border:1px solid var(--border);border-radius:var(--radius-xs);display:block;margin-bottom:4px">' +
+            '<button class="btn btn-sm" style="width:100%;margin-bottom:4px" onclick="document.getElementById(\'hdr-img-inp\').click()"><i data-lucide="upload"></i>تغيير</button>' +
+            '<button class="btn btn-sm" style="width:100%;color:var(--danger-600)" onclick="Pages.updatePageLayout(\''+projId+'\',\''+contractId+'\',\'header\',\'image\',\'\');Pages.render_contract({projId:\''+projId+'\',contractId:\''+contractId+'\'})">إزالة</button>'
+          : '<button class="btn btn-sm" style="width:100%" onclick="document.getElementById(\'hdr-img-inp\').click()"><i data-lucide="upload"></i>رفع صورة رأس</button>'
+        ) +
+        '<input type="file" id="hdr-img-inp" accept="image/*" style="display:none" onchange="Pages.handleHeaderImageUpload(\''+projId+'\',\''+contractId+'\',this)">' +
+      '</div>' +
+      '<div class="var-field">' +
         '<div class="var-field-lbl">عنوان المستند</div>' +
         '<input class="var-field-inp" value="'+UI.escHtml(plh.title||'')+'" placeholder="'+(contract.title||'عنوان العقد')+'" oninput="Pages.updatePageLayout(\''+projId+'\',\''+contractId+'\',\'header\',\'title\',this.value)">' +
       '</div>' +
@@ -4908,6 +4932,16 @@ Pages.render_contract = function(params) {
         '<label style="display:flex;align-items:center;gap:6px;font-size:var(--font-xs);cursor:pointer">' +
           '<input type="checkbox" '+(plf.show!==false?'checked':'')+' onchange="Pages.updatePageLayout(\''+projId+'\',\''+contractId+'\',\'footer\',\'show\',this.checked)"> إظهار التذييل' +
         '</label>' +
+      '</div>' +
+      '<div class="var-field">' +
+        '<div class="var-field-lbl">صورة التذييل (كاملة العرض)</div>' +
+        (plf.image
+          ? '<img src="'+plf.image+'" style="width:100%;max-height:50px;object-fit:contain;border:1px solid var(--border);border-radius:var(--radius-xs);display:block;margin-bottom:4px">' +
+            '<button class="btn btn-sm" style="width:100%;margin-bottom:4px" onclick="document.getElementById(\'ftr-img-inp\').click()"><i data-lucide="upload"></i>تغيير</button>' +
+            '<button class="btn btn-sm" style="width:100%;color:var(--danger-600)" onclick="Pages.updatePageLayout(\''+projId+'\',\''+contractId+'\',\'footer\',\'image\',\'\');Pages.render_contract({projId:\''+projId+'\',contractId:\''+contractId+'\'})">إزالة</button>'
+          : '<button class="btn btn-sm" style="width:100%" onclick="document.getElementById(\'ftr-img-inp\').click()"><i data-lucide="upload"></i>رفع صورة تذييل</button>'
+        ) +
+        '<input type="file" id="ftr-img-inp" accept="image/*" style="display:none" onchange="Pages.handleFooterImageUpload(\''+projId+'\',\''+contractId+'\',this)">' +
       '</div>' +
       '<div class="var-field">' +
         '<div class="var-field-lbl">نص يسار التذييل</div>' +
@@ -5033,6 +5067,12 @@ Pages._renderContractDoc = function(contract) {
         '<span style="color:#9CA3AF;font-size:8pt">'+UI.escHtml(hdr.doc_number||hdr.custom_right||'')+'</span>' +
       '</div>'
     : '';
+  var hdrImgBand = hdr.image
+    ? '<div class="contract-hdr-img-band"><img src="'+hdr.image+'"></div>'
+    : '';
+  var ftrImgBand = ftr.image
+    ? '<div class="contract-ftr-img-band"><img src="'+ftr.image+'"></div>'
+    : '';
 
   var enabledClauses = contract.clauses.filter(function(c){return c.enabled!==false;});
   var clausesHtml = '';
@@ -5085,9 +5125,9 @@ Pages._renderContractDoc = function(contract) {
     : '';
 
   return '<div class="contract-doc" id="contract-doc">' +
-    covHtml + docHeaderHtml +
+    covHtml + docHeaderHtml + hdrImgBand +
     '<div id="contract-clauses-body">'+clausesHtml+'</div>' +
-    sigHtml + docFooterHtml +
+    sigHtml + ftrImgBand + docFooterHtml +
   '</div>';
 };
 
@@ -5290,18 +5330,40 @@ Pages.handleContractBgUpload = function(projId, contractId, input) {
   reader.readAsDataURL(file);
 };
 
+Pages.handleHeaderImageUpload = function(projId, contractId, input) {
+  var file = input.files && input.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    Pages.updatePageLayout(projId, contractId, 'header', 'image', e.target.result);
+    Pages.render_contract({projId:projId, contractId:contractId});
+  };
+  reader.readAsDataURL(file);
+};
+
+Pages.handleFooterImageUpload = function(projId, contractId, input) {
+  var file = input.files && input.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    Pages.updatePageLayout(projId, contractId, 'footer', 'image', e.target.result);
+    Pages.render_contract({projId:projId, contractId:contractId});
+  };
+  reader.readAsDataURL(file);
+};
+
 Pages.updateDocStyle = function(projId, contractId, key, value) {
   var contracts = DB.getContracts(projId);
   var c = contracts.find(function(x){return x.id===contractId;});
   if (!c) return;
-  if (!c.doc_style) c.doc_style = {font_size:12, line_height:1.9};
+  if (!c.doc_style) c.doc_style = {font_size:14, line_height:1.5};
   c.doc_style[key] = value;
   c.updated = (new Date()).toISOString().slice(0,10);
   DB.saveContract(projId, c);
   var docEl = document.getElementById('contract-doc');
   if (docEl) {
-    docEl.style.fontSize = (c.doc_style.font_size||12)+'pt';
-    docEl.style.lineHeight = (c.doc_style.line_height||1.9).toString();
+    docEl.style.fontSize = (c.doc_style.font_size||14)+'pt';
+    docEl.style.lineHeight = (c.doc_style.line_height||1.5).toString();
   }
 };
 
@@ -5383,7 +5445,7 @@ Pages.printContract = function() {
   if (!contract) return;
 
   var vars = contract.variables || {};
-  var ds = contract.doc_style || {font_size:12, line_height:1.9};
+  var ds = contract.doc_style || {font_size:14, line_height:1.5};
   var hdr = (contract.page_layout && contract.page_layout.header) || {};
   var ftr = (contract.page_layout && contract.page_layout.footer) || {};
 
@@ -5420,23 +5482,32 @@ Pages.printContract = function() {
       '</div>' +
     '</div>';
 
-  // Header/footer for body pages
-  var logoInHeader = (hdr.show_logo && contract.cover && contract.cover.logo)
-    ? '<img src="'+contract.cover.logo+'" style="max-height:32px;object-fit:contain">'
-    : '';
-  var printHeaderHtml = (hdr.show !== false)
-    ? '<div class="contract-doc-header">' +
-        '<span>'+logoInHeader+UI.escHtml(hdr.title||contract.title||'')+'</span>' +
-        '<span style="color:#9CA3AF;font-size:8pt">'+UI.escHtml(hdr.doc_number||hdr.custom_right||'')+'</span>' +
-      '</div>'
-    : '';
-  var printFooterHtml = (ftr.show !== false)
-    ? '<div class="contract-doc-footer">' +
-        '<span>'+UI.escHtml(ftr.left_text||contract.footer_label||'سري')+'</span>' +
-        '<span>'+UI.escHtml(ftr.center_text||'')+'</span>' +
-        '<span>'+(ftr.show_page_num!==false?'وثيقة سرية':'')+'</span>' +
-      '</div>'
-    : '';
+  // Header/footer content for body pages (image band or text)
+  var printHdrContent = '';
+  if (hdr.image) {
+    printHdrContent = '<img src="'+hdr.image+'" style="width:100%;display:block;object-fit:contain">';
+  } else if (hdr.show !== false) {
+    var logoInHdr = (hdr.show_logo && contract.cover && contract.cover.logo)
+      ? '<img src="'+contract.cover.logo+'" style="max-height:32px;object-fit:contain;margin-left:8px">'
+      : '';
+    printHdrContent =
+      '<div style="padding:8px 0;border-bottom:1.5px solid #0F2A4A;font-size:9pt;color:#4B5563;display:flex;align-items:center;justify-content:space-between">'+
+      '<span>'+logoInHdr+UI.escHtml(hdr.title||contract.title||'')+'</span>'+
+      '<span style="color:#9CA3AF;font-size:8pt">'+UI.escHtml(hdr.doc_number||hdr.custom_right||'')+'</span>'+
+      '</div>';
+  }
+
+  var printFtrContent = '';
+  if (ftr.image) {
+    printFtrContent = '<img src="'+ftr.image+'" style="width:100%;display:block;object-fit:contain">';
+  } else if (ftr.show !== false) {
+    printFtrContent =
+      '<div style="padding:6px 0;border-top:1px solid #E5E7EB;font-size:9pt;color:#9CA3AF;display:flex;justify-content:space-between">'+
+      '<span>'+UI.escHtml(ftr.left_text||contract.footer_label||'سري')+'</span>'+
+      '<span>'+UI.escHtml(ftr.center_text||'')+'</span>'+
+      '<span></span>'+
+      '</div>';
+  }
 
   // Clauses with plain vars substituted
   var enabledClauses = contract.clauses.filter(function(c){return c.enabled!==false;});
@@ -5472,6 +5543,17 @@ Pages.printContract = function() {
       '</div>' +
     '</div>';
 
+  // Table-based body: thead repeats header on every page, tfoot repeats footer
+  var bodyTableHtml =
+    '<table style="width:100%;border-collapse:collapse;direction:rtl">' +
+      '<thead><tr><td style="padding:0">'+printHdrContent+'</td></tr></thead>' +
+      '<tfoot><tr><td style="padding:0">'+printFtrContent+'</td></tr></tfoot>' +
+      '<tbody><tr><td>' +
+        '<div id="contract-clauses-body">'+clausesHtml+'</div>' +
+        sigHtml +
+      '</td></tr></tbody>' +
+    '</table>';
+
   var html = '<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8">' +
     '<title>'+UI.escHtml(contract.title||'عقد')+'</title>' +
     '<link rel="preconnect" href="https://fonts.googleapis.com">' +
@@ -5479,8 +5561,8 @@ Pages.printContract = function() {
     '<style>' +
     '*{box-sizing:border-box;margin:0;padding:0}' +
     'body{font-family:\'IBM Plex Sans Arabic\',Tajawal,system-ui,sans-serif;direction:rtl;background:#fff;color:#1F2937;font-size:'+ds.font_size+'pt;line-height:'+ds.line_height+'}' +
-    '@page{size:A4 portrait;margin:2.5cm 3cm 2.5cm 2cm}' +
-    '@page cover-page{size:A4 portrait;margin:0}' +
+    '@page{size:A4 portrait;margin:2.5cm 3cm 2.5cm 2.5cm;@bottom-center{content:"الصفحة " counter(page) " من " counter(pages);font-family:\'IBM Plex Sans Arabic\',system-ui,sans-serif;font-size:10pt;color:#9CA3AF;direction:rtl}}' +
+    '@page cover-page{size:A4 portrait;margin:0;@bottom-center{content:none}}' +
     '.cov-page{page:cover-page;page-break-after:always;min-height:100vh;display:flex;flex-direction:column;position:relative;overflow:hidden}' +
     '.cov-frame-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:60px 50px}' +
     '.cov-frame-modern .cov-frame-wrap{border:2.5px solid #0F2A4A;margin:24px;border-radius:4px}' +
@@ -5495,19 +5577,17 @@ Pages.printContract = function() {
     '.cov-frame-image .cov-parties-box{background:rgba(255,255,255,0.1);border-color:rgba(255,255,255,0.25);color:#fff;backdrop-filter:blur(4px)}' +
     '.cov-frame-image .cov-parties-row{border-bottom-color:rgba(255,255,255,0.15)}' +
     '.cov-frame-image .cov-ref-line{color:rgba(255,255,255,0.6)}' +
-    '.cov-title{font-size:26pt;font-weight:700;color:#0F2A4A;line-height:1.3;margin-bottom:12px}' +
+    '.cov-title{font-size:18pt;font-weight:700;color:#0F2A4A;line-height:1.3;margin-bottom:12px}' +
     '.cov-subtitle{font-size:12pt;color:#6B7280;margin-bottom:40px}' +
     '.cov-parties-box{border:1px solid #E5E7EB;border-radius:6px;padding:20px 32px;max-width:420px;text-align:right;font-size:11pt}' +
     '.cov-parties-row{padding:6px 0;border-bottom:1px solid #F3F4F6;color:#374151}' +
     '.cov-parties-row:last-child{border-bottom:none}' +
     '.cov-parties-row strong{color:#6B7280;display:block;font-size:10pt;font-weight:500}' +
     '.cov-ref-line{margin-top:32px;font-size:10pt;color:#9CA3AF}' +
-    '.contract-doc-header{display:flex;padding:10px 50px;border-bottom:1.5px solid #0F2A4A;font-size:9pt;color:#4B5563;align-items:center;justify-content:space-between}' +
-    '.contract-doc-footer{padding:8px 50px;border-top:1px solid #E5E7EB;font-size:9pt;color:#9CA3AF;display:flex;align-items:center;justify-content:space-between;background:#FAFAFA}' +
     '.clause-block{padding:20px 50px;border-bottom:1px solid #E5E7EB;page-break-inside:avoid;orphans:4;widows:4}' +
     '.clause-block:last-of-type{border-bottom:none}' +
     '.clause-block-inner{padding-right:24px}' +
-    '.clause-title{font-size:13pt;font-weight:700;color:#0F2A4A;margin-bottom:10px}' +
+    '.clause-title{font-size:14pt;font-weight:700;color:#0F2A4A;margin-bottom:10px}' +
     '.clause-body{font-size:'+ds.font_size+'pt;line-height:'+ds.line_height+';color:#1F2937;white-space:pre-wrap;word-wrap:break-word;text-align:justify}' +
     '.sig-page{padding:50px;page-break-before:always}' +
     '.sig-page-title{font-size:14pt;font-weight:700;color:#0F2A4A;text-align:center;margin-bottom:8px}' +
@@ -5521,10 +5601,7 @@ Pages.printContract = function() {
     '@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}' +
     '</style></head><body>' +
     covHtml +
-    printHeaderHtml +
-    '<div id="contract-clauses-body">'+clausesHtml+'</div>' +
-    sigHtml +
-    printFooterHtml +
+    bodyTableHtml +
     '<script>window.onload=function(){window.print();}<\/script>' +
     '</body></html>';
 
