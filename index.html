@@ -5747,39 +5747,6 @@ Pages.printContract = function() {
       '</div>' +
     '</div>';
 
-  // Header/footer content for body pages (image band or text)
-  var printHdrContent = '';
-  if (hdr.show !== false) {
-    if (hdr.mode === 'image' && hdr.image) {
-      var hdrPosPrint = hdr.image_position || 'center';
-      printHdrContent = '<img src="'+hdr.image+'" style="width:100%;height:'+(hdr.height||20)+'mm;object-fit:cover;object-position:'+UI.escHtml(hdrPosPrint)+';display:block">';
-    } else if (hdr.title || hdr.doc_number || hdr.show_logo) {
-      var logoInHdr = (hdr.show_logo && contract.cover && contract.cover.logo)
-        ? '<img src="'+contract.cover.logo+'" style="max-height:'+Math.round((hdr.height||20)*0.6)+'mm;object-fit:contain;margin-left:8px">'
-        : '';
-      printHdrContent =
-        '<div style="height:'+(hdr.height||20)+'mm;display:flex;align-items:center;justify-content:space-between;border-bottom:1.5px solid #0F2A4A;font-size:9pt;color:#4B5563">'+
-        '<span>'+logoInHdr+UI.escHtml(hdr.title||contract.title||'')+'</span>'+
-        '<span style="color:#9CA3AF;font-size:8pt">'+UI.escHtml(hdr.doc_number||hdr.custom_right||'')+'</span>'+
-        '</div>';
-    }
-  }
-
-  var printFtrContent = '';
-  if (ftr.show !== false) {
-    if (ftr.mode === 'image' && ftr.image) {
-      var ftrPosPrint = ftr.image_position || 'center';
-      printFtrContent = '<img src="'+ftr.image+'" style="width:100%;height:'+(ftr.height||15)+'mm;object-fit:cover;object-position:'+UI.escHtml(ftrPosPrint)+';display:block">';
-    } else {
-      printFtrContent =
-        '<div style="height:'+(ftr.height||15)+'mm;display:flex;align-items:center;justify-content:space-between;border-top:1px solid #E5E7EB;font-size:9pt;color:#9CA3AF">'+
-        '<span>'+UI.escHtml(ftr.left_text||contract.footer_label||'سري')+'</span>'+
-        '<span>'+UI.escHtml(ftr.center_text||'')+'</span>'+
-        '<span></span>'+
-        '</div>';
-    }
-  }
-
   // Clauses with plain vars substituted
   var enabledClauses = contract.clauses.filter(function(c){return c.enabled!==false;});
   var clausesHtml = '';
@@ -5813,18 +5780,62 @@ Pages.printContract = function() {
       '</div>' +
     '</div>';
 
-  // Table-based body: thead repeats header on every page, tfoot repeats footer.
-  // CRITICAL: explicit display:table-header-group / table-footer-group is needed
-  // for Chrome to repeat them across pages on PDF export.
-  var bodyTableHtml =
-    '<table class="print-body-table" style="width:100%;border-collapse:separate;border-spacing:0;direction:rtl">' +
-      '<thead class="print-thead" style="display:table-header-group"><tr><td style="padding:0">'+printHdrContent+'</td></tr></thead>' +
-      '<tfoot class="print-tfoot" style="display:table-footer-group"><tr><td style="padding:0">'+printFtrContent+'</td></tr></tfoot>' +
-      '<tbody class="print-tbody"><tr><td style="padding:0">' +
-        '<div id="contract-clauses-body">'+clausesHtml+'</div>' +
-        sigHtml +
-      '</td></tr></tbody>' +
-    '</table>';
+  // ── Build fixed header/footer for body pages ──
+  // position:fixed in @media print is the most reliable Chrome approach for
+  // repeating header/footer images on every page. The cover page (z-index:200)
+  // paints above these fixed elements (z-index:100) to hide them on page 1.
+
+  var hdrActive = hdr.show !== false &&
+    (hdr.mode === 'image' ? !!hdr.image : !!(hdr.title || hdr.doc_number || hdr.show_logo));
+  var ftrActive = ftr.show !== false &&
+    (ftr.mode === 'image' ? !!ftr.image : true);
+  var hdrH = hdrActive ? (parseFloat(hdr.height) || 20) : 0; // mm
+  var ftrH = ftrActive ? (parseFloat(ftr.height) || 15) : 0; // mm
+
+  // All padding in mm (1 cm = 10 mm)
+  var topPad   = hdrH + dm.top    * 10;
+  var botPad   = ftrH + dm.bottom * 10;
+  var rightPad = dm.right * 10;
+  var leftPad  = dm.left  * 10;
+
+  var fixedHdrHtml = '';
+  if (hdrActive) {
+    var hdrInner = '';
+    if (hdr.mode === 'image' && hdr.image) {
+      var hp = UI.escHtml(hdr.image_position || 'center');
+      hdrInner = '<img src="'+hdr.image+'" style="width:100%;height:'+hdrH+'mm;object-fit:cover;object-position:'+hp+';display:block;margin:0">';
+    } else {
+      var logoH = (hdr.show_logo && contract.cover && contract.cover.logo)
+        ? '<img src="'+contract.cover.logo+'" style="max-height:'+(hdrH*0.6).toFixed(1)+'mm;object-fit:contain;margin-inline-start:8px">'
+        : '';
+      hdrInner = '<div style="height:'+hdrH+'mm;display:flex;align-items:center;justify-content:space-between;border-bottom:1.5px solid #0F2A4A;padding:0 '+rightPad+'mm;font-size:9pt;color:#4B5563">'+
+        '<span>'+logoH+UI.escHtml(hdr.title||contract.title||'')+'</span>'+
+        '<span style="color:#9CA3AF;font-size:8pt">'+UI.escHtml(hdr.doc_number||hdr.custom_right||'')+'</span>'+
+        '</div>';
+    }
+    fixedHdrHtml = '<div class="phf phf-top">'+hdrInner+'</div>';
+  }
+
+  var fixedFtrHtml = '';
+  if (ftrActive) {
+    var ftrInner = '';
+    if (ftr.mode === 'image' && ftr.image) {
+      var fp = UI.escHtml(ftr.image_position || 'center');
+      var pnLayer = ftr.show_page_num
+        ? '<div style="position:absolute;bottom:6px;right:'+rightPad+'mm;font-size:9pt;color:#9CA3AF;font-family:\'IBM Plex Sans Arabic\',system-ui"><span class="pn-lbl"></span></div>'
+        : '';
+      ftrInner = '<div style="position:relative;height:'+ftrH+'mm">'+
+        '<img src="'+ftr.image+'" style="width:100%;height:'+ftrH+'mm;object-fit:cover;object-position:'+fp+';display:block;margin:0">'+
+        pnLayer+'</div>';
+    } else {
+      var pnSpan = ftr.show_page_num ? '<span class="pn-lbl"></span>' : '';
+      ftrInner = '<div style="height:'+ftrH+'mm;display:flex;align-items:center;justify-content:space-between;border-top:1px solid #E5E7EB;padding:0 '+rightPad+'mm;font-size:9pt;color:#9CA3AF">'+
+        '<span>'+UI.escHtml(ftr.left_text||contract.footer_label||'سري')+'</span>'+
+        '<span>'+UI.escHtml(ftr.center_text||'')+'</span>'+
+        pnSpan+'</div>';
+    }
+    fixedFtrHtml = '<div class="phf phf-bot">'+ftrInner+'</div>';
+  }
 
   var html = '<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8">' +
     '<title>'+UI.escHtml(contract.title||'عقد')+'</title>' +
@@ -5833,9 +5844,16 @@ Pages.printContract = function() {
     '<style>' +
     '*{box-sizing:border-box;margin:0;padding:0}' +
     'body{font-family:\'IBM Plex Sans Arabic\',Tajawal,system-ui,sans-serif;direction:rtl;background:#fff;color:#1F2937;font-size:'+ds.font_size+'pt;line-height:'+ds.line_height+'}' +
-    '@page{size:A4 portrait;margin:'+dm.top+'cm '+dm.right+'cm '+dm.bottom+'cm '+dm.left+'cm;@bottom-center{content:"الصفحة " counter(page) " من " counter(pages);font-family:\'IBM Plex Sans Arabic\',system-ui;font-size:10pt;color:#9CA3AF;direction:rtl}}' +
-    '@page cover-page{size:A4 portrait;margin:0;@bottom-center{content:none}}' +
-    '.cov-page{page:cover-page;page-break-after:always;min-height:100vh;display:flex;flex-direction:column;position:relative;overflow:hidden}' +
+    /* Zero @page margins — fixed elements sit at the physical page edge */
+    '@page{size:A4 portrait;margin:0}' +
+    /* Fixed header/footer: position:fixed repeats on every page in Chrome print */
+    '.phf{position:fixed;left:0;right:0;z-index:100;-webkit-print-color-adjust:exact;print-color-adjust:exact}' +
+    '.phf-top{top:0;height:'+hdrH+'mm}' +
+    '.phf-bot{bottom:0;height:'+ftrH+'mm}' +
+    /* CSS page counter for footer labels */
+    '.pn-lbl::after{content:"الصفحة " counter(page) " من " counter(pages);font-family:\'IBM Plex Sans Arabic\',system-ui;direction:rtl}' +
+    /* Cover page: z-index:200 > fixed z-index:100, so cover background paints over header/footer on page 1 */
+    '.cov-page{page-break-after:always;min-height:297mm;display:flex;flex-direction:column;position:relative;z-index:200;isolation:isolate;overflow:hidden;background:#fff}' +
     '.cov-frame-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:60px 50px}' +
     '.cov-frame-modern .cov-frame-wrap{border:2.5px solid #0F2A4A;margin:24px;border-radius:4px}' +
     '.cov-frame-classical .cov-frame-wrap{border:2px solid #B8860B;outline:6px double #B8860B;outline-offset:-12px;margin:20px;padding:50px}' +
@@ -5856,30 +5874,29 @@ Pages.printContract = function() {
     '.cov-parties-row:last-child{border-bottom:none}' +
     '.cov-parties-row strong{color:#6B7280;display:block;font-size:10pt;font-weight:500}' +
     '.cov-ref-line{margin-top:32px;font-size:10pt;color:#9CA3AF}' +
+    /* Body content: padding = header height + user top margin (and same for bottom/sides) */
+    '.print-body{padding:'+topPad+'mm '+rightPad+'mm '+botPad+'mm '+leftPad+'mm}' +
     '.clause-block{padding:14px 0;page-break-inside:avoid;orphans:4;widows:4}' +
     '.clause-block+.clause-block{border-top:1px solid #E5E7EB;padding-top:14px}' +
-    '.clause-block-inner{padding-right:0}' +
+    '.clause-block-inner{padding:0}' +
     '.clause-title{font-size:'+(ds.clause_title_size||14)+'pt;font-weight:700;color:#0F2A4A;margin-bottom:10px}' +
     '.clause-body{font-size:'+ds.font_size+'pt;line-height:'+ds.line_height+';color:#1F2937;white-space:pre-wrap;word-wrap:break-word;text-align:justify}' +
-    /* Force thead/tfoot to repeat on every printed page */
-    'table.print-body-table{width:100%;border-collapse:separate;border-spacing:0}' +
-    'thead.print-thead{display:table-header-group}' +
-    'tfoot.print-tfoot{display:table-footer-group}' +
-    'table.print-body-table tr{page-break-inside:avoid;page-break-after:auto}' +
-    'table.print-body-table td{padding:0}' +
-    /* Spacing so body content doesn't crash into repeated header/footer area */
-    'thead.print-thead td>*,tfoot.print-tfoot td>*{display:block}' +
-    '.sig-page{padding:24px 0 0}' +
+    '.sig-page{padding-top:24px}' +
     '.sig-grid{display:grid;grid-template-columns:1fr 1fr;gap:40px}' +
     '.sig-block{border:1px solid #E5E7EB;border-radius:6px;padding:24px;text-align:center}' +
     '.sig-block-title{font-size:11pt;font-weight:700;color:#0F2A4A;margin-bottom:4px}' +
     '.sig-block-name{font-size:10pt;color:#6B7280;margin-bottom:60px}' +
     '.sig-line{border-bottom:1.5px solid #374151;width:180px;margin:0 auto 8px}' +
     '.sig-line-label{font-size:9pt;color:#9CA3AF}' +
-    '@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}' +
+    '@media print{body,img{-webkit-print-color-adjust:exact;print-color-adjust:exact}}' +
     '</style></head><body>' +
+    fixedHdrHtml +
+    fixedFtrHtml +
     covHtml +
-    bodyTableHtml +
+    '<div class="print-body">' +
+      clausesHtml +
+      sigHtml +
+    '</div>' +
     '<script>window.onload=function(){window.print();}<\/script>' +
     '</body></html>';
 
