@@ -1990,25 +1990,33 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
   .contract-editor-page.active{flex-direction:column!important}
   .contract-sidebar-left,.contract-sidebar-right{
     display:none;position:fixed;inset-inline-start:0;inset-inline-end:0;
-    bottom:56px;max-height:65vh;z-index:200;border-radius:var(--radius-lg) var(--radius-lg) 0 0;
+    bottom:calc(56px + env(safe-area-inset-bottom,0px));
+    max-height:65vh;z-index:200;
+    border-radius:var(--radius-lg) var(--radius-lg) 0 0;
     box-shadow:var(--shadow-xl);overflow-y:auto;
   }
   .contract-sidebar.mob-open{display:flex!important}
-  .contract-canvas-area{padding:8px 0!important;flex:1;overflow-x:hidden!important}
-  /* .doc-page scaled by JS — keep natural width so scale works correctly */
-  .doc-page{transform-origin:top center}
-  /* wrapper that holds scaled pages — height set by JS via --scaled-h */
-  .doc-page-scale-wrap{
-    display:block;
-    height:var(--scaled-h,1123px);
-    width:100%;
+  .contract-canvas-area{
+    padding:8px 0!important;flex:1;
+    overflow-x:hidden!important;
+    /* extra bottom padding so last page clears the mobile tab bar + Safari bar */
+    padding-bottom:calc(72px + env(safe-area-inset-bottom,0px))!important;
   }
+  /* zoom applied by JS on .contract-doc — keep pages at natural 794px width */
+  .contract-doc{width:794px}
+  /* cover page: ensure content fills visible area even when zoomed */
+  .doc-page.cov-page{overflow:hidden}
+  .cov-frame-wrap{padding:20px!important}
+  .cov-parties-box{max-width:100%!important;padding:12px 16px!important}
+  .sig-grid{grid-template-columns:1fr!important}
 }
 .contract-mobile-bar{
   display:none;
   background:var(--bg-elevated);border-top:1px solid var(--border);
   padding:6px var(--space-3);gap:var(--space-1_5);align-items:center;
   flex-shrink:0;
+  /* Safari bottom safe area (home indicator) */
+  padding-bottom:calc(6px + env(safe-area-inset-bottom,0px));
 }
 @media(max-width:768px){
   .contract-mobile-bar{display:flex}
@@ -5741,29 +5749,15 @@ Pages._refreshContractCanvas = function(contract) {
 Pages._scaleDocPages = function() {
   var canvas = document.querySelector('.contract-canvas-area');
   if (!canvas) return;
-  var pages = canvas.querySelectorAll('.doc-page');
-  if (!pages.length) return;
-  var available = canvas.clientWidth - 16; // 8px side margin
-  if (available >= 794) {
-    // Desktop — no scaling needed
-    pages.forEach(function(p) {
-      p.style.transform = '';
-      var wrap = p.parentElement;
-      if (wrap && wrap.classList.contains('doc-page-scale-wrap')) {
-        wrap.style.removeProperty('--scaled-h');
-      }
-    });
+  var doc = canvas.querySelector('.contract-doc');
+  if (!doc) return;
+  var available = canvas.clientWidth - 8;
+  if (available >= 800) {
+    doc.style.zoom = '';
     return;
   }
-  var scale = Math.max(0.3, available / 794);
-  pages.forEach(function(p) {
-    p.style.transform = 'scale(' + scale.toFixed(4) + ')';
-    p.style.transformOrigin = 'top center';
-    // Compensate for the space the scaled element no longer occupies
-    var h = p.offsetHeight || 1123;
-    var gap = Math.round((h * scale) - h);
-    p.style.marginBottom = gap + 'px';
-  });
+  // zoom changes layout dimensions (unlike transform:scale) — works in Safari/Chrome/Firefox 126+
+  doc.style.zoom = (available / 794).toFixed(4);
 };
 
 Pages.moveClause = function(projId, contractId, clauseIdx, dir) {
