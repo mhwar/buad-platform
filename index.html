@@ -5856,10 +5856,10 @@ Pages.printContract = function() {
     '.phf{position:fixed;left:0;right:0;z-index:100;-webkit-print-color-adjust:exact;print-color-adjust:exact}' +
     '.phf-top{top:0;height:'+hdrH+'mm}' +
     '.phf-bot{bottom:0;height:'+ftrH+'mm}' +
-    /* CSS page counter for footer labels */
-    '.pn-lbl::after{content:"الصفحة " counter(page) " من " counter(pages);font-family:\'IBM Plex Sans Arabic\',system-ui;direction:rtl}' +
-    /* Cover page: z-index:200 > fixed z-index:100, so cover background paints over header/footer on page 1 */
-    '.cov-page{page-break-after:always;min-height:297mm;display:flex;flex-direction:column;position:relative;z-index:200;isolation:isolate;overflow:hidden;background:#fff}' +
+    /* page number counter in fixed footer — counter(page) works in Chrome regular content */
+    '.pn-lbl::after{content:counter(page);font-family:\'IBM Plex Sans Arabic\',system-ui}' +
+    /* Cover page: page:cover-page suppresses page numbers; z-index:200 hides fixed header/footer on page 1 */
+    '.cov-page{page:cover-page;page-break-after:always;min-height:297mm;display:flex;flex-direction:column;position:relative;z-index:200;isolation:isolate;overflow:hidden;background:#fff}' +
     '.cov-frame-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:60px 50px}' +
     '.cov-frame-modern .cov-frame-wrap{border:2.5px solid #0F2A4A;margin:24px;border-radius:4px}' +
     '.cov-frame-classical .cov-frame-wrap{border:2px solid #B8860B;outline:6px double #B8860B;outline-offset:-12px;margin:20px;padding:50px}' +
