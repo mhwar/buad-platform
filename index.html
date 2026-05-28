@@ -1648,7 +1648,7 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
   background:#fff;
   box-shadow:0 4px 24px oklch(0 0 0 / 0.10);
   display:grid;
-  grid-template-rows:var(--hdr-h,200px) 1fr var(--ftr-h,150px);
+  grid-template-rows:var(--hdr-h,180px) 1fr var(--ftr-h,90px);
   overflow:hidden;position:relative;
   break-after:page;page-break-after:always;
 }
@@ -3751,13 +3751,13 @@ Pages.createContract = function(projId, tplKey) {
       header: {
         show: true,
         image: '',
-        height: 200,
+        height: 180,  /* 48mm — Word/PandaDoc standard */
         overlay: []
       },
       footer: {
         show: true,
         image: '',
-        height: 150,
+        height: 90,   /* 24mm — fits 2 lines of content + page number */
         overlay: [
           { text: 'صفحة {{page_number}} من {{total_pages}}', pos: 'bottom-center', font_size: 9, color: '#6B7280', font_weight: '400' }
         ]
@@ -5134,20 +5134,22 @@ Pages.render_contract = function(params) {
 Pages._migrateContractLayout = function(contract) {
   if (!contract.page_layout) {
     contract.page_layout = {
-      header: { show: true, image: '', height: 200, overlay: [] },
-      footer: { show: true, image: '', height: 150, overlay: [{text:'صفحة {{page_number}} من {{total_pages}}', pos:'bottom-center', font_size:9, color:'#6B7280'}] }
+      header: { show: true, image: '', height: 180, overlay: [] },
+      footer: { show: true, image: '', height: 90, overlay: [{text:'صفحة {{page_number}} من {{total_pages}}', pos:'bottom-center', font_size:9, color:'#6B7280'}] }
     };
   }
   var h = contract.page_layout.header;
   var f = contract.page_layout.footer;
   if (h) {
-    if (h.height && h.height < 110) h.height = 200;
+    // Old mm-based heights or oversized defaults get reset to 180px
+    if (!h.height || h.height < 110 || h.height === 200) h.height = 180;
     if (!h.overlay) h.overlay = [];
     delete h.mode; delete h.image_position; delete h.show_logo;
     delete h.title; delete h.doc_number; delete h.show_page_num; delete h.custom_right;
   }
   if (f) {
-    if (f.height && f.height < 110) f.height = 150;
+    // Old 150px default → 90px (industry-standard footer)
+    if (!f.height || f.height < 60 || f.height === 150) f.height = 90;
     if (!f.overlay) f.overlay = [];
     delete f.mode; delete f.image_position;
     delete f.left_text; delete f.center_text; delete f.show_page_num; delete f.custom_right;
@@ -5980,10 +5982,116 @@ Pages.removeOverlay = function(projId, contractId, section, idx) {
 };
 
 /* Render the settings panel for header or footer band */
+/* Show a modal with recommended dimensions to send to the designer */
+Pages.showBandSpecs = function(section, label, currentH) {
+  var pxW = 794;
+  var hMm = Math.round(currentH * 25.4 / 96);
+  var rec1xW = pxW, rec1xH = currentH;
+  var rec2xW = pxW * 2, rec2xH = currentH * 2;
+  var rec3xW = pxW * 3, rec3xH = currentH * 3;
+  var aspect = (pxW / currentH).toFixed(2);
+  var preset = section === 'header'
+    ? '<div style="background:var(--iris-50);border:1px solid var(--iris-200);border-radius:var(--radius-sm);padding:10px;margin-bottom:12px">'+
+        '<div style="font-size:12px;font-weight:600;color:var(--iris-700);margin-bottom:6px">📐 ارتفاعات قياسية مقترحة:</div>'+
+        '<div style="font-size:11.5px;color:var(--fg-2);line-height:1.7">'+
+          '• <strong>مدمج (Compact):</strong> 120 بكسل (32 مم) — للشعار البسيط<br>'+
+          '• <strong>قياسي (Standard):</strong> 180 بكسل (48 مم) — شعار + بيانات شركة — <span style="color:var(--iris-600)">موصى به</span><br>'+
+          '• <strong>موسع (Extended):</strong> 240 بكسل (64 مم) — تصميم فاخر بعناصر متعددة'+
+        '</div>'+
+      '</div>'
+    : '<div style="background:var(--iris-50);border:1px solid var(--iris-200);border-radius:var(--radius-sm);padding:10px;margin-bottom:12px">'+
+        '<div style="font-size:12px;font-weight:600;color:var(--iris-700);margin-bottom:6px">📐 ارتفاعات قياسية مقترحة:</div>'+
+        '<div style="font-size:11.5px;color:var(--fg-2);line-height:1.7">'+
+          '• <strong>مدمج (Compact):</strong> 60 بكسل (16 مم) — ترقيم صفحات فقط<br>'+
+          '• <strong>قياسي (Standard):</strong> 90 بكسل (24 مم) — معلومات اتصال + ترقيم — <span style="color:var(--iris-600)">موصى به</span><br>'+
+          '• <strong>موسع (Extended):</strong> 120 بكسل (32 مم) — فوتر كامل بشعار وعناوين'+
+        '</div>'+
+      '</div>';
+  var html =
+    '<div style="padding:20px;max-width:560px">' +
+      '<h2 style="margin:0 0 4px;font-size:16px;color:var(--fg-1)">قياسات تصميم '+label+'</h2>' +
+      '<div style="font-size:12px;color:var(--fg-3);margin-bottom:16px">معلومات يمكن إرسالها للمصمم لإنتاج صورة بأبعاد مناسبة</div>' +
+      preset +
+      '<div style="background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;margin-bottom:12px">' +
+        '<div style="font-size:12px;font-weight:600;margin-bottom:8px">🎯 الإعداد الحالي:</div>' +
+        '<table style="width:100%;font-size:12px;border-collapse:collapse">' +
+          '<tr><td style="padding:4px 0;color:var(--fg-3)">العرض (كامل صفحة A4):</td><td style="font-family:var(--font-mono);font-weight:600">'+pxW+' بكسل</td><td style="color:var(--fg-3)">≈ 210 مم</td></tr>' +
+          '<tr><td style="padding:4px 0;color:var(--fg-3)">الارتفاع المحدد:</td><td style="font-family:var(--font-mono);font-weight:600">'+currentH+' بكسل</td><td style="color:var(--fg-3)">≈ '+hMm+' مم</td></tr>' +
+          '<tr><td style="padding:4px 0;color:var(--fg-3)">النسبة الأفقية:</td><td style="font-family:var(--font-mono);font-weight:600" colspan="2">'+aspect+' : 1</td></tr>' +
+        '</table>' +
+      '</div>' +
+      '<div style="background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;margin-bottom:12px">' +
+        '<div style="font-size:12px;font-weight:600;margin-bottom:8px">📸 أبعاد الصورة المطلوبة من المصمم:</div>' +
+        '<table style="width:100%;font-size:12px;border-collapse:collapse">' +
+          '<tr><td style="padding:4px 0;color:var(--fg-3)">الحد الأدنى (1×):</td><td style="font-family:var(--font-mono)">'+rec1xW+' × '+rec1xH+' بكسل</td><td style="font-size:10px;color:var(--fg-3)">للعرض الرقمي</td></tr>' +
+          '<tr style="background:var(--iris-50)"><td style="padding:6px 0;color:var(--iris-700);font-weight:600">الموصى به (2× Retina):</td><td style="font-family:var(--font-mono);font-weight:600;color:var(--iris-700)">'+rec2xW+' × '+rec2xH+' بكسل</td><td style="font-size:10px;color:var(--iris-600)">جودة عالية</td></tr>' +
+          '<tr><td style="padding:4px 0;color:var(--fg-3)">الأمثل (3× للطباعة):</td><td style="font-family:var(--font-mono)">'+rec3xW+' × '+rec3xH+' بكسل</td><td style="font-size:10px;color:var(--fg-3)">جودة طباعة احترافية</td></tr>' +
+        '</table>' +
+      '</div>' +
+      '<div style="background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;margin-bottom:12px">' +
+        '<div style="font-size:12px;font-weight:600;margin-bottom:8px">⚙️ مواصفات تقنية للمصمم:</div>' +
+        '<div style="font-size:11.5px;color:var(--fg-2);line-height:1.8">' +
+          '• <strong>الدقة:</strong> 300 DPI للطباعة الاحترافية، 96 DPI للويب<br>' +
+          '• <strong>التنسيق:</strong> PNG (للشفافية) أو JPG (للصور الفوتوغرافية)<br>' +
+          '• <strong>نظام الألوان:</strong> RGB للعرض / CMYK للطباعة الاحترافية<br>' +
+          '• <strong>المنطقة الآمنة:</strong> ترك 30 بكسل من كل حافة بدون عناصر مهمة (احتياط القص)<br>' +
+          '• <strong>الخلفية:</strong> الصورة ستُمدّ بالـ <code style="background:var(--neutral-100);padding:1px 4px;border-radius:3px">object-fit:cover</code> لتغطي كامل عرض الصفحة<br>' +
+          '• <strong>النصوص المتغيرة:</strong> لا تضع نصاً ثابتاً (تاريخ، رقم، ترقيم) في الصورة — استخدم نظام "العناصر النصية فوق الصورة"' +
+        '</div>' +
+      '</div>' +
+      '<div style="display:flex;gap:8px;margin-top:16px">' +
+        '<button class="btn btn-primary" style="flex:1" onclick="Pages.copyBandSpecs(\''+section+'\','+currentH+')"><i data-lucide="copy"></i>نسخ القياسات للحافظة</button>' +
+        '<button class="btn" onclick="UI.closeModalForce()">إغلاق</button>' +
+      '</div>' +
+    '</div>';
+  UI.openModal(html, {size:'md'});
+  if (typeof lucide !== 'undefined') setTimeout(function(){ lucide.createIcons(); }, 50);
+};
+
+/* Copy specifications text to clipboard for sending to designer */
+Pages.copyBandSpecs = function(section, currentH) {
+  var label = section === 'header' ? 'الهيدر (رأس الصفحة)' : 'الفوتر (تذييل الصفحة)';
+  var pxW = 794, hMm = Math.round(currentH * 25.4 / 96);
+  var rec2xW = pxW * 2, rec2xH = currentH * 2;
+  var rec3xW = pxW * 3, rec3xH = currentH * 3;
+  var text =
+    '═══ قياسات تصميم ' + label + ' ═══\n\n' +
+    'الأبعاد المطلوبة (في صفحة A4):\n' +
+    '• العرض: ' + pxW + ' بكسل (210 مم)\n' +
+    '• الارتفاع: ' + currentH + ' بكسل (' + hMm + ' مم)\n\n' +
+    'أبعاد ملف التصميم:\n' +
+    '• الموصى به (2× Retina): ' + rec2xW + ' × ' + rec2xH + ' بكسل\n' +
+    '• الأمثل (3× طباعة): ' + rec3xW + ' × ' + rec3xH + ' بكسل\n\n' +
+    'المواصفات التقنية:\n' +
+    '• الدقة: 300 DPI للطباعة / 96 DPI للويب\n' +
+    '• التنسيق: PNG أو JPG\n' +
+    '• نظام الألوان: RGB / CMYK للطباعة\n' +
+    '• المنطقة الآمنة: ترك 30 بكسل من الحواف\n' +
+    '• الخلفية: الصورة ستملأ كامل عرض الصفحة (cover)\n\n' +
+    'ملاحظات مهمة:\n' +
+    '— تجنب وضع نصوص متغيرة (تاريخ، رقم، ترقيم) في الصورة\n' +
+    '— هذه النصوص تُضاف برمجياً فوق الصورة عبر النظام\n';
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(function(){
+      UI.toast('تم نسخ القياسات للحافظة');
+    }, function(){
+      UI.toast('فشل النسخ', 'warn');
+    });
+  } else {
+    var ta = document.createElement('textarea');
+    ta.value = text; document.body.appendChild(ta);
+    ta.select(); document.execCommand('copy'); ta.remove();
+    UI.toast('تم نسخ القياسات للحافظة');
+  }
+};
+
 Pages._renderBandSettings = function(projId, contractId, section, label, band) {
-  var defaultH = section === 'header' ? 200 : 150;
+  var defaultH = section === 'header' ? 180 : 90;
   var inpId = section === 'header' ? 'hdr-img-inp' : 'ftr-img-inp';
   var uploader = section === 'header' ? 'handleHeaderImageUpload' : 'handleFooterImageUpload';
+  // Recommended dimensions for the designer (2x retina-quality):
+  var recW = 1588, recH = section === 'header' ? 360 : 180;
+  var heightMm = Math.round((band.height||defaultH) * 25.4 / 96);
   var overlays = band.overlay || [];
   var posOpts = ['top-right','top-center','top-left','center','bottom-right','bottom-center','bottom-left'];
   var posLabels = {
@@ -5998,8 +6106,14 @@ Pages._renderBandSettings = function(projId, contractId, section, label, band) {
       '</label>' +
     '</div>' +
     '<div class="var-field">' +
-      '<div class="var-field-lbl">الارتفاع (بكسل)</div>' +
-      '<input type="number" class="var-field-inp" min="50" max="400" step="10" value="'+(band.height||defaultH)+'" oninput="Pages.updatePageLayout(\''+projId+'\',\''+contractId+'\',\''+section+'\',\'height\',parseFloat(this.value)||'+defaultH+')">' +
+      '<div class="var-field-lbl" style="display:flex;justify-content:space-between;align-items:center">' +
+        '<span>الارتفاع</span>' +
+        '<button class="btn btn-sm" style="padding:1px 6px;font-size:10px;color:var(--iris-600)" onclick="Pages.showBandSpecs(\''+section+'\',\''+label+'\','+(band.height||defaultH)+')" title="عرض القياسات الموصى بها للمصمم"><i data-lucide="ruler" style="width:11px;height:11px"></i>قياسات للمصمم</button>' +
+      '</div>' +
+      '<div style="display:flex;gap:6px;align-items:center">' +
+        '<input type="number" class="var-field-inp" style="flex:1" min="50" max="400" step="10" value="'+(band.height||defaultH)+'" oninput="Pages.updatePageLayout(\''+projId+'\',\''+contractId+'\',\''+section+'\',\'height\',parseFloat(this.value)||'+defaultH+')">' +
+        '<span style="font-size:11px;color:var(--fg-3);min-width:80px">بكسل ('+heightMm+' مم)</span>' +
+      '</div>' +
     '</div>' +
     '<div class="var-field">' +
       '<div class="var-field-lbl">صورة الخلفية (بعرض كامل الصفحة)</div>' +
@@ -6152,7 +6266,7 @@ Pages.printContract = function() {
     'body{font-family:\'IBM Plex Sans Arabic\',Tajawal,system-ui,sans-serif;direction:rtl;color:#1F2937;font-size:'+(ds.font_size||14)+'pt;line-height:'+(ds.line_height||1.5)+'}' +
     '@page{size:A4 portrait;margin:0}' +
     '.contract-doc{display:flex;flex-direction:column;align-items:stretch;gap:0;font-family:inherit;color:inherit;font-size:inherit;line-height:inherit;direction:rtl}' +
-    '.doc-page{width:210mm;height:297mm;background:#fff;display:grid;grid-template-rows:var(--hdr-h,200px) 1fr var(--ftr-h,150px);overflow:hidden;position:relative;page-break-after:always;break-after:page;-webkit-print-color-adjust:exact;print-color-adjust:exact}' +
+    '.doc-page{width:210mm;height:297mm;background:#fff;display:grid;grid-template-rows:var(--hdr-h,180px) 1fr var(--ftr-h,90px);overflow:hidden;position:relative;page-break-after:always;break-after:page;-webkit-print-color-adjust:exact;print-color-adjust:exact}' +
     '.doc-page:last-child{page-break-after:auto;break-after:auto}' +
     '.doc-page.cov-page{grid-template-rows:1fr}' +
     '.doc-page.cov-page .doc-page-hdr,.doc-page.cov-page .doc-page-ftr{display:none}' +
