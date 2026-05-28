@@ -1785,6 +1785,32 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
 .cov-frame-image .cov-ref-line{color:rgba(255,255,255,0.6)}
 .cov-frame-image .cov-parties-row strong{color:rgba(255,255,255,0.7)}
 
+/* ─── Free-form cover canvas ─── */
+.cov-free-canvas{position:relative;width:100%;height:1123px;overflow:hidden;display:block}
+.cov-free-bg{position:absolute;inset:0;z-index:0}
+.cov-free-bg img.cov-bg-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;display:block}
+.cov-free-bg-overlay{position:absolute;inset:0;z-index:1;pointer-events:none}
+.cov-el{position:absolute;box-sizing:border-box;z-index:2;touch-action:none}
+.cov-el[data-draggable="1"]{cursor:move;user-select:none}
+.cov-el-dragging{opacity:0.7;outline:2px dashed var(--iris-400);outline-offset:3px}
+.cov-el-logo{display:flex;flex-direction:column;align-items:center;justify-content:center}
+.cov-el-logo img{max-width:100%;max-height:90px;object-fit:contain;display:block;margin:0 auto}
+.cov-el-logo .logo-ph{min-width:80px;min-height:56px;border:2px dashed #CBD5E1;border-radius:8px;display:inline-flex;flex-direction:column;align-items:center;justify-content:center;font-size:10px;color:#94A3B8;padding:8px;cursor:pointer}
+.cov-el-text{line-height:1.4;white-space:pre-wrap;word-break:break-word}
+.cov-el-parties .cov-parties-box{border:1px solid #E5E7EB;border-radius:6px;padding:14px 24px;width:100%;box-sizing:border-box}
+.cov-el-parties .cov-parties-row{padding:5px 0;border-bottom:1px solid #F3F4F6;font-size:11pt;color:#374151}
+.cov-el-parties .cov-parties-row:last-child{border-bottom:none}
+.cov-el-parties .cov-parties-row strong{display:block;font-size:10pt;color:#6B7280;font-weight:500}
+.cov-el-divider hr{border:none;margin:0}
+.cov-el-image img{max-width:100%;display:block}
+/* cover element settings cards */
+.cov-el-card{border:1px solid var(--border);border-radius:var(--radius-xs);padding:8px 10px;margin-bottom:6px;background:var(--bg-elevated)}
+.cov-el-card-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:2px}
+.cov-el-type-label{font-size:11px;font-weight:600;color:var(--fg-2)}
+.cov-pos-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;margin-top:6px}
+.cov-pos-field label{font-size:10px;color:var(--fg-3);display:block;margin-bottom:2px}
+.cov-pos-field input{width:100%;font-size:11px;padding:2px 4px;border:1px solid var(--border);border-radius:3px;background:var(--bg);color:var(--fg-1)}
+
 /* Doc header (shown on body pages, hidden on cover) */
 .contract-doc-header{
   display:none;
@@ -4909,6 +4935,9 @@ Pages.render_contract = function(params) {
   }).join('');
 
   // === RIGHT SIDEBAR: Two-tab design ===
+  // Pre-migrate cover so settings panel sees elements[] before _renderContractDoc runs
+  if (!contract.cover) contract.cover = {};
+  if (!contract.cover.elements) Pages._migrateCoverToFree(contract.cover);
   var ds = contract.doc_style || {font_size:14, line_height:1.5, title_size:18, clause_title_size:14, subtitle_size:12};
   var dm = contract.doc_margins || {top:2.5, right:3, bottom:2.5, left:2.5};
   var pl = contract.page_layout || {};
@@ -5013,61 +5042,10 @@ Pages.render_contract = function(params) {
         '<div class="margin-field"><label>يسار</label><input type="number" min="1" max="5" step="0.5" value="'+dm.left+'" oninput="Pages.updateDocMargins(\''+projId+'\',\''+contractId+'\',\'left\',this.value)"></div>' +
       '</div>' +
     '</div>' +
-    // Cover
+    // Cover — free-form designer
     '<div class="stg-section">' +
       '<div class="stg-section-lbl">الغلاف</div>' +
-      '<div class="var-field">' +
-        '<div class="var-field-lbl">إطار الغلاف</div>' +
-        '<select class="var-field-inp" onchange="Pages.updateContractCover(\''+projId+'\',\''+contractId+'\',\'frame_style\',this.value);Pages.render_contract({projId:\''+projId+'\',contractId:\''+contractId+'\'})">' +
-          ['modern','classical','minimal','image'].map(function(s){
-            return '<option value="'+s+'"'+(curFrameStyle===s?' selected':'')+'>'+{modern:'حديث',classical:'كلاسيكي',minimal:'بسيط',image:'صورة خلفية'}[s]+'</option>';
-          }).join('') +
-        '</select>' +
-      '</div>' +
-      (isImgFrame
-        ? '<div class="var-field">' +
-            '<div class="var-field-lbl">صورة الخلفية</div>' +
-            (contract.cover&&contract.cover.bg_image
-              ? '<img src="'+contract.cover.bg_image+'" style="max-width:100%;max-height:60px;object-fit:cover;border-radius:var(--radius-xs);border:1px solid var(--border);display:block;margin-bottom:6px">'
-              : ''
-            ) +
-            '<button class="btn btn-sm" style="width:100%;margin-bottom:4px" onclick="document.getElementById(\'contract-bg-inp\').click()"><i data-lucide="image"></i>رفع صورة خلفية</button>' +
-            '<input type="file" id="contract-bg-inp" accept="image/*" style="display:none" onchange="Pages.handleContractBgUpload(\''+projId+'\',\''+contractId+'\',this)">' +
-          '</div>' +
-          '<div class="var-field">' +
-            '<div class="var-field-lbl">موضع الصورة</div>' +
-            '<select class="var-field-inp" onchange="Pages.updateContractCover(\''+projId+'\',\''+contractId+'\',\'bg_position\',this.value)">' +
-              ['center','top','bottom'].map(function(p){
-                var lbl = {center:'وسط',top:'أعلى',bottom:'أسفل'}[p];
-                var cur = (contract.cover && contract.cover.bg_position) || 'center';
-                return '<option value="'+p+'"'+(cur===p?' selected':'')+'>'+lbl+'</option>';
-              }).join('') +
-            '</select>' +
-          '</div>' +
-          '<div class="var-field">' +
-            '<div class="var-field-lbl">تعتيم الطبقة</div>' +
-            '<input type="range" min="0" max="0.85" step="0.05" value="'+((contract.cover&&contract.cover.overlay_opacity)||0.55)+'" class="var-field-inp" style="padding:0;height:28px" onchange="Pages.updateContractCover(\''+projId+'\',\''+contractId+'\',\'overlay_opacity\',parseFloat(this.value))">' +
-          '</div>' +
-          '<div class="var-field">' +
-            '<div class="var-field-lbl">لون الخلفية (احتياطي)</div>' +
-            '<input type="color" class="var-field-inp" style="height:36px;padding:2px" value="'+((contract.cover&&contract.cover.bg_color)||'#0F2A4A')+'" onchange="Pages.updateContractCover(\''+projId+'\',\''+contractId+'\',\'bg_color\',this.value)">' +
-          '</div>'
-        : ''
-      ) +
-      '<div class="var-field">' +
-        '<div class="var-field-lbl">اسم الجهة / الكليشه</div>' +
-        '<input class="var-field-inp" value="'+UI.escHtml(contract.cover&&contract.cover.company_name||'')+'" placeholder="اسم الشركة أو المكتب" oninput="Pages.updateContractCover(\''+projId+'\',\''+contractId+'\',\'company_name\',this.value)">' +
-      '</div>' +
-      '<div class="var-field">' +
-        '<div class="var-field-lbl">شعار الجهة</div>' +
-        (contract.cover&&contract.cover.logo
-          ? '<img src="'+contract.cover.logo+'" style="max-width:100%;max-height:60px;object-fit:contain;border-radius:var(--radius-xs);border:1px solid var(--border);display:block;margin-bottom:6px">' +
-            '<button class="btn btn-sm" style="width:100%;margin-bottom:4px" onclick="document.getElementById(\'contract-logo-inp\').click()"><i data-lucide="upload"></i>تغيير</button>' +
-            '<button class="btn btn-sm" style="width:100%;color:var(--danger-600)" onclick="Pages.updateContractCover(\''+projId+'\',\''+contractId+'\',\'logo\',\'\');Pages.render_contract({projId:\''+projId+'\',contractId:\''+contractId+'\'})">إزالة</button>'
-          : '<button class="btn btn-sm" style="width:100%" onclick="document.getElementById(\'contract-logo-inp\').click()"><i data-lucide="upload"></i>رفع شعار</button>'
-        ) +
-        '<input type="file" id="contract-logo-inp" accept="image/*" style="display:none" onchange="Pages.handleContractLogoUpload(\''+projId+'\',\''+contractId+'\',this)">' +
-      '</div>' +
+      Pages._renderContractCoverSettings(projId, contractId, contract.cover || {}) +
     '</div>' +
     // Header section — image + positioned text overlays
     Pages._renderBandSettings(projId, contractId, 'header', 'رأس الصفحة', plh) +
@@ -5191,11 +5169,23 @@ Pages._migrateContractLayout = function(contract) {
     contract._migrated_v2 = true;
     try { DB.saveContract(Pages._contractProjId, contract); } catch(e) {}
   }
+  // Migrate cover to free-form elements if not done yet
+  if (contract.cover && !contract.cover.elements) {
+    Pages._migrateCoverToFree(contract.cover);
+    if (!contract._cover_free_v1 && Pages._contractProjId) {
+      contract._cover_free_v1 = true;
+      try { DB.saveContract(Pages._contractProjId, contract); } catch(e) {}
+    }
+  }
 };
 
 /* Render cover page content (no header/footer slots) */
 Pages._renderCoverContent = function(contract, opts) {
   opts = opts || {};
+  // Free-form renderer: used when cover has elements[]
+  if (contract.cover && Array.isArray(contract.cover.elements)) {
+    return Pages._renderCoverContentFree(contract, opts);
+  }
   var vars = contract.variables || {};
   var ds = contract.doc_style || {title_size:18, subtitle_size:12};
   var preview = opts.preview;
@@ -5230,6 +5220,138 @@ Pages._renderCoverContent = function(contract, opts) {
       '<div class="cov-ref-line">'+(vars.contract_date_gregorian?UI.escHtml(vars.contract_date_gregorian):'')+(vars.contract_city?' · '+UI.escHtml(vars.contract_city):'')+'</div>' +
     '</div>' +
   '</div>';
+};
+
+/* ─── Free-form cover designer ─── */
+
+/* Default element layout for new covers */
+Pages._defaultCoverElements = function() {
+  return [
+    { id: DB.uid(), type:'logo',    x:50, y:7,  w:25, align:'center', props:{src:''} },
+    { id: DB.uid(), type:'text',    x:50, y:22, w:80, align:'center', props:{text:'{{company_name}}', font_size:12, font_weight:'600', color:'#0F2A4A'} },
+    { id: DB.uid(), type:'text',    x:50, y:30, w:85, align:'center', props:{text:'{{title}}', font_size:22, font_weight:'700', color:'#0F2A4A'} },
+    { id: DB.uid(), type:'text',    x:50, y:44, w:70, align:'center', props:{text:'المملكة العربية السعودية', font_size:12, font_weight:'400', color:'#6B7280'} },
+    { id: DB.uid(), type:'divider', x:50, y:52, w:60, align:'center', props:{color:'#D1D5DB', thickness:1} },
+    { id: DB.uid(), type:'parties', x:50, y:58, w:80, align:'center', props:{show_a:true, show_b:true} },
+    { id: DB.uid(), type:'text',    x:50, y:87, w:80, align:'center', props:{text:'{{contract_date_gregorian}}', font_size:10, font_weight:'400', color:'#9CA3AF'} }
+  ];
+};
+
+/* Convert old frame_style cover to free-form elements[] */
+Pages._migrateCoverToFree = function(cover) {
+  if (!cover) cover = {};
+  if (cover.elements) return cover;
+  var els = Pages._defaultCoverElements();
+  if (cover.logo) els[0].props.src = cover.logo;
+  if (cover.company_name) els[1].props.text = cover.company_name;
+  if (!cover.bg_type) {
+    if (cover.frame_style === 'image' && cover.bg_image) {
+      cover.bg_type = 'image';
+      cover.bg_overlay = typeof cover.overlay_opacity === 'number' ? cover.overlay_opacity : 0.3;
+    } else {
+      cover.bg_type = 'color';
+      if (!cover.bg_color) cover.bg_color = '#FFFFFF';
+    }
+  }
+  cover.elements = els;
+  return cover;
+};
+
+/* Resolve {{vars}} inside a cover text element */
+Pages._applyVarsToCoverEl = function(text, vars, contract) {
+  if (!text) return '';
+  return text
+    .replace(/\{\{title\}\}/g, UI.escHtml((contract && contract.title) || ''))
+    .replace(/\{\{company_name\}\}/g, UI.escHtml(vars.company_name || ''))
+    .replace(/\{\{contract_no\}\}/g, UI.escHtml(vars.contract_no || ''))
+    .replace(/\{\{contract_date_gregorian\}\}/g, UI.escHtml(vars.contract_date_gregorian || ''))
+    .replace(/\{\{contract_city\}\}/g, UI.escHtml(vars.contract_city || ''))
+    .replace(/\{\{party_a_name\}\}/g, UI.escHtml(vars.party_a_name || ''))
+    .replace(/\{\{party_b_name\}\}/g, UI.escHtml(vars.party_b_name || ''));
+};
+
+/* Render one cover element */
+Pages._renderCoverEl = function(el, vars, contract, editable) {
+  vars = vars || {};
+  var t = el.type || 'text';
+  var p = el.props || {};
+  var innerHtml = '';
+
+  if (t === 'logo') {
+    if (p.src) {
+      innerHtml = '<div class="cov-el-logo"><img src="'+p.src+'" alt=""></div>';
+    } else if (editable) {
+      innerHtml = '<div class="cov-el-logo"><div class="logo-ph" title="شعار — ارفع من الإعدادات"><i data-lucide="building-2" style="width:28px;height:28px"></i><span style="font-size:9px;margin-top:4px;display:block">شعار الجهة</span></div></div>';
+    }
+  } else if (t === 'text') {
+    var txt = Pages._applyVarsToCoverEl(p.text || '', vars, contract);
+    var fs = p.font_size || 12;
+    var fw = p.font_weight || '400';
+    var fc = p.color || '#1F2937';
+    innerHtml = '<div class="cov-el-text" style="font-size:'+fs+'pt;font-weight:'+fw+';color:'+UI.escHtml(fc)+'">'+txt+'</div>';
+  } else if (t === 'parties') {
+    var partyA = vars.party_a_name ? UI.escHtml(vars.party_a_name) : '_______________';
+    var partyB = vars.party_b_name ? UI.escHtml(vars.party_b_name) : '_______________';
+    var rows = '';
+    if (p.show_a !== false) rows += '<div class="cov-parties-row"><strong>الطرف الأول</strong>'+partyA+'</div>';
+    if (p.show_b !== false) rows += '<div class="cov-parties-row"><strong>الطرف الثاني</strong>'+partyB+'</div>';
+    innerHtml = '<div class="cov-el-parties"><div class="cov-parties-box">'+rows+'</div></div>';
+  } else if (t === 'divider') {
+    var hrStyle = 'border-top:'+(p.thickness||1)+'px solid '+(p.color||'#D1D5DB');
+    innerHtml = '<div class="cov-el-divider"><hr style="'+hrStyle+'"></div>';
+  } else if (t === 'image') {
+    if (p.src) {
+      innerHtml = '<div class="cov-el-image"><img src="'+p.src+'" alt="" style="max-width:100%;display:block"></div>';
+    } else if (editable) {
+      innerHtml = '<div class="cov-el-image"><div class="logo-ph" title="صورة — ارفع من الإعدادات"><i data-lucide="image" style="width:24px;height:24px"></i></div></div>';
+    }
+  }
+
+  if (!innerHtml) return '';
+
+  var x = typeof el.x === 'number' ? el.x : 50;
+  var y = typeof el.y === 'number' ? el.y : 10;
+  var w = typeof el.w === 'number' ? el.w : 80;
+  var align = el.align || 'center';
+  var leftPct = (x - w / 2);
+  var style = 'left:'+leftPct.toFixed(2)+'%;top:'+y.toFixed(2)+'%;width:'+w+'%;text-align:'+align;
+
+  var dragAttrs = editable
+    ? ' data-draggable="1" data-el-x="'+x+'" data-el-y="'+y+'" data-el-id="'+el.id+'"'
+      + ' onpointerdown="Pages._startCoverElDrag(event,\''+el.id+'\')"'
+      + ' onpointermove="Pages._coverElDragMove(event)"'
+      + ' onpointerup="Pages._coverElDragEnd(event)"'
+    : '';
+
+  return '<div class="cov-el" style="'+style+'"'+dragAttrs+'>'+innerHtml+'</div>';
+};
+
+/* Render free-form cover canvas */
+Pages._renderCoverContentFree = function(contract, opts) {
+  opts = opts || {};
+  var editable = opts.editable !== false;
+  var vars = contract.variables || {};
+  var cover = contract.cover || {};
+  var elements = cover.elements || [];
+
+  var bgStyle = '';
+  var bgImgHtml = '';
+  if (cover.bg_type === 'image' && cover.bg_image) {
+    bgImgHtml = '<img class="cov-bg-img" src="'+cover.bg_image+'" alt="">';
+    var ov = cover.bg_overlay || 0;
+    if (ov > 0) bgImgHtml += '<div class="cov-free-bg-overlay" style="background:rgba(0,0,0,'+ov+')"></div>';
+  } else {
+    bgStyle = 'background:'+(cover.bg_color || '#FFFFFF');
+  }
+
+  var elsHtml = elements.map(function(el) {
+    return Pages._renderCoverEl(el, vars, contract, editable);
+  }).join('');
+
+  return '<div class="cov-free-canvas">'
+    + '<div class="cov-free-bg"'+(bgStyle?' style="'+bgStyle+'"':'')+'>'+bgImgHtml+'</div>'
+    + elsHtml
+    + '</div>';
 };
 
 /* Render a single page header/footer band with image background and overlay text slots */
@@ -5566,7 +5688,7 @@ Pages._renderContractDoc = function(contract, opts) {
   var coverPageHtml =
     '<div class="doc-page cov-page" style="--hdr-h:0;--ftr-h:0">' +
       '<div class="doc-page-body cov-body">' +
-        Pages._renderCoverContent(contract, {preview:false}) +
+        Pages._renderCoverContent(contract, {preview:false, editable:editable}) +
       '</div>' +
     '</div>';
 
@@ -5955,6 +6077,267 @@ Pages.handleContractBgUpload = function(projId, contractId, input) {
     Pages.render_contract({projId:projId, contractId:contractId});
   };
   reader.readAsDataURL(file);
+};
+
+/* ─── Free-form cover: contract CRUD ─── */
+
+Pages._renderContractCoverSettings = function(projId, contractId, cover) {
+  cover = cover || {};
+  var elements = cover.elements || [];
+  var bgType = cover.bg_type || 'color';
+  var bgSuffix = contractId.replace(/[^a-zA-Z0-9]/g,'_');
+  return (
+    '<div class="var-field">' +
+      '<div class="var-field-lbl">خلفية الغلاف</div>' +
+      '<div style="display:flex;gap:12px;margin-bottom:6px">' +
+        '<label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer"><input type="radio" name="cov-bg-t-'+bgSuffix+'" value="color" '+(bgType==='color'?'checked':'')+' onchange="Pages.updateContractCoverBg(\''+projId+'\',\''+contractId+'\',\'bg_type\',\'color\')"> لون موحد</label>' +
+        '<label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer"><input type="radio" name="cov-bg-t-'+bgSuffix+'" value="image" '+(bgType==='image'?'checked':'')+' onchange="Pages.updateContractCoverBg(\''+projId+'\',\''+contractId+'\',\'bg_type\',\'image\')"> صورة A4</label>' +
+      '</div>' +
+      (bgType === 'color'
+        ? '<input type="color" class="var-field-inp" style="height:36px;padding:2px" value="'+(cover.bg_color||'#FFFFFF')+'" onchange="Pages.updateContractCoverBg(\''+projId+'\',\''+contractId+'\',\'bg_color\',this.value)">'
+        : (cover.bg_image ? '<img src="'+cover.bg_image+'" style="max-width:100%;max-height:56px;object-fit:cover;border-radius:var(--radius-xs);border:1px solid var(--border);display:block;margin-bottom:6px">' : '') +
+          '<button class="btn btn-sm" style="width:100%;margin-bottom:6px" onclick="document.getElementById(\'cov-bg-inp-'+bgSuffix+'\').click()"><i data-lucide="image"></i>رفع صورة خلفية</button>' +
+          '<input type="file" id="cov-bg-inp-'+bgSuffix+'" accept="image/*" style="display:none" onchange="Pages.handleCoverBgUpload(\''+projId+'\',\''+contractId+'\',this)">' +
+          '<div class="var-field"><div class="var-field-lbl">تعتيم</div><input type="range" min="0" max="0.8" step="0.05" value="'+(cover.bg_overlay||0)+'" class="var-field-inp" style="padding:0;height:26px" oninput="Pages.updateContractCoverBg(\''+projId+'\',\''+contractId+'\',\'bg_overlay\',parseFloat(this.value))"></div>'
+      ) +
+    '</div>' +
+    '<div class="var-field" style="margin-top:10px">' +
+      '<div class="var-field-lbl" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">' +
+        '<span>عناصر الغلاف</span>' +
+        '<button class="btn btn-sm" style="padding:2px 8px;font-size:11px" onclick="Pages._showAddCoverEl(\''+projId+'\',\''+contractId+'\')"><i data-lucide="plus" style="width:11px;height:11px"></i>إضافة</button>' +
+      '</div>' +
+      (elements.length === 0
+        ? '<div style="font-size:11px;color:var(--fg-4);text-align:center;padding:8px;border:1px dashed var(--border);border-radius:var(--radius-xs)">لا توجد عناصر</div>'
+        : elements.map(function(el,i){ return Pages._renderCoverElCard(el,i,{type:'contract',projId:projId,contractId:contractId}); }).join('')
+      ) +
+    '</div>'
+  );
+};
+
+Pages.updateContractCoverBg = function(projId, contractId, key, value) {
+  var contracts = DB.getContracts(projId);
+  var c = contracts.find(function(x){return x.id===contractId;});
+  if (!c) return;
+  if (!c.cover) c.cover = {};
+  c.cover[key] = value;
+  c.updated = (new Date()).toISOString().slice(0,10);
+  DB.saveContract(projId, c);
+  Pages._refreshCoverPage(projId, contractId);
+};
+
+Pages.addContractCoverEl = function(projId, contractId, type) {
+  var contracts = DB.getContracts(projId);
+  var c = contracts.find(function(x){return x.id===contractId;});
+  if (!c || !c.cover || !c.cover.elements) return;
+  var defaults = { logo:{src:''}, text:{text:'نص جديد',font_size:14,font_weight:'400',color:'#1F2937'}, parties:{show_a:true,show_b:true}, divider:{color:'#D1D5DB',thickness:1}, image:{src:''} };
+  c.cover.elements.push({ id:DB.uid(), type:type, x:50, y:50, w:70, align:'center', props:defaults[type]||{} });
+  c.updated = (new Date()).toISOString().slice(0,10);
+  DB.saveContract(projId, c);
+  Pages.render_contract({projId:projId, contractId:contractId});
+};
+
+Pages.deleteContractCoverEl = function(projId, contractId, elId) {
+  var contracts = DB.getContracts(projId);
+  var c = contracts.find(function(x){return x.id===contractId;});
+  if (!c || !c.cover || !c.cover.elements) return;
+  c.cover.elements = c.cover.elements.filter(function(e){return e.id!==elId;});
+  c.updated = (new Date()).toISOString().slice(0,10);
+  DB.saveContract(projId, c);
+  Pages.render_contract({projId:projId, contractId:contractId});
+};
+
+Pages.updateContractCoverEl = function(projId, contractId, elId, key, value) {
+  var contracts = DB.getContracts(projId);
+  var c = contracts.find(function(x){return x.id===contractId;});
+  if (!c || !c.cover || !c.cover.elements) return;
+  var el = c.cover.elements.find(function(e){return e.id===elId;});
+  if (!el) return;
+  if (key==='x'||key==='y'||key==='w'||key==='align') { el[key]=value; }
+  else { if (!el.props) el.props={}; el.props[key]=value; }
+  c.updated = (new Date()).toISOString().slice(0,10);
+  DB.saveContract(projId, c);
+  Pages._refreshCoverPage(projId, contractId);
+};
+
+Pages.updateContractCoverElPos = function(projId, contractId, elId, x, y) {
+  var contracts = DB.getContracts(projId);
+  var c = contracts.find(function(x){return x.id===contractId;});
+  if (!c || !c.cover || !c.cover.elements) return;
+  var el = c.cover.elements.find(function(e){return e.id===elId;});
+  if (!el) return;
+  el.x = x; el.y = y;
+  c.updated = (new Date()).toISOString().slice(0,10);
+  DB.saveContract(projId, c);
+};
+
+Pages._refreshCoverPage = function(projId, contractId) {
+  var contracts = DB.getContracts(projId);
+  var c = contracts.find(function(x){return x.id===contractId;});
+  if (!c) return;
+  var covBody = document.querySelector('.contract-doc .cov-page .cov-body');
+  if (!covBody) return;
+  covBody.innerHTML = Pages._renderCoverContent(c, {preview:false, editable:true});
+  if (typeof lucide !== 'undefined') lucide.createIcons({rootElement:covBody});
+};
+
+Pages.handleCoverBgUpload = function(projId, contractId, input) {
+  var file = input.files && input.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    Pages.updateContractCoverBg(projId, contractId, 'bg_image', e.target.result);
+    Pages.render_contract({projId:projId, contractId:contractId});
+  };
+  reader.readAsDataURL(file);
+};
+
+Pages.handleCoverLogoElUpload = function(projId, contractId, elId, input) {
+  var file = input.files && input.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    Pages.updateContractCoverEl(projId, contractId, elId, 'src', e.target.result);
+    Pages.render_contract({projId:projId, contractId:contractId});
+  };
+  reader.readAsDataURL(file);
+};
+
+/* ─── Cover element settings card (shared contract + template) ─── */
+
+Pages._renderCoverElCard = function(el, i, ctx) {
+  var typeLabels = {logo:'شعار الجهة',text:'نص',parties:'الأطراف',divider:'فاصل',image:'صورة'};
+  var t = el.type||'text';
+  var p = el.props||{};
+  var isContract = ctx.type==='contract';
+  var ctxArgs = isContract ? '\''+ctx.projId+'\',\''+ctx.contractId+'\'' : '\''+ctx.tplId+'\'';
+  var updateFn = (isContract ? 'Pages.updateContractCoverEl' : 'Pages.updateTplCoverEl')+'('+ctxArgs+',\''+el.id+'\'';
+  var deleteFn = (isContract ? 'Pages.deleteContractCoverEl' : 'Pages.deleteTplCoverEl')+'('+ctxArgs+',\''+el.id+'\')';
+  var ctxKey = (isContract ? ctx.contractId : ctx.tplId).replace(/[^a-zA-Z0-9]/g,'_');
+  var inpId = 'cov-logo-inp-'+ctxKey+'-'+el.id.replace(/[^a-zA-Z0-9]/g,'_');
+  var uploadFn = isContract
+    ? 'Pages.handleCoverLogoElUpload(\''+ctx.projId+'\',\''+ctx.contractId+'\',\''+el.id+'\',this)'
+    : 'Pages.handleTplCoverLogoElUpload(\''+ctx.tplId+'\',\''+el.id+'\',this)';
+
+  var extraHtml = '';
+  if (t==='text') {
+    extraHtml =
+      '<div class="var-field" style="margin-top:5px"><input class="var-field-inp" style="font-size:11px" value="'+UI.escHtml(p.text||'')+'" placeholder="النص أو {{متغير}}" oninput="'+updateFn+',\'text\',this.value)"></div>' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;margin-top:4px">' +
+        '<div><label style="font-size:10px;color:var(--fg-3);display:block">الحجم (pt)</label><input type="number" class="var-field-inp" style="font-size:11px" min="8" max="48" value="'+(p.font_size||12)+'" oninput="'+updateFn+',\'font_size\',parseFloat(this.value)||12)"></div>' +
+        '<div><label style="font-size:10px;color:var(--fg-3);display:block">الوزن</label><select class="var-field-inp" style="font-size:10px" onchange="'+updateFn+',\'font_weight\',this.value)">'+['400','600','700'].map(function(w){return '<option value="'+w+'"'+((p.font_weight||'400')===w?' selected':'')+'>'+{400:'عادي',600:'شبه',700:'عريض'}[w]+'</option>';}).join('')+'</select></div>' +
+        '<div><label style="font-size:10px;color:var(--fg-3);display:block">اللون</label><input type="color" class="var-field-inp" style="padding:2px;height:26px" value="'+(p.color||'#1F2937')+'" onchange="'+updateFn+',\'color\',this.value)"></div>' +
+      '</div>';
+  } else if (t==='logo'||t==='image') {
+    extraHtml =
+      '<div class="var-field" style="margin-top:5px">' +
+        (p.src ? '<img src="'+p.src+'" style="max-width:100%;max-height:48px;object-fit:contain;border:1px solid var(--border);border-radius:var(--radius-xs);display:block;margin-bottom:4px">' +
+          '<button class="btn btn-sm" style="width:100%;margin-bottom:4px" onclick="document.getElementById(\''+inpId+'\').click()"><i data-lucide="upload"></i>تغيير</button>' +
+          '<button class="btn btn-sm" style="width:100%;color:var(--danger-600)" onclick="'+updateFn+',\'src\',\'\')">إزالة</button>'
+          : '<button class="btn btn-sm" style="width:100%" onclick="document.getElementById(\''+inpId+'\').click()"><i data-lucide="upload"></i>رفع '+(t==='logo'?'شعار':'صورة')+'</button>') +
+        '<input type="file" id="'+inpId+'" accept="image/*" style="display:none" onchange="'+uploadFn+'">' +
+      '</div>';
+  } else if (t==='divider') {
+    extraHtml =
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:5px">' +
+        '<div><label style="font-size:10px;color:var(--fg-3);display:block">اللون</label><input type="color" class="var-field-inp" style="padding:2px;height:26px" value="'+(p.color||'#D1D5DB')+'" onchange="'+updateFn+',\'color\',this.value)"></div>' +
+        '<div><label style="font-size:10px;color:var(--fg-3);display:block">سماكة (px)</label><input type="number" class="var-field-inp" style="font-size:11px" min="1" max="10" value="'+(p.thickness||1)+'" oninput="'+updateFn+',\'thickness\',parseFloat(this.value)||1)"></div>' +
+      '</div>';
+  } else if (t==='parties') {
+    extraHtml =
+      '<div style="display:flex;gap:12px;margin-top:5px;font-size:11px">' +
+        '<label style="display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" '+(p.show_a!==false?'checked':'')+' onchange="'+updateFn+',\'show_a\',this.checked)"> الطرف الأول</label>' +
+        '<label style="display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" '+(p.show_b!==false?'checked':'')+' onchange="'+updateFn+',\'show_b\',this.checked)"> الطرف الثاني</label>' +
+      '</div>';
+  }
+
+  var posHtml =
+    '<div class="cov-pos-grid">' +
+      '<div class="cov-pos-field"><label>الأفقي (مركز %)</label><input id="pos-x-'+el.id+'" type="number" min="0" max="100" step="1" value="'+(typeof el.x==='number'?el.x:50)+'" oninput="'+updateFn+',\'x\',parseFloat(this.value)||50)"></div>' +
+      '<div class="cov-pos-field"><label>من الأعلى (%)</label><input id="pos-y-'+el.id+'" type="number" min="0" max="99" step="1" value="'+(typeof el.y==='number'?el.y:10)+'" oninput="'+updateFn+',\'y\',parseFloat(this.value)||0)"></div>' +
+      '<div class="cov-pos-field"><label>العرض (%)</label><input type="number" min="10" max="100" step="5" value="'+(typeof el.w==='number'?el.w:80)+'" oninput="'+updateFn+',\'w\',parseFloat(this.value)||80)"></div>' +
+    '</div>';
+
+  return '<div class="cov-el-card">' +
+    '<div class="cov-el-card-hdr">' +
+      '<span class="cov-el-type-label">'+(typeLabels[t]||t)+'</span>' +
+      '<button class="clause-ctrl-btn danger" onclick="'+deleteFn+'" title="حذف"><i data-lucide="trash-2" style="width:12px;height:12px"></i></button>' +
+    '</div>' +
+    extraHtml + posHtml +
+  '</div>';
+};
+
+Pages._showAddCoverEl = function(projId, contractId) {
+  var types = [['logo','شعار الجهة','building-2'],['text','نص حر','type'],['parties','الأطراف','users'],['divider','فاصل','minus'],['image','صورة','image']];
+  UI.openModal(
+    '<div class="modal-header"><h3>إضافة عنصر للغلاف</h3><button class="modal-close" onclick="UI.closeModalForce()">×</button></div>' +
+    '<div class="modal-body"><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">' +
+      types.map(function(t){ return '<button class="btn" style="justify-content:flex-start;gap:8px;padding:10px;font-size:12px" onclick="Pages.addContractCoverEl(\''+projId+'\',\''+contractId+'\',\''+t[0]+'\');UI.closeModalForce()"><i data-lucide="'+t[2]+'"></i>'+t[1]+'</button>'; }).join('') +
+    '</div></div>'
+  );
+  if (typeof lucide !== 'undefined') setTimeout(function(){lucide.createIcons({rootElement:document.querySelector('.modal-dialog')});},10);
+};
+
+/* ─── Cover drag & drop ─── */
+
+Pages._coverDragState = null;
+
+Pages._startCoverElDrag = function(event, elId) {
+  event.preventDefault();
+  event.stopPropagation();
+  var el = event.currentTarget;
+  var covPage = el.closest('.cov-page');
+  if (!covPage) return;
+  var pageRect = covPage.getBoundingClientRect();
+  var initPtrX = (event.clientX - pageRect.left) / pageRect.width * 100;
+  var initPtrY = (event.clientY - pageRect.top) / pageRect.height * 100;
+  Pages._coverDragState = {
+    elId: elId, elEl: el, pageRect: pageRect,
+    initPtrX: initPtrX, initPtrY: initPtrY,
+    initElX: parseFloat(el.getAttribute('data-el-x')) || 50,
+    initElY: parseFloat(el.getAttribute('data-el-y')) || 10,
+    _newX: undefined, _newY: undefined
+  };
+  el.setPointerCapture(event.pointerId);
+  el.classList.add('cov-el-dragging');
+};
+
+Pages._coverElDragMove = function(event) {
+  var ds = Pages._coverDragState;
+  if (!ds || !event.buttons) return;
+  var pr = ds.pageRect;
+  var curX = (event.clientX - pr.left) / pr.width * 100;
+  var curY = (event.clientY - pr.top) / pr.height * 100;
+  var newX = Math.max(0, Math.min(100, ds.initElX + (curX - ds.initPtrX)));
+  var newY = Math.max(0, Math.min(97, ds.initElY + (curY - ds.initPtrY)));
+  var w = parseFloat(ds.elEl.style.width) || 80;
+  ds.elEl.style.left = (newX - w / 2).toFixed(2) + '%';
+  ds.elEl.style.top = newY.toFixed(2) + '%';
+  ds.elEl.setAttribute('data-el-x', newX.toFixed(1));
+  ds.elEl.setAttribute('data-el-y', newY.toFixed(1));
+  ds._newX = newX;
+  ds._newY = newY;
+};
+
+Pages._coverElDragEnd = function(event) {
+  var ds = Pages._coverDragState;
+  if (!ds) return;
+  Pages._coverDragState = null;
+  ds.elEl.classList.remove('cov-el-dragging');
+  if (ds._newX === undefined) return;
+  var x = Math.round(ds._newX * 10) / 10;
+  var y = Math.round(ds._newY * 10) / 10;
+  // Update position inputs live
+  var xInp = document.getElementById('pos-x-' + ds.elId);
+  var yInp = document.getElementById('pos-y-' + ds.elId);
+  if (xInp) xInp.value = x;
+  if (yInp) yInp.value = y;
+  // Save (position-only, no canvas refresh needed)
+  var tplEdEl = document.getElementById('pg-template-editor');
+  if (tplEdEl && tplEdEl.offsetParent !== null && Pages._tplEditorId) {
+    Pages.updateTplCoverElPos(Pages._tplEditorId, ds.elId, x, y);
+  } else if (Pages._contractProjId && Pages._contractId) {
+    Pages.updateContractCoverElPos(Pages._contractProjId, Pages._contractId, ds.elId, x, y);
+  }
 };
 
 Pages.handleHeaderImageUpload = function(projId, contractId, input) {
@@ -6427,7 +6810,7 @@ Pages.printContract = function() {
   if (!contract) return;
 
   // Strip clause-controls (editing UI) and disable contenteditable from a fresh render
-  var docHtml = Pages._renderContractDoc(contract);
+  var docHtml = Pages._renderContractDoc(contract, {editable: false});
   var tmp = document.createElement('div');
   tmp.innerHTML = docHtml;
   tmp.querySelectorAll('.clause-controls').forEach(function(el){ el.remove(); });
@@ -6505,6 +6888,19 @@ Pages.printContract = function() {
     /* Variable chips: print as plain underlined text since vars should already be substituted */
     '.var-chip{background:transparent;color:inherit;padding:0}' +
     '.var-chip.empty{color:#9CA3AF;text-decoration:underline dotted}' +
+    /* Free-form cover */
+    '.cov-free-canvas{position:relative;width:100%;height:297mm;overflow:hidden;display:block}' +
+    '.cov-free-bg{position:absolute;inset:0;z-index:0}' +
+    '.cov-free-bg img.cov-bg-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}' +
+    '.cov-free-bg-overlay{position:absolute;inset:0;z-index:1;pointer-events:none}' +
+    '.cov-el{position:absolute;box-sizing:border-box;z-index:2}' +
+    '.cov-el-text{line-height:1.4;white-space:pre-wrap;word-break:break-word}' +
+    '.cov-el-logo img{max-width:100%;max-height:90px;object-fit:contain;display:block;margin:0 auto}' +
+    '.cov-el-parties .cov-parties-box{border:1px solid #E5E7EB;border-radius:6px;padding:14px 24px;width:100%;box-sizing:border-box}' +
+    '.cov-el-parties .cov-parties-row{padding:5px 0;border-bottom:1px solid #F3F4F6;font-size:11pt;color:#374151}' +
+    '.cov-el-parties .cov-parties-row:last-child{border-bottom:none}' +
+    '.cov-el-parties .cov-parties-row strong{display:block;font-size:10pt;color:#6B7280;font-weight:500}' +
+    '.cov-el-divider hr{border:none;margin:0}' +
     '@media print{*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}}';
 
   var html = '<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8">' +
@@ -6709,11 +7105,13 @@ Pages.render_template_editor = function(params) {
     templateId = template.id;
   }
 
-  // Migrate old templates missing layout fields
+  // Migrate old templates missing layout/cover fields
   var migrated = false;
   if (!template.doc_style) { template.doc_style = { font_size:14, line_height:1.5, title_size:18, clause_title_size:14, subtitle_size:12 }; migrated=true; }
   if (!template.doc_margins) { template.doc_margins = { top:0, right:2.0, bottom:0, left:2.0 }; migrated=true; }
   if (!template.page_layout) { template.page_layout = { header:{show:true,image:'',height:180,overlay:[]}, footer:{show:true,image:'',height:90,overlay:[{text:'صفحة {{page_number}} من {{total_pages}}',pos:'bottom-center',font_size:9,color:'#6B7280',font_weight:'400'}]} }; migrated=true; }
+  if (!template.cover) { template.cover = {}; migrated=true; }
+  if (!template.cover.elements) { Pages._migrateCoverToFree(template.cover); migrated=true; }
   if (migrated) DB.saveCustomTemplate(template);
 
   Pages._tplEditorId = templateId;
@@ -6887,27 +7285,8 @@ Pages._renderTplSettingsPanel = function(tplId, template) {
     '</div>' +
     '<div class="stg-section">' +
       '<div class="stg-section-lbl">الغلاف</div>' +
-      '<div class="var-field">' +
-        '<div class="var-field-lbl">إطار الغلاف</div>' +
-        '<select class="var-field-inp" onchange="Pages.updateTplField(\''+tplId+'\',\'frame_style\',this.value)">' +
-          ['modern','classical','minimal'].map(function(s){ return '<option value="'+s+'"'+((template.cover&&template.cover.frame_style===s)?' selected':'')+'>'+{modern:'حديث',classical:'كلاسيكي',minimal:'بسيط'}[s]+'</option>'; }).join('') +
-        '</select>' +
-      '</div>' +
-      '<div class="var-field">' +
-        '<div class="var-field-lbl">اسم الجهة</div>' +
-        '<input class="var-field-inp" value="'+UI.escHtml(template.cover&&template.cover.company_name||'')+'" placeholder="اسم الشركة أو المكتب" oninput="Pages.updateTplField(\''+tplId+'\',\'company_name\',this.value)">' +
-      '</div>' +
-      '<div class="var-field">' +
-        '<div class="var-field-lbl">شعار الجهة</div>' +
-        (template.cover&&template.cover.logo
-          ? '<img src="'+template.cover.logo+'" style="max-width:100%;max-height:60px;object-fit:contain;border-radius:var(--radius-xs);border:1px solid var(--border);display:block;margin-bottom:6px">' +
-            '<button class="btn btn-sm" style="width:100%;margin-bottom:4px" onclick="document.getElementById(\'tpl-logo-inp\').click()"><i data-lucide="upload"></i>تغيير</button>' +
-            '<button class="btn btn-sm" style="width:100%;color:var(--danger-600)" onclick="Pages.updateTplField(\''+tplId+'\',\'logo\',\'\');Pages.render_template_editor({templateId:\''+tplId+'\'})">إزالة</button>'
-          : '<button class="btn btn-sm" style="width:100%" onclick="document.getElementById(\'tpl-logo-inp\').click()"><i data-lucide="upload"></i>رفع شعار</button>'
-        ) +
-        '<input type="file" id="tpl-logo-inp" accept="image/*" style="display:none" onchange="Pages.handleLogoUpload(\''+tplId+'\',this)">' +
-      '</div>' +
-      '<div class="var-field">' +
+      Pages._renderTplCoverSettings(tplId, template.cover || {}) +
+      '<div class="var-field" style="margin-top:10px">' +
         '<div class="var-field-lbl">تصنيف التذييل</div>' +
         '<select class="var-field-inp" onchange="Pages.updateTplField(\''+tplId+'\',\'footer_label\',this.value)">' +
           ['سري','مسودة','نسخة طبق الأصل','نهائي'].map(function(s){ return '<option value="'+s+'"'+(template.footer_label===s?' selected':'')+'>'+s+'</option>'; }).join('') +
@@ -7252,6 +7631,135 @@ Pages.updateTplDocMargins = function(tplId, key, value) {
   tpl.updated = (new Date()).toISOString().slice(0,10);
   DB.saveCustomTemplate(tpl);
   Pages._refreshTemplateCanvas(tplId);
+};
+
+/* ─── Free-form cover: template CRUD ─── */
+
+Pages._renderTplCoverSettings = function(tplId, cover) {
+  cover = cover || {};
+  var elements = cover.elements || [];
+  var bgType = cover.bg_type || 'color';
+  var bgSuffix = tplId.replace(/[^a-zA-Z0-9]/g,'_');
+  return (
+    '<div class="var-field">' +
+      '<div class="var-field-lbl">خلفية الغلاف</div>' +
+      '<div style="display:flex;gap:12px;margin-bottom:6px">' +
+        '<label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer"><input type="radio" name="cov-bg-t-'+bgSuffix+'" value="color" '+(bgType==='color'?'checked':'')+' onchange="Pages.updateTplCoverBg(\''+tplId+'\',\'bg_type\',\'color\')"> لون موحد</label>' +
+        '<label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer"><input type="radio" name="cov-bg-t-'+bgSuffix+'" value="image" '+(bgType==='image'?'checked':'')+' onchange="Pages.updateTplCoverBg(\''+tplId+'\',\'bg_type\',\'image\')"> صورة A4</label>' +
+      '</div>' +
+      (bgType === 'color'
+        ? '<input type="color" class="var-field-inp" style="height:36px;padding:2px" value="'+(cover.bg_color||'#FFFFFF')+'" onchange="Pages.updateTplCoverBg(\''+tplId+'\',\'bg_color\',this.value)">'
+        : (cover.bg_image ? '<img src="'+cover.bg_image+'" style="max-width:100%;max-height:56px;object-fit:cover;border-radius:var(--radius-xs);border:1px solid var(--border);display:block;margin-bottom:6px">' : '') +
+          '<button class="btn btn-sm" style="width:100%;margin-bottom:6px" onclick="document.getElementById(\'tpl-cov-bg-inp-'+bgSuffix+'\').click()"><i data-lucide="image"></i>رفع صورة خلفية</button>' +
+          '<input type="file" id="tpl-cov-bg-inp-'+bgSuffix+'" accept="image/*" style="display:none" onchange="Pages.handleTplCoverBgUpload(\''+tplId+'\',this)">' +
+          '<div class="var-field"><div class="var-field-lbl">تعتيم</div><input type="range" min="0" max="0.8" step="0.05" value="'+(cover.bg_overlay||0)+'" class="var-field-inp" style="padding:0;height:26px" oninput="Pages.updateTplCoverBg(\''+tplId+'\',\'bg_overlay\',parseFloat(this.value))"></div>'
+      ) +
+    '</div>' +
+    '<div class="var-field" style="margin-top:10px">' +
+      '<div class="var-field-lbl" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">' +
+        '<span>عناصر الغلاف</span>' +
+        '<button class="btn btn-sm" style="padding:2px 8px;font-size:11px" onclick="Pages._showAddTplCoverEl(\''+tplId+'\')"><i data-lucide="plus" style="width:11px;height:11px"></i>إضافة</button>' +
+      '</div>' +
+      (elements.length === 0
+        ? '<div style="font-size:11px;color:var(--fg-4);text-align:center;padding:8px;border:1px dashed var(--border);border-radius:var(--radius-xs)">لا توجد عناصر</div>'
+        : elements.map(function(el,i){ return Pages._renderCoverElCard(el,i,{type:'template',tplId:tplId}); }).join('')
+      ) +
+    '</div>'
+  );
+};
+
+Pages.updateTplCoverBg = function(tplId, key, value) {
+  var tpl = DB.getCustomTemplates().find(function(x){return x.id===tplId;});
+  if (!tpl) return;
+  if (!tpl.cover) tpl.cover = {};
+  tpl.cover[key] = value;
+  tpl.updated = (new Date()).toISOString().slice(0,10);
+  DB.saveCustomTemplate(tpl);
+  Pages._refreshTplCoverPage(tplId);
+};
+
+Pages.addTplCoverEl = function(tplId, type) {
+  var tpl = DB.getCustomTemplates().find(function(x){return x.id===tplId;});
+  if (!tpl || !tpl.cover || !tpl.cover.elements) return;
+  var defaults = { logo:{src:''}, text:{text:'نص جديد',font_size:14,font_weight:'400',color:'#1F2937'}, parties:{show_a:true,show_b:true}, divider:{color:'#D1D5DB',thickness:1}, image:{src:''} };
+  tpl.cover.elements.push({ id:DB.uid(), type:type, x:50, y:50, w:70, align:'center', props:defaults[type]||{} });
+  tpl.updated = (new Date()).toISOString().slice(0,10);
+  DB.saveCustomTemplate(tpl);
+  Pages.render_template_editor({templateId:tplId});
+};
+
+Pages.deleteTplCoverEl = function(tplId, elId) {
+  var tpl = DB.getCustomTemplates().find(function(x){return x.id===tplId;});
+  if (!tpl || !tpl.cover || !tpl.cover.elements) return;
+  tpl.cover.elements = tpl.cover.elements.filter(function(e){return e.id!==elId;});
+  tpl.updated = (new Date()).toISOString().slice(0,10);
+  DB.saveCustomTemplate(tpl);
+  Pages.render_template_editor({templateId:tplId});
+};
+
+Pages.updateTplCoverEl = function(tplId, elId, key, value) {
+  var tpl = DB.getCustomTemplates().find(function(x){return x.id===tplId;});
+  if (!tpl || !tpl.cover || !tpl.cover.elements) return;
+  var el = tpl.cover.elements.find(function(e){return e.id===elId;});
+  if (!el) return;
+  if (key==='x'||key==='y'||key==='w'||key==='align') { el[key]=value; }
+  else { if (!el.props) el.props={}; el.props[key]=value; }
+  tpl.updated = (new Date()).toISOString().slice(0,10);
+  DB.saveCustomTemplate(tpl);
+  Pages._refreshTplCoverPage(tplId);
+};
+
+Pages.updateTplCoverElPos = function(tplId, elId, x, y) {
+  var tpl = DB.getCustomTemplates().find(function(x){return x.id===tplId;});
+  if (!tpl || !tpl.cover || !tpl.cover.elements) return;
+  var el = tpl.cover.elements.find(function(e){return e.id===elId;});
+  if (!el) return;
+  el.x = x; el.y = y;
+  tpl.updated = (new Date()).toISOString().slice(0,10);
+  DB.saveCustomTemplate(tpl);
+};
+
+Pages._refreshTplCoverPage = function(tplId) {
+  var tpl = DB.getCustomTemplates().find(function(x){return x.id===tplId;});
+  if (!tpl) return;
+  var fakeC = Pages._templateToPreviewContract(tpl);
+  var covBody = document.querySelector('#tpl-canvas-area .cov-page .cov-body');
+  if (!covBody) return;
+  covBody.innerHTML = Pages._renderCoverContent(fakeC, {editable:false});
+  if (typeof lucide !== 'undefined') lucide.createIcons({rootElement:covBody});
+};
+
+Pages.handleTplCoverBgUpload = function(tplId, input) {
+  var file = input.files && input.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    Pages.updateTplCoverBg(tplId, 'bg_image', e.target.result);
+    Pages.render_template_editor({templateId:tplId});
+  };
+  reader.readAsDataURL(file);
+};
+
+Pages.handleTplCoverLogoElUpload = function(tplId, elId, input) {
+  var file = input.files && input.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    Pages.updateTplCoverEl(tplId, elId, 'src', e.target.result);
+    Pages.render_template_editor({templateId:tplId});
+  };
+  reader.readAsDataURL(file);
+};
+
+Pages._showAddTplCoverEl = function(tplId) {
+  var types = [['logo','شعار الجهة','building-2'],['text','نص حر','type'],['parties','الأطراف','users'],['divider','فاصل','minus'],['image','صورة','image']];
+  UI.openModal(
+    '<div class="modal-header"><h3>إضافة عنصر للغلاف</h3><button class="modal-close" onclick="UI.closeModalForce()">×</button></div>' +
+    '<div class="modal-body"><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">' +
+      types.map(function(t){ return '<button class="btn" style="justify-content:flex-start;gap:8px;padding:10px;font-size:12px" onclick="Pages.addTplCoverEl(\''+tplId+'\',\''+t[0]+'\');UI.closeModalForce()"><i data-lucide="'+t[2]+'"></i>'+t[1]+'</button>'; }).join('') +
+    '</div></div>'
+  );
+  if (typeof lucide !== 'undefined') setTimeout(function(){lucide.createIcons({rootElement:document.querySelector('.modal-dialog')});},10);
 };
 
 /* ─── Save contract as template ─── */
