@@ -1632,6 +1632,22 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
   padding:40px 20px;display:flex;flex-direction:column;align-items:center;
   min-width:0;
 }
+/* Page-by-page guides on canvas */
+.contract-doc.show-page-guides{
+  background-image:repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent 1119px,
+    rgba(220,38,38,0.45) 1119px,
+    rgba(220,38,38,0.45) 1123px
+  );
+  background-size:100% 1123px;
+  background-repeat:repeat-y;
+  background-position:top left;
+}
+.contract-doc.show-page-guides::after{
+  content:'';position:absolute;pointer-events:none;
+}
 
 /* A4 Document */
 .contract-doc{
@@ -1688,7 +1704,7 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
 }
 .cov-bg-img{
   position:absolute;inset:0;width:100%;height:100%;
-  object-fit:cover;z-index:0;
+  object-fit:cover;object-position:center;z-index:0;
 }
 .cov-overlay{
   position:absolute;inset:0;z-index:1;
@@ -1741,7 +1757,7 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
   margin-bottom:10px;cursor:default;
 }
 .clause-body{
-  outline:none;min-height:60px;font-size:14pt;line-height:1.5;
+  outline:none;min-height:60px;
   color:#1F2937;white-space:pre-wrap;word-wrap:break-word;text-align:justify;
 }
 .clause-body:focus{
@@ -3628,7 +3644,8 @@ Pages.createContract = function(projId, tplKey) {
     clauses = customT.clauses.filter(function(c){return c.enabled!==false;}).map(function(clItem) {
       return { id: DB.uid(), key: clItem.key, title: clItem.title, content: clItem.content, enabled: true };
     });
-    contract_cover = customT.cover ? JSON.parse(JSON.stringify(customT.cover)) : {frame_style:'modern'};
+    contract_cover = customT.cover ? JSON.parse(JSON.stringify(customT.cover)) : {frame_style:'modern',bg_position:'center'};
+    if (!contract_cover.bg_position) contract_cover.bg_position = 'center';
     contract_footer = customT.footer_label || 'سري';
   } else {
     tpl = CONTRACT_TEMPLATES[tplKey] || CONTRACT_TEMPLATES['blank'];
@@ -3641,7 +3658,7 @@ Pages.createContract = function(projId, tplKey) {
         enabled: true
       };
     });
-    contract_cover = {frame_style:'modern'};
+    contract_cover = {frame_style:'modern',bg_position:'center'};
     contract_footer = 'سري';
   }
 
@@ -3691,6 +3708,7 @@ Pages.createContract = function(projId, tplKey) {
         show: true,
         mode: 'text',
         image: '',
+        image_position: 'center',
         height: 20,
         show_logo: false,
         title: '',
@@ -3702,6 +3720,7 @@ Pages.createContract = function(projId, tplKey) {
         show: true,
         mode: 'text',
         image: '',
+        image_position: 'center',
         height: 15,
         left_text: '',
         center_text: '',
@@ -4949,6 +4968,16 @@ Pages.render_contract = function(params) {
             '<input type="file" id="contract-bg-inp" accept="image/*" style="display:none" onchange="Pages.handleContractBgUpload(\''+projId+'\',\''+contractId+'\',this)">' +
           '</div>' +
           '<div class="var-field">' +
+            '<div class="var-field-lbl">موضع الصورة</div>' +
+            '<select class="var-field-inp" onchange="Pages.updateContractCover(\''+projId+'\',\''+contractId+'\',\'bg_position\',this.value)">' +
+              ['center','top','bottom'].map(function(p){
+                var lbl = {center:'وسط',top:'أعلى',bottom:'أسفل'}[p];
+                var cur = (contract.cover && contract.cover.bg_position) || 'center';
+                return '<option value="'+p+'"'+(cur===p?' selected':'')+'>'+lbl+'</option>';
+              }).join('') +
+            '</select>' +
+          '</div>' +
+          '<div class="var-field">' +
             '<div class="var-field-lbl">تعتيم الطبقة</div>' +
             '<input type="range" min="0" max="0.85" step="0.05" value="'+((contract.cover&&contract.cover.overlay_opacity)||0.55)+'" class="var-field-inp" style="padding:0;height:28px" onchange="Pages.updateContractCover(\''+projId+'\',\''+contractId+'\',\'overlay_opacity\',parseFloat(this.value))">' +
           '</div>' +
@@ -5002,6 +5031,16 @@ Pages.render_contract = function(params) {
               : '<button class="btn btn-sm" style="width:100%" onclick="document.getElementById(\'hdr-img-inp\').click()"><i data-lucide="upload"></i>رفع صورة رأس</button>'
             ) +
             '<input type="file" id="hdr-img-inp" accept="image/*" style="display:none" onchange="Pages.handleHeaderImageUpload(\''+projId+'\',\''+contractId+'\',this)">' +
+          '</div>' +
+          '<div class="var-field">' +
+            '<div class="var-field-lbl">موضع الصورة</div>' +
+            '<select class="var-field-inp" onchange="Pages.updatePageLayout(\''+projId+'\',\''+contractId+'\',\'header\',\'image_position\',this.value)">' +
+              ['center','top','bottom'].map(function(p){
+                var lbl = {center:'وسط',top:'أعلى',bottom:'أسفل'}[p];
+                var cur = plh.image_position || 'center';
+                return '<option value="'+p+'"'+(cur===p?' selected':'')+'>'+lbl+'</option>';
+              }).join('') +
+            '</select>' +
           '</div>'
         : '<div class="var-field">' +
             '<div class="var-field-lbl">عنوان المستند</div>' +
@@ -5050,6 +5089,16 @@ Pages.render_contract = function(params) {
               : '<button class="btn btn-sm" style="width:100%" onclick="document.getElementById(\'ftr-img-inp\').click()"><i data-lucide="upload"></i>رفع صورة تذييل</button>'
             ) +
             '<input type="file" id="ftr-img-inp" accept="image/*" style="display:none" onchange="Pages.handleFooterImageUpload(\''+projId+'\',\''+contractId+'\',this)">' +
+          '</div>' +
+          '<div class="var-field">' +
+            '<div class="var-field-lbl">موضع الصورة</div>' +
+            '<select class="var-field-inp" onchange="Pages.updatePageLayout(\''+projId+'\',\''+contractId+'\',\'footer\',\'image_position\',this.value)">' +
+              ['center','top','bottom'].map(function(p){
+                var lbl = {center:'وسط',top:'أعلى',bottom:'أسفل'}[p];
+                var cur = plf.image_position || 'center';
+                return '<option value="'+p+'"'+(cur===p?' selected':'')+'>'+lbl+'</option>';
+              }).join('') +
+            '</select>' +
           '</div>'
         : '<div class="var-field">' +
             '<div class="var-field-lbl">نص يسار التذييل</div>' +
@@ -5114,6 +5163,7 @@ Pages.render_contract = function(params) {
 
   document.getElementById('top-actions').innerHTML =
     '<button class="btn btn-sm" onclick="Nav.go(\'fin\',{projId:\''+projId+'\',tab:\'contracts\'})" style="display:inline-flex;align-items:center;gap:5px"><i data-lucide="arrow-right"></i>العودة للمشروع</button>' +
+    '<button class="btn btn-sm" id="contract-guides-btn" onclick="Pages.togglePageGuides()" style="display:inline-flex;align-items:center;gap:5px"><i data-lucide="layout"></i>حدود الصفحات</button>' +
     '<button class="btn btn-sm" id="contract-preview-btn" onclick="Pages.toggleContractPreview()" style="display:inline-flex;align-items:center;gap:5px"><i data-lucide="eye"></i>معاينة</button>' +
     '<button class="btn btn-sm btn-primary" onclick="Pages.printContract()" style="display:inline-flex;align-items:center;gap:5px"><i data-lucide="printer"></i>طباعة PDF</button>';
 
@@ -5123,6 +5173,12 @@ Pages.render_contract = function(params) {
     var ds2 = contract.doc_style;
     docEl.style.fontSize = (ds2.font_size||14)+'pt';
     docEl.style.lineHeight = (ds2.line_height||1.5).toString();
+    // Initial sync: explicit inline font-size on .clause-body so the slider
+    // is the single source of truth (CSS no longer hard-codes 14pt).
+    docEl.querySelectorAll('.clause-body').forEach(function(el){
+      el.style.fontSize = (ds2.font_size||14)+'pt';
+      el.style.lineHeight = (ds2.line_height||1.5).toString();
+    });
   }
 
   if (Pages._contractAutosaveTimer) clearInterval(Pages._contractAutosaveTimer);
@@ -5156,8 +5212,9 @@ Pages._renderContractDoc = function(contract) {
     : '';
 
   var isCovImage = frameClass === 'cov-frame-image';
+  var covBgPos = (contract.cover && contract.cover.bg_position) || 'center';
   var bgImgHtml = (isCovImage && contract.cover && contract.cover.bg_image)
-    ? '<img class="cov-bg-img" src="'+contract.cover.bg_image+'">'
+    ? '<img class="cov-bg-img" src="'+contract.cover.bg_image+'" style="object-position:'+UI.escHtml(covBgPos)+'">'
       + '<div class="cov-overlay" style="background:rgba(0,0,0,'+UI.escHtml(String((contract.cover && contract.cover.overlay_opacity)||0.55))+')"></div>'
     : '';
   var covExtraStyle = covNegMargin + (isCovImage && !(contract.cover && contract.cover.bg_image) ? ';background:'+UI.escHtml((contract.cover && contract.cover.bg_color)||'#0F2A4A') : '');
@@ -5184,7 +5241,8 @@ Pages._renderContractDoc = function(contract) {
   var hdrBand = '';
   if (plHdr.show !== false) {
     if (plHdr.mode === 'image' && plHdr.image) {
-      hdrBand = '<div class="contract-hdr-img-band" style="'+bandNegMargin+';height:'+(plHdr.height||20)+'mm;overflow:hidden"><img src="'+plHdr.image+'" style="width:100%;height:100%;object-fit:cover"></div>';
+      var hdrImgPos = plHdr.image_position || 'center';
+      hdrBand = '<div class="contract-hdr-img-band" style="'+bandNegMargin+';height:'+(plHdr.height||20)+'mm;overflow:hidden"><img src="'+plHdr.image+'" style="width:100%;height:100%;object-fit:cover;object-position:'+UI.escHtml(hdrImgPos)+'"></div>';
     } else {
       var hdrHeight = (plHdr.height||20);
       var hdrLogoHtml = (plHdr.show_logo && contract.cover && contract.cover.logo)
@@ -5201,7 +5259,8 @@ Pages._renderContractDoc = function(contract) {
   var ftrBand = '';
   if (plFtr.show !== false) {
     if (plFtr.mode === 'image' && plFtr.image) {
-      ftrBand = '<div class="contract-ftr-img-band" style="'+bandNegMargin+';height:'+(plFtr.height||15)+'mm;overflow:hidden"><img src="'+plFtr.image+'" style="width:100%;height:100%;object-fit:cover"></div>';
+      var ftrImgPos = plFtr.image_position || 'center';
+      ftrBand = '<div class="contract-ftr-img-band" style="'+bandNegMargin+';height:'+(plFtr.height||15)+'mm;overflow:hidden"><img src="'+plFtr.image+'" style="width:100%;height:100%;object-fit:cover;object-position:'+UI.escHtml(ftrImgPos)+'"></div>';
     } else {
       ftrBand = '<div class="contract-doc-footer" style="margin:0 '+(-rightPx)+'px 0 '+(-leftPx)+'px;padding:8px '+rightPx+'px;height:'+(plFtr.height||15)+'mm">' +
         '<span>'+UI.escHtml(plFtr.left_text||contract.footer_label||'سري')+'</span>' +
@@ -5421,7 +5480,7 @@ Pages.updateContractCover = function(projId, contractId, key, value) {
   c.updated = (new Date()).toISOString().slice(0,10);
   DB.saveContract(projId, c);
   // Re-render the cover page live for visual keys
-  var reRenderKeys = ['frame_style','bg_image','bg_color','overlay_opacity','logo','company_name'];
+  var reRenderKeys = ['frame_style','bg_image','bg_color','bg_position','overlay_opacity','logo','company_name'];
   if (reRenderKeys.indexOf(key) !== -1) {
     var docEl = document.getElementById('contract-doc');
     if (docEl) {
@@ -5501,6 +5560,13 @@ Pages.updateDocStyle = function(projId, contractId, key, value) {
     docEl.querySelectorAll('.clause-title').forEach(function(el){
       el.style.fontSize = (ds2.clause_title_size||14)+'pt';
     });
+    // Force font-size + line-height on .clause-body so the slider takes effect
+    // (CSS no longer hard-codes these on .clause-body — inheritance works,
+    //  but inline styles guarantee live updates without re-render)
+    docEl.querySelectorAll('.clause-body').forEach(function(el){
+      el.style.fontSize = (ds2.font_size||14)+'pt';
+      el.style.lineHeight = (ds2.line_height||1.5).toString();
+    });
   }
 };
 
@@ -5563,6 +5629,21 @@ Pages.updateContractStatus = function(projId, contractId, value) {
   c.status = value;
   c.updated = (new Date()).toISOString().slice(0,10);
   DB.saveContract(projId, c);
+};
+
+Pages.togglePageGuides = function() {
+  var docEl = document.getElementById('contract-doc');
+  var btn = document.getElementById('contract-guides-btn');
+  if (!docEl) return;
+  var on = !docEl.classList.contains('show-page-guides');
+  docEl.classList.toggle('show-page-guides', on);
+  if (btn) {
+    btn.innerHTML = on
+      ? '<i data-lucide="square"></i>إخفاء حدود الصفحات'
+      : '<i data-lucide="layout"></i>حدود الصفحات';
+    btn.classList.toggle('btn-primary', on);
+    if (typeof lucide !== 'undefined') lucide.createIcons({rootElement: btn});
+  }
 };
 
 Pages.toggleContractPreview = function() {
@@ -5639,8 +5720,9 @@ Pages.printContract = function() {
   if (isCovImage && !(contract.cover && contract.cover.bg_image)) {
     bgStyle = ' style="background:'+((contract.cover&&contract.cover.bg_color)||'#0F2A4A')+'"';
   }
+  var covBgPosPrint = (contract.cover && contract.cover.bg_position) || 'center';
   var bgImgHtml = (isCovImage && contract.cover && contract.cover.bg_image)
-    ? '<img class="cov-bg-img" src="'+contract.cover.bg_image+'">'
+    ? '<img class="cov-bg-img" src="'+contract.cover.bg_image+'" style="object-position:'+UI.escHtml(covBgPosPrint)+'">'
       + '<div class="cov-overlay" style="background:rgba(0,0,0,'+String((contract.cover&&contract.cover.overlay_opacity)||0.55)+')"></div>'
     : '';
   var logoHtmlCov = contract.cover && contract.cover.logo
@@ -5669,7 +5751,8 @@ Pages.printContract = function() {
   var printHdrContent = '';
   if (hdr.show !== false) {
     if (hdr.mode === 'image' && hdr.image) {
-      printHdrContent = '<img src="'+hdr.image+'" style="width:100%;height:'+(hdr.height||20)+'mm;object-fit:cover;display:block">';
+      var hdrPosPrint = hdr.image_position || 'center';
+      printHdrContent = '<img src="'+hdr.image+'" style="width:100%;height:'+(hdr.height||20)+'mm;object-fit:cover;object-position:'+UI.escHtml(hdrPosPrint)+';display:block">';
     } else if (hdr.title || hdr.doc_number || hdr.show_logo) {
       var logoInHdr = (hdr.show_logo && contract.cover && contract.cover.logo)
         ? '<img src="'+contract.cover.logo+'" style="max-height:'+Math.round((hdr.height||20)*0.6)+'mm;object-fit:contain;margin-left:8px">'
@@ -5685,7 +5768,8 @@ Pages.printContract = function() {
   var printFtrContent = '';
   if (ftr.show !== false) {
     if (ftr.mode === 'image' && ftr.image) {
-      printFtrContent = '<img src="'+ftr.image+'" style="width:100%;height:'+(ftr.height||15)+'mm;object-fit:cover;display:block">';
+      var ftrPosPrint = ftr.image_position || 'center';
+      printFtrContent = '<img src="'+ftr.image+'" style="width:100%;height:'+(ftr.height||15)+'mm;object-fit:cover;object-position:'+UI.escHtml(ftrPosPrint)+';display:block">';
     } else {
       printFtrContent =
         '<div style="height:'+(ftr.height||15)+'mm;display:flex;align-items:center;justify-content:space-between;border-top:1px solid #E5E7EB;font-size:9pt;color:#9CA3AF">'+
@@ -5729,12 +5813,14 @@ Pages.printContract = function() {
       '</div>' +
     '</div>';
 
-  // Table-based body: thead repeats header on every page, tfoot repeats footer
+  // Table-based body: thead repeats header on every page, tfoot repeats footer.
+  // CRITICAL: explicit display:table-header-group / table-footer-group is needed
+  // for Chrome to repeat them across pages on PDF export.
   var bodyTableHtml =
-    '<table style="width:100%;border-collapse:collapse;direction:rtl">' +
-      '<thead><tr><td style="padding:0">'+printHdrContent+'</td></tr></thead>' +
-      '<tfoot><tr><td style="padding:0">'+printFtrContent+'</td></tr></tfoot>' +
-      '<tbody><tr><td>' +
+    '<table class="print-body-table" style="width:100%;border-collapse:separate;border-spacing:0;direction:rtl">' +
+      '<thead class="print-thead" style="display:table-header-group"><tr><td style="padding:0">'+printHdrContent+'</td></tr></thead>' +
+      '<tfoot class="print-tfoot" style="display:table-footer-group"><tr><td style="padding:0">'+printFtrContent+'</td></tr></tfoot>' +
+      '<tbody class="print-tbody"><tr><td style="padding:0">' +
         '<div id="contract-clauses-body">'+clausesHtml+'</div>' +
         sigHtml +
       '</td></tr></tbody>' +
@@ -5775,6 +5861,14 @@ Pages.printContract = function() {
     '.clause-block-inner{padding-right:0}' +
     '.clause-title{font-size:'+(ds.clause_title_size||14)+'pt;font-weight:700;color:#0F2A4A;margin-bottom:10px}' +
     '.clause-body{font-size:'+ds.font_size+'pt;line-height:'+ds.line_height+';color:#1F2937;white-space:pre-wrap;word-wrap:break-word;text-align:justify}' +
+    /* Force thead/tfoot to repeat on every printed page */
+    'table.print-body-table{width:100%;border-collapse:separate;border-spacing:0}' +
+    'thead.print-thead{display:table-header-group}' +
+    'tfoot.print-tfoot{display:table-footer-group}' +
+    'table.print-body-table tr{page-break-inside:avoid;page-break-after:auto}' +
+    'table.print-body-table td{padding:0}' +
+    /* Spacing so body content doesn't crash into repeated header/footer area */
+    'thead.print-thead td>*,tfoot.print-tfoot td>*{display:block}' +
     '.sig-page{padding:24px 0 0}' +
     '.sig-grid{display:grid;grid-template-columns:1fr 1fr;gap:40px}' +
     '.sig-block{border:1px solid #E5E7EB;border-radius:6px;padding:24px;text-align:center}' +
