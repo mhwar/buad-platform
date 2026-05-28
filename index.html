@@ -1632,30 +1632,91 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
   padding:40px 20px;display:flex;flex-direction:column;align-items:center;
   min-width:0;
 }
-/* Page-by-page guides on canvas */
-.contract-doc.show-page-guides{
-  background-image:repeating-linear-gradient(
-    to bottom,
-    transparent 0,
-    transparent 1119px,
-    rgba(220,38,38,0.45) 1119px,
-    rgba(220,38,38,0.45) 1123px
-  );
-  background-size:100% 1123px;
-  background-repeat:repeat-y;
-  background-position:top left;
-}
-.contract-doc.show-page-guides::after{
-  content:'';position:absolute;pointer-events:none;
-}
+/* Visible pages naturally show page boundaries — no guides needed */
 
-/* A4 Document */
+/* A4 Document container — holds multiple .doc-page children */
 .contract-doc{
-  width:794px;max-width:100%;background:#fff;
-  box-shadow:0 4px 32px oklch(0 0 0 / 0.12);
   font-family:'IBM Plex Sans Arabic','Tajawal',system-ui,sans-serif;
   font-size:14pt;line-height:1.5;color:#1F2937;direction:rtl;
+  display:flex;flex-direction:column;align-items:center;gap:20px;
   margin-bottom:40px;
+}
+
+/* Visible A4 page — fixed 794×1123px (96dpi). Each page is a real DOM node. */
+.doc-page{
+  width:794px;height:1123px;max-width:100%;
+  background:#fff;
+  box-shadow:0 4px 24px oklch(0 0 0 / 0.10);
+  display:grid;
+  grid-template-rows:var(--hdr-h,200px) 1fr var(--ftr-h,150px);
+  overflow:hidden;position:relative;
+  break-after:page;page-break-after:always;
+}
+.doc-page:last-child{break-after:auto;page-break-after:auto}
+
+/* Cover page: no header/footer slots, content fills entire page */
+.doc-page.cov-page{grid-template-rows:1fr;height:1123px;min-height:1123px}
+.doc-page.cov-page .doc-page-hdr,
+.doc-page.cov-page .doc-page-ftr{display:none}
+
+/* Header/Footer bands — span full 794px width, hold image + overlay slots */
+.doc-page-hdr,.doc-page-ftr{
+  position:relative;overflow:hidden;width:794px;
+}
+.doc-page-hdr-img,.doc-page-ftr-img{
+  position:absolute;inset:0;
+  width:100%;height:100%;
+  object-fit:cover;display:block;
+}
+.doc-page-hdr-overlay,.doc-page-ftr-overlay{
+  position:absolute;inset:0;pointer-events:none;
+}
+
+/* Overlay text slots — positioned within header/footer bounds */
+.hdr-slot,.ftr-slot{
+  position:absolute;
+  font-family:'IBM Plex Sans Arabic','Tajawal',system-ui;
+  white-space:nowrap;line-height:1.3;
+}
+.hdr-slot[data-pos="top-right"],.ftr-slot[data-pos="top-right"]{top:8px;right:16px}
+.hdr-slot[data-pos="top-left"],.ftr-slot[data-pos="top-left"]{top:8px;left:16px}
+.hdr-slot[data-pos="top-center"],.ftr-slot[data-pos="top-center"]{top:8px;left:50%;transform:translateX(-50%)}
+.hdr-slot[data-pos="bottom-right"],.ftr-slot[data-pos="bottom-right"]{bottom:8px;right:16px}
+.hdr-slot[data-pos="bottom-left"],.ftr-slot[data-pos="bottom-left"]{bottom:8px;left:16px}
+.hdr-slot[data-pos="bottom-center"],.ftr-slot[data-pos="bottom-center"]{bottom:8px;left:50%;transform:translateX(-50%)}
+.hdr-slot[data-pos="center"],.ftr-slot[data-pos="center"]{top:50%;left:50%;transform:translate(-50%,-50%)}
+
+/* Empty header/footer placeholder (no image, no overlay) */
+.doc-page-hdr.empty,.doc-page-ftr.empty{
+  background:repeating-linear-gradient(45deg,#FAFAFA,#FAFAFA 8px,#F3F4F6 8px,#F3F4F6 16px);
+  display:flex;align-items:center;justify-content:center;
+  color:#D1D5DB;font-size:11px;
+}
+
+/* Body area — holds clauses with inner padding (text margins) */
+.doc-page-body{
+  padding:1cm 2cm;
+  overflow:hidden;position:relative;
+}
+.doc-page-body.cov-body{padding:0}
+
+/* Print: each .doc-page exactly fills one A4 sheet */
+@media print{
+  body{background:white!important}
+  .contract-doc{gap:0!important;margin:0!important}
+  .doc-page{
+    margin:0!important;
+    box-shadow:none!important;
+    width:210mm!important;height:297mm!important;
+    page-break-after:always!important;break-after:page!important;
+    -webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;
+  }
+  .doc-page:last-child{page-break-after:auto!important;break-after:auto!important}
+  .doc-page-hdr,.doc-page-ftr,
+  .doc-page-hdr-img,.doc-page-ftr-img{
+    -webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;
+  }
+  .doc-page-hdr.empty,.doc-page-ftr.empty{background:transparent!important}
 }
 
 /* Cover Page */
@@ -1881,7 +1942,7 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
   .contract-sidebar-right{display:none}
 }
 
-/* A4 Print rules */
+/* A4 Print rules: in-page Ctrl+P (the printContract popup uses its own self-contained CSS) */
 @media print{
   body > *:not(#app){display:none!important}
   #app .page:not(.contract-editor-page){display:none!important}
@@ -1890,32 +1951,9 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
   .modal-overlay,.ctrl-drawer,.ctrl-drawer-overlay,
   .clause-controls,.contract-mobile-bar{display:none!important}
   .contract-canvas-area{background:white!important;padding:0!important;overflow:visible!important;flex:1}
-  .contract-doc{
-    box-shadow:none!important;width:100%!important;max-width:none!important;
-    font-size:14pt!important;line-height:1.5!important;
-  }
-  .clause-body{font-size:14pt!important;line-height:1.5!important;text-align:justify!important}
-  .clause-title{font-size:14pt!important;font-weight:700!important}
-  .cov-title{font-size:18pt!important}
-  .cov-subtitle{font-size:11pt!important}
-  .cov-parties-box{font-size:11pt!important}
-  .sig-block-title{font-size:12pt!important}
-  @page{
-    size:A4 portrait;
-    margin:2.5cm 3cm 2.5cm 2.5cm;
-    @bottom-center{
-      content:"الصفحة " counter(page) " من " counter(pages);
-      font-family:'IBM Plex Sans Arabic',system-ui,sans-serif;
-      font-size:10pt;color:#9CA3AF;direction:rtl;
-    }
-  }
-  .cov-page{page-break-after:always!important;min-height:auto!important;page:cover-page}
-  @page cover-page{margin:0;@bottom-center{content:none}}
-  .sig-page{page-break-before:auto!important}
-  .clause-block{page-break-inside:avoid!important;break-inside:avoid!important;orphans:4!important;widows:4!important;padding:14px 0!important}
-  .sig-grid{page-break-inside:avoid!important;break-inside:avoid!important}
-  .contract-doc-header{display:flex!important}
-  .contract-doc-footer{font-size:9pt!important}
+  .contract-doc{margin:0!important;gap:0!important}
+  @page{size:A4 portrait;margin:0}
+  /* .doc-page already set to A4 dimensions in its own rule */
 }
 
 /* Template picker cards in modal */
@@ -3704,30 +3742,21 @@ Pages.createContract = function(projId, tplKey) {
     cover: contract_cover,
     footer_label: contract_footer,
     doc_style: { font_size: 14, line_height: 1.5, title_size: 18, clause_title_size: 14, subtitle_size: 12 },
-    doc_margins: { top: 2.5, right: 3, bottom: 2.5, left: 2.5 },
+    doc_margins: { top: 1.0, right: 2.0, bottom: 1.0, left: 2.0 },
     page_layout: {
       header: {
         show: true,
-        mode: 'text',
         image: '',
-        image_position: 'center',
-        height: 53,
-        show_logo: false,
-        title: '',
-        doc_number: '',
-        show_page_num: false,
-        custom_right: ''
+        height: 200,
+        overlay: []
       },
       footer: {
         show: true,
-        mode: 'text',
         image: '',
-        image_position: 'center',
-        height: 20,
-        left_text: '',
-        center_text: '',
-        show_page_num: true,
-        custom_right: ''
+        height: 150,
+        overlay: [
+          { text: 'صفحة {{page_number}} من {{total_pages}}', pos: 'bottom-center', font_size: 9, color: '#6B7280', font_weight: '400' }
+        ]
       }
     }
   };
@@ -5014,118 +5043,12 @@ Pages.render_contract = function(params) {
         '<input type="file" id="contract-logo-inp" accept="image/*" style="display:none" onchange="Pages.handleContractLogoUpload(\''+projId+'\',\''+contractId+'\',this)">' +
       '</div>' +
     '</div>' +
-    // Header
+    // Header section — image + positioned text overlays
+    Pages._renderBandSettings(projId, contractId, 'header', 'رأس الصفحة', plh) +
+    // Footer section — image + positioned text overlays
+    Pages._renderBandSettings(projId, contractId, 'footer', 'تذييل الصفحة', plf) +
     '<div class="stg-section">' +
-      '<div class="stg-section-lbl">رأس الصفحة</div>' +
-      '<div class="var-field">' +
-        '<label style="display:flex;align-items:center;gap:6px;font-size:var(--font-xs);cursor:pointer">' +
-          '<input type="checkbox" '+(plh.show!==false?'checked':'')+' onchange="Pages.updatePageLayout(\''+projId+'\',\''+contractId+'\',\'header\',\'show\',this.checked)"> إظهار الرأس' +
-        '</label>' +
-      '</div>' +
-      '<div class="var-field">' +
-        '<div class="var-field-lbl">الارتفاع (مم)</div>' +
-        '<input type="number" class="var-field-inp" min="10" max="100" step="1" value="'+(plh.height||53)+'" oninput="Pages.updatePageLayout(\''+projId+'\',\''+contractId+'\',\'header\',\'height\',parseFloat(this.value)||53)">' +
-      '</div>' +
-      '<div class="var-field">' +
-        '<div class="var-field-lbl">النوع</div>' +
-        '<select class="var-field-inp" onchange="Pages.updatePageLayout(\''+projId+'\',\''+contractId+'\',\'header\',\'mode\',this.value);Pages.render_contract({projId:\''+projId+'\',contractId:\''+contractId+'\'})">' +
-          '<option value="text"'+((!plh.mode||plh.mode==='text')?' selected':'')+'>نص</option>' +
-          '<option value="image"'+(plh.mode==='image'?' selected':'')+'>صورة</option>' +
-        '</select>' +
-      '</div>' +
-      (plh.mode === 'image'
-        ? '<div class="var-field">' +
-            '<div class="var-field-lbl">صورة الرأس</div>' +
-            (plh.image
-              ? '<img src="'+plh.image+'" style="width:100%;max-height:50px;object-fit:contain;border:1px solid var(--border);border-radius:var(--radius-xs);display:block;margin-bottom:4px">' +
-                '<button class="btn btn-sm" style="width:100%;margin-bottom:4px" onclick="document.getElementById(\'hdr-img-inp\').click()"><i data-lucide="upload"></i>تغيير</button>' +
-                '<button class="btn btn-sm" style="width:100%;color:var(--danger-600)" onclick="Pages.updatePageLayout(\''+projId+'\',\''+contractId+'\',\'header\',\'image\',\'\');Pages.render_contract({projId:\''+projId+'\',contractId:\''+contractId+'\'})">إزالة</button>'
-              : '<button class="btn btn-sm" style="width:100%" onclick="document.getElementById(\'hdr-img-inp\').click()"><i data-lucide="upload"></i>رفع صورة رأس</button>'
-            ) +
-            '<input type="file" id="hdr-img-inp" accept="image/*" style="display:none" onchange="Pages.handleHeaderImageUpload(\''+projId+'\',\''+contractId+'\',this)">' +
-          '</div>' +
-          '<div class="var-field">' +
-            '<div class="var-field-lbl">موضع الصورة</div>' +
-            '<select class="var-field-inp" onchange="Pages.updatePageLayout(\''+projId+'\',\''+contractId+'\',\'header\',\'image_position\',this.value)">' +
-              ['center','top','bottom'].map(function(p){
-                var lbl = {center:'وسط',top:'أعلى',bottom:'أسفل'}[p];
-                var cur = plh.image_position || 'center';
-                return '<option value="'+p+'"'+(cur===p?' selected':'')+'>'+lbl+'</option>';
-              }).join('') +
-            '</select>' +
-          '</div>'
-        : '<div class="var-field">' +
-            '<div class="var-field-lbl">عنوان المستند</div>' +
-            '<input class="var-field-inp" value="'+UI.escHtml(plh.title||'')+'" placeholder="'+(contract.title||'عنوان العقد')+'" oninput="Pages.updatePageLayout(\''+projId+'\',\''+contractId+'\',\'header\',\'title\',this.value)">' +
-          '</div>' +
-          '<div class="var-field">' +
-            '<div class="var-field-lbl">رقم المستند</div>' +
-            '<input class="var-field-inp" value="'+UI.escHtml(plh.doc_number||'')+'" placeholder="{{contract_no}}" oninput="Pages.updatePageLayout(\''+projId+'\',\''+contractId+'\',\'header\',\'doc_number\',this.value)">' +
-          '</div>' +
-          '<div class="var-field" style="display:flex;gap:12px">' +
-            '<label style="display:flex;align-items:center;gap:6px;font-size:var(--font-xs);cursor:pointer">' +
-              '<input type="checkbox" '+(plh.show_logo?'checked':'')+' onchange="Pages.updatePageLayout(\''+projId+'\',\''+contractId+'\',\'header\',\'show_logo\',this.checked)"> إظهار الشعار' +
-            '</label>' +
-            '<label style="display:flex;align-items:center;gap:6px;font-size:var(--font-xs);cursor:pointer">' +
-              '<input type="checkbox" '+(plh.show_page_num?'checked':'')+' onchange="Pages.updatePageLayout(\''+projId+'\',\''+contractId+'\',\'header\',\'show_page_num\',this.checked)"> رقم الصفحة' +
-            '</label>' +
-          '</div>'
-      ) +
-    '</div>' +
-    // Footer
-    '<div class="stg-section">' +
-      '<div class="stg-section-lbl">تذييل الصفحة</div>' +
-      '<div class="var-field">' +
-        '<label style="display:flex;align-items:center;gap:6px;font-size:var(--font-xs);cursor:pointer">' +
-          '<input type="checkbox" '+(plf.show!==false?'checked':'')+' onchange="Pages.updatePageLayout(\''+projId+'\',\''+contractId+'\',\'footer\',\'show\',this.checked)"> إظهار التذييل' +
-        '</label>' +
-      '</div>' +
-      '<div class="var-field">' +
-        '<div class="var-field-lbl">الارتفاع (مم)</div>' +
-        '<input type="number" class="var-field-inp" min="8" max="60" step="1" value="'+(plf.height||20)+'" oninput="Pages.updatePageLayout(\''+projId+'\',\''+contractId+'\',\'footer\',\'height\',parseFloat(this.value)||20)">' +
-      '</div>' +
-      '<div class="var-field">' +
-        '<div class="var-field-lbl">النوع</div>' +
-        '<select class="var-field-inp" onchange="Pages.updatePageLayout(\''+projId+'\',\''+contractId+'\',\'footer\',\'mode\',this.value);Pages.render_contract({projId:\''+projId+'\',contractId:\''+contractId+'\'})">' +
-          '<option value="text"'+((!plf.mode||plf.mode==='text')?' selected':'')+'>نص</option>' +
-          '<option value="image"'+(plf.mode==='image'?' selected':'')+'>صورة</option>' +
-        '</select>' +
-      '</div>' +
-      (plf.mode === 'image'
-        ? '<div class="var-field">' +
-            '<div class="var-field-lbl">صورة التذييل</div>' +
-            (plf.image
-              ? '<img src="'+plf.image+'" style="width:100%;max-height:50px;object-fit:contain;border:1px solid var(--border);border-radius:var(--radius-xs);display:block;margin-bottom:4px">' +
-                '<button class="btn btn-sm" style="width:100%;margin-bottom:4px" onclick="document.getElementById(\'ftr-img-inp\').click()"><i data-lucide="upload"></i>تغيير</button>' +
-                '<button class="btn btn-sm" style="width:100%;color:var(--danger-600)" onclick="Pages.updatePageLayout(\''+projId+'\',\''+contractId+'\',\'footer\',\'image\',\'\');Pages.render_contract({projId:\''+projId+'\',contractId:\''+contractId+'\'})">إزالة</button>'
-              : '<button class="btn btn-sm" style="width:100%" onclick="document.getElementById(\'ftr-img-inp\').click()"><i data-lucide="upload"></i>رفع صورة تذييل</button>'
-            ) +
-            '<input type="file" id="ftr-img-inp" accept="image/*" style="display:none" onchange="Pages.handleFooterImageUpload(\''+projId+'\',\''+contractId+'\',this)">' +
-          '</div>' +
-          '<div class="var-field">' +
-            '<div class="var-field-lbl">موضع الصورة</div>' +
-            '<select class="var-field-inp" onchange="Pages.updatePageLayout(\''+projId+'\',\''+contractId+'\',\'footer\',\'image_position\',this.value)">' +
-              ['center','top','bottom'].map(function(p){
-                var lbl = {center:'وسط',top:'أعلى',bottom:'أسفل'}[p];
-                var cur = plf.image_position || 'center';
-                return '<option value="'+p+'"'+(cur===p?' selected':'')+'>'+lbl+'</option>';
-              }).join('') +
-            '</select>' +
-          '</div>'
-        : '<div class="var-field">' +
-            '<div class="var-field-lbl">نص يسار التذييل</div>' +
-            '<input class="var-field-inp" value="'+UI.escHtml(plf.left_text||'')+'" placeholder="مثال: السجل التجاري / الرقم الضريبي" oninput="Pages.updatePageLayout(\''+projId+'\',\''+contractId+'\',\'footer\',\'left_text\',this.value)">' +
-          '</div>' +
-          '<div class="var-field">' +
-            '<div class="var-field-lbl">نص وسط التذييل</div>' +
-            '<input class="var-field-inp" value="'+UI.escHtml(plf.center_text||'')+'" placeholder="مثال: وثيقة سرية" oninput="Pages.updatePageLayout(\''+projId+'\',\''+contractId+'\',\'footer\',\'center_text\',this.value)">' +
-          '</div>' +
-          '<div class="var-field">' +
-            '<label style="display:flex;align-items:center;gap:6px;font-size:var(--font-xs);cursor:pointer">' +
-              '<input type="checkbox" '+(plf.show_page_num!==false?'checked':'')+' onchange="Pages.updatePageLayout(\''+projId+'\',\''+contractId+'\',\'footer\',\'show_page_num\',this.checked)"> ترقيم الصفحات' +
-            '</label>' +
-          '</div>'
-      ) +
+      '<div class="stg-section-lbl">إعدادات أخرى</div>' +
       '<div class="var-field">' +
         '<div class="var-field-lbl">تصنيف التذييل</div>' +
         '<select class="var-field-inp" onchange="Pages.updateContractCover(\''+projId+'\',\''+contractId+'\',\'footer_label\',this.value)">' +
@@ -5173,7 +5096,6 @@ Pages.render_contract = function(params) {
 
   document.getElementById('top-actions').innerHTML =
     '<button class="btn btn-sm" onclick="Nav.go(\'fin\',{projId:\''+projId+'\',tab:\'contracts\'})" style="display:inline-flex;align-items:center;gap:5px"><i data-lucide="arrow-right"></i>العودة للمشروع</button>' +
-    '<button class="btn btn-sm" id="contract-guides-btn" onclick="Pages.togglePageGuides()" style="display:inline-flex;align-items:center;gap:5px"><i data-lucide="layout"></i>حدود الصفحات</button>' +
     '<button class="btn btn-sm" id="contract-preview-btn" onclick="Pages.toggleContractPreview()" style="display:inline-flex;align-items:center;gap:5px"><i data-lucide="eye"></i>معاينة</button>' +
     '<button class="btn btn-sm btn-primary" onclick="Pages.printContract()" style="display:inline-flex;align-items:center;gap:5px"><i data-lucide="printer"></i>طباعة PDF</button>';
 
@@ -5201,109 +5123,164 @@ Pages.render_contract = function(params) {
   if (Pages._contractActiveTab) Pages.switchContractTab(Pages._contractActiveTab);
 };
 
-Pages._renderContractDoc = function(contract) {
+/* Migrate old page_layout values (mm-based heights) to new px-based system */
+Pages._migrateContractLayout = function(contract) {
+  if (!contract.page_layout) {
+    contract.page_layout = {
+      header: { show: true, image: '', height: 200, overlay: [] },
+      footer: { show: true, image: '', height: 150, overlay: [{text:'صفحة {{page_number}} من {{total_pages}}', pos:'bottom-center', font_size:9, color:'#6B7280'}] }
+    };
+  }
+  var h = contract.page_layout.header;
+  var f = contract.page_layout.footer;
+  if (h) {
+    // Convert mm → px if height is suspiciously small (was mm)
+    if (h.height && h.height < 110) h.height = 200;
+    if (!h.overlay) h.overlay = [];
+    delete h.mode; delete h.image_position; delete h.show_logo;
+    delete h.title; delete h.doc_number; delete h.show_page_num; delete h.custom_right;
+  }
+  if (f) {
+    if (f.height && f.height < 110) f.height = 150;
+    if (!f.overlay) f.overlay = [];
+    delete f.mode; delete f.image_position;
+    delete f.left_text; delete f.center_text; delete f.show_page_num; delete f.custom_right;
+  }
+  if (contract.doc_margins) {
+    var m = contract.doc_margins;
+    if (m.top > 2.5) m.top = 1.0;
+    if (m.bottom > 2.5) m.bottom = 1.0;
+    if (m.right > 2.5) m.right = 2.0;
+    if (m.left > 2.5) m.left = 2.0;
+  } else {
+    contract.doc_margins = {top:1.0, right:2.0, bottom:1.0, left:2.0};
+  }
+};
+
+/* Render cover page content (no header/footer slots) */
+Pages._renderCoverContent = function(contract, opts) {
+  opts = opts || {};
   var vars = contract.variables || {};
-  var ds = contract.doc_style || {font_size:14, line_height:1.5, title_size:18, clause_title_size:14};
-  var dm = contract.doc_margins || {top:2.5, right:3, bottom:2.5, left:2.5};
-  var PX = 37.795; // 1 cm = 37.795px at 96dpi
-  var topPx = Math.round(dm.top * PX);
-  var rightPx = Math.round(dm.right * PX);
-  var bottomPx = Math.round(dm.bottom * PX);
-  var leftPx = Math.round(dm.left * PX);
-  var docPadStyle = 'padding:'+topPx+'px '+rightPx+'px '+bottomPx+'px '+leftPx+'px';
-  var covNegMargin = 'margin:'+(-topPx)+'px '+(-rightPx)+'px 0 '+(-leftPx)+'px';
-  var bandNegMargin = 'margin:0 '+(-rightPx)+'px 0 '+(-leftPx)+'px';
+  var ds = contract.doc_style || {title_size:18, subtitle_size:12};
+  var preview = opts.preview;
   var frameClass = 'cov-frame-' + (contract.cover && contract.cover.frame_style ? contract.cover.frame_style : 'modern');
-
-  var logoHtml = contract.cover && contract.cover.logo
-    ? '<img src="'+contract.cover.logo+'" style="max-width:120px;max-height:72px;object-fit:contain;margin-bottom:12px;display:block;margin-inline:auto">'
-    : '<div class="cov-logo-slot" title="رفع شعار"><i data-lucide="building-2"></i><span style="display:block;font-size:9px;margin-top:3px">شعار</span></div>';
-  var companyHtml = contract.cover && contract.cover.company_name
-    ? '<div style="font-size:11pt;font-weight:600;color:#0F2A4A;margin-bottom:8px">'+UI.escHtml(contract.cover.company_name)+'</div>'
-    : '';
-
   var isCovImage = frameClass === 'cov-frame-image';
   var covBgPos = (contract.cover && contract.cover.bg_position) || 'center';
   var bgImgHtml = (isCovImage && contract.cover && contract.cover.bg_image)
     ? '<img class="cov-bg-img" src="'+contract.cover.bg_image+'" style="object-position:'+UI.escHtml(covBgPos)+'">'
       + '<div class="cov-overlay" style="background:rgba(0,0,0,'+UI.escHtml(String((contract.cover && contract.cover.overlay_opacity)||0.55))+')"></div>'
     : '';
-  var covExtraStyle = covNegMargin + (isCovImage && !(contract.cover && contract.cover.bg_image) ? ';background:'+UI.escHtml((contract.cover && contract.cover.bg_color)||'#0F2A4A') : '');
-
-  var covHtml =
-    '<div class="cov-page '+frameClass+'" style="'+covExtraStyle+'">' +
-      bgImgHtml +
-      '<div class="cov-frame-wrap">' +
-        logoHtml + companyHtml +
-        '<div class="cov-title" style="font-size:'+(ds.title_size||18)+'pt">'+UI.escHtml(contract.title)+'</div>' +
-        '<div class="cov-subtitle">المملكة العربية السعودية</div>' +
-        '<div class="cov-parties-box">' +
-          '<div class="cov-parties-row"><strong>الطرف الأول</strong>'+(vars.party_a_name?UI.escHtml(vars.party_a_name):'<span style="color:#9CA3AF">اسم الطرف الأول</span>')+'</div>' +
-          '<div class="cov-parties-row"><strong>الطرف الثاني</strong>'+(vars.party_b_name?UI.escHtml(vars.party_b_name):'<span style="color:#9CA3AF">اسم الطرف الثاني</span>')+'</div>' +
-        '</div>' +
-        '<div class="cov-ref-line">'+(vars.contract_date_gregorian?UI.escHtml(vars.contract_date_gregorian):'')+(vars.contract_city?' · '+UI.escHtml(vars.contract_city):'')+'</div>' +
+  var covBg = (isCovImage && !(contract.cover && contract.cover.bg_image))
+    ? ';background:'+UI.escHtml((contract.cover && contract.cover.bg_color)||'#0F2A4A')
+    : '';
+  var logoHtml = contract.cover && contract.cover.logo
+    ? '<img src="'+contract.cover.logo+'" style="max-width:120px;max-height:72px;object-fit:contain;display:block;margin:0 auto 12px">'
+    : (preview ? '' : '<div class="cov-logo-slot" title="رفع شعار"><i data-lucide="building-2"></i><span style="display:block;font-size:9px;margin-top:3px">شعار</span></div>');
+  var companyHtml = contract.cover && contract.cover.company_name
+    ? '<div style="font-size:11pt;font-weight:600;color:#0F2A4A;margin-bottom:8px">'+UI.escHtml(contract.cover.company_name)+'</div>'
+    : '';
+  var partyA = vars.party_a_name ? UI.escHtml(vars.party_a_name) : (preview ? '_______________' : '<span style="color:#9CA3AF">اسم الطرف الأول</span>');
+  var partyB = vars.party_b_name ? UI.escHtml(vars.party_b_name) : (preview ? '_______________' : '<span style="color:#9CA3AF">اسم الطرف الثاني</span>');
+  return '<div class="cov-page-inner '+frameClass+'" style="width:100%;height:100%;display:flex;flex-direction:column;position:relative;overflow:hidden'+covBg+'">' +
+    bgImgHtml +
+    '<div class="cov-frame-wrap">' +
+      logoHtml + companyHtml +
+      '<div class="cov-title" style="font-size:'+(ds.title_size||18)+'pt">'+UI.escHtml(contract.title)+'</div>' +
+      '<div class="cov-subtitle">المملكة العربية السعودية</div>' +
+      '<div class="cov-parties-box">' +
+        '<div class="cov-parties-row"><strong>الطرف الأول</strong>'+partyA+'</div>' +
+        '<div class="cov-parties-row"><strong>الطرف الثاني</strong>'+partyB+'</div>' +
       '</div>' +
-    '</div>';
+      '<div class="cov-ref-line">'+(vars.contract_date_gregorian?UI.escHtml(vars.contract_date_gregorian):'')+(vars.contract_city?' · '+UI.escHtml(vars.contract_city):'')+'</div>' +
+    '</div>' +
+  '</div>';
+};
 
-  var plHdr = (contract.page_layout && contract.page_layout.header) || {};
-  var plFtr = (contract.page_layout && contract.page_layout.footer) || {};
-  var hdr = plHdr;
-  var ftr = plFtr;
-  // Header/footer bands are placed OUTSIDE the padded content area so they
-  // span the full doc width without negative-margin tricks.
-  var hdrBand = '';
-  if (plHdr.show !== false) {
-    if (plHdr.mode === 'image' && plHdr.image) {
-      var hdrImgPos = plHdr.image_position || 'center';
-      hdrBand = '<div class="contract-hdr-img-band" style="height:'+(plHdr.height||53)+'mm;overflow:hidden;width:100%"><img src="'+plHdr.image+'" style="width:100%;height:100%;object-fit:cover;object-position:'+UI.escHtml(hdrImgPos)+';display:block"></div>';
-    } else {
-      var hdrHeight = (plHdr.height||53);
-      var hdrLogoHtml = (plHdr.show_logo && contract.cover && contract.cover.logo)
-        ? '<img src="'+contract.cover.logo+'" style="max-height:'+Math.round(hdrHeight*0.7)+'mm;object-fit:contain;margin-inline-start:8px">'
-        : '';
-      hdrBand = '<div class="contract-doc-header" style="padding:10px '+rightPx+'px 10px '+leftPx+'px;height:'+hdrHeight+'mm">' +
-        '<span>'+hdrLogoHtml+UI.escHtml(plHdr.title||contract.title||'')+'</span>' +
-        '<span style="color:#9CA3AF;font-size:8pt">'+UI.escHtml(plHdr.doc_number||plHdr.custom_right||'')+'</span>' +
-        '</div>';
-    }
-  }
-  var docHeaderHtml = hdrBand;
-  var ftrBand = '';
-  if (plFtr.show !== false) {
-    if (plFtr.mode === 'image' && plFtr.image) {
-      var ftrImgPos = plFtr.image_position || 'center';
-      ftrBand = '<div class="contract-ftr-img-band" style="height:'+(plFtr.height||20)+'mm;overflow:hidden;width:100%"><img src="'+plFtr.image+'" style="width:100%;height:100%;object-fit:cover;object-position:'+UI.escHtml(ftrImgPos)+';display:block"></div>';
-    } else {
-      ftrBand = '<div class="contract-doc-footer" style="padding:8px '+rightPx+'px;height:'+(plFtr.height||20)+'mm">' +
-        '<span>'+UI.escHtml(plFtr.left_text||contract.footer_label||'سري')+'</span>' +
-        '<span>'+UI.escHtml(plFtr.center_text||'')+'</span>' +
-        '<span>'+(plFtr.show_page_num!==false?'ص':'')+'</span>' +
-        '</div>';
-    }
-  }
-  var docFooterHtml = ftrBand;
+/* Render a single page header/footer band with image background and overlay text slots */
+Pages._renderHeaderBand = function(hdr, pageNum, totalPages, vars, contract) {
+  if (hdr.show === false) return '<header class="doc-page-hdr" style="height:0"></header>';
+  var h = hdr.height || 200;
+  var imgHtml = hdr.image ? '<img class="doc-page-hdr-img" src="'+hdr.image+'">' : '';
+  var overlay = (hdr.overlay || []).map(function(slot) {
+    var text = Pages._applyOverlayVars(slot.text || '', vars, pageNum, totalPages);
+    if (!text) return '';
+    var style = 'font-size:'+(slot.font_size||9)+'pt;color:'+(slot.color||'#1F2937')+';font-weight:'+(slot.font_weight||'400');
+    return '<span class="hdr-slot" data-pos="'+(slot.pos||'top-right')+'" style="'+style+'">'+UI.escHtml(text)+'</span>';
+  }).join('');
+  var hasContent = hdr.image || (hdr.overlay||[]).some(function(s){return s.text;});
+  var emptyClass = hasContent ? '' : ' empty';
+  return '<header class="doc-page-hdr'+emptyClass+'" style="height:'+h+'px">' +
+    imgHtml +
+    '<div class="doc-page-hdr-overlay">' + overlay + '</div>' +
+    (hasContent ? '' : '<span>الرأس فارغ — أضف صورة أو نص من الإعدادات</span>') +
+  '</header>';
+};
+Pages._renderFooterBand = function(ftr, pageNum, totalPages, vars, contract) {
+  if (ftr.show === false) return '<footer class="doc-page-ftr" style="height:0"></footer>';
+  var h = ftr.height || 150;
+  var imgHtml = ftr.image ? '<img class="doc-page-ftr-img" src="'+ftr.image+'">' : '';
+  var overlay = (ftr.overlay || []).map(function(slot) {
+    var text = Pages._applyOverlayVars(slot.text || '', vars, pageNum, totalPages);
+    if (!text) return '';
+    var style = 'font-size:'+(slot.font_size||9)+'pt;color:'+(slot.color||'#1F2937')+';font-weight:'+(slot.font_weight||'400');
+    return '<span class="ftr-slot" data-pos="'+(slot.pos||'bottom-center')+'" style="'+style+'">'+UI.escHtml(text)+'</span>';
+  }).join('');
+  var hasContent = ftr.image || (ftr.overlay||[]).some(function(s){return s.text;});
+  var emptyClass = hasContent ? '' : ' empty';
+  return '<footer class="doc-page-ftr'+emptyClass+'" style="height:'+h+'px">' +
+    imgHtml +
+    '<div class="doc-page-ftr-overlay">' + overlay + '</div>' +
+    (hasContent ? '' : '<span>الذيل فارغ — أضف صورة أو نص من الإعدادات</span>') +
+  '</footer>';
+};
 
-  var enabledClauses = contract.clauses.filter(function(c){return c.enabled!==false;});
-  var clausesHtml = '';
-  enabledClauses.forEach(function(cl, i) {
-    var contentHtml = Pages._contractPreview
-      ? Pages._applyVars(UI.escHtml(cl.content), contract.variables)
-      : UI.escHtml(cl.content);
-    clausesHtml +=
-      '<div class="clause-block'+(cl.page_break?' has-break':'')+'" id="clause-'+cl.id+'">' +
-        '<div class="clause-controls">' +
-          (i>0 ? '<button class="clause-ctrl-btn" onclick="Pages.moveClause(\''+Pages._contractProjId+'\',\''+Pages._contractId+'\','+i+',\'up\')" title="للأعلى"><i data-lucide="chevron-up"></i></button>' : '') +
-          (i<enabledClauses.length-1 ? '<button class="clause-ctrl-btn" onclick="Pages.moveClause(\''+Pages._contractProjId+'\',\''+Pages._contractId+'\','+i+',\'down\')" title="للأسفل"><i data-lucide="chevron-down"></i></button>' : '') +
-          '<button class="clause-ctrl-btn'+(cl.page_break?' break-active':'')+'" onclick="Pages.toggleClauseBreak(\''+Pages._contractProjId+'\',\''+Pages._contractId+'\','+i+')" title="'+(cl.page_break?'إلغاء فصل الصفحة':'ابدأ صفحة جديدة')+'"><i data-lucide="arrow-down-to-line"></i></button>' +
-          '<button class="clause-ctrl-btn danger" onclick="Pages.deleteClause(\''+Pages._contractProjId+'\',\''+Pages._contractId+'\','+i+')" title="حذف البند"><i data-lucide="x"></i></button>' +
-        '</div>' +
-        '<div class="clause-block-inner">' +
-          '<div class="clause-title" style="font-size:'+(ds.clause_title_size||14)+'pt">'+UI.escHtml(cl.title)+'</div>' +
-          '<div class="clause-body" contenteditable="true" data-clause-idx="'+i+'" onblur="Pages.saveClauseContent(\''+Pages._contractProjId+'\',\''+Pages._contractId+'\','+i+',this)">'+contentHtml+'</div>' +
-        '</div>' +
-      '</div>';
+/* Substitute variables in overlay text, including {{page_number}} / {{total_pages}} */
+Pages._applyOverlayVars = function(text, vars, pageNum, totalPages) {
+  if (!text) return '';
+  return text.replace(/\{\{(\w+)\}\}/g, function(match, key) {
+    if (key === 'page_number') return String(pageNum);
+    if (key === 'total_pages') return String(totalPages);
+    if (key === 'contract_amount_words') {
+      var amt = parseFloat(((vars && vars.contract_amount)||'').replace(/,/g,''));
+      return Pages._numToArabic(amt) || '';
+    }
+    var v = (vars && vars[key]) || '';
+    return String(v).trim();
   });
+};
 
+/* Render one clause block — used both for measuring and for final DOM */
+Pages._renderClauseHtml = function(cl, idx, totalClauses, contract, opts) {
+  opts = opts || {};
+  var ds = contract.doc_style || {clause_title_size:14};
+  var contentHtml = opts.editable
+    ? UI.escHtml(cl.content)
+    : (Pages._contractPreview
+        ? Pages._applyVars(UI.escHtml(cl.content), contract.variables)
+        : UI.escHtml(cl.content));
+  var controls = opts.editable
+    ? '<div class="clause-controls">' +
+        (idx>0 ? '<button class="clause-ctrl-btn" onclick="Pages.moveClause(\''+Pages._contractProjId+'\',\''+Pages._contractId+'\','+idx+',\'up\')" title="للأعلى"><i data-lucide="chevron-up"></i></button>' : '') +
+        (idx<totalClauses-1 ? '<button class="clause-ctrl-btn" onclick="Pages.moveClause(\''+Pages._contractProjId+'\',\''+Pages._contractId+'\','+idx+',\'down\')" title="للأسفل"><i data-lucide="chevron-down"></i></button>' : '') +
+        '<button class="clause-ctrl-btn'+(cl.page_break?' break-active':'')+'" onclick="Pages.toggleClauseBreak(\''+Pages._contractProjId+'\',\''+Pages._contractId+'\','+idx+')" title="'+(cl.page_break?'إلغاء فصل الصفحة':'ابدأ صفحة جديدة')+'"><i data-lucide="arrow-down-to-line"></i></button>' +
+        '<button class="clause-ctrl-btn danger" onclick="Pages.deleteClause(\''+Pages._contractProjId+'\',\''+Pages._contractId+'\','+idx+')" title="حذف البند"><i data-lucide="x"></i></button>' +
+      '</div>'
+    : '';
+  var bodyAttrs = opts.editable
+    ? ' contenteditable="true" data-clause-idx="'+idx+'" onblur="Pages.saveClauseContent(\''+Pages._contractProjId+'\',\''+Pages._contractId+'\','+idx+',this)"'
+    : '';
+  return '<div class="clause-block'+(cl.page_break?' has-break':'')+'" id="clause-'+cl.id+'">' +
+    controls +
+    '<div class="clause-block-inner">' +
+      '<div class="clause-title" style="font-size:'+(ds.clause_title_size||14)+'pt">'+UI.escHtml(cl.title)+'</div>' +
+      '<div class="clause-body"'+bodyAttrs+'>'+contentHtml+'</div>' +
+    '</div>' +
+  '</div>';
+};
+
+/* Render signature page content */
+Pages._renderSignatureHtml = function(contract) {
+  var vars = contract.variables || {};
   function sigBlock(label, orgName, repName, repTitle) {
     return '<div class="sig-block">' +
       '<div class="sig-block-title">'+label+'</div>' +
@@ -5314,25 +5291,118 @@ Pages._renderContractDoc = function(contract) {
       '<div class="sig-line-label">التوقيع والختم</div>' +
     '</div>';
   }
-  var sigHtml =
-    '<div class="sig-page">' +
-      '<div style="border-top:1.5px solid #0F2A4A;margin-bottom:32px"></div>' +
-      '<div class="sig-grid">' +
-        sigBlock('الطرف الأول', vars.party_a_name, vars.party_a_rep_name, vars.party_a_title) +
-        sigBlock('الطرف الثاني', vars.party_b_name, vars.party_b_rep_name, vars.party_b_title) +
+  return '<div class="sig-page">' +
+    '<div style="border-top:1.5px solid #0F2A4A;margin-bottom:32px"></div>' +
+    '<div class="sig-grid">' +
+      sigBlock('الطرف الأول', vars.party_a_name, vars.party_a_rep_name, vars.party_a_title) +
+      sigBlock('الطرف الثاني', vars.party_b_name, vars.party_b_rep_name, vars.party_b_title) +
+    '</div>' +
+  '</div>';
+};
+
+/* Paginate clauses into A4 pages by measuring rendered heights */
+Pages._paginateContract = function(contract, opts) {
+  opts = opts || {};
+  var ds = contract.doc_style || {font_size:14, line_height:1.5, clause_title_size:14};
+  var pl = contract.page_layout;
+  var hdrH = pl.header.height || 200;
+  var ftrH = pl.footer.height || 150;
+  // Body padding (1cm 2cm) eats 2*37.795 px vertically and 4*37.795 px horizontally
+  var PX = 37.795;
+  var dm = contract.doc_margins || {top:1.0, right:2.0, bottom:1.0, left:2.0};
+  var bodyPadTop = dm.top * PX, bodyPadBottom = dm.bottom * PX;
+  var bodyPadLeft = dm.left * PX, bodyPadRight = dm.right * PX;
+  var maxBodyHeight = 1123 - hdrH - ftrH - bodyPadTop - bodyPadBottom;
+  var bodyInnerWidth = 794 - bodyPadLeft - bodyPadRight;
+
+  // Hidden measuring container
+  var measureEl = document.createElement('div');
+  measureEl.style.cssText = 'position:absolute;visibility:hidden;left:-9999px;top:0;'+
+    'width:'+bodyInnerWidth+'px;'+
+    'font-family:\'IBM Plex Sans Arabic\',\'Tajawal\',system-ui;'+
+    'font-size:'+(ds.font_size||14)+'pt;line-height:'+(ds.line_height||1.5)+';'+
+    'direction:rtl;color:#1F2937';
+  document.body.appendChild(measureEl);
+
+  var enabledClauses = contract.clauses.filter(function(c){return c.enabled!==false;});
+  var pages = [[]];
+  var currentHeight = 0;
+  var totalClauses = enabledClauses.length;
+
+  enabledClauses.forEach(function(cl, i) {
+    if (cl.page_break && pages[pages.length-1].length > 0) {
+      pages.push([]);
+      currentHeight = 0;
+    }
+    var html = Pages._renderClauseHtml(cl, i, totalClauses, contract, {editable:false});
+    measureEl.innerHTML = html;
+    var h = measureEl.firstElementChild ? measureEl.firstElementChild.offsetHeight : 0;
+    if (currentHeight > 0 && currentHeight + h > maxBodyHeight) {
+      pages.push([]);
+      currentHeight = 0;
+    }
+    pages[pages.length-1].push({ clause: cl, idx: i, height: h });
+    currentHeight += h;
+  });
+
+  // Signature page: try to fit on last body page; otherwise own page
+  var sigHtml = Pages._renderSignatureHtml(contract);
+  measureEl.innerHTML = sigHtml;
+  var sigH = measureEl.firstElementChild ? measureEl.firstElementChild.offsetHeight : 200;
+  if (currentHeight + sigH > maxBodyHeight && pages[pages.length-1].length > 0) {
+    pages.push([{ type:'signatures' }]);
+  } else {
+    pages[pages.length-1].push({ type:'signatures' });
+  }
+
+  measureEl.remove();
+  return pages;
+};
+
+Pages._renderContractDoc = function(contract) {
+  Pages._migrateContractLayout(contract);
+  var vars = contract.variables || {};
+  var ds = contract.doc_style || {font_size:14, line_height:1.5, title_size:18, clause_title_size:14};
+  var dm = contract.doc_margins || {top:1.0, right:2.0, bottom:1.0, left:2.0};
+  var pl = contract.page_layout;
+  var hdrH = pl.header.height || 200;
+  var ftrH = pl.footer.height || 150;
+
+  // 1. Cover page (no header/footer slots, full content area)
+  var coverPageHtml =
+    '<div class="doc-page cov-page" style="--hdr-h:0;--ftr-h:0">' +
+      '<div class="doc-page-body cov-body">' +
+        Pages._renderCoverContent(contract, {preview:false}) +
       '</div>' +
     '</div>';
 
-  // Header/footer are outside the padded body so they span full doc width.
-  // The padded inner div handles all content spacing.
+  // 2. Paginate clause text + signature
+  var pages = Pages._paginateContract(contract);
+  var totalPages = pages.length + 1; // +1 for cover
+
+  // 3. Render each body page with full header/footer (var substitution per page)
+  var totalClauses = contract.clauses.filter(function(c){return c.enabled!==false;}).length;
+  var bodyPagesHtml = pages.map(function(page, idx) {
+    var pageNum = idx + 2; // page 1 = cover
+    var pageStyle = '--hdr-h:'+hdrH+'px;--ftr-h:'+ftrH+'px';
+    var bodyStyle = 'padding:'+dm.top+'cm '+dm.right+'cm '+dm.bottom+'cm '+dm.left+'cm;'+
+      'font-size:'+(ds.font_size||14)+'pt;line-height:'+(ds.line_height||1.5);
+    var bodyContent = page.map(function(item) {
+      if (item.type === 'signatures') return Pages._renderSignatureHtml(contract);
+      return Pages._renderClauseHtml(item.clause, item.idx, totalClauses, contract, {editable:true});
+    }).join('');
+    return '<div class="doc-page" style="'+pageStyle+'">' +
+      Pages._renderHeaderBand(pl.header, pageNum, totalPages, vars, contract) +
+      '<div class="doc-page-body" style="'+bodyStyle+'">' +
+        bodyContent +
+      '</div>' +
+      Pages._renderFooterBand(pl.footer, pageNum, totalPages, vars, contract) +
+    '</div>';
+  }).join('');
+
   return '<div class="contract-doc" id="contract-doc" style="font-size:'+(ds.font_size||14)+'pt;line-height:'+(ds.line_height||1.5)+'">' +
-    docHeaderHtml +
-    '<div class="doc-body-pad" style="'+docPadStyle+'">' +
-      covHtml +
-      '<div id="contract-clauses-body">'+clausesHtml+'</div>' +
-      sigHtml +
-    '</div>' +
-    docFooterHtml +
+    coverPageHtml +
+    bodyPagesHtml +
   '</div>';
 };
 
@@ -5402,6 +5472,8 @@ Pages.updateContractVar = function(projId, contractId, key, value) {
   c.updated = (new Date()).toISOString().slice(0,10);
   DB.saveContract(projId, c);
   Pages._refreshContractCover(c);
+  // If this variable is used in a header/footer overlay, re-render bands across all pages
+  if (Pages._maybeRefreshBands(c, key)) return;
   // Live-update all variable chips in the WYSIWYG clause bodies
   var val = String(value||'').trim();
   var docEl = document.getElementById('contract-doc');
@@ -5449,8 +5521,19 @@ Pages._refreshContractCover = function(contract) {
   var sigTitles = docEl.querySelectorAll('.sig-block-rep-title');
   if (sigTitles[0]) { sigTitles[0].textContent = vars.party_a_title||''; sigTitles[0].className = 'sig-block-rep-title'+(vars.party_a_title?'':' sig-placeholder'); }
   if (sigTitles[1]) { sigTitles[1].textContent = vars.party_b_title||''; sigTitles[1].className = 'sig-block-rep-title'+(vars.party_b_title?'':' sig-placeholder'); }
-  var sigDate = docEl.querySelector('.sig-page-sub');
-  if (sigDate) sigDate.textContent = 'حرر في مدينة '+(vars.signature_city||'___________')+' بتاريخ '+(vars.contract_date_gregorian||'___________');
+};
+
+/* Full re-render of the contract canvas — used after structural changes
+   (page layout, margins, header/footer overlay). Re-paginates from scratch. */
+Pages._refreshContractCanvas = function(contract) {
+  var docEl = document.getElementById('contract-doc');
+  if (!docEl || !docEl.parentNode) return;
+  var newHtml = Pages._renderContractDoc(contract);
+  var tmp = document.createElement('div');
+  tmp.innerHTML = newHtml;
+  var newDoc = tmp.firstChild;
+  docEl.parentNode.replaceChild(newDoc, docEl);
+  if (typeof lucide !== 'undefined') lucide.createIcons({rootElement: newDoc});
 };
 
 Pages.moveClause = function(projId, contractId, clauseIdx, dir) {
@@ -5487,8 +5570,7 @@ Pages.deleteClause = function(projId, contractId, clauseIdx) {
   cl.enabled = false;
   c.updated = (new Date()).toISOString().slice(0,10);
   DB.saveContract(projId, c);
-  var el = document.getElementById('clause-'+cl.id);
-  if (el) el.remove();
+  Pages._refreshContractCanvas(c);
 };
 
 Pages.toggleClauseBreak = function(projId, contractId, clauseIdx) {
@@ -5529,27 +5611,8 @@ Pages.addClauseFromLib = function(projId, contractId, clauseKey) {
   c.clauses.push(newClause);
   c.updated = (new Date()).toISOString().slice(0,10);
   DB.saveContract(projId, c);
-  var clausesBody = document.getElementById('contract-clauses-body');
-  if (clausesBody) {
-    var div = document.createElement('div');
-    div.innerHTML = Pages._renderSingleClause(newClause, enabledCount, enabledCount);
-    clausesBody.appendChild(div.firstChild);
-    if (typeof lucide !== 'undefined') lucide.createIcons({rootElement: clausesBody.lastElementChild});
-  }
-};
-
-Pages._renderSingleClause = function(cl, idx, total) {
-  return '<div class="clause-block" id="clause-'+cl.id+'">' +
-    '<div class="clause-controls">' +
-      (idx>0 ? '<button class="clause-ctrl-btn" onclick="Pages.moveClause(\''+Pages._contractProjId+'\',\''+Pages._contractId+'\','+idx+',\'up\')" title="للأعلى"><i data-lucide="chevron-up"></i></button>' : '') +
-      (idx<total ? '<button class="clause-ctrl-btn" onclick="Pages.moveClause(\''+Pages._contractProjId+'\',\''+Pages._contractId+'\','+idx+',\'down\')" title="للأسفل"><i data-lucide="chevron-down"></i></button>' : '') +
-      '<button class="clause-ctrl-btn danger" onclick="Pages.deleteClause(\''+Pages._contractProjId+'\',\''+Pages._contractId+'\','+idx+')" title="حذف"><i data-lucide="x"></i></button>' +
-    '</div>' +
-    '<div class="clause-block-inner">' +
-      '<div class="clause-title">'+UI.escHtml(cl.title)+'</div>' +
-      '<div class="clause-body" contenteditable="true" data-clause-idx="'+idx+'" onblur="Pages.saveClauseContent(\''+Pages._contractProjId+'\',\''+Pages._contractId+'\','+idx+',this)">'+UI.escHtml(cl.content)+'</div>' +
-    '</div>' +
-  '</div>';
+  // New clause needs pagination — re-render the canvas
+  Pages._refreshContractCanvas(c);
 };
 
 Pages.saveClauseContent = function(projId, contractId, clauseIdx, el) {
@@ -5640,6 +5703,22 @@ Pages.handleFooterImageUpload = function(projId, contractId, input) {
   reader.readAsDataURL(file);
 };
 
+/* Update updateContractVar to also re-render headers/footers when vars used there change */
+Pages._maybeRefreshBands = function(c, key) {
+  // If any header/footer overlay text references this key, re-render bands
+  var pl = c.page_layout;
+  if (!pl) return false;
+  var token = '{{' + key + '}}';
+  function used(band) {
+    return (band.overlay || []).some(function(s) { return (s.text||'').indexOf(token) >= 0; });
+  }
+  if (used(pl.header) || used(pl.footer)) {
+    Pages._refreshContractCanvas(c);
+    return true;
+  }
+  return false;
+};
+
 Pages.updateDocStyle = function(projId, contractId, key, value) {
   var contracts = DB.getContracts(projId);
   var c = contracts.find(function(x){return x.id===contractId;});
@@ -5672,52 +5751,115 @@ Pages.updateDocMargins = function(projId, contractId, key, value) {
   var contracts = DB.getContracts(projId);
   var c = contracts.find(function(x){return x.id===contractId;});
   if (!c) return;
-  if (!c.doc_margins) c.doc_margins = {top:2.5, right:3, bottom:2.5, left:2.5};
-  c.doc_margins[key] = parseFloat(value)||2.5;
+  if (!c.doc_margins) c.doc_margins = {top:1.0, right:2.0, bottom:1.0, left:2.0};
+  c.doc_margins[key] = parseFloat(value)||1.0;
   c.updated = (new Date()).toISOString().slice(0,10);
   DB.saveContract(projId, c);
-  var PX = 37.795;
-  var m = c.doc_margins;
-  var docEl = document.getElementById('contract-doc');
-  if (docEl) {
-    docEl.style.padding = Math.round(m.top*PX)+'px '+Math.round(m.right*PX)+'px '+Math.round(m.bottom*PX)+'px '+Math.round(m.left*PX)+'px';
-    var covEl = docEl.querySelector('.cov-page');
-    if (covEl) {
-      covEl.style.margin = (-Math.round(m.top*PX))+'px '+(-Math.round(m.right*PX))+'px 0 '+(-Math.round(m.left*PX))+'px';
-    }
-    docEl.querySelectorAll('.contract-hdr-img-band,.contract-ftr-img-band,.contract-doc-header,.contract-doc-footer').forEach(function(el){
-      el.style.marginLeft = (-Math.round(m.left*PX))+'px';
-      el.style.marginRight = (-Math.round(m.right*PX))+'px';
-      if (el.classList.contains('contract-doc-header')||el.classList.contains('contract-doc-footer')) {
-        el.style.paddingLeft = Math.round(m.left*PX)+'px';
-        el.style.paddingRight = Math.round(m.right*PX)+'px';
-      }
-    });
-  }
+  Pages._refreshContractCanvas(c);
 };
 
 Pages.updatePageLayout = function(projId, contractId, section, key, value) {
   var contracts = DB.getContracts(projId);
   var c = contracts.find(function(x){return x.id===contractId;});
   if (!c) return;
-  if (!c.page_layout) c.page_layout = {header:{show:true},footer:{show:true}};
-  if (!c.page_layout[section]) c.page_layout[section] = {};
+  if (!c.page_layout) c.page_layout = {header:{show:true,overlay:[]},footer:{show:true,overlay:[]}};
+  if (!c.page_layout[section]) c.page_layout[section] = {overlay:[]};
   c.page_layout[section][key] = value;
   c.updated = (new Date()).toISOString().slice(0,10);
   DB.saveContract(projId, c);
-  // re-render entire doc
-  var docEl = document.getElementById('contract-doc');
-  if (docEl) {
-    var updated = DB.getContracts(projId).find(function(x){return x.id===contractId;});
-    if (updated) {
-      var newDocHtml = Pages._renderContractDoc(updated);
-      var tmp = document.createElement('div');
-      tmp.innerHTML = newDocHtml;
-      var newDocEl = tmp.firstChild;
-      docEl.parentNode.replaceChild(newDocEl, docEl);
-      if (typeof lucide !== 'undefined') lucide.createIcons({rootElement: document.getElementById('contract-clauses-body')});
-    }
-  }
+  Pages._refreshContractCanvas(c);
+};
+
+/* Header/Footer overlay management */
+Pages.addOverlay = function(projId, contractId, section) {
+  var contracts = DB.getContracts(projId);
+  var c = contracts.find(function(x){return x.id===contractId;});
+  if (!c) return;
+  if (!c.page_layout[section].overlay) c.page_layout[section].overlay = [];
+  c.page_layout[section].overlay.push({
+    text: '', pos: section==='header'?'top-right':'bottom-center',
+    font_size: 9, color: '#1F2937', font_weight: '400'
+  });
+  c.updated = (new Date()).toISOString().slice(0,10);
+  DB.saveContract(projId, c);
+  Pages.render_contract({projId:projId, contractId:contractId});
+};
+Pages.updateOverlay = function(projId, contractId, section, idx, key, value) {
+  var contracts = DB.getContracts(projId);
+  var c = contracts.find(function(x){return x.id===contractId;});
+  if (!c || !c.page_layout[section].overlay || !c.page_layout[section].overlay[idx]) return;
+  c.page_layout[section].overlay[idx][key] = value;
+  c.updated = (new Date()).toISOString().slice(0,10);
+  DB.saveContract(projId, c);
+  Pages._refreshContractCanvas(c);
+};
+Pages.removeOverlay = function(projId, contractId, section, idx) {
+  var contracts = DB.getContracts(projId);
+  var c = contracts.find(function(x){return x.id===contractId;});
+  if (!c || !c.page_layout[section].overlay) return;
+  c.page_layout[section].overlay.splice(idx, 1);
+  c.updated = (new Date()).toISOString().slice(0,10);
+  DB.saveContract(projId, c);
+  Pages.render_contract({projId:projId, contractId:contractId});
+};
+
+/* Render the settings panel for header or footer band */
+Pages._renderBandSettings = function(projId, contractId, section, label, band) {
+  var defaultH = section === 'header' ? 200 : 150;
+  var inpId = section === 'header' ? 'hdr-img-inp' : 'ftr-img-inp';
+  var uploader = section === 'header' ? 'handleHeaderImageUpload' : 'handleFooterImageUpload';
+  var overlays = band.overlay || [];
+  var posOpts = ['top-right','top-center','top-left','center','bottom-right','bottom-center','bottom-left'];
+  var posLabels = {
+    'top-right':'يمين أعلى','top-center':'وسط أعلى','top-left':'يسار أعلى',
+    'center':'وسط','bottom-right':'يمين أسفل','bottom-center':'وسط أسفل','bottom-left':'يسار أسفل'
+  };
+  return '<div class="stg-section">' +
+    '<div class="stg-section-lbl">'+label+'</div>' +
+    '<div class="var-field">' +
+      '<label style="display:flex;align-items:center;gap:6px;font-size:var(--font-xs);cursor:pointer">' +
+        '<input type="checkbox" '+(band.show!==false?'checked':'')+' onchange="Pages.updatePageLayout(\''+projId+'\',\''+contractId+'\',\''+section+'\',\'show\',this.checked)"> إظهار '+label+
+      '</label>' +
+    '</div>' +
+    '<div class="var-field">' +
+      '<div class="var-field-lbl">الارتفاع (بكسل)</div>' +
+      '<input type="number" class="var-field-inp" min="50" max="400" step="10" value="'+(band.height||defaultH)+'" oninput="Pages.updatePageLayout(\''+projId+'\',\''+contractId+'\',\''+section+'\',\'height\',parseFloat(this.value)||'+defaultH+')">' +
+    '</div>' +
+    '<div class="var-field">' +
+      '<div class="var-field-lbl">صورة الخلفية (بعرض كامل الصفحة)</div>' +
+      (band.image
+        ? '<img src="'+band.image+'" style="width:100%;max-height:60px;object-fit:contain;border:1px solid var(--border);border-radius:var(--radius-xs);display:block;margin-bottom:4px">' +
+          '<button class="btn btn-sm" style="width:100%;margin-bottom:4px" onclick="document.getElementById(\''+inpId+'\').click()"><i data-lucide="upload"></i>تغيير الصورة</button>' +
+          '<button class="btn btn-sm" style="width:100%;color:var(--danger-600)" onclick="Pages.updatePageLayout(\''+projId+'\',\''+contractId+'\',\''+section+'\',\'image\',\'\')">إزالة الصورة</button>'
+        : '<button class="btn btn-sm" style="width:100%" onclick="document.getElementById(\''+inpId+'\').click()"><i data-lucide="upload"></i>رفع صورة</button>'
+      ) +
+      '<input type="file" id="'+inpId+'" accept="image/*" style="display:none" onchange="Pages.'+uploader+'(\''+projId+'\',\''+contractId+'\',this)">' +
+    '</div>' +
+    '<div class="var-field" style="margin-top:14px">' +
+      '<div class="var-field-lbl" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">' +
+        '<span>عناصر نصية فوق الصورة</span>' +
+        '<button class="btn btn-sm" style="padding:2px 8px;font-size:11px" onclick="Pages.addOverlay(\''+projId+'\',\''+contractId+'\',\''+section+'\')"><i data-lucide="plus" style="width:11px;height:11px"></i>إضافة</button>' +
+      '</div>' +
+      (overlays.length === 0
+        ? '<div style="font-size:11px;color:var(--fg-4);text-align:center;padding:8px;border:1px dashed var(--border);border-radius:var(--radius-xs)">لا توجد عناصر نصية. اضغط "إضافة"</div>'
+        : overlays.map(function(slot, i) {
+            return '<div style="border:1px solid var(--border);border-radius:var(--radius-xs);padding:8px;margin-bottom:6px;background:var(--bg-elevated)">' +
+              '<div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">' +
+                '<input class="var-field-inp" style="flex:1" placeholder="نص أو {{contract_no}}" value="'+UI.escHtml(slot.text||'')+'" oninput="Pages.updateOverlay(\''+projId+'\',\''+contractId+'\',\''+section+'\','+i+',\'text\',this.value)">' +
+                '<button class="btn btn-sm" style="padding:2px 6px;color:var(--danger-600)" onclick="Pages.removeOverlay(\''+projId+'\',\''+contractId+'\',\''+section+'\','+i+')"><i data-lucide="trash-2" style="width:12px;height:12px"></i></button>' +
+              '</div>' +
+              '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">' +
+                '<select class="var-field-inp" style="font-size:10px" onchange="Pages.updateOverlay(\''+projId+'\',\''+contractId+'\',\''+section+'\','+i+',\'pos\',this.value)">' +
+                  posOpts.map(function(p){return '<option value="'+p+'"'+((slot.pos||(section==='header'?'top-right':'bottom-center'))===p?' selected':'')+'>'+posLabels[p]+'</option>';}).join('') +
+                '</select>' +
+                '<input type="number" class="var-field-inp" style="font-size:10px" min="6" max="24" step="0.5" value="'+(slot.font_size||9)+'" title="الحجم (pt)" oninput="Pages.updateOverlay(\''+projId+'\',\''+contractId+'\',\''+section+'\','+i+',\'font_size\',parseFloat(this.value)||9)">' +
+                '<input type="color" class="var-field-inp" style="padding:2px;height:26px" value="'+(slot.color||'#1F2937')+'" title="اللون" onchange="Pages.updateOverlay(\''+projId+'\',\''+contractId+'\',\''+section+'\','+i+',\'color\',this.value)">' +
+              '</div>' +
+            '</div>';
+          }).join('')
+      ) +
+    '</div>' +
+  '</div>';
 };
 
 Pages.updateContractStatus = function(projId, contractId, value) {
@@ -5811,160 +5953,64 @@ Pages.printContract = function() {
   var contract = contracts.find(function(x){return x.id===Pages._contractId;});
   if (!contract) return;
 
-  var vars = contract.variables || {};
-  var ds = contract.doc_style || {font_size:14, line_height:1.5, title_size:18, clause_title_size:14, subtitle_size:12};
-  var dm = contract.doc_margins || {top:2.5, right:3, bottom:2.5, left:2.5};
-  var hdr = (contract.page_layout && contract.page_layout.header) || {};
-  var ftr = (contract.page_layout && contract.page_layout.footer) || {};
-
-  // Cover
-  var frameClass = 'cov-frame-' + (contract.cover && contract.cover.frame_style ? contract.cover.frame_style : 'modern');
-  var isCovImage = frameClass === 'cov-frame-image';
-  var bgStyle = '';
-  if (isCovImage && !(contract.cover && contract.cover.bg_image)) {
-    bgStyle = ' style="background:'+((contract.cover&&contract.cover.bg_color)||'#0F2A4A')+'"';
-  }
-  var covBgPosPrint = (contract.cover && contract.cover.bg_position) || 'center';
-  var bgImgHtml = (isCovImage && contract.cover && contract.cover.bg_image)
-    ? '<img class="cov-bg-img" src="'+contract.cover.bg_image+'" style="object-position:'+UI.escHtml(covBgPosPrint)+'">'
-      + '<div class="cov-overlay" style="background:rgba(0,0,0,'+String((contract.cover&&contract.cover.overlay_opacity)||0.55)+')"></div>'
-    : '';
-  var logoHtmlCov = contract.cover && contract.cover.logo
-    ? '<img src="'+contract.cover.logo+'" style="max-width:120px;max-height:72px;object-fit:contain;margin-bottom:12px;display:block;margin:0 auto 12px">'
-    : '';
-  var companyHtmlCov = contract.cover && contract.cover.company_name
-    ? '<div style="font-size:11pt;font-weight:600;color:#0F2A4A;margin-bottom:8px">'+UI.escHtml(contract.cover.company_name)+'</div>'
-    : '';
-
-  var covHtml =
-    '<div class="cov-page '+frameClass+'"'+bgStyle+'>' +
-      bgImgHtml +
-      '<div class="cov-frame-wrap">' +
-        logoHtmlCov + companyHtmlCov +
-        '<div class="cov-title">'+UI.escHtml(contract.title)+'</div>' +
-        '<div class="cov-subtitle">المملكة العربية السعودية</div>' +
-        '<div class="cov-parties-box">' +
-          '<div class="cov-parties-row"><strong>الطرف الأول</strong>'+(vars.party_a_name?UI.escHtml(vars.party_a_name):'_______________')+'</div>' +
-          '<div class="cov-parties-row"><strong>الطرف الثاني</strong>'+(vars.party_b_name?UI.escHtml(vars.party_b_name):'_______________')+'</div>' +
-        '</div>' +
-        '<div class="cov-ref-line">'+(vars.contract_date_gregorian?UI.escHtml(vars.contract_date_gregorian):'')+(vars.contract_city?' · '+UI.escHtml(vars.contract_city):'')+'</div>' +
-      '</div>' +
-    '</div>';
-
-  // Clauses with plain vars substituted
-  var enabledClauses = contract.clauses.filter(function(c){return c.enabled!==false;});
-  var clausesHtml = '';
-  enabledClauses.forEach(function(cl) {
-    var pbStyle = cl.page_break ? 'style="page-break-before:always"' : '';
-    clausesHtml +=
-      '<div class="clause-block" '+pbStyle+'>' +
-        '<div class="clause-block-inner">' +
-          '<div class="clause-title">'+UI.escHtml(cl.title)+'</div>' +
-          '<div class="clause-body">'+UI.escHtml(Pages._applyVarsPlain(cl.content, vars))+'</div>' +
-        '</div>' +
-      '</div>';
+  // Strip clause-controls (editing UI) and disable contenteditable from a fresh render
+  var docHtml = Pages._renderContractDoc(contract);
+  var tmp = document.createElement('div');
+  tmp.innerHTML = docHtml;
+  tmp.querySelectorAll('.clause-controls').forEach(function(el){ el.remove(); });
+  tmp.querySelectorAll('[contenteditable]').forEach(function(el){ el.removeAttribute('contenteditable'); el.removeAttribute('onblur'); });
+  tmp.querySelectorAll('.clause-body').forEach(function(el){
+    // Substitute variables in plain text for the printout
+    var clauseId = el.closest('.clause-block') && el.closest('.clause-block').id;
+    // The textContent here is the raw content; apply vars
+    el.textContent = Pages._applyVarsPlain(el.textContent, contract.variables);
   });
+  var docCleanHtml = tmp.firstChild.outerHTML;
 
-  // Signature page
-  function pSigBlock(label, orgName, repName, repTitle) {
-    return '<div class="sig-block">' +
-      '<div class="sig-block-title">'+label+'</div>' +
-      '<div class="sig-block-org">'+UI.escHtml(orgName||'_______________')+'</div>' +
-      '<div class="sig-block-rep">'+UI.escHtml(repName||'')+'</div>' +
-      '<div class="sig-block-rep-title">'+UI.escHtml(repTitle||'')+'</div>' +
-      '<div class="sig-line"></div>' +
-      '<div class="sig-line-label">التوقيع والختم</div>' +
-    '</div>';
-  }
-  var sigHtml =
-    '<div class="sig-page">' +
-      '<div style="border-top:1.5px solid #0F2A4A;margin-bottom:32px"></div>' +
-      '<div class="sig-grid">' +
-        pSigBlock('الطرف الأول', vars.party_a_name, vars.party_a_rep_name, vars.party_a_title) +
-        pSigBlock('الطرف الثاني', vars.party_b_name, vars.party_b_rep_name, vars.party_b_title) +
-      '</div>' +
-    '</div>';
-
-  // ── Build fixed header/footer for body pages ──
-  // position:fixed in @media print is the most reliable Chrome approach for
-  // repeating header/footer images on every page. The cover page (z-index:200)
-  // paints above these fixed elements (z-index:100) to hide them on page 1.
-
-  var hdrActive = hdr.show !== false &&
-    (hdr.mode === 'image' ? !!hdr.image : !!(hdr.title || hdr.doc_number || hdr.show_logo));
-  var ftrActive = ftr.show !== false &&
-    (ftr.mode === 'image' ? !!ftr.image : true);
-  var hdrH = hdrActive ? (parseFloat(hdr.height) || 53) : 0; // mm
-  var ftrH = ftrActive ? (parseFloat(ftr.height) || 20) : 0; // mm
-  // Side margins in cm (for @page and padding)
-  var rl = dm.left;   // cm
-  var rr = dm.right;  // cm
-  var rt = dm.top;    // cm
-  var rb = dm.bottom; // cm
-
-  var fixedHdrHtml = '';
-  if (hdrActive) {
-    var hdrInner = '';
-    if (hdr.mode === 'image' && hdr.image) {
-      var hp = UI.escHtml(hdr.image_position || 'center');
-      hdrInner = '<img src="'+hdr.image+'" style="width:100%;height:'+hdrH+'mm;object-fit:cover;object-position:'+hp+';display:block;margin:0">';
-    } else {
-      var logoH = (hdr.show_logo && contract.cover && contract.cover.logo)
-        ? '<img src="'+contract.cover.logo+'" style="max-height:'+(hdrH*0.6).toFixed(1)+'mm;object-fit:contain;margin-inline-start:8px">'
-        : '';
-      hdrInner = '<div style="height:'+hdrH+'mm;display:flex;align-items:center;justify-content:space-between;border-bottom:1.5px solid #0F2A4A;padding:0 '+rr+'cm 0 '+rl+'cm;font-size:9pt;color:#4B5563">'+
-        '<span>'+logoH+UI.escHtml(hdr.title||contract.title||'')+'</span>'+
-        '<span style="color:#9CA3AF;font-size:8pt">'+UI.escHtml(hdr.doc_number||hdr.custom_right||'')+'</span>'+
-        '</div>';
-    }
-    fixedHdrHtml = '<div class="phf phf-top">'+hdrInner+'</div>';
-  }
-
-  var fixedFtrHtml = '';
-  if (ftrActive) {
-    var ftrInner = '';
-    if (ftr.mode === 'image' && ftr.image) {
-      var fp = UI.escHtml(ftr.image_position || 'center');
-      var pnLayer = ftr.show_page_num
-        ? '<div style="position:absolute;bottom:6px;right:'+rr+'cm;font-size:9pt;color:#9CA3AF;font-family:\'IBM Plex Sans Arabic\',system-ui"><span class="pn-lbl"></span></div>'
-        : '';
-      ftrInner = '<div style="position:relative;height:'+ftrH+'mm">'+
-        '<img src="'+ftr.image+'" style="width:100%;height:'+ftrH+'mm;object-fit:cover;object-position:'+fp+';display:block;margin:0">'+
-        pnLayer+'</div>';
-    } else {
-      var pnSpan = ftr.show_page_num ? '<span class="pn-lbl" style="color:#9CA3AF"></span>' : '';
-      ftrInner = '<div style="height:'+ftrH+'mm;display:flex;align-items:center;justify-content:space-between;border-top:1px solid #E5E7EB;padding:0 '+rr+'cm 0 '+rl+'cm;font-size:9pt;color:#9CA3AF">'+
-        '<span>'+UI.escHtml(ftr.left_text||contract.footer_label||'سري')+'</span>'+
-        '<span>'+UI.escHtml(ftr.center_text||'')+'</span>'+
-        pnSpan+'</div>';
-    }
-    fixedFtrHtml = '<div class="phf phf-bot">'+ftrInner+'</div>';
-  }
-
-  var html = '<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8">' +
-    '<title>'+UI.escHtml(contract.title||'عقد')+'</title>' +
-    '<link rel="preconnect" href="https://fonts.googleapis.com">' +
-    '<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">' +
-    '<style>' +
+  // Extract the contract-related CSS from the current page (everything inside the parent <style> tag)
+  // Simpler: hard-code the relevant CSS so the print popup is self-contained.
+  var ds = contract.doc_style || {font_size:14, line_height:1.5};
+  var css =
     '*{box-sizing:border-box;margin:0;padding:0}' +
-    'body{font-family:\'IBM Plex Sans Arabic\',Tajawal,system-ui,sans-serif;direction:rtl;background:#fff;color:#1F2937;font-size:'+ds.font_size+'pt;line-height:'+ds.line_height+'}' +
-    /* @page margin reserves space for header/footer on EVERY body page.
-       Content area starts at hdrH from physical top — guarantees no text/header overlap.
-       With @page cover-page{margin:0}, Chrome calculates fixed positions from the generic
-       @page rule, placing the header at physical top:0. On the cover (full content area),
-       z-index:200 makes the cover paint over the fixed header. */
-    '@page{size:A4 portrait;margin:'+hdrH+'mm '+rr+'cm '+ftrH+'mm '+rl+'cm}' +
-    '@page cover-page{size:A4 portrait;margin:0}' +
-    '.phf{position:fixed;left:-'+rl+'cm;right:-'+rr+'cm;z-index:100;-webkit-print-color-adjust:exact;print-color-adjust:exact}' +
-    '.phf-top{top:-'+hdrH+'mm;height:'+hdrH+'mm}' +
-    '.phf-bot{bottom:-'+ftrH+'mm;height:'+ftrH+'mm}' +
-    '.pn-lbl::after{content:"الصفحة " counter(page);font-family:\'IBM Plex Sans Arabic\',system-ui;direction:rtl}' +
-    /* Cover: page:cover-page → margin:0 → content area = full page.
-       Chrome uses generic @page for fixed positioning, so header appears at physical top
-       (0-hdrH) which is INSIDE the cover's full-page content area.
-       z-index:200 + background:white ensures the cover PAINTS OVER the fixed header.
-       min-height:297mm = exactly one A4 page, page-break-after forces next content to page 2. */
-    '.cov-page{page:cover-page;page-break-after:always;min-height:297mm;display:flex;flex-direction:column;position:relative;z-index:200;overflow:hidden;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}' +
+    'html,body{background:#fff}' +
+    'body{font-family:\'IBM Plex Sans Arabic\',Tajawal,system-ui,sans-serif;direction:rtl;color:#1F2937;font-size:'+(ds.font_size||14)+'pt;line-height:'+(ds.line_height||1.5)+'}' +
+    '@page{size:A4 portrait;margin:0}' +
+    '.contract-doc{display:flex;flex-direction:column;align-items:stretch;gap:0;font-family:inherit;color:inherit;font-size:inherit;line-height:inherit;direction:rtl}' +
+    '.doc-page{width:210mm;height:297mm;background:#fff;display:grid;grid-template-rows:var(--hdr-h,200px) 1fr var(--ftr-h,150px);overflow:hidden;position:relative;page-break-after:always;break-after:page;-webkit-print-color-adjust:exact;print-color-adjust:exact}' +
+    '.doc-page:last-child{page-break-after:auto;break-after:auto}' +
+    '.doc-page.cov-page{grid-template-rows:1fr}' +
+    '.doc-page.cov-page .doc-page-hdr,.doc-page.cov-page .doc-page-ftr{display:none}' +
+    '.doc-page-hdr,.doc-page-ftr{position:relative;overflow:hidden;width:100%}' +
+    '.doc-page-hdr-img,.doc-page-ftr-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}' +
+    '.doc-page-hdr-overlay,.doc-page-ftr-overlay{position:absolute;inset:0;pointer-events:none}' +
+    '.hdr-slot,.ftr-slot{position:absolute;white-space:nowrap;line-height:1.3;font-family:inherit}' +
+    '.hdr-slot[data-pos="top-right"],.ftr-slot[data-pos="top-right"]{top:8px;right:16px}' +
+    '.hdr-slot[data-pos="top-left"],.ftr-slot[data-pos="top-left"]{top:8px;left:16px}' +
+    '.hdr-slot[data-pos="top-center"],.ftr-slot[data-pos="top-center"]{top:8px;left:50%;transform:translateX(-50%)}' +
+    '.hdr-slot[data-pos="bottom-right"],.ftr-slot[data-pos="bottom-right"]{bottom:8px;right:16px}' +
+    '.hdr-slot[data-pos="bottom-left"],.ftr-slot[data-pos="bottom-left"]{bottom:8px;left:16px}' +
+    '.hdr-slot[data-pos="bottom-center"],.ftr-slot[data-pos="bottom-center"]{bottom:8px;left:50%;transform:translateX(-50%)}' +
+    '.hdr-slot[data-pos="center"],.ftr-slot[data-pos="center"]{top:50%;left:50%;transform:translate(-50%,-50%)}' +
+    '.doc-page-hdr.empty,.doc-page-ftr.empty{background:transparent}' +
+    '.doc-page-hdr.empty>span,.doc-page-ftr.empty>span{display:none}' +
+    '.doc-page-body{overflow:hidden;position:relative}' +
+    '.doc-page-body.cov-body{padding:0}' +
+    '.clause-block{padding:14px 0;page-break-inside:avoid;break-inside:avoid;orphans:4;widows:4}' +
+    '.clause-block-inner{padding:0}' +
+    '.clause-title{font-weight:700;color:#0F2A4A;margin-bottom:10px}' +
+    '.clause-body{white-space:pre-wrap;word-wrap:break-word;text-align:justify;color:#1F2937;outline:none}' +
+    '.sig-page{padding-top:24px}' +
+    '.sig-grid{display:grid;grid-template-columns:1fr 1fr;gap:40px}' +
+    '.sig-block{border:1px solid #E5E7EB;border-radius:6px;padding:24px;text-align:center}' +
+    '.sig-block-title{font-size:11pt;font-weight:700;color:#0F2A4A;margin-bottom:6px}' +
+    '.sig-block-org{font-size:10.5pt;font-weight:600;color:#1F2937;margin-bottom:4px}' +
+    '.sig-block-rep{font-size:10pt;color:#374151;margin-bottom:2px}' +
+    '.sig-block-rep-title{font-size:9pt;color:#6B7280;margin-bottom:32px}' +
+    '.sig-line{border-bottom:1.5px solid #374151;width:180px;margin:0 auto 8px}' +
+    '.sig-line-label{font-size:9pt;color:#9CA3AF}' +
+    '.sig-placeholder{color:#D1D5DB}' +
+    /* Cover frames */
+    '.cov-page-inner{height:100%}' +
     '.cov-frame-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:60px 50px}' +
     '.cov-frame-modern .cov-frame-wrap{border:2.5px solid #0F2A4A;margin:24px;border-radius:4px}' +
     '.cov-frame-classical .cov-frame-wrap{border:2px solid #B8860B;outline:6px double #B8860B;outline-offset:-12px;margin:20px;padding:50px}' +
@@ -5975,42 +6021,26 @@ Pages.printContract = function() {
     '.cov-frame-image .cov-frame-wrap{position:relative;z-index:2;border:none;margin:0;color:#fff}' +
     '.cov-frame-image .cov-title{color:#fff}' +
     '.cov-frame-image .cov-subtitle{color:rgba(255,255,255,0.8)}' +
-    '.cov-frame-image .cov-parties-box{background:rgba(255,255,255,0.1);border-color:rgba(255,255,255,0.25);color:#fff;backdrop-filter:blur(4px)}' +
-    '.cov-frame-image .cov-parties-row{border-bottom-color:rgba(255,255,255,0.15)}' +
-    '.cov-frame-image .cov-ref-line{color:rgba(255,255,255,0.6)}' +
-    '.cov-title{font-size:'+(ds.title_size||18)+'pt;font-weight:700;color:#0F2A4A;line-height:1.3;margin-bottom:12px}' +
-    '.cov-subtitle{font-size:'+(ds.subtitle_size||12)+'pt;color:#6B7280;margin-bottom:40px}' +
+    '.cov-frame-image .cov-parties-box{background:rgba(255,255,255,0.1);border-color:rgba(255,255,255,0.25);color:#fff}' +
+    '.cov-title{font-weight:700;color:#0F2A4A;line-height:1.3;margin-bottom:12px}' +
+    '.cov-subtitle{color:#6B7280;margin-bottom:40px}' +
     '.cov-parties-box{border:1px solid #E5E7EB;border-radius:6px;padding:20px 32px;max-width:420px;text-align:right;font-size:11pt}' +
     '.cov-parties-row{padding:6px 0;border-bottom:1px solid #F3F4F6;color:#374151}' +
     '.cov-parties-row:last-child{border-bottom:none}' +
     '.cov-parties-row strong{color:#6B7280;display:block;font-size:10pt;font-weight:500}' +
     '.cov-ref-line{margin-top:32px;font-size:10pt;color:#9CA3AF}' +
-    /* Body: left/right handled by @page margin; only inner top/bottom padding needed */
-    '.print-body{padding:'+rt+'cm 0 '+rb+'cm 0}' +
-    '.clause-block{padding:14px 0;page-break-inside:avoid;orphans:4;widows:4}' +
-    '.clause-block+.clause-block{border-top:1px solid #E5E7EB;padding-top:14px}' +
-    '.clause-block-inner{padding:0}' +
-    '.clause-title{font-size:'+(ds.clause_title_size||14)+'pt;font-weight:700;color:#0F2A4A;margin-bottom:10px}' +
-    '.clause-body{font-size:'+ds.font_size+'pt;line-height:'+ds.line_height+';color:#1F2937;white-space:pre-wrap;word-wrap:break-word;text-align:justify}' +
-    '.sig-page{padding-top:24px}' +
-    '.sig-grid{display:grid;grid-template-columns:1fr 1fr;gap:40px}' +
-    '.sig-block{border:1px solid #E5E7EB;border-radius:6px;padding:24px;text-align:center}' +
-    '.sig-block-title{font-size:11pt;font-weight:700;color:#0F2A4A;margin-bottom:6px}' +
-    '.sig-block-org{font-size:10.5pt;font-weight:600;color:#1F2937;margin-bottom:4px}' +
-    '.sig-block-rep{font-size:10pt;color:#374151;margin-bottom:2px}' +
-    '.sig-block-rep-title{font-size:9pt;color:#6B7280;margin-bottom:32px}' +
-    '.sig-line{border-bottom:1.5px solid #374151;width:180px;margin:0 auto 8px}' +
-    '.sig-line-label{font-size:9pt;color:#9CA3AF}' +
-    '@media print{body,img{-webkit-print-color-adjust:exact;print-color-adjust:exact}}' +
-    '</style></head><body>' +
-    fixedHdrHtml +
-    fixedFtrHtml +
-    covHtml +
-    '<div class="print-body">' +
-      clausesHtml +
-      sigHtml +
-    '</div>' +
-    '<script>window.onload=function(){window.print();}<\/script>' +
+    /* Variable chips: print as plain underlined text since vars should already be substituted */
+    '.var-chip{background:transparent;color:inherit;padding:0}' +
+    '.var-chip.empty{color:#9CA3AF;text-decoration:underline dotted}' +
+    '@media print{*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}}';
+
+  var html = '<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8">' +
+    '<title>'+UI.escHtml(contract.title||'عقد')+'</title>' +
+    '<link rel="preconnect" href="https://fonts.googleapis.com">' +
+    '<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">' +
+    '<style>'+css+'</style>' +
+    '</head><body>' + docCleanHtml +
+    '<script>window.onload=function(){setTimeout(function(){window.print();},400);}<\/script>' +
     '</body></html>';
 
   var w = window.open('', '_blank', 'width=980,height=820');
