@@ -1796,16 +1796,13 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
 .sig-page{padding:24px 0 0}
 .sig-grid{display:grid;grid-template-columns:1fr 1fr;gap:40px}
 .sig-block{border:1px solid #E5E7EB;border-radius:6px;padding:24px;text-align:center}
-.sig-block-title{font-size:11pt;font-weight:700;color:#0F2A4A;margin-bottom:4px}
-.sig-block-name{font-size:10pt;color:#6B7280;margin-bottom:60px}
+.sig-block-title{font-size:11pt;font-weight:700;color:#0F2A4A;margin-bottom:6px}
+.sig-block-org{font-size:10.5pt;font-weight:600;color:#1F2937;margin-bottom:4px}
+.sig-block-rep{font-size:10pt;color:#374151;margin-bottom:2px}
+.sig-block-rep-title{font-size:9pt;color:#6B7280;margin-bottom:32px}
+.sig-placeholder{color:#D1D5DB!important}
 .sig-line{border-bottom:1.5px solid #374151;width:180px;margin:0 auto 8px}
 .sig-line-label{font-size:9pt;color:#9CA3AF}
-.sig-stamp-area{
-  margin-top:16px;width:80px;height:80px;
-  border-radius:50%;border:1.5px dashed #D1D5DB;
-  margin-inline:auto;display:flex;align-items:center;justify-content:center;
-  font-size:9pt;color:#9CA3AF;
-}
 
 /* Clause library sidebar items */
 .clause-lib-item{
@@ -2491,7 +2488,7 @@ var CONTRACT_TEMPLATES = {
       {
         key: 'preamble',
         baseTitle: 'التمهيد وأطراف العقد',
-        content: 'إنه في يوم {{contract_date_gregorian}}م، بمدينة {{contract_city}}، تم الاتفاق والتعاقد بين كل من:\n\nأولاً — الطرف الأول (مقدم الخدمة): {{party_a_name}}، وثيقة الهوية / السجل التجاري رقم {{party_a_id}}، وعنوانه: {{party_a_address}}.\n\nثانياً — الطرف الثاني (مستفيد الخدمة): {{party_b_name}}، وثيقة الهوية / السجل التجاري رقم {{party_b_id}}، وعنوانه: {{party_b_address}}.\n\nوقد اتفق الطرفان بملء إرادتهما ودون أي إكراه على إبرام هذا العقد وفقاً للشروط والأحكام المنصوص عليها أدناه.'
+        content: 'إنه في يوم {{contract_date_gregorian}}م، بمدينة {{contract_city}}، تم الاتفاق والتعاقد بين كل من:\n\nأولاً — الطرف الأول (مقدم الخدمة): {{party_a_name}}، وثيقة الهوية / السجل التجاري رقم {{party_a_id}}، وعنوانه: {{party_a_address}}، يمثله في هذا العقد {{party_a_rep_name}}، بصفته {{party_a_title}}.\n\nثانياً — الطرف الثاني (مستفيد الخدمة): {{party_b_name}}، وثيقة الهوية / السجل التجاري رقم {{party_b_id}}، وعنوانه: {{party_b_address}}، يمثله في هذا العقد {{party_b_rep_name}}، بصفته {{party_b_title}}.\n\nوقد اتفق الطرفان بملء إرادتهما ودون أي إكراه على إبرام هذا العقد وفقاً للشروط والأحكام المنصوص عليها أدناه.'
       },
       {
         key: 'subject',
@@ -2536,7 +2533,7 @@ var CONTRACT_TEMPLATES = {
       {
         key: 'preamble',
         baseTitle: 'التمهيد وأطراف الاتفاقية',
-        content: 'إنه في يوم {{contract_date_gregorian}}م، بمدينة {{contract_city}}، أبرمت هذه الاتفاقية بين:\n\nالطرف الأول (المُفصِح): {{party_a_name}}، وثيقة الهوية / السجل التجاري رقم {{party_a_id}}، وعنوانه: {{party_a_address}}.\n\nالطرف الثاني (المُستقبِل): {{party_b_name}}، وثيقة الهوية / السجل التجاري رقم {{party_b_id}}، وعنوانه: {{party_b_address}}.\n\nرغبةً من الطرفين في حماية المعلومات السرية التي سيُفصح عنها في إطار العلاقة المهنية والتجارية بينهما، اتفقا على الشروط والأحكام الآتية.'
+        content: 'إنه في يوم {{contract_date_gregorian}}م، بمدينة {{contract_city}}، أبرمت هذه الاتفاقية بين:\n\nالطرف الأول (المُفصِح): {{party_a_name}}، وثيقة الهوية / السجل التجاري رقم {{party_a_id}}، وعنوانه: {{party_a_address}}، يمثله {{party_a_rep_name}} بصفته {{party_a_title}}.\n\nالطرف الثاني (المُستقبِل): {{party_b_name}}، وثيقة الهوية / السجل التجاري رقم {{party_b_id}}، وعنوانه: {{party_b_address}}، يمثله {{party_b_rep_name}} بصفته {{party_b_title}}.\n\nرغبةً من الطرفين في حماية المعلومات السرية التي سيُفصح عنها في إطار العلاقة المهنية والتجارية بينهما، اتفقا على الشروط والأحكام الآتية.'
       },
       {
         key: 'definitions',
@@ -2576,7 +2573,7 @@ var CONTRACT_TEMPLATES = {
       {
         key: 'preamble',
         baseTitle: 'أطراف عقد العمل',
-        content: 'إنه في يوم {{contract_date_gregorian}}م، بمدينة {{contract_city}}، تم إبرام عقد العمل هذا بين:\n\nصاحب العمل (الطرف الأول): {{party_a_name}}، السجل التجاري / رقم الهوية {{party_a_id}}، العنوان: {{party_a_address}}.\n\nالموظف (الطرف الثاني): {{party_b_name}}، وثيقة الهوية رقم {{party_b_id}}، العنوان: {{party_b_address}}.\n\nوقد اتفق الطرفان على الشروط والأحكام التالية وفقاً لنظام العمل السعودي الصادر بالمرسوم الملكي ولوائحه التنفيذية.'
+        content: 'إنه في يوم {{contract_date_gregorian}}م، بمدينة {{contract_city}}، تم إبرام عقد العمل هذا بين:\n\nصاحب العمل (الطرف الأول): {{party_a_name}}، السجل التجاري / رقم الهوية {{party_a_id}}، العنوان: {{party_a_address}}، يمثلها {{party_a_rep_name}} بصفته {{party_a_title}}.\n\nالموظف (الطرف الثاني): {{party_b_name}}، وثيقة الهوية رقم {{party_b_id}}، العنوان: {{party_b_address}}.\n\nوقد اتفق الطرفان على الشروط والأحكام التالية وفقاً لنظام العمل السعودي الصادر بالمرسوم الملكي ولوائحه التنفيذية.'
       },
       {
         key: 'subject',
@@ -2616,7 +2613,7 @@ var CONTRACT_TEMPLATES = {
       {
         key: 'preamble',
         baseTitle: 'أطراف عقد الاستشارة',
-        content: 'إنه في يوم {{contract_date_gregorian}}م، بمدينة {{contract_city}}، أُبرم هذا العقد الاستشاري بين:\n\nالطرف الأول (المستشار): {{party_a_name}}، وثيقة الهوية / السجل التجاري رقم {{party_a_id}}، وعنوانه: {{party_a_address}}.\n\nالطرف الثاني (العميل): {{party_b_name}}، وثيقة الهوية / السجل التجاري رقم {{party_b_id}}، وعنوانه: {{party_b_address}}.\n\nبناءً على رغبة الطرف الثاني في الاستفادة من خبرات الطرف الأول ومؤهلاته المهنية، اتفق الطرفان على ما يلي.'
+        content: 'إنه في يوم {{contract_date_gregorian}}م، بمدينة {{contract_city}}، أُبرم هذا العقد الاستشاري بين:\n\nالطرف الأول (المستشار): {{party_a_name}}، وثيقة الهوية / السجل التجاري رقم {{party_a_id}}، وعنوانه: {{party_a_address}}، يمثله {{party_a_rep_name}} بصفته {{party_a_title}}.\n\nالطرف الثاني (العميل): {{party_b_name}}، وثيقة الهوية / السجل التجاري رقم {{party_b_id}}، وعنوانه: {{party_b_address}}، يمثله {{party_b_rep_name}} بصفته {{party_b_title}}.\n\nبناءً على رغبة الطرف الثاني في الاستفادة من خبرات الطرف الأول ومؤهلاته المهنية، اتفق الطرفان على ما يلي.'
       },
       {
         key: 'subject',
@@ -3667,19 +3664,21 @@ Pages.createContract = function(projId, tplKey) {
 
   var vars = {
     party_a_name: '',
+    party_a_rep_name: '',
+    party_a_title: '',
     party_a_id: '',
     party_a_address: '',
     party_a_phone: '',
     party_a_email: '',
-    party_a_title: '',
     party_a_reg: '',
     party_a_tax: '',
     party_b_name: cl ? cl.name : '',
+    party_b_rep_name: cl ? (cl.contact_name||'') : '',
+    party_b_title: '',
     party_b_id: cl ? (cl.reg_no||'') : '',
     party_b_address: cl ? (cl.city||'') : '',
     party_b_phone: cl ? (cl.phone||'') : '',
     party_b_email: cl ? (cl.email||'') : '',
-    party_b_title: '',
     party_b_reg: cl ? (cl.reg_no||'') : '',
     party_b_tax: cl ? (cl.tax_no||'') : '',
     contract_date_gregorian: fin.ctrl && fin.ctrl.contract_date ? fin.ctrl.contract_date : today,
@@ -4885,8 +4884,9 @@ Pages.render_contract = function(params) {
   // VARS PANEL
   var varsPanelHtml =
     '<div class="var-group-lbl"><i data-lucide="user"></i>الطرف الأول</div>' +
-    varField('party_a_name', 'الاسم', false) +
-    varField('party_a_title', 'الصفة / المسمى', false) +
+    varField('party_a_name', 'اسم الجهة / الطرف', false) +
+    varField('party_a_rep_name', 'اسم الممثل المفوض', false) +
+    varField('party_a_title', 'صفة الممثل', false) +
     varField('party_a_id', 'رقم الهوية', false) +
     varField('party_a_reg', 'السجل التجاري', false) +
     varField('party_a_tax', 'الرقم الضريبي', false) +
@@ -4894,8 +4894,9 @@ Pages.render_contract = function(params) {
     varField('party_a_phone', 'الجوال', false) +
     varField('party_a_email', 'البريد الإلكتروني', false) +
     '<div class="var-group-lbl"><i data-lucide="users"></i>الطرف الثاني</div>' +
-    varField('party_b_name', 'الاسم', true) +
-    varField('party_b_title', 'الصفة / المسمى', false) +
+    varField('party_b_name', 'اسم الجهة / الطرف', true) +
+    varField('party_b_rep_name', 'اسم الممثل المفوض', true) +
+    varField('party_b_title', 'صفة الممثل', false) +
     varField('party_b_id', 'رقم الهوية', true) +
     varField('party_b_reg', 'السجل التجاري', true) +
     varField('party_b_tax', 'الرقم الضريبي', true) +
@@ -5303,24 +5304,22 @@ Pages._renderContractDoc = function(contract) {
       '</div>';
   });
 
+  function sigBlock(label, orgName, repName, repTitle) {
+    return '<div class="sig-block">' +
+      '<div class="sig-block-title">'+label+'</div>' +
+      '<div class="sig-block-org">'+UI.escHtml(orgName||'_______________')+'</div>' +
+      (repName ? '<div class="sig-block-rep">'+UI.escHtml(repName)+'</div>' : '<div class="sig-block-rep sig-placeholder">اسم الممثل</div>') +
+      (repTitle ? '<div class="sig-block-rep-title">'+UI.escHtml(repTitle)+'</div>' : '<div class="sig-block-rep-title sig-placeholder">الصفة</div>') +
+      '<div class="sig-line"></div>' +
+      '<div class="sig-line-label">التوقيع والختم</div>' +
+    '</div>';
+  }
   var sigHtml =
     '<div class="sig-page">' +
       '<div style="border-top:1.5px solid #0F2A4A;margin-bottom:32px"></div>' +
       '<div class="sig-grid">' +
-        '<div class="sig-block">' +
-          '<div class="sig-block-title">الطرف الأول</div>' +
-          '<div class="sig-block-name">'+UI.escHtml(vars.party_a_name||'_______________')+'</div>' +
-          '<div class="sig-line"></div>' +
-          '<div class="sig-line-label">التوقيع</div>' +
-          '<div class="sig-stamp-area">ختم</div>' +
-        '</div>' +
-        '<div class="sig-block">' +
-          '<div class="sig-block-title">الطرف الثاني</div>' +
-          '<div class="sig-block-name">'+UI.escHtml(vars.party_b_name||'_______________')+'</div>' +
-          '<div class="sig-line"></div>' +
-          '<div class="sig-line-label">التوقيع</div>' +
-          '<div class="sig-stamp-area">ختم</div>' +
-        '</div>' +
+        sigBlock('الطرف الأول', vars.party_a_name, vars.party_a_rep_name, vars.party_a_title) +
+        sigBlock('الطرف الثاني', vars.party_b_name, vars.party_b_rep_name, vars.party_b_title) +
       '</div>' +
     '</div>';
 
@@ -5423,9 +5422,15 @@ Pages._refreshContractCover = function(contract) {
   if (covParties[1]) covParties[1].innerHTML = '<strong>الطرف الثاني</strong>'+(vars.party_b_name?UI.escHtml(vars.party_b_name):'<span style="color:#9CA3AF">اسم الطرف الثاني</span>');
   var refLine = docEl.querySelector('.cov-ref-line');
   if (refLine) refLine.textContent = (vars.contract_date_gregorian||'')+(vars.contract_city?' · '+vars.contract_city:'');
-  var sigNames = docEl.querySelectorAll('.sig-block-name');
-  if (sigNames[0]) sigNames[0].textContent = vars.party_a_name||'_______________';
-  if (sigNames[1]) sigNames[1].textContent = vars.party_b_name||'_______________';
+  var sigOrgs = docEl.querySelectorAll('.sig-block-org');
+  if (sigOrgs[0]) sigOrgs[0].textContent = vars.party_a_name||'_______________';
+  if (sigOrgs[1]) sigOrgs[1].textContent = vars.party_b_name||'_______________';
+  var sigReps = docEl.querySelectorAll('.sig-block-rep');
+  if (sigReps[0]) { sigReps[0].textContent = vars.party_a_rep_name||''; sigReps[0].className = 'sig-block-rep'+(vars.party_a_rep_name?'':' sig-placeholder'); }
+  if (sigReps[1]) { sigReps[1].textContent = vars.party_b_rep_name||''; sigReps[1].className = 'sig-block-rep'+(vars.party_b_rep_name?'':' sig-placeholder'); }
+  var sigTitles = docEl.querySelectorAll('.sig-block-rep-title');
+  if (sigTitles[0]) { sigTitles[0].textContent = vars.party_a_title||''; sigTitles[0].className = 'sig-block-rep-title'+(vars.party_a_title?'':' sig-placeholder'); }
+  if (sigTitles[1]) { sigTitles[1].textContent = vars.party_b_title||''; sigTitles[1].className = 'sig-block-rep-title'+(vars.party_b_title?'':' sig-placeholder'); }
   var sigDate = docEl.querySelector('.sig-page-sub');
   if (sigDate) sigDate.textContent = 'حرر في مدينة '+(vars.signature_city||'___________')+' بتاريخ '+(vars.contract_date_gregorian||'___________');
 };
@@ -5843,22 +5848,22 @@ Pages.printContract = function() {
   });
 
   // Signature page
+  function pSigBlock(label, orgName, repName, repTitle) {
+    return '<div class="sig-block">' +
+      '<div class="sig-block-title">'+label+'</div>' +
+      '<div class="sig-block-org">'+UI.escHtml(orgName||'_______________')+'</div>' +
+      '<div class="sig-block-rep">'+UI.escHtml(repName||'')+'</div>' +
+      '<div class="sig-block-rep-title">'+UI.escHtml(repTitle||'')+'</div>' +
+      '<div class="sig-line"></div>' +
+      '<div class="sig-line-label">التوقيع والختم</div>' +
+    '</div>';
+  }
   var sigHtml =
     '<div class="sig-page">' +
       '<div style="border-top:1.5px solid #0F2A4A;margin-bottom:32px"></div>' +
       '<div class="sig-grid">' +
-        '<div class="sig-block">' +
-          '<div class="sig-block-title">الطرف الأول</div>' +
-          '<div class="sig-block-name">'+UI.escHtml(vars.party_a_name||'_______________')+'</div>' +
-          '<div class="sig-line"></div>' +
-          '<div class="sig-line-label">التوقيع</div>' +
-        '</div>' +
-        '<div class="sig-block">' +
-          '<div class="sig-block-title">الطرف الثاني</div>' +
-          '<div class="sig-block-name">'+UI.escHtml(vars.party_b_name||'_______________')+'</div>' +
-          '<div class="sig-line"></div>' +
-          '<div class="sig-line-label">التوقيع</div>' +
-        '</div>' +
+        pSigBlock('الطرف الأول', vars.party_a_name, vars.party_a_rep_name, vars.party_a_title) +
+        pSigBlock('الطرف الثاني', vars.party_b_name, vars.party_b_rep_name, vars.party_b_title) +
       '</div>' +
     '</div>';
 
@@ -5969,8 +5974,10 @@ Pages.printContract = function() {
     '.sig-page{padding-top:24px}' +
     '.sig-grid{display:grid;grid-template-columns:1fr 1fr;gap:40px}' +
     '.sig-block{border:1px solid #E5E7EB;border-radius:6px;padding:24px;text-align:center}' +
-    '.sig-block-title{font-size:11pt;font-weight:700;color:#0F2A4A;margin-bottom:4px}' +
-    '.sig-block-name{font-size:10pt;color:#6B7280;margin-bottom:60px}' +
+    '.sig-block-title{font-size:11pt;font-weight:700;color:#0F2A4A;margin-bottom:6px}' +
+    '.sig-block-org{font-size:10.5pt;font-weight:600;color:#1F2937;margin-bottom:4px}' +
+    '.sig-block-rep{font-size:10pt;color:#374151;margin-bottom:2px}' +
+    '.sig-block-rep-title{font-size:9pt;color:#6B7280;margin-bottom:32px}' +
     '.sig-line{border-bottom:1.5px solid #374151;width:180px;margin:0 auto 8px}' +
     '.sig-line-label{font-size:9pt;color:#9CA3AF}' +
     '@media print{body,img{-webkit-print-color-adjust:exact;print-color-adjust:exact}}' +
@@ -6146,7 +6153,7 @@ Pages.render_template_editor = function(params) {
       name: 'نموذج جديد',
       template_type: 'blank',
       created: today, updated: today,
-      clauses: [{id:DB.uid(), key:'preamble', title:'المادة الأولى: التمهيد', content:'إنه في يوم {{contract_date_gregorian}}م، بمدينة {{contract_city}}، تم الاتفاق بين:\nالطرف الأول: {{party_a_name}}\nالطرف الثاني: {{party_b_name}}\nعلى إبرام هذا العقد وفقاً للشروط أدناه.', enabled:true}],
+      clauses: [{id:DB.uid(), key:'preamble', title:'المادة الأولى: التمهيد', content:'إنه في يوم {{contract_date_gregorian}}م، بمدينة {{contract_city}}، تم الاتفاق بين:\nالطرف الأول: {{party_a_name}}، يمثله {{party_a_rep_name}} بصفته {{party_a_title}}.\nالطرف الثاني: {{party_b_name}}، يمثله {{party_b_rep_name}} بصفته {{party_b_title}}.\nعلى إبرام هذا العقد وفقاً للشروط أدناه.', enabled:true}],
       cover: {frame_style:'modern', company_name:'', logo:''},
       footer_label: 'سري'
     };
@@ -6281,8 +6288,8 @@ Pages._renderTemplatePrev = function(template) {
       '<div class="sig-page-title">صفحة التوقيعات</div>' +
       '<div class="sig-page-sub">حرر في مدينة <span class="var-chip">{{signature_city}}</span> بتاريخ <span class="var-chip">{{contract_date_gregorian}}</span></div>' +
       '<div class="sig-grid">' +
-        '<div class="sig-block"><div class="sig-block-title">الطرف الأول</div><div class="sig-block-name"><span class="var-chip">{{party_a_name}}</span></div><div class="sig-line"></div><div class="sig-line-label">التوقيع والختم</div></div>' +
-        '<div class="sig-block"><div class="sig-block-title">الطرف الثاني</div><div class="sig-block-name"><span class="var-chip">{{party_b_name}}</span></div><div class="sig-line"></div><div class="sig-line-label">التوقيع والختم</div></div>' +
+        '<div class="sig-block"><div class="sig-block-title">الطرف الأول</div><div class="sig-block-org"><span class="var-chip">{{party_a_name}}</span></div><div class="sig-block-rep"><span class="var-chip">{{party_a_rep_name}}</span></div><div class="sig-block-rep-title"><span class="var-chip">{{party_a_title}}</span></div><div class="sig-line"></div><div class="sig-line-label">التوقيع والختم</div></div>' +
+        '<div class="sig-block"><div class="sig-block-title">الطرف الثاني</div><div class="sig-block-org"><span class="var-chip">{{party_b_name}}</span></div><div class="sig-block-rep"><span class="var-chip">{{party_b_rep_name}}</span></div><div class="sig-block-rep-title"><span class="var-chip">{{party_b_title}}</span></div><div class="sig-line"></div><div class="sig-line-label">التوقيع والختم</div></div>' +
       '</div>' +
     '</div>';
 
