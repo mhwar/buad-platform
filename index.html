@@ -1803,12 +1803,13 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
 .contract-ftr-img-band{width:100%;display:block;margin:0}
 .contract-ftr-img-band img{width:100%;display:block;object-fit:contain}
 
-/* Article / Clause block */
+/* Article / Clause block — uniform 14px padding top/bottom on every clause
+   including the first; with body padding-top:0 this creates a 14px gap
+   from header bottom to first clause title, identical to inter-clause gap. */
 .clause-block{
   padding:14px 0;
   position:relative;
 }
-.clause-block:first-child{padding-top:0}
 .clause-block-inner{padding-inline-start:0}
 .clause-block + .clause-block::before{
   content:'';display:block;height:1px;
@@ -3745,7 +3746,7 @@ Pages.createContract = function(projId, tplKey) {
     cover: contract_cover,
     footer_label: contract_footer,
     doc_style: { font_size: 14, line_height: 1.5, title_size: 18, clause_title_size: 14, subtitle_size: 12 },
-    doc_margins: { top: 0.4, right: 2.0, bottom: 0.4, left: 2.0 },
+    doc_margins: { top: 0, right: 2.0, bottom: 0, left: 2.0 },
     page_layout: {
       header: {
         show: true,
@@ -5126,7 +5127,10 @@ Pages.render_contract = function(params) {
   if (Pages._contractActiveTab) Pages.switchContractTab(Pages._contractActiveTab);
 };
 
-/* Migrate old page_layout values (mm-based heights) to new px-based system */
+/* Migrate old page_layout values (mm-based heights) to new px-based system.
+   Also forces top/bottom margins to the tight defaults so the gap between
+   the header band and the first clause text matches inter-clause spacing
+   (≈ 14px, identical on EVERY body page). */
 Pages._migrateContractLayout = function(contract) {
   if (!contract.page_layout) {
     contract.page_layout = {
@@ -5137,7 +5141,6 @@ Pages._migrateContractLayout = function(contract) {
   var h = contract.page_layout.header;
   var f = contract.page_layout.footer;
   if (h) {
-    // Convert mm → px if height is suspiciously small (was mm)
     if (h.height && h.height < 110) h.height = 200;
     if (!h.overlay) h.overlay = [];
     delete h.mode; delete h.image_position; delete h.show_logo;
@@ -5149,16 +5152,18 @@ Pages._migrateContractLayout = function(contract) {
     delete f.mode; delete f.image_position;
     delete f.left_text; delete f.center_text; delete f.show_page_num; delete f.custom_right;
   }
-  if (contract.doc_margins) {
-    var m = contract.doc_margins;
-    // Old defaults were 2.5cm top/bottom; reduce to 0.4cm (≈ 15px) so spacing
-    // between header and first clause matches inter-clause spacing
-    if (m.top >= 1.0) m.top = 0.4;
-    if (m.bottom >= 1.0) m.bottom = 0.4;
-    if (m.right > 2.5) m.right = 2.0;
-    if (m.left > 2.5) m.left = 2.0;
-  } else {
-    contract.doc_margins = {top:0.4, right:2.0, bottom:0.4, left:2.0};
+  // Force top/bottom margins to 0 — first/last clause's natural padding (14px)
+  // is the entire gap; this matches the inter-clause spacing exactly on every page.
+  if (!contract.doc_margins) contract.doc_margins = {top:0, right:2.0, bottom:0, left:2.0};
+  var m = contract.doc_margins;
+  m.top = 0;
+  m.bottom = 0;
+  if (m.right > 2.5 || !m.right) m.right = 2.0;
+  if (m.left > 2.5 || !m.left) m.left = 2.0;
+  // Persist the migration so the saved DB value reflects the new defaults
+  if (contract._migrated_v2 !== true && Pages._contractProjId) {
+    contract._migrated_v2 = true;
+    try { DB.saveContract(Pages._contractProjId, contract); } catch(e) {}
   }
 };
 
