@@ -3709,7 +3709,7 @@ Pages.createContract = function(projId, tplKey) {
         mode: 'text',
         image: '',
         image_position: 'center',
-        height: 20,
+        height: 53,
         show_logo: false,
         title: '',
         doc_number: '',
@@ -3721,7 +3721,7 @@ Pages.createContract = function(projId, tplKey) {
         mode: 'text',
         image: '',
         image_position: 'center',
-        height: 15,
+        height: 20,
         left_text: '',
         center_text: '',
         show_page_num: true,
@@ -5012,7 +5012,7 @@ Pages.render_contract = function(params) {
       '</div>' +
       '<div class="var-field">' +
         '<div class="var-field-lbl">الارتفاع (مم)</div>' +
-        '<input type="number" class="var-field-inp" min="8" max="60" step="1" value="'+(plh.height||20)+'" oninput="Pages.updatePageLayout(\''+projId+'\',\''+contractId+'\',\'header\',\'height\',parseFloat(this.value)||20)">' +
+        '<input type="number" class="var-field-inp" min="10" max="100" step="1" value="'+(plh.height||53)+'" oninput="Pages.updatePageLayout(\''+projId+'\',\''+contractId+'\',\'header\',\'height\',parseFloat(this.value)||53)">' +
       '</div>' +
       '<div class="var-field">' +
         '<div class="var-field-lbl">النوع</div>' +
@@ -5070,7 +5070,7 @@ Pages.render_contract = function(params) {
       '</div>' +
       '<div class="var-field">' +
         '<div class="var-field-lbl">الارتفاع (مم)</div>' +
-        '<input type="number" class="var-field-inp" min="8" max="60" step="1" value="'+(plf.height||15)+'" oninput="Pages.updatePageLayout(\''+projId+'\',\''+contractId+'\',\'footer\',\'height\',parseFloat(this.value)||15)">' +
+        '<input type="number" class="var-field-inp" min="8" max="60" step="1" value="'+(plf.height||20)+'" oninput="Pages.updatePageLayout(\''+projId+'\',\''+contractId+'\',\'footer\',\'height\',parseFloat(this.value)||20)">' +
       '</div>' +
       '<div class="var-field">' +
         '<div class="var-field-lbl">النوع</div>' +
@@ -5135,20 +5135,18 @@ Pages.render_contract = function(params) {
 
   var pageEl = document.getElementById('pg-contract');
   pageEl.innerHTML =
-    '<div class="contract-sidebar contract-sidebar-left">' +
-      '<div class="contract-sidebar-header">مكتبة البنود</div>' +
-      '<div class="contract-sidebar-body">'+libHtml+'</div>' +
-    '</div>' +
     '<div class="contract-canvas-area" id="contract-canvas-area">' +
       docHtml +
     '</div>' +
     '<div class="contract-sidebar contract-sidebar-right">' +
       '<div class="ctab-pills">' +
         '<button class="ctab-pill active" id="ctab-vars-btn" onclick="Pages.switchContractTab(\'vars\')">المتغيرات</button>' +
+        '<button class="ctab-pill" id="ctab-cls-btn" onclick="Pages.switchContractTab(\'clauses\')">البنود</button>' +
         '<button class="ctab-pill" id="ctab-sets-btn" onclick="Pages.switchContractTab(\'settings\')">الإعدادات</button>' +
       '</div>' +
       '<div class="contract-sidebar-body">' +
         '<div id="ctab-vars-panel">'+varsPanelHtml+'</div>' +
+        '<div id="ctab-cls-panel" style="display:none">'+libHtml+'</div>' +
         '<div id="ctab-sets-panel" style="display:none">'+settingsPanelHtml+'</div>' +
       '</div>' +
     '</div>' +
@@ -5188,6 +5186,7 @@ Pages.render_contract = function(params) {
 
   if (typeof lucide !== 'undefined') lucide.createIcons({rootElement: pageEl});
   if (typeof lucide !== 'undefined') lucide.createIcons({rootElement: document.getElementById('top-actions')});
+  if (Pages._contractActiveTab) Pages.switchContractTab(Pages._contractActiveTab);
 };
 
 Pages._renderContractDoc = function(contract) {
@@ -5242,9 +5241,9 @@ Pages._renderContractDoc = function(contract) {
   if (plHdr.show !== false) {
     if (plHdr.mode === 'image' && plHdr.image) {
       var hdrImgPos = plHdr.image_position || 'center';
-      hdrBand = '<div class="contract-hdr-img-band" style="'+bandNegMargin+';height:'+(plHdr.height||20)+'mm;overflow:hidden"><img src="'+plHdr.image+'" style="width:100%;height:100%;object-fit:cover;object-position:'+UI.escHtml(hdrImgPos)+'"></div>';
+      hdrBand = '<div class="contract-hdr-img-band" style="'+bandNegMargin+';height:'+(plHdr.height||53)+'mm;overflow:hidden"><img src="'+plHdr.image+'" style="width:100%;height:100%;object-fit:cover;object-position:'+UI.escHtml(hdrImgPos)+'"></div>';
     } else {
-      var hdrHeight = (plHdr.height||20);
+      var hdrHeight = (plHdr.height||53);
       var hdrLogoHtml = (plHdr.show_logo && contract.cover && contract.cover.logo)
         ? '<img src="'+contract.cover.logo+'" style="max-height:'+Math.round(hdrHeight*0.7)+'mm;object-fit:contain;margin-left:8px">'
         : '';
@@ -5260,9 +5259,9 @@ Pages._renderContractDoc = function(contract) {
   if (plFtr.show !== false) {
     if (plFtr.mode === 'image' && plFtr.image) {
       var ftrImgPos = plFtr.image_position || 'center';
-      ftrBand = '<div class="contract-ftr-img-band" style="'+bandNegMargin+';height:'+(plFtr.height||15)+'mm;overflow:hidden"><img src="'+plFtr.image+'" style="width:100%;height:100%;object-fit:cover;object-position:'+UI.escHtml(ftrImgPos)+'"></div>';
+      ftrBand = '<div class="contract-ftr-img-band" style="'+bandNegMargin+';height:'+(plFtr.height||20)+'mm;overflow:hidden"><img src="'+plFtr.image+'" style="width:100%;height:100%;object-fit:cover;object-position:'+UI.escHtml(ftrImgPos)+'"></div>';
     } else {
-      ftrBand = '<div class="contract-doc-footer" style="margin:0 '+(-rightPx)+'px 0 '+(-leftPx)+'px;padding:8px '+rightPx+'px;height:'+(plFtr.height||15)+'mm">' +
+      ftrBand = '<div class="contract-doc-footer" style="margin:0 '+(-rightPx)+'px 0 '+(-leftPx)+'px;padding:8px '+rightPx+'px;height:'+(plFtr.height||20)+'mm">' +
         '<span>'+UI.escHtml(plFtr.left_text||contract.footer_label||'سري')+'</span>' +
         '<span>'+UI.escHtml(plFtr.center_text||'')+'</span>' +
         '<span>'+(plFtr.show_page_num!==false?'وثيقة سرية':'')+'</span>' +
@@ -5685,18 +5684,24 @@ Pages.toggleContractPreview = function() {
 };
 
 Pages.switchContractTab = function(tab) {
+  Pages._contractActiveTab = tab;
   var vp = document.getElementById('ctab-vars-panel');
+  var cp = document.getElementById('ctab-cls-panel');
   var sp = document.getElementById('ctab-sets-panel');
   var vb = document.getElementById('ctab-vars-btn');
+  var cb = document.getElementById('ctab-cls-btn');
   var sb = document.getElementById('ctab-sets-btn');
-  if (!vp || !sp) return;
+  if (!vp) return;
+  [vp, cp, sp].forEach(function(el){ if (el) el.style.display = 'none'; });
+  [vb, cb, sb].forEach(function(el){ if (el) el.classList.remove('active'); });
   if (tab === 'vars') {
-    vp.style.display = ''; sp.style.display = 'none';
+    if (vp) vp.style.display = '';
     if (vb) vb.classList.add('active');
-    if (sb) sb.classList.remove('active');
+  } else if (tab === 'clauses') {
+    if (cp) cp.style.display = '';
+    if (cb) cb.classList.add('active');
   } else {
-    vp.style.display = 'none'; sp.style.display = '';
-    if (vb) vb.classList.remove('active');
+    if (sp) sp.style.display = '';
     if (sb) sb.classList.add('active');
   }
 };
@@ -5789,8 +5794,8 @@ Pages.printContract = function() {
     (hdr.mode === 'image' ? !!hdr.image : !!(hdr.title || hdr.doc_number || hdr.show_logo));
   var ftrActive = ftr.show !== false &&
     (ftr.mode === 'image' ? !!ftr.image : true);
-  var hdrH = hdrActive ? (parseFloat(hdr.height) || 20) : 0; // mm
-  var ftrH = ftrActive ? (parseFloat(ftr.height) || 15) : 0; // mm
+  var hdrH = hdrActive ? (parseFloat(hdr.height) || 53) : 0; // mm
+  var ftrH = ftrActive ? (parseFloat(ftr.height) || 20) : 0; // mm
 
   // All padding in mm (1 cm = 10 mm)
   var topPad   = hdrH + dm.top    * 10;
@@ -5844,8 +5849,9 @@ Pages.printContract = function() {
     '<style>' +
     '*{box-sizing:border-box;margin:0;padding:0}' +
     'body{font-family:\'IBM Plex Sans Arabic\',Tajawal,system-ui,sans-serif;direction:rtl;background:#fff;color:#1F2937;font-size:'+ds.font_size+'pt;line-height:'+ds.line_height+'}' +
-    /* Zero @page margins — fixed elements sit at the physical page edge */
-    '@page{size:A4 portrait;margin:0}' +
+    /* Zero top/side margins; 8mm bottom for page-number margin box */
+    '@page{size:A4 portrait;margin:0 0 8mm 0;@bottom-center{content:"الصفحة " counter(page) " من " counter(pages);font-family:\'IBM Plex Sans Arabic\',system-ui;font-size:9pt;color:#9CA3AF;direction:rtl}}' +
+    '@page cover-page{size:A4 portrait;margin:0;@bottom-center{content:none}}' +
     /* Fixed header/footer: position:fixed repeats on every page in Chrome print */
     '.phf{position:fixed;left:0;right:0;z-index:100;-webkit-print-color-adjust:exact;print-color-adjust:exact}' +
     '.phf-top{top:0;height:'+hdrH+'mm}' +
@@ -5923,26 +5929,22 @@ Pages.saveContractNow = function(silent) {
 
 /* ─── MOBILE CONTRACT PANEL TOGGLE ─── */
 Pages.toggleContractMobilePanel = function(panel) {
-  var leftSidebar  = document.querySelector('#pg-contract .contract-sidebar-left');
   var rightSidebar = document.querySelector('#pg-contract .contract-sidebar-right');
   var clsBtn = document.getElementById('cmb-clauses');
   var varBtn = document.getElementById('cmb-vars');
-  var isLeftOpen  = leftSidebar && leftSidebar.classList.contains('mob-open');
-  var isRightOpen = rightSidebar && rightSidebar.classList.contains('mob-open');
+  var targetTab = panel === 'clauses' ? 'clauses' : 'vars';
+  var isOpen = rightSidebar && rightSidebar.classList.contains('mob-open');
+  var wasOnSameTab = isOpen && Pages._contractActiveTab === targetTab;
 
-  // close all first
-  if (leftSidebar)  leftSidebar.classList.remove('mob-open');
   if (rightSidebar) rightSidebar.classList.remove('mob-open');
   if (clsBtn) clsBtn.classList.remove('active');
   if (varBtn) varBtn.classList.remove('active');
 
-  if (panel==='clauses' && !isLeftOpen) {
-    if (leftSidebar) leftSidebar.classList.add('mob-open');
-    if (clsBtn) clsBtn.classList.add('active');
-  }
-  if (panel==='vars' && !isRightOpen) {
+  if (!wasOnSameTab) {
+    Pages.switchContractTab(targetTab);
     if (rightSidebar) rightSidebar.classList.add('mob-open');
-    if (varBtn) varBtn.classList.add('active');
+    if (panel === 'clauses' && clsBtn) clsBtn.classList.add('active');
+    if (panel === 'vars' && varBtn) varBtn.classList.add('active');
   }
 };
 
