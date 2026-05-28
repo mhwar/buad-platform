@@ -4915,7 +4915,17 @@ Pages.render_contract = function(params) {
   }
 
   // VARS PANEL
+  var coverSubtitle = (contract.cover && contract.cover.subtitle != null) ? contract.cover.subtitle : 'المملكة العربية السعودية';
   var varsPanelHtml =
+    '<div class="var-group-lbl"><i data-lucide="file-signature"></i>عنوان الوثيقة</div>' +
+    '<div class="var-field">' +
+      '<div class="var-field-lbl">عنوان العقد</div>' +
+      '<input class="var-field-inp" value="'+UI.escHtml(contract.title||'')+'" placeholder="مثال: عقد تقديم خدمات" oninput="Pages.updateContractTitle(\''+projId+'\',\''+contractId+'\',this.value)">' +
+    '</div>' +
+    '<div class="var-field">' +
+      '<div class="var-field-lbl">الوصف تحت العنوان (في الغلاف)</div>' +
+      '<input class="var-field-inp" value="'+UI.escHtml(coverSubtitle)+'" placeholder="مثال: المملكة العربية السعودية" oninput="Pages.updateContractCover(\''+projId+'\',\''+contractId+'\',\'subtitle\',this.value)">' +
+    '</div>' +
     '<div class="var-group-lbl"><i data-lucide="user"></i>الطرف الأول</div>' +
     varField('party_a_name', 'اسم الجهة / الطرف', false) +
     varField('party_a_rep_name', 'اسم الممثل المفوض', false) +
@@ -5198,7 +5208,7 @@ Pages._renderCoverContent = function(contract, opts) {
     '<div class="cov-frame-wrap">' +
       logoHtml + companyHtml +
       '<div class="cov-title" style="font-size:'+(ds.title_size||18)+'pt">'+UI.escHtml(contract.title)+'</div>' +
-      '<div class="cov-subtitle">المملكة العربية السعودية</div>' +
+      '<div class="cov-subtitle">'+UI.escHtml((contract.cover && contract.cover.subtitle) != null ? contract.cover.subtitle : 'المملكة العربية السعودية')+'</div>' +
       '<div class="cov-parties-box">' +
         '<div class="cov-parties-row"><strong>الطرف الأول</strong>'+partyA+'</div>' +
         '<div class="cov-parties-row"><strong>الطرف الثاني</strong>'+partyB+'</div>' +
@@ -5320,7 +5330,7 @@ Pages._renderFirstPageTitle = function(contract) {
   var ds = contract.doc_style || {};
   var sz = ds.body_title_size || ds.title_size || 18;
   return '<div class="doc-body-title" style="font-size:'+sz+'pt;text-align:center;font-weight:700;color:#0F2A4A;'+
-    'padding:0 0 18px;margin-bottom:10px;border-bottom:1.5px solid #0F2A4A">'+
+    'padding:0 0 14px;margin-bottom:6px">'+
     UI.escHtml(contract.title||'') +
   '</div>';
 };
@@ -5362,10 +5372,11 @@ Pages._paginateContract = function(contract, opts) {
   var hdrH = pl.header.height || 200;
   var ftrH = pl.footer.height || 150;
   var PX = 37.795;
-  var dm = contract.doc_margins || {top:0.4, right:2.0, bottom:0.4, left:2.0};
-  var bodyPadTop = dm.top * PX, bodyPadBottom = dm.bottom * PX;
+  var dm = contract.doc_margins || {top:0, right:2.0, bottom:0, left:2.0};
+  var headerGap = (pl.header && typeof pl.header.bottom_gap === 'number') ? pl.header.bottom_gap : 0;
+  var footerGap = (pl.footer && typeof pl.footer.top_gap === 'number') ? pl.footer.top_gap : 0;
   var bodyPadLeft = dm.left * PX, bodyPadRight = dm.right * PX;
-  var maxBodyHeight = 1123 - hdrH - ftrH - bodyPadTop - bodyPadBottom;
+  var maxBodyHeight = 1123 - hdrH - ftrH - headerGap - footerGap;
   var bodyInnerWidth = 794 - bodyPadLeft - bodyPadRight;
 
   var measureEl = document.createElement('div');
@@ -5549,10 +5560,15 @@ Pages._renderContractDoc = function(contract) {
 
   // 3. Render each body page with full header/footer (var substitution per page)
   var totalClauses = contract.clauses.filter(function(c){return c.enabled!==false;}).length;
+  // Custom gap between header band and body content (px). Default 0 — clause's own
+  // 14px padding-top creates the natural rhythm.
+  var headerGap = (pl.header && typeof pl.header.bottom_gap === 'number') ? pl.header.bottom_gap : 0;
+  var footerGap = (pl.footer && typeof pl.footer.top_gap === 'number') ? pl.footer.top_gap : 0;
   var bodyPagesHtml = pages.map(function(page, idx) {
     var pageNum = idx + 2; // page 1 = cover
     var pageStyle = '--hdr-h:'+hdrH+'px;--ftr-h:'+ftrH+'px';
-    var bodyStyle = 'padding:'+dm.top+'cm '+dm.right+'cm '+dm.bottom+'cm '+dm.left+'cm;'+
+    // doc_margins is in cm (sides). Top/bottom use the user-controllable px gaps.
+    var bodyStyle = 'padding:'+headerGap+'px '+dm.right+'cm '+footerGap+'px '+dm.left+'cm;'+
       'font-size:'+(ds.font_size||14)+'pt;line-height:'+(ds.line_height||1.5);
     var bodyContent = page.map(function(item) {
       if (item.type === 'signatures') return Pages._renderSignatureHtml(contract);
@@ -5828,6 +5844,23 @@ Pages.saveClauseContent = function(projId, contractId, clauseIdx, el) {
   }
 };
 
+Pages.updateContractTitle = function(projId, contractId, value) {
+  var contracts = DB.getContracts(projId);
+  var c = contracts.find(function(x){return x.id===contractId;});
+  if (!c) return;
+  c.title = value;
+  c.updated = (new Date()).toISOString().slice(0,10);
+  DB.saveContract(projId, c);
+  // Live-update the cover title + first-body-page title
+  var docEl = document.getElementById('contract-doc');
+  if (docEl) {
+    var covTitle = docEl.querySelector('.cov-title');
+    if (covTitle) covTitle.textContent = value;
+    var bodyTitle = docEl.querySelector('.doc-body-title');
+    if (bodyTitle) bodyTitle.textContent = value;
+  }
+};
+
 Pages.updateContractCover = function(projId, contractId, key, value) {
   var contracts = DB.getContracts(projId);
   var c = contracts.find(function(x){return x.id===contractId;});
@@ -5840,6 +5873,15 @@ Pages.updateContractCover = function(projId, contractId, key, value) {
   }
   c.updated = (new Date()).toISOString().slice(0,10);
   DB.saveContract(projId, c);
+  // Live-update visual elements without full re-render where possible
+  if (key === 'subtitle') {
+    var docEl = document.getElementById('contract-doc');
+    if (docEl) {
+      var sub = docEl.querySelector('.cov-subtitle');
+      if (sub) sub.textContent = value;
+    }
+    return;
+  }
   // Re-render the cover page live for visual keys
   var reRenderKeys = ['frame_style','bg_image','bg_color','bg_position','overlay_opacity','logo','company_name'];
   if (reRenderKeys.indexOf(key) !== -1) {
@@ -6107,6 +6149,30 @@ Pages.copyBandSpecs = function(section, currentH) {
   }
 };
 
+/* Catalog of insertable variables/auto-tokens for header/footer overlays.
+   Each entry: { token: '{{name}}', label: 'Arabic name', group: 'auto|contract|party' } */
+Pages._OVERLAY_VARS = [
+  // Auto/dynamic
+  { group:'auto', token:'{{page_number}}', label:'رقم الصفحة الحالية' },
+  { group:'auto', token:'{{total_pages}}', label:'إجمالي عدد الصفحات' },
+  { group:'auto', token:'{{contract_amount_words}}', label:'المبلغ بالكلمات (تفقيط)' },
+  // Contract data
+  { group:'contract', token:'{{contract_no}}', label:'رقم العقد' },
+  { group:'contract', token:'{{contract_date_gregorian}}', label:'تاريخ العقد الميلادي' },
+  { group:'contract', token:'{{contract_city}}', label:'مدينة الإبرام' },
+  { group:'contract', token:'{{signature_city}}', label:'مدينة التوقيع' },
+  { group:'contract', token:'{{subject}}', label:'موضوع العقد' },
+  { group:'contract', token:'{{contract_amount}}', label:'قيمة العقد' },
+  { group:'contract', token:'{{currency}}', label:'العملة' },
+  { group:'contract', token:'{{duration_months}}', label:'المدة (شهور)' },
+  { group:'contract', token:'{{payment_method}}', label:'طريقة الدفع' },
+  // Parties
+  { group:'party', token:'{{party_a_name}}', label:'اسم الطرف الأول' },
+  { group:'party', token:'{{party_a_rep_name}}', label:'ممثل الطرف الأول' },
+  { group:'party', token:'{{party_b_name}}', label:'اسم الطرف الثاني' },
+  { group:'party', token:'{{party_b_rep_name}}', label:'ممثل الطرف الثاني' }
+];
+
 Pages._renderBandSettings = function(projId, contractId, section, label, band) {
   var defaultH = section === 'header' ? 180 : 90;
   var inpId = section === 'header' ? 'hdr-img-inp' : 'ftr-img-inp';
@@ -6114,6 +6180,10 @@ Pages._renderBandSettings = function(projId, contractId, section, label, band) {
   // Recommended dimensions for the designer (2x retina-quality):
   var recW = 1588, recH = section === 'header' ? 360 : 180;
   var heightMm = Math.round((band.height||defaultH) * 25.4 / 96);
+  // Gap between this band and adjacent body content (px)
+  var gapKey = section === 'header' ? 'bottom_gap' : 'top_gap';
+  var gapLabel = section === 'header' ? 'الهامش بعد الرأس' : 'الهامش قبل الذيل';
+  var gapVal = (typeof band[gapKey] === 'number') ? band[gapKey] : 0;
   var overlays = band.overlay || [];
   var posOpts = ['top-right','top-center','top-left','center','bottom-right','bottom-center','bottom-left'];
   var posLabels = {
@@ -6147,6 +6217,14 @@ Pages._renderBandSettings = function(projId, contractId, section, label, band) {
       ) +
       '<input type="file" id="'+inpId+'" accept="image/*" style="display:none" onchange="Pages.'+uploader+'(\''+projId+'\',\''+contractId+'\',this)">' +
     '</div>' +
+    /* Gap between band and adjacent body content */
+    '<div class="var-field">' +
+      '<div class="var-field-lbl">'+gapLabel+'</div>' +
+      '<div style="display:flex;gap:6px;align-items:center">' +
+        '<input type="range" min="0" max="60" step="2" value="'+gapVal+'" style="flex:1" oninput="Pages.updatePageLayout(\''+projId+'\',\''+contractId+'\',\''+section+'\',\''+gapKey+'\',parseFloat(this.value)||0);this.nextElementSibling.textContent=this.value+\' بكسل\'">' +
+        '<span style="font-size:11px;color:var(--fg-3);min-width:54px">'+gapVal+' بكسل</span>' +
+      '</div>' +
+    '</div>' +
     '<div class="var-field" style="margin-top:14px">' +
       '<div class="var-field-lbl" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">' +
         '<span>عناصر نصية فوق الصورة</span>' +
@@ -6155,9 +6233,11 @@ Pages._renderBandSettings = function(projId, contractId, section, label, band) {
       (overlays.length === 0
         ? '<div style="font-size:11px;color:var(--fg-4);text-align:center;padding:8px;border:1px dashed var(--border);border-radius:var(--radius-xs)">لا توجد عناصر نصية. اضغط "إضافة"</div>'
         : overlays.map(function(slot, i) {
+            var slotInpId = 'ov-'+section+'-'+i+'-inp';
             return '<div style="border:1px solid var(--border);border-radius:var(--radius-xs);padding:8px;margin-bottom:6px;background:var(--bg-elevated)">' +
               '<div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">' +
-                '<input class="var-field-inp" style="flex:1" placeholder="نص أو {{contract_no}}" value="'+UI.escHtml(slot.text||'')+'" oninput="Pages.updateOverlay(\''+projId+'\',\''+contractId+'\',\''+section+'\','+i+',\'text\',this.value)">' +
+                '<input id="'+slotInpId+'" class="var-field-inp" style="flex:1" placeholder="نص أو متغير" value="'+UI.escHtml(slot.text||'')+'" oninput="Pages.updateOverlay(\''+projId+'\',\''+contractId+'\',\''+section+'\','+i+',\'text\',this.value)">' +
+                '<button class="btn btn-sm" style="padding:2px 6px" title="إدراج متغير" onclick="Pages.openVarPicker(\''+projId+'\',\''+contractId+'\',\''+section+'\','+i+',\''+slotInpId+'\')"><i data-lucide="variable" style="width:12px;height:12px"></i></button>' +
                 '<button class="btn btn-sm" style="padding:2px 6px;color:var(--danger-600)" onclick="Pages.removeOverlay(\''+projId+'\',\''+contractId+'\',\''+section+'\','+i+')"><i data-lucide="trash-2" style="width:12px;height:12px"></i></button>' +
               '</div>' +
               '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">' +
@@ -6172,6 +6252,53 @@ Pages._renderBandSettings = function(projId, contractId, section, label, band) {
       ) +
     '</div>' +
   '</div>';
+};
+
+/* Open a modal listing available variables — clicking one inserts the token
+   into the targeted overlay text input. */
+Pages.openVarPicker = function(projId, contractId, section, slotIdx, inputId) {
+  var groups = { auto:'متغيرات تلقائية', contract:'بيانات العقد', party:'الأطراف' };
+  var byGroup = { auto:[], contract:[], party:[] };
+  Pages._OVERLAY_VARS.forEach(function(v){ byGroup[v.group].push(v); });
+  function rowHtml(v) {
+    var safeToken = v.token.replace(/'/g, "\\'");
+    return '<button class="var-pick-row" onclick="Pages._insertVarToken(\''+inputId+'\',\''+safeToken+'\',\''+projId+'\',\''+contractId+'\',\''+section+'\','+slotIdx+')" '+
+      'style="display:flex;justify-content:space-between;width:100%;padding:8px 12px;border:none;background:transparent;cursor:pointer;text-align:right;font-family:inherit;border-bottom:1px solid var(--border);transition:background 120ms">' +
+      '<span style="color:var(--fg-1);font-size:13px">'+UI.escHtml(v.label)+'</span>' +
+      '<code style="background:var(--neutral-100);padding:2px 6px;border-radius:3px;font-size:11px;color:var(--iris-600)">'+UI.escHtml(v.token)+'</code>' +
+    '</button>';
+  }
+  var html =
+    '<div style="padding:16px 0;max-width:480px">' +
+      '<h2 style="margin:0 16px 4px;font-size:15px;color:var(--fg-1)">اختر متغيراً لإدراجه</h2>' +
+      '<div style="font-size:11px;color:var(--fg-3);margin:0 16px 12px">سيُستبدل المتغير بقيمته الفعلية عند الطباعة</div>' +
+      Object.keys(byGroup).map(function(g) {
+        if (!byGroup[g].length) return '';
+        return '<div style="margin-bottom:8px">' +
+          '<div style="font-size:11px;font-weight:600;color:var(--fg-3);padding:6px 16px;background:var(--bg-elevated);letter-spacing:.3px">'+groups[g]+'</div>' +
+          byGroup[g].map(rowHtml).join('') +
+        '</div>';
+      }).join('') +
+      '<div style="padding:12px 16px;text-align:end;border-top:1px solid var(--border)">' +
+        '<button class="btn" onclick="UI.closeModalForce()">إلغاء</button>' +
+      '</div>' +
+    '</div>' +
+    '<style>.var-pick-row:hover{background:var(--iris-50)!important}</style>';
+  UI.openModal(html);
+  if (typeof lucide !== 'undefined') setTimeout(function(){ lucide.createIcons(); }, 50);
+};
+
+Pages._insertVarToken = function(inputId, token, projId, contractId, section, slotIdx) {
+  var inp = document.getElementById(inputId);
+  if (inp) {
+    // Insert at cursor position, or append
+    var start = (typeof inp.selectionStart === 'number') ? inp.selectionStart : inp.value.length;
+    var end = (typeof inp.selectionEnd === 'number') ? inp.selectionEnd : inp.value.length;
+    var newVal = inp.value.slice(0, start) + token + inp.value.slice(end);
+    inp.value = newVal;
+    Pages.updateOverlay(projId, contractId, section, slotIdx, 'text', newVal);
+  }
+  UI.closeModalForce();
 };
 
 Pages.updateContractStatus = function(projId, contractId, value) {
