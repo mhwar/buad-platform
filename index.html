@@ -4937,7 +4937,14 @@ Pages.render_contract = function(params) {
   // === RIGHT SIDEBAR: Two-tab design ===
   // Pre-migrate cover so settings panel sees elements[] before _renderContractDoc runs
   if (!contract.cover) contract.cover = {};
-  if (!contract.cover.elements) Pages._migrateCoverToFree(contract.cover);
+  if (!contract.cover.elements) {
+    Pages._migrateCoverToFree(contract.cover);
+    // Save immediately — _migrateContractLayout won't re-run this because elements[] now exists
+    if (!contract._cover_free_v1) {
+      contract._cover_free_v1 = true;
+      try { DB.saveContract(projId, contract); } catch(e) {}
+    }
+  }
   var ds = contract.doc_style || {font_size:14, line_height:1.5, title_size:18, clause_title_size:14, subtitle_size:12};
   var dm = contract.doc_margins || {top:2.5, right:3, bottom:2.5, left:2.5};
   var pl = contract.page_layout || {};
@@ -5799,6 +5806,11 @@ Pages.updateContractVar = function(projId, contractId, key, value) {
   c.variables[key] = value;
   c.updated = (new Date()).toISOString().slice(0,10);
   DB.saveContract(projId, c);
+  // Refresh cover: free-form cover needs full re-render; old style uses inline DOM update
+  if (c.cover && Array.isArray(c.cover.elements)) {
+    Pages._refreshCoverPage(projId, contractId);
+  }
+  // Always update signature blocks (party names/titles at bottom of doc)
   Pages._refreshContractCover(c);
   // If this variable is used in a header/footer overlay, re-render bands across all pages
   if (Pages._maybeRefreshBands(c, key)) return;
