@@ -5021,14 +5021,8 @@ Pages.render_contract = function(params) {
 
   var vars = contract.variables || {};
 
-  // === LEFT SIDEBAR: Clause Library ===
-  var libHtml = CLAUSE_LIBRARY.map(function(cl) {
-    var alreadyIn = contract.clauses.some(function(c){return c.key===cl.key && c.enabled!==false;});
-    return '<div class="clause-lib-item">' +
-      '<span style="'+(alreadyIn?'opacity:.5':'')+'">'+cl.title+'</span>' +
-      '<button class="clause-lib-add-btn" onclick="Pages.addClauseFromLib(\''+projId+'\',\''+contractId+'\',\''+cl.key+'\')" title="إضافة للعقد">+</button>' +
-    '</div>';
-  }).join('');
+  // === CLAUSES SIDEBAR PANEL ===
+  var clsPanelHtml = Pages._renderContractClausesPanel(projId, contractId, contract);
 
   // === RIGHT SIDEBAR: Two-tab design ===
   // Pre-migrate cover so settings panel sees elements[] before _renderContractDoc runs
@@ -5210,7 +5204,7 @@ Pages.render_contract = function(params) {
       '</div>' +
       '<div class="contract-sidebar-body">' +
         '<div id="ctab-vars-panel">'+varsPanelHtml+'</div>' +
-        '<div id="ctab-cls-panel" style="display:none">'+libHtml+'</div>' +
+        '<div id="ctab-cls-panel" style="display:none">'+clsPanelHtml+'</div>' +
         '<div id="ctab-sets-panel" style="display:none">'+settingsPanelHtml+'</div>' +
       '</div>' +
     '</div>' +
@@ -6046,6 +6040,109 @@ Pages._refreshContractCanvas = function(contract) {
   Pages._scaleDocPages();
 };
 
+/* Build the "البنود" sidebar panel for the contract editor.
+   Shows current contract clauses with full management controls at the top,
+   then the clause library for adding new clauses at the bottom. */
+Pages._renderContractClausesPanel = function(projId, contractId, contract) {
+  var enabledClauses = (contract.clauses || []).filter(function(c){return c.enabled!==false;});
+
+  var currentHtml;
+  if (enabledClauses.length === 0) {
+    currentHtml = '<div style="font-size:12px;color:var(--fg-3);text-align:center;padding:20px;border:1px dashed var(--border);border-radius:var(--radius-sm);margin:var(--space-3)">لا توجد بنود. أضف من مكتبة البنود أدناه.</div>';
+  } else {
+    currentHtml = enabledClauses.map(function(cl, i) {
+      var pbActive = cl.page_break ? ' break-active' : '';
+      var asActive = cl.allow_split ? ' break-active' : '';
+      return '<div class="stg-section" style="'+(i===0?'margin-top:0;padding-top:0;border-top:none':'')+'">' +
+        '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:4px;margin-bottom:4px">' +
+          '<span style="font-size:11px;font-weight:600;color:var(--fg-1);flex:1;line-height:1.5">'+UI.escHtml(cl.title||('البند '+(i+1)))+'</span>' +
+          '<div style="display:flex;gap:2px;flex-shrink:0">' +
+            (i>0 ? '<button class="clause-ctrl-btn" onclick="Pages.moveClause(\''+projId+'\',\''+contractId+'\','+i+',\'up\')" title="للأعلى"><i data-lucide="chevron-up"></i></button>' : '') +
+            (i<enabledClauses.length-1 ? '<button class="clause-ctrl-btn" onclick="Pages.moveClause(\''+projId+'\',\''+contractId+'\','+i+',\'down\')" title="للأسفل"><i data-lucide="chevron-down"></i></button>' : '') +
+            '<button class="clause-ctrl-btn'+pbActive+'" onclick="Pages.toggleClauseBreak(\''+projId+'\',\''+contractId+'\','+i+')" title="'+(cl.page_break?'إلغاء فصل الصفحة':'ابدأ صفحة جديدة')+'"><i data-lucide="arrow-down-to-line"></i></button>' +
+            '<button class="clause-ctrl-btn'+asActive+'" onclick="Pages.toggleClauseSplit(\''+projId+'\',\''+contractId+'\','+i+')" title="'+(cl.allow_split?'منع تقسيم البند':'اسمح بتقسيم البند')+'"><i data-lucide="scissors"></i></button>' +
+            '<button class="clause-ctrl-btn" onclick="Pages.openContractClauseTextEditor(\''+projId+'\',\''+contractId+'\',\''+cl.id+'\')" title="تحرير نص المادة"><i data-lucide="pencil"></i></button>' +
+            '<button class="clause-ctrl-btn danger" onclick="Pages.deleteClause(\''+projId+'\',\''+contractId+'\','+i+')" title="حذف البند"><i data-lucide="x"></i></button>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  var libHtml = CLAUSE_LIBRARY.map(function(cl) {
+    var alreadyIn = contract.clauses.some(function(c){return c.key===cl.key && c.enabled!==false;});
+    return '<div class="clause-lib-item">' +
+      '<span style="'+(alreadyIn?'opacity:.5':'')+'">'+cl.title+'</span>' +
+      '<button class="clause-lib-add-btn" onclick="Pages.addClauseFromLib(\''+projId+'\',\''+contractId+'\',\''+cl.key+'\')" title="إضافة للعقد">+</button>' +
+    '</div>';
+  }).join('');
+
+  return '<div style="font-size:10px;font-weight:700;color:var(--fg-3);text-transform:uppercase;letter-spacing:.06em;padding:var(--space-3) var(--space-3) var(--space-1)">البنود الحالية</div>' +
+    currentHtml +
+    '<div style="font-size:10px;font-weight:700;color:var(--fg-3);text-transform:uppercase;letter-spacing:.06em;padding:var(--space-3) var(--space-3) var(--space-1);border-top:1px solid var(--border);margin-top:var(--space-2)">مكتبة البنود</div>' +
+    libHtml;
+};
+
+/* Partial refresh: update only the clauses sidebar panel without full render_contract. */
+Pages._refreshContractClausesPanel = function(projId, contractId) {
+  var panel = document.getElementById('ctab-cls-panel');
+  if (!panel) return;
+  var contracts = DB.getContracts(projId);
+  var c = contracts.find(function(x){return x.id===contractId;});
+  if (!c) return;
+  panel.innerHTML = Pages._renderContractClausesPanel(projId, contractId, c);
+  if (typeof lucide !== 'undefined') lucide.createIcons({rootElement: panel});
+};
+
+/* Open a modal to edit a specific contract clause's text.
+   Changes are saved to the contract only — the source template is never modified. */
+Pages.openContractClauseTextEditor = function(projId, contractId, clauseId) {
+  var contracts = DB.getContracts(projId);
+  var c = contracts.find(function(x){return x.id===contractId;});
+  if (!c) return;
+  var cl = (c.clauses||[]).find(function(x){return x.id===clauseId;});
+  if (!cl) return;
+  var safeId = clauseId.replace(/[^a-zA-Z0-9]/g,'_');
+  var taId = 'cce-ta-'+safeId;
+  UI.openModal(
+    '<div class="modal-header">' +
+      '<h3 style="font-size:13px;font-weight:700">'+UI.escHtml(cl.title||'تحرير المادة')+'</h3>' +
+      '<button class="modal-close" onclick="UI.closeModalForce()">×</button>' +
+    '</div>' +
+    '<div class="modal-body" style="padding:var(--space-3)">' +
+      '<div style="font-size:11px;color:var(--iris-700);background:var(--iris-50);border:1px solid var(--iris-200);border-radius:var(--radius-sm);padding:8px 10px;margin-bottom:10px;line-height:1.6">' +
+        'التعديلات هنا تُحفظ على هذا العقد فقط ولا تؤثر على النموذج الأصلي.' +
+      '</div>' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">' +
+        '<label style="font-size:12px;font-weight:600;color:var(--fg-1)">نص المادة</label>' +
+        '<button class="btn btn-sm" style="padding:1px 7px;font-size:10px;gap:3px" onclick="Pages.openClauseVarPicker(\'contract\',\''+contractId+'\',\''+clauseId+'\',\''+taId+'\',\''+projId+'\')"><i data-lucide="braces" style="width:11px;height:11px"></i>إدراج متغير</button>' +
+      '</div>' +
+      '<textarea id="'+taId+'" style="width:100%;min-height:240px;font-size:12px;font-family:inherit;resize:vertical;padding:8px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg-1);color:var(--fg-1);direction:rtl;line-height:1.7">'+UI.escHtml(cl.content||'')+'</textarea>' +
+    '</div>' +
+    '<div class="modal-footer" style="display:flex;gap:var(--space-2);justify-content:flex-end">' +
+      '<button class="btn btn-sm" onclick="UI.closeModalForce()">إلغاء</button>' +
+      '<button class="btn btn-sm btn-primary" onclick="Pages.saveContractClauseText(\''+projId+'\',\''+contractId+'\',\''+clauseId+'\',document.getElementById(\''+taId+'\').value)">حفظ التعديل</button>' +
+    '</div>'
+  );
+  if (typeof lucide !== 'undefined') lucide.createIcons();
+};
+
+/* Save clause text to the contract object only. The source template is untouched. */
+Pages.saveContractClauseText = function(projId, contractId, clauseId, text) {
+  var contracts = DB.getContracts(projId);
+  var c = contracts.find(function(x){return x.id===contractId;});
+  if (!c) return;
+  var cl = (c.clauses||[]).find(function(x){return x.id===clauseId;});
+  if (!cl) return;
+  cl.content = text;
+  c.updated = (new Date()).toISOString().slice(0,10);
+  DB.saveContract(projId, c);
+  UI.closeModalForce();
+  Pages._refreshContractCanvas(c);
+  Pages._refreshContractClausesPanel(projId, contractId);
+  UI.toast('تم حفظ التعديل على العقد');
+};
+
 /* Scale .doc-page elements to fit the canvas width on narrow screens.
    Each page keeps its 794px internal width (correct for printing) but is
    visually shrunk with transform:scale so it fits the viewport. */
@@ -6098,6 +6195,7 @@ Pages.deleteClause = function(projId, contractId, clauseIdx) {
   c.updated = (new Date()).toISOString().slice(0,10);
   DB.saveContract(projId, c);
   Pages._refreshContractCanvas(c);
+  Pages._refreshContractClausesPanel(projId, contractId);
 };
 
 Pages.toggleClauseBreak = function(projId, contractId, clauseIdx) {
@@ -6111,6 +6209,7 @@ Pages.toggleClauseBreak = function(projId, contractId, clauseIdx) {
   c.updated = (new Date()).toISOString().slice(0,10);
   DB.saveContract(projId, c);
   Pages._refreshContractCanvas(c);
+  Pages._refreshContractClausesPanel(projId, contractId);
 };
 
 Pages.toggleClauseSplit = function(projId, contractId, clauseIdx) {
@@ -6124,6 +6223,7 @@ Pages.toggleClauseSplit = function(projId, contractId, clauseIdx) {
   c.updated = (new Date()).toISOString().slice(0,10);
   DB.saveContract(projId, c);
   Pages._refreshContractCanvas(c);
+  Pages._refreshContractClausesPanel(projId, contractId);
   UI.toast(cl.allow_split ? 'تم تفعيل تقسيم البند بين الصفحات' : 'تم منع تقسيم البند');
 };
 
@@ -6152,8 +6252,8 @@ Pages.addClauseFromLib = function(projId, contractId, clauseKey) {
   c.clauses.push(newClause);
   c.updated = (new Date()).toISOString().slice(0,10);
   DB.saveContract(projId, c);
-  // New clause needs pagination — re-render the canvas
   Pages._refreshContractCanvas(c);
+  Pages._refreshContractClausesPanel(projId, contractId);
 };
 
 Pages.saveClauseContent = function(projId, contractId, clauseIdx, el) {
