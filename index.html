@@ -5930,20 +5930,17 @@ Pages.printContract = function() {
     '<style>' +
     '*{box-sizing:border-box;margin:0;padding:0}' +
     'body{font-family:\'IBM Plex Sans Arabic\',Tajawal,system-ui,sans-serif;direction:rtl;background:#fff;color:#1F2937;font-size:'+ds.font_size+'pt;line-height:'+ds.line_height+'}' +
-    /* @page margin-top = header height so text clears the header on EVERY page.
-       position:fixed with negative top/bottom reaches into the @page margin areas,
-       placing the images at the physical page edges. */
-    '@page{size:A4 portrait;margin:'+hdrH+'mm '+rr+'cm '+ftrH+'mm '+rl+'cm}' +
-    /* cover page has margin:0 → negative-positioned fixed elements go off-page → invisible on cover */
-    '@page cover-page{size:A4 portrait;margin:0}' +
-    /* Fixed header/footer: negative offset = into @page margin area at physical edge */
-    '.phf{position:fixed;left:-'+rl+'cm;right:-'+rr+'cm;z-index:100;-webkit-print-color-adjust:exact;print-color-adjust:exact}' +
-    '.phf-top{top:-'+hdrH+'mm;height:'+hdrH+'mm}' +
-    '.phf-bot{bottom:-'+ftrH+'mm;height:'+ftrH+'mm}' +
-    /* counter(page) works in Chrome regular elements for paged media */
+    /* Single @page rule with zero margins — all spacing is handled via .print-body padding.
+       This avoids Chrome's broken negative-top fixed positioning with named pages. */
+    '@page{size:A4 portrait;margin:0}' +
+    /* Fixed header/footer: top:0 / bottom:0 = physical page edges (no negative offsets needed). */
+    '.phf{position:fixed;left:0;right:0;z-index:100;-webkit-print-color-adjust:exact;print-color-adjust:exact}' +
+    '.phf-top{top:0;height:'+hdrH+'mm}' +
+    '.phf-bot{bottom:0;height:'+ftrH+'mm}' +
     '.pn-lbl::after{content:"الصفحة " counter(page);font-family:\'IBM Plex Sans Arabic\',system-ui;direction:rtl}' +
-    /* Cover: page:cover-page so margin:0 applies and fixed elements go off-page */
-    '.cov-page{page:cover-page;page-break-after:always;min-height:297mm;display:flex;flex-direction:column;position:relative;overflow:hidden;background:#fff}' +
+    /* Cover: z-index:200 > phf z-index:100 → cover's opaque background PAINTS OVER the fixed header/footer
+       so no header/footer is visible on the cover page. Exactly 297mm tall = one A4 page. */
+    '.cov-page{page-break-after:always;height:297mm;max-height:297mm;display:flex;flex-direction:column;position:relative;z-index:200;overflow:hidden;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}' +
     '.cov-frame-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:60px 50px}' +
     '.cov-frame-modern .cov-frame-wrap{border:2.5px solid #0F2A4A;margin:24px;border-radius:4px}' +
     '.cov-frame-classical .cov-frame-wrap{border:2px solid #B8860B;outline:6px double #B8860B;outline-offset:-12px;margin:20px;padding:50px}' +
@@ -5964,8 +5961,8 @@ Pages.printContract = function() {
     '.cov-parties-row:last-child{border-bottom:none}' +
     '.cov-parties-row strong{color:#6B7280;display:block;font-size:10pt;font-weight:500}' +
     '.cov-ref-line{margin-top:32px;font-size:10pt;color:#9CA3AF}' +
-    /* Body content: top/bottom inner margins only — left/right handled by @page margin */
-    '.print-body{padding:'+rt+'cm 0 '+rb+'cm 0}' +
+    /* Body: padding-top = header height + inner top margin; sides = document side margins */
+    '.print-body{padding:calc('+hdrH+'mm + '+rt+'cm) '+rr+'cm calc('+ftrH+'mm + '+rb+'cm) '+rl+'cm}' +
     '.clause-block{padding:14px 0;page-break-inside:avoid;orphans:4;widows:4}' +
     '.clause-block+.clause-block{border-top:1px solid #E5E7EB;padding-top:14px}' +
     '.clause-block-inner{padding:0}' +
