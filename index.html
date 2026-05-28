@@ -5321,17 +5321,28 @@ Pages._migrateCoverToFree = function(cover) {
   return cover;
 };
 
-/* Resolve {{vars}} inside a cover text element */
+/* Resolve {{vars}} inside a cover text element — full variable set */
 Pages._applyVarsToCoverEl = function(text, vars, contract) {
   if (!text) return '';
-  return text
-    .replace(/\{\{title\}\}/g, UI.escHtml((contract && contract.title) || ''))
-    .replace(/\{\{company_name\}\}/g, UI.escHtml(vars.company_name || ''))
-    .replace(/\{\{contract_no\}\}/g, UI.escHtml(vars.contract_no || ''))
-    .replace(/\{\{contract_date_gregorian\}\}/g, UI.escHtml(vars.contract_date_gregorian || ''))
-    .replace(/\{\{contract_city\}\}/g, UI.escHtml(vars.contract_city || ''))
-    .replace(/\{\{party_a_name\}\}/g, UI.escHtml(vars.party_a_name || ''))
-    .replace(/\{\{party_b_name\}\}/g, UI.escHtml(vars.party_b_name || ''));
+  var settings = DB.getSettings();
+  return text.replace(/\{\{(\w+)\}\}/g, function(match, key) {
+    if (key === 'title') return UI.escHtml((contract && contract.title) || '');
+    if (key === 'footer_label') return UI.escHtml((contract && contract.footer_label) || '');
+    if (key === 'company_name') return UI.escHtml(settings.company_name || (vars && vars.company_name) || '');
+    if (key === 'company_email') return UI.escHtml(settings.company_email || '');
+    if (key === 'company_phone') return UI.escHtml(settings.company_phone || '');
+    if (key === 'duration_full') {
+      var dv = ((vars && vars.duration_months) || '').toString().trim();
+      var du = ((vars && vars.duration_unit) || 'شهر').trim();
+      return dv ? UI.escHtml(dv + ' ' + du) : '';
+    }
+    if (key === 'contract_amount_words') {
+      var amt = parseFloat(((vars && vars.contract_amount) || '').replace(/,/g,''));
+      return UI.escHtml(Pages._numToArabic(amt) || '');
+    }
+    var val = vars && vars[key];
+    return val ? UI.escHtml(String(val)) : match;
+  });
 };
 
 /* Render one cover element */
@@ -5344,10 +5355,12 @@ Pages._renderCoverEl = function(el, vars, contract, editable) {
   if (t === 'logo' || t === 'logo_a' || t === 'logo_b') {
     var logoLabel = t === 'logo_a' ? 'شعار الطرف الأول' : t === 'logo_b' ? 'شعار الطرف الثاني' : 'شعار الجهة';
     var logoIcon = t === 'logo' ? 'building-2' : 'building';
+    var mhStyle = p.max_height ? 'max-height:'+p.max_height+'px;' : '';
     if (p.src) {
-      innerHtml = '<div class="cov-el-logo"><img src="'+p.src+'" alt=""></div>';
+      var changeHint = editable ? ' style="cursor:pointer" onclick="Pages._clickCoverElUpload(\''+el.id+'\')" title="انقر لتغيير الشعار"' : '';
+      innerHtml = '<div class="cov-el-logo"><img src="'+p.src+'" alt="" style="'+mhStyle+'max-width:100%;object-fit:contain"'+changeHint+'></div>';
     } else if (editable) {
-      innerHtml = '<div class="cov-el-logo"><div class="logo-ph" title="'+logoLabel+' — ارفع من الإعدادات"><i data-lucide="'+logoIcon+'" style="width:28px;height:28px"></i><span style="font-size:9px;margin-top:4px;display:block">'+logoLabel+'</span></div></div>';
+      innerHtml = '<div class="cov-el-logo"><div class="logo-ph" style="cursor:pointer" onclick="Pages._clickCoverElUpload(\''+el.id+'\')" title="'+logoLabel+' — انقر للرفع"><i data-lucide="'+logoIcon+'" style="width:28px;height:28px"></i><span style="font-size:9px;margin-top:4px;display:block">'+logoLabel+'<br><span style="color:var(--iris-500)">انقر للرفع</span></span></div></div>';
     }
   } else if (t === 'text') {
     var txt = Pages._applyVarsToCoverEl(p.text || '', vars, contract);
@@ -5366,10 +5379,12 @@ Pages._renderCoverEl = function(el, vars, contract, editable) {
     var hrStyle = 'border-top:'+(p.thickness||1)+'px solid '+(p.color||'#D1D5DB');
     innerHtml = '<div class="cov-el-divider"><hr style="'+hrStyle+'"></div>';
   } else if (t === 'image') {
+    var mhStyleImg = p.max_height ? 'max-height:'+p.max_height+'px;' : '';
     if (p.src) {
-      innerHtml = '<div class="cov-el-image"><img src="'+p.src+'" alt="" style="max-width:100%;display:block"></div>';
+      var imgChangeHint = editable ? ' style="cursor:pointer;'+mhStyleImg+'max-width:100%;display:block;object-fit:contain" onclick="Pages._clickCoverElUpload(\''+el.id+'\')" title="انقر لتغيير الصورة"' : ' style="'+mhStyleImg+'max-width:100%;display:block;object-fit:contain"';
+      innerHtml = '<div class="cov-el-image"><img src="'+p.src+'" alt=""'+imgChangeHint+'></div>';
     } else if (editable) {
-      innerHtml = '<div class="cov-el-image"><div class="logo-ph" title="صورة — ارفع من الإعدادات"><i data-lucide="image" style="width:24px;height:24px"></i></div></div>';
+      innerHtml = '<div class="cov-el-image"><div class="logo-ph" style="cursor:pointer" onclick="Pages._clickCoverElUpload(\''+el.id+'\')" title="صورة — انقر للرفع"><i data-lucide="image" style="width:24px;height:24px"></i><span style="font-size:9px;color:var(--iris-500);display:block;margin-top:4px">انقر للرفع</span></div></div>';
     }
   }
 
@@ -5752,6 +5767,9 @@ Pages._paginateContract = function(contract, opts) {
 Pages._renderContractDoc = function(contract, opts) {
   opts = opts || {};
   var editable = opts.editable !== false; // default true; pass false for template preview
+  // coverEditable can be set independently — lets template canvas have draggable cover
+  // while clauses remain non-editable (preview-only)
+  var coverEditable = opts.coverEditable !== undefined ? opts.coverEditable : editable;
   Pages._migrateContractLayout(contract);
   var vars = contract.variables || {};
   var ds = contract.doc_style || {font_size:14, line_height:1.5, title_size:18, clause_title_size:14};
@@ -5764,7 +5782,7 @@ Pages._renderContractDoc = function(contract, opts) {
   var coverPageHtml =
     '<div class="doc-page cov-page" style="--hdr-h:0;--ftr-h:0">' +
       '<div class="doc-page-body cov-body">' +
-        Pages._renderCoverContent(contract, {preview:false, editable:editable}) +
+        Pages._renderCoverContent(contract, {preview:false, editable:coverEditable}) +
       '</div>' +
     '</div>';
 
@@ -6334,13 +6352,18 @@ Pages._renderCoverElCard = function(el, i, ctx) {
       '</div>';
   } else if (t==='logo'||t==='logo_a'||t==='logo_b'||t==='image') {
     var uploadLabel = t==='image' ? 'صورة' : typeLabels[t] || 'شعار';
+    var mhVal = p.max_height || '';
     extraHtml =
       '<div class="var-field" style="margin-top:5px">' +
-        (p.src ? '<img src="'+p.src+'" style="max-width:100%;max-height:48px;object-fit:contain;border:1px solid var(--border);border-radius:var(--radius-xs);display:block;margin-bottom:4px">' +
+        (p.src ? '<img src="'+p.src+'" style="max-width:100%;max-height:60px;object-fit:contain;border:1px solid var(--border);border-radius:var(--radius-xs);display:block;margin-bottom:4px">' +
           '<button class="btn btn-sm" style="width:100%;margin-bottom:4px" onclick="document.getElementById(\''+inpId+'\').click()"><i data-lucide="upload"></i>تغيير</button>' +
           '<button class="btn btn-sm" style="width:100%;color:var(--danger-600)" onclick="'+updateFn+',\'src\',\'\')">إزالة</button>'
-          : '<button class="btn btn-sm" style="width:100%" onclick="document.getElementById(\''+inpId+'\').click()"><i data-lucide="upload"></i>رفع '+uploadLabel+'</button>') +
+          : '<button class="btn btn-sm" style="width:100%;margin-bottom:4px" onclick="document.getElementById(\''+inpId+'\').click()"><i data-lucide="upload"></i>رفع '+uploadLabel+'</button>') +
         '<input type="file" id="'+inpId+'" accept="image/*" style="display:none" onchange="'+uploadFn+'">' +
+      '</div>' +
+      '<div style="margin-top:5px">' +
+        '<label style="font-size:10px;color:var(--fg-3);display:block;margin-bottom:2px">الحجم الأقصى للارتفاع (px — 0 = بلا حد)</label>' +
+        '<input type="number" class="var-field-inp" style="font-size:11px" min="0" max="600" step="10" value="'+mhVal+'" placeholder="تلقائي" oninput="'+updateFn+',\'max_height\',parseFloat(this.value)||0)">' +
       '</div>';
   } else if (t==='divider') {
     extraHtml =
@@ -6444,6 +6467,35 @@ Pages._coverElDragEnd = function(event) {
   } else if (Pages._contractProjId && Pages._contractId) {
     Pages.updateContractCoverElPos(Pages._contractProjId, Pages._contractId, ds.elId, x, y);
   }
+};
+
+/* Click on a logo/image placeholder or image in the canvas to open file picker inline */
+Pages._clickCoverElUpload = function(elId) {
+  var inpId = 'cov-inline-up-' + elId.replace(/[^a-zA-Z0-9]/g,'_');
+  var inp = document.getElementById(inpId);
+  if (!inp) {
+    inp = document.createElement('input');
+    inp.type = 'file'; inp.accept = 'image/*';
+    inp.id = inpId; inp.style.display = 'none';
+    inp.addEventListener('change', function() {
+      var file = inp.files && inp.files[0];
+      if (!file) { document.body.removeChild(inp); return; }
+      var reader = new FileReader();
+      reader.onload = function(e) {
+        var src = e.target.result;
+        var tplEdEl = document.getElementById('pg-template-editor');
+        if (tplEdEl && tplEdEl.offsetParent !== null && Pages._tplEditorId) {
+          Pages.updateTplCoverEl(Pages._tplEditorId, elId, 'src', src);
+        } else if (Pages._contractProjId && Pages._contractId) {
+          Pages.updateContractCoverEl(Pages._contractProjId, Pages._contractId, elId, 'src', src);
+        }
+        try { document.body.removeChild(inp); } catch(e) {}
+      };
+      reader.readAsDataURL(file);
+    });
+    document.body.appendChild(inp);
+  }
+  inp.click();
 };
 
 Pages.handleHeaderImageUpload = function(projId, contractId, input) {
@@ -7587,7 +7639,7 @@ Pages._renderTemplatePrev = function(template) {
   var fakeContract = Pages._templateToPreviewContract(template);
   var prevPreview = Pages._contractPreview;
   Pages._contractPreview = true; // show var chips in template preview
-  var html = Pages._renderContractDoc(fakeContract, {editable: false});
+  var html = Pages._renderContractDoc(fakeContract, {editable: false, coverEditable: true});
   Pages._contractPreview = prevPreview;
   return html;
 };
@@ -8167,7 +8219,7 @@ Pages._refreshTplCoverPage = function(tplId) {
   var fakeC = Pages._templateToPreviewContract(tpl);
   var covBody = document.querySelector('#tpl-canvas-area .cov-page .cov-body');
   if (!covBody) return;
-  covBody.innerHTML = Pages._renderCoverContent(fakeC, {editable:false});
+  covBody.innerHTML = Pages._renderCoverContent(fakeC, {editable:true});
   if (typeof lucide !== 'undefined') lucide.createIcons({rootElement:covBody});
 };
 
