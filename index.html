@@ -5313,6 +5313,18 @@ Pages._splitClauseParagraphs = function(content) {
   return paras.length > 0 ? paras : [content];
 };
 
+/* Render the centered title shown at the top of the first body page (after cover).
+   Returns empty string if disabled. */
+Pages._renderFirstPageTitle = function(contract) {
+  if (contract.hide_body_title === true) return '';
+  var ds = contract.doc_style || {};
+  var sz = ds.body_title_size || ds.title_size || 18;
+  return '<div class="doc-body-title" style="font-size:'+sz+'pt;text-align:center;font-weight:700;color:#0F2A4A;'+
+    'padding:0 0 18px;margin-bottom:10px;border-bottom:1.5px solid #0F2A4A">'+
+    UI.escHtml(contract.title||'') +
+  '</div>';
+};
+
 /* Render signature page content */
 Pages._renderSignatureHtml = function(contract) {
   var vars = contract.variables || {};
@@ -5374,7 +5386,14 @@ Pages._paginateContract = function(contract, opts) {
 
   var enabledClauses = contract.clauses.filter(function(c){return c.enabled!==false;});
   var pages = [[]];
-  var currentHeight = 0;
+  // First body page reserves height for the centered document title
+  var firstPageTitleHtml = Pages._renderFirstPageTitle(contract);
+  var firstPageTitleHeight = 0;
+  if (firstPageTitleHtml) {
+    measureEl.innerHTML = firstPageTitleHtml;
+    firstPageTitleHeight = measureEl.firstElementChild ? measureEl.firstElementChild.offsetHeight : 0;
+  }
+  var currentHeight = firstPageTitleHeight; // first page starts with title already taking space
   var totalClauses = enabledClauses.length;
   var AUTO_SPLIT_THRESHOLD = 0.5; // split clauses taller than 50% of page
 
@@ -5543,9 +5562,12 @@ Pages._renderContractDoc = function(contract) {
         contentOverride: item.content
       });
     }).join('');
+    // First body page (idx===0) gets the centered document title above clauses
+    var firstPageTitle = (idx === 0) ? Pages._renderFirstPageTitle(contract) : '';
     return '<div class="doc-page" style="'+pageStyle+'">' +
       Pages._renderHeaderBand(pl.header, pageNum, totalPages, vars, contract) +
       '<div class="doc-page-body" style="'+bodyStyle+'">' +
+        firstPageTitle +
         bodyContent +
       '</div>' +
       Pages._renderFooterBand(pl.footer, pageNum, totalPages, vars, contract) +
