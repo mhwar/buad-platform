@@ -1728,12 +1728,14 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
 
 /* Article / Clause block */
 .clause-block{
-  padding:20px 50px 20px 50px;
-  border-bottom:1px solid #E5E7EB;
+  padding:16px 0;
   position:relative;
 }
-.clause-block:last-child{border-bottom:none}
-.clause-block-inner{padding-inline-start:24px}
+.clause-block-inner{padding-inline-start:0}
+.clause-block + .clause-block::before{
+  content:'';display:block;height:1px;
+  background:var(--border);margin-bottom:16px;
+}
 .clause-title{
   font-size:14pt;font-weight:700;color:#0F2A4A;
   margin-bottom:10px;cursor:default;
@@ -1772,9 +1774,7 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
 .var-chip.empty{background:var(--danger-50);color:var(--danger-700);text-decoration:underline dotted}
 
 /* Signature page */
-.sig-page{padding:50px;page-break-before:always}
-.sig-page-title{font-size:14pt;font-weight:700;color:#0F2A4A;text-align:center;margin-bottom:8px}
-.sig-page-sub{font-size:10pt;color:#6B7280;text-align:center;margin-bottom:40px}
+.sig-page{padding:24px 0 0}
 .sig-grid{display:grid;grid-template-columns:1fr 1fr;gap:40px}
 .sig-block{border:1px solid #E5E7EB;border-radius:6px;padding:24px;text-align:center}
 .sig-block-title{font-size:11pt;font-weight:700;color:#0F2A4A;margin-bottom:4px}
@@ -1895,8 +1895,8 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
   }
   .cov-page{page-break-after:always!important;min-height:auto!important;page:cover-page}
   @page cover-page{margin:0;@bottom-center{content:none}}
-  .sig-page{page-break-before:always!important}
-  .clause-block{page-break-inside:avoid!important;break-inside:avoid!important;orphans:4!important;widows:4!important}
+  .sig-page{page-break-before:auto!important}
+  .clause-block{page-break-inside:avoid!important;break-inside:avoid!important;orphans:4!important;widows:4!important;padding:14px 0!important}
   .sig-grid{page-break-inside:avoid!important;break-inside:avoid!important}
   .contract-doc-header{display:flex!important}
   .contract-doc-footer{font-size:9pt!important}
@@ -3689,15 +3689,20 @@ Pages.createContract = function(projId, tplKey) {
     page_layout: {
       header: {
         show: true,
+        mode: 'text',
         image: '',
+        height: 20,
         show_logo: false,
         title: '',
         doc_number: '',
+        show_page_num: false,
         custom_right: ''
       },
       footer: {
         show: true,
+        mode: 'text',
         image: '',
+        height: 15,
         left_text: '',
         center_text: '',
         show_page_num: true,
@@ -4977,28 +4982,44 @@ Pages.render_contract = function(params) {
         '</label>' +
       '</div>' +
       '<div class="var-field">' +
-        '<div class="var-field-lbl">صورة الرأس (كاملة العرض)</div>' +
-        (plh.image
-          ? '<img src="'+plh.image+'" style="width:100%;max-height:50px;object-fit:contain;border:1px solid var(--border);border-radius:var(--radius-xs);display:block;margin-bottom:4px">' +
-            '<button class="btn btn-sm" style="width:100%;margin-bottom:4px" onclick="document.getElementById(\'hdr-img-inp\').click()"><i data-lucide="upload"></i>تغيير</button>' +
-            '<button class="btn btn-sm" style="width:100%;color:var(--danger-600)" onclick="Pages.updatePageLayout(\''+projId+'\',\''+contractId+'\',\'header\',\'image\',\'\');Pages.render_contract({projId:\''+projId+'\',contractId:\''+contractId+'\'})">إزالة</button>'
-          : '<button class="btn btn-sm" style="width:100%" onclick="document.getElementById(\'hdr-img-inp\').click()"><i data-lucide="upload"></i>رفع صورة رأس</button>'
-        ) +
-        '<input type="file" id="hdr-img-inp" accept="image/*" style="display:none" onchange="Pages.handleHeaderImageUpload(\''+projId+'\',\''+contractId+'\',this)">' +
+        '<div class="var-field-lbl">الارتفاع (مم)</div>' +
+        '<input type="number" class="var-field-inp" min="8" max="60" step="1" value="'+(plh.height||20)+'" oninput="Pages.updatePageLayout(\''+projId+'\',\''+contractId+'\',\'header\',\'height\',parseFloat(this.value)||20)">' +
       '</div>' +
       '<div class="var-field">' +
-        '<div class="var-field-lbl">عنوان المستند</div>' +
-        '<input class="var-field-inp" value="'+UI.escHtml(plh.title||'')+'" placeholder="'+(contract.title||'عنوان العقد')+'" oninput="Pages.updatePageLayout(\''+projId+'\',\''+contractId+'\',\'header\',\'title\',this.value)">' +
+        '<div class="var-field-lbl">النوع</div>' +
+        '<select class="var-field-inp" onchange="Pages.updatePageLayout(\''+projId+'\',\''+contractId+'\',\'header\',\'mode\',this.value);Pages.render_contract({projId:\''+projId+'\',contractId:\''+contractId+'\'})">' +
+          '<option value="text"'+((!plh.mode||plh.mode==='text')?' selected':'')+'>نص</option>' +
+          '<option value="image"'+(plh.mode==='image'?' selected':'')+'>صورة</option>' +
+        '</select>' +
       '</div>' +
-      '<div class="var-field">' +
-        '<div class="var-field-lbl">رقم المستند</div>' +
-        '<input class="var-field-inp" value="'+UI.escHtml(plh.doc_number||'')+'" placeholder="{{contract_no}}" oninput="Pages.updatePageLayout(\''+projId+'\',\''+contractId+'\',\'header\',\'doc_number\',this.value)">' +
-      '</div>' +
-      '<div class="var-field">' +
-        '<label style="display:flex;align-items:center;gap:6px;font-size:var(--font-xs);cursor:pointer">' +
-          '<input type="checkbox" '+(plh.show_logo?'checked':'')+' onchange="Pages.updatePageLayout(\''+projId+'\',\''+contractId+'\',\'header\',\'show_logo\',this.checked)"> إظهار الشعار في الرأس' +
-        '</label>' +
-      '</div>' +
+      (plh.mode === 'image'
+        ? '<div class="var-field">' +
+            '<div class="var-field-lbl">صورة الرأس</div>' +
+            (plh.image
+              ? '<img src="'+plh.image+'" style="width:100%;max-height:50px;object-fit:contain;border:1px solid var(--border);border-radius:var(--radius-xs);display:block;margin-bottom:4px">' +
+                '<button class="btn btn-sm" style="width:100%;margin-bottom:4px" onclick="document.getElementById(\'hdr-img-inp\').click()"><i data-lucide="upload"></i>تغيير</button>' +
+                '<button class="btn btn-sm" style="width:100%;color:var(--danger-600)" onclick="Pages.updatePageLayout(\''+projId+'\',\''+contractId+'\',\'header\',\'image\',\'\');Pages.render_contract({projId:\''+projId+'\',contractId:\''+contractId+'\'})">إزالة</button>'
+              : '<button class="btn btn-sm" style="width:100%" onclick="document.getElementById(\'hdr-img-inp\').click()"><i data-lucide="upload"></i>رفع صورة رأس</button>'
+            ) +
+            '<input type="file" id="hdr-img-inp" accept="image/*" style="display:none" onchange="Pages.handleHeaderImageUpload(\''+projId+'\',\''+contractId+'\',this)">' +
+          '</div>'
+        : '<div class="var-field">' +
+            '<div class="var-field-lbl">عنوان المستند</div>' +
+            '<input class="var-field-inp" value="'+UI.escHtml(plh.title||'')+'" placeholder="'+(contract.title||'عنوان العقد')+'" oninput="Pages.updatePageLayout(\''+projId+'\',\''+contractId+'\',\'header\',\'title\',this.value)">' +
+          '</div>' +
+          '<div class="var-field">' +
+            '<div class="var-field-lbl">رقم المستند</div>' +
+            '<input class="var-field-inp" value="'+UI.escHtml(plh.doc_number||'')+'" placeholder="{{contract_no}}" oninput="Pages.updatePageLayout(\''+projId+'\',\''+contractId+'\',\'header\',\'doc_number\',this.value)">' +
+          '</div>' +
+          '<div class="var-field" style="display:flex;gap:12px">' +
+            '<label style="display:flex;align-items:center;gap:6px;font-size:var(--font-xs);cursor:pointer">' +
+              '<input type="checkbox" '+(plh.show_logo?'checked':'')+' onchange="Pages.updatePageLayout(\''+projId+'\',\''+contractId+'\',\'header\',\'show_logo\',this.checked)"> إظهار الشعار' +
+            '</label>' +
+            '<label style="display:flex;align-items:center;gap:6px;font-size:var(--font-xs);cursor:pointer">' +
+              '<input type="checkbox" '+(plh.show_page_num?'checked':'')+' onchange="Pages.updatePageLayout(\''+projId+'\',\''+contractId+'\',\'header\',\'show_page_num\',this.checked)"> رقم الصفحة' +
+            '</label>' +
+          '</div>'
+      ) +
     '</div>' +
     // Footer
     '<div class="stg-section">' +
@@ -5009,28 +5030,41 @@ Pages.render_contract = function(params) {
         '</label>' +
       '</div>' +
       '<div class="var-field">' +
-        '<div class="var-field-lbl">صورة التذييل (كاملة العرض)</div>' +
-        (plf.image
-          ? '<img src="'+plf.image+'" style="width:100%;max-height:50px;object-fit:contain;border:1px solid var(--border);border-radius:var(--radius-xs);display:block;margin-bottom:4px">' +
-            '<button class="btn btn-sm" style="width:100%;margin-bottom:4px" onclick="document.getElementById(\'ftr-img-inp\').click()"><i data-lucide="upload"></i>تغيير</button>' +
-            '<button class="btn btn-sm" style="width:100%;color:var(--danger-600)" onclick="Pages.updatePageLayout(\''+projId+'\',\''+contractId+'\',\'footer\',\'image\',\'\');Pages.render_contract({projId:\''+projId+'\',contractId:\''+contractId+'\'})">إزالة</button>'
-          : '<button class="btn btn-sm" style="width:100%" onclick="document.getElementById(\'ftr-img-inp\').click()"><i data-lucide="upload"></i>رفع صورة تذييل</button>'
-        ) +
-        '<input type="file" id="ftr-img-inp" accept="image/*" style="display:none" onchange="Pages.handleFooterImageUpload(\''+projId+'\',\''+contractId+'\',this)">' +
+        '<div class="var-field-lbl">الارتفاع (مم)</div>' +
+        '<input type="number" class="var-field-inp" min="8" max="60" step="1" value="'+(plf.height||15)+'" oninput="Pages.updatePageLayout(\''+projId+'\',\''+contractId+'\',\'footer\',\'height\',parseFloat(this.value)||15)">' +
       '</div>' +
       '<div class="var-field">' +
-        '<div class="var-field-lbl">نص يسار التذييل</div>' +
-        '<input class="var-field-inp" value="'+UI.escHtml(plf.left_text||'')+'" placeholder="مثال: السجل التجاري / الرقم الضريبي" oninput="Pages.updatePageLayout(\''+projId+'\',\''+contractId+'\',\'footer\',\'left_text\',this.value)">' +
+        '<div class="var-field-lbl">النوع</div>' +
+        '<select class="var-field-inp" onchange="Pages.updatePageLayout(\''+projId+'\',\''+contractId+'\',\'footer\',\'mode\',this.value);Pages.render_contract({projId:\''+projId+'\',contractId:\''+contractId+'\'})">' +
+          '<option value="text"'+((!plf.mode||plf.mode==='text')?' selected':'')+'>نص</option>' +
+          '<option value="image"'+(plf.mode==='image'?' selected':'')+'>صورة</option>' +
+        '</select>' +
       '</div>' +
-      '<div class="var-field">' +
-        '<div class="var-field-lbl">نص وسط التذييل</div>' +
-        '<input class="var-field-inp" value="'+UI.escHtml(plf.center_text||'')+'" placeholder="مثال: وثيقة سرية" oninput="Pages.updatePageLayout(\''+projId+'\',\''+contractId+'\',\'footer\',\'center_text\',this.value)">' +
-      '</div>' +
-      '<div class="var-field">' +
-        '<label style="display:flex;align-items:center;gap:6px;font-size:var(--font-xs);cursor:pointer">' +
-          '<input type="checkbox" '+(plf.show_page_num!==false?'checked':'')+' onchange="Pages.updatePageLayout(\''+projId+'\',\''+contractId+'\',\'footer\',\'show_page_num\',this.checked)"> ترقيم الصفحات' +
-        '</label>' +
-      '</div>' +
+      (plf.mode === 'image'
+        ? '<div class="var-field">' +
+            '<div class="var-field-lbl">صورة التذييل</div>' +
+            (plf.image
+              ? '<img src="'+plf.image+'" style="width:100%;max-height:50px;object-fit:contain;border:1px solid var(--border);border-radius:var(--radius-xs);display:block;margin-bottom:4px">' +
+                '<button class="btn btn-sm" style="width:100%;margin-bottom:4px" onclick="document.getElementById(\'ftr-img-inp\').click()"><i data-lucide="upload"></i>تغيير</button>' +
+                '<button class="btn btn-sm" style="width:100%;color:var(--danger-600)" onclick="Pages.updatePageLayout(\''+projId+'\',\''+contractId+'\',\'footer\',\'image\',\'\');Pages.render_contract({projId:\''+projId+'\',contractId:\''+contractId+'\'})">إزالة</button>'
+              : '<button class="btn btn-sm" style="width:100%" onclick="document.getElementById(\'ftr-img-inp\').click()"><i data-lucide="upload"></i>رفع صورة تذييل</button>'
+            ) +
+            '<input type="file" id="ftr-img-inp" accept="image/*" style="display:none" onchange="Pages.handleFooterImageUpload(\''+projId+'\',\''+contractId+'\',this)">' +
+          '</div>'
+        : '<div class="var-field">' +
+            '<div class="var-field-lbl">نص يسار التذييل</div>' +
+            '<input class="var-field-inp" value="'+UI.escHtml(plf.left_text||'')+'" placeholder="مثال: السجل التجاري / الرقم الضريبي" oninput="Pages.updatePageLayout(\''+projId+'\',\''+contractId+'\',\'footer\',\'left_text\',this.value)">' +
+          '</div>' +
+          '<div class="var-field">' +
+            '<div class="var-field-lbl">نص وسط التذييل</div>' +
+            '<input class="var-field-inp" value="'+UI.escHtml(plf.center_text||'')+'" placeholder="مثال: وثيقة سرية" oninput="Pages.updatePageLayout(\''+projId+'\',\''+contractId+'\',\'footer\',\'center_text\',this.value)">' +
+          '</div>' +
+          '<div class="var-field">' +
+            '<label style="display:flex;align-items:center;gap:6px;font-size:var(--font-xs);cursor:pointer">' +
+              '<input type="checkbox" '+(plf.show_page_num!==false?'checked':'')+' onchange="Pages.updatePageLayout(\''+projId+'\',\''+contractId+'\',\'footer\',\'show_page_num\',this.checked)"> ترقيم الصفحات' +
+            '</label>' +
+          '</div>'
+      ) +
       '<div class="var-field">' +
         '<div class="var-field-lbl">تصنيف التذييل</div>' +
         '<select class="var-field-inp" onchange="Pages.updateContractCover(\''+projId+'\',\''+contractId+'\',\'footer_label\',this.value)">' +
@@ -5103,6 +5137,15 @@ Pages.render_contract = function(params) {
 Pages._renderContractDoc = function(contract) {
   var vars = contract.variables || {};
   var ds = contract.doc_style || {font_size:14, line_height:1.5, title_size:18, clause_title_size:14};
+  var dm = contract.doc_margins || {top:2.5, right:3, bottom:2.5, left:2.5};
+  var PX = 37.795; // 1 cm = 37.795px at 96dpi
+  var topPx = Math.round(dm.top * PX);
+  var rightPx = Math.round(dm.right * PX);
+  var bottomPx = Math.round(dm.bottom * PX);
+  var leftPx = Math.round(dm.left * PX);
+  var docPadStyle = 'padding:'+topPx+'px '+rightPx+'px '+bottomPx+'px '+leftPx+'px';
+  var covNegMargin = 'margin:'+(-topPx)+'px '+(-rightPx)+'px 0 '+(-leftPx)+'px';
+  var bandNegMargin = 'margin:0 '+(-rightPx)+'px 0 '+(-leftPx)+'px';
   var frameClass = 'cov-frame-' + (contract.cover && contract.cover.frame_style ? contract.cover.frame_style : 'modern');
 
   var logoHtml = contract.cover && contract.cover.logo
@@ -5113,17 +5156,14 @@ Pages._renderContractDoc = function(contract) {
     : '';
 
   var isCovImage = frameClass === 'cov-frame-image';
-  var bgStyle = '';
-  if (isCovImage && !(contract.cover && contract.cover.bg_image)) {
-    bgStyle = ' style="background:'+UI.escHtml((contract.cover && contract.cover.bg_color)||'#0F2A4A')+'"';
-  }
   var bgImgHtml = (isCovImage && contract.cover && contract.cover.bg_image)
     ? '<img class="cov-bg-img" src="'+contract.cover.bg_image+'">'
       + '<div class="cov-overlay" style="background:rgba(0,0,0,'+UI.escHtml(String((contract.cover && contract.cover.overlay_opacity)||0.55))+')"></div>'
     : '';
+  var covExtraStyle = covNegMargin + (isCovImage && !(contract.cover && contract.cover.bg_image) ? ';background:'+UI.escHtml((contract.cover && contract.cover.bg_color)||'#0F2A4A') : '');
 
   var covHtml =
-    '<div class="cov-page '+frameClass+'"'+bgStyle+'>' +
+    '<div class="cov-page '+frameClass+'" style="'+covExtraStyle+'">' +
       bgImgHtml +
       '<div class="cov-frame-wrap">' +
         logoHtml + companyHtml +
@@ -5137,23 +5177,41 @@ Pages._renderContractDoc = function(contract) {
       '</div>' +
     '</div>';
 
-  var hdr = (contract.page_layout && contract.page_layout.header) || {};
-  var ftr = (contract.page_layout && contract.page_layout.footer) || {};
-  var logoInHeader = (hdr.show_logo && contract.cover && contract.cover.logo)
-    ? '<img src="'+contract.cover.logo+'" style="max-height:32px;object-fit:contain">'
-    : '';
-  var docHeaderHtml = (hdr.show !== false)
-    ? '<div class="contract-doc-header">' +
-        '<span>'+logoInHeader+UI.escHtml(hdr.title||contract.title||'')+'</span>' +
-        '<span style="color:#9CA3AF;font-size:8pt">'+UI.escHtml(hdr.doc_number||hdr.custom_right||'')+'</span>' +
-      '</div>'
-    : '';
-  var hdrImgBand = hdr.image
-    ? '<div class="contract-hdr-img-band"><img src="'+hdr.image+'"></div>'
-    : '';
-  var ftrImgBand = ftr.image
-    ? '<div class="contract-ftr-img-band"><img src="'+ftr.image+'"></div>'
-    : '';
+  var plHdr = (contract.page_layout && contract.page_layout.header) || {};
+  var plFtr = (contract.page_layout && contract.page_layout.footer) || {};
+  var hdr = plHdr;
+  var ftr = plFtr;
+  var hdrBand = '';
+  if (plHdr.show !== false) {
+    if (plHdr.mode === 'image' && plHdr.image) {
+      hdrBand = '<div class="contract-hdr-img-band" style="'+bandNegMargin+';height:'+(plHdr.height||20)+'mm;overflow:hidden"><img src="'+plHdr.image+'" style="width:100%;height:100%;object-fit:cover"></div>';
+    } else {
+      var hdrHeight = (plHdr.height||20);
+      var hdrLogoHtml = (plHdr.show_logo && contract.cover && contract.cover.logo)
+        ? '<img src="'+contract.cover.logo+'" style="max-height:'+Math.round(hdrHeight*0.7)+'mm;object-fit:contain;margin-left:8px">'
+        : '';
+      hdrBand = '<div class="contract-doc-header" style="margin:0 '+(-rightPx)+'px 0 '+(-leftPx)+'px;padding:10px '+rightPx+'px 10px '+leftPx+'px;height:'+hdrHeight+'mm">' +
+        '<span>'+hdrLogoHtml+UI.escHtml(plHdr.title||contract.title||'')+'</span>' +
+        '<span style="color:#9CA3AF;font-size:8pt">'+UI.escHtml(plHdr.doc_number||plHdr.custom_right||'')+'</span>' +
+        '</div>';
+    }
+  }
+  var docHeaderHtml = hdrBand;
+  var hdrImgBand = '';
+  var ftrBand = '';
+  if (plFtr.show !== false) {
+    if (plFtr.mode === 'image' && plFtr.image) {
+      ftrBand = '<div class="contract-ftr-img-band" style="'+bandNegMargin+';height:'+(plFtr.height||15)+'mm;overflow:hidden"><img src="'+plFtr.image+'" style="width:100%;height:100%;object-fit:cover"></div>';
+    } else {
+      ftrBand = '<div class="contract-doc-footer" style="margin:0 '+(-rightPx)+'px 0 '+(-leftPx)+'px;padding:8px '+rightPx+'px;height:'+(plFtr.height||15)+'mm">' +
+        '<span>'+UI.escHtml(plFtr.left_text||contract.footer_label||'سري')+'</span>' +
+        '<span>'+UI.escHtml(plFtr.center_text||'')+'</span>' +
+        '<span>'+(plFtr.show_page_num!==false?'وثيقة سرية':'')+'</span>' +
+        '</div>';
+    }
+  }
+  var docFooterHtml = ftrBand;
+  var ftrImgBand = '';
 
   var enabledClauses = contract.clauses.filter(function(c){return c.enabled!==false;});
   var clausesHtml = '';
@@ -5177,8 +5235,7 @@ Pages._renderContractDoc = function(contract) {
 
   var sigHtml =
     '<div class="sig-page">' +
-      '<div class="sig-page-title">صفحة التوقيعات</div>' +
-      '<div class="sig-page-sub">حرر في مدينة '+(vars.signature_city?UI.escHtml(vars.signature_city):'___________')+' بتاريخ '+UI.escHtml(vars.contract_date_gregorian||'___________')+'</div>' +
+      '<div style="border-top:1.5px solid #0F2A4A;margin-bottom:32px"></div>' +
       '<div class="sig-grid">' +
         '<div class="sig-block">' +
           '<div class="sig-block-title">الطرف الأول</div>' +
@@ -5197,15 +5254,7 @@ Pages._renderContractDoc = function(contract) {
       '</div>' +
     '</div>';
 
-  var docFooterHtml = (ftr.show !== false)
-    ? '<div class="contract-doc-footer">' +
-        '<span>'+UI.escHtml(ftr.left_text||contract.footer_label||'سري')+'</span>' +
-        '<span>'+UI.escHtml(ftr.center_text||'')+'</span>' +
-        '<span>'+(ftr.show_page_num!==false?'وثيقة سرية':'')+'</span>' +
-      '</div>'
-    : '';
-
-  return '<div class="contract-doc" id="contract-doc" style="font-size:'+(ds.font_size||14)+'pt;line-height:'+(ds.line_height||1.5)+'">' +
+  return '<div class="contract-doc" id="contract-doc" style="font-size:'+(ds.font_size||14)+'pt;line-height:'+(ds.line_height||1.5)+';'+docPadStyle+'">' +
     covHtml + docHeaderHtml + hdrImgBand +
     '<div id="contract-clauses-body">'+clausesHtml+'</div>' +
     sigHtml + ftrImgBand + docFooterHtml +
@@ -5463,6 +5512,24 @@ Pages.updateDocMargins = function(projId, contractId, key, value) {
   c.doc_margins[key] = parseFloat(value)||2.5;
   c.updated = (new Date()).toISOString().slice(0,10);
   DB.saveContract(projId, c);
+  var PX = 37.795;
+  var m = c.doc_margins;
+  var docEl = document.getElementById('contract-doc');
+  if (docEl) {
+    docEl.style.padding = Math.round(m.top*PX)+'px '+Math.round(m.right*PX)+'px '+Math.round(m.bottom*PX)+'px '+Math.round(m.left*PX)+'px';
+    var covEl = docEl.querySelector('.cov-page');
+    if (covEl) {
+      covEl.style.margin = (-Math.round(m.top*PX))+'px '+(-Math.round(m.right*PX))+'px 0 '+(-Math.round(m.left*PX))+'px';
+    }
+    docEl.querySelectorAll('.contract-hdr-img-band,.contract-ftr-img-band,.contract-doc-header,.contract-doc-footer').forEach(function(el){
+      el.style.marginLeft = (-Math.round(m.left*PX))+'px';
+      el.style.marginRight = (-Math.round(m.right*PX))+'px';
+      if (el.classList.contains('contract-doc-header')||el.classList.contains('contract-doc-footer')) {
+        el.style.paddingLeft = Math.round(m.left*PX)+'px';
+        el.style.paddingRight = Math.round(m.right*PX)+'px';
+      }
+    });
+  }
 };
 
 Pages.updatePageLayout = function(projId, contractId, section, key, value) {
@@ -5600,29 +5667,33 @@ Pages.printContract = function() {
 
   // Header/footer content for body pages (image band or text)
   var printHdrContent = '';
-  if (hdr.image) {
-    printHdrContent = '<img src="'+hdr.image+'" style="width:100%;display:block;object-fit:contain">';
-  } else if (hdr.show !== false) {
-    var logoInHdr = (hdr.show_logo && contract.cover && contract.cover.logo)
-      ? '<img src="'+contract.cover.logo+'" style="max-height:32px;object-fit:contain;margin-left:8px">'
-      : '';
-    printHdrContent =
-      '<div style="padding:8px 0;border-bottom:1.5px solid #0F2A4A;font-size:9pt;color:#4B5563;display:flex;align-items:center;justify-content:space-between">'+
-      '<span>'+logoInHdr+UI.escHtml(hdr.title||contract.title||'')+'</span>'+
-      '<span style="color:#9CA3AF;font-size:8pt">'+UI.escHtml(hdr.doc_number||hdr.custom_right||'')+'</span>'+
-      '</div>';
+  if (hdr.show !== false) {
+    if (hdr.mode === 'image' && hdr.image) {
+      printHdrContent = '<img src="'+hdr.image+'" style="width:100%;height:'+(hdr.height||20)+'mm;object-fit:cover;display:block">';
+    } else if (hdr.title || hdr.doc_number || hdr.show_logo) {
+      var logoInHdr = (hdr.show_logo && contract.cover && contract.cover.logo)
+        ? '<img src="'+contract.cover.logo+'" style="max-height:'+Math.round((hdr.height||20)*0.6)+'mm;object-fit:contain;margin-left:8px">'
+        : '';
+      printHdrContent =
+        '<div style="height:'+(hdr.height||20)+'mm;display:flex;align-items:center;justify-content:space-between;border-bottom:1.5px solid #0F2A4A;font-size:9pt;color:#4B5563">'+
+        '<span>'+logoInHdr+UI.escHtml(hdr.title||contract.title||'')+'</span>'+
+        '<span style="color:#9CA3AF;font-size:8pt">'+UI.escHtml(hdr.doc_number||hdr.custom_right||'')+'</span>'+
+        '</div>';
+    }
   }
 
   var printFtrContent = '';
-  if (ftr.image) {
-    printFtrContent = '<img src="'+ftr.image+'" style="width:100%;display:block;object-fit:contain">';
-  } else if (ftr.show !== false) {
-    printFtrContent =
-      '<div style="padding:6px 0;border-top:1px solid #E5E7EB;font-size:9pt;color:#9CA3AF;display:flex;justify-content:space-between">'+
-      '<span>'+UI.escHtml(ftr.left_text||contract.footer_label||'سري')+'</span>'+
-      '<span>'+UI.escHtml(ftr.center_text||'')+'</span>'+
-      '<span></span>'+
-      '</div>';
+  if (ftr.show !== false) {
+    if (ftr.mode === 'image' && ftr.image) {
+      printFtrContent = '<img src="'+ftr.image+'" style="width:100%;height:'+(ftr.height||15)+'mm;object-fit:cover;display:block">';
+    } else {
+      printFtrContent =
+        '<div style="height:'+(ftr.height||15)+'mm;display:flex;align-items:center;justify-content:space-between;border-top:1px solid #E5E7EB;font-size:9pt;color:#9CA3AF">'+
+        '<span>'+UI.escHtml(ftr.left_text||contract.footer_label||'سري')+'</span>'+
+        '<span>'+UI.escHtml(ftr.center_text||'')+'</span>'+
+        '<span></span>'+
+        '</div>';
+    }
   }
 
   // Clauses with plain vars substituted
@@ -5641,8 +5712,7 @@ Pages.printContract = function() {
   // Signature page
   var sigHtml =
     '<div class="sig-page">' +
-      '<div class="sig-page-title">صفحة التوقيعات</div>' +
-      '<div class="sig-page-sub">حرر في مدينة '+(vars.signature_city?UI.escHtml(vars.signature_city):'___________')+' بتاريخ '+UI.escHtml(vars.contract_date_gregorian||'___________')+'</div>' +
+      '<div style="border-top:1.5px solid #0F2A4A;margin-bottom:32px"></div>' +
       '<div class="sig-grid">' +
         '<div class="sig-block">' +
           '<div class="sig-block-title">الطرف الأول</div>' +
@@ -5700,14 +5770,12 @@ Pages.printContract = function() {
     '.cov-parties-row:last-child{border-bottom:none}' +
     '.cov-parties-row strong{color:#6B7280;display:block;font-size:10pt;font-weight:500}' +
     '.cov-ref-line{margin-top:32px;font-size:10pt;color:#9CA3AF}' +
-    '.clause-block{padding:20px 50px;border-bottom:1px solid #E5E7EB;page-break-inside:avoid;orphans:4;widows:4}' +
-    '.clause-block:last-of-type{border-bottom:none}' +
-    '.clause-block-inner{padding-right:24px}' +
+    '.clause-block{padding:14px 0;page-break-inside:avoid;orphans:4;widows:4}' +
+    '.clause-block+.clause-block{border-top:1px solid #E5E7EB;padding-top:14px}' +
+    '.clause-block-inner{padding-right:0}' +
     '.clause-title{font-size:'+(ds.clause_title_size||14)+'pt;font-weight:700;color:#0F2A4A;margin-bottom:10px}' +
     '.clause-body{font-size:'+ds.font_size+'pt;line-height:'+ds.line_height+';color:#1F2937;white-space:pre-wrap;word-wrap:break-word;text-align:justify}' +
-    '.sig-page{padding:50px;page-break-before:always}' +
-    '.sig-page-title{font-size:14pt;font-weight:700;color:#0F2A4A;text-align:center;margin-bottom:8px}' +
-    '.sig-page-sub{font-size:10pt;color:#6B7280;text-align:center;margin-bottom:40px}' +
+    '.sig-page{padding:24px 0 0}' +
     '.sig-grid{display:grid;grid-template-columns:1fr 1fr;gap:40px}' +
     '.sig-block{border:1px solid #E5E7EB;border-radius:6px;padding:24px;text-align:center}' +
     '.sig-block-title{font-size:11pt;font-weight:700;color:#0F2A4A;margin-bottom:4px}' +
