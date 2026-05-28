@@ -1826,15 +1826,26 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
   .contract-editor-page{display:flex!important}
   .contract-sidebar,#top-bar-wrap,.top-bar,.ctrl-fab,
   .modal-overlay,.ctrl-drawer,.ctrl-drawer-overlay,
-  .clause-controls{display:none!important}
-  .contract-canvas-area{background:white!important;padding:0!important;overflow:visible!important}
-  .contract-doc{box-shadow:none!important;width:210mm!important;max-width:none!important}
-  @page{size:A4 portrait;margin:2.5cm 2cm 2.5cm 2cm}
-  .cov-page{page-break-after:always;min-height:auto}
-  .sig-page{page-break-before:always}
-  .clause-block{page-break-inside:avoid;break-inside:avoid}
-  .sig-grid{page-break-inside:avoid;break-inside:avoid}
+  .clause-controls,.contract-mobile-bar{display:none!important}
+  .contract-canvas-area{background:white!important;padding:0!important;overflow:visible!important;flex:1}
+  .contract-doc{
+    box-shadow:none!important;width:100%!important;max-width:none!important;
+    font-size:12pt!important;line-height:1.9!important;
+  }
+  .clause-body{font-size:12pt!important;line-height:1.9!important;text-align:justify!important}
+  .clause-title{font-size:13pt!important;font-weight:700!important}
+  .cov-title{font-size:24pt!important}
+  .cov-subtitle{font-size:11pt!important}
+  .cov-parties-box{font-size:11pt!important}
+  .sig-block-title{font-size:12pt!important}
+  @page{size:A4 portrait;margin:2.5cm 3cm 2.5cm 2cm} /* wider right for RTL binding */
+  .cov-page{page-break-after:always!important;min-height:auto!important;page:cover-page}
+  @page cover-page{margin:0}
+  .sig-page{page-break-before:always!important}
+  .clause-block{page-break-inside:avoid!important;break-inside:avoid!important;orphans:4!important;widows:4!important}
+  .sig-grid{page-break-inside:avoid!important;break-inside:avoid!important}
   .contract-doc-header{display:flex!important}
+  .contract-doc-footer{font-size:9pt!important}
 }
 
 /* Template picker cards in modal */
@@ -1861,6 +1872,44 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
   .clause-block-inner{padding-inline-start:0}
   .sig-grid{grid-template-columns:1fr}
 }
+
+/* Mobile contract editor — bottom tab bar */
+@media(max-width:768px){
+  .contract-editor-page.active{flex-direction:column!important}
+  .contract-sidebar-left,.contract-sidebar-right{
+    display:none;position:fixed;inset-inline-start:0;inset-inline-end:0;
+    bottom:56px;max-height:65vh;z-index:200;border-radius:var(--radius-lg) var(--radius-lg) 0 0;
+    box-shadow:var(--shadow-xl);overflow-y:auto;
+  }
+  .contract-sidebar.mob-open{display:flex!important}
+  .contract-canvas-area{padding:12px 0!important;flex:1}
+  .contract-doc{width:100%!important;border-radius:0!important;box-shadow:none!important}
+  .clause-block{padding:14px 16px!important}
+  .clause-block-inner{padding-inline-start:0!important}
+  .cov-page{min-height:auto!important;padding:32px 20px!important}
+  .cov-frame-wrap{padding:20px!important}
+  .cov-parties-box{max-width:100%!important;padding:12px 16px!important}
+  .sig-grid{grid-template-columns:1fr!important}
+  .contract-doc-header{font-size:8pt}
+}
+.contract-mobile-bar{
+  display:none;
+  background:var(--bg-elevated);border-top:1px solid var(--border);
+  padding:6px var(--space-3);gap:var(--space-1_5);align-items:center;
+  flex-shrink:0;
+}
+@media(max-width:768px){
+  .contract-mobile-bar{display:flex}
+}
+.cmb-tab{
+  flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;
+  padding:6px 4px;border-radius:var(--radius-sm);border:none;
+  background:transparent;font-family:inherit;font-size:10px;
+  color:var(--fg-3);cursor:pointer;transition:var(--transition-fast);
+}
+.cmb-tab.active{color:var(--iris-600);background:var(--iris-50)}
+.cmb-tab [data-lucide]{width:17px;height:17px;stroke-width:1.5}
+.cmb-actions{display:flex;gap:var(--space-1_5);margin-inline-start:auto}
 </style>
 </head>
 <body>
@@ -1896,6 +1945,10 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
         <span class="sb-icon"><i data-lucide="briefcase"></i></span>
         <span class="sb-label">المشاريع</span>
         <span class="sb-badge" id="sb-badge-projects">0</span>
+      </a>
+      <a class="sb-item" id="nav-templates" onclick="Nav.go('templates')">
+        <span class="sb-icon"><i data-lucide="layout-template"></i></span>
+        <span class="sb-label">النماذج</span>
       </a>
       <div class="sb-section-label">الحساب</div>
       <a class="sb-item" id="nav-settings" onclick="Nav.go('settings')">
@@ -1947,6 +2000,8 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
     <div id="pg-projects" class="page"></div>
     <div id="pg-fin"      class="page"></div>
     <div id="pg-contract" class="page contract-editor-page"></div>
+    <div id="pg-templates" class="page"></div>
+    <div id="pg-template-editor" class="page contract-editor-page"></div>
     <div id="pg-settings" class="page"></div>
   </main>
 </div>
@@ -2018,6 +2073,20 @@ DB.deleteContract = function(pid, cid) {
   var fin = DB.getFin(pid);
   fin.contracts = (fin.contracts||[]).filter(function(x){ return x.id!==cid; });
   DB.saveFin(pid, fin);
+};
+DB.getCustomTemplates = function() {
+  try { return JSON.parse(localStorage.getItem('buad2_custom_templates')||'[]'); } catch(e){ return []; }
+};
+DB.saveCustomTemplate = function(t) {
+  var arr = DB.getCustomTemplates();
+  var idx = -1;
+  for(var i=0;i<arr.length;i++){ if(arr[i].id===t.id){idx=i;break;} }
+  if(idx>=0) arr[idx]=t; else arr.push(t);
+  localStorage.setItem('buad2_custom_templates', JSON.stringify(arr));
+};
+DB.deleteCustomTemplate = function(id) {
+  var arr = DB.getCustomTemplates().filter(function(x){return x.id!==id;});
+  localStorage.setItem('buad2_custom_templates', JSON.stringify(arr));
 };
 
 /* ═══════════════════════════════════════════
@@ -2122,6 +2191,8 @@ var Nav = {
     if (page==='client') { var ni=document.getElementById('nav-clients'); if(ni) ni.classList.add('active'); }
     if (page==='fin') { var ni2=document.getElementById('nav-projects'); if(ni2) ni2.classList.add('active'); }
     if (page==='contract') { var ni3=document.getElementById('nav-projects'); if(ni3) ni3.classList.add('active'); }
+    if (page==='templates') { var nt=document.getElementById('nav-templates'); if(nt) nt.classList.add('active'); }
+    if (page==='template-editor') { var nt2=document.getElementById('nav-templates'); if(nt2) nt2.classList.add('active'); }
     if (page==='fin' && params && params.tab) { Pages._finTab = params.tab; }
     if (Pages['render_'+page]) Pages['render_'+page](params);
     if (typeof lucide !== 'undefined') lucide.createIcons();
@@ -2174,6 +2245,17 @@ var Nav = {
         '<span class="bc-sep">←</span>' +
         (pp?'<span onclick="Nav.go(\'fin\',{projId:\''+params.projId+'\',tab:\'contracts\'})" style="cursor:pointer;color:var(--iris-500)">'+UI.escHtml(pp.name)+'</span><span class="bc-sep">←</span>':'') +
         '<span class="bc-page">'+(cc?UI.escHtml(cc.title):'عقد')+'</span>';
+      if (typeof lucide !== 'undefined') lucide.createIcons({rootElement: bc});
+      return;
+    }
+    if (page==='templates') { bc.innerHTML = iconHtml('layout-template')+'<span class="bc-page">النماذج</span>'; if (typeof lucide !== 'undefined') lucide.createIcons({rootElement: bc}); return; }
+    if (page==='template-editor') {
+      var tid = params && params.templateId;
+      var tt = tid && tid!=='new' ? DB.getCustomTemplates().find(function(x){return x.id===tid;}) : null;
+      bc.innerHTML = iconHtml('layout-template')+
+        '<span onclick="Nav.go(\'templates\')" style="cursor:pointer;color:var(--iris-500)">النماذج</span>'+
+        '<span class="bc-sep">←</span>'+
+        '<span class="bc-page">'+(tt?UI.escHtml(tt.name):'نموذج جديد')+'</span>';
       if (typeof lucide !== 'undefined') lucide.createIcons({rootElement: bc});
       return;
     }
@@ -3425,29 +3507,44 @@ Pages.deleteContractConfirm = function(projId, contractId) {
 };
 
 Pages.addContractModal = function(projId) {
-  var templates = [
-    {key:'service', name:'عقد تقديم خدمات', sub:'للخدمات والمشاريع', icon:'briefcase'},
-    {key:'nda', name:'اتفاقية عدم إفصاح', sub:'حماية المعلومات السرية', icon:'shield'},
-    {key:'employment', name:'عقد عمل', sub:'توظيف وعمالة', icon:'user'},
-    {key:'consulting', name:'عقد استشارات', sub:'الاستشارات والخبرات', icon:'lightbulb'},
-    {key:'blank', name:'نموذج فارغ', sub:'ابدأ من الصفر', icon:'file-plus'}
+  var customTpls = DB.getCustomTemplates();
+  var builtIn = [
+    {key:'service',     name:'عقد تقديم خدمات', sub:'للخدمات والمشاريع',    icon:'briefcase'},
+    {key:'nda',         name:'اتفاقية عدم إفصاح', sub:'حماية المعلومات',   icon:'shield'},
+    {key:'employment',  name:'عقد عمل',           sub:'توظيف وعلاقات عمل', icon:'user'},
+    {key:'consulting',  name:'عقد استشارات',      sub:'الاستشارات والخبرات',icon:'lightbulb'},
+    {key:'blank',       name:'نموذج فارغ',         sub:'ابدأ من الصفر',     icon:'file-plus'}
   ];
-  var cardsHtml = templates.map(function(t) {
-    return '<div class="tpl-pick-card" onclick="Pages._selectTpl=\''+t.key+'\';document.querySelectorAll(\'.tpl-pick-card\').forEach(function(x){x.classList.remove(\'selected\')});this.classList.add(\'selected\')">' +
+
+  Pages._selectTpl = customTpls.length > 0 ? 'custom:'+customTpls[0].id : 'service';
+
+  var customCards = customTpls.map(function(t) {
+    var key = 'custom:'+t.id;
+    return '<div class="tpl-pick-card'+(Pages._selectTpl===key?' selected':'')+'" onclick="Pages._selectTpl=\''+key+'\';document.querySelectorAll(\'.tpl-pick-card\').forEach(function(x){x.classList.remove(\'selected\')});this.classList.add(\'selected\')">' +
+      '<div class="tpl-pick-icon" style="background:var(--iris-100);color:var(--iris-600)"><i data-lucide="layout-template"></i></div>' +
+      '<div class="tpl-pick-name">'+UI.escHtml(t.name||'نموذج')+'</div>' +
+      '<div class="tpl-pick-sub">نموذج مخصص</div>' +
+    '</div>';
+  }).join('');
+
+  var builtInCards = builtIn.map(function(t) {
+    return '<div class="tpl-pick-card'+(Pages._selectTpl===t.key?' selected':'')+'" onclick="Pages._selectTpl=\''+t.key+'\';document.querySelectorAll(\'.tpl-pick-card\').forEach(function(x){x.classList.remove(\'selected\')});this.classList.add(\'selected\')">' +
       '<div class="tpl-pick-icon"><i data-lucide="'+t.icon+'"></i></div>' +
       '<div class="tpl-pick-name">'+t.name+'</div>' +
       '<div class="tpl-pick-sub">'+t.sub+'</div>' +
     '</div>';
   }).join('');
 
-  Pages._selectTpl = 'service';
+  var sectionsHtml = (customTpls.length>0
+    ? '<div style="font-size:var(--font-xs);color:var(--fg-3);margin-bottom:var(--space-2)">نماذجي المخصصة</div>' +
+      '<div class="tpl-pick-grid" style="margin-bottom:var(--space-3)">'+customCards+'</div>' +
+      '<div style="font-size:var(--font-xs);color:var(--fg-3);margin-bottom:var(--space-2)">النماذج الجاهزة</div>'
+    : '') +
+    '<div class="tpl-pick-grid">'+builtInCards+'</div>';
 
   UI.openModal(
     '<div class="modal-header"><h3>إنشاء عقد جديد</h3><button class="modal-close" onclick="UI.closeModalForce()">×</button></div>' +
-    '<div class="modal-body">' +
-      '<p style="color:var(--fg-3);font-size:var(--font-xs);margin-bottom:var(--space-4)">اختر قالب العقد — يمكنك تعديل جميع البنود لاحقاً</p>' +
-      '<div class="tpl-pick-grid">'+cardsHtml+'</div>' +
-    '</div>' +
+    '<div class="modal-body">'+sectionsHtml+'</div>' +
     '<div class="modal-footer" style="display:flex;gap:var(--space-2);justify-content:flex-end">' +
       '<button class="btn btn-sm" onclick="UI.closeModalForce()">إلغاء</button>' +
       '<button class="btn btn-sm btn-primary" onclick="Pages.createContract(\''+projId+'\',Pages._selectTpl)">إنشاء وفتح المحرر</button>' +
@@ -3457,7 +3554,6 @@ Pages.addContractModal = function(projId) {
 };
 
 Pages.createContract = function(projId, tplKey) {
-  var tpl = CONTRACT_TEMPLATES[tplKey] || CONTRACT_TEMPLATES['blank'];
   var projects = DB.getProjects();
   var proj = projects.find(function(p){return p.id===projId;});
   var clients = DB.getClients();
@@ -3465,6 +3561,35 @@ Pages.createContract = function(projId, tplKey) {
   var fin = DB.getFin(projId);
   var r = FinCalc.calc(projId);
   var today = (new Date()).toISOString().slice(0,10);
+
+  var isCustom = tplKey && tplKey.indexOf('custom:')===0;
+  var tpl, clauses, contract_cover, contract_footer;
+
+  if (isCustom) {
+    var customId = tplKey.replace('custom:','');
+    var customArr = DB.getCustomTemplates();
+    var customT = customArr.find(function(x){return x.id===customId;});
+    if (!customT) { UI.closeModalForce(); return; }
+    tpl = { title: customT.name };
+    clauses = customT.clauses.filter(function(c){return c.enabled!==false;}).map(function(clItem) {
+      return { id: DB.uid(), key: clItem.key, title: clItem.title, content: clItem.content, enabled: true };
+    });
+    contract_cover = customT.cover ? JSON.parse(JSON.stringify(customT.cover)) : {frame_style:'modern'};
+    contract_footer = customT.footer_label || 'سري';
+  } else {
+    tpl = CONTRACT_TEMPLATES[tplKey] || CONTRACT_TEMPLATES['blank'];
+    clauses = tpl.clauses.map(function(clItem, i) {
+      return {
+        id: DB.uid(),
+        key: clItem.key,
+        title: 'المادة ' + (CONTRACT_ORDINALS[i] || (i+1).toString()) + ': ' + clItem.baseTitle,
+        content: clItem.content,
+        enabled: true
+      };
+    });
+    contract_cover = {frame_style:'modern'};
+    contract_footer = 'سري';
+  }
 
   var vars = {
     party_a_name: '',
@@ -3475,22 +3600,13 @@ Pages.createContract = function(projId, tplKey) {
     party_b_address: cl ? (cl.city||'') : '',
     contract_date_gregorian: fin.ctrl && fin.ctrl.contract_date ? fin.ctrl.contract_date : today,
     contract_city: cl ? (cl.city||'الرياض') : 'الرياض',
+    signature_city: cl ? (cl.city||'الرياض') : 'الرياض',
     contract_amount: r.grossTotal > 0 ? Math.round(r.grossTotal).toString() : '',
     currency: 'ر.س',
     duration_months: '12',
     subject: proj ? proj.name : '',
     payment_method: 'تحويل بنكي'
   };
-
-  var clauses = tpl.clauses.map(function(cl, i) {
-    return {
-      id: DB.uid(),
-      key: cl.key,
-      title: 'المادة ' + (CONTRACT_ORDINALS[i] || (i+1).toString()) + ': ' + cl.baseTitle,
-      content: cl.content,
-      enabled: true
-    };
-  });
 
   var contract = {
     id: DB.uid(),
@@ -3501,8 +3617,8 @@ Pages.createContract = function(projId, tplKey) {
     updated: today,
     variables: vars,
     clauses: clauses,
-    cover: { frame_style: 'modern' },
-    footer_label: 'سري'
+    cover: contract_cover,
+    footer_label: contract_footer
   };
 
   DB.saveContract(projId, contract);
@@ -4646,6 +4762,7 @@ Pages.render_contract = function(params) {
     {key:'party_b_address', label:'عنوان / مدينة الطرف الثاني', auto:true},
     {key:'contract_date_gregorian', label:'تاريخ العقد الميلادي', auto:true},
     {key:'contract_city', label:'مدينة الإبرام', auto:true},
+    {key:'signature_city', label:'مدينة التوقيع', auto:true},
     {key:'subject', label:'موضوع العقد', auto:true},
     {key:'contract_amount', label:'قيمة العقد', auto:true},
     {key:'currency', label:'العملة', auto:true},
@@ -4664,6 +4781,20 @@ Pages.render_contract = function(params) {
   var settingsHtml =
     '<div style="margin-top:var(--space-4);padding-top:var(--space-4);border-top:1px solid var(--border)">' +
       '<div class="contract-sidebar-header" style="padding:0;margin-bottom:var(--space-3);position:static">إعدادات الوثيقة</div>' +
+      '<div class="var-field">' +
+        '<div class="var-field-lbl">اسم الجهة / الكليشه</div>' +
+        '<input class="var-field-inp" value="'+UI.escHtml(contract.cover&&contract.cover.company_name||'')+'" placeholder="اسم الشركة أو المكتب" oninput="Pages.updateContractCover(\''+projId+'\',\''+contractId+'\',\'company_name\',this.value)">' +
+      '</div>' +
+      '<div class="var-field">' +
+        '<div class="var-field-lbl">شعار الجهة</div>' +
+        (contract.cover&&contract.cover.logo
+          ? '<img src="'+contract.cover.logo+'" style="max-width:100%;max-height:60px;object-fit:contain;border-radius:var(--radius-xs);border:1px solid var(--border);display:block;margin-bottom:6px">' +
+            '<button class="btn btn-sm" style="width:100%;margin-bottom:4px" onclick="document.getElementById(\'contract-logo-inp\').click()"><i data-lucide="upload"></i>تغيير</button>' +
+            '<button class="btn btn-sm" style="width:100%;color:var(--danger-600)" onclick="Pages.updateContractCover(\''+projId+'\',\''+contractId+'\',\'logo\',\'\');Pages.render_contract({projId:\''+projId+'\',contractId:\''+contractId+'\'})">إزالة</button>'
+          : '<button class="btn btn-sm" style="width:100%" onclick="document.getElementById(\'contract-logo-inp\').click()"><i data-lucide="upload"></i>رفع شعار</button>'
+        ) +
+        '<input type="file" id="contract-logo-inp" accept="image/*" style="display:none" onchange="Pages.handleContractLogoUpload(\''+projId+'\',\''+contractId+'\',this)">' +
+      '</div>' +
       '<div class="var-field">' +
         '<div class="var-field-lbl">إطار الغلاف</div>' +
         '<select class="var-field-inp" onchange="Pages.updateContractCover(\''+projId+'\',\''+contractId+'\',\'frame_style\',this.value)">' +
@@ -4703,6 +4834,14 @@ Pages.render_contract = function(params) {
     '<div class="contract-sidebar contract-sidebar-right">' +
       '<div class="contract-sidebar-header">المتغيرات والإعدادات</div>' +
       '<div class="contract-sidebar-body">'+varHtml+settingsHtml+'</div>' +
+    '</div>' +
+    '<div class="contract-mobile-bar" id="contract-mobile-bar">' +
+      '<button class="cmb-tab" id="cmb-clauses" onclick="Pages.toggleContractMobilePanel(\'clauses\')"><i data-lucide="list"></i>البنود</button>' +
+      '<button class="cmb-tab" id="cmb-vars" onclick="Pages.toggleContractMobilePanel(\'vars\')"><i data-lucide="sliders-horizontal"></i>المتغيرات</button>' +
+      '<div class="cmb-actions">' +
+        '<button class="btn btn-sm" onclick="Pages.saveContractNow(false)" style="font-size:11px;padding:5px 10px"><i data-lucide="save" style="width:13px;height:13px"></i>حفظ</button>' +
+        '<button class="btn btn-sm btn-primary" onclick="Pages.printContract()" style="font-size:11px;padding:5px 10px"><i data-lucide="printer" style="width:13px;height:13px"></i>PDF</button>' +
+      '</div>' +
     '</div>';
 
   document.getElementById('top-actions').innerHTML =
@@ -4723,10 +4862,17 @@ Pages._renderContractDoc = function(contract) {
   var vars = contract.variables || {};
   var frameClass = 'cov-frame-' + (contract.cover && contract.cover.frame_style ? contract.cover.frame_style : 'modern');
 
+  var logoHtml = contract.cover && contract.cover.logo
+    ? '<img src="'+contract.cover.logo+'" style="max-width:120px;max-height:72px;object-fit:contain;margin-bottom:12px;display:block;margin-inline:auto">'
+    : '<div class="cov-logo-slot" title="رفع شعار"><i data-lucide="building-2"></i><span style="display:block;font-size:9px;margin-top:3px">شعار</span></div>';
+  var companyHtml = contract.cover && contract.cover.company_name
+    ? '<div style="font-size:11pt;font-weight:600;color:#0F2A4A;margin-bottom:8px">'+UI.escHtml(contract.cover.company_name)+'</div>'
+    : '';
+
   var covHtml =
     '<div class="cov-page '+frameClass+'">' +
       '<div class="cov-frame-wrap">' +
-        '<div class="cov-logo-slot"><i data-lucide="building-2"></i><span style="display:block;font-size:9px;margin-top:4px">شعار</span></div>' +
+        logoHtml + companyHtml +
         '<div class="cov-title">'+UI.escHtml(contract.title)+'</div>' +
         '<div class="cov-subtitle">المملكة العربية السعودية</div>' +
         '<div class="cov-parties-box">' +
@@ -4766,7 +4912,7 @@ Pages._renderContractDoc = function(contract) {
   var sigHtml =
     '<div class="sig-page">' +
       '<div class="sig-page-title">صفحة التوقيعات</div>' +
-      '<div class="sig-page-sub">وقّع الطرفان على هذه الاتفاقية بتاريخ '+UI.escHtml(vars.contract_date_gregorian||'___________')+'</div>' +
+      '<div class="sig-page-sub">حرر في مدينة '+(vars.signature_city?UI.escHtml(vars.signature_city):'___________')+' بتاريخ '+UI.escHtml(vars.contract_date_gregorian||'___________')+'</div>' +
       '<div class="sig-grid">' +
         '<div class="sig-block">' +
           '<div class="sig-block-title">الطرف الأول</div>' +
@@ -4835,7 +4981,7 @@ Pages._refreshContractCover = function(contract) {
   if (sigNames[0]) sigNames[0].textContent = vars.party_a_name||'_______________';
   if (sigNames[1]) sigNames[1].textContent = vars.party_b_name||'_______________';
   var sigDate = docEl.querySelector('.sig-page-sub');
-  if (sigDate) sigDate.textContent = 'وقّع الطرفان على هذه الاتفاقية بتاريخ '+(vars.contract_date_gregorian||'___________');
+  if (sigDate) sigDate.textContent = 'حرر في مدينة '+(vars.signature_city||'___________')+' بتاريخ '+(vars.contract_date_gregorian||'___________');
 };
 
 Pages.moveClause = function(projId, contractId, clauseIdx, dir) {
@@ -4945,15 +5091,24 @@ Pages.updateContractCover = function(projId, contractId, key, value) {
   } else {
     if (!c.cover) c.cover = {};
     c.cover[key] = value;
+    if (key === 'frame_style') {
+      var covPage = document.querySelector('.cov-page');
+      if (covPage) covPage.className = 'cov-page cov-frame-'+value;
+    }
   }
   c.updated = (new Date()).toISOString().slice(0,10);
   DB.saveContract(projId, c);
-  if (key === 'frame_style') {
-    var covPage = document.querySelector('.cov-page');
-    if (covPage) {
-      covPage.className = 'cov-page cov-frame-'+value;
-    }
-  }
+};
+
+Pages.handleContractLogoUpload = function(projId, contractId, input) {
+  var file = input.files && input.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    Pages.updateContractCover(projId, contractId, 'logo', e.target.result);
+    Pages.render_contract({projId:projId, contractId:contractId});
+  };
+  reader.readAsDataURL(file);
 };
 
 Pages.updateContractStatus = function(projId, contractId, value) {
@@ -5021,6 +5176,439 @@ Pages.saveContractNow = function(silent) {
   c.updated = (new Date()).toISOString().slice(0,10);
   DB.saveContract(Pages._contractProjId, c);
   if (!silent && UI.toast) UI.toast('تم الحفظ');
+};
+
+/* ─── MOBILE CONTRACT PANEL TOGGLE ─── */
+Pages.toggleContractMobilePanel = function(panel) {
+  var leftSidebar  = document.querySelector('#pg-contract .contract-sidebar-left');
+  var rightSidebar = document.querySelector('#pg-contract .contract-sidebar-right');
+  var clsBtn = document.getElementById('cmb-clauses');
+  var varBtn = document.getElementById('cmb-vars');
+  var isLeftOpen  = leftSidebar && leftSidebar.classList.contains('mob-open');
+  var isRightOpen = rightSidebar && rightSidebar.classList.contains('mob-open');
+
+  // close all first
+  if (leftSidebar)  leftSidebar.classList.remove('mob-open');
+  if (rightSidebar) rightSidebar.classList.remove('mob-open');
+  if (clsBtn) clsBtn.classList.remove('active');
+  if (varBtn) varBtn.classList.remove('active');
+
+  if (panel==='clauses' && !isLeftOpen) {
+    if (leftSidebar) leftSidebar.classList.add('mob-open');
+    if (clsBtn) clsBtn.classList.add('active');
+  }
+  if (panel==='vars' && !isRightOpen) {
+    if (rightSidebar) rightSidebar.classList.add('mob-open');
+    if (varBtn) varBtn.classList.add('active');
+  }
+};
+
+/* ─── TEMPLATES PAGE ─── */
+Pages.render_templates = function() {
+  var custom = DB.getCustomTemplates();
+  var builtIn = [
+    {key:'service', name:'عقد تقديم خدمات', sub:'للخدمات والمشاريع المهنية', icon:'briefcase'},
+    {key:'nda',     name:'اتفاقية عدم إفصاح', sub:'حماية المعلومات السرية',    icon:'shield'},
+    {key:'employment', name:'عقد عمل',       sub:'توظيف وعلاقات العمل',         icon:'user'},
+    {key:'consulting', name:'عقد استشارات',  sub:'الاستشارات والخبرات المهنية', icon:'lightbulb'},
+    {key:'blank',   name:'نموذج فارغ',       sub:'ابدأ من الصفر',               icon:'file-plus'}
+  ];
+
+  var customHtml = '';
+  if (custom.length > 0) {
+    customHtml =
+      '<div class="dash-sec-hdr" style="margin-bottom:var(--space-4)"><h3><i data-lucide="star"></i>نماذجي المخصصة</h3></div>' +
+      '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:var(--space-3);margin-bottom:var(--space-6)">' +
+      custom.map(function(t) {
+        return '<div class="card" style="padding:var(--space-4);cursor:default">' +
+          '<div style="display:flex;align-items:flex-start;gap:var(--space-3);margin-bottom:var(--space-3)">' +
+            '<div style="width:40px;height:40px;border-radius:var(--radius-sm);background:var(--iris-100);color:var(--iris-600);display:flex;align-items:center;justify-content:center;flex-shrink:0"><i data-lucide="layout-template"></i></div>' +
+            '<div style="flex:1;min-width:0">' +
+              '<div style="font-size:var(--font-sm);font-weight:600;color:var(--fg-1);margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+UI.escHtml(t.name||'نموذج')+'</div>' +
+              '<div style="font-size:var(--font-2xs);color:var(--fg-3)">'+(t.clauses?t.clauses.filter(function(c){return c.enabled!==false;}).length:0)+' بنود</div>' +
+            '</div>' +
+            '<span class="badge iris sm">مخصص</span>' +
+          '</div>' +
+          '<div style="display:flex;gap:var(--space-2)">' +
+            '<button class="btn btn-sm" style="flex:1;justify-content:center" onclick="Nav.go(\'template-editor\',{templateId:\''+t.id+'\'})"><i data-lucide="pencil"></i>تعديل</button>' +
+            '<button class="btn btn-sm btn-danger" onclick="Pages.deleteCustomTemplateConfirm(\''+t.id+'\')"><i data-lucide="trash-2"></i></button>' +
+          '</div>' +
+        '</div>';
+      }).join('') +
+      '</div>';
+  }
+
+  var builtInHtml =
+    '<div class="dash-sec-hdr" style="margin-bottom:var(--space-4)"><h3><i data-lucide="file-text"></i>النماذج الجاهزة</h3></div>' +
+    '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:var(--space-3)">' +
+    builtIn.map(function(t) {
+      return '<div class="card" style="padding:var(--space-4);cursor:default">' +
+        '<div style="width:44px;height:44px;border-radius:var(--radius-sm);background:var(--neutral-100);color:var(--fg-2);display:flex;align-items:center;justify-content:center;margin-bottom:var(--space-3)"><i data-lucide="'+t.icon+'"></i></div>' +
+        '<div style="font-size:var(--font-sm);font-weight:600;color:var(--fg-1);margin-bottom:3px">'+t.name+'</div>' +
+        '<div style="font-size:var(--font-xs);color:var(--fg-3);margin-bottom:var(--space-3)">'+t.sub+'</div>' +
+        '<button class="btn btn-sm" style="width:100%;justify-content:center" onclick="Pages.duplicateBuiltInTemplate(\''+t.key+'\')"><i data-lucide="copy"></i>نسخ وتخصيص</button>' +
+      '</div>';
+    }).join('') +
+    '</div>';
+
+  document.getElementById('pg-templates').innerHTML =
+    '<div class="page-header">' +
+      '<div><h1>النماذج</h1><div class="page-header-sub">نماذج العقود الجاهزة وإنشاء نماذج مخصصة</div></div>' +
+      '<button class="btn btn-primary btn-sm" onclick="Nav.go(\'template-editor\',{templateId:\'new\'})" style="display:inline-flex;align-items:center;gap:6px"><i data-lucide="plus"></i>نموذج جديد</button>' +
+    '</div>' +
+    customHtml + builtInHtml;
+
+  if (typeof lucide !== 'undefined') lucide.createIcons({rootElement: document.getElementById('pg-templates')});
+};
+
+Pages.duplicateBuiltInTemplate = function(tplKey) {
+  var tpl = CONTRACT_TEMPLATES[tplKey];
+  if (!tpl) return;
+  var today = (new Date()).toISOString().slice(0,10);
+  var clauses = tpl.clauses.map(function(cl, i) {
+    return {
+      id: DB.uid(),
+      key: cl.key,
+      title: 'المادة '+(CONTRACT_ORDINALS[i]||(i+1).toString())+': '+(cl.baseTitle||cl.key),
+      content: cl.content,
+      enabled: true
+    };
+  });
+  var newTpl = {
+    id: DB.uid(),
+    name: tpl.title + ' (نسخة)',
+    template_type: tplKey,
+    created: today,
+    updated: today,
+    clauses: clauses,
+    cover: {frame_style:'modern', company_name:'', logo:''},
+    footer_label: 'سري'
+  };
+  DB.saveCustomTemplate(newTpl);
+  Nav.go('template-editor', {templateId: newTpl.id});
+};
+
+Pages.deleteCustomTemplateConfirm = function(id) {
+  var templates = DB.getCustomTemplates();
+  var t = templates.find(function(x){return x.id===id;});
+  if (!t) return;
+  UI.openModal(
+    '<div class="modal-header"><h3>حذف النموذج</h3><button class="modal-close" onclick="UI.closeModalForce()">×</button></div>' +
+    '<div class="modal-body"><p style="color:var(--fg-2)">هل تريد حذف نموذج "<strong>'+UI.escHtml(t.name||'')+'</strong>"؟</p></div>' +
+    '<div class="modal-footer" style="display:flex;gap:var(--space-2);justify-content:flex-end">' +
+      '<button class="btn btn-sm" onclick="UI.closeModalForce()">إلغاء</button>' +
+      '<button class="btn btn-sm btn-danger" onclick="DB.deleteCustomTemplate(\''+id+'\');UI.closeModalForce();Pages.render_templates()">حذف</button>' +
+    '</div>'
+  );
+};
+
+/* ─── TEMPLATE EDITOR PAGE ─── */
+Pages.render_template_editor = function(params) {
+  params = params||{};
+  var templateId = params.templateId;
+  var isNew = templateId === 'new';
+  var templates = DB.getCustomTemplates();
+  var template = isNew ? null : templates.find(function(t){return t.id===templateId;});
+
+  if (!isNew && !template) {
+    document.getElementById('pg-template-editor').innerHTML='<div class="empty-state"><h3>النموذج غير موجود</h3></div>';
+    return;
+  }
+
+  if (isNew) {
+    var today = (new Date()).toISOString().slice(0,10);
+    template = {
+      id: DB.uid(),
+      name: 'نموذج جديد',
+      template_type: 'blank',
+      created: today, updated: today,
+      clauses: [{id:DB.uid(), key:'preamble', title:'المادة الأولى: التمهيد', content:'إنه في يوم {{contract_date_gregorian}}م، بمدينة {{contract_city}}، تم الاتفاق بين:\nالطرف الأول: {{party_a_name}}\nالطرف الثاني: {{party_b_name}}\nعلى إبرام هذا العقد وفقاً للشروط أدناه.', enabled:true}],
+      cover: {frame_style:'modern', company_name:'', logo:''},
+      footer_label: 'سري'
+    };
+    DB.saveCustomTemplate(template);
+    params.templateId = template.id;
+    templateId = template.id;
+  }
+
+  Pages._tplEditorId = templateId;
+
+  var libHtml = CLAUSE_LIBRARY.map(function(cl) {
+    return '<div class="clause-lib-item">' +
+      '<span>'+cl.title+'</span>' +
+      '<button class="clause-lib-add-btn" onclick="Pages.addClauseToTemplate(\''+templateId+'\',\''+cl.key+'\')" title="إضافة">+</button>' +
+    '</div>';
+  }).join('');
+
+  var settingsHtml =
+    '<div class="var-field">' +
+      '<div class="var-field-lbl">اسم النموذج</div>' +
+      '<input class="var-field-inp" value="'+UI.escHtml(template.name||'')+'" placeholder="اسم النموذج" oninput="Pages.updateTemplateName(\''+templateId+'\',this.value)">' +
+    '</div>' +
+    '<div class="var-field">' +
+      '<div class="var-field-lbl">اسم الجهة / الكليشه</div>' +
+      '<input class="var-field-inp" value="'+UI.escHtml(template.cover&&template.cover.company_name||'')+'" placeholder="اسم الشركة أو المكتب" oninput="Pages.updateTemplateField(\''+templateId+'\',\'company_name\',this.value)">' +
+    '</div>' +
+    '<div class="var-field">' +
+      '<div class="var-field-lbl">شعار الجهة</div>' +
+      (template.cover&&template.cover.logo
+        ? '<div style="margin-bottom:8px"><img src="'+template.cover.logo+'" style="max-width:100%;max-height:80px;object-fit:contain;border-radius:var(--radius-xs);border:1px solid var(--border)"></div>' +
+          '<button class="btn btn-sm" style="width:100%;margin-bottom:4px" onclick="document.getElementById(\'tpl-logo-input\').click()"><i data-lucide="upload"></i>تغيير الشعار</button>' +
+          '<button class="btn btn-sm" style="width:100%;color:var(--danger-600)" onclick="Pages.updateTemplateField(\''+templateId+'\',\'logo\',\'\');Pages.render_template_editor({templateId:\''+templateId+'\'})"><i data-lucide="x"></i>إزالة</button>'
+        : '<button class="btn btn-sm" style="width:100%;" onclick="document.getElementById(\'tpl-logo-input\').click()"><i data-lucide="upload"></i>رفع شعار</button>'
+      ) +
+      '<input type="file" id="tpl-logo-input" accept="image/*" style="display:none" onchange="Pages.handleLogoUpload(\''+templateId+'\',this)">' +
+    '</div>' +
+    '<div style="margin-top:var(--space-3);padding-top:var(--space-3);border-top:1px solid var(--border)">' +
+      '<div class="var-field-lbl" style="margin-bottom:var(--space-2)">المتغيرات المتاحة للاستخدام في النص</div>' +
+      ['party_a_name','party_b_name','contract_date_gregorian','contract_city','signature_city','contract_amount','currency','duration_months','subject','payment_method','party_a_id','party_b_id'].map(function(k){
+        return '<code style="display:inline-block;font-size:10px;background:var(--neutral-100);border-radius:3px;padding:2px 5px;margin:2px;cursor:pointer;color:var(--fg-2)" onclick="Pages._insertVarToClipboard(\'{{'+k+'}}\')" title="انقر للنسخ">{{'+k+'}}</code>';
+      }).join('') +
+      '<div style="font-size:10px;color:var(--fg-4);margin-top:6px">انقر لنسخ المتغير ثم الصقه في نص البند</div>' +
+    '</div>' +
+    '<div style="margin-top:var(--space-3);padding-top:var(--space-3);border-top:1px solid var(--border)">' +
+      '<div class="var-field">' +
+        '<div class="var-field-lbl">إطار الغلاف</div>' +
+        '<select class="var-field-inp" onchange="Pages.updateTemplateField(\''+templateId+'\',\'frame_style\',this.value)">' +
+          ['modern','classical','minimal'].map(function(s){
+            return '<option value="'+s+'"'+((template.cover&&template.cover.frame_style===s)?' selected':'')+'>'+{modern:'حديث',classical:'كلاسيكي',minimal:'بسيط'}[s]+'</option>';
+          }).join('') +
+        '</select>' +
+      '</div>' +
+      '<div class="var-field">' +
+        '<div class="var-field-lbl">تصنيف التذييل</div>' +
+        '<select class="var-field-inp" onchange="Pages.updateTemplateField(\''+templateId+'\',\'footer_label\',this.value)">' +
+          ['سري','مسودة','نسخة طبق الأصل','نهائي'].map(function(s){
+            return '<option value="'+s+'"'+(template.footer_label===s?' selected':'')+'>'+s+'</option>';
+          }).join('') +
+        '</select>' +
+      '</div>' +
+    '</div>';
+
+  var docHtml = Pages._renderTemplatePrev(template);
+
+  var pageEl = document.getElementById('pg-template-editor');
+  pageEl.innerHTML =
+    '<div class="contract-sidebar contract-sidebar-left">' +
+      '<div class="contract-sidebar-header">مكتبة البنود</div>' +
+      '<div class="contract-sidebar-body">'+libHtml+'</div>' +
+    '</div>' +
+    '<div class="contract-canvas-area" id="tpl-canvas-area">'+docHtml+'</div>' +
+    '<div class="contract-sidebar contract-sidebar-right">' +
+      '<div class="contract-sidebar-header">إعدادات النموذج</div>' +
+      '<div class="contract-sidebar-body">'+settingsHtml+'</div>' +
+    '</div>' +
+    '<div class="contract-mobile-bar">' +
+      '<button class="cmb-tab" onclick="Pages.toggleTplMobilePanel(\'clauses\')"><i data-lucide="list"></i>البنود</button>' +
+      '<button class="cmb-tab" onclick="Pages.toggleTplMobilePanel(\'settings\')"><i data-lucide="settings-2"></i>الإعدادات</button>' +
+      '<div class="cmb-actions">' +
+        '<button class="btn btn-sm btn-primary" onclick="Pages.saveTemplateFinal(\''+templateId+'\')" style="font-size:11px;padding:5px 10px">حفظ</button>' +
+      '</div>' +
+    '</div>';
+
+  document.getElementById('top-actions').innerHTML =
+    '<button class="btn btn-sm" onclick="Nav.go(\'templates\')" style="display:inline-flex;align-items:center;gap:5px"><i data-lucide="arrow-right"></i>النماذج</button>' +
+    '<button class="btn btn-sm btn-primary" onclick="Pages.saveTemplateFinal(\''+templateId+'\')" style="display:inline-flex;align-items:center;gap:5px"><i data-lucide="save"></i>حفظ النموذج</button>';
+
+  if (typeof lucide !== 'undefined') lucide.createIcons({rootElement: pageEl});
+  if (typeof lucide !== 'undefined') lucide.createIcons({rootElement: document.getElementById('top-actions')});
+};
+
+Pages._renderTemplatePrev = function(template) {
+  var frameClass = 'cov-frame-'+(template.cover&&template.cover.frame_style||'modern');
+  var logoHtml = template.cover&&template.cover.logo
+    ? '<img src="'+template.cover.logo+'" style="max-width:120px;max-height:72px;object-fit:contain;margin-bottom:12px">'
+    : '<div class="cov-logo-slot" onclick="document.getElementById(\'tpl-logo-input\').click()" title="رفع شعار"><i data-lucide="image"></i><span style="display:block;font-size:9px;margin-top:3px">شعار</span></div>';
+  var companyHtml = template.cover&&template.cover.company_name
+    ? '<div style="font-size:11pt;font-weight:600;color:#0F2A4A;margin-bottom:8px">'+UI.escHtml(template.cover.company_name)+'</div>'
+    : '';
+
+  var covHtml =
+    '<div class="cov-page '+frameClass+'">' +
+      '<div class="cov-frame-wrap">' +
+        logoHtml + companyHtml +
+        '<div class="cov-title">'+UI.escHtml(template.name||'نموذج')+'</div>' +
+        '<div class="cov-subtitle">نموذج عقد — قابل للتخصيص</div>' +
+        '<div class="cov-parties-box">' +
+          '<div class="cov-parties-row"><strong>الطرف الأول</strong><span class="var-chip">{{party_a_name}}</span></div>' +
+          '<div class="cov-parties-row"><strong>الطرف الثاني</strong><span class="var-chip">{{party_b_name}}</span></div>' +
+        '</div>' +
+        '<div class="cov-ref-line"><span class="var-chip">{{contract_date_gregorian}}</span> · <span class="var-chip">{{contract_city}}</span></div>' +
+      '</div>' +
+    '</div>';
+
+  var enabledClauses = template.clauses.filter(function(c){return c.enabled!==false;});
+  var clausesHtml = enabledClauses.map(function(cl, i) {
+    return '<div class="clause-block" id="tplcl-'+cl.id+'">' +
+      '<div class="clause-controls">' +
+        (i>0 ? '<button class="clause-ctrl-btn" onclick="Pages.moveTplClause(\''+template.id+'\','+i+',\'up\')"><i data-lucide="chevron-up"></i></button>' : '') +
+        (i<enabledClauses.length-1 ? '<button class="clause-ctrl-btn" onclick="Pages.moveTplClause(\''+template.id+'\','+i+',\'down\')"><i data-lucide="chevron-down"></i></button>' : '') +
+        '<button class="clause-ctrl-btn danger" onclick="Pages.deleteTplClause(\''+template.id+'\','+i+')"><i data-lucide="x"></i></button>' +
+      '</div>' +
+      '<div class="clause-block-inner">' +
+        '<div class="clause-title">'+UI.escHtml(cl.title)+'</div>' +
+        '<div class="clause-body" contenteditable="true" data-tpl-clause-idx="'+i+'" onblur="Pages.saveTplClause(\''+template.id+'\','+i+',this)">'+UI.escHtml(cl.content)+'</div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+
+  var sigHtml =
+    '<div class="sig-page">' +
+      '<div class="sig-page-title">صفحة التوقيعات</div>' +
+      '<div class="sig-page-sub">حرر في مدينة <span class="var-chip">{{signature_city}}</span> بتاريخ <span class="var-chip">{{contract_date_gregorian}}</span></div>' +
+      '<div class="sig-grid">' +
+        '<div class="sig-block"><div class="sig-block-title">الطرف الأول</div><div class="sig-block-name"><span class="var-chip">{{party_a_name}}</span></div><div class="sig-line"></div><div class="sig-line-label">التوقيع والختم</div></div>' +
+        '<div class="sig-block"><div class="sig-block-title">الطرف الثاني</div><div class="sig-block-name"><span class="var-chip">{{party_b_name}}</span></div><div class="sig-line"></div><div class="sig-line-label">التوقيع والختم</div></div>' +
+      '</div>' +
+    '</div>';
+
+  var footerHtml =
+    '<div class="contract-doc-footer">' +
+      '<span>'+UI.escHtml(template.footer_label||'سري')+'</span>' +
+      '<span>وثيقة خاصة وسرية — نموذج</span>' +
+    '</div>';
+
+  return '<div class="contract-doc">'+covHtml+clausesHtml+sigHtml+footerHtml+'</div>';
+};
+
+Pages.updateTemplateName = function(id, val) {
+  var arr = DB.getCustomTemplates();
+  var t = arr.find(function(x){return x.id===id;});
+  if (!t) return;
+  t.name = val;
+  t.updated = (new Date()).toISOString().slice(0,10);
+  DB.saveCustomTemplate(t);
+  var covTitle = document.querySelector('#pg-template-editor .cov-title');
+  if (covTitle) covTitle.textContent = val;
+};
+
+Pages.updateTemplateField = function(id, field, val) {
+  var arr = DB.getCustomTemplates();
+  var t = arr.find(function(x){return x.id===id;});
+  if (!t) return;
+  if (field==='company_name'||field==='logo'||field==='frame_style') {
+    if (!t.cover) t.cover={};
+    t.cover[field] = val;
+    if (field==='frame_style') {
+      var covPage = document.querySelector('#pg-template-editor .cov-page');
+      if (covPage) covPage.className = 'cov-page cov-frame-'+val;
+    }
+  } else if (field==='footer_label') {
+    t.footer_label = val;
+  }
+  t.updated = (new Date()).toISOString().slice(0,10);
+  DB.saveCustomTemplate(t);
+};
+
+Pages.handleLogoUpload = function(templateId, input) {
+  var file = input.files && input.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    Pages.updateTemplateField(templateId, 'logo', e.target.result);
+    Pages.render_template_editor({templateId: templateId});
+  };
+  reader.readAsDataURL(file);
+};
+
+Pages._insertVarToClipboard = function(text) {
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(function(){
+      if (UI.toast) UI.toast('تم نسخ ' + text);
+    });
+  }
+};
+
+Pages.moveTplClause = function(id, idx, dir) {
+  var arr = DB.getCustomTemplates();
+  var t = arr.find(function(x){return x.id===id;});
+  if (!t) return;
+  var enabled = t.clauses.filter(function(c){return c.enabled!==false;});
+  var newIdx = dir==='up' ? idx-1 : idx+1;
+  if (newIdx<0||newIdx>=enabled.length) return;
+  var ri = t.clauses.indexOf(enabled[idx]);
+  var rni = t.clauses.indexOf(enabled[newIdx]);
+  var tmp = t.clauses[ri]; t.clauses[ri]=t.clauses[rni]; t.clauses[rni]=tmp;
+  var oi = 0;
+  t.clauses.forEach(function(cl){
+    if (cl.enabled!==false) {
+      var base = cl.title.replace(/^المادة\s+\S+\s*:\s*/,'');
+      cl.title = 'المادة '+(CONTRACT_ORDINALS[oi]||(oi+1).toString())+': '+base;
+      oi++;
+    }
+  });
+  t.updated = (new Date()).toISOString().slice(0,10);
+  DB.saveCustomTemplate(t);
+  Pages.render_template_editor({templateId: id});
+};
+
+Pages.deleteTplClause = function(id, idx) {
+  var arr = DB.getCustomTemplates();
+  var t = arr.find(function(x){return x.id===id;});
+  if (!t) return;
+  var enabled = t.clauses.filter(function(c){return c.enabled!==false;});
+  var cl = enabled[idx];
+  if (!cl) return;
+  cl.enabled = false;
+  DB.saveCustomTemplate(t);
+  var el = document.getElementById('tplcl-'+cl.id);
+  if (el) el.remove();
+};
+
+Pages.saveTplClause = function(id, idx, el) {
+  var arr = DB.getCustomTemplates();
+  var t = arr.find(function(x){return x.id===id;});
+  if (!t) return;
+  var enabled = t.clauses.filter(function(c){return c.enabled!==false;});
+  if (enabled[idx]) enabled[idx].content = el.innerText||el.textContent||'';
+  t.updated = (new Date()).toISOString().slice(0,10);
+  DB.saveCustomTemplate(t);
+};
+
+Pages.addClauseToTemplate = function(id, clauseKey) {
+  var arr = DB.getCustomTemplates();
+  var t = arr.find(function(x){return x.id===id;});
+  if (!t) return;
+  var enabledCount = t.clauses.filter(function(c){return c.enabled!==false;}).length;
+  var libItem = CLAUSE_LIBRARY.find(function(x){return x.key===clauseKey;});
+  var baseTitle = libItem ? libItem.title : clauseKey;
+  var content = '';
+  for (var tKey in CONTRACT_TEMPLATES) {
+    var found = CONTRACT_TEMPLATES[tKey].clauses.find(function(c){return c.key===clauseKey;});
+    if (found) { content = found.content; break; }
+  }
+  t.clauses.push({
+    id: DB.uid(), key: clauseKey,
+    title: 'المادة '+(CONTRACT_ORDINALS[enabledCount]||(enabledCount+1).toString())+': '+baseTitle,
+    content: content, enabled: true
+  });
+  DB.saveCustomTemplate(t);
+  Pages.render_template_editor({templateId: id});
+};
+
+Pages.saveTemplateFinal = function(id) {
+  document.querySelectorAll('.clause-body[data-tpl-clause-idx]').forEach(function(el) {
+    var idx = parseInt(el.getAttribute('data-tpl-clause-idx'), 10);
+    var arr = DB.getCustomTemplates();
+    var t = arr.find(function(x){return x.id===id;});
+    if (!t) return;
+    var enabled = t.clauses.filter(function(c){return c.enabled!==false;});
+    if (enabled[idx]) enabled[idx].content = el.innerText||el.textContent||'';
+    t.updated = (new Date()).toISOString().slice(0,10);
+    DB.saveCustomTemplate(t);
+  });
+  if (UI.toast) UI.toast('تم حفظ النموذج');
+};
+
+Pages.toggleTplMobilePanel = function(panel) {
+  var leftSidebar  = document.querySelector('#pg-template-editor .contract-sidebar-left');
+  var rightSidebar = document.querySelector('#pg-template-editor .contract-sidebar-right');
+  var isLeftOpen   = leftSidebar && leftSidebar.classList.contains('mob-open');
+  var isRightOpen  = rightSidebar && rightSidebar.classList.contains('mob-open');
+  if (leftSidebar) leftSidebar.classList.remove('mob-open');
+  if (rightSidebar) rightSidebar.classList.remove('mob-open');
+  if (panel==='clauses' && !isLeftOpen && leftSidebar) leftSidebar.classList.add('mob-open');
+  if (panel==='settings' && !isRightOpen && rightSidebar) rightSidebar.classList.add('mob-open');
 };
 
 /* ─── SETTINGS ─── */
