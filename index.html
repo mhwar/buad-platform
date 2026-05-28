@@ -1817,6 +1817,21 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
 .var-field-inp.auto-val{
   background:oklch(0.96 0.02 275);border-color:var(--iris-200);color:var(--iris-700);
 }
+/* Contract sidebar tabs */
+.ctab-pills{display:flex;gap:4px;padding:var(--space-1_5) var(--space-2);border-bottom:1px solid var(--border);flex-shrink:0}
+.ctab-pill{flex:1;padding:6px 0;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--bg);font-size:var(--font-xs);color:var(--fg-2);cursor:pointer;font-family:inherit;text-align:center;transition:var(--transition-fast)}
+.ctab-pill.active{background:oklch(0.15 0.02 275);border-color:oklch(0.15 0.02 275);color:#fff;font-weight:600}
+/* Variable group labels */
+.var-group-lbl{font-size:var(--font-2xs);font-weight:700;color:var(--fg-3);letter-spacing:.4px;padding:var(--space-2) 0 var(--space-1);margin-top:var(--space-3);border-bottom:1px solid var(--border);margin-bottom:var(--space-2);display:flex;align-items:center;gap:5px}
+.var-group-lbl:first-child{margin-top:0}
+.var-group-lbl [data-lucide]{width:12px;height:12px;flex-shrink:0}
+/* Settings sub-section */
+.stg-section{margin-top:var(--space-4);padding-top:var(--space-3);border-top:1px solid var(--border)}
+.stg-section-lbl{font-size:var(--font-xs);font-weight:600;color:var(--fg-2);margin-bottom:var(--space-3)}
+/* Margin grid */
+.margin-grid{display:grid;grid-template-columns:1fr 1fr;gap:var(--space-2)}
+.margin-field label{font-size:var(--font-2xs);color:var(--fg-3);display:block;margin-bottom:2px}
+.margin-field input{width:100%;font-size:var(--font-xs);padding:4px 8px;border:1px solid var(--border);border-radius:var(--radius-xs);background:var(--bg);text-align:center;font-family:var(--font-mono)}
 
 /* Contract card in project page (contract list) */
 .contract-card{
@@ -3634,9 +3649,19 @@ Pages.createContract = function(projId, tplKey) {
     party_a_name: '',
     party_a_id: '',
     party_a_address: '',
+    party_a_phone: '',
+    party_a_email: '',
+    party_a_title: '',
+    party_a_reg: '',
+    party_a_tax: '',
     party_b_name: cl ? cl.name : '',
     party_b_id: cl ? (cl.reg_no||'') : '',
     party_b_address: cl ? (cl.city||'') : '',
+    party_b_phone: cl ? (cl.phone||'') : '',
+    party_b_email: cl ? (cl.email||'') : '',
+    party_b_title: '',
+    party_b_reg: cl ? (cl.reg_no||'') : '',
+    party_b_tax: cl ? (cl.tax_no||'') : '',
     contract_date_gregorian: fin.ctrl && fin.ctrl.contract_date ? fin.ctrl.contract_date : today,
     contract_city: cl ? (cl.city||'الرياض') : 'الرياض',
     signature_city: cl ? (cl.city||'الرياض') : 'الرياض',
@@ -3644,7 +3669,8 @@ Pages.createContract = function(projId, tplKey) {
     currency: 'ر.س',
     duration_months: '12',
     subject: proj ? proj.name : '',
-    payment_method: 'تحويل بنكي'
+    payment_method: 'تحويل بنكي',
+    contract_no: ''
   };
 
   var contract = {
@@ -3658,7 +3684,8 @@ Pages.createContract = function(projId, tplKey) {
     clauses: clauses,
     cover: contract_cover,
     footer_label: contract_footer,
-    doc_style: { font_size: 14, line_height: 1.5 },
+    doc_style: { font_size: 14, line_height: 1.5, title_size: 18, clause_title_size: 14, subtitle_size: 12 },
+    doc_margins: { top: 2.5, right: 3, bottom: 2.5, left: 2.5 },
     page_layout: {
       header: {
         show: true,
@@ -4810,52 +4837,94 @@ Pages.render_contract = function(params) {
     '</div>';
   }).join('');
 
-  // === RIGHT SIDEBAR: Variables ===
-  var varDefs = [
-    {key:'party_a_name', label:'اسم الطرف الأول (مقدم الخدمة)', auto:false},
-    {key:'party_a_id', label:'رقم هوية / سجل تجاري الطرف الأول', auto:false},
-    {key:'party_a_address', label:'عنوان الطرف الأول', auto:false},
-    {key:'party_b_name', label:'اسم الطرف الثاني (مستقبل الخدمة)', auto:true},
-    {key:'party_b_id', label:'رقم هوية / سجل تجاري الطرف الثاني', auto:true},
-    {key:'party_b_address', label:'عنوان / مدينة الطرف الثاني', auto:true},
-    {key:'contract_date_gregorian', label:'تاريخ العقد الميلادي', auto:true},
-    {key:'contract_city', label:'مدينة الإبرام', auto:true},
-    {key:'signature_city', label:'مدينة التوقيع', auto:true},
-    {key:'subject', label:'موضوع العقد', auto:true},
-    {key:'contract_amount', label:'قيمة العقد', auto:true},
-    {key:'currency', label:'العملة', auto:true},
-    {key:'duration_months', label:'مدة العقد (شهور)', auto:false},
-    {key:'payment_method', label:'طريقة الدفع', auto:false}
-  ];
-
-  var varHtml = varDefs.map(function(def) {
-    var val = vars[def.key] || '';
-    return '<div class="var-field">' +
-      '<div class="var-field-lbl">'+def.label+(def.auto?' <span style="color:var(--iris-500);font-size:10px">مُعبأ تلقائياً</span>':'')+'</div>' +
-      '<input class="var-field-inp'+(val&&def.auto?' auto-val':'')+'" value="'+UI.escHtml(val)+'" placeholder="'+def.label+'" oninput="Pages.updateContractVar(\''+projId+'\',\''+contractId+'\',\''+def.key+'\',this.value)">' +
-    '</div>';
-  }).join('');
-
-  var ds = contract.doc_style || {font_size:14, line_height:1.5};
+  // === RIGHT SIDEBAR: Two-tab design ===
+  var ds = contract.doc_style || {font_size:14, line_height:1.5, title_size:18, clause_title_size:14, subtitle_size:12};
+  var dm = contract.doc_margins || {top:2.5, right:3, bottom:2.5, left:2.5};
   var pl = contract.page_layout || {};
   var plh = pl.header || {};
   var plf = pl.footer || {};
   var curFrameStyle = (contract.cover && contract.cover.frame_style) || 'modern';
   var isImgFrame = curFrameStyle === 'image';
 
-  var settingsHtml =
-    '<div style="margin-top:var(--space-4);padding-top:var(--space-4);border-top:1px solid var(--border)">' +
-      '<div class="contract-sidebar-header" style="padding:0;margin-bottom:var(--space-3);position:static">الخط والتباعد</div>' +
-      '<div class="var-field">' +
-        '<div class="var-field-lbl">حجم الخط: <span id="lbl-fsize">'+ds.font_size+'</span>pt</div>' +
-        '<input type="range" min="9" max="16" step="0.5" value="'+ds.font_size+'" class="var-field-inp" style="padding:0;height:28px" oninput="Pages.updateDocStyle(\''+projId+'\',\''+contractId+'\',\'font_size\',parseFloat(this.value));document.getElementById(\'lbl-fsize\').textContent=this.value">' +
-      '</div>' +
-      '<div class="var-field">' +
-        '<div class="var-field-lbl">تباعد الأسطر: <span id="lbl-lh">'+ds.line_height+'</span></div>' +
-        '<input type="range" min="1.4" max="2.6" step="0.1" value="'+ds.line_height+'" class="var-field-inp" style="padding:0;height:28px" oninput="Pages.updateDocStyle(\''+projId+'\',\''+contractId+'\',\'line_height\',parseFloat(this.value));document.getElementById(\'lbl-lh\').textContent=this.value">' +
-      '</div>' +
+  function varField(key, label, isAuto) {
+    var val = vars[key] || '';
+    return '<div class="var-field">' +
+      '<div class="var-field-lbl">'+label+(isAuto?' <span style="color:var(--iris-500);font-size:10px">تلقائي</span>':'')+'</div>' +
+      '<input class="var-field-inp'+(val&&isAuto?' auto-val':'')+'" value="'+UI.escHtml(val)+'" placeholder="'+label+'"' +
+      ' oninput="Pages.updateContractVar(\''+projId+'\',\''+contractId+'\',\''+key+'\',this.value)">' +
+    '</div>';
+  }
 
-      '<div class="contract-sidebar-header" style="padding:0;margin-top:var(--space-4);margin-bottom:var(--space-3);position:static">إعدادات الغلاف</div>' +
+  // VARS PANEL
+  var varsPanelHtml =
+    '<div class="var-group-lbl"><i data-lucide="user"></i>الطرف الأول</div>' +
+    varField('party_a_name', 'الاسم', false) +
+    varField('party_a_title', 'الصفة / المسمى', false) +
+    varField('party_a_id', 'رقم الهوية', false) +
+    varField('party_a_reg', 'السجل التجاري', false) +
+    varField('party_a_tax', 'الرقم الضريبي', false) +
+    varField('party_a_address', 'العنوان', false) +
+    varField('party_a_phone', 'الجوال', false) +
+    varField('party_a_email', 'البريد الإلكتروني', false) +
+    '<div class="var-group-lbl"><i data-lucide="users"></i>الطرف الثاني</div>' +
+    varField('party_b_name', 'الاسم', true) +
+    varField('party_b_title', 'الصفة / المسمى', false) +
+    varField('party_b_id', 'رقم الهوية', true) +
+    varField('party_b_reg', 'السجل التجاري', true) +
+    varField('party_b_tax', 'الرقم الضريبي', true) +
+    varField('party_b_address', 'العنوان / المدينة', true) +
+    varField('party_b_phone', 'الجوال', true) +
+    varField('party_b_email', 'البريد الإلكتروني', true) +
+    '<div class="var-group-lbl"><i data-lucide="file-text"></i>بيانات العقد</div>' +
+    varField('contract_no', 'رقم العقد', false) +
+    varField('contract_date_gregorian', 'تاريخ العقد الميلادي', true) +
+    varField('contract_city', 'مدينة الإبرام', true) +
+    varField('signature_city', 'مدينة التوقيع', true) +
+    varField('subject', 'موضوع العقد', true) +
+    varField('contract_amount', 'قيمة العقد', true) +
+    varField('currency', 'العملة', true) +
+    varField('duration_months', 'مدة العقد (شهور)', false) +
+    varField('payment_method', 'طريقة الدفع', false);
+
+  // SETTINGS PANEL
+  var settingsPanelHtml =
+    // Typography
+    '<div class="stg-section" style="margin-top:0;padding-top:0;border-top:none">' +
+      '<div class="stg-section-lbl">الخطوط والتباعد</div>' +
+      '<div class="var-field">' +
+        '<div class="var-field-lbl">عنوان الغلاف: <span id="lbl-title-sz">'+(ds.title_size||18)+'</span>pt</div>' +
+        '<input type="range" min="12" max="24" step="1" value="'+(ds.title_size||18)+'" class="var-field-inp" style="padding:0;height:26px"' +
+        ' oninput="Pages.updateDocStyle(\''+projId+'\',\''+contractId+'\',\'title_size\',parseFloat(this.value));document.getElementById(\'lbl-title-sz\').textContent=this.value">' +
+      '</div>' +
+      '<div class="var-field">' +
+        '<div class="var-field-lbl">عناوين البنود: <span id="lbl-cl-sz">'+(ds.clause_title_size||14)+'</span>pt</div>' +
+        '<input type="range" min="10" max="18" step="1" value="'+(ds.clause_title_size||14)+'" class="var-field-inp" style="padding:0;height:26px"' +
+        ' oninput="Pages.updateDocStyle(\''+projId+'\',\''+contractId+'\',\'clause_title_size\',parseFloat(this.value));document.getElementById(\'lbl-cl-sz\').textContent=this.value">' +
+      '</div>' +
+      '<div class="var-field">' +
+        '<div class="var-field-lbl">نص الفقرات: <span id="lbl-fsize">'+(ds.font_size||14)+'</span>pt</div>' +
+        '<input type="range" min="9" max="16" step="0.5" value="'+(ds.font_size||14)+'" class="var-field-inp" style="padding:0;height:26px"' +
+        ' oninput="Pages.updateDocStyle(\''+projId+'\',\''+contractId+'\',\'font_size\',parseFloat(this.value));document.getElementById(\'lbl-fsize\').textContent=this.value">' +
+      '</div>' +
+      '<div class="var-field">' +
+        '<div class="var-field-lbl">تباعد الأسطر: <span id="lbl-lh">'+(ds.line_height||1.5)+'</span></div>' +
+        '<input type="range" min="1.0" max="2.5" step="0.1" value="'+(ds.line_height||1.5)+'" class="var-field-inp" style="padding:0;height:26px"' +
+        ' oninput="Pages.updateDocStyle(\''+projId+'\',\''+contractId+'\',\'line_height\',parseFloat(this.value));document.getElementById(\'lbl-lh\').textContent=this.value">' +
+      '</div>' +
+    '</div>' +
+    // Margins
+    '<div class="stg-section">' +
+      '<div class="stg-section-lbl">الهوامش (سم)</div>' +
+      '<div class="margin-grid">' +
+        '<div class="margin-field"><label>الأعلى</label><input type="number" min="1" max="5" step="0.5" value="'+dm.top+'" oninput="Pages.updateDocMargins(\''+projId+'\',\''+contractId+'\',\'top\',this.value)"></div>' +
+        '<div class="margin-field"><label>يمين (تجليد)</label><input type="number" min="1" max="5" step="0.5" value="'+dm.right+'" oninput="Pages.updateDocMargins(\''+projId+'\',\''+contractId+'\',\'right\',this.value)"></div>' +
+        '<div class="margin-field"><label>الأسفل</label><input type="number" min="1" max="5" step="0.5" value="'+dm.bottom+'" oninput="Pages.updateDocMargins(\''+projId+'\',\''+contractId+'\',\'bottom\',this.value)"></div>' +
+        '<div class="margin-field"><label>يسار</label><input type="number" min="1" max="5" step="0.5" value="'+dm.left+'" oninput="Pages.updateDocMargins(\''+projId+'\',\''+contractId+'\',\'left\',this.value)"></div>' +
+      '</div>' +
+    '</div>' +
+    // Cover
+    '<div class="stg-section">' +
+      '<div class="stg-section-lbl">الغلاف</div>' +
       '<div class="var-field">' +
         '<div class="var-field-lbl">إطار الغلاف</div>' +
         '<select class="var-field-inp" onchange="Pages.updateContractCover(\''+projId+'\',\''+contractId+'\',\'frame_style\',this.value);Pages.render_contract({projId:\''+projId+'\',contractId:\''+contractId+'\'})">' +
@@ -4898,8 +4967,10 @@ Pages.render_contract = function(params) {
         ) +
         '<input type="file" id="contract-logo-inp" accept="image/*" style="display:none" onchange="Pages.handleContractLogoUpload(\''+projId+'\',\''+contractId+'\',this)">' +
       '</div>' +
-
-      '<div class="contract-sidebar-header" style="padding:0;margin-top:var(--space-4);margin-bottom:var(--space-3);position:static">رأس وتذييل الصفحات</div>' +
+    '</div>' +
+    // Header
+    '<div class="stg-section">' +
+      '<div class="stg-section-lbl">رأس الصفحة</div>' +
       '<div class="var-field">' +
         '<label style="display:flex;align-items:center;gap:6px;font-size:var(--font-xs);cursor:pointer">' +
           '<input type="checkbox" '+(plh.show!==false?'checked':'')+' onchange="Pages.updatePageLayout(\''+projId+'\',\''+contractId+'\',\'header\',\'show\',this.checked)"> إظهار الرأس' +
@@ -4928,6 +4999,10 @@ Pages.render_contract = function(params) {
           '<input type="checkbox" '+(plh.show_logo?'checked':'')+' onchange="Pages.updatePageLayout(\''+projId+'\',\''+contractId+'\',\'header\',\'show_logo\',this.checked)"> إظهار الشعار في الرأس' +
         '</label>' +
       '</div>' +
+    '</div>' +
+    // Footer
+    '<div class="stg-section">' +
+      '<div class="stg-section-lbl">تذييل الصفحة</div>' +
       '<div class="var-field">' +
         '<label style="display:flex;align-items:center;gap:6px;font-size:var(--font-xs);cursor:pointer">' +
           '<input type="checkbox" '+(plf.show!==false?'checked':'')+' onchange="Pages.updatePageLayout(\''+projId+'\',\''+contractId+'\',\'footer\',\'show\',this.checked)"> إظهار التذييل' +
@@ -4956,8 +5031,6 @@ Pages.render_contract = function(params) {
           '<input type="checkbox" '+(plf.show_page_num!==false?'checked':'')+' onchange="Pages.updatePageLayout(\''+projId+'\',\''+contractId+'\',\'footer\',\'show_page_num\',this.checked)"> ترقيم الصفحات' +
         '</label>' +
       '</div>' +
-
-      '<div class="contract-sidebar-header" style="padding:0;margin-top:var(--space-4);margin-bottom:var(--space-3);position:static">إعدادات أخرى</div>' +
       '<div class="var-field">' +
         '<div class="var-field-lbl">تصنيف التذييل</div>' +
         '<select class="var-field-inp" onchange="Pages.updateContractCover(\''+projId+'\',\''+contractId+'\',\'footer_label\',this.value)">' +
@@ -4987,8 +5060,14 @@ Pages.render_contract = function(params) {
       docHtml +
     '</div>' +
     '<div class="contract-sidebar contract-sidebar-right">' +
-      '<div class="contract-sidebar-header">المتغيرات والإعدادات</div>' +
-      '<div class="contract-sidebar-body">'+varHtml+settingsHtml+'</div>' +
+      '<div class="ctab-pills">' +
+        '<button class="ctab-pill active" id="ctab-vars-btn" onclick="Pages.switchContractTab(\'vars\')">المتغيرات</button>' +
+        '<button class="ctab-pill" id="ctab-sets-btn" onclick="Pages.switchContractTab(\'settings\')">الإعدادات</button>' +
+      '</div>' +
+      '<div class="contract-sidebar-body">' +
+        '<div id="ctab-vars-panel">'+varsPanelHtml+'</div>' +
+        '<div id="ctab-sets-panel" style="display:none">'+settingsPanelHtml+'</div>' +
+      '</div>' +
     '</div>' +
     '<div class="contract-mobile-bar" id="contract-mobile-bar">' +
       '<button class="cmb-tab" id="cmb-clauses" onclick="Pages.toggleContractMobilePanel(\'clauses\')"><i data-lucide="list"></i>البنود</button>' +
@@ -5007,8 +5086,9 @@ Pages.render_contract = function(params) {
   // Apply doc_style to contract-doc
   var docEl = document.getElementById('contract-doc');
   if (docEl && contract.doc_style) {
-    docEl.style.fontSize = (contract.doc_style.font_size||12)+'pt';
-    docEl.style.lineHeight = (contract.doc_style.line_height||1.9).toString();
+    var ds2 = contract.doc_style;
+    docEl.style.fontSize = (ds2.font_size||14)+'pt';
+    docEl.style.lineHeight = (ds2.line_height||1.5).toString();
   }
 
   if (Pages._contractAutosaveTimer) clearInterval(Pages._contractAutosaveTimer);
@@ -5022,6 +5102,7 @@ Pages.render_contract = function(params) {
 
 Pages._renderContractDoc = function(contract) {
   var vars = contract.variables || {};
+  var ds = contract.doc_style || {font_size:14, line_height:1.5, title_size:18, clause_title_size:14};
   var frameClass = 'cov-frame-' + (contract.cover && contract.cover.frame_style ? contract.cover.frame_style : 'modern');
 
   var logoHtml = contract.cover && contract.cover.logo
@@ -5046,7 +5127,7 @@ Pages._renderContractDoc = function(contract) {
       bgImgHtml +
       '<div class="cov-frame-wrap">' +
         logoHtml + companyHtml +
-        '<div class="cov-title">'+UI.escHtml(contract.title)+'</div>' +
+        '<div class="cov-title" style="font-size:'+(ds.title_size||18)+'pt">'+UI.escHtml(contract.title)+'</div>' +
         '<div class="cov-subtitle">المملكة العربية السعودية</div>' +
         '<div class="cov-parties-box">' +
           '<div class="cov-parties-row"><strong>الطرف الأول</strong>'+(vars.party_a_name?UI.escHtml(vars.party_a_name):'<span style="color:#9CA3AF">اسم الطرف الأول</span>')+'</div>' +
@@ -5088,7 +5169,7 @@ Pages._renderContractDoc = function(contract) {
           '<button class="clause-ctrl-btn danger" onclick="Pages.deleteClause(\''+Pages._contractProjId+'\',\''+Pages._contractId+'\','+i+')" title="حذف البند"><i data-lucide="x"></i></button>' +
         '</div>' +
         '<div class="clause-block-inner">' +
-          '<div class="clause-title">'+UI.escHtml(cl.title)+'</div>' +
+          '<div class="clause-title" style="font-size:'+(ds.clause_title_size||14)+'pt">'+UI.escHtml(cl.title)+'</div>' +
           '<div class="clause-body" contenteditable="true" data-clause-idx="'+i+'" onblur="Pages.saveClauseContent(\''+Pages._contractProjId+'\',\''+Pages._contractId+'\','+i+',this)">'+contentHtml+'</div>' +
         '</div>' +
       '</div>';
@@ -5124,7 +5205,7 @@ Pages._renderContractDoc = function(contract) {
       '</div>'
     : '';
 
-  return '<div class="contract-doc" id="contract-doc">' +
+  return '<div class="contract-doc" id="contract-doc" style="font-size:'+(ds.font_size||14)+'pt;line-height:'+(ds.line_height||1.5)+'">' +
     covHtml + docHeaderHtml + hdrImgBand +
     '<div id="contract-clauses-body">'+clausesHtml+'</div>' +
     sigHtml + ftrImgBand + docFooterHtml +
@@ -5145,7 +5226,8 @@ Pages._applyVars = function(text, vars) {
 Pages._applyVarsPlain = function(text, vars) {
   if (!vars) return text;
   return text.replace(/\{\{(\w+)\}\}/g, function(match, key) {
-    return (vars[key] && vars[key].trim()) ? vars[key] : match;
+    var val = vars[key];
+    return (val && String(val).trim()) ? String(val) : '';
   });
 };
 
@@ -5356,15 +5438,31 @@ Pages.updateDocStyle = function(projId, contractId, key, value) {
   var contracts = DB.getContracts(projId);
   var c = contracts.find(function(x){return x.id===contractId;});
   if (!c) return;
-  if (!c.doc_style) c.doc_style = {font_size:14, line_height:1.5};
+  if (!c.doc_style) c.doc_style = {font_size:14, line_height:1.5, title_size:18, clause_title_size:14, subtitle_size:12};
   c.doc_style[key] = value;
   c.updated = (new Date()).toISOString().slice(0,10);
   DB.saveContract(projId, c);
   var docEl = document.getElementById('contract-doc');
   if (docEl) {
-    docEl.style.fontSize = (c.doc_style.font_size||14)+'pt';
-    docEl.style.lineHeight = (c.doc_style.line_height||1.5).toString();
+    var ds2 = c.doc_style;
+    docEl.style.fontSize = (ds2.font_size||14)+'pt';
+    docEl.style.lineHeight = (ds2.line_height||1.5).toString();
+    var covTitle = docEl.querySelector('.cov-title');
+    if (covTitle) covTitle.style.fontSize = (ds2.title_size||18)+'pt';
+    docEl.querySelectorAll('.clause-title').forEach(function(el){
+      el.style.fontSize = (ds2.clause_title_size||14)+'pt';
+    });
   }
+};
+
+Pages.updateDocMargins = function(projId, contractId, key, value) {
+  var contracts = DB.getContracts(projId);
+  var c = contracts.find(function(x){return x.id===contractId;});
+  if (!c) return;
+  if (!c.doc_margins) c.doc_margins = {top:2.5, right:3, bottom:2.5, left:2.5};
+  c.doc_margins[key] = parseFloat(value)||2.5;
+  c.updated = (new Date()).toISOString().slice(0,10);
+  DB.saveContract(projId, c);
 };
 
 Pages.updatePageLayout = function(projId, contractId, section, key, value) {
@@ -5438,6 +5536,23 @@ Pages.toggleContractPreview = function() {
   }
 };
 
+Pages.switchContractTab = function(tab) {
+  var vp = document.getElementById('ctab-vars-panel');
+  var sp = document.getElementById('ctab-sets-panel');
+  var vb = document.getElementById('ctab-vars-btn');
+  var sb = document.getElementById('ctab-sets-btn');
+  if (!vp || !sp) return;
+  if (tab === 'vars') {
+    vp.style.display = ''; sp.style.display = 'none';
+    if (vb) vb.classList.add('active');
+    if (sb) sb.classList.remove('active');
+  } else {
+    vp.style.display = 'none'; sp.style.display = '';
+    if (vb) vb.classList.remove('active');
+    if (sb) sb.classList.add('active');
+  }
+};
+
 Pages.printContract = function() {
   Pages.saveContractNow(true);
   var contracts = DB.getContracts(Pages._contractProjId);
@@ -5445,7 +5560,8 @@ Pages.printContract = function() {
   if (!contract) return;
 
   var vars = contract.variables || {};
-  var ds = contract.doc_style || {font_size:14, line_height:1.5};
+  var ds = contract.doc_style || {font_size:14, line_height:1.5, title_size:18, clause_title_size:14, subtitle_size:12};
+  var dm = contract.doc_margins || {top:2.5, right:3, bottom:2.5, left:2.5};
   var hdr = (contract.page_layout && contract.page_layout.header) || {};
   var ftr = (contract.page_layout && contract.page_layout.footer) || {};
 
@@ -5561,7 +5677,7 @@ Pages.printContract = function() {
     '<style>' +
     '*{box-sizing:border-box;margin:0;padding:0}' +
     'body{font-family:\'IBM Plex Sans Arabic\',Tajawal,system-ui,sans-serif;direction:rtl;background:#fff;color:#1F2937;font-size:'+ds.font_size+'pt;line-height:'+ds.line_height+'}' +
-    '@page{size:A4 portrait;margin:2.5cm 3cm 2.5cm 2.5cm;@bottom-center{content:"الصفحة " counter(page) " من " counter(pages);font-family:\'IBM Plex Sans Arabic\',system-ui,sans-serif;font-size:10pt;color:#9CA3AF;direction:rtl}}' +
+    '@page{size:A4 portrait;margin:'+dm.top+'cm '+dm.right+'cm '+dm.bottom+'cm '+dm.left+'cm;@bottom-center{content:"الصفحة " counter(page) " من " counter(pages);font-family:\'IBM Plex Sans Arabic\',system-ui;font-size:10pt;color:#9CA3AF;direction:rtl}}' +
     '@page cover-page{size:A4 portrait;margin:0;@bottom-center{content:none}}' +
     '.cov-page{page:cover-page;page-break-after:always;min-height:100vh;display:flex;flex-direction:column;position:relative;overflow:hidden}' +
     '.cov-frame-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:60px 50px}' +
@@ -5577,8 +5693,8 @@ Pages.printContract = function() {
     '.cov-frame-image .cov-parties-box{background:rgba(255,255,255,0.1);border-color:rgba(255,255,255,0.25);color:#fff;backdrop-filter:blur(4px)}' +
     '.cov-frame-image .cov-parties-row{border-bottom-color:rgba(255,255,255,0.15)}' +
     '.cov-frame-image .cov-ref-line{color:rgba(255,255,255,0.6)}' +
-    '.cov-title{font-size:18pt;font-weight:700;color:#0F2A4A;line-height:1.3;margin-bottom:12px}' +
-    '.cov-subtitle{font-size:12pt;color:#6B7280;margin-bottom:40px}' +
+    '.cov-title{font-size:'+(ds.title_size||18)+'pt;font-weight:700;color:#0F2A4A;line-height:1.3;margin-bottom:12px}' +
+    '.cov-subtitle{font-size:'+(ds.subtitle_size||12)+'pt;color:#6B7280;margin-bottom:40px}' +
     '.cov-parties-box{border:1px solid #E5E7EB;border-radius:6px;padding:20px 32px;max-width:420px;text-align:right;font-size:11pt}' +
     '.cov-parties-row{padding:6px 0;border-bottom:1px solid #F3F4F6;color:#374151}' +
     '.cov-parties-row:last-child{border-bottom:none}' +
@@ -5587,7 +5703,7 @@ Pages.printContract = function() {
     '.clause-block{padding:20px 50px;border-bottom:1px solid #E5E7EB;page-break-inside:avoid;orphans:4;widows:4}' +
     '.clause-block:last-of-type{border-bottom:none}' +
     '.clause-block-inner{padding-right:24px}' +
-    '.clause-title{font-size:14pt;font-weight:700;color:#0F2A4A;margin-bottom:10px}' +
+    '.clause-title{font-size:'+(ds.clause_title_size||14)+'pt;font-weight:700;color:#0F2A4A;margin-bottom:10px}' +
     '.clause-body{font-size:'+ds.font_size+'pt;line-height:'+ds.line_height+';color:#1F2937;white-space:pre-wrap;word-wrap:break-word;text-align:justify}' +
     '.sig-page{padding:50px;page-break-before:always}' +
     '.sig-page-title{font-size:14pt;font-weight:700;color:#0F2A4A;text-align:center;margin-bottom:8px}' +
