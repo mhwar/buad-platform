@@ -3755,6 +3755,7 @@ Pages.createContract = function(projId, tplKey) {
     if (customT.doc_style) tpl._doc_style = JSON.parse(JSON.stringify(customT.doc_style));
     if (customT.doc_margins) tpl._doc_margins = JSON.parse(JSON.stringify(customT.doc_margins));
     if (customT.page_layout) tpl._page_layout = JSON.parse(JSON.stringify(customT.page_layout));
+    if (customT.custom_vars) tpl._custom_vars = JSON.parse(JSON.stringify(customT.custom_vars));
   } else {
     tpl = CONTRACT_TEMPLATES[tplKey] || CONTRACT_TEMPLATES['blank'];
     clauses = tpl.clauses.map(function(clItem, i) {
@@ -3800,6 +3801,11 @@ Pages.createContract = function(projId, tplKey) {
     contract_no: ''
   };
 
+  // Seed custom variable values (from a custom template) so they appear in the panel
+  if (tpl._custom_vars && tpl._custom_vars.length) {
+    tpl._custom_vars.forEach(function(cv){ if (!(cv.key in vars)) vars[cv.key] = ''; });
+  }
+
   var contract = {
     id: DB.uid(),
     template_type: tplKey,
@@ -3808,6 +3814,7 @@ Pages.createContract = function(projId, tplKey) {
     created: today,
     updated: today,
     variables: vars,
+    custom_vars: tpl._custom_vars || [],
     clauses: clauses,
     cover: contract_cover,
     footer_label: contract_footer,
@@ -5055,7 +5062,13 @@ Pages.render_contract = function(params) {
         '<div style="font-size:10px;color:var(--fg-4);margin-top:2px">استخدم <code style="background:var(--bg-elevated);padding:1px 4px;border-radius:3px">{{duration_full}}</code> في البنود للعرض الكامل</div>' +
       '</div>';
     })() +
-    varField('payment_method', 'طريقة الدفع', false);
+    varField('payment_method', 'طريقة الدفع', false) +
+    (function() {
+      var cvs = contract.custom_vars || [];
+      if (!cvs.length) return '';
+      return '<div class="var-group-lbl"><i data-lucide="braces"></i>متغيرات مخصصة</div>' +
+        cvs.map(function(cv){ return varField(cv.key, cv.label, false); }).join('');
+    })();
 
   // SETTINGS PANEL
   var settingsPanelHtml =
@@ -6079,6 +6092,19 @@ Pages.saveClauseContent = function(projId, contractId, clauseIdx, el) {
   }
 };
 
+/* Save a contract clause's content by clause id (used by the variable picker). */
+Pages.updateContractClauseContentVal = function(projId, contractId, clauseId, val) {
+  var contracts = DB.getContracts(projId);
+  var c = contracts.find(function(x){return x.id===contractId;});
+  if (!c) return;
+  var cl = (c.clauses||[]).find(function(x){return x.id===clauseId;});
+  if (!cl) return;
+  cl.content = val;
+  c.updated = (new Date()).toISOString().slice(0,10);
+  DB.saveContract(projId, c);
+  Pages._refreshContractCanvas(c);
+};
+
 Pages.updateContractTitle = function(projId, contractId, value) {
   var contracts = DB.getContracts(projId);
   var c = contracts.find(function(x){return x.id===contractId;});
@@ -6885,6 +6911,197 @@ Pages._insertVarToken = function(inputId, token, projId, contractId, section, sl
   UI.closeModalForce();
 };
 
+/* ─── Clause-text variable insertion (template + contract clause editors) ─── */
+
+/* Catalog of platform-defined variables that can be inserted into clause text. */
+Pages._CLAUSE_VARS = [
+  // الطرف الأول
+  { group:'party', token:'{{party_a_name}}', label:'اسم الطرف الأول' },
+  { group:'party', token:'{{party_a_rep_name}}', label:'ممثل الطرف الأول' },
+  { group:'party', token:'{{party_a_title}}', label:'صفة ممثل الطرف الأول' },
+  { group:'party', token:'{{party_a_id}}', label:'هوية الطرف الأول' },
+  { group:'party', token:'{{party_a_reg}}', label:'السجل التجاري للطرف الأول' },
+  { group:'party', token:'{{party_a_tax}}', label:'الرقم الضريبي للطرف الأول' },
+  { group:'party', token:'{{party_a_address}}', label:'عنوان الطرف الأول' },
+  { group:'party', token:'{{party_a_phone}}', label:'جوال الطرف الأول' },
+  { group:'party', token:'{{party_a_email}}', label:'بريد الطرف الأول' },
+  // الطرف الثاني
+  { group:'party', token:'{{party_b_name}}', label:'اسم الطرف الثاني' },
+  { group:'party', token:'{{party_b_rep_name}}', label:'ممثل الطرف الثاني' },
+  { group:'party', token:'{{party_b_title}}', label:'صفة ممثل الطرف الثاني' },
+  { group:'party', token:'{{party_b_id}}', label:'هوية الطرف الثاني' },
+  { group:'party', token:'{{party_b_reg}}', label:'السجل التجاري للطرف الثاني' },
+  { group:'party', token:'{{party_b_tax}}', label:'الرقم الضريبي للطرف الثاني' },
+  { group:'party', token:'{{party_b_address}}', label:'عنوان الطرف الثاني' },
+  { group:'party', token:'{{party_b_phone}}', label:'جوال الطرف الثاني' },
+  { group:'party', token:'{{party_b_email}}', label:'بريد الطرف الثاني' },
+  // بيانات العقد
+  { group:'contract', token:'{{contract_no}}', label:'رقم العقد' },
+  { group:'contract', token:'{{contract_date_gregorian}}', label:'التاريخ الميلادي' },
+  { group:'contract', token:'{{contract_date_hijri}}', label:'التاريخ الهجري' },
+  { group:'contract', token:'{{contract_city}}', label:'مدينة الإبرام' },
+  { group:'contract', token:'{{signature_city}}', label:'مدينة التوقيع' },
+  { group:'contract', token:'{{subject}}', label:'موضوع العقد' },
+  { group:'contract', token:'{{contract_amount}}', label:'قيمة العقد (رقماً)' },
+  { group:'contract', token:'{{contract_amount_words}}', label:'قيمة العقد (تفقيط)' },
+  { group:'contract', token:'{{currency}}', label:'العملة' },
+  { group:'contract', token:'{{duration_months}}', label:'مدة العقد (رقم)' },
+  { group:'contract', token:'{{duration_full}}', label:'مدة العقد (رقم + وحدة)' },
+  { group:'contract', token:'{{payment_method}}', label:'طريقة الدفع' },
+  // بيانات الجهة
+  { group:'company', token:'{{company_name}}', label:'اسم الجهة / الشركة' },
+  { group:'company', token:'{{company_email}}', label:'البريد الإلكتروني للجهة' },
+  { group:'company', token:'{{company_phone}}', label:'رقم التواصل للجهة' }
+];
+
+/* Read custom variables defined on a template or contract. */
+Pages._getCustomVars = function(ctx, id, clauseId) {
+  var obj;
+  if (ctx === 'tpl') {
+    obj = DB.getCustomTemplates().find(function(x){return x.id===id;});
+  } else {
+    obj = DB.getContracts(Pages._customVarProjId).find(function(x){return x.id===id;});
+  }
+  return (obj && obj.custom_vars) || [];
+};
+
+/* Build an ASCII token key from an arbitrary label. Falls back to a unique id. */
+Pages._slugifyVarKey = function(label) {
+  var slug = String(label||'').toLowerCase().trim()
+    .replace(/[^a-z0-9_\s-]/g, '')      // drop non-ASCII (incl. Arabic)
+    .replace(/[\s-]+/g, '_')
+    .replace(/^_+|_+$/g, '');
+  if (!slug) slug = 'var_' + Date.now().toString(36).slice(-5);
+  return 'c_' + slug;                    // c_ prefix marks custom vars
+};
+
+/* Open the variable picker for a clause text field. ctx='tpl' or 'contract'. */
+Pages.openClauseVarPicker = function(ctx, id, clauseId, taId, projId) {
+  Pages._customVarProjId = projId || Pages._contractProjId;
+  var groups = { party:'الأطراف', contract:'بيانات العقد', company:'بيانات الجهة', custom:'متغيرات مخصصة' };
+  var byGroup = { party:[], contract:[], company:[], custom:[] };
+  Pages._CLAUSE_VARS.forEach(function(v){ byGroup[v.group].push(v); });
+  Pages._getCustomVars(ctx, id, clauseId).forEach(function(cv){
+    byGroup.custom.push({ group:'custom', token:'{{'+cv.key+'}}', label:cv.label });
+  });
+  function callArgs() {
+    return '\''+ctx+'\',\''+id+'\',\''+clauseId+'\',\''+taId+'\'';
+  }
+  function rowHtml(v) {
+    var safeToken = v.token.replace(/'/g, "\\'");
+    return '<button class="var-pick-row" data-label="'+UI.escHtml(v.label)+'" onclick="Pages._insertClauseVar('+callArgs()+',\''+safeToken+'\')" '+
+      'style="display:flex;justify-content:space-between;align-items:center;width:100%;padding:8px 12px;border:none;background:transparent;cursor:pointer;text-align:right;font-family:inherit;border-bottom:1px solid var(--border);transition:background 120ms">' +
+      '<span style="color:var(--fg-1);font-size:13px">'+UI.escHtml(v.label)+'</span>' +
+      '<code style="background:var(--neutral-100);padding:2px 6px;border-radius:3px;font-size:11px;color:var(--iris-600)">'+UI.escHtml(v.token)+'</code>' +
+    '</button>';
+  }
+  var html =
+    '<div style="padding:16px 0;max-width:500px;width:90vw">' +
+      '<h2 style="margin:0 16px 4px;font-size:15px;color:var(--fg-1)">إدراج متغير في النص</h2>' +
+      '<div style="font-size:11px;color:var(--fg-3);margin:0 16px 10px">سيُستبدل المتغير بقيمته الفعلية عند تعبئة العقد. يمكنك أيضاً إنشاء متغير جديد.</div>' +
+      '<div style="padding:0 16px 10px">' +
+        '<input id="clause-var-search" class="var-field-inp" placeholder="ابحث عن متغير…" oninput="Pages._filterClauseVars(this.value)" style="font-size:12px">' +
+      '</div>' +
+      '<div style="margin:0 16px 12px;padding:10px;border:1px dashed var(--iris-300);border-radius:var(--radius-sm);background:var(--iris-50)">' +
+        '<div style="font-size:11px;font-weight:600;color:var(--iris-700);margin-bottom:6px">متغير جديد</div>' +
+        '<div style="display:grid;grid-template-columns:1fr auto;gap:6px">' +
+          '<input id="clause-var-new" class="var-field-inp" placeholder="اسم المتغير (مثال: رقم الطلب)" style="font-size:12px" onkeydown="if(event.key===\'Enter\'){Pages._addCustomVarAndInsert('+callArgs()+');}">' +
+          '<button class="btn btn-sm btn-primary" style="white-space:nowrap" onclick="Pages._addCustomVarAndInsert('+callArgs()+')"><i data-lucide="plus" style="width:12px;height:12px"></i>إضافة وإدراج</button>' +
+        '</div>' +
+      '</div>' +
+      '<div id="clause-var-list" style="max-height:42vh;overflow:auto;border-top:1px solid var(--border)">' +
+        Object.keys(byGroup).map(function(g) {
+          if (!byGroup[g].length) return '';
+          return '<div class="var-pick-group" data-group="'+g+'">' +
+            '<div style="font-size:11px;font-weight:600;color:var(--fg-3);padding:6px 16px;background:var(--bg-elevated);letter-spacing:.3px">'+groups[g]+'</div>' +
+            byGroup[g].map(rowHtml).join('') +
+          '</div>';
+        }).join('') +
+      '</div>' +
+      '<div style="padding:12px 16px;text-align:end;border-top:1px solid var(--border)">' +
+        '<button class="btn" onclick="UI.closeModalForce()">إغلاق</button>' +
+      '</div>' +
+    '</div>' +
+    '<style>.var-pick-row:hover{background:var(--iris-50)!important}</style>';
+  UI.openModal(html);
+  if (typeof lucide !== 'undefined') setTimeout(function(){ lucide.createIcons(); }, 50);
+};
+
+/* Live-filter the variable list by label or token. */
+Pages._filterClauseVars = function(q) {
+  q = (q||'').trim().toLowerCase();
+  var list = document.getElementById('clause-var-list');
+  if (!list) return;
+  list.querySelectorAll('.var-pick-row').forEach(function(row) {
+    var label = (row.getAttribute('data-label')||'').toLowerCase();
+    var code = (row.querySelector('code') ? row.querySelector('code').textContent : '').toLowerCase();
+    row.style.display = (!q || label.indexOf(q)>=0 || code.indexOf(q)>=0) ? '' : 'none';
+  });
+  // Hide group headers with no visible rows
+  list.querySelectorAll('.var-pick-group').forEach(function(grp) {
+    var anyVisible = Array.prototype.some.call(grp.querySelectorAll('.var-pick-row'), function(r){ return r.style.display !== 'none'; });
+    grp.style.display = anyVisible ? '' : 'none';
+  });
+};
+
+/* Insert a token into the target clause textarea at the caret and persist. */
+Pages._insertClauseVar = function(ctx, id, clauseId, taId, token) {
+  var ta = document.getElementById(taId);
+  if (ta) {
+    var start = (typeof ta.selectionStart === 'number') ? ta.selectionStart : ta.value.length;
+    var end = (typeof ta.selectionEnd === 'number') ? ta.selectionEnd : ta.value.length;
+    var newVal = ta.value.slice(0, start) + token + ta.value.slice(end);
+    ta.value = newVal;
+    if (ctx === 'tpl') {
+      Pages.updateTplClauseContent(id, clauseId, newVal);
+    } else {
+      Pages.updateContractClauseContentVal(Pages._customVarProjId, id, clauseId, newVal);
+    }
+    UI.closeModalForce();
+    setTimeout(function(){
+      var ta2 = document.getElementById(taId);
+      if (ta2) { ta2.focus(); var pos = start + token.length; try { ta2.setSelectionRange(pos, pos); } catch(e){} }
+    }, 30);
+    return;
+  }
+  UI.closeModalForce();
+};
+
+/* Create a new custom variable (registered on the template/contract) and insert it. */
+Pages._addCustomVarAndInsert = function(ctx, id, clauseId, taId) {
+  var inp = document.getElementById('clause-var-new');
+  var label = inp ? inp.value.trim() : '';
+  if (!label) { if (inp) inp.focus(); return; }
+  var key = Pages._slugifyVarKey(label);
+  var obj;
+  if (ctx === 'tpl') {
+    obj = DB.getCustomTemplates().find(function(x){return x.id===id;});
+  } else {
+    obj = DB.getContracts(Pages._customVarProjId).find(function(x){return x.id===id;});
+  }
+  if (!obj) { UI.closeModalForce(); return; }
+  if (!obj.custom_vars) obj.custom_vars = [];
+  // Dedupe: reuse existing key if same label already defined
+  var existing = obj.custom_vars.find(function(c){ return c.label === label; });
+  if (existing) { key = existing.key; }
+  else {
+    // Ensure key uniqueness
+    var base = key, n = 2;
+    while (obj.custom_vars.some(function(c){ return c.key === key; })) { key = base + '_' + n; n++; }
+    obj.custom_vars.push({ key:key, label:label });
+  }
+  obj.updated = (new Date()).toISOString().slice(0,10);
+  if (ctx === 'tpl') {
+    DB.saveCustomTemplate(obj);
+  } else {
+    // Seed the value so it appears in the variables panel
+    if (!obj.variables) obj.variables = {};
+    if (!(key in obj.variables)) obj.variables[key] = '';
+    DB.saveContract(Pages._customVarProjId, obj);
+  }
+  Pages._insertClauseVar(ctx, id, clauseId, taId, '{{'+key+'}}');
+};
+
 Pages.updateContractStatus = function(projId, contractId, value) {
   var contracts = DB.getContracts(projId);
   var c = contracts.find(function(x){return x.id===contractId;});
@@ -7257,6 +7474,7 @@ Pages.render_template_editor = function(params) {
       name: 'نموذج جديد',
       template_type: 'blank',
       created: today, updated: today,
+      custom_vars: [],
       clauses: [{id:DB.uid(), key:'preamble', title:'المادة الأولى: التمهيد', content:'إنه في يوم {{contract_date_gregorian}}م، بمدينة {{contract_city}}، تم الاتفاق بين:\nالطرف الأول: {{party_a_name}}، يمثله {{party_a_rep_name}} بصفته {{party_a_title}}.\nالطرف الثاني: {{party_b_name}}، يمثله {{party_b_rep_name}} بصفته {{party_b_title}}.\nعلى إبرام هذا العقد وفقاً للشروط أدناه.', enabled:true}],
       cover: {frame_style:'modern', company_name:'', logo:''},
       footer_label: 'سري',
@@ -7279,6 +7497,7 @@ Pages.render_template_editor = function(params) {
   if (!template.page_layout) { template.page_layout = { header:{show:true,image:'',height:180,overlay:[]}, footer:{show:true,image:'',height:90,overlay:[{text:'صفحة {{page_number}} من {{total_pages}}',pos:'bottom-center',font_size:9,color:'#6B7280',font_weight:'400'}]} }; migrated=true; }
   if (!template.cover) { template.cover = {}; migrated=true; }
   if (!template.cover.elements) { Pages._migrateCoverToFree(template.cover); migrated=true; }
+  if (!template.custom_vars) { template.custom_vars = []; migrated=true; }
   if (migrated) DB.saveCustomTemplate(template);
 
   Pages._tplEditorId = templateId;
@@ -7391,6 +7610,9 @@ Pages._renderTplClausesPanel = function(tplId, template) {
     return '<div style="font-size:12px;color:var(--fg-3);text-align:center;padding:20px;border:1px dashed var(--border);border-radius:var(--radius-sm);margin:var(--space-3)">لا توجد بنود. أضف من مكتبة البنود على اليسار.</div>';
   }
   return enabledClauses.map(function(cl, i) {
+    var safeCid = String(cl.id).replace(/[^a-zA-Z0-9]/g,'_');
+    var taId = 'tplcl-ta-'+safeCid;
+    var titleId = 'tplcl-title-'+safeCid;
     return '<div class="stg-section" style="'+(i===0?'margin-top:0;padding-top:0;border-top:none':'')+'">' +
       '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">' +
         '<span style="font-size:11px;font-weight:600;color:var(--fg-2)">البند '+(i+1)+'</span>' +
@@ -7402,11 +7624,14 @@ Pages._renderTplClausesPanel = function(tplId, template) {
       '</div>' +
       '<div class="var-field" style="margin-bottom:6px">' +
         '<div class="var-field-lbl">العنوان</div>' +
-        '<input class="var-field-inp" style="font-size:11px" value="'+UI.escHtml(cl.title||'')+'" onblur="Pages.updateTplClauseTitle(\''+tplId+'\',\''+cl.id+'\',this.value)">' +
+        '<input id="'+titleId+'" class="var-field-inp" style="font-size:11px" value="'+UI.escHtml(cl.title||'')+'" onblur="Pages.updateTplClauseTitle(\''+tplId+'\',\''+cl.id+'\',this.value)">' +
       '</div>' +
       '<div class="var-field">' +
-        '<div class="var-field-lbl">النص</div>' +
-        '<textarea class="var-field-inp" rows="5" style="font-size:11px;resize:vertical;font-family:inherit" onblur="Pages.updateTplClauseContent(\''+tplId+'\',\''+cl.id+'\',this.value)">'+UI.escHtml(cl.content||'')+'</textarea>' +
+        '<div class="var-field-lbl" style="display:flex;align-items:center;justify-content:space-between">' +
+          '<span>النص</span>' +
+          '<button class="btn btn-sm" style="padding:1px 7px;font-size:10px;gap:3px" onclick="Pages.openClauseVarPicker(\'tpl\',\''+tplId+'\',\''+cl.id+'\',\''+taId+'\')"><i data-lucide="braces" style="width:11px;height:11px"></i>إدراج متغير</button>' +
+        '</div>' +
+        '<textarea id="'+taId+'" class="var-field-inp" rows="5" style="font-size:11px;resize:vertical;font-family:inherit" onblur="Pages.updateTplClauseContent(\''+tplId+'\',\''+cl.id+'\',this.value)">'+UI.escHtml(cl.content||'')+'</textarea>' +
       '</div>' +
     '</div>';
   }).join('');
@@ -8018,7 +8243,8 @@ Pages._doSaveContractAsTemplate = function(projId, contractId) {
     footer_label: c.footer_label || 'سري',
     doc_style: JSON.parse(JSON.stringify(c.doc_style||{})),
     doc_margins: JSON.parse(JSON.stringify(c.doc_margins||{})),
-    page_layout: JSON.parse(JSON.stringify(c.page_layout||{}))
+    page_layout: JSON.parse(JSON.stringify(c.page_layout||{})),
+    custom_vars: JSON.parse(JSON.stringify(c.custom_vars||[]))
   };
   // Clear company_name from cover (client-specific); images/layout are retained
   if (tpl.cover) tpl.cover.company_name = '';
