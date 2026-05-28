@@ -5342,14 +5342,14 @@ Pages._applyVars = function(text, vars) {
     if (key === 'contract_amount_words') {
       var amt = parseFloat(((vars && vars.contract_amount)||'').replace(/,/g,''));
       var words = Pages._numToArabic(amt);
-      return words ? '<span class="var-chip">'+UI.escHtml(words)+'</span>'
-                   : '<span class="var-chip empty">{{contract_amount_words}}</span>';
+      return words ? '<span class="var-chip" data-vk="contract_amount_words">'+UI.escHtml(words)+'</span>'
+                   : '<span class="var-chip empty" data-vk="contract_amount_words">{{contract_amount_words}}</span>';
     }
     var val = vars[key];
     if (val && val.trim()) {
-      return '<span class="var-chip">'+UI.escHtml(val)+'</span>';
+      return '<span class="var-chip" data-vk="'+key+'">'+UI.escHtml(val)+'</span>';
     }
-    return '<span class="var-chip empty">'+match+'</span>';
+    return '<span class="var-chip empty" data-vk="'+key+'">'+match+'</span>';
   });
 };
 
@@ -5402,6 +5402,24 @@ Pages.updateContractVar = function(projId, contractId, key, value) {
   c.updated = (new Date()).toISOString().slice(0,10);
   DB.saveContract(projId, c);
   Pages._refreshContractCover(c);
+  // Live-update all variable chips in the WYSIWYG clause bodies
+  var val = String(value||'').trim();
+  var docEl = document.getElementById('contract-doc');
+  if (docEl) {
+    docEl.querySelectorAll('[data-vk="'+key+'"]').forEach(function(chip) {
+      chip.textContent = val || '{{'+key+'}}';
+      chip.className = 'var-chip' + (val ? '' : ' empty');
+    });
+    // Auto-update amount-words chips when amount changes
+    if (key === 'contract_amount') {
+      var words = Pages._numToArabic(parseFloat((value||'').replace(/,/g,'')));
+      docEl.querySelectorAll('[data-vk="contract_amount_words"]').forEach(function(chip) {
+        chip.textContent = words || '{{contract_amount_words}}';
+        chip.className = 'var-chip' + (words ? '' : ' empty');
+      });
+    }
+  }
+  // Update tafqeet display in sidebar
   if (key === 'contract_amount') {
     var disp = document.getElementById('contract-amount-words-disp');
     if (disp) {
@@ -5930,17 +5948,23 @@ Pages.printContract = function() {
     '<style>' +
     '*{box-sizing:border-box;margin:0;padding:0}' +
     'body{font-family:\'IBM Plex Sans Arabic\',Tajawal,system-ui,sans-serif;direction:rtl;background:#fff;color:#1F2937;font-size:'+ds.font_size+'pt;line-height:'+ds.line_height+'}' +
-    /* Single @page rule with zero margins — all spacing is handled via .print-body padding.
-       This avoids Chrome's broken negative-top fixed positioning with named pages. */
-    '@page{size:A4 portrait;margin:0}' +
-    /* Fixed header/footer: top:0 / bottom:0 = physical page edges (no negative offsets needed). */
-    '.phf{position:fixed;left:0;right:0;z-index:100;-webkit-print-color-adjust:exact;print-color-adjust:exact}' +
-    '.phf-top{top:0;height:'+hdrH+'mm}' +
-    '.phf-bot{bottom:0;height:'+ftrH+'mm}' +
+    /* @page margin reserves space for header/footer on EVERY body page.
+       Content area starts at hdrH from physical top — guarantees no text/header overlap.
+       With @page cover-page{margin:0}, Chrome calculates fixed positions from the generic
+       @page rule, placing the header at physical top:0. On the cover (full content area),
+       z-index:200 makes the cover paint over the fixed header. */
+    '@page{size:A4 portrait;margin:'+hdrH+'mm '+rr+'cm '+ftrH+'mm '+rl+'cm}' +
+    '@page cover-page{size:A4 portrait;margin:0}' +
+    '.phf{position:fixed;left:-'+rl+'cm;right:-'+rr+'cm;z-index:100;-webkit-print-color-adjust:exact;print-color-adjust:exact}' +
+    '.phf-top{top:-'+hdrH+'mm;height:'+hdrH+'mm}' +
+    '.phf-bot{bottom:-'+ftrH+'mm;height:'+ftrH+'mm}' +
     '.pn-lbl::after{content:"الصفحة " counter(page);font-family:\'IBM Plex Sans Arabic\',system-ui;direction:rtl}' +
-    /* Cover: z-index:200 > phf z-index:100 → cover's opaque background PAINTS OVER the fixed header/footer
-       so no header/footer is visible on the cover page. Exactly 297mm tall = one A4 page. */
-    '.cov-page{page-break-after:always;height:297mm;max-height:297mm;display:flex;flex-direction:column;position:relative;z-index:200;overflow:hidden;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}' +
+    /* Cover: page:cover-page → margin:0 → content area = full page.
+       Chrome uses generic @page for fixed positioning, so header appears at physical top
+       (0-hdrH) which is INSIDE the cover's full-page content area.
+       z-index:200 + background:white ensures the cover PAINTS OVER the fixed header.
+       min-height:297mm = exactly one A4 page, page-break-after forces next content to page 2. */
+    '.cov-page{page:cover-page;page-break-after:always;min-height:297mm;display:flex;flex-direction:column;position:relative;z-index:200;overflow:hidden;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}' +
     '.cov-frame-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:60px 50px}' +
     '.cov-frame-modern .cov-frame-wrap{border:2.5px solid #0F2A4A;margin:24px;border-radius:4px}' +
     '.cov-frame-classical .cov-frame-wrap{border:2px solid #B8860B;outline:6px double #B8860B;outline-offset:-12px;margin:20px;padding:50px}' +
@@ -5961,8 +5985,8 @@ Pages.printContract = function() {
     '.cov-parties-row:last-child{border-bottom:none}' +
     '.cov-parties-row strong{color:#6B7280;display:block;font-size:10pt;font-weight:500}' +
     '.cov-ref-line{margin-top:32px;font-size:10pt;color:#9CA3AF}' +
-    /* Body: padding-top = header height + inner top margin; sides = document side margins */
-    '.print-body{padding:calc('+hdrH+'mm + '+rt+'cm) '+rr+'cm calc('+ftrH+'mm + '+rb+'cm) '+rl+'cm}' +
+    /* Body: left/right handled by @page margin; only inner top/bottom padding needed */
+    '.print-body{padding:'+rt+'cm 0 '+rb+'cm 0}' +
     '.clause-block{padding:14px 0;page-break-inside:avoid;orphans:4;widows:4}' +
     '.clause-block+.clause-block{border-top:1px solid #E5E7EB;padding-top:14px}' +
     '.clause-block-inner{padding:0}' +
