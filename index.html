@@ -5038,7 +5038,23 @@ Pages.render_contract = function(params) {
       '</div>';
     })() +
     varField('currency', 'العملة', true) +
-    varField('duration_months', 'مدة العقد (شهور)', false) +
+    (function() {
+      var dv = vars.duration_months || '';
+      var du = vars.duration_unit || 'شهر';
+      var units = ['يوم','أسبوع','شهر','سنة'];
+      return '<div class="var-field">' +
+        '<div class="var-field-lbl">مدة العقد</div>' +
+        '<div style="display:grid;grid-template-columns:1fr auto;gap:4px">' +
+          '<input class="var-field-inp" type="number" min="1" step="1" value="'+UI.escHtml(dv)+'" placeholder="المدة" ' +
+            'oninput="Pages.updateContractVar(\''+projId+'\',\''+contractId+'\',\'duration_months\',this.value)">' +
+          '<select class="var-field-inp" style="width:80px;padding:0 6px" ' +
+            'onchange="Pages.updateContractVar(\''+projId+'\',\''+contractId+'\',\'duration_unit\',this.value)">' +
+            units.map(function(u){ return '<option value="'+u+'"'+(du===u?' selected':'')+'>'+u+'</option>'; }).join('') +
+          '</select>' +
+        '</div>' +
+        '<div style="font-size:10px;color:var(--fg-4);margin-top:2px">استخدم <code style="background:var(--bg-elevated);padding:1px 4px;border-radius:3px">{{duration_full}}</code> في البنود للعرض الكامل</div>' +
+      '</div>';
+    })() +
     varField('payment_method', 'طريقة الدفع', false);
 
   // SETTINGS PANEL
@@ -5312,11 +5328,13 @@ Pages._renderCoverEl = function(el, vars, contract, editable) {
   var p = el.props || {};
   var innerHtml = '';
 
-  if (t === 'logo') {
+  if (t === 'logo' || t === 'logo_a' || t === 'logo_b') {
+    var logoLabel = t === 'logo_a' ? 'شعار الطرف الأول' : t === 'logo_b' ? 'شعار الطرف الثاني' : 'شعار الجهة';
+    var logoIcon = t === 'logo' ? 'building-2' : 'building';
     if (p.src) {
       innerHtml = '<div class="cov-el-logo"><img src="'+p.src+'" alt=""></div>';
     } else if (editable) {
-      innerHtml = '<div class="cov-el-logo"><div class="logo-ph" title="شعار — ارفع من الإعدادات"><i data-lucide="building-2" style="width:28px;height:28px"></i><span style="font-size:9px;margin-top:4px;display:block">شعار الجهة</span></div></div>';
+      innerHtml = '<div class="cov-el-logo"><div class="logo-ph" title="'+logoLabel+' — ارفع من الإعدادات"><i data-lucide="'+logoIcon+'" style="width:28px;height:28px"></i><span style="font-size:9px;margin-top:4px;display:block">'+logoLabel+'</span></div></div>';
     }
   } else if (t === 'text') {
     var txt = Pages._applyVarsToCoverEl(p.text || '', vars, contract);
@@ -5442,6 +5460,11 @@ Pages._applyOverlayVars = function(text, vars, pageNum, totalPages, contract) {
     if (key === 'company_email') return settings.company_email || '';
     if (key === 'company_phone') return settings.company_phone || '';
     if (key === 'footer_label') return (contract && contract.footer_label) || '';
+    if (key === 'duration_full') {
+      var dv = ((vars && vars.duration_months) || '').toString().trim();
+      var du = ((vars && vars.duration_unit) || 'شهر').trim();
+      return dv ? dv + ' ' + du : '';
+    }
     var v = (vars && vars[key]) || '';
     return String(v).trim();
   });
@@ -5734,7 +5757,7 @@ Pages._renderContractDoc = function(contract, opts) {
 
   // 2. Paginate clause text + signature
   var pages = Pages._paginateContract(contract);
-  var totalPages = pages.length + 1; // +1 for cover
+  var totalPages = pages.length; // cover is not counted in page numbering
 
   // 3. Render each body page with full header/footer (var substitution per page)
   var totalClauses = contract.clauses.filter(function(c){return c.enabled!==false;}).length;
@@ -5743,7 +5766,7 @@ Pages._renderContractDoc = function(contract, opts) {
   var headerGap = (pl.header && typeof pl.header.bottom_gap === 'number') ? pl.header.bottom_gap : 0;
   var footerGap = (pl.footer && typeof pl.footer.top_gap === 'number') ? pl.footer.top_gap : 0;
   var bodyPagesHtml = pages.map(function(page, idx) {
-    var pageNum = idx + 2; // page 1 = cover
+    var pageNum = idx + 1; // cover not counted; first body page = 1
     var pageStyle = '--hdr-h:'+hdrH+'px;--ftr-h:'+ftrH+'px';
     // doc_margins is in cm (sides). Top/bottom use the user-controllable px gaps.
     var bodyStyle = 'padding:'+headerGap+'px '+dm.right+'cm '+footerGap+'px '+dm.left+'cm;'+
@@ -5783,6 +5806,13 @@ Pages._applyVars = function(text, vars) {
       return words ? '<span class="var-chip" data-vk="contract_amount_words">'+UI.escHtml(words)+'</span>'
                    : '<span class="var-chip empty" data-vk="contract_amount_words">{{contract_amount_words}}</span>';
     }
+    if (key === 'duration_full') {
+      var dv = (vars.duration_months || '').toString().trim();
+      var du = (vars.duration_unit || 'شهر').trim();
+      var full = dv ? dv + ' ' + du : '';
+      return full ? '<span class="var-chip" data-vk="duration_full">'+UI.escHtml(full)+'</span>'
+                  : '<span class="var-chip empty" data-vk="duration_full">{{duration_full}}</span>';
+    }
     var val = vars[key];
     if (val && val.trim()) {
       return '<span class="var-chip" data-vk="'+key+'">'+UI.escHtml(val)+'</span>';
@@ -5820,11 +5850,15 @@ Pages._numToArabic = function(n) {
 Pages._applyVarsPlain = function(text, vars) {
   if (!vars) return text;
   return text.replace(/\{\{(\w+)\}\}/g, function(match, key) {
-    // Auto-derive amount in words from contract_amount
     if (key === 'contract_amount_words') {
       var amt = parseFloat((vars.contract_amount||'').replace(/,/g,''));
       var words = Pages._numToArabic(amt);
       return words || '';
+    }
+    if (key === 'duration_full') {
+      var dv = (vars.duration_months || '').toString().trim();
+      var du = (vars.duration_unit || 'شهر').trim();
+      return dv ? dv + ' ' + du : '';
     }
     var val = vars[key];
     return (val && String(val).trim()) ? String(val) : '';
@@ -6174,7 +6208,7 @@ Pages.addContractCoverEl = function(projId, contractId, type) {
   var contracts = DB.getContracts(projId);
   var c = contracts.find(function(x){return x.id===contractId;});
   if (!c || !c.cover || !c.cover.elements) return;
-  var defaults = { logo:{src:''}, text:{text:'نص جديد',font_size:14,font_weight:'400',color:'#1F2937'}, parties:{show_a:true,show_b:true}, divider:{color:'#D1D5DB',thickness:1}, image:{src:''} };
+  var defaults = { logo:{src:''}, logo_a:{src:''}, logo_b:{src:''}, text:{text:'نص جديد',font_size:14,font_weight:'400',color:'#1F2937'}, parties:{show_a:true,show_b:true}, divider:{color:'#D1D5DB',thickness:1}, image:{src:''} };
   c.cover.elements.push({ id:DB.uid(), type:type, x:50, y:50, w:70, align:'center', props:defaults[type]||{} });
   c.updated = (new Date()).toISOString().slice(0,10);
   DB.saveContract(projId, c);
@@ -6250,7 +6284,7 @@ Pages.handleCoverLogoElUpload = function(projId, contractId, elId, input) {
 /* ─── Cover element settings card (shared contract + template) ─── */
 
 Pages._renderCoverElCard = function(el, i, ctx) {
-  var typeLabels = {logo:'شعار الجهة',text:'نص',parties:'الأطراف',divider:'فاصل',image:'صورة'};
+  var typeLabels = {logo:'شعار الجهة',logo_a:'شعار الطرف الأول',logo_b:'شعار الطرف الثاني',text:'نص',parties:'الأطراف',divider:'فاصل',image:'صورة'};
   var t = el.type||'text';
   var p = el.props||{};
   var isContract = ctx.type==='contract';
@@ -6272,13 +6306,14 @@ Pages._renderCoverElCard = function(el, i, ctx) {
         '<div><label style="font-size:10px;color:var(--fg-3);display:block">الوزن</label><select class="var-field-inp" style="font-size:10px" onchange="'+updateFn+',\'font_weight\',this.value)">'+['400','600','700'].map(function(w){return '<option value="'+w+'"'+((p.font_weight||'400')===w?' selected':'')+'>'+{400:'عادي',600:'شبه',700:'عريض'}[w]+'</option>';}).join('')+'</select></div>' +
         '<div><label style="font-size:10px;color:var(--fg-3);display:block">اللون</label><input type="color" class="var-field-inp" style="padding:2px;height:26px" value="'+(p.color||'#1F2937')+'" onchange="'+updateFn+',\'color\',this.value)"></div>' +
       '</div>';
-  } else if (t==='logo'||t==='image') {
+  } else if (t==='logo'||t==='logo_a'||t==='logo_b'||t==='image') {
+    var uploadLabel = t==='image' ? 'صورة' : typeLabels[t] || 'شعار';
     extraHtml =
       '<div class="var-field" style="margin-top:5px">' +
         (p.src ? '<img src="'+p.src+'" style="max-width:100%;max-height:48px;object-fit:contain;border:1px solid var(--border);border-radius:var(--radius-xs);display:block;margin-bottom:4px">' +
           '<button class="btn btn-sm" style="width:100%;margin-bottom:4px" onclick="document.getElementById(\''+inpId+'\').click()"><i data-lucide="upload"></i>تغيير</button>' +
           '<button class="btn btn-sm" style="width:100%;color:var(--danger-600)" onclick="'+updateFn+',\'src\',\'\')">إزالة</button>'
-          : '<button class="btn btn-sm" style="width:100%" onclick="document.getElementById(\''+inpId+'\').click()"><i data-lucide="upload"></i>رفع '+(t==='logo'?'شعار':'صورة')+'</button>') +
+          : '<button class="btn btn-sm" style="width:100%" onclick="document.getElementById(\''+inpId+'\').click()"><i data-lucide="upload"></i>رفع '+uploadLabel+'</button>') +
         '<input type="file" id="'+inpId+'" accept="image/*" style="display:none" onchange="'+uploadFn+'">' +
       '</div>';
   } else if (t==='divider') {
@@ -6312,7 +6347,7 @@ Pages._renderCoverElCard = function(el, i, ctx) {
 };
 
 Pages._showAddCoverEl = function(projId, contractId) {
-  var types = [['logo','شعار الجهة','building-2'],['text','نص حر','type'],['parties','الأطراف','users'],['divider','فاصل','minus'],['image','صورة','image']];
+  var types = [['logo','شعار الجهة','building-2'],['logo_a','شعار الطرف الأول','building'],['logo_b','شعار الطرف الثاني','building'],['text','نص حر','type'],['parties','الأطراف','users'],['divider','فاصل','minus'],['image','صورة','image']];
   UI.openModal(
     '<div class="modal-header"><h3>إضافة عنصر للغلاف</h3><button class="modal-close" onclick="UI.closeModalForce()">×</button></div>' +
     '<div class="modal-body"><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">' +
@@ -6667,6 +6702,7 @@ Pages._OVERLAY_VARS = [
   { group:'contract', token:'{{subject}}', label:'موضوع العقد' },
   { group:'contract', token:'{{contract_amount}}', label:'قيمة العقد (رقماً)' },
   { group:'contract', token:'{{currency}}', label:'العملة' },
+  { group:'contract', token:'{{duration_full}}', label:'مدة العقد (رقم + وحدة)' },
   // Parties
   { group:'party', token:'{{party_a_name}}', label:'اسم الطرف الأول' },
   { group:'party', token:'{{party_a_rep_name}}', label:'ممثل الطرف الأول' },
@@ -7862,7 +7898,7 @@ Pages.updateTplCoverBg = function(tplId, key, value) {
 Pages.addTplCoverEl = function(tplId, type) {
   var tpl = DB.getCustomTemplates().find(function(x){return x.id===tplId;});
   if (!tpl || !tpl.cover || !tpl.cover.elements) return;
-  var defaults = { logo:{src:''}, text:{text:'نص جديد',font_size:14,font_weight:'400',color:'#1F2937'}, parties:{show_a:true,show_b:true}, divider:{color:'#D1D5DB',thickness:1}, image:{src:''} };
+  var defaults = { logo:{src:''}, logo_a:{src:''}, logo_b:{src:''}, text:{text:'نص جديد',font_size:14,font_weight:'400',color:'#1F2937'}, parties:{show_a:true,show_b:true}, divider:{color:'#D1D5DB',thickness:1}, image:{src:''} };
   tpl.cover.elements.push({ id:DB.uid(), type:type, x:50, y:50, w:70, align:'center', props:defaults[type]||{} });
   tpl.updated = (new Date()).toISOString().slice(0,10);
   DB.saveCustomTemplate(tpl);
@@ -7933,7 +7969,7 @@ Pages.handleTplCoverLogoElUpload = function(tplId, elId, input) {
 };
 
 Pages._showAddTplCoverEl = function(tplId) {
-  var types = [['logo','شعار الجهة','building-2'],['text','نص حر','type'],['parties','الأطراف','users'],['divider','فاصل','minus'],['image','صورة','image']];
+  var types = [['logo','شعار الجهة','building-2'],['logo_a','شعار الطرف الأول','building'],['logo_b','شعار الطرف الثاني','building'],['text','نص حر','type'],['parties','الأطراف','users'],['divider','فاصل','minus'],['image','صورة','image']];
   UI.openModal(
     '<div class="modal-header"><h3>إضافة عنصر للغلاف</h3><button class="modal-close" onclick="UI.closeModalForce()">×</button></div>' +
     '<div class="modal-body"><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">' +
