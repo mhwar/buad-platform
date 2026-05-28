@@ -2587,47 +2587,97 @@ var CONTRACT_ORDINALS = ['الأولى','الثانية','الثالثة','ال�
 
 var CONTRACT_TEMPLATES = {
   service: {
-    title: 'عقد تقديم خدمات',
+    title: 'عقد تقديم خدمات وتنفيذ مشاريع',
     clauses: [
       {
+        key: 'opening',
+        title: 'أطراف العقد',
+        content: 'رقم العقد: {{contract_no}}\nتاريخ الإبرام: {{contract_date_hijri}} هـ | الموافق {{contract_date_gregorian}} م\nمدينة الإبرام: {{contract_city}}\n\nتم الاتفاق والتراضي في هذا اليوم الموضح أعلاه بين كل من:\n\nالطرف الأول (مقدم الخدمة):\nالاسم: {{party_a_name}}\nالسجل التجاري: {{party_a_reg}}\nالرقم الضريبي: {{party_a_tax}}\nالعنوان الوطني: {{party_a_address}}\nيمثلها في التوقيع: الأستاذ/ {{party_a_rep_name}} بصفته {{party_a_title}} بموجب الهوية الوطنية رقم {{party_a_id}}\nبيانات التواصل: جوال: {{party_a_phone}} | البريد الإلكتروني: {{party_a_email}}\n(ويشار إليه في هذا العقد بـ "الطرف الأول" أو "الشركة")\n\nالطرف الثاني (العميل):\nالاسم: {{party_b_name}}\nالسجل التجاري / رقم الترخيص: {{party_b_reg}}\nالرقم الضريبي: {{party_b_tax}}\nالعنوان الوطني: {{party_b_address}}\nيمثلها في التوقيع: الأستاذ/ {{party_b_rep_name}} بصفته {{party_b_title}} بموجب الهوية الوطنية رقم {{party_b_id}}\nبيانات التواصل: جوال: {{party_b_phone}} | البريد الإلكتروني: {{party_b_email}}\n(ويشار إليه في هذا العقد بـ "الطرف الثاني" أو "الجهة المستفيدة")'
+      },
+      {
         key: 'preamble',
-        baseTitle: 'التمهيد وأطراف العقد',
-        content: 'إنه في يوم {{contract_date_gregorian}}م، بمدينة {{contract_city}}، تم الاتفاق والتعاقد بين كل من:\n\nأولاً — الطرف الأول (مقدم الخدمة): {{party_a_name}}، وثيقة الهوية / السجل التجاري رقم {{party_a_id}}، وعنوانه: {{party_a_address}}، يمثله في هذا العقد {{party_a_rep_name}}، بصفته {{party_a_title}}.\n\nثانياً — الطرف الثاني (مستفيد الخدمة): {{party_b_name}}، وثيقة الهوية / السجل التجاري رقم {{party_b_id}}، وعنوانه: {{party_b_address}}، يمثله في هذا العقد {{party_b_rep_name}}، بصفته {{party_b_title}}.\n\nوقد اتفق الطرفان بملء إرادتهما ودون أي إكراه على إبرام هذا العقد وفقاً للشروط والأحكام المنصوص عليها أدناه.'
+        baseTitle: 'التمهيد',
+        content: 'حيث إن الطرف الأول {{party_a_name}} شركة وطنية متخصصة في تقديم الخدمات المهنية والاستشارية والإدارية، وتطوير وتنفيذ المشاريع النوعية الموجهة لتمكين وتطوير القطاع الثالث (القطاع غير الربحي)، وتمتلك الخبرات والكوادر البشرية المؤهلة لتنفيذ هذه المشاريع بكفاءة واحترافية عالية.\n\nوحيث إن الطرف الثاني {{party_b_name}} جهة أهلية مرخصة تسعى لتنفيذ وتطوير مشاريعها وأنشطتها التنموية، وترغب في الاستعانة بخدمات الطرف الأول لتنفيذ وإدارة مشروعها المتمثل في {{subject}}.\n\nوبناءً على تلاقي إرادة الطرفين المعتبرة شرعاً ونظاماً على التعاون المشترك، فقد اتفقا — وهما بكامل أهليتهما المعتبرة — على إبرام هذا العقد وفق الشروط والبنود التالية:'
+      },
+      {
+        key: 'definitions',
+        baseTitle: 'التعريفات',
+        content: 'في تطبيق أحكام هذا العقد، يكون للكلمات والعبارات التالية المعاني الموضحة قرين كل منها، ما لم يقتضِ سياق النص خلاف ذلك:\n\nالعقد: يعني هذه الوثيقة الموقعة بين الطرفين وكافة ملاحقها وتعديلاتها الكتابية المعتمدة.\n\nالخدمات / المشروع: تعني كافة الأعمال الفنية والاستشارية والتنفيذية والتقنية أو التوريدات التي يلتزم الطرف الأول بتقديمها بموجب هذا العقد والمحددة في نطاق العمل.\n\nالجهة الميسّرة: تعني {{company_name}} بصفتها الطرف الميسّر ومالك المنصة التقنية المستخدمة لإدارة هذا العقد.'
       },
       {
         key: 'subject',
         baseTitle: 'موضوع العقد',
-        content: 'يتعهد الطرف الأول بتقديم خدمات {{subject}} للطرف الثاني وفقاً للمواصفات والشروط المتفق عليها بين الطرفين، وذلك خلال المدة المحددة في هذا العقد.\n\nتشمل نطاق الخدمات جميع المهام والتسليمات المتفق عليها، ويلتزم الطرف الأول بتنفيذ هذه الخدمات بالمستوى المهني اللازم ووفق أفضل الممارسات المعتمدة في المجال، مع الالتزام بمعايير الجودة المتفق عليها.'
+        content: 'بموجب هذا العقد، يلتزم الطرف الأول بتنفيذ وتقديم خدمات مشروع: {{subject}} لصالح الطرف الثاني، وذلك طبقاً لأعلى المعايير المهنية المعتمدة، وبناءً على الشروط والمواصفات والمخرجات التفصيلية المتفق عليها والمرفقة بملحق نطاق العمل (الملحق رقم 1) الذي يُعد جزءاً لا يتجزأ من هذا العقد.'
+      },
+      {
+        key: 'obligations_a',
+        baseTitle: 'التزامات الطرف الأول',
+        content: 'يتعهد الطرف الأول ويلتزم بالآتي:\n\nتنفيذ الخدمات والمشروع موضوع العقد بمستوى عالٍ من المهنية والاحترافية ووفق الممارسات المهنية المعتمدة في هذا المجال.\n\nالالتزام بالجدول الزمني المحدد لتسليم المخرجات والمشروع دون تأخير غير مبرر.\n\nتوفير فريق عمل مؤهل وذي خبرة كافية ومناسبة لتأدية الخدمات المتفق عليها.\n\nتزويد الطرف الثاني بتقارير دورية تبيّن تقدم سير العمل ومراحل الإنجاز للمشروع.\n\nالالتزام بالأنظمة السارية في المملكة العربية السعودية عند تنفيذ أعمال هذا العقد.'
+      },
+      {
+        key: 'obligations_b',
+        baseTitle: 'التزامات الطرف الثاني',
+        content: 'يتعهد الطرف الثاني ويلتزم بالآتي:\n\nالالتزام بسداد المقابل المالي للطرف الأول في المواعيد المقررة ووفقاً للآلية المحددة في المادة السادسة من هذا العقد.\n\nتعيين ممثل رسمي للمشروع لمتابعة المخرجات وتسهيل التواصل السريع مع الطرف الأول.\n\nتوفير كافة البيانات والمستندات والموافقات وتصاريح الدخول اللازمة التي يطلبها الطرف الأول للتمكن من تنفيذ المشروع في الوقت المحدد.\n\nمراجعة مخرجات الطرف الأول وإبداء الملاحظات أو التوقيع على محاضر الاستلام والقبول خلال مدة لا تتجاوز (5) أيام عمل من تاريخ تسلم المخرج، ويُعد فوات هذه المدة دون إبداء ملاحظات قبولاً نهائياً للمخرج.'
       },
       {
         key: 'financial',
         baseTitle: 'المقابل المالي وشروط الدفع',
-        content: 'اتفق الطرفان على أن يكون المقابل المالي الإجمالي لهذا العقد مبلغ وقدره {{contract_amount}} {{currency}} ({{contract_amount_words}} فقط لا غير).\n\nتتم عملية الدفع عن طريق {{payment_method}}، ويلتزم الطرف الثاني بسداد المستحقات في مواعيدها المقررة.\n\nفي حال التأخر في السداد لأكثر من (٣٠) يوماً من تاريخ الاستحقاق، يحق للطرف الأول إيقاف الخدمات حتى تسوية المبالغ المستحقة، مع الاحتفاظ بحقه في المطالبة بالتعويض عن أي أضرار ناجمة عن التأخير.'
+        content: 'لقاء التزام الطرف الأول بتنفيذ الخدمات موضوع هذا العقد، يلتزم الطرف الثاني بدفع مبلغ إجمالي وقدره {{contract_amount}} {{currency}} (فقط {{contract_amount_words}} {{currency}} لا غير) شامل ضريبة القيمة المضافة وكافة الرسوم والمصاريف المرتبطة بالتنفيذ.\n\nيتم سداد المبلغ الإجمالي للطرف الأول عن طريق {{payment_method}} المعتمدة بين الطرفين على النحو التالي:\n\nالدفعة الأولى: نسبة (50%) من إجمالي العقد، وتُدفع كدفعة مقدمة مباشرة بعد توقيع العقد لبدء الأعمال.\n\nالدفعة الثانية (النهائية): نسبة (50%) من إجمالي العقد، وتُدفع خلال (7) أيام عمل من تسليم المشروع النهائي وتوقيع محضر الإنجاز النهائي.\n\nتُودع المبالغ في الحساب البنكي الرسمي المعتمد للطرف الأول.'
       },
       {
         key: 'duration',
         baseTitle: 'مدة العقد',
-        content: 'تبدأ مدة هذا العقد من تاريخ توقيعه وتمتد لمدة {{duration_months}} شهراً ميلادياً، وتنتهي بانتهاء هذه المدة ما لم يجدد الطرفان الاتفاق كتابياً قبل انتهائها بمدة لا تقل عن ثلاثين (٣٠) يوماً.\n\nيجوز تمديد مدة العقد باتفاق خطي موقع من الطرفين، ويُعدّ التمديد نافذاً فقط بعد توقيع ملحق رسمي من الطرفين.'
+        content: 'يسري هذا العقد ويبدأ العمل به من تاريخ التوقيع والاعتماد من الطرفين، وينتهي بانتهاء مدته.\n\nمدة تنفيذ العقد الإجمالية هي: {{duration_full}}، ويلتزم الطرف الأول بإنهاء كافة الأعمال وتسليم المخرجات النهائية قبل نهاية هذه المدة.\n\nيجوز تمديد هذا العقد لمدد أخرى مماثلة باتفاق كتابي مسبق موقع ومختوم من الطرفين قبل انتهاء المدة الأصلية بـ (15) يوماً على الأقل.'
       },
       {
         key: 'confidentiality',
         baseTitle: 'السرية وعدم الإفصاح',
-        content: 'يلتزم كلا الطرفين بالحفاظ على سرية جميع المعلومات والبيانات والوثائق التي يطلع عليها أي منهما بموجب هذا العقد، ويُحظر على أي منهما الإفصاح عنها لأي طرف ثالث دون الحصول على موافقة خطية مسبقة من الطرف الآخر.\n\nتستمر التزامات السرية المنصوص عليها في هذه المادة لمدة ثلاث (٣) سنوات بعد انتهاء هذا العقد أو إنهائه لأي سبب كان.\n\nلا تسري أحكام السرية على المعلومات التي أصبحت متاحة للعموم بصورة مشروعة، أو التي تم الإفصاح عنها بموجب أمر قضائي أو تنظيمي.'
+        content: 'يلتزم الطرفان التزاماً تاماً بالمحافظة على سرية كافة المعلومات والبيانات والوثائق التي تقع تحت أيديهما أو يتم تداولها بموجب هذا العقد، سواء كانت مكتوبة أو شفهية أو مخزّنة إلكترونياً.\n\nلا يجوز لأي من الطرفين إفشاء هذه المعلومات السرية لأي طرف ثالث دون الحصول على موافقة خطية مسبقة وصريحة من الطرف الآخر، ويُستثنى من ذلك الطلبات الرسمية الصادرة من الجهات القضائية أو الحكومية المختصة في المملكة، وكذلك المعلومات التي أصبحت متاحة للعموم بصورة مشروعة دون إخلال من الطرف المُفصِح.\n\nيستمر هذا الالتزام بالسرية سارياً طوال مدة العقد ولمدة (3) سنوات تالية بعد إنهاء العقد أو انقضائه لأي سبب كان.'
+      },
+      {
+        key: 'ip',
+        baseTitle: 'الملكية الفكرية',
+        content: 'يتفق الطرفان على أن جميع حقوق الملكية الفكرية السابقة لإبرام هذا العقد والخاصة بكل طرف (بما في ذلك المنهجيات والأدوات والنماذج الخاصة بالطرف الأول {{party_a_name}}) تظل ملكاً خالصاً له، ولا يحق للطرف الآخر المطالبة بها أو استخدامها خارج نطاق هذا العقد.\n\nتؤول ملكية كافة المخرجات والمستندات والتقارير التي يتم إعدادها وتطويرها خصيصاً لصالح الطرف الثاني بموجب هذا العقد إلى الطرف الثاني فور سداده كامل المستحقات المالية الواردة في المادة السابعة من هذا العقد.'
+      },
+      {
+        key: 'force_majeure',
+        baseTitle: 'القوة القاهرة',
+        content: 'لا يتحمل أي من الطرفين المسؤولية عن أي تأخير أو إخفاق في تنفيذ التزاماته بموجب هذا العقد إذا كان ذلك ناتجاً عن حدث خارج عن إرادته المعقولة ولا يمكن توقعه أو تلافيه (مثل الكوارث الطبيعية والحروب والأوبئة والقرارات السيادية المفاجئة).\n\nيجب على الطرف الذي يتعرض لظرف القوة القاهرة إخطار الطرف الآخر كتابياً خلال (5) أيام من حدوثها، موضحاً طبيعة الحدث وتأثيره المتوقع على سير العمل، ويبذل الطرفان أقصى جهد ممكن للحد من آثار القوة القاهرة واستئناف العمل فور زوالها.'
       },
       {
         key: 'termination',
         baseTitle: 'إنهاء العقد',
-        content: 'يحق لأي من الطرفين إنهاء هذا العقد في الحالات الآتية:\nأولاً: بالاتفاق المشترك بين الطرفين في أي وقت.\nثانياً: بموجب إشعار كتابي مسبق لا يقل عن ثلاثين (٣٠) يوماً.\nثالثاً: في حالة إخلال أي من الطرفين بالتزاماته الجوهرية بموجب هذا العقد وعدم معالجة هذا الإخلال خلال (١٥) يوماً من تاريخ إخطاره كتابياً.\n\nعند إنهاء العقد، يستحق الطرف الأول أتعاباً عن الأعمال المنجزة حتى تاريخ الإنهاء، ويلتزم الطرف الثاني بسداد هذه المستحقات خلال (٣٠) يوماً من تاريخ الإنهاء.'
+        content: 'يجوز إنهاء هذا العقد في الحالات التالية:\n\nبالتراضي: باتفاق كتابي موقع من الطرفين في أي وقت.\n\nللإخلال: إذا أخل أحد الطرفين بأي من التزاماته الجوهرية المنصوص عليها في هذا العقد ولم يقم بتصحيح هذا الإخلال خلال (10) أيام من تاريخ تسلمه إشعاراً خطياً بذلك من الطرف الآخر.\n\nللقوة القاهرة: إذا استمرت حالة القوة القاهرة لأكثر من (30) يوماً متواصلة وعاقت تنفيذ العقد بشكل جوهري.\n\nالتصفية أو الإفلاس: في حال إفلاس أحد الطرفين أو دخوله في إجراءات التصفية النظامية.\n\nوفي جميع أحوال الإنهاء، يستحق الطرف الأول مقابل الأعمال المنجزة فعلياً حتى تاريخ الإنهاء، ويلتزم الطرف الثاني بسدادها خلال (30) يوماً من تاريخ الإنهاء.'
+      },
+      {
+        key: 'indemnity',
+        baseTitle: 'التعويض',
+        content: 'يلتزم كل طرف بتعويض الطرف الآخر وحمايته من أي أضرار مباشرة أو خسائر أو تكاليف أو مطالبات (بما في ذلك الأتعاب القانونية المعقولة) تنشأ مباشرة نتيجة إهماله الجسيم أو سوء سلوكه أو مخالفته الصريحة لبنود هذا العقد أو الأنظمة المعمول بها في المملكة العربية السعودية أثناء تنفيذ خدمات المشروع.'
+      },
+      {
+        key: 'disputes',
+        baseTitle: 'حل النزاعات',
+        content: 'في حال حدوث أي خلاف أو نزاع بين الطرفين حول تفسير هذا العقد أو طريقة تنفيذه أو أي بند من بنوده، يلتزم الطرفان ببذل أقصى جهودهما الودية لحل الخلاف بشكل ثنائي خلال مدة (15) يوماً من تاريخ إخطار الطرف المتضرر للطرف الآخر بالخلاف.\n\nوفي حال تعذّر الحل الودي خلال المدة المذكورة، يُحال النزاع إلى الجهة القضائية المختصة وفقاً للمادة الرابعة عشرة من هذا العقد.'
       },
       {
         key: 'governing_law',
         baseTitle: 'القانون المطبق والاختصاص القضائي',
-        content: 'يخضع هذا العقد ويُفسَّر وفقاً لأنظمة وتشريعات المملكة العربية السعودية، وتختص محاكم مدينة {{contract_city}} بالنظر في أي نزاع ينشأ عن تطبيقه أو تفسيره ما لم يتفق الطرفان على اللجوء إلى التحكيم.\n\nفي حال وجود أي تعارض بين بنود هذا العقد والأنظمة والتشريعات السارية في المملكة العربية السعودية، تسود الأنظمة والتشريعات السارية.'
+        content: 'يخضع هذا العقد، وتُفسَّر وتُطبَّق أحكامه، وفقاً للأنظمة واللوائح والتعليمات المعمول بها في المملكة العربية السعودية.\n\nوفي حال تعذّر حل النزاع ودياً وفقاً للمادة الثالثة عشرة، يختص القضاء التجاري في مدينة {{signature_city}} بالفصل في هذا النزاع بشكل نهائي.'
+      },
+      {
+        key: 'notices',
+        baseTitle: 'التبليغات والإشعارات',
+        content: 'تُرسل جميع المراسلات والإشعارات والإنذارات المتعلقة بهذا العقد كتابةً باللغة العربية، وتُعد مُرسَلة ومُستلَمة رسمياً إذا سُلّمت يدوياً مقابل توقيع بالاستلام، أو أُرسلت بالبريد المسجّل، أو عبر البريد الإلكتروني الرسمي المحدد لكل طرف في صدر هذا العقد.\n\nيلتزم كل طرف بإخطار الطرف الآخر فوراً بأي تغيير يطرأ على عنوانه الوطني أو بريده الإلكتروني المعتمد في العقد.'
       },
       {
         key: 'general',
         baseTitle: 'أحكام عامة',
-        content: 'أولاً — الاتفاقية الكاملة: يمثل هذا العقد الاتفاقية الكاملة بين الطرفين بشأن الموضوع المتعاقد عليه، ويلغي ويحل محل جميع الاتفاقيات والتفاهمات السابقة سواء كانت شفهية أم كتابية.\n\nثانياً — التعديلات: لا يجوز تعديل أي بند من بنود هذا العقد إلا بموجب وثيقة خطية موقعة من الطرفين.\n\nثالثاً — قابلية الفصل: إذا تبيّن أن أي بند من بنود هذا العقد باطل أو غير نافذ لأي سبب، فلا يؤثر ذلك على صحة ونفاذ باقي البنود.\n\nرابعاً — النسخ: حرر هذا العقد من نسختين أصليتين بالعربية لكل طرف نسخة تحمل حجيتها القانونية ذاتها.'
+        content: 'استقلالية البنود: إذا تبيّن أن أي بند من بنود هذا العقد باطل أو غير قابل للتنفيذ بموجب الأنظمة، فإن ذلك لا يؤثر على صحة ونفاذ باقي بنود العقد.\n\nالتعديل: لا يجوز تعديل أو تغيير أي بند من بنود هذا العقد أو ملاحقه إلا باتفاق مكتوب وموقع ومختوم من ممثلي الطرفين المفوضين رسمياً بالتوقيع.\n\nالتكامل: يمثل هذا العقد وملاحقه كامل الاتفاق والتفاهم بين الطرفين بشأن موضوعه، ويلغي كافة التفاهمات الشفهية أو الكتابية السابقة لإبرامه.'
+      },
+      {
+        key: 'signatures_note',
+        baseTitle: 'التوقيعات',
+        content: 'تحت رعاية ومتابعة الجهة الميسّرة {{company_name}} عبر بريدها الإلكتروني {{company_email}} وهاتفها {{company_phone}}؛ حُرّر هذا العقد من نسختين أصليتين، بيد كل طرف نسخة للعمل بموجبها والالتزام بما جاء فيها، وقد تم التوقيع والاعتماد إلكترونياً أو كتابياً من قبل الممثلين المفوضين أدناه في مدينة {{signature_city}}.'
       }
     ]
   },
@@ -3758,11 +3808,22 @@ Pages.createContract = function(projId, tplKey) {
     if (customT.custom_vars) tpl._custom_vars = JSON.parse(JSON.stringify(customT.custom_vars));
   } else {
     tpl = CONTRACT_TEMPLATES[tplKey] || CONTRACT_TEMPLATES['blank'];
-    clauses = tpl.clauses.map(function(clItem, i) {
+    var ordIdx = 0;
+    clauses = tpl.clauses.map(function(clItem) {
+      // A clause may carry an explicit (unnumbered) title — e.g. the opening
+      // "أطراف العقد" block — which neither gets a "المادة" prefix nor consumes
+      // an article number. All other clauses are auto-numbered sequentially.
+      var title;
+      if (clItem.title) {
+        title = clItem.title;
+      } else {
+        title = 'المادة ' + (CONTRACT_ORDINALS[ordIdx] || (ordIdx+1).toString()) + ': ' + clItem.baseTitle;
+        ordIdx++;
+      }
       return {
         id: DB.uid(),
         key: clItem.key,
-        title: 'المادة ' + (CONTRACT_ORDINALS[i] || (i+1).toString()) + ': ' + clItem.baseTitle,
+        title: title,
         content: clItem.content,
         enabled: true
       };
@@ -5830,20 +5891,26 @@ Pages._renderContractDoc = function(contract, opts) {
 
 Pages._applyVars = function(text, vars) {
   if (!vars) return text;
+  var settings = DB.getSettings();
+  function chip(key, val) {
+    return (val && String(val).trim())
+      ? '<span class="var-chip" data-vk="'+key+'">'+UI.escHtml(String(val))+'</span>'
+      : '<span class="var-chip empty" data-vk="'+key+'">{{'+key+'}}</span>';
+  }
   return text.replace(/\{\{(\w+)\}\}/g, function(match, key) {
     if (key === 'contract_amount_words') {
       var amt = parseFloat(((vars && vars.contract_amount)||'').replace(/,/g,''));
-      var words = Pages._numToArabic(amt);
-      return words ? '<span class="var-chip" data-vk="contract_amount_words">'+UI.escHtml(words)+'</span>'
-                   : '<span class="var-chip empty" data-vk="contract_amount_words">{{contract_amount_words}}</span>';
+      return chip('contract_amount_words', Pages._numToArabic(amt));
     }
     if (key === 'duration_full') {
       var dv = (vars.duration_months || '').toString().trim();
       var du = (vars.duration_unit || 'شهر').trim();
-      var full = dv ? dv + ' ' + du : '';
-      return full ? '<span class="var-chip" data-vk="duration_full">'+UI.escHtml(full)+'</span>'
-                  : '<span class="var-chip empty" data-vk="duration_full">{{duration_full}}</span>';
+      return chip('duration_full', dv ? dv + ' ' + du : '');
     }
+    // Company/organization tokens come from app settings (fallback to vars)
+    if (key === 'company_name')  return chip('company_name',  settings.company_name  || vars.company_name);
+    if (key === 'company_email') return chip('company_email', settings.company_email || vars.company_email);
+    if (key === 'company_phone') return chip('company_phone', settings.company_phone || vars.company_phone);
     var val = vars[key];
     if (val && val.trim()) {
       return '<span class="var-chip" data-vk="'+key+'">'+UI.escHtml(val)+'</span>';
@@ -5880,6 +5947,7 @@ Pages._numToArabic = function(n) {
 
 Pages._applyVarsPlain = function(text, vars) {
   if (!vars) return text;
+  var settings = DB.getSettings();
   return text.replace(/\{\{(\w+)\}\}/g, function(match, key) {
     if (key === 'contract_amount_words') {
       var amt = parseFloat((vars.contract_amount||'').replace(/,/g,''));
@@ -5891,6 +5959,9 @@ Pages._applyVarsPlain = function(text, vars) {
       var du = (vars.duration_unit || 'شهر').trim();
       return dv ? dv + ' ' + du : '';
     }
+    if (key === 'company_name')  return settings.company_name  || vars.company_name  || '';
+    if (key === 'company_email') return settings.company_email || vars.company_email || '';
+    if (key === 'company_phone') return settings.company_phone || vars.company_phone || '';
     var val = vars[key];
     return (val && String(val).trim()) ? String(val) : '';
   });
@@ -7189,30 +7260,22 @@ Pages.toggleContractPreview = function() {
       : '<i data-lucide="eye"></i>معاينة';
     if (typeof lucide !== 'undefined') lucide.createIcons({rootElement: btn});
   }
-  if (Pages._contractPreview) {
-    var contracts = DB.getContracts(Pages._contractProjId);
-    var c = contracts.find(function(x){return x.id===Pages._contractId;});
-    if (c) {
-      document.querySelectorAll('.clause-body').forEach(function(el, i) {
-        el.setAttribute('contenteditable', 'false');
-        var enabledClauses = c.clauses.filter(function(x){return x.enabled!==false;});
-        var cl = enabledClauses[i];
-        if (cl) {
-          el.innerHTML = Pages._applyVars(UI.escHtml(cl.content), c.variables);
-        }
-      });
-    }
-  } else {
-    var contracts2 = DB.getContracts(Pages._contractProjId);
-    var c2 = contracts2.find(function(x){return x.id===Pages._contractId;});
-    if (c2) {
-      document.querySelectorAll('.clause-body').forEach(function(el, i) {
-        var enabledClauses = c2.clauses.filter(function(x){return x.enabled!==false;});
-        var cl = enabledClauses[i];
-        if (cl) el.textContent = cl.content;
-        el.setAttribute('contenteditable', 'true');
-      });
-    }
+  // Full re-render — honors Pages._contractPreview (var substitution) and
+  // correctly handles clauses split across pages. In preview we render
+  // non-editable so _renderClauseHtml substitutes {{vars}}; in edit mode we
+  // render editable so clause bodies stay contenteditable with raw tokens.
+  // (The previous index-based .clause-body patching drifted whenever a clause
+  // was paginated into multiple fragments, leaving later articles unresolved.)
+  var contracts = DB.getContracts(Pages._contractProjId);
+  var c = contracts.find(function(x){return x.id===Pages._contractId;});
+  var docEl = document.getElementById('contract-doc');
+  if (c && docEl && docEl.parentNode) {
+    var tmp = document.createElement('div');
+    tmp.innerHTML = Pages._renderContractDoc(c, { editable: !Pages._contractPreview });
+    var newDoc = tmp.firstChild;
+    docEl.parentNode.replaceChild(newDoc, docEl);
+    if (typeof lucide !== 'undefined') lucide.createIcons({rootElement: newDoc});
+    Pages._scaleDocPages();
   }
 };
 
