@@ -1685,6 +1685,27 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
 .hdr-slot[data-pos="bottom-left"],.ftr-slot[data-pos="bottom-left"]{bottom:8px;left:16px}
 .hdr-slot[data-pos="bottom-center"],.ftr-slot[data-pos="bottom-center"]{bottom:8px;left:50%;transform:translateX(-50%)}
 .hdr-slot[data-pos="center"],.ftr-slot[data-pos="center"]{top:50%;left:50%;transform:translate(-50%,-50%)}
+.hdr-slot[data-pos="center-right"],.ftr-slot[data-pos="center-right"]{top:50%;right:16px;transform:translateY(-50%)}
+.hdr-slot[data-pos="center-left"],.ftr-slot[data-pos="center-left"]{top:50%;left:16px;transform:translateY(-50%)}
+/* Position picker grid (used in overlay slot cards) */
+.pos-grid{display:grid;grid-template-columns:repeat(3,28px);gap:3px}
+.pos-grid-btn{width:28px;height:22px;border:1px solid var(--border);border-radius:3px;background:var(--bg-elevated);cursor:pointer;position:relative;padding:0;transition:background 100ms,border-color 100ms}
+.pos-grid-btn:hover{background:var(--iris-50);border-color:var(--iris-300)}
+.pos-grid-btn.active{background:var(--iris-50);border-color:var(--iris-500)}
+.pos-grid-btn::after{content:'';position:absolute;width:5px;height:5px;border-radius:50%;background:var(--fg-4)}
+.pos-grid-btn.active::after{background:var(--iris-600)}
+.pos-grid-btn[data-pos="top-right"]::after{top:3px;right:3px}
+.pos-grid-btn[data-pos="top-center"]::after{top:3px;left:50%;transform:translateX(-50%)}
+.pos-grid-btn[data-pos="top-left"]::after{top:3px;left:3px}
+.pos-grid-btn[data-pos="center-right"]::after{top:50%;right:3px;transform:translateY(-50%)}
+.pos-grid-btn[data-pos="center"]::after{top:50%;left:50%;transform:translate(-50%,-50%)}
+.pos-grid-btn[data-pos="center-left"]::after{top:50%;left:3px;transform:translateY(-50%)}
+.pos-grid-btn[data-pos="bottom-right"]::after{bottom:3px;right:3px}
+.pos-grid-btn[data-pos="bottom-center"]::after{bottom:3px;left:50%;transform:translateX(-50%)}
+.pos-grid-btn[data-pos="bottom-left"]::after{bottom:3px;left:3px}
+/* Preset chips for adding overlay slots quickly */
+.preset-chip{display:inline-flex;align-items:center;gap:3px;padding:2px 7px;font-size:10px;border:1px solid var(--border);border-radius:100px;background:var(--bg-elevated);cursor:pointer;color:var(--fg-2);white-space:nowrap;font-family:inherit;line-height:1.6}
+.preset-chip:hover{background:var(--iris-50);border-color:var(--iris-300);color:var(--iris-700)}
 
 /* Empty header/footer placeholder (no image, no overlay) */
 .doc-page-hdr.empty,.doc-page-ftr.empty{
@@ -2202,6 +2223,13 @@ var DB = {
   saveFin: function(pid, d) {
     localStorage.setItem('buad2_fin_'+pid, JSON.stringify(d));
   }
+};
+DB.getSettings = function() {
+  try { return JSON.parse(localStorage.getItem('buad2_settings') || '{}'); } catch(e) { return {}; }
+};
+DB.saveSettings = function(upd) {
+  var cur = DB.getSettings();
+  localStorage.setItem('buad2_settings', JSON.stringify(Object.assign(cur, upd)));
 };
 DB.getContracts = function(pid) {
   var fin = DB.getFin(pid);
@@ -5367,7 +5395,7 @@ Pages._renderHeaderBand = function(hdr, pageNum, totalPages, vars, contract) {
   var h = hdr.height || 200;
   var imgHtml = hdr.image ? '<img class="doc-page-hdr-img" src="'+hdr.image+'">' : '';
   var overlay = (hdr.overlay || []).map(function(slot) {
-    var text = Pages._applyOverlayVars(slot.text || '', vars, pageNum, totalPages);
+    var text = Pages._applyOverlayVars(slot.text || '', vars, pageNum, totalPages, contract);
     if (!text) return '';
     var style = 'font-size:'+(slot.font_size||9)+'pt;color:'+(slot.color||'#1F2937')+';font-weight:'+(slot.font_weight||'400');
     return '<span class="hdr-slot" data-pos="'+(slot.pos||'top-right')+'" style="'+style+'">'+UI.escHtml(text)+'</span>';
@@ -5385,7 +5413,7 @@ Pages._renderFooterBand = function(ftr, pageNum, totalPages, vars, contract) {
   var h = ftr.height || 150;
   var imgHtml = ftr.image ? '<img class="doc-page-ftr-img" src="'+ftr.image+'">' : '';
   var overlay = (ftr.overlay || []).map(function(slot) {
-    var text = Pages._applyOverlayVars(slot.text || '', vars, pageNum, totalPages);
+    var text = Pages._applyOverlayVars(slot.text || '', vars, pageNum, totalPages, contract);
     if (!text) return '';
     var style = 'font-size:'+(slot.font_size||9)+'pt;color:'+(slot.color||'#1F2937')+';font-weight:'+(slot.font_weight||'400');
     return '<span class="ftr-slot" data-pos="'+(slot.pos||'bottom-center')+'" style="'+style+'">'+UI.escHtml(text)+'</span>';
@@ -5399,9 +5427,10 @@ Pages._renderFooterBand = function(ftr, pageNum, totalPages, vars, contract) {
   '</footer>';
 };
 
-/* Substitute variables in overlay text, including {{page_number}} / {{total_pages}} */
-Pages._applyOverlayVars = function(text, vars, pageNum, totalPages) {
+/* Substitute variables in overlay text — page numbers, contract vars, company settings */
+Pages._applyOverlayVars = function(text, vars, pageNum, totalPages, contract) {
   if (!text) return '';
+  var settings = DB.getSettings();
   return text.replace(/\{\{(\w+)\}\}/g, function(match, key) {
     if (key === 'page_number') return String(pageNum);
     if (key === 'total_pages') return String(totalPages);
@@ -5409,6 +5438,10 @@ Pages._applyOverlayVars = function(text, vars, pageNum, totalPages) {
       var amt = parseFloat(((vars && vars.contract_amount)||'').replace(/,/g,''));
       return Pages._numToArabic(amt) || '';
     }
+    if (key === 'company_name') return settings.company_name || (vars && vars.company_name) || '';
+    if (key === 'company_email') return settings.company_email || '';
+    if (key === 'company_phone') return settings.company_phone || '';
+    if (key === 'footer_label') return (contract && contract.footer_label) || '';
     var v = (vars && vars[key]) || '';
     return String(v).trim();
   });
@@ -6474,6 +6507,42 @@ Pages.removeOverlay = function(projId, contractId, section, idx) {
   Pages.render_contract({projId:projId, contractId:contractId});
 };
 
+/* Preset overlay slot — adds a predefined slot with smart defaults */
+Pages._overlayPresets = function(section) {
+  var isHdr = section === 'header';
+  return {
+    page_num:    { text:'صفحة {{page_number}} من {{total_pages}}', pos:'bottom-center', font_size:9,  color:'#6B7280', font_weight:'400' },
+    company:     { text:'{{company_name}}',             pos: isHdr?'top-center':'bottom-center',   font_size:10, color:'#1F2937', font_weight:'600' },
+    date_greg:   { text:'{{contract_date_gregorian}}',  pos: isHdr?'top-left':'bottom-left',   font_size:9,  color:'#6B7280', font_weight:'400' },
+    date_hijri:  { text:'{{contract_date_hijri}}',      pos: isHdr?'top-right':'bottom-right',  font_size:9,  color:'#6B7280', font_weight:'400' },
+    contract_no: { text:'{{contract_no}}',              pos: isHdr?'top-right':'bottom-right',  font_size:9,  color:'#6B7280', font_weight:'400' },
+    email:       { text:'{{company_email}}',            pos: isHdr?'top-left':'bottom-left',    font_size:8,  color:'#6B7280', font_weight:'400' },
+    phone:       { text:'{{company_phone}}',            pos: isHdr?'top-right':'bottom-right',  font_size:8,  color:'#6B7280', font_weight:'400' },
+    footer_lbl:  { text:'{{footer_label}}',             pos:'bottom-center',                    font_size:8,  color:'#9CA3AF', font_weight:'400' }
+  };
+};
+Pages.addOverlayPreset = function(projId, contractId, section, key) {
+  var contracts = DB.getContracts(projId);
+  var c = contracts.find(function(x){return x.id===contractId;});
+  if (!c) return;
+  var preset = Pages._overlayPresets(section)[key] || { text:'', pos: section==='header'?'top-right':'bottom-center', font_size:9, color:'#1F2937', font_weight:'400' };
+  if (!c.page_layout[section].overlay) c.page_layout[section].overlay = [];
+  c.page_layout[section].overlay.push(Object.assign({}, preset));
+  c.updated = (new Date()).toISOString().slice(0,10);
+  DB.saveContract(projId, c);
+  Pages.render_contract({projId:projId, contractId:contractId});
+};
+Pages.addTplOverlayPreset = function(tplId, section, key) {
+  var tpl = DB.getCustomTemplates().find(function(x){return x.id===tplId;});
+  if (!tpl || !tpl.page_layout || !tpl.page_layout[section]) return;
+  var preset = Pages._overlayPresets(section)[key] || { text:'', pos: section==='header'?'top-right':'bottom-center', font_size:9, color:'#1F2937', font_weight:'400' };
+  if (!tpl.page_layout[section].overlay) tpl.page_layout[section].overlay = [];
+  tpl.page_layout[section].overlay.push(Object.assign({}, preset));
+  tpl.updated = (new Date()).toISOString().slice(0,10);
+  DB.saveCustomTemplate(tpl);
+  Pages.render_template_editor({templateId: tplId});
+};
+
 /* Render the settings panel for header or footer band */
 /* Show a modal with recommended dimensions to send to the designer */
 Pages.showBandSpecs = function(section, label, currentH) {
@@ -6585,16 +6654,19 @@ Pages._OVERLAY_VARS = [
   { group:'auto', token:'{{page_number}}', label:'رقم الصفحة الحالية' },
   { group:'auto', token:'{{total_pages}}', label:'إجمالي عدد الصفحات' },
   { group:'auto', token:'{{contract_amount_words}}', label:'المبلغ بالكلمات (تفقيط)' },
+  // Company/organization (from app settings)
+  { group:'company', token:'{{company_name}}', label:'اسم الجهة / الشركة' },
+  { group:'company', token:'{{company_email}}', label:'البريد الإلكتروني للجهة' },
+  { group:'company', token:'{{company_phone}}', label:'رقم التواصل للجهة' },
   // Contract data
   { group:'contract', token:'{{contract_no}}', label:'رقم العقد' },
-  { group:'contract', token:'{{contract_date_gregorian}}', label:'تاريخ العقد الميلادي' },
+  { group:'contract', token:'{{contract_date_gregorian}}', label:'التاريخ الميلادي' },
+  { group:'contract', token:'{{contract_date_hijri}}', label:'التاريخ الهجري' },
+  { group:'contract', token:'{{footer_label}}', label:'تصنيف المستند (سري، نهائي…)' },
   { group:'contract', token:'{{contract_city}}', label:'مدينة الإبرام' },
-  { group:'contract', token:'{{signature_city}}', label:'مدينة التوقيع' },
   { group:'contract', token:'{{subject}}', label:'موضوع العقد' },
-  { group:'contract', token:'{{contract_amount}}', label:'قيمة العقد' },
+  { group:'contract', token:'{{contract_amount}}', label:'قيمة العقد (رقماً)' },
   { group:'contract', token:'{{currency}}', label:'العملة' },
-  { group:'contract', token:'{{duration_months}}', label:'المدة (شهور)' },
-  { group:'contract', token:'{{payment_method}}', label:'طريقة الدفع' },
   // Parties
   { group:'party', token:'{{party_a_name}}', label:'اسم الطرف الأول' },
   { group:'party', token:'{{party_a_rep_name}}', label:'ممثل الطرف الأول' },
@@ -6606,19 +6678,50 @@ Pages._renderBandSettings = function(projId, contractId, section, label, band) {
   var defaultH = section === 'header' ? 180 : 90;
   var inpId = section === 'header' ? 'hdr-img-inp' : 'ftr-img-inp';
   var uploader = section === 'header' ? 'handleHeaderImageUpload' : 'handleFooterImageUpload';
-  // Recommended dimensions for the designer (2x retina-quality):
-  var recW = 1588, recH = section === 'header' ? 360 : 180;
   var heightMm = Math.round((band.height||defaultH) * 25.4 / 96);
-  // Gap between this band and adjacent body content (px)
   var gapKey = section === 'header' ? 'bottom_gap' : 'top_gap';
   var gapLabel = section === 'header' ? 'الهامش بعد الرأس' : 'الهامش قبل الذيل';
   var gapVal = (typeof band[gapKey] === 'number') ? band[gapKey] : 0;
   var overlays = band.overlay || [];
-  var posOpts = ['top-right','top-center','top-left','center','bottom-right','bottom-center','bottom-left'];
+  // 9-position grid layout: [row][col] → position key
+  var posGrid = [
+    ['top-right','top-center','top-left'],
+    ['center-right','center','center-left'],
+    ['bottom-right','bottom-center','bottom-left']
+  ];
   var posLabels = {
     'top-right':'يمين أعلى','top-center':'وسط أعلى','top-left':'يسار أعلى',
-    'center':'وسط','bottom-right':'يمين أسفل','bottom-center':'وسط أسفل','bottom-left':'يسار أسفل'
+    'center-right':'وسط يمين','center':'وسط الوسط','center-left':'وسط يسار',
+    'bottom-right':'يمين أسفل','bottom-center':'وسط أسفل','bottom-left':'يسار أسفل'
   };
+  function posGridHtml(slot, i) {
+    var cur = slot.pos || (section==='header'?'top-right':'bottom-center');
+    return '<div class="pos-grid">' +
+      posGrid.map(function(row){
+        return row.map(function(pos){
+          var active = pos===cur ? ' active' : '';
+          return '<button class="pos-grid-btn'+active+'" data-pos="'+pos+'" title="'+posLabels[pos]+'" ' +
+            'onclick="this.closest(\'.pos-grid\').querySelectorAll(\'.pos-grid-btn\').forEach(function(b){b.classList.remove(\'active\')});this.classList.add(\'active\');Pages.updateOverlay(\''+projId+'\',\''+contractId+'\',\''+section+'\','+i+',\'pos\',\''+pos+'\')"></button>';
+        }).join('');
+      }).join('') +
+    '</div>';
+  }
+  var presets = [
+    { key:'page_num',    label:'رقم الصفحة' },
+    { key:'company',     label:'اسم الجهة' },
+    { key:'date_greg',   label:'التاريخ م' },
+    { key:'date_hijri',  label:'التاريخ هـ' },
+    { key:'contract_no', label:'رقم العقد' },
+    { key:'email',       label:'البريد' },
+    { key:'phone',       label:'الجوال' },
+    { key:'footer_lbl',  label:'التصنيف' }
+  ];
+  var presetsHtml = '<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px">' +
+    presets.map(function(p){
+      return '<button class="preset-chip" onclick="Pages.addOverlayPreset(\''+projId+'\',\''+contractId+'\',\''+section+'\',\''+p.key+'\')">'+p.label+'</button>';
+    }).join('') +
+    '<button class="preset-chip" style="border-style:dashed" onclick="Pages.addOverlay(\''+projId+'\',\''+contractId+'\',\''+section+'\')">+ فارغ</button>' +
+  '</div>';
   return '<div class="stg-section">' +
     '<div class="stg-section-lbl">'+label+'</div>' +
     '<div class="var-field">' +
@@ -6629,7 +6732,7 @@ Pages._renderBandSettings = function(projId, contractId, section, label, band) {
     '<div class="var-field">' +
       '<div class="var-field-lbl" style="display:flex;justify-content:space-between;align-items:center">' +
         '<span>الارتفاع</span>' +
-        '<button class="btn btn-sm" style="padding:1px 6px;font-size:10px;color:var(--iris-600)" onclick="Pages.showBandSpecs(\''+section+'\',\''+label+'\','+(band.height||defaultH)+')" title="عرض القياسات الموصى بها للمصمم"><i data-lucide="ruler" style="width:11px;height:11px"></i>قياسات للمصمم</button>' +
+        '<button class="btn btn-sm" style="padding:1px 6px;font-size:10px;color:var(--iris-600)" onclick="Pages.showBandSpecs(\''+section+'\',\''+label+'\','+(band.height||defaultH)+')" title="قياسات للمصمم"><i data-lucide="ruler" style="width:11px;height:11px"></i>قياسات</button>' +
       '</div>' +
       '<div style="display:flex;gap:6px;align-items:center">' +
         '<input type="number" class="var-field-inp" style="flex:1" min="50" max="400" step="10" value="'+(band.height||defaultH)+'" oninput="Pages.updatePageLayout(\''+projId+'\',\''+contractId+'\',\''+section+'\',\'height\',parseFloat(this.value)||'+defaultH+')">' +
@@ -6637,16 +6740,15 @@ Pages._renderBandSettings = function(projId, contractId, section, label, band) {
       '</div>' +
     '</div>' +
     '<div class="var-field">' +
-      '<div class="var-field-lbl">صورة الخلفية (بعرض كامل الصفحة)</div>' +
+      '<div class="var-field-lbl">صورة الخلفية</div>' +
       (band.image
         ? '<img src="'+band.image+'" style="width:100%;max-height:60px;object-fit:contain;border:1px solid var(--border);border-radius:var(--radius-xs);display:block;margin-bottom:4px">' +
-          '<button class="btn btn-sm" style="width:100%;margin-bottom:4px" onclick="document.getElementById(\''+inpId+'\').click()"><i data-lucide="upload"></i>تغيير الصورة</button>' +
-          '<button class="btn btn-sm" style="width:100%;color:var(--danger-600)" onclick="Pages.updatePageLayout(\''+projId+'\',\''+contractId+'\',\''+section+'\',\'image\',\'\')">إزالة الصورة</button>'
+          '<button class="btn btn-sm" style="width:100%;margin-bottom:4px" onclick="document.getElementById(\''+inpId+'\').click()"><i data-lucide="upload"></i>تغيير</button>' +
+          '<button class="btn btn-sm" style="width:100%;color:var(--danger-600)" onclick="Pages.updatePageLayout(\''+projId+'\',\''+contractId+'\',\''+section+'\',\'image\',\'\')">إزالة</button>'
         : '<button class="btn btn-sm" style="width:100%" onclick="document.getElementById(\''+inpId+'\').click()"><i data-lucide="upload"></i>رفع صورة</button>'
       ) +
       '<input type="file" id="'+inpId+'" accept="image/*" style="display:none" onchange="Pages.'+uploader+'(\''+projId+'\',\''+contractId+'\',this)">' +
     '</div>' +
-    /* Gap between band and adjacent body content */
     '<div class="var-field">' +
       '<div class="var-field-lbl">'+gapLabel+'</div>' +
       '<div style="display:flex;gap:6px;align-items:center">' +
@@ -6655,26 +6757,39 @@ Pages._renderBandSettings = function(projId, contractId, section, label, band) {
       '</div>' +
     '</div>' +
     '<div class="var-field" style="margin-top:14px">' +
-      '<div class="var-field-lbl" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">' +
-        '<span>عناصر نصية فوق الصورة</span>' +
-        '<button class="btn btn-sm" style="padding:2px 8px;font-size:11px" onclick="Pages.addOverlay(\''+projId+'\',\''+contractId+'\',\''+section+'\')"><i data-lucide="plus" style="width:11px;height:11px"></i>إضافة</button>' +
-      '</div>' +
+      '<div class="var-field-lbl" style="margin-bottom:6px">نصوص فوق الصورة</div>' +
+      presetsHtml +
       (overlays.length === 0
-        ? '<div style="font-size:11px;color:var(--fg-4);text-align:center;padding:8px;border:1px dashed var(--border);border-radius:var(--radius-xs)">لا توجد عناصر نصية. اضغط "إضافة"</div>'
+        ? '<div style="font-size:11px;color:var(--fg-4);text-align:center;padding:8px;border:1px dashed var(--border);border-radius:var(--radius-xs)">اختر وصفة جاهزة أو "فارغ" لإضافة نص</div>'
         : overlays.map(function(slot, i) {
             var slotInpId = 'ov-'+section+'-'+i+'-inp';
             return '<div style="border:1px solid var(--border);border-radius:var(--radius-xs);padding:8px;margin-bottom:6px;background:var(--bg-elevated)">' +
-              '<div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">' +
-                '<input id="'+slotInpId+'" class="var-field-inp" style="flex:1" placeholder="نص أو متغير" value="'+UI.escHtml(slot.text||'')+'" oninput="Pages.updateOverlay(\''+projId+'\',\''+contractId+'\',\''+section+'\','+i+',\'text\',this.value)">' +
+              '<div style="display:flex;gap:6px;align-items:center;margin-bottom:8px">' +
+                '<input id="'+slotInpId+'" class="var-field-inp" style="flex:1" placeholder="النص أو {{متغير}}..." value="'+UI.escHtml(slot.text||'')+'" oninput="Pages.updateOverlay(\''+projId+'\',\''+contractId+'\',\''+section+'\','+i+',\'text\',this.value)">' +
                 '<button class="btn btn-sm" style="padding:2px 6px" title="إدراج متغير" onclick="Pages.openVarPicker(\''+projId+'\',\''+contractId+'\',\''+section+'\','+i+',\''+slotInpId+'\')"><i data-lucide="variable" style="width:12px;height:12px"></i></button>' +
                 '<button class="btn btn-sm" style="padding:2px 6px;color:var(--danger-600)" onclick="Pages.removeOverlay(\''+projId+'\',\''+contractId+'\',\''+section+'\','+i+')"><i data-lucide="trash-2" style="width:12px;height:12px"></i></button>' +
               '</div>' +
-              '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">' +
-                '<select class="var-field-inp" style="font-size:10px" onchange="Pages.updateOverlay(\''+projId+'\',\''+contractId+'\',\''+section+'\','+i+',\'pos\',this.value)">' +
-                  posOpts.map(function(p){return '<option value="'+p+'"'+((slot.pos||(section==='header'?'top-right':'bottom-center'))===p?' selected':'')+'>'+posLabels[p]+'</option>';}).join('') +
-                '</select>' +
-                '<input type="number" class="var-field-inp" style="font-size:10px" min="6" max="24" step="0.5" value="'+(slot.font_size||9)+'" title="الحجم (pt)" oninput="Pages.updateOverlay(\''+projId+'\',\''+contractId+'\',\''+section+'\','+i+',\'font_size\',parseFloat(this.value)||9)">' +
-                '<input type="color" class="var-field-inp" style="padding:2px;height:26px" value="'+(slot.color||'#1F2937')+'" title="اللون" onchange="Pages.updateOverlay(\''+projId+'\',\''+contractId+'\',\''+section+'\','+i+',\'color\',this.value)">' +
+              '<div style="display:flex;gap:8px;align-items:start">' +
+                '<div>' +
+                  '<div style="font-size:10px;color:var(--fg-3);margin-bottom:3px">الموضع</div>' +
+                  posGridHtml(slot, i) +
+                '</div>' +
+                '<div style="flex:1;display:grid;grid-template-columns:1fr 1fr;gap:4px;align-content:start">' +
+                  '<div>' +
+                    '<div style="font-size:10px;color:var(--fg-3);margin-bottom:2px">الحجم (pt)</div>' +
+                    '<input type="number" class="var-field-inp" style="font-size:10px" min="6" max="24" step="0.5" value="'+(slot.font_size||9)+'" oninput="Pages.updateOverlay(\''+projId+'\',\''+contractId+'\',\''+section+'\','+i+',\'font_size\',parseFloat(this.value)||9)">' +
+                  '</div>' +
+                  '<div>' +
+                    '<div style="font-size:10px;color:var(--fg-3);margin-bottom:2px">اللون</div>' +
+                    '<input type="color" class="var-field-inp" style="padding:2px;height:28px;width:100%" value="'+(slot.color||'#1F2937')+'" onchange="Pages.updateOverlay(\''+projId+'\',\''+contractId+'\',\''+section+'\','+i+',\'color\',this.value)">' +
+                  '</div>' +
+                  '<div style="grid-column:1/-1">' +
+                    '<div style="font-size:10px;color:var(--fg-3);margin-bottom:2px">الوزن</div>' +
+                    '<select class="var-field-inp" style="font-size:10px" onchange="Pages.updateOverlay(\''+projId+'\',\''+contractId+'\',\''+section+'\','+i+',\'font_weight\',this.value)">' +
+                      ['400','600','700'].map(function(w){return '<option value="'+w+'"'+((slot.font_weight||'400')===w?' selected':'')+'>'+(w==='400'?'عادي':w==='600'?'شبه عريض':'عريض')+'</option>';}).join('') +
+                    '</select>' +
+                  '</div>' +
+                '</div>' +
               '</div>' +
             '</div>';
           }).join('')
@@ -6686,8 +6801,8 @@ Pages._renderBandSettings = function(projId, contractId, section, label, band) {
 /* Open a modal listing available variables — clicking one inserts the token
    into the targeted overlay text input. */
 Pages.openVarPicker = function(projId, contractId, section, slotIdx, inputId) {
-  var groups = { auto:'متغيرات تلقائية', contract:'بيانات العقد', party:'الأطراف' };
-  var byGroup = { auto:[], contract:[], party:[] };
+  var groups = { auto:'تلقائية', company:'بيانات الجهة', contract:'بيانات العقد', party:'الأطراف' };
+  var byGroup = { auto:[], company:[], contract:[], party:[] };
   Pages._OVERLAY_VARS.forEach(function(v){ byGroup[v.group].push(v); });
   function rowHtml(v) {
     var safeToken = v.token.replace(/'/g, "\\'");
@@ -6725,7 +6840,11 @@ Pages._insertVarToken = function(inputId, token, projId, contractId, section, sl
     var end = (typeof inp.selectionEnd === 'number') ? inp.selectionEnd : inp.value.length;
     var newVal = inp.value.slice(0, start) + token + inp.value.slice(end);
     inp.value = newVal;
-    Pages.updateOverlay(projId, contractId, section, slotIdx, 'text', newVal);
+    if (projId === '__tpl__') {
+      Pages.updateTplOverlay(contractId, section, slotIdx, 'text', newVal);
+    } else {
+      Pages.updateOverlay(projId, contractId, section, slotIdx, 'text', newVal);
+    }
   }
   UI.closeModalForce();
 };
@@ -7320,8 +7439,44 @@ Pages._renderTplBandSettings = function(tplId, section, label, band) {
   var gapLabel = section === 'header' ? 'الهامش بعد الرأس' : 'الهامش قبل الذيل';
   var gapVal = (typeof band[gapKey] === 'number') ? band[gapKey] : 0;
   var overlays = band.overlay || [];
-  var posOpts = ['top-right','top-center','top-left','center','bottom-right','bottom-center','bottom-left'];
-  var posLabels = {'top-right':'يمين أعلى','top-center':'وسط أعلى','top-left':'يسار أعلى','center':'وسط','bottom-right':'يمين أسفل','bottom-center':'وسط أسفل','bottom-left':'يسار أسفل'};
+  var posGrid = [
+    ['top-right','top-center','top-left'],
+    ['center-right','center','center-left'],
+    ['bottom-right','bottom-center','bottom-left']
+  ];
+  var posLabels = {
+    'top-right':'يمين أعلى','top-center':'وسط أعلى','top-left':'يسار أعلى',
+    'center-right':'وسط يمين','center':'وسط الوسط','center-left':'وسط يسار',
+    'bottom-right':'يمين أسفل','bottom-center':'وسط أسفل','bottom-left':'يسار أسفل'
+  };
+  function posGridHtml(slot, i) {
+    var cur = slot.pos || (section==='header'?'top-right':'bottom-center');
+    return '<div class="pos-grid">' +
+      posGrid.map(function(row){
+        return row.map(function(pos){
+          var active = pos===cur ? ' active' : '';
+          return '<button class="pos-grid-btn'+active+'" data-pos="'+pos+'" title="'+posLabels[pos]+'" ' +
+            'onclick="this.closest(\'.pos-grid\').querySelectorAll(\'.pos-grid-btn\').forEach(function(b){b.classList.remove(\'active\')});this.classList.add(\'active\');Pages.updateTplOverlay(\''+tplId+'\',\''+section+'\','+i+',\'pos\',\''+pos+'\')"></button>';
+        }).join('');
+      }).join('') +
+    '</div>';
+  }
+  var presets = [
+    { key:'page_num',    label:'رقم الصفحة' },
+    { key:'company',     label:'اسم الجهة' },
+    { key:'date_greg',   label:'التاريخ م' },
+    { key:'date_hijri',  label:'التاريخ هـ' },
+    { key:'contract_no', label:'رقم العقد' },
+    { key:'email',       label:'البريد' },
+    { key:'phone',       label:'الجوال' },
+    { key:'footer_lbl',  label:'التصنيف' }
+  ];
+  var presetsHtml = '<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px">' +
+    presets.map(function(p){
+      return '<button class="preset-chip" onclick="Pages.addTplOverlayPreset(\''+tplId+'\',\''+section+'\',\''+p.key+'\')">'+p.label+'</button>';
+    }).join('') +
+    '<button class="preset-chip" style="border-style:dashed" onclick="Pages.addTplOverlay(\''+tplId+'\',\''+section+'\')">+ فارغ</button>' +
+  '</div>';
   return '<div class="stg-section">' +
     '<div class="stg-section-lbl">'+label+'</div>' +
     '<div class="var-field">' +
@@ -7357,25 +7512,39 @@ Pages._renderTplBandSettings = function(tplId, section, label, band) {
       '</div>' +
     '</div>' +
     '<div class="var-field" style="margin-top:14px">' +
-      '<div class="var-field-lbl" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">' +
-        '<span>عناصر نصية فوق الصورة</span>' +
-        '<button class="btn btn-sm" style="padding:2px 8px;font-size:11px" onclick="Pages.addTplOverlay(\''+tplId+'\',\''+section+'\')"><i data-lucide="plus" style="width:11px;height:11px"></i>إضافة</button>' +
-      '</div>' +
+      '<div class="var-field-lbl" style="margin-bottom:6px">نصوص فوق الصورة</div>' +
+      presetsHtml +
       (overlays.length === 0
-        ? '<div style="font-size:11px;color:var(--fg-4);text-align:center;padding:8px;border:1px dashed var(--border);border-radius:var(--radius-xs)">لا توجد عناصر نصية</div>'
+        ? '<div style="font-size:11px;color:var(--fg-4);text-align:center;padding:8px;border:1px dashed var(--border);border-radius:var(--radius-xs)">اختر وصفة جاهزة أو "فارغ" لإضافة نص</div>'
         : overlays.map(function(slot, i) {
             var slotInpId = 'tpl-ov-'+section+'-'+i+'-inp';
             return '<div style="border:1px solid var(--border);border-radius:var(--radius-xs);padding:8px;margin-bottom:6px;background:var(--bg-elevated)">' +
-              '<div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">' +
-                '<input id="'+slotInpId+'" class="var-field-inp" style="flex:1" placeholder="نص أو متغير" value="'+UI.escHtml(slot.text||'')+'" oninput="Pages.updateTplOverlay(\''+tplId+'\',\''+section+'\','+i+',\'text\',this.value)">' +
+              '<div style="display:flex;gap:6px;align-items:center;margin-bottom:8px">' +
+                '<input id="'+slotInpId+'" class="var-field-inp" style="flex:1" placeholder="النص أو {{متغير}}..." value="'+UI.escHtml(slot.text||'')+'" oninput="Pages.updateTplOverlay(\''+tplId+'\',\''+section+'\','+i+',\'text\',this.value)">' +
+                '<button class="btn btn-sm" style="padding:2px 6px" title="إدراج متغير" onclick="Pages.openVarPicker(\'__tpl__\',\''+tplId+'\',\''+section+'\','+i+',\''+slotInpId+'\')"><i data-lucide="variable" style="width:12px;height:12px"></i></button>' +
                 '<button class="btn btn-sm" style="padding:2px 6px;color:var(--danger-600)" onclick="Pages.removeTplOverlay(\''+tplId+'\',\''+section+'\','+i+')"><i data-lucide="trash-2" style="width:12px;height:12px"></i></button>' +
               '</div>' +
-              '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">' +
-                '<select class="var-field-inp" style="font-size:10px" onchange="Pages.updateTplOverlay(\''+tplId+'\',\''+section+'\','+i+',\'pos\',this.value)">' +
-                  posOpts.map(function(p){return '<option value="'+p+'"'+((slot.pos||(section==='header'?'top-right':'bottom-center'))===p?' selected':'')+'>'+posLabels[p]+'</option>';}).join('') +
-                '</select>' +
-                '<input type="number" class="var-field-inp" style="font-size:10px" min="6" max="24" step="0.5" value="'+(slot.font_size||9)+'" title="الحجم (pt)" oninput="Pages.updateTplOverlay(\''+tplId+'\',\''+section+'\','+i+',\'font_size\',parseFloat(this.value)||9)">' +
-                '<input type="color" class="var-field-inp" style="padding:2px;height:26px" value="'+(slot.color||'#1F2937')+'" title="اللون" onchange="Pages.updateTplOverlay(\''+tplId+'\',\''+section+'\','+i+',\'color\',this.value)">' +
+              '<div style="display:flex;gap:8px;align-items:start">' +
+                '<div>' +
+                  '<div style="font-size:10px;color:var(--fg-3);margin-bottom:3px">الموضع</div>' +
+                  posGridHtml(slot, i) +
+                '</div>' +
+                '<div style="flex:1;display:grid;grid-template-columns:1fr 1fr;gap:4px;align-content:start">' +
+                  '<div>' +
+                    '<div style="font-size:10px;color:var(--fg-3);margin-bottom:2px">الحجم (pt)</div>' +
+                    '<input type="number" class="var-field-inp" style="font-size:10px" min="6" max="24" step="0.5" value="'+(slot.font_size||9)+'" oninput="Pages.updateTplOverlay(\''+tplId+'\',\''+section+'\','+i+',\'font_size\',parseFloat(this.value)||9)">' +
+                  '</div>' +
+                  '<div>' +
+                    '<div style="font-size:10px;color:var(--fg-3);margin-bottom:2px">اللون</div>' +
+                    '<input type="color" class="var-field-inp" style="padding:2px;height:28px;width:100%" value="'+(slot.color||'#1F2937')+'" onchange="Pages.updateTplOverlay(\''+tplId+'\',\''+section+'\','+i+',\'color\',this.value)">' +
+                  '</div>' +
+                  '<div style="grid-column:1/-1">' +
+                    '<div style="font-size:10px;color:var(--fg-3);margin-bottom:2px">الوزن</div>' +
+                    '<select class="var-field-inp" style="font-size:10px" onchange="Pages.updateTplOverlay(\''+tplId+'\',\''+section+'\','+i+',\'font_weight\',this.value)">' +
+                      ['400','600','700'].map(function(w){return '<option value="'+w+'"'+((slot.font_weight||'400')===w?' selected':'')+'>'+(w==='400'?'عادي':w==='600'?'شبه عريض':'عريض')+'</option>';}).join('') +
+                    '</select>' +
+                  '</div>' +
+                '</div>' +
               '</div>' +
             '</div>';
           }).join('')
@@ -7868,6 +8037,29 @@ Pages.render_settings = function() {
         '<div class="kpi-card-sub">مشروع منجَز</div>' +
       '</div>' +
     '</div>' +
+
+    /* Company/Organization settings */
+    (function(){
+      var s = DB.getSettings();
+      function fld(key, label, ph, type) {
+        type = type || 'text';
+        return '<div class="var-field" style="margin-bottom:12px">' +
+          '<div class="var-field-lbl">'+label+'</div>' +
+          '<input class="var-field-inp" type="'+type+'" placeholder="'+ph+'" value="'+UI.escHtml(s[key]||'')+'" ' +
+            'oninput="DB.saveSettings({'+key+':this.value})">' +
+        '</div>';
+      }
+      return '<div class="card" style="margin-bottom:var(--space-5)">' +
+        '<div class="dash-sec-hdr"><h3><i data-lucide="building-2"></i>بيانات الجهة</h3>' +
+          '<span style="font-size:11px;color:var(--fg-3)">تُستخدم في الرأس والذيل عبر {{company_name}} وغيرها</span>' +
+        '</div>' +
+        '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:0 16px">' +
+          fld('company_name',  'اسم الجهة / الشركة',    'شركة نماء للاستشارات') +
+          fld('company_email', 'البريد الإلكتروني',      'info@example.sa', 'email') +
+          fld('company_phone', 'رقم التواصل',            '+966 5X XXX XXXX', 'tel') +
+        '</div>' +
+      '</div>';
+    })() +
 
     /* Data management */
     '<div class="dash-2col" style="margin-bottom:var(--space-5)">' +
