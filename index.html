@@ -5086,7 +5086,17 @@ Pages.render_contract = function(params) {
     varField('party_b_email', 'البريد الإلكتروني', true) +
     '<div class="var-group-lbl"><i data-lucide="file-text"></i>بيانات العقد</div>' +
     varField('contract_no', 'رقم العقد', false) +
-    varField('contract_date_gregorian', 'تاريخ العقد الميلادي', true) +
+    (function(){
+      var dv = vars.contract_date_gregorian || '';
+      // Normalise to YYYY-MM-DD for <input type="date">
+      var iso = dv.match(/^\d{4}-\d{2}-\d{2}$/) ? dv :
+        (function(){ var d = new Date(dv); return isNaN(d) ? '' : d.toISOString().slice(0,10); })();
+      return '<div class="var-field">' +
+        '<div class="var-field-lbl">تاريخ العقد الميلادي <span style="color:var(--iris-500);font-size:10px">تلقائي</span></div>' +
+        '<input type="date" class="var-field-inp'+(iso?' auto-val':'')+'" value="'+iso+'"' +
+        ' oninput="Pages.updateContractVar(\''+projId+'\',\''+contractId+'\',\'contract_date_gregorian\',this.value)">' +
+      '</div>';
+    })() +
     varField('contract_city', 'مدينة الإبرام', true) +
     varField('signature_city', 'مدينة التوقيع', true) +
     varField('subject', 'موضوع العقد', true) +
@@ -5336,7 +5346,7 @@ Pages._renderCoverContent = function(contract, opts) {
         '<div class="cov-parties-row"><strong>الطرف الأول</strong>'+partyA+'</div>' +
         '<div class="cov-parties-row"><strong>الطرف الثاني</strong>'+partyB+'</div>' +
       '</div>' +
-      '<div class="cov-ref-line">'+(vars.contract_date_gregorian?UI.escHtml(vars.contract_date_gregorian):'')+(vars.contract_city?' · '+UI.escHtml(vars.contract_city):'')+'</div>' +
+      '<div class="cov-ref-line">'+(vars.contract_date_gregorian?UI.escHtml(Pages._fmtDateDisplay(vars.contract_date_gregorian)):'')+(vars.contract_city?' · '+UI.escHtml(vars.contract_city):'')+'</div>' +
     '</div>' +
   '</div>';
 };
@@ -5394,6 +5404,10 @@ Pages._applyVarsToCoverEl = function(text, vars, contract) {
     if (key === 'contract_amount_words') {
       var amt = parseFloat(((vars && vars.contract_amount) || '').replace(/,/g,''));
       return UI.escHtml(Pages._numToArabic(amt) || '');
+    }
+    if (key === 'contract_date_gregorian') {
+      var rawDate = vars && vars.contract_date_gregorian;
+      return rawDate ? UI.escHtml(Pages._fmtDateDisplay(rawDate)) : match;
     }
     var val = vars && vars[key];
     return val ? UI.escHtml(String(val)) : match;
@@ -5883,6 +5897,14 @@ Pages._renderContractDoc = function(contract, opts) {
   '</div>';
 };
 
+/* Format a YYYY-MM-DD date string to DD/MM/YYYY for display in clause text */
+Pages._fmtDateDisplay = function(v) {
+  if (!v) return '';
+  var m = v.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (m) return m[3] + '/' + m[2] + '/' + m[1];
+  return v; // not ISO — return as-is
+};
+
 Pages._applyVars = function(text, vars) {
   if (!vars) return text;
   var settings = DB.getSettings();
@@ -5900,6 +5922,9 @@ Pages._applyVars = function(text, vars) {
       var dv = (vars.duration_months || '').toString().trim();
       var du = (vars.duration_unit || 'شهر').trim();
       return chip('duration_full', dv ? dv + ' ' + du : '');
+    }
+    if (key === 'contract_date_gregorian') {
+      return chip('contract_date_gregorian', Pages._fmtDateDisplay(vars.contract_date_gregorian));
     }
     // Company/organization tokens come from app settings (fallback to vars)
     if (key === 'company_name')  return chip('company_name',  settings.company_name  || vars.company_name);
@@ -5953,6 +5978,7 @@ Pages._applyVarsPlain = function(text, vars) {
       var du = (vars.duration_unit || 'شهر').trim();
       return dv ? dv + ' ' + du : '';
     }
+    if (key === 'contract_date_gregorian') return Pages._fmtDateDisplay(vars.contract_date_gregorian) || '';
     if (key === 'company_name')  return settings.company_name  || vars.company_name  || '';
     if (key === 'company_email') return settings.company_email || vars.company_email || '';
     if (key === 'company_phone') return settings.company_phone || vars.company_phone || '';
@@ -6014,7 +6040,7 @@ Pages._refreshContractCover = function(contract) {
   if (covParties[0]) covParties[0].innerHTML = '<strong>الطرف الأول</strong>'+(vars.party_a_name?UI.escHtml(vars.party_a_name):'<span style="color:#9CA3AF">اسم الطرف الأول</span>');
   if (covParties[1]) covParties[1].innerHTML = '<strong>الطرف الثاني</strong>'+(vars.party_b_name?UI.escHtml(vars.party_b_name):'<span style="color:#9CA3AF">اسم الطرف الثاني</span>');
   var refLine = docEl.querySelector('.cov-ref-line');
-  if (refLine) refLine.textContent = (vars.contract_date_gregorian||'')+(vars.contract_city?' · '+vars.contract_city:'');
+  if (refLine) refLine.textContent = (Pages._fmtDateDisplay(vars.contract_date_gregorian||''))+(vars.contract_city?' · '+vars.contract_city:'');
   var sigOrgs = docEl.querySelectorAll('.sig-block-org');
   if (sigOrgs[0]) sigOrgs[0].textContent = vars.party_a_name||'_______________';
   if (sigOrgs[1]) sigOrgs[1].textContent = vars.party_b_name||'_______________';
@@ -6257,7 +6283,11 @@ Pages.addClauseFromLib = function(projId, contractId, clauseKey) {
 };
 
 Pages.saveClauseContent = function(projId, contractId, clauseIdx, el) {
-  if (Pages._contractPreview) return; // don't save preview content
+  if (Pages._contractPreview) return;
+  // Guard: skip saves triggered by DOM removal (replaceChild detaches the element
+  // and fires a spurious blur — this would re-join fragments from the NEW DOM
+  // producing duplicate content). Only save when the element is still connected.
+  if (el && !el.isConnected) return;
   var contracts = DB.getContracts(projId);
   var c = contracts.find(function(x){return x.id===contractId;});
   if (!c) return;
