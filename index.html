@@ -1874,6 +1874,8 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
   background:oklch(0.97 0.02 275 / 0.35);
   border-radius:4px;padding:4px;margin:-4px;
 }
+.clause-body-editable{cursor:pointer;border-radius:4px;transition:background 120ms}
+.clause-body-editable:hover{background:oklch(0.97 0.02 275 / 0.45);box-shadow:0 0 0 4px oklch(0.97 0.02 275 / 0.45)}
 /* Clause controls */
 .clause-controls{
   position:absolute;inset-inline-end:12px;top:18px;
@@ -5019,6 +5021,14 @@ Pages.render_contract = function(params) {
   Pages._contractProjId = projId;
   Pages._contractPreview = false;
 
+  // One-time repair of clause corruption from the old inline-edit bug:
+  // accumulated "المادة …:" title prefixes and duplicated content paragraphs.
+  if (!contract._clauses_repaired_v1) {
+    var repaired = Pages._repairContractClauses(contract);
+    contract._clauses_repaired_v1 = true;
+    try { DB.saveContract(projId, contract); } catch(e) {}
+  }
+
   var vars = contract.variables || {};
 
   // === CLAUSES SIDEBAR PANEL ===
@@ -5574,34 +5584,41 @@ Pages._renderClauseHtml = function(cl, idx, totalClauses, contract, opts) {
   opts = opts || {};
   var ds = contract.doc_style || {clause_title_size:14};
   var fragmentMode = opts.fragmentMode || 'full';
+  // A continuation fragment carries no title — the text simply flows on.
+  var isContinuation = (fragmentMode === 'continued' || fragmentMode === 'continued-no-title');
   var contentText = opts.contentOverride != null ? opts.contentOverride : cl.content;
-  var contentHtml = opts.editable
-    ? UI.escHtml(contentText)
-    : (Pages._contractPreview
-        ? Pages._applyVars(UI.escHtml(contentText), contract.variables)
-        : UI.escHtml(contentText));
-  var showControls = opts.editable && fragmentMode !== 'continued';
+  // Always render resolved variable chips (WYSIWYG) — in the canvas, preview,
+  // measurement, and print alike. Keeping a single rendering path means the
+  // pagination measurement matches exactly what's shown, and editing happens
+  // only in the modal (click the body or the pencil), never inline — which
+  // removes the fragment-rejoin path that previously duplicated paragraphs.
+  var contentHtml = Pages._applyVars(UI.escHtml(contentText), contract.variables);
+  // Controls only on the first/full fragment (not continuations)
+  var showControls = opts.editable && !isContinuation;
   var controls = showControls
     ? '<div class="clause-controls">' +
         (idx>0 ? '<button class="clause-ctrl-btn" onclick="Pages.moveClause(\''+Pages._contractProjId+'\',\''+Pages._contractId+'\','+idx+',\'up\')" title="للأعلى"><i data-lucide="chevron-up"></i></button>' : '') +
         (idx<totalClauses-1 ? '<button class="clause-ctrl-btn" onclick="Pages.moveClause(\''+Pages._contractProjId+'\',\''+Pages._contractId+'\','+idx+',\'down\')" title="للأسفل"><i data-lucide="chevron-down"></i></button>' : '') +
+        '<button class="clause-ctrl-btn" onclick="Pages.openContractClauseTextEditor(\''+Pages._contractProjId+'\',\''+Pages._contractId+'\',\''+cl.id+'\')" title="تحرير نص المادة"><i data-lucide="pencil"></i></button>' +
         '<button class="clause-ctrl-btn'+(cl.page_break?' break-active':'')+'" onclick="Pages.toggleClauseBreak(\''+Pages._contractProjId+'\',\''+Pages._contractId+'\','+idx+')" title="'+(cl.page_break?'إلغاء فصل الصفحة':'ابدأ صفحة جديدة')+'"><i data-lucide="arrow-down-to-line"></i></button>' +
         '<button class="clause-ctrl-btn'+(cl.allow_split?' break-active':'')+'" onclick="Pages.toggleClauseSplit(\''+Pages._contractProjId+'\',\''+Pages._contractId+'\','+idx+')" title="'+(cl.allow_split?'منع تقسيم البند':'اسمح بتقسيم البند')+'"><i data-lucide="scissors"></i></button>' +
         '<button class="clause-ctrl-btn danger" onclick="Pages.deleteClause(\''+Pages._contractProjId+'\',\''+Pages._contractId+'\','+idx+')" title="حذف البند"><i data-lucide="x"></i></button>' +
       '</div>'
     : '';
-  var bodyAttrs = (opts.editable && fragmentMode !== 'continued')
-    ? ' contenteditable="true" data-clause-idx="'+idx+'" data-fragment-mode="'+fragmentMode+'" onblur="Pages.saveClauseContent(\''+Pages._contractProjId+'\',\''+Pages._contractId+'\','+idx+',this)"'
-    : ' data-clause-idx="'+idx+'" data-fragment-mode="'+fragmentMode+'"';
-  var titleText = cl.title + (fragmentMode === 'continued' ? ' (تابع)' : '');
-  var titleHtml = (fragmentMode === 'continued-no-title')
+  // Click anywhere on the body to edit (in canvas edit mode). Editing the
+  // first/continuation fragment opens the SAME clause's full text in the modal,
+  // so the second-page portion is fully editable too.
+  var bodyAttrs = opts.editable
+    ? ' class="clause-body clause-body-editable" data-clause-idx="'+idx+'" data-fragment-mode="'+fragmentMode+'" onclick="Pages.openContractClauseTextEditor(\''+Pages._contractProjId+'\',\''+Pages._contractId+'\',\''+cl.id+'\')" title="انقر لتحرير النص"'
+    : ' class="clause-body" data-clause-idx="'+idx+'" data-fragment-mode="'+fragmentMode+'"';
+  var titleHtml = isContinuation
     ? ''
-    : '<div class="clause-title" style="font-size:'+(ds.clause_title_size||14)+'pt">'+UI.escHtml(titleText)+'</div>';
+    : '<div class="clause-title" style="font-size:'+(ds.clause_title_size||14)+'pt">'+UI.escHtml(cl.title||'')+'</div>';
   return '<div class="clause-block'+(cl.page_break?' has-break':'')+'" id="clause-'+cl.id+(fragmentMode==='full'?'':'-'+fragmentMode)+'">' +
     controls +
     '<div class="clause-block-inner">' +
       titleHtml +
-      '<div class="clause-body"'+bodyAttrs+'>'+contentHtml+'</div>' +
+      '<div'+bodyAttrs+'>'+contentHtml+'</div>' +
     '</div>' +
   '</div>';
 };
@@ -6005,10 +6022,11 @@ Pages.updateContractVar = function(projId, contractId, key, value) {
   if (Pages._maybeRefreshBands(c, key)) return;
   // Live-update all variable chips in the WYSIWYG clause bodies
   var val = String(value||'').trim();
+  var dispVal = (key === 'contract_date_gregorian') ? Pages._fmtDateDisplay(val) : val;
   var docEl = document.getElementById('contract-doc');
   if (docEl) {
     docEl.querySelectorAll('[data-vk="'+key+'"]').forEach(function(chip) {
-      chip.textContent = val || '{{'+key+'}}';
+      chip.textContent = dispVal || '{{'+key+'}}';
       chip.className = 'var-chip' + (val ? '' : ' empty');
     });
     // Auto-update amount-words chips when amount changes
@@ -6121,13 +6139,16 @@ Pages._refreshContractClausesPanel = function(projId, contractId) {
 };
 
 /* Open a modal to edit a specific contract clause's text.
-   Changes are saved to the contract only — the source template is never modified. */
-Pages.openContractClauseTextEditor = function(projId, contractId, clauseId) {
+   Changes are saved to the contract only — the source template is never modified.
+   `initialText` (optional) restores unsaved edits when reopening after the
+   variable picker. */
+Pages.openContractClauseTextEditor = function(projId, contractId, clauseId, initialText) {
   var contracts = DB.getContracts(projId);
   var c = contracts.find(function(x){return x.id===contractId;});
   if (!c) return;
   var cl = (c.clauses||[]).find(function(x){return x.id===clauseId;});
   if (!cl) return;
+  var contentVal = (initialText != null) ? initialText : (cl.content || '');
   var safeId = clauseId.replace(/[^a-zA-Z0-9]/g,'_');
   var taId = 'cce-ta-'+safeId;
   UI.openModal(
@@ -6141,9 +6162,9 @@ Pages.openContractClauseTextEditor = function(projId, contractId, clauseId) {
       '</div>' +
       '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">' +
         '<label style="font-size:12px;font-weight:600;color:var(--fg-1)">نص المادة</label>' +
-        '<button class="btn btn-sm" style="padding:1px 7px;font-size:10px;gap:3px" onclick="Pages.openClauseVarPicker(\'contract\',\''+contractId+'\',\''+clauseId+'\',\''+taId+'\',\''+projId+'\')"><i data-lucide="braces" style="width:11px;height:11px"></i>إدراج متغير</button>' +
+        '<button class="btn btn-sm" style="padding:1px 7px;font-size:10px;gap:3px" onclick="Pages._clauseModalOpenPicker(\'contract\',\''+contractId+'\',\''+clauseId+'\',\''+taId+'\',\''+projId+'\')"><i data-lucide="braces" style="width:11px;height:11px"></i>إدراج متغير</button>' +
       '</div>' +
-      '<textarea id="'+taId+'" style="width:100%;min-height:240px;font-size:12px;font-family:inherit;resize:vertical;padding:8px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg-1);color:var(--fg-1);direction:rtl;line-height:1.7">'+UI.escHtml(cl.content||'')+'</textarea>' +
+      '<textarea id="'+taId+'" style="width:100%;min-height:240px;font-size:12px;font-family:inherit;resize:vertical;padding:8px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg-1);color:var(--fg-1);direction:rtl;line-height:1.7">'+UI.escHtml(contentVal)+'</textarea>' +
     '</div>' +
     '<div class="modal-footer" style="display:flex;gap:var(--space-2);justify-content:flex-end">' +
       '<button class="btn btn-sm" onclick="UI.closeModalForce()">إلغاء</button>' +
@@ -6167,6 +6188,81 @@ Pages.saveContractClauseText = function(projId, contractId, clauseId, text) {
   Pages._refreshContractCanvas(c);
   Pages._refreshContractClausesPanel(projId, contractId);
   UI.toast('تم حفظ التعديل على العقد');
+};
+
+/* Strip any number of leading "المادة <ordinal>: " prefixes from a clause title.
+   The ordinal may be multiple words (e.g. "الحادية عشرة"), and corrupted titles
+   may carry several accumulated prefixes — this removes them all. */
+Pages._stripArticlePrefix = function(title) {
+  var t = String(title || '');
+  var re = /^\s*المادة\s+[^:：]*[:：]\s*/;
+  var guard = 0;
+  while (re.test(t) && guard++ < 30) {
+    var next = t.replace(re, '');
+    if (next === t) break;
+    t = next;
+  }
+  return t.trim();
+};
+
+/* Re-apply sequential "المادة <ordinal>:" numbering to enabled, numbered clauses.
+   Clauses with non-article titles (e.g. "أطراف العقد") are left untouched and do
+   not consume an ordinal slot. Mutates clause titles in place. */
+Pages._renumberClauses = function(clauses) {
+  var ordI = 0;
+  (clauses || []).forEach(function(cl) {
+    if (cl.enabled === false) return;
+    if (/^\s*المادة\s+[^:：]*[:：]/.test(cl.title || '')) {
+      var base = Pages._stripArticlePrefix(cl.title);
+      cl.title = 'المادة ' + (CONTRACT_ORDINALS[ordI] || (ordI+1).toString()) + ': ' + base;
+      ordI++;
+    }
+  });
+};
+
+/* Collapse clause content that is an exact whole-block repetition (corruption
+   from the old inline fragment-rejoin bug). Conservative: only collapses when
+   the paragraph list is exactly K identical copies (K>=2) of a base block. */
+Pages._dedupeClauseContent = function(content) {
+  if (!content) return content;
+  var paras = content.split(/\n\s*\n/).map(function(p){ return p.trim(); }).filter(function(p){ return p.length; });
+  var n = paras.length;
+  if (n < 2) return content;
+  for (var L = 1; L <= n/2; L++) {
+    if (n % L !== 0) continue;
+    var ok = true;
+    for (var i = L; i < n && ok; i++) {
+      if (paras[i] !== paras[i % L]) ok = false;
+    }
+    if (ok) return paras.slice(0, L).join('\n\n');
+  }
+  return content;
+};
+
+/* One-time repair of an existing contract's clauses: fix accumulated title
+   prefixes and de-duplicate repeated content. Idempotent and flagged so it
+   only persists once per contract. Returns true if anything changed. */
+Pages._repairContractClauses = function(c) {
+  if (!c || !Array.isArray(c.clauses)) return false;
+  var changed = false;
+  c.clauses.forEach(function(cl) {
+    if (typeof cl.content === 'string') {
+      var deduped = Pages._dedupeClauseContent(cl.content);
+      if (deduped !== cl.content) { cl.content = deduped; changed = true; }
+    }
+    var stripped = Pages._stripArticlePrefix(cl.title);
+    // Detect accumulated prefixes: title had >1 "المادة …:" segment
+    if (/^\s*المادة\s+[^:：]*[:：]/.test(cl.title || '')) {
+      var rebuilt = cl.title.replace(/^\s*المادة\s+[^:：]*[:：]\s*/, '');
+      if (rebuilt !== stripped) changed = true; // multiple prefixes existed
+    }
+  });
+  // Renumber to normalize titles (also fixes the accumulated-prefix case)
+  var before = c.clauses.map(function(cl){return cl.title;}).join('');
+  Pages._renumberClauses(c.clauses);
+  var after = c.clauses.map(function(cl){return cl.title;}).join('');
+  if (before !== after) changed = true;
+  return changed;
 };
 
 /* Scale .doc-page elements to fit the canvas width on narrow screens.
@@ -6197,14 +6293,7 @@ Pages.moveClause = function(projId, contractId, clauseIdx, dir) {
   var realNewIdx = c.clauses.indexOf(enabledClauses[newIdx]);
   if (realIdx<0||realNewIdx<0) return;
   var tmp = c.clauses[realIdx]; c.clauses[realIdx]=c.clauses[realNewIdx]; c.clauses[realNewIdx]=tmp;
-  var ordI = 0;
-  c.clauses.forEach(function(cl) {
-    if (cl.enabled!==false) {
-      var base = cl.title.replace(/^المادة\s+\S+\s*:\s*/,'');
-      cl.title = 'المادة '+(CONTRACT_ORDINALS[ordI]||(ordI+1).toString())+': '+base;
-      ordI++;
-    }
-  });
+  Pages._renumberClauses(c.clauses);
   c.updated = (new Date()).toISOString().slice(0,10);
   DB.saveContract(projId, c);
   Pages.render_contract({projId:projId, contractId:contractId});
@@ -6218,6 +6307,7 @@ Pages.deleteClause = function(projId, contractId, clauseIdx) {
   var cl = enabledClauses[clauseIdx];
   if (!cl) return;
   cl.enabled = false;
+  Pages._renumberClauses(c.clauses);
   c.updated = (new Date()).toISOString().slice(0,10);
   DB.saveContract(projId, c);
   Pages._refreshContractCanvas(c);
@@ -7298,6 +7388,20 @@ Pages._filterClauseVars = function(q) {
 };
 
 /* Insert a token into the target clause textarea at the caret and persist. */
+/* Wrapper used by the contract clause edit MODAL: the picker replaces the modal
+   DOM (destroying the textarea), so stash its current value + caret first, then
+   open the picker. _insertClauseVar reopens the edit modal with the token. */
+Pages._clauseModalOpenPicker = function(ctx, id, clauseId, taId, projId) {
+  var ta = document.getElementById(taId);
+  Pages._clauseModalStash = ta ? {
+    ctx: ctx, id: id, clauseId: clauseId, taId: taId, projId: projId,
+    value: ta.value,
+    start: (typeof ta.selectionStart === 'number') ? ta.selectionStart : ta.value.length,
+    end: (typeof ta.selectionEnd === 'number') ? ta.selectionEnd : ta.value.length
+  } : null;
+  Pages.openClauseVarPicker(ctx, id, clauseId, taId, projId);
+};
+
 Pages._insertClauseVar = function(ctx, id, clauseId, taId, token) {
   var ta = document.getElementById(taId);
   if (ta) {
@@ -7315,6 +7419,16 @@ Pages._insertClauseVar = function(ctx, id, clauseId, taId, token) {
       var ta2 = document.getElementById(taId);
       if (ta2) { ta2.focus(); var pos = start + token.length; try { ta2.setSelectionRange(pos, pos); } catch(e){} }
     }, 30);
+    return;
+  }
+  // Textarea gone — we came from the contract edit modal. Reopen it with the
+  // token spliced in at the stashed caret (unsaved; user confirms with حفظ).
+  var s = Pages._clauseModalStash;
+  if (s && s.taId === taId && ctx === 'contract') {
+    var nv = s.value.slice(0, s.start) + token + s.value.slice(s.end);
+    Pages._clauseModalStash = null;
+    UI.closeModalForce();
+    Pages.openContractClauseTextEditor(s.projId, s.id, s.clauseId, nv);
     return;
   }
   UI.closeModalForce();
@@ -7390,12 +7504,9 @@ Pages.toggleContractPreview = function() {
       : '<i data-lucide="eye"></i>معاينة';
     if (typeof lucide !== 'undefined') lucide.createIcons({rootElement: btn});
   }
-  // Full re-render — honors Pages._contractPreview (var substitution) and
-  // correctly handles clauses split across pages. In preview we render
-  // non-editable so _renderClauseHtml substitutes {{vars}}; in edit mode we
-  // render editable so clause bodies stay contenteditable with raw tokens.
-  // (The previous index-based .clause-body patching drifted whenever a clause
-  // was paginated into multiple fragments, leaving later articles unresolved.)
+  // Full re-render. Both modes show resolved variables now; the difference is
+  // that edit mode renders the clause controls + click-to-edit affordance,
+  // while preview hides them for a clean reading view.
   var contracts = DB.getContracts(Pages._contractProjId);
   var c = contracts.find(function(x){return x.id===Pages._contractId;});
   var docEl = document.getElementById('contract-doc');
@@ -8120,14 +8231,7 @@ Pages.moveTplClause = function(id, idx, dir) {
   var ri = t.clauses.indexOf(enabled[idx]);
   var rni = t.clauses.indexOf(enabled[newIdx]);
   var tmp = t.clauses[ri]; t.clauses[ri]=t.clauses[rni]; t.clauses[rni]=tmp;
-  var oi = 0;
-  t.clauses.forEach(function(cl){
-    if (cl.enabled!==false) {
-      var base = cl.title.replace(/^المادة\s+\S+\s*:\s*/,'');
-      cl.title = 'المادة '+(CONTRACT_ORDINALS[oi]||(oi+1).toString())+': '+base;
-      oi++;
-    }
-  });
+  Pages._renumberClauses(t.clauses);
   t.updated = (new Date()).toISOString().slice(0,10);
   DB.saveCustomTemplate(t);
   Pages.render_template_editor({templateId: id});
