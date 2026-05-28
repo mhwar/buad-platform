@@ -1805,13 +1805,14 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
 
 /* Article / Clause block */
 .clause-block{
-  padding:16px 0;
+  padding:14px 0;
   position:relative;
 }
+.clause-block:first-child{padding-top:0}
 .clause-block-inner{padding-inline-start:0}
 .clause-block + .clause-block::before{
   content:'';display:block;height:1px;
-  background:var(--border);margin-bottom:16px;
+  background:var(--border);margin-bottom:14px;
 }
 .clause-title{
   font-size:14pt;font-weight:700;color:#0F2A4A;
@@ -1845,6 +1846,8 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
 .clause-block.has-break{border-top:2px dashed var(--iris-400)!important;margin-top:20px}
 .clause-block.has-break::before{content:'↧ بداية صفحة جديدة';display:block;font-size:9px;color:var(--iris-400);margin-bottom:8px;text-align:center;letter-spacing:.02em}
 .clause-ctrl-btn [data-lucide]{width:13px;height:13px}
+/* Continuation fragment styling: the (تابع) title shows muted to signal it's not a new clause */
+.clause-body[data-fragment-mode="continued"]{border-top:1px dashed var(--neutral-200);padding-top:8px}
 
 /* Variable chip */
 .var-chip{
@@ -3742,7 +3745,7 @@ Pages.createContract = function(projId, tplKey) {
     cover: contract_cover,
     footer_label: contract_footer,
     doc_style: { font_size: 14, line_height: 1.5, title_size: 18, clause_title_size: 14, subtitle_size: 12 },
-    doc_margins: { top: 1.0, right: 2.0, bottom: 1.0, left: 2.0 },
+    doc_margins: { top: 0.4, right: 2.0, bottom: 0.4, left: 2.0 },
     page_layout: {
       header: {
         show: true,
@@ -5148,12 +5151,14 @@ Pages._migrateContractLayout = function(contract) {
   }
   if (contract.doc_margins) {
     var m = contract.doc_margins;
-    if (m.top > 2.5) m.top = 1.0;
-    if (m.bottom > 2.5) m.bottom = 1.0;
+    // Old defaults were 2.5cm top/bottom; reduce to 0.4cm (≈ 15px) so spacing
+    // between header and first clause matches inter-clause spacing
+    if (m.top >= 1.0) m.top = 0.4;
+    if (m.bottom >= 1.0) m.bottom = 0.4;
     if (m.right > 2.5) m.right = 2.0;
     if (m.left > 2.5) m.left = 2.0;
   } else {
-    contract.doc_margins = {top:1.0, right:2.0, bottom:1.0, left:2.0};
+    contract.doc_margins = {top:0.4, right:2.0, bottom:0.4, left:2.0};
   }
 };
 
@@ -5249,33 +5254,56 @@ Pages._applyOverlayVars = function(text, vars, pageNum, totalPages) {
   });
 };
 
-/* Render one clause block — used both for measuring and for final DOM */
+/* Render one clause block — used both for measuring and for final DOM.
+   opts.fragmentMode: 'full' (default) | 'first' (with title, partial content)
+                    | 'continued' (continuation in next page, title with "(تابع)") */
 Pages._renderClauseHtml = function(cl, idx, totalClauses, contract, opts) {
   opts = opts || {};
   var ds = contract.doc_style || {clause_title_size:14};
+  var fragmentMode = opts.fragmentMode || 'full';
+  var contentText = opts.contentOverride != null ? opts.contentOverride : cl.content;
   var contentHtml = opts.editable
-    ? UI.escHtml(cl.content)
+    ? UI.escHtml(contentText)
     : (Pages._contractPreview
-        ? Pages._applyVars(UI.escHtml(cl.content), contract.variables)
-        : UI.escHtml(cl.content));
-  var controls = opts.editable
+        ? Pages._applyVars(UI.escHtml(contentText), contract.variables)
+        : UI.escHtml(contentText));
+  var showControls = opts.editable && fragmentMode !== 'continued';
+  var controls = showControls
     ? '<div class="clause-controls">' +
         (idx>0 ? '<button class="clause-ctrl-btn" onclick="Pages.moveClause(\''+Pages._contractProjId+'\',\''+Pages._contractId+'\','+idx+',\'up\')" title="للأعلى"><i data-lucide="chevron-up"></i></button>' : '') +
         (idx<totalClauses-1 ? '<button class="clause-ctrl-btn" onclick="Pages.moveClause(\''+Pages._contractProjId+'\',\''+Pages._contractId+'\','+idx+',\'down\')" title="للأسفل"><i data-lucide="chevron-down"></i></button>' : '') +
         '<button class="clause-ctrl-btn'+(cl.page_break?' break-active':'')+'" onclick="Pages.toggleClauseBreak(\''+Pages._contractProjId+'\',\''+Pages._contractId+'\','+idx+')" title="'+(cl.page_break?'إلغاء فصل الصفحة':'ابدأ صفحة جديدة')+'"><i data-lucide="arrow-down-to-line"></i></button>' +
+        '<button class="clause-ctrl-btn'+(cl.allow_split?' break-active':'')+'" onclick="Pages.toggleClauseSplit(\''+Pages._contractProjId+'\',\''+Pages._contractId+'\','+idx+')" title="'+(cl.allow_split?'منع تقسيم البند':'اسمح بتقسيم البند')+'"><i data-lucide="scissors"></i></button>' +
         '<button class="clause-ctrl-btn danger" onclick="Pages.deleteClause(\''+Pages._contractProjId+'\',\''+Pages._contractId+'\','+idx+')" title="حذف البند"><i data-lucide="x"></i></button>' +
       '</div>'
     : '';
-  var bodyAttrs = opts.editable
-    ? ' contenteditable="true" data-clause-idx="'+idx+'" onblur="Pages.saveClauseContent(\''+Pages._contractProjId+'\',\''+Pages._contractId+'\','+idx+',this)"'
-    : '';
-  return '<div class="clause-block'+(cl.page_break?' has-break':'')+'" id="clause-'+cl.id+'">' +
+  var bodyAttrs = (opts.editable && fragmentMode !== 'continued')
+    ? ' contenteditable="true" data-clause-idx="'+idx+'" data-fragment-mode="'+fragmentMode+'" onblur="Pages.saveClauseContent(\''+Pages._contractProjId+'\',\''+Pages._contractId+'\','+idx+',this)"'
+    : ' data-clause-idx="'+idx+'" data-fragment-mode="'+fragmentMode+'"';
+  var titleText = cl.title + (fragmentMode === 'continued' ? ' (تابع)' : '');
+  var titleHtml = (fragmentMode === 'continued-no-title')
+    ? ''
+    : '<div class="clause-title" style="font-size:'+(ds.clause_title_size||14)+'pt">'+UI.escHtml(titleText)+'</div>';
+  return '<div class="clause-block'+(cl.page_break?' has-break':'')+'" id="clause-'+cl.id+(fragmentMode==='full'?'':'-'+fragmentMode)+'">' +
     controls +
     '<div class="clause-block-inner">' +
-      '<div class="clause-title" style="font-size:'+(ds.clause_title_size||14)+'pt">'+UI.escHtml(cl.title)+'</div>' +
+      titleHtml +
       '<div class="clause-body"'+bodyAttrs+'>'+contentHtml+'</div>' +
     '</div>' +
   '</div>';
+};
+
+/* Split clause content into paragraphs (on blank-line boundaries).
+   Single-paragraph clauses return a one-item array. */
+Pages._splitClauseParagraphs = function(content) {
+  if (!content) return [''];
+  // Split on \n\n (paragraph breaks); fall back to \n if no double-newlines
+  var paras = content.split(/\n\s*\n/);
+  if (paras.length === 1) {
+    // No paragraph breaks — try single newlines as soft boundaries for very long clauses
+    paras = content.split(/\n/).filter(function(p){ return p.trim().length > 0; });
+  }
+  return paras.length > 0 ? paras : [content];
 };
 
 /* Render signature page content */
@@ -5300,22 +5328,27 @@ Pages._renderSignatureHtml = function(contract) {
   '</div>';
 };
 
-/* Paginate clauses into A4 pages by measuring rendered heights */
+/* Paginate clauses into A4 pages by measuring rendered heights.
+   Splits long clauses on paragraph boundaries when:
+   - Total clause height > 50% of page (auto-split threshold), OR
+   - cl.allow_split is true (manual override)
+   Constraints:
+   - Title never separates from its first paragraph (orphan protection)
+   - Last paragraph never alone on next page (widow protection)
+*/
 Pages._paginateContract = function(contract, opts) {
   opts = opts || {};
   var ds = contract.doc_style || {font_size:14, line_height:1.5, clause_title_size:14};
   var pl = contract.page_layout;
   var hdrH = pl.header.height || 200;
   var ftrH = pl.footer.height || 150;
-  // Body padding (1cm 2cm) eats 2*37.795 px vertically and 4*37.795 px horizontally
   var PX = 37.795;
-  var dm = contract.doc_margins || {top:1.0, right:2.0, bottom:1.0, left:2.0};
+  var dm = contract.doc_margins || {top:0.4, right:2.0, bottom:0.4, left:2.0};
   var bodyPadTop = dm.top * PX, bodyPadBottom = dm.bottom * PX;
   var bodyPadLeft = dm.left * PX, bodyPadRight = dm.right * PX;
   var maxBodyHeight = 1123 - hdrH - ftrH - bodyPadTop - bodyPadBottom;
   var bodyInnerWidth = 794 - bodyPadLeft - bodyPadRight;
 
-  // Hidden measuring container
   var measureEl = document.createElement('div');
   measureEl.style.cssText = 'position:absolute;visibility:hidden;left:-9999px;top:0;'+
     'width:'+bodyInnerWidth+'px;'+
@@ -5324,25 +5357,133 @@ Pages._paginateContract = function(contract, opts) {
     'direction:rtl;color:#1F2937';
   document.body.appendChild(measureEl);
 
+  function measureClauseHtml(cl, idx, total, fragmentMode, contentOverride) {
+    var html = Pages._renderClauseHtml(cl, idx, total, contract, {
+      editable:false, fragmentMode:fragmentMode||'full', contentOverride:contentOverride
+    });
+    measureEl.innerHTML = html;
+    return measureEl.firstElementChild ? measureEl.firstElementChild.offsetHeight : 0;
+  }
+
   var enabledClauses = contract.clauses.filter(function(c){return c.enabled!==false;});
   var pages = [[]];
   var currentHeight = 0;
   var totalClauses = enabledClauses.length;
+  var AUTO_SPLIT_THRESHOLD = 0.5; // split clauses taller than 50% of page
+
+  function pushNewPage() {
+    pages.push([]);
+    currentHeight = 0;
+  }
+  function addToCurrentPage(item) {
+    pages[pages.length-1].push(item);
+    currentHeight += item.height;
+  }
 
   enabledClauses.forEach(function(cl, i) {
     if (cl.page_break && pages[pages.length-1].length > 0) {
-      pages.push([]);
-      currentHeight = 0;
+      pushNewPage();
     }
-    var html = Pages._renderClauseHtml(cl, i, totalClauses, contract, {editable:false});
-    measureEl.innerHTML = html;
-    var h = measureEl.firstElementChild ? measureEl.firstElementChild.offsetHeight : 0;
-    if (currentHeight > 0 && currentHeight + h > maxBodyHeight) {
-      pages.push([]);
-      currentHeight = 0;
+    var fullHeight = measureClauseHtml(cl, i, totalClauses, 'full');
+    var fits = currentHeight + fullHeight <= maxBodyHeight;
+
+    // Case 1: clause fits in current page → place as-is
+    if (fits) {
+      addToCurrentPage({ clause: cl, idx: i, height: fullHeight, mode:'full' });
+      return;
     }
-    pages[pages.length-1].push({ clause: cl, idx: i, height: h });
-    currentHeight += h;
+
+    var allowSplit = cl.allow_split || fullHeight > maxBodyHeight * AUTO_SPLIT_THRESHOLD;
+    var paragraphs = Pages._splitClauseParagraphs(cl.content);
+    var splittable = allowSplit && paragraphs.length >= 2;
+
+    // Case 2: clause doesn't fit and isn't splittable → push to next page (full)
+    if (!splittable) {
+      if (pages[pages.length-1].length > 0) pushNewPage();
+      addToCurrentPage({ clause: cl, idx: i, height: fullHeight, mode:'full' });
+      return;
+    }
+
+    // Case 3: clause is splittable — try to fit a prefix on current page
+    var spaceLeft = maxBodyHeight - currentHeight;
+    var prefixParas = [];
+    var prefixHeight = 0;
+    var firstParaHeight = measureClauseHtml(cl, i, totalClauses, 'first', paragraphs[0]);
+
+    // Orphan protection: title + first para must fit together to start on this page
+    if (firstParaHeight > spaceLeft || currentHeight === 0) {
+      // Can't even fit title+first para, or page is empty (then no point splitting yet)
+      if (currentHeight > 0 && firstParaHeight > spaceLeft) {
+        pushNewPage();
+        spaceLeft = maxBodyHeight;
+      }
+    }
+
+    // Greedy: add paragraphs to prefix as long as they fit
+    var prefixCount = 0;
+    for (var p = 0; p < paragraphs.length; p++) {
+      var trial = prefixParas.concat([paragraphs[p]]).join('\n\n');
+      var trialHeight = measureClauseHtml(cl, i, totalClauses, 'first', trial);
+      if (trialHeight <= spaceLeft) {
+        prefixParas.push(paragraphs[p]);
+        prefixHeight = trialHeight;
+        prefixCount = p + 1;
+      } else {
+        break;
+      }
+    }
+
+    // Widow protection: don't leave only 1 paragraph for the continuation
+    // Unless that's the only way to fit anything
+    if (prefixCount > 0 && prefixCount === paragraphs.length - 1) {
+      // Only one para left for next page → take it with prefix if it fits combined
+      // (i.e., un-split this clause and push it all to next page)
+      prefixParas = [];
+      prefixCount = 0;
+    }
+
+    if (prefixCount > 0) {
+      // Place the prefix on current page
+      addToCurrentPage({
+        clause: cl, idx: i, height: prefixHeight, mode:'first',
+        content: prefixParas.join('\n\n')
+      });
+    }
+
+    // Continuation on next page(s)
+    var remaining = paragraphs.slice(prefixCount);
+    if (remaining.length > 0) {
+      pushNewPage();
+      // Render remaining as 'continued' fragment(s). May still need further splits.
+      var contParas = [];
+      var contHeight = 0;
+      var hasTitleBeenShown = (prefixCount > 0); // if prefix shown, continuation uses "(تابع)" title
+      var continuationMode = hasTitleBeenShown ? 'continued' : 'full';
+      for (var q = 0; q < remaining.length; q++) {
+        var trialCont = contParas.concat([remaining[q]]).join('\n\n');
+        var trialContHeight = measureClauseHtml(cl, i, totalClauses, continuationMode, trialCont);
+        if (trialContHeight > maxBodyHeight && contParas.length > 0) {
+          // Flush current and start a new page
+          addToCurrentPage({
+            clause: cl, idx: i, height: contHeight, mode: continuationMode,
+            content: contParas.join('\n\n')
+          });
+          pushNewPage();
+          contParas = [remaining[q]];
+          contHeight = measureClauseHtml(cl, i, totalClauses, 'continued', remaining[q]);
+          continuationMode = 'continued';
+        } else {
+          contParas.push(remaining[q]);
+          contHeight = trialContHeight;
+        }
+      }
+      if (contParas.length > 0) {
+        addToCurrentPage({
+          clause: cl, idx: i, height: contHeight, mode: continuationMode,
+          content: contParas.join('\n\n')
+        });
+      }
+    }
   });
 
   // Signature page: try to fit on last body page; otherwise own page
@@ -5389,7 +5530,11 @@ Pages._renderContractDoc = function(contract) {
       'font-size:'+(ds.font_size||14)+'pt;line-height:'+(ds.line_height||1.5);
     var bodyContent = page.map(function(item) {
       if (item.type === 'signatures') return Pages._renderSignatureHtml(contract);
-      return Pages._renderClauseHtml(item.clause, item.idx, totalClauses, contract, {editable:true});
+      return Pages._renderClauseHtml(item.clause, item.idx, totalClauses, contract, {
+        editable: true,
+        fragmentMode: item.mode || 'full',
+        contentOverride: item.content
+      });
     }).join('');
     return '<div class="doc-page" style="'+pageStyle+'">' +
       Pages._renderHeaderBand(pl.header, pageNum, totalPages, vars, contract) +
@@ -5583,7 +5728,21 @@ Pages.toggleClauseBreak = function(projId, contractId, clauseIdx) {
   cl.page_break = !cl.page_break;
   c.updated = (new Date()).toISOString().slice(0,10);
   DB.saveContract(projId, c);
-  Pages.render_contract({projId:projId, contractId:contractId});
+  Pages._refreshContractCanvas(c);
+};
+
+Pages.toggleClauseSplit = function(projId, contractId, clauseIdx) {
+  var contracts = DB.getContracts(projId);
+  var c = contracts.find(function(x){return x.id===contractId;});
+  if (!c) return;
+  var enabledClauses = c.clauses.filter(function(x){return x.enabled!==false;});
+  var cl = enabledClauses[clauseIdx];
+  if (!cl) return;
+  cl.allow_split = !cl.allow_split;
+  c.updated = (new Date()).toISOString().slice(0,10);
+  DB.saveContract(projId, c);
+  Pages._refreshContractCanvas(c);
+  UI.toast(cl.allow_split ? 'تم تفعيل تقسيم البند بين الصفحات' : 'تم منع تقسيم البند');
 };
 
 Pages.addClauseFromLib = function(projId, contractId, clauseKey) {
@@ -5623,9 +5782,21 @@ Pages.saveClauseContent = function(projId, contractId, clauseIdx, el) {
   var enabledClauses = c.clauses.filter(function(x){return x.enabled!==false;});
   var cl = enabledClauses[clauseIdx];
   if (!cl) return;
-  cl.content = el.innerText || el.textContent || '';
+  // Reassemble content from ALL fragments of this clause across pages
+  var fragments = document.querySelectorAll('.clause-body[data-clause-idx="'+clauseIdx+'"]');
+  if (fragments.length > 1) {
+    var parts = [];
+    fragments.forEach(function(f) { parts.push(f.innerText || f.textContent || ''); });
+    cl.content = parts.join('\n\n').replace(/\n{3,}/g, '\n\n').trim();
+  } else {
+    cl.content = el.innerText || el.textContent || '';
+  }
   c.updated = (new Date()).toISOString().slice(0,10);
   DB.saveContract(projId, c);
+  // Re-paginate after a brief delay (let the blur complete first)
+  if (fragments.length > 1) {
+    setTimeout(function(){ Pages._refreshContractCanvas(c); }, 50);
+  }
 };
 
 Pages.updateContractCover = function(projId, contractId, key, value) {
@@ -6053,11 +6224,22 @@ Pages.saveContractNow = function(silent) {
   var contracts = DB.getContracts(Pages._contractProjId);
   var c = contracts.find(function(x){return x.id===Pages._contractId;});
   if (!c) return;
+  var enabledClauses = c.clauses.filter(function(x){return x.enabled!==false;});
+  // Group fragments by clauseIdx and reassemble multi-page splits
+  var fragmentsByIdx = {};
   document.querySelectorAll('.clause-body[data-clause-idx]').forEach(function(el) {
     var idx = parseInt(el.getAttribute('data-clause-idx'), 10);
-    var enabledClauses = c.clauses.filter(function(x){return x.enabled!==false;});
+    if (!fragmentsByIdx[idx]) fragmentsByIdx[idx] = [];
+    fragmentsByIdx[idx].push(el.innerText || el.textContent || '');
+  });
+  Object.keys(fragmentsByIdx).forEach(function(idxStr) {
+    var idx = parseInt(idxStr, 10);
     var cl = enabledClauses[idx];
-    if (cl) cl.content = el.innerText || el.textContent || '';
+    if (!cl) return;
+    var parts = fragmentsByIdx[idx];
+    cl.content = (parts.length > 1)
+      ? parts.join('\n\n').replace(/\n{3,}/g, '\n\n').trim()
+      : parts[0];
   });
   c.updated = (new Date()).toISOString().slice(0,10);
   DB.saveContract(Pages._contractProjId, c);
