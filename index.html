@@ -1994,15 +1994,15 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
     box-shadow:var(--shadow-xl);overflow-y:auto;
   }
   .contract-sidebar.mob-open{display:flex!important}
-  .contract-canvas-area{padding:12px 0!important;flex:1}
-  .contract-doc{width:100%!important;border-radius:0!important;box-shadow:none!important}
-  .clause-block{padding:14px 16px!important}
-  .clause-block-inner{padding-inline-start:0!important}
-  .cov-page{min-height:auto!important;padding:32px 20px!important}
-  .cov-frame-wrap{padding:20px!important}
-  .cov-parties-box{max-width:100%!important;padding:12px 16px!important}
-  .sig-grid{grid-template-columns:1fr!important}
-  .contract-doc-header{font-size:8pt}
+  .contract-canvas-area{padding:8px 0!important;flex:1;overflow-x:hidden!important}
+  /* .doc-page scaled by JS — keep natural width so scale works correctly */
+  .doc-page{transform-origin:top center}
+  /* wrapper that holds scaled pages — height set by JS via --scaled-h */
+  .doc-page-scale-wrap{
+    display:block;
+    height:var(--scaled-h,1123px);
+    width:100%;
+  }
 }
 .contract-mobile-bar{
   display:none;
@@ -5140,6 +5140,7 @@ Pages.render_contract = function(params) {
   if (typeof lucide !== 'undefined') lucide.createIcons({rootElement: pageEl});
   if (typeof lucide !== 'undefined') lucide.createIcons({rootElement: document.getElementById('top-actions')});
   if (Pages._contractActiveTab) Pages.switchContractTab(Pages._contractActiveTab);
+  setTimeout(Pages._scaleDocPages, 0);
 };
 
 /* Migrate old page_layout values (mm-based heights) to new px-based system.
@@ -5731,6 +5732,38 @@ Pages._refreshContractCanvas = function(contract) {
   var newDoc = tmp.firstChild;
   docEl.parentNode.replaceChild(newDoc, docEl);
   if (typeof lucide !== 'undefined') lucide.createIcons({rootElement: newDoc});
+  Pages._scaleDocPages();
+};
+
+/* Scale .doc-page elements to fit the canvas width on narrow screens.
+   Each page keeps its 794px internal width (correct for printing) but is
+   visually shrunk with transform:scale so it fits the viewport. */
+Pages._scaleDocPages = function() {
+  var canvas = document.querySelector('.contract-canvas-area');
+  if (!canvas) return;
+  var pages = canvas.querySelectorAll('.doc-page');
+  if (!pages.length) return;
+  var available = canvas.clientWidth - 16; // 8px side margin
+  if (available >= 794) {
+    // Desktop — no scaling needed
+    pages.forEach(function(p) {
+      p.style.transform = '';
+      var wrap = p.parentElement;
+      if (wrap && wrap.classList.contains('doc-page-scale-wrap')) {
+        wrap.style.removeProperty('--scaled-h');
+      }
+    });
+    return;
+  }
+  var scale = Math.max(0.3, available / 794);
+  pages.forEach(function(p) {
+    p.style.transform = 'scale(' + scale.toFixed(4) + ')';
+    p.style.transformOrigin = 'top center';
+    // Compensate for the space the scaled element no longer occupies
+    var h = p.offsetHeight || 1123;
+    var gap = Math.round((h * scale) - h);
+    p.style.marginBottom = gap + 'px';
+  });
 };
 
 Pages.moveClause = function(projId, contractId, clauseIdx, dir) {
@@ -6733,7 +6766,10 @@ Pages.render_template_editor = function(params) {
 
   if (typeof lucide !== 'undefined') lucide.createIcons({rootElement: pageEl});
   if (typeof lucide !== 'undefined') lucide.createIcons({rootElement: document.getElementById('top-actions')});
+  setTimeout(Pages._scaleDocPages, 0);
 };
+// Nav.go uses Pages['render_'+page]; hyphen in page name means underscore function isn't found
+Pages['render_template-editor'] = Pages.render_template_editor;
 
 /* Convert a custom template object to a fake contract so _renderContractDoc can render it */
 Pages._templateToPreviewContract = function(tpl) {
@@ -6786,6 +6822,7 @@ Pages._refreshTemplateCanvas = function(tplId) {
   if (!canvasEl) return;
   canvasEl.innerHTML = Pages._renderTemplatePrev(tpl);
   if (typeof lucide !== 'undefined') lucide.createIcons({rootElement: canvasEl});
+  setTimeout(Pages._scaleDocPages, 0);
 };
 
 /* ─── Clauses panel for right sidebar ─── */
@@ -7461,6 +7498,11 @@ Pages.loadSampleData = function() {
   Pages._finTab = 'overview';
   Nav.go('dash');
   Nav.initSearchHotkey();
+  // Scale doc pages on resize (e.g. device rotation)
+  window.addEventListener('resize', function() {
+    clearTimeout(window._docScaleTimer);
+    window._docScaleTimer = setTimeout(Pages._scaleDocPages, 120);
+  });
 })();
 </script>
 
