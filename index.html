@@ -3850,7 +3850,7 @@ Pages.render_fin = function(params) {
           '</div>' +
           '<div class="proj-hero-actions">' +
             '<button class="proj-hero-edit" onclick="Pages.openCtrlDrawer(\''+projId+'\')" style="color:var(--iris-600);border-color:var(--iris-200);background:var(--iris-50)"><i data-lucide="sliders-horizontal"></i>مركز التحكم</button>' +
-            '<button class="proj-hero-edit" onclick="Pages.editProjectStatusModal(\''+projId+'\')"><i data-lucide="pencil"></i>تعديل</button>' +
+            '<button class="proj-hero-edit" onclick="Pages.printFinReport(\''+projId+'\')" style="color:var(--accent-600);border-color:var(--accent-200);background:var(--accent-50)"><i data-lucide="file-chart-line"></i>تقارير</button>' +
           '</div>' +
         '</div>' +
         '<div class="proj-hero-progress">' +
@@ -4308,7 +4308,39 @@ Pages.renderFinCtrl = function(projId) {
         '<span>الإجمالي المخطط</span>' +
         '<span class="mono" style="color:var(--iris-600)">'+UI.fmt(r.budgetTotal)+' ر.س</span>' +
       '</div>' : '') +
-    '</div>';
+    '</div>' +
+    // ── Row 4: Project Info ──
+    (function(){
+      var projs = DB.getProjects();
+      var proj  = projs.find(function(p){return p.id===projId;})||{};
+      var typeOpt = function(v,l){return '<option value="'+v+'"'+(proj.type===v?' selected':'')+'>'+l+'</option>';};
+      var stOpt  = function(v,l){return '<option value="'+v+'"'+(proj.status===v?' selected':'')+'>'+l+'</option>';};
+      return '<div class="card" style="border-top:2px solid var(--border-2)">' +
+        '<details>' +
+          '<summary style="cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;padding:4px 0;font-size:13px;font-weight:700;color:var(--fg-1)">' +
+            '<span style="display:flex;align-items:center;gap:6px"><i data-lucide="pencil" style="width:13px;height:13px;color:var(--fg-3)"></i>بيانات المشروع</span>' +
+            '<i data-lucide="chevron-down" style="width:14px;height:14px;color:var(--fg-3)"></i>' +
+          '</summary>' +
+          '<div style="margin-top:12px;display:grid;gap:10px">' +
+            '<div class="var-field"><div class="var-field-lbl">اسم المشروع</div><input class="var-field-inp" id="cp-name" value="'+UI.escHtml(proj.name||'')+'"></div>' +
+            '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">' +
+              '<div class="var-field"><div class="var-field-lbl">النوع</div>' +
+                '<select class="var-field-inp" id="cp-type">' +
+                  typeOpt('training','تدريب')+typeOpt('consulting','استشارات')+typeOpt('event','فعالية')+typeOpt('other','أخرى') +
+                '</select></div>' +
+              '<div class="var-field"><div class="var-field-lbl">الحالة</div>' +
+                '<select class="var-field-inp" id="cp-status">' +
+                  stOpt('active','نشط')+stOpt('completed','مكتمل')+stOpt('paused','متوقف')+stOpt('cancelled','ملغي') +
+                '</select></div>' +
+            '</div>' +
+            '<div style="display:flex;gap:8px">' +
+              '<button class="btn btn-primary btn-sm" style="flex:1" onclick="Pages.saveProjectInCtrl(\''+projId+'\')"><i data-lucide="check"></i>حفظ</button>' +
+              '<button class="btn btn-danger btn-sm" onclick="Pages.closeCtrlDrawer();Pages.deleteProjectConfirm(\''+projId+'\')"><i data-lucide="trash-2"></i>حذف المشروع</button>' +
+            '</div>' +
+          '</div>' +
+        '</details>' +
+      '</div>';
+    })();
   if (typeof lucide !== 'undefined') lucide.createIcons({rootElement: document.getElementById(Pages._ctrlContainer||'ctrl-drawer-body')});
 };
 
@@ -5249,6 +5281,219 @@ Pages.saveProjectEdit = function(projId) {
   UI.toast('تم الحفظ','success');
   UI.closeModalForce();
   Pages.render_fin({projId:projId});
+};
+
+Pages.printFinReport = function(projId) {
+  var fin      = DB.getFin(projId);
+  var r        = FinCalc.calc(projId);
+  var c        = fin.ctrl || {};
+  var entries  = fin.entries || [];
+  var budget   = fin.budget  || [];
+  var projs    = DB.getProjects();
+  var proj     = projs.find(function(p){ return p.id===projId; }) || {};
+  var cl       = DB.getClients().find(function(x){ return x.id===proj.client_id; });
+  var s        = DB.getSettings();
+  var profitPct = r.grossTotal>0 ? (r.profit/r.grossTotal*100).toFixed(1) : '0.0';
+  var today    = new Date().toLocaleDateString('ar-SA');
+
+  function fmtN(n){ return (parseFloat(n)||0).toLocaleString('ar-SA',{minimumFractionDigits:0,maximumFractionDigits:2}); }
+  function fmtD(d){ if(!d) return '—'; var m=d.match(/^(\d{4})-(\d{2})-(\d{2})$/); return m?m[3]+'/'+m[2]+'/'+m[1]:d; }
+  function esc(t){ return UI.escHtml(t||''); }
+
+  var catLbl  = {exec:'أتعاب التنفيذ',vat:'ضريبة ق.م',mkt:'تسويق',cashback:'كاش باك',cf:'رسوم إضافية',salary:'رواتب',logistics:'لوجستيات',materials:'مواد',other:'أخرى'};
+  var stLbl   = {active:'نشط',completed:'مكتمل',paused:'متوقف',cancelled:'ملغي'};
+  var stsPaid = {paid:'مدفوع',pending:'معلق',cancelled:'ملغي'};
+
+  function entryRows(list, isIncome) {
+    if (!list.length) return '<tr><td colspan="5" style="text-align:center;color:#9ca3af;padding:10pt">لا توجد بنود</td></tr>';
+    var total = 0;
+    var rows  = list.map(function(e){
+      total += parseFloat(e.amount)||0;
+      var st = e.status ? (stsPaid[e.status]||'') : '';
+      var stCls = e.status==='paid'?'badge-paid':e.status==='pending'?'badge-pending':'badge-other';
+      return '<tr>' +
+        '<td>'+fmtD(e.date)+'</td>' +
+        '<td>'+esc(e.desc)+'</td>' +
+        '<td>'+esc(catLbl[e.cat]||e.cat||'—')+'</td>' +
+        '<td class="'+(isIncome?'income-amt':'expense-amt')+'" style="text-align:left;direction:ltr">'+(isIncome?'+':'-')+fmtN(e.amount)+' ر.س</td>' +
+        '<td>'+(st?'<span class="'+stCls+'">'+st+'</span>':'')+'</td>' +
+      '</tr>';
+    }).join('');
+    return rows +
+      '<tr class="total-row">' +
+        '<td colspan="3"><strong>الإجمالي</strong></td>' +
+        '<td class="'+(isIncome?'income-amt':'expense-amt')+'" style="text-align:left;direction:ltr"><strong>'+(isIncome?'+':'-')+fmtN(total)+' ر.س</strong></td>' +
+        '<td></td>' +
+      '</tr>';
+  }
+
+  function feeRow(label, amt, base) {
+    if (amt<=0) return '';
+    var pct = base>0 ? (amt/base*100).toFixed(1) : '0';
+    return '<tr><td>'+label+'</td><td style="text-align:left;direction:ltr">'+fmtN(amt)+' ر.س</td><td>'+pct+'%</td></tr>';
+  }
+
+  var incomeList  = entries.filter(function(e){ return e.type==='income'; });
+  var expList     = entries.filter(function(e){ return e.type==='expense'; });
+
+  // Group expenses by category
+  var catTotals = {};
+  expList.forEach(function(e){ var k=e.cat||'other'; catTotals[k]=(catTotals[k]||0)+(parseFloat(e.amount)||0); });
+  var catRows = Object.keys(catTotals).map(function(k){
+    return '<tr><td>'+(catLbl[k]||k)+'</td><td style="text-align:left;direction:ltr;color:#dc2626;font-weight:600">'+fmtN(catTotals[k])+' ر.س</td><td>'+(r.grossTotal>0?(catTotals[k]/r.grossTotal*100).toFixed(1):'0')+'%</td></tr>';
+  }).join('');
+
+  var budgetRows = budget.length ? budget.map(function(b){
+    return '<tr><td>'+esc(b.name)+'</td><td style="text-align:left;direction:ltr">'+fmtN(b.amount)+' ر.س</td><td>'+esc(b.note)+'</td></tr>';
+  }).join('') : '<tr><td colspan="3" style="text-align:center;color:#9ca3af">لا توجد ميزانية مخططة</td></tr>';
+
+  var clLogoHtml = cl && cl.logo ? '<img src="'+cl.logo+'" style="max-height:40pt;max-width:80pt;object-fit:contain;display:block">' : '';
+
+  var css = [
+    '*{margin:0;padding:0;box-sizing:border-box}',
+    '@page{size:A4 portrait;margin:0}',
+    'body{font-family:"Segoe UI",Tahoma,Arial,sans-serif;font-size:10pt;color:#1a1a2e;direction:rtl;background:#fff}',
+    '.page{width:210mm;min-height:297mm;padding:14mm 14mm 12mm 14mm;background:#fff;page-break-after:always}',
+    '.rpt-hdr{display:flex;align-items:flex-start;justify-content:space-between;padding-bottom:10pt;border-bottom:2pt solid #1e2a4a;margin-bottom:14pt}',
+    '.rpt-logo{width:46pt;height:46pt;border-radius:10pt;background:#1e2a4a;display:flex;align-items:center;justify-content:center;color:#fff;font-size:22pt;font-weight:800;flex-shrink:0}',
+    '.rpt-co{flex:1;padding-right:10pt}.rpt-co-name{font-size:13pt;font-weight:700;color:#1e2a4a}.rpt-co-sub{font-size:8.5pt;color:#6b7280;margin-top:2pt}',
+    '.rpt-title-blk{text-align:left}.rpt-title{font-size:17pt;font-weight:800;color:#1e2a4a}.rpt-date{font-size:8.5pt;color:#6b7280;margin-top:3pt}',
+    '.proj-box{background:#f8faff;border:1pt solid #c7d2fe;border-radius:7pt;padding:9pt 12pt;margin-bottom:12pt}',
+    '.proj-box-name{font-size:12pt;font-weight:700;color:#1e2a4a;margin-bottom:4pt}',
+    '.proj-meta{display:flex;gap:14pt;flex-wrap:wrap}.proj-meta-i{font-size:8.5pt;color:#4b5563}.proj-meta-l{font-weight:600;color:#374151}',
+    '.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:7pt;margin-bottom:14pt}',
+    '.kpi{border:1pt solid #e5e7eb;border-radius:7pt;padding:7pt 9pt;text-align:center}',
+    '.kpi.brand{border-color:#c7d2fe;background:#eef2ff}.kpi.success{border-color:#bbf7d0;background:#f0fdf4}.kpi.warn{border-color:#fde68a;background:#fffbeb}.kpi.danger{border-color:#fecaca;background:#fef2f2}',
+    '.kpi-lbl{font-size:7.5pt;color:#6b7280;margin-bottom:3pt}.kpi-val{font-size:13pt;font-weight:700}',
+    '.kpi.brand .kpi-val{color:#4338ca}.kpi.success .kpi-val{color:#16a34a}.kpi.warn .kpi-val{color:#d97706}.kpi.danger .kpi-val{color:#dc2626}',
+    '.kpi-sub{font-size:7.5pt;color:#9ca3af;margin-top:2pt}',
+    '.sec{margin-bottom:14pt}.sec-title{font-size:10.5pt;font-weight:700;color:#1e2a4a;padding-bottom:4pt;border-bottom:1.5pt solid #e5e7eb;margin-bottom:8pt;display:flex;align-items:center;gap:6pt}',
+    '.sec-title:before{content:"";display:inline-block;width:3.5pt;height:13pt;background:#6366f1;border-radius:2pt;margin-left:5pt}',
+    'table{width:100%;border-collapse:collapse;font-size:9pt}',
+    'th{background:#1e2a4a;color:#fff;padding:5pt 7pt;text-align:right;font-weight:600;font-size:8.5pt}',
+    'td{padding:5pt 7pt;border-bottom:.5pt solid #f0f0f0;vertical-align:top}',
+    'tr:nth-child(even) td{background:#f9fafb}',
+    '.total-row td{background:#eef2ff!important;font-weight:700;border-top:1pt solid #c7d2fe}',
+    '.income-amt{color:#16a34a;font-weight:600}.expense-amt{color:#dc2626;font-weight:600}',
+    '.badge-paid{background:#d1fae5;color:#065f46;padding:1pt 5pt;border-radius:20pt;font-size:7.5pt}',
+    '.badge-pending{background:#fef9c3;color:#854d0e;padding:1pt 5pt;border-radius:20pt;font-size:7.5pt}',
+    '.badge-other{background:#f3f4f6;color:#374151;padding:1pt 5pt;border-radius:20pt;font-size:7.5pt}',
+    '.two-col{display:grid;grid-template-columns:1fr 1fr;gap:12pt}',
+    '.rpt-footer{margin-top:20pt;padding-top:7pt;border-top:.5pt solid #e5e7eb;display:flex;justify-content:space-between;font-size:7.5pt;color:#9ca3af}',
+    '.no-print{padding:10pt 0;text-align:left;border-bottom:1pt solid #e5e7eb;margin-bottom:14pt}',
+    '@media print{*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}.no-print{display:none!important}}'
+  ].join('\n');
+
+  var html = '<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8">' +
+    '<title>تقرير مالي — '+esc(proj.name)+'</title>' +
+    '<style>'+css+'</style></head><body><div class="page">' +
+
+    /* Print button */
+    '<div class="no-print">' +
+      '<button onclick="window.print()" style="background:#1e2a4a;color:#fff;border:none;padding:7pt 22pt;border-radius:8pt;font-size:11pt;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:7pt">' +
+        '🖨 طباعة / حفظ PDF' +
+      '</button>' +
+    '</div>' +
+
+    /* Header */
+    '<div class="rpt-hdr">' +
+      '<div style="display:flex;align-items:center;gap:10pt">' +
+        (clLogoHtml ? '<div style="width:46pt;height:46pt;border-radius:8pt;border:1pt solid #e5e7eb;display:flex;align-items:center;justify-content:center;background:#fff;padding:3pt;overflow:hidden;flex-shrink:0">'+clLogoHtml+'</div>' :
+          '<div class="rpt-logo">'+esc((s.company_name||'ب')[0])+'</div>') +
+        '<div class="rpt-co">' +
+          '<div class="rpt-co-name">'+esc(s.company_name||'بُعد')+'</div>' +
+          '<div class="rpt-co-sub">'+esc(s.company_email||'')+(s.company_phone?' · '+esc(s.company_phone):'')+'</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="rpt-title-blk">' +
+        '<div class="rpt-title">تقرير مالي تفصيلي</div>' +
+        '<div class="rpt-date">تاريخ الإصدار: '+today+'</div>' +
+      '</div>' +
+    '</div>' +
+
+    /* Project info */
+    '<div class="proj-box">' +
+      '<div class="proj-box-name">'+esc(proj.name)+'</div>' +
+      '<div class="proj-meta">' +
+        (cl?'<div class="proj-meta-i"><span class="proj-meta-l">العميل: </span>'+esc(cl.name)+'</div>':'') +
+        (c.contract_no?'<div class="proj-meta-i"><span class="proj-meta-l">رقم العقد: </span>'+esc(c.contract_no)+'</div>':'') +
+        (c.contract_date?'<div class="proj-meta-i"><span class="proj-meta-l">تاريخ العقد: </span>'+fmtD(c.contract_date)+'</div>':'') +
+        '<div class="proj-meta-i"><span class="proj-meta-l">الحالة: </span>'+(stLbl[proj.status]||'—')+'</div>' +
+      '</div>' +
+    '</div>' +
+
+    /* KPI */
+    '<div class="sec"><div class="sec-title">الملخص المالي</div>' +
+    '<div class="kpi-grid">' +
+      '<div class="kpi brand"><div class="kpi-lbl">قيمة العقد الإجمالية</div><div class="kpi-val">'+fmtN(r.grossTotal)+'</div><div class="kpi-sub">ر.س</div></div>' +
+      '<div class="kpi '+(r.remaining<0?'danger':'warn')+'"><div class="kpi-lbl">المتبقي</div><div class="kpi-val">'+fmtN(r.remaining)+'</div><div class="kpi-sub">ر.س</div></div>' +
+      '<div class="kpi success"><div class="kpi-lbl">صافي الربح</div><div class="kpi-val">'+fmtN(r.profit)+'</div><div class="kpi-sub">ر.س</div></div>' +
+      '<div class="kpi '+(parseFloat(profitPct)>=20?'success':parseFloat(profitPct)>=0?'warn':'danger')+'"><div class="kpi-lbl">هامش الربح</div><div class="kpi-val">'+profitPct+'%</div><div class="kpi-sub">من الإجمالي</div></div>' +
+    '</div></div>' +
+
+    /* Fees + Category breakdown side by side */
+    '<div class="two-col">' +
+      '<div class="sec"><div class="sec-title">توزيع الاتفاقية</div>' +
+        '<table><thead><tr><th>البند</th><th>المبلغ</th><th>النسبة</th></tr></thead><tbody>' +
+          feeRow('أتعاب التنفيذ', r.execAmt, r.grossTotal) +
+          feeRow('التسويق', r.mkt, r.grossTotal) +
+          feeRow('كاش باك', r.cb, r.grossTotal) +
+          feeRow('رسوم إضافية', r.cfAmt, r.grossTotal) +
+          (r.vatAmt>0?feeRow('ضريبة القيمة المضافة ('+r.vatPct+'%)', r.vatAmt, r.grossTotal):'') +
+          '<tr class="total-row"><td><strong>الصافي المتاح</strong></td><td style="text-align:left;direction:ltr"><strong>'+fmtN(r.available)+' ر.س</strong></td><td></td></tr>' +
+        '</tbody></table>' +
+      '</div>' +
+      '<div class="sec"><div class="sec-title">المصاريف حسب الفئة</div>' +
+        '<table><thead><tr><th>الفئة</th><th>المبلغ</th><th>%</th></tr></thead><tbody>' +
+          (catRows||'<tr><td colspan="3" style="text-align:center;color:#9ca3af">لا توجد مصاريف</td></tr>') +
+        '</tbody></table>' +
+      '</div>' +
+    '</div>' +
+
+    /* Income entries */
+    '<div class="sec"><div class="sec-title">الإيرادات والمقبوضات</div>' +
+      '<table><thead><tr><th>التاريخ</th><th>البيان</th><th>التصنيف</th><th>المبلغ</th><th>الحالة</th></tr></thead>' +
+      '<tbody>'+entryRows(incomeList,true)+'</tbody></table>' +
+    '</div>' +
+
+    /* Expense entries */
+    '<div class="sec"><div class="sec-title">المصاريف والمدفوعات</div>' +
+      '<table><thead><tr><th>التاريخ</th><th>البيان</th><th>التصنيف</th><th>المبلغ</th><th>الحالة</th></tr></thead>' +
+      '<tbody>'+entryRows(expList,false)+'</tbody></table>' +
+    '</div>' +
+
+    /* Budget */
+    (budget.length ? '<div class="sec"><div class="sec-title">الميزانية المخططة</div>' +
+      '<table><thead><tr><th>البند</th><th>المبلغ المخطط</th><th>ملاحظة</th></tr></thead>' +
+      '<tbody>'+budgetRows+'<tr class="total-row"><td><strong>الإجمالي المخطط</strong></td><td style="text-align:left;direction:ltr"><strong>'+fmtN(r.budgetTotal)+' ر.س</strong></td><td></td></tr></tbody></table>' +
+    '</div>' : '') +
+
+    /* Footer */
+    '<div class="rpt-footer">' +
+      '<span>'+esc(s.company_name||'بُعد')+' — منصة إدارة المشاريع</span>' +
+      '<span>تم إصدار هذا التقرير في '+today+'</span>' +
+    '</div>' +
+
+    '</div></body></html>';
+
+  var w = window.open('', '_blank', 'width=900,height=700');
+  if (!w) { UI.toast('الرجاء السماح بفتح النوافذ المنبثقة','danger'); return; }
+  w.document.write(html);
+  w.document.close();
+};
+
+Pages.saveProjectInCtrl = function(projId) {
+  var projects = DB.getProjects();
+  var idx = projects.findIndex(function(p){ return p.id===projId; });
+  if (idx<0) return;
+  var n = (document.getElementById('cp-name').value||'').trim();
+  if (n) projects[idx].name = n;
+  projects[idx].type   = document.getElementById('cp-type').value;
+  projects[idx].status = document.getElementById('cp-status').value;
+  DB.saveProjects(projects);
+  UI.toast('تم حفظ بيانات المشروع','success');
+  Pages.closeCtrlDrawer();
+  Pages.render_fin({projId: projId, tab: Pages._finTab});
 };
 
 Pages.deleteProjectConfirm = function(projId) {
