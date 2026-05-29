@@ -23,12 +23,28 @@ function djb2(s) {
   return (h >>> 0).toString(36);
 }
 
+// Unicode-safe base64url encode (supports Arabic and all Unicode)
+function b64uEncode(str) {
+  const bytes = new TextEncoder().encode(str);
+  const bin = Array.from(bytes, b => String.fromCharCode(b)).join('');
+  return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+}
+
+// Unicode-safe base64url decode
+function b64uDecode(str) {
+  const padded = str.replace(/-/g, '+').replace(/_/g, '/') +
+    '=='.slice(0, (4 - str.length % 4) % 4);
+  const bin = atob(padded);
+  const bytes = Uint8Array.from(bin, c => c.charCodeAt(0));
+  return new TextDecoder().decode(bytes);
+}
+
 async function signJWT(payload, secret) {
-  const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
-  const body   = btoa(JSON.stringify({
+  const header = b64uEncode(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
+  const body   = b64uEncode(JSON.stringify({
     ...payload,
     iat: Math.floor(Date.now() / 1000),
-    exp: Math.floor(Date.now() / 1000) + 86400 * 30, // 30 days
+    exp: Math.floor(Date.now() / 1000) + 86400 * 30,
   }));
   const msg = header + '.' + body;
   const key = await crypto.subtle.importKey(
@@ -50,13 +66,12 @@ async function verifyJWT(token, secret) {
       'raw', new TextEncoder().encode(secret),
       { name: 'HMAC', hash: 'SHA-256' }, false, ['verify']
     );
-    // Restore base64 padding
     const sigPadded = parts[2].replace(/-/g, '+').replace(/_/g, '/') +
       '=='.slice(0, (4 - parts[2].length % 4) % 4);
     const sig = Uint8Array.from(atob(sigPadded), c => c.charCodeAt(0));
     const valid = await crypto.subtle.verify('HMAC', key, sig, new TextEncoder().encode(msg));
     if (!valid) return null;
-    const payload = JSON.parse(atob(parts[1]));
+    const payload = JSON.parse(b64uDecode(parts[1]));
     if (payload.exp && payload.exp < Math.floor(Date.now() / 1000)) return null;
     return payload;
   } catch (e) {
