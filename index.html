@@ -285,8 +285,10 @@ body.menu-open{overflow:hidden}
   .nav-links{display:none}
   .nav-cta .nav-team{display:none}
   .nav-toggle{display:inline-flex}
-  .hero-grid,.why-grid,.request-grid{grid-template-columns:1fr;gap:44px}
-  .hero-visual{order:-1;max-width:430px;margin:0 auto;width:100%}
+  .hero-grid,.why-grid,.request-grid{grid-template-columns:1fr;gap:40px}
+  /* Text first, visual card after — value proposition leads on mobile */
+  .hero-text{order:1}
+  .hero-visual{order:2;max-width:440px;margin:0 auto;width:100%}
   .services-grid{grid-template-columns:1fr 1fr}
   .stats-grid{grid-template-columns:repeat(2,1fr);gap:38px 20px}
   .process{grid-template-columns:1fr 1fr;gap:34px 22px}
@@ -294,24 +296,29 @@ body.menu-open{overflow:hidden}
   .footer-grid{grid-template-columns:1fr 1fr;gap:34px}
 }
 @media(max-width:620px){
-  .container{padding:0 18px}
-  .nav{padding:14px 0}
+  .container{padding:0 20px}
+  .nav{padding:13px 0}
   .nav.scrolled{padding:9px 0}
+  .nav-logo img{height:34px}
   .nav-cta .btn-primary{display:none}      /* CTA lives in the mobile menu */
-  .hero{padding:118px 0 64px}
-  .hero h1{font-size:clamp(28px,8vw,38px)}
+  /* Hero: centered, breathing room from the top, headline-first */
+  .hero{padding:132px 0 58px;text-align:center}
+  .hero-eyebrow{margin-bottom:20px}
+  .hero h1{font-size:clamp(29px,8.4vw,40px);line-height:1.28;margin-bottom:18px}
   .hero h1 .hl{white-space:normal}
-  .hero p.lead{font-size:15.5px}
-  .hero-actions{gap:11px}
+  .hero h1 .hl::after{height:10px;bottom:4px}
+  .hero p.lead{font-size:16px;margin:0 auto 28px;max-width:520px}
+  .hero-actions{gap:11px;justify-content:center}
   .hero-actions .btn{flex:1;min-width:0}
-  .hero-trust{margin-top:28px;font-size:12.5px}
-  .hero-card{padding:20px}
+  .hero-trust{margin-top:30px;justify-content:center;flex-wrap:wrap}
+  .hero-visual{margin-top:38px}
+  .hero-card{padding:20px;border-radius:20px}
   .section{padding:58px 0}
-  .sec-head{margin-bottom:38px}
+  .sec-head{margin-bottom:36px}
   .sec-head p{font-size:15.5px}
   .services-grid{grid-template-columns:1fr;gap:16px}
   .svc{padding:26px 22px}
-  .stats-grid{padding:42px 0;gap:30px 18px}
+  .stats-grid{padding:44px 0;gap:32px 18px}
   .why-visual{padding:34px 26px}
   .why-visual .q{font-size:18px}
   .process{gap:26px 18px}
