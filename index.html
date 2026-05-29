@@ -264,6 +264,9 @@ body.menu-open{overflow:hidden}
 .footer-social a:hover{background:var(--accent)}
 .footer-social svg{width:19px;height:19px;color:#fff}
 .footer-bottom{display:flex;align-items:center;justify-content:space-between;padding-top:24px;font-size:13px;flex-wrap:wrap;gap:12px}
+.team-access{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:8px;color:rgba(255,255,255,.25);transition:color .2s,background .2s}
+.team-access:hover{color:rgba(255,255,255,.85);background:rgba(255,255,255,.08)}
+.team-access svg{width:15px;height:15px}
 
 /* ── Reveal animation ── */
 .reveal{opacity:0;transform:translateY(26px);transition:opacity .7s var(--ease),transform .7s var(--ease)}
@@ -341,10 +344,6 @@ body.menu-open{overflow:hidden}
       <a href="#request">تواصل معنا</a>
     </div>
     <div class="nav-cta">
-      <a href="/app" class="nav-team" title="دخول فريق العمل">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-        دخول الفريق
-      </a>
       <a href="#request" class="btn btn-primary">اطلب خدمة</a>
       <button class="nav-toggle" id="nav-toggle" aria-label="القائمة" aria-expanded="false" onclick="toggleMenu()">
         <svg class="ic-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
@@ -363,10 +362,6 @@ body.menu-open{overflow:hidden}
   <a class="mm-link" href="#request" onclick="toggleMenu(false)">تواصل معنا <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m15 18-6-6 6-6"/></svg></a>
   <div class="mm-actions">
     <a href="#request" class="btn btn-primary" onclick="toggleMenu(false)">اطلب خدمة الآن</a>
-    <a href="/app" class="nav-team">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-      دخول الفريق
-    </a>
   </div>
 </div>
 
@@ -565,7 +560,6 @@ body.menu-open{overflow:hidden}
         <a href="#why">لماذا بُعد</a>
         <a href="#process">منهجيتنا</a>
         <a href="#request">تواصل معنا</a>
-        <a href="/app">دخول الفريق</a>
       </div>
       <div class="footer-col">
         <h5>تواصل</h5>
@@ -576,7 +570,12 @@ body.menu-open{overflow:hidden}
     </div>
     <div class="footer-bottom">
       <span>© <span id="year"></span> بُعد للتمكين. جميع الحقوق محفوظة.</span>
-      <span>صُنع بعنايةٍ لخدمة العمل الخيري</span>
+      <span style="display:inline-flex;align-items:center;gap:14px">
+        <span>صُنع بعنايةٍ لخدمة العمل الخيري</span>
+        <a href="/app" class="team-access" title="دخول فريق العمل" aria-label="دخول فريق العمل">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        </a>
+      </span>
     </div>
   </div>
 </footer>
