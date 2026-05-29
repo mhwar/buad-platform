@@ -40,6 +40,10 @@
     <input type="password" id="token" placeholder="أدخل الـ API Token هنا">
   </div>
   <div class="field">
+    <label>Account ID <span style="font-weight:400;color:#9ca3af">(اختياري — يُجلب تلقائياً، أو أدخله يدوياً من صفحة Overview في Cloudflare)</span></label>
+    <input type="text" id="accountId" placeholder="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" style="direction:ltr">
+  </div>
+  <div class="field">
     <label>JWT Secret (كلمة سر عشوائية للتوقيع)</label>
     <input type="text" id="jwt" placeholder="سيتم توليدها تلقائياً إن تركتها فارغة">
   </div>
@@ -104,8 +108,22 @@ async function cf(path, method, body, token) {
   if (body) opts.body = JSON.stringify(body);
   const r = await fetch('https://api.cloudflare.com/client/v4' + path, opts);
   const j = await r.json();
-  if (!j.success) throw new Error(JSON.stringify(j.errors));
+  if (!j.success) {
+    const msg = (j.errors||[]).map(e=>e.message||JSON.stringify(e)).join(', ');
+    throw new Error('HTTP ' + r.status + ': ' + msg);
+  }
   return j;
+}
+
+function showErr(msg) {
+  let el = document.getElementById('err-detail');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'err-detail';
+    el.style = 'margin-top:12px;background:#fef2f2;color:#dc2626;padding:12px;border-radius:8px;font-size:12px;direction:ltr;text-align:left;word-break:break-all';
+    document.getElementById('log').appendChild(el);
+  }
+  el.textContent = msg;
 }
 
 async function runSetup() {
@@ -115,12 +133,28 @@ async function runSetup() {
 
   document.getElementById('log').style.display = 'block';
   document.getElementById('runBtn').disabled = true;
+  const errEl = document.getElementById('err-detail');
+  if (errEl) errEl.remove();
 
   try {
     // Step 1: Get account ID
     setStep('step1', 'running');
-    const accs = await cf('/accounts', 'GET', null, token);
-    const accountId = accs.result[0].id;
+    let accountId = (document.getElementById('accountId').value||'').trim();
+    if (!accountId) {
+      try {
+        const accs = await cf('/accounts', 'GET', null, token);
+        accountId = accs.result[0].id;
+      } catch(e1) {
+        try {
+          const mem = await cf('/memberships', 'GET', null, token);
+          if (!mem.result || !mem.result.length) throw new Error('');
+          accountId = mem.result[0].account.id;
+        } catch(e2) {
+          throw new Error('لم يمكن جلب الـ Account ID تلقائياً. الرجاء إدخاله يدوياً من صفحة Overview في Cloudflare.\nتفاصيل: ' + e1.message);
+        }
+      }
+    }
+    if (!accountId) throw new Error('Account ID غير صالح');
     setStep('step1', 'done', 'معرّف الحساب: ' + accountId.slice(0,8) + '...');
 
     // Step 2: Create D1 database (or find existing)
@@ -192,14 +226,13 @@ async function runSetup() {
     window._dbId = dbId;
 
   } catch(e) {
-    // Mark remaining steps as error
     ['step1','step2','step3','step4','step5','step6'].forEach(function(s) {
-      if (document.getElementById(s).classList.contains('pending') ||
-          document.getElementById(s).classList.contains('running')) {
-        setStep(s, 'error', document.getElementById(s).querySelector('span:last-child').textContent + ' — فشل');
+      const el = document.getElementById(s);
+      if (el.classList.contains('pending') || el.classList.contains('running')) {
+        setStep(s, 'error', el.querySelector('span:last-child').textContent + ' — فشل');
       }
     });
-    alert('خطأ: ' + e.message);
+    showErr('Error: ' + e.message);
     document.getElementById('runBtn').disabled = false;
   }
 }
