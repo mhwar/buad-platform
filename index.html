@@ -2083,6 +2083,38 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
 </head>
 <body>
 <a class="skip-link" href="#main">تخطّي إلى المحتوى</a>
+
+<!-- Login Page -->
+<div id="pg-login" style="display:none;position:fixed;inset:0;background:linear-gradient(135deg,#f0f4ff 0%,#f8f9fb 100%);z-index:9999;flex-direction:column;align-items:center;justify-content:center;font-family:inherit;">
+  <div style="background:#fff;border-radius:20px;box-shadow:0 8px 48px rgba(30,42,74,.12);padding:44px 52px;min-width:360px;max-width:420px;width:90%;text-align:center;">
+    <div style="width:52px;height:52px;background:#1e2a4a;border-radius:14px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:24px;font-weight:800;color:#fff;">ب</div>
+    <div style="font-size:22px;font-weight:800;color:#1e2a4a;margin-bottom:4px;">بُعد</div>
+    <div style="font-size:13px;color:#6b7280;margin-bottom:32px;">منصة إدارة المشاريع والعقود</div>
+    <div style="text-align:right;margin-bottom:14px;">
+      <label style="font-size:12px;color:#374151;font-weight:600;display:block;margin-bottom:6px;">البريد الإلكتروني</label>
+      <input id="login-email" type="email" placeholder="example@domain.com" autocomplete="email"
+             style="width:100%;padding:11px 14px;border:1.5px solid #e5e7eb;border-radius:9px;font-size:14px;box-sizing:border-box;direction:ltr;text-align:left;outline:none;transition:border-color .15s;font-family:inherit;"
+             onfocus="this.style.borderColor='#6366f1'" onblur="this.style.borderColor='#e5e7eb'">
+    </div>
+    <div style="text-align:right;margin-bottom:24px;">
+      <label style="font-size:12px;color:#374151;font-weight:600;display:block;margin-bottom:6px;">كلمة المرور</label>
+      <input id="login-pass" type="password" placeholder="••••••••" autocomplete="current-password"
+             style="width:100%;padding:11px 14px;border:1.5px solid #e5e7eb;border-radius:9px;font-size:14px;box-sizing:border-box;direction:ltr;text-align:left;outline:none;transition:border-color .15s;font-family:inherit;"
+             onfocus="this.style.borderColor='#6366f1'" onblur="this.style.borderColor='#e5e7eb'"
+             onkeydown="if(event.key==='Enter')Pages.doLogin()">
+    </div>
+    <div id="login-err" style="display:none;background:#fef2f2;color:#dc2626;font-size:12.5px;padding:10px 14px;border-radius:8px;margin-bottom:16px;text-align:right;">
+      البريد الإلكتروني أو كلمة المرور غير صحيحة
+    </div>
+    <button onclick="Pages.doLogin()" id="login-btn"
+            style="width:100%;padding:13px;background:#1e2a4a;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;transition:background .15s;"
+            onmouseover="this.style.background='#2d3f6b'" onmouseout="this.style.background='#1e2a4a'">
+      تسجيل الدخول
+    </button>
+  </div>
+  <div style="margin-top:20px;font-size:12px;color:#9ca3af;">بُعد · نظام إدارة المشاريع</div>
+</div>
+
 <div id="app">
   <!-- Sidebar -->
   <aside id="sidebar" class="sidebar">
@@ -2147,7 +2179,7 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
         <button class="sb-user-menu-item" onclick="Nav.closeUserMenu();UI.toast('قريباً')"><i data-lucide="bell"></i>الإشعارات</button>
         <div class="sb-user-menu-sep"></div>
         <button class="sb-user-menu-item" onclick="Nav.closeUserMenu();UI.toast('قريباً')"><i data-lucide="help-circle"></i>المساعدة والدعم</button>
-        <button class="sb-user-menu-item danger" onclick="Nav.closeUserMenu();UI.toast('تم تسجيل الخروج')"><i data-lucide="log-out"></i>تسجيل الخروج</button>
+        <button class="sb-user-menu-item danger" onclick="Nav.closeUserMenu();Auth.logout()"><i data-lucide="log-out"></i>تسجيل الخروج</button>
       </div>
     </div>
   </aside>
@@ -2263,6 +2295,68 @@ DB.saveCustomTemplate = function(t) {
 DB.deleteCustomTemplate = function(id) {
   var arr = DB.getCustomTemplates().filter(function(x){return x.id!==id;});
   localStorage.setItem('buad2_custom_templates', JSON.stringify(arr));
+};
+DB.getProjectsForUser = function() {
+  var session = Auth ? Auth.getSession() : null;
+  var all = DB.getProjects();
+  if (!session || session.role === 'admin') return all;
+  return all.filter(function(p) {
+    return p.owner_id === session.id || p.visibility === 'team' || !p.owner_id;
+  });
+};
+
+/* ═══════════════════════════════════════════
+   AUTH
+═══════════════════════════════════════════ */
+var Auth = {};
+Auth._SK = 'buad2_session';
+Auth.getSession = function() {
+  try { return JSON.parse(sessionStorage.getItem(Auth._SK)||'null'); } catch(e){return null;}
+};
+Auth.setSession = function(u) { sessionStorage.setItem(Auth._SK, JSON.stringify(u)); };
+Auth.clearSession = function() { sessionStorage.removeItem(Auth._SK); };
+Auth.isLoggedIn = function() { return !!Auth.getSession(); };
+Auth._hash = function(s) {
+  var h = 5381;
+  for (var i=0;i<s.length;i++) h=((h<<5)+h)+s.charCodeAt(i);
+  return (h>>>0).toString(36);
+};
+Auth._seedAdmin = function() {
+  var s = DB.getSettings();
+  if (!s.users || !s.users.length) {
+    DB.saveSettings({ users: [{
+      id: 'usr_admin_1',
+      name: 'سلطان عسيري',
+      email: 'sultan.sa41@gmail.com',
+      password: Auth._hash('123'),
+      role: 'admin'
+    }]});
+  }
+};
+Auth.getUsers = function() { return DB.getSettings().users || []; };
+Auth.login = function(email, pass) {
+  Auth._seedAdmin();
+  var u = Auth.getUsers().find(function(x){
+    return x.email===email && x.password===Auth._hash(pass);
+  });
+  if (!u) return false;
+  Auth.setSession({id:u.id, name:u.name, email:u.email, role:u.role});
+  return true;
+};
+Auth.logout = function() {
+  Auth.clearSession();
+  document.getElementById('app').style.display = 'none';
+  var lp = document.getElementById('pg-login');
+  if (lp) { lp.style.display = 'flex'; document.getElementById('login-email').value=''; document.getElementById('login-pass').value=''; document.getElementById('login-err').style.display='none'; }
+};
+Auth.saveUser = function(u) {
+  var users = Auth.getUsers();
+  var idx = users.findIndex(function(x){return x.id===u.id;});
+  if (idx>=0) users[idx]=u; else users.push(u);
+  DB.saveSettings({users:users});
+};
+Auth.deleteUser = function(uid) {
+  DB.saveSettings({users: Auth.getUsers().filter(function(x){return x.id!==uid;})});
 };
 
 /* ═══════════════════════════════════════════
@@ -3550,8 +3644,11 @@ Pages.saveProject = function(presetClientId) {
   if (!clientId) { UI.toast('يرجى اختيار العميل','danger'); return; }
   var name = (document.getElementById('proj-name').value||'').trim();
   if (!name) { UI.toast('اسم المشروع مطلوب','danger'); return; }
+  var _projSession = Auth.getSession();
   var proj = {
     id: DB.uid(),
+    owner_id: _projSession ? _projSession.id : 'usr_admin_1',
+    visibility: 'team',
     client_id: clientId,
     name: name,
     type: document.getElementById('proj-type').value,
@@ -8672,6 +8769,39 @@ Pages.render_settings = function() {
       '</div>';
     })() +
 
+    /* Users management — admin only */
+    (function(){
+      var session = Auth.getSession();
+      if (!session || session.role !== 'admin') return '';
+      var users = Auth.getUsers();
+      return '<div class="card" style="margin-bottom:var(--space-5)">' +
+        '<div class="dash-sec-hdr">' +
+          '<h3><i data-lucide="shield-check"></i>المستخدمون</h3>' +
+          '<button class="btn btn-primary btn-sm" onclick="Pages.openAddUserModal()"><i data-lucide="user-plus"></i>إضافة مستخدم</button>' +
+        '</div>' +
+        '<div style="display:grid;gap:10px">' +
+          users.map(function(u){
+            var isMe = u.id === session.id;
+            var roleLbl = u.role==='admin' ? 'مدير' : 'مستخدم';
+            var roleColor = u.role==='admin' ? 'var(--primary-600)' : 'var(--fg-2)';
+            var roleBg   = u.role==='admin' ? 'var(--primary-50)' : 'var(--bg-2)';
+            return '<div style="display:flex;align-items:center;gap:12px;padding:12px 14px;border:1px solid var(--border-1);border-radius:10px;background:var(--bg-1)">' +
+              '<div style="width:36px;height:36px;border-radius:50%;background:var(--primary-100);color:var(--primary-700);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;flex-shrink:0">'+u.name.charAt(0)+'</div>'+
+              '<div style="flex:1;min-width:0">' +
+                '<div style="font-weight:600;font-size:13px;color:var(--fg-1)">'+UI.escHtml(u.name)+'</div>'+
+                '<div style="font-size:11.5px;color:var(--fg-3);direction:ltr;text-align:right">'+UI.escHtml(u.email)+'</div>'+
+              '</div>'+
+              '<span style="font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;background:'+roleBg+';color:'+roleColor+'">'+roleLbl+'</span>'+
+              (isMe
+                ? '<span style="font-size:11px;color:var(--success-600);font-weight:600">أنت</span>'
+                : '<button onclick="Pages.deleteUserConfirm(\''+u.id+'\')" style="background:none;border:none;cursor:pointer;color:var(--danger-500);padding:4px" title="حذف"><i data-lucide="trash-2" style="width:15px;height:15px"></i></button>'
+              ) +
+            '</div>';
+          }).join('') +
+        '</div>' +
+      '</div>';
+    })() +
+
     /* Data management */
     '<div class="dash-2col" style="margin-bottom:var(--space-5)">' +
       '<div class="card">' +
@@ -8802,9 +8932,101 @@ Pages.loadSampleData = function() {
 };
 
 /* ═══════════════════════════════════════════
-   INIT
+   AUTH UI HELPERS
 ═══════════════════════════════════════════ */
-(function init() {
+Pages.doLogin = function() {
+  var email = (document.getElementById('login-email').value||'').trim();
+  var pass  = document.getElementById('login-pass').value;
+  var err   = document.getElementById('login-err');
+  var btn   = document.getElementById('login-btn');
+  btn.disabled = true; btn.textContent = 'جارٍ التحقق...';
+  if (Auth.login(email, pass)) {
+    err.style.display = 'none';
+    document.getElementById('pg-login').style.display = 'none';
+    document.getElementById('app').style.display = '';
+    Pages._initApp();
+  } else {
+    err.style.display = 'block';
+    document.getElementById('login-pass').value = '';
+    btn.disabled = false; btn.textContent = 'تسجيل الدخول';
+  }
+};
+
+Pages._updateSidebarUser = function() {
+  var u = Auth.getSession();
+  if (!u) return;
+  var initial = u.name ? u.name.charAt(0) : '؟';
+  var roleLabel = u.role === 'admin' ? 'الإدارة' : 'مستخدم';
+  var btn = document.getElementById('sb-user-btn');
+  if (btn) btn.innerHTML =
+    '<div class="sb-user-avatar">'+initial+'</div>'+
+    '<div class="sb-user-info">'+
+      '<div class="sb-user-name">'+UI.escHtml(u.name)+'</div>'+
+      '<div class="sb-user-sub">بُعد · '+roleLabel+'</div>'+
+    '</div>'+
+    '<button class="sb-user-action" aria-label="خيارات الحساب" tabindex="-1"><i data-lucide="chevrons-up-down"></i></button>';
+  var menu = document.getElementById('sb-user-menu');
+  if (menu) {
+    var hdr = menu.querySelector('.sb-user-menu-header');
+    if (hdr) hdr.innerHTML =
+      '<div class="sb-user-menu-header-avatar">'+initial+'</div>'+
+      '<div class="sb-user-menu-header-info">'+
+        '<div class="sb-user-menu-header-name">'+UI.escHtml(u.name)+'</div>'+
+        '<div class="sb-user-menu-header-mail">'+UI.escHtml(u.email)+'</div>'+
+      '</div>';
+  }
+  var tb = document.querySelector('.tb-user');
+  if (tb) { tb.textContent = initial; tb.title = u.name; }
+  if (typeof lucide !== 'undefined') lucide.createIcons({rootElement: btn});
+};
+
+Pages.openAddUserModal = function() {
+  UI.openModal(
+    '<div class="modal-header"><h3>إضافة مستخدم جديد</h3><button class="modal-close" onclick="UI.closeModalForce()">×</button></div>'+
+    '<div class="modal-body" style="display:grid;gap:14px;">'+
+      '<div class="var-field"><div class="var-field-lbl">الاسم الكامل</div><input class="var-field-inp" id="nu-name" placeholder="الاسم"></div>'+
+      '<div class="var-field"><div class="var-field-lbl">البريد الإلكتروني</div><input class="var-field-inp" id="nu-email" type="email" placeholder="email@example.com" style="direction:ltr;text-align:left;"></div>'+
+      '<div class="var-field"><div class="var-field-lbl">كلمة المرور</div><input class="var-field-inp" id="nu-pass" type="password" placeholder="••••••••"></div>'+
+      '<div class="var-field"><div class="var-field-lbl">الدور</div>'+
+        '<select class="var-field-inp" id="nu-role">'+
+          '<option value="user">مستخدم</option>'+
+          '<option value="admin">مدير النظام</option>'+
+        '</select>'+
+      '</div>'+
+    '</div>'+
+    '<div class="modal-footer">'+
+      '<button class="btn btn-ghost" onclick="UI.closeModalForce()">إلغاء</button>'+
+      '<button class="btn btn-primary" onclick="Pages.saveNewUser()">إضافة المستخدم</button>'+
+    '</div>'
+  );
+};
+
+Pages.saveNewUser = function() {
+  var name  = (document.getElementById('nu-name').value||'').trim();
+  var email = (document.getElementById('nu-email').value||'').trim();
+  var pass  = document.getElementById('nu-pass').value;
+  var role  = document.getElementById('nu-role').value;
+  if (!name)  { UI.toast('الاسم مطلوب','danger'); return; }
+  if (!email) { UI.toast('البريد الإلكتروني مطلوب','danger'); return; }
+  if (!pass)  { UI.toast('كلمة المرور مطلوبة','danger'); return; }
+  var existing = Auth.getUsers().find(function(u){return u.email===email;});
+  if (existing) { UI.toast('هذا البريد مسجل مسبقاً','danger'); return; }
+  Auth.saveUser({id: DB.uid(), name:name, email:email, password:Auth._hash(pass), role:role});
+  UI.toast('تم إضافة المستخدم','success');
+  UI.closeModalForce();
+  Pages.render_settings();
+};
+
+Pages.deleteUserConfirm = function(uid) {
+  var session = Auth.getSession();
+  if (uid === (session && session.id)) { UI.toast('لا يمكن حذف حسابك الحالي','danger'); return; }
+  if (!confirm('هل تريد حذف هذا المستخدم؟')) return;
+  Auth.deleteUser(uid);
+  UI.toast('تم حذف المستخدم');
+  Pages.render_settings();
+};
+
+Pages._initApp = function() {
   if (localStorage.getItem('buad2_sb')==='1') {
     document.getElementById('sidebar').classList.add('collapsed');
   }
@@ -8813,13 +9035,26 @@ Pages.loadSampleData = function() {
   window._entriesFilter = 'all';
   window._entriesSearch = '';
   Pages._finTab = 'overview';
+  Pages._updateSidebarUser();
   Nav.go('dash');
   Nav.initSearchHotkey();
-  // Scale doc pages on resize (e.g. device rotation)
   window.addEventListener('resize', function() {
     clearTimeout(window._docScaleTimer);
     window._docScaleTimer = setTimeout(Pages._scaleDocPages, 120);
   });
+};
+
+/* ═══════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════ */
+(function init() {
+  Auth._seedAdmin();
+  if (!Auth.isLoggedIn()) {
+    document.getElementById('app').style.display = 'none';
+    document.getElementById('pg-login').style.display = 'flex';
+    return;
+  }
+  Pages._initApp();
 })();
 </script>
 
