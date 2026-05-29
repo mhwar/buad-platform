@@ -3252,7 +3252,7 @@ var Pages = {};
 /* ─── DASHBOARD v2 ─── */
 Pages.render_dash = function() {
   var clients  = DB.getClients();
-  var projects = DB.getProjects();
+  var projects = DB.getProjectsForUser();
 
   /* ── KPIs ── */
   var activeProj    = projects.filter(function(p){ return p.status==='active'; });
@@ -3943,6 +3943,7 @@ Pages._projRowCard = function(p, cl, opts) {
         '<span class="prc-name">'+UI.escHtml(p.name)+'</span>' +
         '<span class="badge gray sm">'+typeLabel(p.type)+'</span>' +
         statusBadge(p.status) +
+        (p.visibility==='private' ? '<span title="خاص" style="display:inline-flex;align-items:center;color:var(--fg-3)"><i data-lucide="lock" style="width:12px;height:12px"></i></span>' : '') +
       '</div>' +
       '<div class="prc-meta">' +
         clHtml +
@@ -3955,7 +3956,7 @@ Pages._projRowCard = function(p, cl, opts) {
 };
 
 Pages.render_projects = function() {
-  var projects = DB.getProjects();
+  var projects = DB.getProjectsForUser();
   var clients = DB.getClients();
   var filterStatus = window._projFilter||'all';
   var filtered = filterStatus==='all' ? projects : projects.filter(function(p){ return p.status===filterStatus; });
@@ -5516,6 +5517,7 @@ Pages.editProjectStatusModal = function(projId) {
   var projects = DB.getProjects();
   var proj = projects.find(function(p){ return p.id===projId; });
   if (!proj) return;
+  var vis = proj.visibility || 'team';
   UI.openModal(
     '<div class="modal-header"><h3>تعديل المشروع</h3><button class="modal-close" onclick="UI.closeModalForce()">×</button></div>' +
     '<div class="modal-body">' +
@@ -5536,6 +5538,12 @@ Pages.editProjectStatusModal = function(projId) {
             '<option value="cancelled"'+(proj.status==='cancelled'?' selected':'')+'>ملغي</option>' +
           '</select></div>' +
       '</div>' +
+      '<div class="form-group"><label class="field-label">الظهور</label>' +
+        '<select id="ep-visibility" class="field-input">' +
+          '<option value="team"'+(vis==='team'?' selected':'')+'>مرئي لكل المستخدمين</option>' +
+          '<option value="private"'+(vis==='private'?' selected':'')+'>خاص (أنا فقط)</option>' +
+        '</select>' +
+      '</div>' +
     '</div>' +
     '<div class="modal-footer">' +
       '<button class="btn btn-ghost" onclick="UI.closeModalForce()">إلغاء</button>' +
@@ -5552,6 +5560,7 @@ Pages.saveProjectEdit = function(projId) {
   projects[idx].name = document.getElementById('ep-name').value.trim()||projects[idx].name;
   projects[idx].type = document.getElementById('ep-type').value;
   projects[idx].status = document.getElementById('ep-status').value;
+  projects[idx].visibility = document.getElementById('ep-visibility').value;
   DB.saveProjects(projects);
   UI.toast('تم الحفظ','success');
   UI.closeModalForce();
@@ -9381,7 +9390,7 @@ Pages._doSaveContractAsTemplate = function(projId, contractId) {
 };
 
 /* ─── SETTINGS ─── */
-Pages.render_settings = function() {
+Pages.render_settings = function(opts) {
   var clients = DB.getClients();
   var projects = DB.getProjects();
   var activeCount = projects.filter(function(p){return p.status==='active';}).length;
@@ -9572,6 +9581,13 @@ Pages.render_settings = function() {
       '</div>' +
     '</div>';
   document.getElementById('top-actions').innerHTML='';
+
+  // Pull fresh users from server once per page visit (not on the recursive refresh itself)
+  if (DB._token && !(opts && opts._refreshed)) {
+    DB._pullUsers().then(function() {
+      if (Nav._cur === 'settings') Pages.render_settings({ _refreshed: true });
+    });
+  }
 };
 
 Pages.exportData = function() {
@@ -9928,7 +9944,13 @@ Pages.showInviteLink = function(uid) {
 // Full user management modal: role, reset password, delete
 Pages.openManageUserModal = function(uid) {
   var u = Auth.getUsers().find(function(x){ return x.id === uid; });
-  if (!u) return;
+  if (!u) {
+    // Not in local cache yet — pull from server then retry
+    if (DB._token) {
+      DB._pullUsers().then(function() { Pages.openManageUserModal(uid); });
+    }
+    return;
+  }
   UI.openModal(
     '<div class="modal-header"><h3>إدارة المستخدم</h3><button class="modal-close" onclick="UI.closeModalForce()">×</button></div>'+
     '<div class="modal-body" style="display:grid;gap:16px;">'+
