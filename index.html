@@ -2130,6 +2130,36 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
   <div style="margin-top:20px;font-size:12px;color:#9ca3af;">بُعد · نظام إدارة المشاريع</div>
 </div>
 
+<!-- First-login: setup password page -->
+<div id="pg-setup-pass" style="display:none;position:fixed;inset:0;background:linear-gradient(135deg,#f0f4ff 0%,#f8f9fb 100%);z-index:9999;flex-direction:column;align-items:center;justify-content:center;font-family:inherit;">
+  <div style="background:#fff;border-radius:20px;box-shadow:0 8px 48px rgba(30,42,74,.12);padding:44px 52px;min-width:360px;max-width:420px;width:90%;text-align:center;">
+    <div style="width:52px;height:52px;background:#059669;border-radius:14px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;">
+      <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+    </div>
+    <div style="font-size:20px;font-weight:800;color:#1e2a4a;margin-bottom:4px;">مرحباً بك!</div>
+    <div id="setup-welcome-msg" style="font-size:13px;color:#6b7280;margin-bottom:28px;">أنشئ كلمة مرورك الخاصة لإكمال إعداد حسابك</div>
+    <div style="text-align:right;margin-bottom:14px;">
+      <label style="font-size:12px;color:#374151;font-weight:600;display:block;margin-bottom:6px;">كلمة المرور الجديدة</label>
+      <input id="setup-pass1" type="password" placeholder="••••••••"
+             style="width:100%;padding:11px 14px;border:1.5px solid #e5e7eb;border-radius:9px;font-size:14px;box-sizing:border-box;direction:ltr;text-align:left;outline:none;transition:border-color .15s;font-family:inherit;"
+             onfocus="this.style.borderColor='#059669'" onblur="this.style.borderColor='#e5e7eb'">
+    </div>
+    <div style="text-align:right;margin-bottom:24px;">
+      <label style="font-size:12px;color:#374151;font-weight:600;display:block;margin-bottom:6px;">تأكيد كلمة المرور</label>
+      <input id="setup-pass2" type="password" placeholder="••••••••"
+             style="width:100%;padding:11px 14px;border:1.5px solid #e5e7eb;border-radius:9px;font-size:14px;box-sizing:border-box;direction:ltr;text-align:left;outline:none;transition:border-color .15s;font-family:inherit;"
+             onfocus="this.style.borderColor='#059669'" onblur="this.style.borderColor='#e5e7eb'"
+             onkeydown="if(event.key==='Enter')Pages.doSetupPass()">
+    </div>
+    <div id="setup-err" style="display:none;background:#fef2f2;color:#dc2626;font-size:12.5px;padding:10px 14px;border-radius:8px;margin-bottom:16px;text-align:right;"></div>
+    <button onclick="Pages.doSetupPass()" id="setup-btn"
+            style="width:100%;padding:13px;background:#059669;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;transition:background .15s;"
+            onmouseover="this.style.background='#047857'" onmouseout="this.style.background='#059669'">
+      حفظ كلمة المرور والدخول
+    </button>
+  </div>
+</div>
+
 <div id="app">
   <!-- Sidebar -->
   <aside id="sidebar" class="sidebar">
@@ -2349,12 +2379,22 @@ Auth._seedAdmin = function() {
   }
 };
 Auth.getUsers = function() { return DB.getSettings().users || []; };
+
+// Normalize email: always lowercase + trimmed
+Auth._normalEmail = function(e) { return (e||'').toLowerCase().trim(); };
+
 Auth.login = function(email, pass) {
   Auth._seedAdmin();
+  var em = Auth._normalEmail(email);
   var u = Auth.getUsers().find(function(x){
-    return x.email===email && x.password===Auth._hash(pass);
+    return Auth._normalEmail(x.email)===em && x.password===Auth._hash(pass);
   });
   if (!u) return false;
+  // First-login: user must set their own password
+  if (u.must_change_pass) {
+    Auth._pendingSetup = {id:u.id, name:u.name, email:u.email, role:u.role};
+    return 'setup';
+  }
   Auth.setSession({id:u.id, name:u.name, email:u.email, role:u.role});
   return true;
 };
@@ -2363,8 +2403,12 @@ Auth.logout = function() {
   document.getElementById('app').style.display = 'none';
   var lp = document.getElementById('pg-login');
   if (lp) { lp.style.display = 'flex'; document.getElementById('login-email').value=''; document.getElementById('login-pass').value=''; document.getElementById('login-err').style.display='none'; }
+  var sp = document.getElementById('pg-setup-pass');
+  if (sp) sp.style.display = 'none';
 };
 Auth.saveUser = function(u) {
+  // Normalize email on save
+  u.email = Auth._normalEmail(u.email);
   var users = Auth.getUsers();
   var idx = users.findIndex(function(x){return x.id===u.id;});
   if (idx>=0) users[idx]=u; else users.push(u);
@@ -2372,6 +2416,16 @@ Auth.saveUser = function(u) {
 };
 Auth.deleteUser = function(uid) {
   DB.saveSettings({users: Auth.getUsers().filter(function(x){return x.id!==uid;})});
+};
+// Set new password for a user (used in first-login flow and change-password)
+Auth.setPassword = function(uid, newPass) {
+  var users = Auth.getUsers();
+  var u = users.find(function(x){return x.id===uid;});
+  if (!u) return false;
+  u.password = Auth._hash(newPass);
+  delete u.must_change_pass;
+  DB.saveSettings({users:users});
+  return true;
 };
 
 /* ═══════════════════════════════════════════
@@ -9198,6 +9252,7 @@ Pages.render_settings = function() {
                 '<div style="font-size:11.5px;color:var(--fg-3);direction:ltr;text-align:right">'+UI.escHtml(u.email)+'</div>'+
               '</div>'+
               '<span style="font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;background:'+roleBg+';color:'+roleColor+'">'+roleLbl+'</span>'+
+              (u.must_change_pass ? '<span style="font-size:10.5px;font-weight:600;padding:3px 8px;border-radius:20px;background:#fef9c3;color:#854d0e">في انتظار الإعداد</span>' : '') +
               (isMe
                 ? '<span style="font-size:11px;color:var(--success-600);font-weight:600">أنت</span>'
                 : '<button onclick="Pages.deleteUserConfirm(\''+u.id+'\')" style="background:none;border:none;cursor:pointer;color:var(--danger-500);padding:4px" title="حذف"><i data-lucide="trash-2" style="width:15px;height:15px"></i></button>'
@@ -9205,6 +9260,30 @@ Pages.render_settings = function() {
             '</div>';
           }).join('') +
         '</div>' +
+      '</div>';
+    })() +
+
+    /* Change password — all users */
+    (function(){
+      var session = Auth.getSession();
+      if (!session) return '';
+      return '<div class="card" style="margin-bottom:var(--space-5)">' +
+        '<div class="dash-sec-hdr"><h3><i data-lucide="key-round"></i>تغيير كلمة المرور</h3></div>' +
+        '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:0 16px">' +
+          '<div class="var-field" style="margin-bottom:12px">' +
+            '<div class="var-field-lbl">كلمة المرور الحالية</div>' +
+            '<input class="var-field-inp" id="chpw-old" type="password" placeholder="••••••••">' +
+          '</div>' +
+          '<div class="var-field" style="margin-bottom:12px">' +
+            '<div class="var-field-lbl">كلمة المرور الجديدة</div>' +
+            '<input class="var-field-inp" id="chpw-new1" type="password" placeholder="6 أحرف على الأقل">' +
+          '</div>' +
+          '<div class="var-field" style="margin-bottom:12px">' +
+            '<div class="var-field-lbl">تأكيد كلمة المرور الجديدة</div>' +
+            '<input class="var-field-inp" id="chpw-new2" type="password" placeholder="••••••••">' +
+          '</div>' +
+        '</div>' +
+        '<button class="btn btn-primary btn-sm" onclick="Pages.doChangePassword()"><i data-lucide="save"></i>حفظ كلمة المرور</button>' +
       '</div>';
     })() +
 
@@ -9346,16 +9425,55 @@ Pages.doLogin = function() {
   var err   = document.getElementById('login-err');
   var btn   = document.getElementById('login-btn');
   btn.disabled = true; btn.textContent = 'جارٍ التحقق...';
-  if (Auth.login(email, pass)) {
+  var result = Auth.login(email, pass);
+  if (result === true) {
     err.style.display = 'none';
     document.getElementById('pg-login').style.display = 'none';
     document.getElementById('app').style.display = '';
     Pages._initApp();
+  } else if (result === 'setup') {
+    // First login — show set-password screen
+    err.style.display = 'none';
+    document.getElementById('pg-login').style.display = 'none';
+    var sp = document.getElementById('pg-setup-pass');
+    sp.style.display = 'flex';
+    var u = Auth._pendingSetup;
+    document.getElementById('setup-welcome-msg').textContent =
+      'مرحباً ' + u.name + '! أنشئ كلمة مرورك الخاصة لإكمال إعداد حسابك';
+    document.getElementById('setup-pass1').value = '';
+    document.getElementById('setup-pass2').value = '';
+    document.getElementById('setup-err').style.display = 'none';
+    btn.disabled = false; btn.textContent = 'تسجيل الدخول';
   } else {
     err.style.display = 'block';
     document.getElementById('login-pass').value = '';
     btn.disabled = false; btn.textContent = 'تسجيل الدخول';
   }
+};
+
+Pages.doSetupPass = function() {
+  var p1  = document.getElementById('setup-pass1').value;
+  var p2  = document.getElementById('setup-pass2').value;
+  var err = document.getElementById('setup-err');
+  var btn = document.getElementById('setup-btn');
+  if (p1.length < 6) {
+    err.textContent = 'كلمة المرور يجب أن تكون 6 أحرف على الأقل';
+    err.style.display = 'block'; return;
+  }
+  if (p1 !== p2) {
+    err.textContent = 'كلمتا المرور غير متطابقتين';
+    err.style.display = 'block'; return;
+  }
+  btn.disabled = true; btn.textContent = 'جارٍ الحفظ...';
+  var u = Auth._pendingSetup;
+  Auth.setPassword(u.id, p1);
+  Auth.setSession({id:u.id, name:u.name, email:u.email, role:u.role});
+  Auth._pendingSetup = null;
+  document.getElementById('pg-setup-pass').style.display = 'none';
+  document.getElementById('app').style.display = '';
+  btn.disabled = false; btn.textContent = 'حفظ كلمة المرور والدخول';
+  Pages._initApp();
+  UI.toast('تم ضبط كلمة المرور بنجاح!', 'success');
 };
 
 Pages._updateSidebarUser = function() {
@@ -9390,35 +9508,60 @@ Pages.openAddUserModal = function() {
   UI.openModal(
     '<div class="modal-header"><h3>إضافة مستخدم جديد</h3><button class="modal-close" onclick="UI.closeModalForce()">×</button></div>'+
     '<div class="modal-body" style="display:grid;gap:14px;">'+
-      '<div class="var-field"><div class="var-field-lbl">الاسم الكامل</div><input class="var-field-inp" id="nu-name" placeholder="الاسم"></div>'+
+      '<div class="var-field"><div class="var-field-lbl">الاسم الكامل</div><input class="var-field-inp" id="nu-name" placeholder="الاسم الكامل"></div>'+
       '<div class="var-field"><div class="var-field-lbl">البريد الإلكتروني</div><input class="var-field-inp" id="nu-email" type="email" placeholder="email@example.com" style="direction:ltr;text-align:left;"></div>'+
-      '<div class="var-field"><div class="var-field-lbl">كلمة المرور</div><input class="var-field-inp" id="nu-pass" type="password" placeholder="••••••••"></div>'+
       '<div class="var-field"><div class="var-field-lbl">الدور</div>'+
         '<select class="var-field-inp" id="nu-role">'+
           '<option value="user">مستخدم</option>'+
           '<option value="admin">مدير النظام</option>'+
         '</select>'+
       '</div>'+
+      '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:12px 14px;">'+
+        '<div style="font-size:12px;font-weight:600;color:#166534;margin-bottom:8px;">كلمة المرور</div>'+
+        '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:#374151;margin-bottom:8px;">'+
+          '<input type="radio" name="nu-pass-mode" id="nu-mode-setup" value="setup" checked onchange="Pages._togglePassMode()"> يضبطها المستخدم عند أول دخول (موصى به)'+
+        '</label>'+
+        '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:#374151;">'+
+          '<input type="radio" name="nu-pass-mode" id="nu-mode-manual" value="manual" onchange="Pages._togglePassMode()"> أحدد كلمة مرور مبدئية الآن'+
+        '</label>'+
+        '<div id="nu-pass-wrap" style="display:none;margin-top:10px;">'+
+          '<input class="var-field-inp" id="nu-pass" type="password" placeholder="كلمة المرور المبدئية">'+
+        '</div>'+
+      '</div>'+
     '</div>'+
     '<div class="modal-footer">'+
       '<button class="btn btn-ghost" onclick="UI.closeModalForce()">إلغاء</button>'+
-      '<button class="btn btn-primary" onclick="Pages.saveNewUser()">إضافة المستخدم</button>'+
+      '<button class="btn btn-primary" onclick="Pages.saveNewUser()"><i data-lucide="user-plus"></i>إضافة المستخدم</button>'+
     '</div>'
   );
 };
 
+Pages._togglePassMode = function() {
+  var manual = document.getElementById('nu-mode-manual').checked;
+  document.getElementById('nu-pass-wrap').style.display = manual ? '' : 'none';
+};
+
 Pages.saveNewUser = function() {
   var name  = (document.getElementById('nu-name').value||'').trim();
-  var email = (document.getElementById('nu-email').value||'').trim();
-  var pass  = document.getElementById('nu-pass').value;
+  var email = Auth._normalEmail(document.getElementById('nu-email').value||'');
   var role  = document.getElementById('nu-role').value;
+  var isManual = document.getElementById('nu-mode-manual').checked;
+  var pass = isManual ? (document.getElementById('nu-pass').value||'') : '';
   if (!name)  { UI.toast('الاسم مطلوب','danger'); return; }
   if (!email) { UI.toast('البريد الإلكتروني مطلوب','danger'); return; }
-  if (!pass)  { UI.toast('كلمة المرور مطلوبة','danger'); return; }
-  var existing = Auth.getUsers().find(function(u){return u.email===email;});
+  if (isManual && !pass) { UI.toast('أدخل كلمة المرور المبدئية','danger'); return; }
+  var existing = Auth.getUsers().find(function(u){ return Auth._normalEmail(u.email)===email; });
   if (existing) { UI.toast('هذا البريد مسجل مسبقاً','danger'); return; }
-  Auth.saveUser({id: DB.uid(), name:name, email:email, password:Auth._hash(pass), role:role});
-  UI.toast('تم إضافة المستخدم','success');
+  var userData = {id: DB.uid(), name:name, email:email, role:role};
+  if (isManual) {
+    userData.password = Auth._hash(pass);
+  } else {
+    // Temporary placeholder hash — user must set their own on first login
+    userData.password = Auth._hash('__buad_pending__'+DB.uid());
+    userData.must_change_pass = true;
+  }
+  Auth.saveUser(userData);
+  UI.toast('تم إضافة المستخدم بنجاح', 'success');
   UI.closeModalForce();
   Pages.render_settings();
 };
@@ -9430,6 +9573,27 @@ Pages.deleteUserConfirm = function(uid) {
   Auth.deleteUser(uid);
   UI.toast('تم حذف المستخدم');
   Pages.render_settings();
+};
+
+Pages.doChangePassword = function() {
+  var oldPass = document.getElementById('chpw-old').value;
+  var new1    = document.getElementById('chpw-new1').value;
+  var new2    = document.getElementById('chpw-new2').value;
+  var session = Auth.getSession();
+  if (!session) return;
+  // Verify old password
+  var users = Auth.getUsers();
+  var me = users.find(function(u){ return u.id === session.id; });
+  if (!me || me.password !== Auth._hash(oldPass)) {
+    UI.toast('كلمة المرور الحالية غير صحيحة','danger'); return;
+  }
+  if (new1.length < 6) { UI.toast('كلمة المرور الجديدة يجب أن تكون 6 أحرف على الأقل','danger'); return; }
+  if (new1 !== new2)   { UI.toast('كلمتا المرور الجديدتان غير متطابقتين','danger'); return; }
+  Auth.setPassword(session.id, new1);
+  document.getElementById('chpw-old').value = '';
+  document.getElementById('chpw-new1').value = '';
+  document.getElementById('chpw-new2').value = '';
+  UI.toast('تم تغيير كلمة المرور بنجاح', 'success');
 };
 
 Pages._initApp = function() {
