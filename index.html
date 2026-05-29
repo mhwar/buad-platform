@@ -5473,7 +5473,7 @@ Pages.printReport = function(projId) {
       '<td style="padding:7px 11px;font-weight:600;color:#1a1d2e">'+UI.escHtml(e.desc||'')+'</td>'+
       '<td style="padding:7px 11px;font-size:8.5pt;color:#6b7280">'+catLabel(e.cat)+'</td>'+
       '<td style="padding:7px 11px;font-size:9pt;font-weight:600;color:'+(isInc?'#16a34a':'#dc2626')+'">'+(isInc?'دخل':'مصروف')+'</td>'+
-      '<td class="td-num" style="color:'+(isInc?'#16a34a':'#dc2626');font-weight:700">'+(isInc?'+ ':'− ')+UI.fmt(e.amount)+' ر.س</td>'+
+      '<td class="td-num" style="color:'+(isInc?'#16a34a':'#dc2626')+';font-weight:700">'+(isInc?'+ ':'− ')+UI.fmt(e.amount)+' ر.س</td>'+
       '<td style="padding:7px 11px"><span class="badge '+(e.status==='paid'?'bg-paid':e.status==='pending'?'bg-pending':'bg-other')+'">'+(e.status==='paid'?'مدفوع':e.status==='pending'?'معلق':e.status==='cancelled'?'ملغي':'—')+'</span></td>'+
     '</tr>';
   }).join('') || '<tr><td colspan="6" style="padding:20px;text-align:center;color:#9ca3af">لا توجد قيود مسجّلة</td></tr>';
@@ -5589,8 +5589,8 @@ Pages.printAgreementReport = function(projId) {
       entriesHtml += '<tr style="background:'+(i%2===0?'#fff':'#f9fafc')+'">'+
         '<td style="padding:6px 11px;color:#6b7280;white-space:nowrap;font-size:9pt">'+fmtDate(e.date)+'</td>'+
         '<td style="padding:6px 11px;font-weight:600;color:#1a1d2e">'+UI.escHtml(e.desc||'')+'</td>'+
-        '<td style="padding:6px 11px;font-size:9pt;color:'+(isInc?'#16a34a':'#dc2626');font-weight:600">'+(isInc?'دخل':'مصروف')+'</td>'+
-        '<td class="td-num" style="color:'+(isInc?'#16a34a':'#dc2626');font-weight:700">'+(isInc?'+ ':'− ')+UI.fmt(e.amount)+' ر.س</td>'+
+        '<td style="padding:6px 11px;font-size:9pt;color:'+(isInc?'#16a34a':'#dc2626')+';font-weight:600">'+(isInc?'دخل':'مصروف')+'</td>'+
+        '<td class="td-num" style="color:'+(isInc?'#16a34a':'#dc2626')+';font-weight:700">'+(isInc?'+ ':'− ')+UI.fmt(e.amount)+' ر.س</td>'+
         '<td style="padding:6px 11px"><span class="badge '+(e.status==='paid'?'bg-paid':e.status==='pending'?'bg-pending':'bg-other')+'">'+(e.status==='paid'?'مدفوع':e.status==='pending'?'معلق':'—')+'</span></td>'+
       '</tr>';
     });
