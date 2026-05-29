@@ -9580,11 +9580,22 @@ Pages.exportData = function() {
     var k=localStorage.key(i);
     if (k&&k.startsWith('buad2_')) data[k]=localStorage.getItem(k);
   }
-  var blob = new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  var json = JSON.stringify(data, null, 2);
+  var blob = new Blob([json], {type:'application/json'});
+  // iOS Safari: use Web Share API if available
+  if (navigator.share && navigator.canShare && navigator.canShare({files:[new File([blob],'buad_backup.json',{type:'application/json'})]})) {
+    var file = new File([blob], 'buad_backup.json', {type:'application/json'});
+    navigator.share({files:[file], title:'بيانات بُعد'}).catch(function(){});
+    return;
+  }
+  // Desktop / Android: standard download
   var url = URL.createObjectURL(blob);
-  var a = document.createElement('a'); a.href=url; a.download='buad_backup.json'; a.click();
+  var a = document.createElement('a');
+  a.href = url; a.download = 'buad_backup.json';
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a);
   URL.revokeObjectURL(url);
-  UI.toast('تم التصدير','success');
+  UI.toast('تم التصدير', 'success');
 };
 
 Pages.importData = function(event) {
