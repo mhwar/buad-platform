@@ -2273,12 +2273,14 @@ var DB = {
   },
   saveClients: function(a) {
     localStorage.setItem('buad2_clients', JSON.stringify(a));
+    DB._scheduleSave();
   },
   getProjects: function() {
     try { return JSON.parse(localStorage.getItem('buad2_projects')||'[]'); } catch(e){ return []; }
   },
   saveProjects: function(a) {
     localStorage.setItem('buad2_projects', JSON.stringify(a));
+    DB._scheduleSave();
   },
   getFin: function(pid) {
     try {
@@ -2301,6 +2303,7 @@ var DB = {
   },
   saveFin: function(pid, d) {
     localStorage.setItem('buad2_fin_'+pid, JSON.stringify(d));
+    DB._scheduleSave();
   }
 };
 DB.getSettings = function() {
@@ -2309,6 +2312,87 @@ DB.getSettings = function() {
 DB.saveSettings = function(upd) {
   var cur = DB.getSettings();
   localStorage.setItem('buad2_settings', JSON.stringify(Object.assign(cur, upd)));
+  DB._scheduleSave();
+};
+
+/* ── API sync layer ──────────────────────────────────────────────────── */
+DB._token    = null;  // JWT set after login
+DB._saveTimer = null;
+
+DB._apiHeaders = function() {
+  var h = { 'Content-Type': 'application/json' };
+  if (DB._token) h['Authorization'] = 'Bearer ' + DB._token;
+  return h;
+};
+
+DB._scheduleSave = function() {
+  if (!DB._token) return; // offline mode — skip
+  clearTimeout(DB._saveTimer);
+  DB._saveTimer = setTimeout(DB._pushToServer, 2000);
+};
+
+DB._buildWorkspace = function() {
+  var ws = {
+    clients:   DB.getClients(),
+    projects:  DB.getProjects(),
+    settings:  DB.getSettings(),
+    templates: (function(){ try { return JSON.parse(localStorage.getItem('buad2_custom_templates')||'[]'); } catch(e){ return []; } })(),
+    fin: {}
+  };
+  // Don't send users/passwords to workspace
+  delete ws.settings.users;
+  DB.getProjects().forEach(function(p) { ws.fin[p.id] = DB.getFin(p.id); });
+  return ws;
+};
+
+DB._pushToServer = function() {
+  if (!DB._token) return;
+  var ws = DB._buildWorkspace();
+  fetch('/api/workspace', {
+    method: 'PUT',
+    headers: DB._apiHeaders(),
+    body: JSON.stringify(ws)
+  }).catch(function(e) { console.warn('Sync push failed:', e); });
+};
+
+DB._pullFromServer = function() {
+  if (!DB._token) return Promise.resolve(false);
+  return fetch('/api/workspace', { headers: DB._apiHeaders() })
+    .then(function(r) { return r.ok ? r.json() : null; })
+    .then(function(ws) {
+      if (!ws) return false;
+      if (ws.clients)   localStorage.setItem('buad2_clients',           JSON.stringify(ws.clients));
+      if (ws.projects)  localStorage.setItem('buad2_projects',          JSON.stringify(ws.projects));
+      if (ws.templates) localStorage.setItem('buad2_custom_templates',  JSON.stringify(ws.templates));
+      if (ws.settings) {
+        var localS = DB.getSettings();
+        // Keep local users list (managed separately via /api/users)
+        ws.settings.users = localS.users;
+        localStorage.setItem('buad2_settings', JSON.stringify(ws.settings));
+      }
+      if (ws.fin) {
+        Object.keys(ws.fin).forEach(function(pid) {
+          localStorage.setItem('buad2_fin_' + pid, JSON.stringify(ws.fin[pid]));
+        });
+      }
+      return true;
+    })
+    .catch(function(e) { console.warn('Sync pull failed:', e); return false; });
+};
+
+/* Pull users list from server (admin only) */
+DB._pullUsers = function() {
+  if (!DB._token) return Promise.resolve();
+  return fetch('/api/users', { headers: DB._apiHeaders() })
+    .then(function(r) { return r.ok ? r.json() : null; })
+    .then(function(users) {
+      if (!users) return;
+      // Merge into settings as display list (no passwords)
+      var s = DB.getSettings();
+      s.users = users;
+      localStorage.setItem('buad2_settings', JSON.stringify(s));
+    })
+    .catch(function() {});
 };
 DB.getContracts = function(pid) {
   var fin = DB.getFin(pid);
@@ -2383,16 +2467,48 @@ Auth.getUsers = function() { return DB.getSettings().users || []; };
 // Normalize email: always lowercase + trimmed
 Auth._normalEmail = function(e) { return (e||'').toLowerCase().trim(); };
 
+// Auth.login: tries server first, falls back to local (offline mode)
 Auth.login = function(email, pass) {
+  return fetch('/api/auth/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: email, password: pass })
+  })
+  .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, status: r.status, data: d }; }); })
+  .then(function(res) {
+    if (!res.ok) {
+      if (res.status === 401) {
+        // Try local fallback (offline / dev mode)
+        return Auth._localLogin(email, pass);
+      }
+      return false;
+    }
+    var d = res.data;
+    if (d.action === 'setup') {
+      Auth._pendingSetup = { setupToken: d.token, name: d.name };
+      return 'setup';
+    }
+    DB._token = d.token;
+    sessionStorage.setItem('buad2_jwt', d.token);
+    Auth.setSession(d.user);
+    return true;
+  })
+  .catch(function() {
+    // Network unavailable — fall back to local login
+    return Auth._localLogin(email, pass);
+  });
+};
+
+// Local fallback login (offline / when server not yet configured)
+Auth._localLogin = function(email, pass) {
   Auth._seedAdmin();
   var em = Auth._normalEmail(email);
   var u = Auth.getUsers().find(function(x){
     return Auth._normalEmail(x.email)===em && x.password===Auth._hash(pass);
   });
   if (!u) return false;
-  // First-login: user must set their own password
   if (u.must_change_pass) {
-    Auth._pendingSetup = {id:u.id, name:u.name, email:u.email, role:u.role};
+    Auth._pendingSetup = { localUser: {id:u.id, name:u.name, email:u.email, role:u.role} };
     return 'setup';
   }
   Auth.setSession({id:u.id, name:u.name, email:u.email, role:u.role});
@@ -2407,25 +2523,57 @@ Auth.logout = function() {
   if (sp) sp.style.display = 'none';
 };
 Auth.saveUser = function(u) {
-  // Normalize email on save
   u.email = Auth._normalEmail(u.email);
-  var users = Auth.getUsers();
-  var idx = users.findIndex(function(x){return x.id===u.id;});
-  if (idx>=0) users[idx]=u; else users.push(u);
-  DB.saveSettings({users:users});
+  if (DB._token) {
+    // Server mode
+    var isNew = !u.id || !Auth.getUsers().find(function(x){ return x.id === u.id; });
+    if (isNew) {
+      var payload = { name: u.name, email: u.email, role: u.role };
+      if (u.password) payload.password = u._rawPassword; // raw pass set by caller
+      fetch('/api/users', { method: 'POST', headers: DB._apiHeaders(), body: JSON.stringify(payload) })
+        .then(function(r) { return r.json(); })
+        .then(function() { return DB._pullUsers(); })
+        .then(function() { if (window._afterSaveUser) { window._afterSaveUser(); window._afterSaveUser = null; } })
+        .catch(function(e) { UI.toast('خطأ في الإضافة: ' + e.message, 'danger'); });
+    } else {
+      var upd = {};
+      if (u._rawPassword) upd.password = u._rawPassword;
+      if (u.role) upd.role = u.role;
+      if (u.name) upd.name = u.name;
+      fetch('/api/users/' + u.id, { method: 'PUT', headers: DB._apiHeaders(), body: JSON.stringify(upd) })
+        .then(function() { return DB._pullUsers(); })
+        .catch(function(e) { console.warn('Update user failed:', e); });
+    }
+  } else {
+    // Local fallback
+    var users = Auth.getUsers();
+    var idx = users.findIndex(function(x){ return x.id === u.id; });
+    if (idx >= 0) users[idx] = u; else users.push(u);
+    DB.saveSettings({ users: users });
+  }
 };
 Auth.deleteUser = function(uid) {
-  DB.saveSettings({users: Auth.getUsers().filter(function(x){return x.id!==uid;})});
+  if (DB._token) {
+    fetch('/api/users/' + uid, { method: 'DELETE', headers: DB._apiHeaders() })
+      .then(function() { return DB._pullUsers(); })
+      .then(function() { Pages.render_settings(); })
+      .catch(function(e) { UI.toast('خطأ في الحذف', 'danger'); });
+  } else {
+    DB.saveSettings({ users: Auth.getUsers().filter(function(x){ return x.id !== uid; }) });
+  }
 };
-// Set new password for a user (used in first-login flow and change-password)
 Auth.setPassword = function(uid, newPass) {
+  if (DB._token) {
+    return fetch('/api/users/' + uid, { method: 'PUT', headers: DB._apiHeaders(), body: JSON.stringify({ password: newPass }) })
+      .then(function(r) { return r.ok; });
+  }
   var users = Auth.getUsers();
-  var u = users.find(function(x){return x.id===uid;});
-  if (!u) return false;
+  var u = users.find(function(x){ return x.id === uid; });
+  if (!u) return Promise.resolve(false);
   u.password = Auth._hash(newPass);
   delete u.must_change_pass;
-  DB.saveSettings({users:users});
-  return true;
+  DB.saveSettings({ users: users });
+  return Promise.resolve(true);
 };
 
 /* ═══════════════════════════════════════════
@@ -2540,6 +2688,36 @@ var Nav = {
     var m = document.getElementById('pg-'+page);
     if (m) m.scrollTop = 0;
     Nav.closeSidebar();
+    // Update URL hash for deep-linking
+    Nav._setHash(page, params||{});
+  },
+  // Build hash string and update window.location.hash
+  _setHash: function(page, params) {
+    var hash = page;
+    if (page === 'client'          && params.clientId)   hash = 'client/'   + params.clientId;
+    if (page === 'fin'             && params.projId)      hash = 'fin/'      + params.projId;
+    if (page === 'contract'        && params.projId)      hash = 'contract/' + params.projId + (params.contractId ? '/' + params.contractId : '');
+    if (page === 'template-editor' && params.templateId) hash = 'template-editor/' + params.templateId;
+    if (params && params.tab)  hash += '?tab=' + params.tab;
+    var newHash = '#/' + hash;
+    if (window.location.hash !== newHash) {
+      try { history.pushState(null, '', newHash); } catch(e) { window.location.hash = newHash; }
+    }
+  },
+  // Parse a hash string into {page, params}
+  _parseHash: function(hash) {
+    var parts = hash.split('?');
+    var segs  = parts[0].split('/');
+    var query = {};
+    if (parts[1]) parts[1].split('&').forEach(function(p){ var kv=p.split('='); query[kv[0]]=kv[1]; });
+    var page   = segs[0] || 'dash';
+    var params = {};
+    if (page === 'client'          && segs[1]) params.clientId   = segs[1];
+    if (page === 'fin'             && segs[1]) params.projId     = segs[1];
+    if (page === 'contract'        && segs[1]) { params.projId = segs[1]; if (segs[2]) params.contractId = segs[2]; }
+    if (page === 'template-editor' && segs[1]) params.templateId = segs[1];
+    if (query.tab) params.tab = query.tab;
+    return { page: page, params: params };
   },
   updateBadges: function() {
     try {
@@ -2667,6 +2845,23 @@ var Nav = {
       if (e.key==='Escape') {
         var inp2 = document.getElementById('sb-search-input');
         if (inp2 && document.activeElement===inp2) { inp2.value=''; Nav.search(''); inp2.blur(); }
+      }
+    });
+    // Back/forward browser buttons
+    window.addEventListener('popstate', function() {
+      if (!Auth.isLoggedIn()) return;
+      var hash = window.location.hash.replace(/^#\/?/, '');
+      if (hash) {
+        var parsed = Nav._parseHash(hash);
+        // Navigate without pushing a new history entry
+        Nav._cur = parsed.page; Nav._params = parsed.params;
+        document.querySelectorAll('.page').forEach(function(p){ p.classList.remove('active'); });
+        var el = document.getElementById('pg-' + parsed.page);
+        if (el) el.classList.add('active');
+        if (Pages['render_' + parsed.page]) Pages['render_' + parsed.page](parsed.params);
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+        Nav.updateBreadcrumb(parsed.page, parsed.params);
+        Nav.updateBadges();
       }
     });
   }
@@ -9425,30 +9620,33 @@ Pages.doLogin = function() {
   var err   = document.getElementById('login-err');
   var btn   = document.getElementById('login-btn');
   btn.disabled = true; btn.textContent = 'جارٍ التحقق...';
-  var result = Auth.login(email, pass);
-  if (result === true) {
-    err.style.display = 'none';
-    document.getElementById('pg-login').style.display = 'none';
-    document.getElementById('app').style.display = '';
-    Pages._initApp();
-  } else if (result === 'setup') {
-    // First login — show set-password screen
-    err.style.display = 'none';
-    document.getElementById('pg-login').style.display = 'none';
-    var sp = document.getElementById('pg-setup-pass');
-    sp.style.display = 'flex';
-    var u = Auth._pendingSetup;
-    document.getElementById('setup-welcome-msg').textContent =
-      'مرحباً ' + u.name + '! أنشئ كلمة مرورك الخاصة لإكمال إعداد حسابك';
-    document.getElementById('setup-pass1').value = '';
-    document.getElementById('setup-pass2').value = '';
-    document.getElementById('setup-err').style.display = 'none';
+  Auth.login(email, pass).then(function(result) {
+    if (result === true) {
+      err.style.display = 'none';
+      document.getElementById('pg-login').style.display = 'none';
+      document.getElementById('app').style.display = '';
+      Pages._initApp();
+    } else if (result === 'setup') {
+      err.style.display = 'none';
+      document.getElementById('pg-login').style.display = 'none';
+      var sp = document.getElementById('pg-setup-pass');
+      sp.style.display = 'flex';
+      var pending = Auth._pendingSetup;
+      document.getElementById('setup-welcome-msg').textContent =
+        'مرحباً ' + pending.name + '! أنشئ كلمة مرورك الخاصة لإكمال إعداد حسابك';
+      document.getElementById('setup-pass1').value = '';
+      document.getElementById('setup-pass2').value = '';
+      document.getElementById('setup-err').style.display = 'none';
+    } else {
+      err.style.display = 'block';
+      document.getElementById('login-pass').value = '';
+    }
     btn.disabled = false; btn.textContent = 'تسجيل الدخول';
-  } else {
+  }).catch(function() {
     err.style.display = 'block';
     document.getElementById('login-pass').value = '';
     btn.disabled = false; btn.textContent = 'تسجيل الدخول';
-  }
+  });
 };
 
 Pages.doSetupPass = function() {
@@ -9465,15 +9663,46 @@ Pages.doSetupPass = function() {
     err.style.display = 'block'; return;
   }
   btn.disabled = true; btn.textContent = 'جارٍ الحفظ...';
-  var u = Auth._pendingSetup;
-  Auth.setPassword(u.id, p1);
-  Auth.setSession({id:u.id, name:u.name, email:u.email, role:u.role});
-  Auth._pendingSetup = null;
-  document.getElementById('pg-setup-pass').style.display = 'none';
-  document.getElementById('app').style.display = '';
-  btn.disabled = false; btn.textContent = 'حفظ كلمة المرور والدخول';
-  Pages._initApp();
-  UI.toast('تم ضبط كلمة المرور بنجاح!', 'success');
+  var pending = Auth._pendingSetup;
+
+  var doFinish = function(userData) {
+    Auth._pendingSetup = null;
+    Auth.setSession(userData);
+    document.getElementById('pg-setup-pass').style.display = 'none';
+    document.getElementById('app').style.display = '';
+    btn.disabled = false; btn.textContent = 'حفظ كلمة المرور والدخول';
+    Pages._initApp();
+    UI.toast('تم ضبط كلمة المرور بنجاح!', 'success');
+  };
+
+  if (pending.setupToken) {
+    // Server flow
+    fetch('/api/auth/setup-pass', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ setupToken: pending.setupToken, password: p1 })
+    }).then(function(r) { return r.json(); })
+      .then(function(d) {
+        if (d.token) {
+          DB._token = d.token;
+          sessionStorage.setItem('buad2_jwt', d.token);
+          doFinish(d.user);
+        } else {
+          err.textContent = 'خطأ في الحفظ، حاول مجدداً';
+          err.style.display = 'block';
+          btn.disabled = false; btn.textContent = 'حفظ كلمة المرور والدخول';
+        }
+      }).catch(function() {
+        err.textContent = 'خطأ في الاتصال';
+        err.style.display = 'block';
+        btn.disabled = false; btn.textContent = 'حفظ كلمة المرور والدخول';
+      });
+  } else if (pending.localUser) {
+    // Local fallback flow
+    Auth.setPassword(pending.localUser.id, p1).then(function() {
+      doFinish(pending.localUser);
+    });
+  }
 };
 
 Pages._updateSidebarUser = function() {
@@ -9542,28 +9771,30 @@ Pages._togglePassMode = function() {
 };
 
 Pages.saveNewUser = function() {
-  var name  = (document.getElementById('nu-name').value||'').trim();
-  var email = Auth._normalEmail(document.getElementById('nu-email').value||'');
-  var role  = document.getElementById('nu-role').value;
+  var name     = (document.getElementById('nu-name').value||'').trim();
+  var email    = Auth._normalEmail(document.getElementById('nu-email').value||'');
+  var role     = document.getElementById('nu-role').value;
   var isManual = document.getElementById('nu-mode-manual').checked;
-  var pass = isManual ? (document.getElementById('nu-pass').value||'') : '';
+  var pass     = isManual ? (document.getElementById('nu-pass').value||'') : '';
   if (!name)  { UI.toast('الاسم مطلوب','danger'); return; }
   if (!email) { UI.toast('البريد الإلكتروني مطلوب','danger'); return; }
   if (isManual && !pass) { UI.toast('أدخل كلمة المرور المبدئية','danger'); return; }
-  var existing = Auth.getUsers().find(function(u){ return Auth._normalEmail(u.email)===email; });
-  if (existing) { UI.toast('هذا البريد مسجل مسبقاً','danger'); return; }
-  var userData = {id: DB.uid(), name:name, email:email, role:role};
-  if (isManual) {
-    userData.password = Auth._hash(pass);
-  } else {
-    // Temporary placeholder hash — user must set their own on first login
-    userData.password = Auth._hash('__buad_pending__'+DB.uid());
-    userData.must_change_pass = true;
-  }
+  var userData = { name: name, email: email, role: role };
+  if (isManual) userData._rawPassword = pass;
+  // Show loading while server processes
+  window._afterSaveUser = function() {
+    UI.toast('تم إضافة المستخدم بنجاح', 'success');
+    UI.closeModalForce();
+    Pages.render_settings();
+  };
   Auth.saveUser(userData);
-  UI.toast('تم إضافة المستخدم بنجاح', 'success');
-  UI.closeModalForce();
-  Pages.render_settings();
+  if (!DB._token) {
+    // Local mode: finish immediately
+    UI.toast('تم إضافة المستخدم بنجاح', 'success');
+    UI.closeModalForce();
+    Pages.render_settings();
+  }
+  // Server mode: _afterSaveUser callback handles the rest
 };
 
 Pages.deleteUserConfirm = function(uid) {
@@ -9571,8 +9802,10 @@ Pages.deleteUserConfirm = function(uid) {
   if (uid === (session && session.id)) { UI.toast('لا يمكن حذف حسابك الحالي','danger'); return; }
   if (!confirm('هل تريد حذف هذا المستخدم؟')) return;
   Auth.deleteUser(uid);
-  UI.toast('تم حذف المستخدم');
-  Pages.render_settings();
+  if (!DB._token) {
+    UI.toast('تم حذف المستخدم');
+    Pages.render_settings();
+  }
 };
 
 Pages.doChangePassword = function() {
@@ -9581,19 +9814,39 @@ Pages.doChangePassword = function() {
   var new2    = document.getElementById('chpw-new2').value;
   var session = Auth.getSession();
   if (!session) return;
-  // Verify old password
-  var users = Auth.getUsers();
-  var me = users.find(function(u){ return u.id === session.id; });
-  if (!me || me.password !== Auth._hash(oldPass)) {
-    UI.toast('كلمة المرور الحالية غير صحيحة','danger'); return;
-  }
   if (new1.length < 6) { UI.toast('كلمة المرور الجديدة يجب أن تكون 6 أحرف على الأقل','danger'); return; }
   if (new1 !== new2)   { UI.toast('كلمتا المرور الجديدتان غير متطابقتين','danger'); return; }
-  Auth.setPassword(session.id, new1);
-  document.getElementById('chpw-old').value = '';
-  document.getElementById('chpw-new1').value = '';
-  document.getElementById('chpw-new2').value = '';
-  UI.toast('تم تغيير كلمة المرور بنجاح', 'success');
+
+  if (DB._token) {
+    // Server: verify old pass by trying to re-login
+    fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: session.email, password: oldPass })
+    }).then(function(r) { return r.json(); })
+      .then(function(d) {
+        if (!d.token && d.action !== 'setup') { UI.toast('كلمة المرور الحالية غير صحيحة','danger'); return; }
+        return Auth.setPassword(session.id, new1).then(function() {
+          document.getElementById('chpw-old').value = '';
+          document.getElementById('chpw-new1').value = '';
+          document.getElementById('chpw-new2').value = '';
+          UI.toast('تم تغيير كلمة المرور بنجاح', 'success');
+        });
+      }).catch(function() { UI.toast('خطأ في الاتصال','danger'); });
+  } else {
+    // Local fallback
+    var users = Auth.getUsers();
+    var me = users.find(function(u){ return u.id === session.id; });
+    if (!me || me.password !== Auth._hash(oldPass)) {
+      UI.toast('كلمة المرور الحالية غير صحيحة','danger'); return;
+    }
+    Auth.setPassword(session.id, new1).then(function() {
+      document.getElementById('chpw-old').value = '';
+      document.getElementById('chpw-new1').value = '';
+      document.getElementById('chpw-new2').value = '';
+      UI.toast('تم تغيير كلمة المرور بنجاح', 'success');
+    });
+  }
 };
 
 Pages._initApp = function() {
@@ -9606,18 +9859,40 @@ Pages._initApp = function() {
   window._entriesSearch = '';
   Pages._finTab = 'overview';
   Pages._updateSidebarUser();
-  Nav.go('dash');
-  Nav.initSearchHotkey();
-  window.addEventListener('resize', function() {
-    clearTimeout(window._docScaleTimer);
-    window._docScaleTimer = setTimeout(Pages._scaleDocPages, 120);
-  });
+
+  // Sync from server then navigate (or navigate immediately if offline)
+  var doNav = function() {
+    Nav.initSearchHotkey();
+    // Restore deep-link from URL hash if present
+    var hash = window.location.hash.replace(/^#\/?/, '');
+    if (hash) {
+      var parsed = Nav._parseHash(hash);
+      Nav.go(parsed.page, parsed.params);
+    } else {
+      Nav.go('dash');
+    }
+    window.addEventListener('resize', function() {
+      clearTimeout(window._docScaleTimer);
+      window._docScaleTimer = setTimeout(Pages._scaleDocPages, 120);
+    });
+  };
+
+  if (DB._token) {
+    DB._pullFromServer().then(doNav);
+    DB._pullUsers(); // refresh users list in background
+  } else {
+    doNav();
+  }
 };
 
 /* ═══════════════════════════════════════════
    INIT
 ═══════════════════════════════════════════ */
 (function init() {
+  // Restore JWT from sessionStorage
+  var savedToken = sessionStorage.getItem('buad2_jwt');
+  if (savedToken) DB._token = savedToken;
+
   Auth._seedAdmin();
   if (!Auth.isLoggedIn()) {
     document.getElementById('app').style.display = 'none';
