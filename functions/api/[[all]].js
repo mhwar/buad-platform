@@ -138,11 +138,84 @@ export async function onRequest(context) {
     return json({ token, user: { id: payload.id, name: payload.name, email: payload.email, role: payload.role } });
   }
 
+  /* ─── PUBLIC: GET /api/public/site ─── landing-page content (no auth) */
+  if (path === '/public/site' && method === 'GET') {
+    const row = await db.prepare('SELECT data FROM site_content WHERE id = ?').bind('main').first();
+    const data = row ? JSON.parse(row.data) : {};
+    return json(data);
+  }
+
+  /* ─── PUBLIC: POST /api/public/request ─── submit a service request (no auth) */
+  if (path === '/public/request' && method === 'POST') {
+    let body;
+    try { body = await request.json(); } catch (e) { return json({ error: 'Bad request' }, 400); }
+    const name = (body.name || '').trim();
+    const phone = (body.phone || '').trim();
+    if (!name || !phone) return json({ error: 'name and phone required' }, 400);
+    const id = 'req_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    await db.prepare(
+      'INSERT INTO service_requests (id, name, org, phone, email, service, budget, message, source) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
+    ).bind(
+      id, name, (body.org || '').trim(), phone, (body.email || '').trim(),
+      (body.service || '').trim(), (body.budget || '').trim(), (body.message || '').trim(),
+      (body.source || 'website')
+    ).run();
+    return json({ ok: true, id }, 201);
+  }
+
   /* ── Auth required for all routes below ── */
   const authHeader = request.headers.get('Authorization') || '';
   const rawToken = authHeader.replace('Bearer ', '');
   const me = await verifyJWT(rawToken, jwtSecret);
   if (!me || me.action) return json({ error: 'Unauthorized' }, 401);
+
+  /* ─── GET /api/site ─── full site content for editing */
+  if (path === '/site' && method === 'GET') {
+    const row = await db.prepare('SELECT data FROM site_content WHERE id = ?').bind('main').first();
+    return json(row ? JSON.parse(row.data) : {});
+  }
+
+  /* ─── PUT /api/site ─── update landing-page content */
+  if (path === '/site' && method === 'PUT') {
+    if (me.role !== 'admin') return json({ error: 'Forbidden' }, 403);
+    let body;
+    try { body = await request.json(); } catch (e) { return json({ error: 'Bad request' }, 400); }
+    await db.prepare('INSERT OR REPLACE INTO site_content (id, data, updated_at) VALUES (?, ?, unixepoch())')
+      .bind('main', JSON.stringify(body)).run();
+    return json({ ok: true });
+  }
+
+  /* ─── GET /api/requests ─── list service requests */
+  if (path === '/requests' && method === 'GET') {
+    const { results } = await db.prepare(
+      'SELECT * FROM service_requests ORDER BY created_at DESC'
+    ).all();
+    return json(results);
+  }
+
+  /* ─── PUT /api/requests/:id ─── update status / notes / assignee */
+  const reqUpdateMatch = path.match(/^\/requests\/([^/]+)$/);
+  if (reqUpdateMatch && method === 'PUT') {
+    const rid = reqUpdateMatch[1];
+    let body;
+    try { body = await request.json(); } catch (e) { return json({ error: 'Bad request' }, 400); }
+    const fields = [], vals = [];
+    ['status', 'notes', 'assignee'].forEach(function (k) {
+      if (body[k] !== undefined) { fields.push(k + ' = ?'); vals.push(body[k]); }
+    });
+    if (!fields.length) return json({ error: 'nothing to update' }, 400);
+    vals.push(rid);
+    await db.prepare('UPDATE service_requests SET ' + fields.join(', ') + ' WHERE id = ?').bind(...vals).run();
+    return json({ ok: true });
+  }
+
+  /* ─── DELETE /api/requests/:id ─── */
+  const reqDeleteMatch = path.match(/^\/requests\/([^/]+)$/);
+  if (reqDeleteMatch && method === 'DELETE') {
+    if (me.role !== 'admin') return json({ error: 'Forbidden' }, 403);
+    await db.prepare('DELETE FROM service_requests WHERE id = ?').bind(reqDeleteMatch[1]).run();
+    return json({ ok: true });
+  }
 
   /* ─── GET /api/workspace ─── */
   if (path === '/workspace' && method === 'GET') {
