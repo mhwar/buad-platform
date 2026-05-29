@@ -1,1 +1,4 @@
-/* /index.html 200
+# Dashboard (team only) — served at /app, internal SPA uses hash routing
+/app      /app.html  200
+/app/*    /app.html  200
+# Public landing page is index.html (served at / by default)
