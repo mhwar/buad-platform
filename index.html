@@ -9594,9 +9594,32 @@ Pages.importData = function(event) {
   reader.onload = function(e){
     try {
       var data = JSON.parse(e.target.result);
-      Object.keys(data).forEach(function(k){ localStorage.setItem(k,data[k]); });
-      UI.toast('تم الاستيراد','success');
-      Nav.go('dash');
+      // Write to localStorage (skip users — managed separately via API)
+      Object.keys(data).forEach(function(k){
+        if (k && k.startsWith('buad2_') && k !== 'buad2_settings') {
+          localStorage.setItem(k, data[k]);
+        }
+      });
+      // Merge settings without overwriting users list
+      if (data['buad2_settings']) {
+        try {
+          var imported = JSON.parse(data['buad2_settings']);
+          var local = DB.getSettings();
+          imported.users = local.users; // keep current users
+          localStorage.setItem('buad2_settings', JSON.stringify(imported));
+        } catch(e2) {}
+      }
+      // Auto-push to server if logged in
+      if (DB._token) {
+        UI.toast('جارٍ رفع البيانات إلى السيرفر...');
+        DB._pushToServer().then(function(ok) {
+          UI.toast(ok ? 'تم استيراد البيانات ورفعها للسيرفر بنجاح' : 'تم الاستيراد محلياً — تعذّر الرفع للسيرفر', ok ? 'success' : 'warning');
+          Nav.go('dash');
+        });
+      } else {
+        UI.toast('تم الاستيراد بنجاح', 'success');
+        Nav.go('dash');
+      }
     } catch(err){ UI.toast('خطأ في استيراد البيانات','danger'); }
   };
   reader.readAsText(file);
