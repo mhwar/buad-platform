@@ -1,0 +1,10 @@
+/*.html
+  Content-Type: text/html; charset=utf-8
+  Cache-Control: no-cache, must-revalidate
+  X-Frame-Options: SAMEORIGIN
+  X-Content-Type-Options: nosniff
+
+/*
+  X-Frame-Options: SAMEORIGIN
+  X-Content-Type-Options: nosniff
+  Cache-Control: public, max-age=86400
