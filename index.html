@@ -2473,10 +2473,10 @@ DB.getProjectsForUser = function() {
 var Auth = {};
 Auth._SK = 'buad2_session';
 Auth.getSession = function() {
-  try { return JSON.parse(sessionStorage.getItem(Auth._SK)||'null'); } catch(e){return null;}
+  try { return JSON.parse(localStorage.getItem(Auth._SK)||'null'); } catch(e){return null;}
 };
-Auth.setSession = function(u) { sessionStorage.setItem(Auth._SK, JSON.stringify(u)); };
-Auth.clearSession = function() { sessionStorage.removeItem(Auth._SK); };
+Auth.setSession = function(u) { localStorage.setItem(Auth._SK, JSON.stringify(u)); };
+Auth.clearSession = function() { localStorage.removeItem(Auth._SK); };
 Auth.isLoggedIn = function() { return !!Auth.getSession(); };
 Auth._hash = function(s) {
   var h = 5381;
@@ -2522,7 +2522,7 @@ Auth.login = function(email, pass) {
       return 'setup';
     }
     DB._token = d.token;
-    sessionStorage.setItem('buad2_jwt', d.token);
+    localStorage.setItem('buad2_jwt', d.token);
     Auth.setSession(d.user);
     return true;
   })
@@ -2549,6 +2549,8 @@ Auth._localLogin = function(email, pass) {
 };
 Auth.logout = function() {
   Auth.clearSession();
+  DB._token = null;
+  localStorage.removeItem('buad2_jwt');
   document.getElementById('app').style.display = 'none';
   var lp = document.getElementById('pg-login');
   if (lp) { lp.style.display = 'flex'; document.getElementById('login-email').value=''; document.getElementById('login-pass').value=''; document.getElementById('login-err').style.display='none'; }
@@ -5824,7 +5826,7 @@ Pages._projKebabHtml = function(proj) {
     return '<button class="pkm-item'+(vis===v?' pkm-active':'')+'" onclick="Pages.setProjVisibility(\''+pid+'\',\''+v+'\')"><i data-lucide="'+icon+'"></i>'+lbl+'</button>';
   }
   return '<div class="proj-kebab-wrap">'+
-    '<button class="proj-kebab-btn" onclick="Pages.toggleProjKebab(\''+pid+'\',event)" title="المزيد من الخيارات"><i data-lucide="ellipsis-vertical"></i></button>'+
+    '<button class="proj-kebab-btn" onclick="Pages.toggleProjKebab(\''+pid+'\',event)" title="المزيد من الخيارات" style="font-size:20px;font-weight:700;letter-spacing:0;line-height:1">⋮</button>'+
     '<div class="proj-kebab-menu" id="pkm-'+pid+'" style="display:none">'+
       '<div class="pkm-section">'+
         '<div class="pkm-lbl">حالة التنفيذ</div>'+
@@ -9915,7 +9917,7 @@ Pages.doSetupPass = function() {
       .then(function(d) {
         if (d.token) {
           DB._token = d.token;
-          sessionStorage.setItem('buad2_jwt', d.token);
+          localStorage.setItem('buad2_jwt', d.token);
           doFinish(d.user);
         } else {
           err.textContent = 'خطأ في الحفظ، حاول مجدداً';
@@ -10242,9 +10244,29 @@ Pages._initApp = function() {
    INIT
 ═══════════════════════════════════════════ */
 (function init() {
-  // Restore JWT from sessionStorage
-  var savedToken = sessionStorage.getItem('buad2_jwt');
-  if (savedToken) DB._token = savedToken;
+  // Restore JWT from localStorage (persists across tabs and sessions)
+  var savedToken = localStorage.getItem('buad2_jwt');
+  if (savedToken) {
+    // Verify token isn't expired before trusting it
+    try {
+      var parts = savedToken.split('.');
+      if (parts.length === 3) {
+        var padded = parts[1].replace(/-/g,'+').replace(/_/g,'/') + '=='.slice(0,(4-parts[1].length%4)%4);
+        var bin = atob(padded);
+        var pl = JSON.parse(new TextDecoder().decode(Uint8Array.from(bin, function(c){ return c.charCodeAt(0); })));
+        if (pl && pl.exp && pl.exp > Math.floor(Date.now()/1000) && !pl.action) {
+          DB._token = savedToken;
+          // Restore session if missing (e.g. after clearing sessionStorage)
+          if (!Auth.getSession()) Auth.setSession({id:pl.id, name:pl.name, email:pl.email, role:pl.role});
+        } else {
+          localStorage.removeItem('buad2_jwt');
+          localStorage.removeItem('buad2_session');
+        }
+      }
+    } catch(e) {
+      localStorage.removeItem('buad2_jwt');
+    }
+  }
 
   // Invite link: #/invite/<setupToken> → go straight to set-password screen
   var inviteMatch = (window.location.hash || '').match(/^#\/?invite\/(.+)$/);
