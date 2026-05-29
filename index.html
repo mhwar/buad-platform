@@ -2346,13 +2346,13 @@ DB._buildWorkspace = function() {
 };
 
 DB._pushToServer = function() {
-  if (!DB._token) return;
+  if (!DB._token) return Promise.resolve(false);
   var ws = DB._buildWorkspace();
-  fetch('/api/workspace', {
+  return fetch('/api/workspace', {
     method: 'PUT',
     headers: DB._apiHeaders(),
     body: JSON.stringify(ws)
-  }).catch(function(e) { console.warn('Sync push failed:', e); });
+  }).then(function(r){ return r.ok; }).catch(function(e) { console.warn('Sync push failed:', e); return false; });
 };
 
 DB._pullFromServer = function() {
@@ -2361,9 +2361,11 @@ DB._pullFromServer = function() {
     .then(function(r) { return r.ok ? r.json() : null; })
     .then(function(ws) {
       if (!ws) return false;
-      if (ws.clients)   localStorage.setItem('buad2_clients',           JSON.stringify(ws.clients));
-      if (ws.projects)  localStorage.setItem('buad2_projects',          JSON.stringify(ws.projects));
-      if (ws.templates) localStorage.setItem('buad2_custom_templates',  JSON.stringify(ws.templates));
+      // Only let the server overwrite local data when the server actually has data,
+      // so a freshly-empty database never wipes a browser that still holds projects.
+      if (ws.clients   && ws.clients.length)   localStorage.setItem('buad2_clients',          JSON.stringify(ws.clients));
+      if (ws.projects  && ws.projects.length)  localStorage.setItem('buad2_projects',         JSON.stringify(ws.projects));
+      if (ws.templates && ws.templates.length) localStorage.setItem('buad2_custom_templates', JSON.stringify(ws.templates));
       if (ws.settings) {
         var localS = DB.getSettings();
         // Keep local users list (managed separately via /api/users)
@@ -2529,11 +2531,15 @@ Auth.saveUser = function(u) {
     var isNew = !u.id || !Auth.getUsers().find(function(x){ return x.id === u.id; });
     if (isNew) {
       var payload = { name: u.name, email: u.email, role: u.role };
-      if (u.password) payload.password = u._rawPassword; // raw pass set by caller
+      if (u._rawPassword) payload.password = u._rawPassword; // raw pass set by caller
       fetch('/api/users', { method: 'POST', headers: DB._apiHeaders(), body: JSON.stringify(payload) })
-        .then(function(r) { return r.json(); })
-        .then(function() { return DB._pullUsers(); })
-        .then(function() { if (window._afterSaveUser) { window._afterSaveUser(); window._afterSaveUser = null; } })
+        .then(function(r) { return r.json().then(function(d){ return { ok: r.ok, data: d }; }); })
+        .then(function(res) {
+          if (!res.ok) { throw new Error(res.data && res.data.error === 'email_exists' ? 'هذا البريد مسجّل مسبقاً' : 'تعذّر إضافة المستخدم'); }
+          return DB._pullUsers().then(function() {
+            if (window._afterSaveUser) { window._afterSaveUser(res.data); window._afterSaveUser = null; }
+          });
+        })
         .catch(function(e) { UI.toast('خطأ في الإضافة: ' + e.message, 'danger'); });
     } else {
       var upd = {};
@@ -2554,13 +2560,33 @@ Auth.saveUser = function(u) {
 };
 Auth.deleteUser = function(uid) {
   if (DB._token) {
-    fetch('/api/users/' + uid, { method: 'DELETE', headers: DB._apiHeaders() })
-      .then(function() { return DB._pullUsers(); })
-      .then(function() { Pages.render_settings(); })
-      .catch(function(e) { UI.toast('خطأ في الحذف', 'danger'); });
+    return fetch('/api/users/' + uid, { method: 'DELETE', headers: DB._apiHeaders() })
+      .then(function(r) { if (!r.ok) throw new Error('rejected'); return DB._pullUsers(); })
+      .then(function() { Pages.render_settings(); UI.toast('تم حذف المستخدم'); })
+      .catch(function(e) { UI.toast('تعذّر الحذف — تأكد من صلاحياتك', 'danger'); });
   } else {
     DB.saveSettings({ users: Auth.getUsers().filter(function(x){ return x.id !== uid; }) });
+    return Promise.resolve();
   }
+};
+// Update a user's role (admin only)
+Auth.updateUserRole = function(uid, role) {
+  if (DB._token) {
+    return fetch('/api/users/' + uid, { method: 'PUT', headers: DB._apiHeaders(), body: JSON.stringify({ role: role }) })
+      .then(function(r) { if (!r.ok) throw new Error('rejected'); return DB._pullUsers(); })
+      .catch(function() { UI.toast('تعذّر تغيير الصلاحية', 'danger'); });
+  }
+  var users = Auth.getUsers();
+  var u = users.find(function(x){ return x.id === uid; });
+  if (u) { u.role = role; DB.saveSettings({ users: users }); }
+  return Promise.resolve();
+};
+// Fetch a fresh invite link for a pending user (admin only)
+Auth.getInviteToken = function(uid) {
+  if (!DB._token) return Promise.resolve(null);
+  return fetch('/api/users/' + uid + '/invite', { headers: DB._apiHeaders() })
+    .then(function(r) { return r.ok ? r.json() : null; })
+    .catch(function() { return null; });
 };
 Auth.setPassword = function(uid, newPass) {
   if (DB._token) {
@@ -9448,9 +9474,12 @@ Pages.render_settings = function() {
               '</div>'+
               '<span style="font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;background:'+roleBg+';color:'+roleColor+'">'+roleLbl+'</span>'+
               (u.must_change_pass ? '<span style="font-size:10.5px;font-weight:600;padding:3px 8px;border-radius:20px;background:#fef9c3;color:#854d0e">في انتظار الإعداد</span>' : '') +
+              (u.must_change_pass
+                ? '<button onclick="Pages.showInviteLink(\''+u.id+'\')" style="background:none;border:none;cursor:pointer;color:var(--primary-600);padding:4px" title="رابط الدعوة"><i data-lucide="link" style="width:15px;height:15px"></i></button>'
+                : '') +
               (isMe
                 ? '<span style="font-size:11px;color:var(--success-600);font-weight:600">أنت</span>'
-                : '<button onclick="Pages.deleteUserConfirm(\''+u.id+'\')" style="background:none;border:none;cursor:pointer;color:var(--danger-500);padding:4px" title="حذف"><i data-lucide="trash-2" style="width:15px;height:15px"></i></button>'
+                : '<button onclick="Pages.openManageUserModal(\''+u.id+'\')" style="background:none;border:none;cursor:pointer;color:var(--fg-3);padding:4px" title="إدارة"><i data-lucide="settings-2" style="width:15px;height:15px"></i></button>'
               ) +
             '</div>';
           }).join('') +
@@ -9479,6 +9508,19 @@ Pages.render_settings = function() {
           '</div>' +
         '</div>' +
         '<button class="btn btn-primary btn-sm" onclick="Pages.doChangePassword()"><i data-lucide="save"></i>حفظ كلمة المرور</button>' +
+      '</div>';
+    })() +
+
+    /* Cloud sync — server mode only */
+    (function(){
+      if (!DB._token) return '';
+      return '<div class="card" style="margin-bottom:var(--space-5)">' +
+        '<div class="dash-sec-hdr"><h3><i data-lucide="cloud-upload"></i>مزامنة البيانات السحابية</h3></div>' +
+        '<p style="font-size:var(--font-xs);color:var(--text-muted);margin-bottom:var(--space-4);line-height:var(--lh-normal)">' +
+          'إن كان لديك مشاريع وبيانات محفوظة على هذا المتصفح من قبل، ارفعها إلى قاعدة البيانات لتظهر على كل الأجهزة والمستخدمين. ' +
+          '<strong>تنبيه:</strong> هذا يستبدل البيانات الموجودة حالياً في قاعدة البيانات ببيانات هذا المتصفح.' +
+        '</p>' +
+        '<button class="btn btn-primary" onclick="Pages.uploadLocalToServer()"><i data-lucide="cloud-upload"></i>رفع بيانات هذا المتصفح إلى قاعدة البيانات</button>' +
       '</div>';
     })() +
 
@@ -9782,10 +9824,15 @@ Pages.saveNewUser = function() {
   var userData = { name: name, email: email, role: role };
   if (isManual) userData._rawPassword = pass;
   // Show loading while server processes
-  window._afterSaveUser = function() {
-    UI.toast('تم إضافة المستخدم بنجاح', 'success');
+  window._afterSaveUser = function(created) {
     UI.closeModalForce();
     Pages.render_settings();
+    if (created && created.inviteToken) {
+      // First-login user — show shareable invite link
+      Pages._renderInviteModal(name, email, created.inviteToken);
+    } else {
+      UI.toast('تم إضافة المستخدم بنجاح', 'success');
+    }
   };
   Auth.saveUser(userData);
   if (!DB._token) {
@@ -9795,6 +9842,118 @@ Pages.saveNewUser = function() {
     Pages.render_settings();
   }
   // Server mode: _afterSaveUser callback handles the rest
+};
+
+// Build the invite link for a setup token
+Pages._inviteUrl = function(token) {
+  return location.origin + '/#/invite/' + token;
+};
+
+// Modal showing a copyable invite link + WhatsApp share
+Pages._renderInviteModal = function(name, email, token) {
+  var url = Pages._inviteUrl(token);
+  var msg = 'مرحباً ' + name + '، تم إضافتك إلى منصة بُعد.\n' +
+            'افتح هذا الرابط لتعيين كلمة مرورك والدخول:\n' + url;
+  var waUrl = 'https://wa.me/?text=' + encodeURIComponent(msg);
+  UI.openModal(
+    '<div class="modal-header"><h3>دعوة المستخدم</h3><button class="modal-close" onclick="UI.closeModalForce()">×</button></div>'+
+    '<div class="modal-body" style="display:grid;gap:14px;">'+
+      '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:12px 14px;font-size:13px;color:#166534;line-height:1.6">'+
+        'تم إنشاء حساب <strong>'+UI.escHtml(name)+'</strong> ('+UI.escHtml(email)+').<br>'+
+        'أرسل له الرابط التالي ليُعيّن كلمة مروره ويدخل من أي جهاز.'+
+      '</div>'+
+      '<div class="var-field"><div class="var-field-lbl">رابط الدعوة</div>'+
+        '<input class="var-field-inp" id="invite-url" value="'+UI.escHtml(url)+'" readonly style="direction:ltr;text-align:left;font-size:12px;" onclick="this.select()">'+
+      '</div>'+
+      '<div style="display:flex;gap:8px;flex-wrap:wrap">'+
+        '<button class="btn btn-primary btn-sm" onclick="Pages._copyInvite()"><i data-lucide="copy"></i>نسخ الرابط</button>'+
+        '<a class="btn btn-sm" href="'+waUrl+'" target="_blank" style="background:#25D366;color:#fff;text-decoration:none"><i data-lucide="message-circle"></i>مشاركة عبر واتساب</a>'+
+      '</div>'+
+    '</div>'+
+    '<div class="modal-footer"><button class="btn btn-primary" onclick="UI.closeModalForce()">تم</button></div>'
+  );
+  if (typeof lucide !== 'undefined') lucide.createIcons();
+};
+
+Pages._copyInvite = function() {
+  var inp = document.getElementById('invite-url');
+  inp.select();
+  var done = function(){ UI.toast('تم نسخ الرابط', 'success'); };
+  if (navigator.clipboard) { navigator.clipboard.writeText(inp.value).then(done).catch(function(){ document.execCommand('copy'); done(); }); }
+  else { document.execCommand('copy'); done(); }
+};
+
+// Fetch + show invite link for an existing pending user
+Pages.showInviteLink = function(uid) {
+  Auth.getInviteToken(uid).then(function(d) {
+    if (!d || !d.inviteToken) { UI.toast('تعذّر إنشاء الرابط', 'danger'); return; }
+    Pages._renderInviteModal(d.name, d.email, d.inviteToken);
+  });
+};
+
+// Full user management modal: role, reset password, delete
+Pages.openManageUserModal = function(uid) {
+  var u = Auth.getUsers().find(function(x){ return x.id === uid; });
+  if (!u) return;
+  UI.openModal(
+    '<div class="modal-header"><h3>إدارة المستخدم</h3><button class="modal-close" onclick="UI.closeModalForce()">×</button></div>'+
+    '<div class="modal-body" style="display:grid;gap:16px;">'+
+      '<div style="display:flex;align-items:center;gap:12px">'+
+        '<div style="width:42px;height:42px;border-radius:50%;background:var(--primary-100);color:var(--primary-700);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:17px">'+u.name.charAt(0)+'</div>'+
+        '<div><div style="font-weight:600;font-size:14px">'+UI.escHtml(u.name)+'</div>'+
+        '<div style="font-size:12px;color:var(--fg-3);direction:ltr;text-align:right">'+UI.escHtml(u.email)+'</div></div>'+
+      '</div>'+
+      '<div class="var-field"><div class="var-field-lbl">الصلاحية</div>'+
+        '<select class="var-field-inp" id="mu-role">'+
+          '<option value="user"'+(u.role!=='admin'?' selected':'')+'>مستخدم</option>'+
+          '<option value="admin"'+(u.role==='admin'?' selected':'')+'>مدير النظام</option>'+
+        '</select>'+
+      '</div>'+
+      '<div class="var-field"><div class="var-field-lbl">إعادة تعيين كلمة المرور (اختياري)</div>'+
+        '<input class="var-field-inp" id="mu-pass" type="password" placeholder="اتركه فارغاً لعدم التغيير">'+
+      '</div>'+
+      (u.must_change_pass ? '<button class="btn btn-sm" onclick="UI.closeModalForce();Pages.showInviteLink(\''+u.id+'\')" style="justify-self:start"><i data-lucide="link"></i>عرض رابط الدعوة</button>' : '')+
+    '</div>'+
+    '<div class="modal-footer" style="justify-content:space-between">'+
+      '<button class="btn btn-danger" onclick="Pages.deleteUserFromModal(\''+u.id+'\')"><i data-lucide="trash-2"></i>حذف المستخدم</button>'+
+      '<div style="display:flex;gap:8px">'+
+        '<button class="btn btn-ghost" onclick="UI.closeModalForce()">إلغاء</button>'+
+        '<button class="btn btn-primary" onclick="Pages.saveManageUser(\''+u.id+'\')"><i data-lucide="save"></i>حفظ</button>'+
+      '</div>'+
+    '</div>'
+  );
+  if (typeof lucide !== 'undefined') lucide.createIcons();
+};
+
+Pages.saveManageUser = function(uid) {
+  var role = document.getElementById('mu-role').value;
+  var pass = (document.getElementById('mu-pass').value||'').trim();
+  var tasks = [ Auth.updateUserRole(uid, role) ];
+  if (pass) {
+    if (pass.length < 6) { UI.toast('كلمة المرور 6 أحرف على الأقل', 'danger'); return; }
+    tasks.push(Auth.setPassword(uid, pass));
+  }
+  Promise.all(tasks).then(function() {
+    UI.closeModalForce();
+    Pages.render_settings();
+    UI.toast('تم حفظ التغييرات', 'success');
+  });
+};
+
+Pages.deleteUserFromModal = function(uid) {
+  if (!confirm('هل تريد حذف هذا المستخدم نهائياً؟')) return;
+  Promise.resolve(Auth.deleteUser(uid)).then(function(){ UI.closeModalForce(); });
+};
+
+// Force-upload this browser's local data to the shared database
+Pages.uploadLocalToServer = function() {
+  if (!DB._token) { UI.toast('سجّل الدخول أولاً', 'danger'); return; }
+  var nClients = DB.getClients().length, nProjects = DB.getProjects().length;
+  if (!confirm('سيتم رفع ' + nClients + ' عميل و ' + nProjects + ' مشروع من هذا المتصفح إلى قاعدة البيانات، واستبدال البيانات الموجودة هناك. متابعة؟')) return;
+  UI.toast('جارٍ الرفع...');
+  DB._pushToServer().then(function(ok) {
+    UI.toast(ok ? 'تم رفع البيانات بنجاح إلى قاعدة البيانات' : 'تعذّر الرفع — تحقق من الاتصال', ok ? 'success' : 'danger');
+  });
 };
 
 Pages.deleteUserConfirm = function(uid) {
@@ -9892,6 +10051,28 @@ Pages._initApp = function() {
   // Restore JWT from sessionStorage
   var savedToken = sessionStorage.getItem('buad2_jwt');
   if (savedToken) DB._token = savedToken;
+
+  // Invite link: #/invite/<setupToken> → go straight to set-password screen
+  var inviteMatch = (window.location.hash || '').match(/^#\/?invite\/(.+)$/);
+  if (inviteMatch) {
+    var setupToken = inviteMatch[1];
+    var name = 'بك';
+    try {
+      var payload = JSON.parse(atob(setupToken.split('.')[1].replace(/-/g,'+').replace(/_/g,'/')));
+      if (payload.name) name = payload.name;
+    } catch (e) {}
+    Auth._pendingSetup = { setupToken: setupToken, name: name };
+    document.getElementById('app').style.display = 'none';
+    document.getElementById('pg-login').style.display = 'none';
+    var sp = document.getElementById('pg-setup-pass');
+    sp.style.display = 'flex';
+    document.getElementById('setup-welcome-msg').textContent =
+      'مرحباً ' + name + '! أنشئ كلمة مرورك الخاصة لإكمال إعداد حسابك';
+    document.getElementById('setup-pass1').value = '';
+    document.getElementById('setup-pass2').value = '';
+    document.getElementById('setup-err').style.display = 'none';
+    return;
+  }
 
   Auth._seedAdmin();
   if (!Auth.isLoggedIn()) {

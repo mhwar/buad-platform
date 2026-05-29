@@ -93,13 +93,16 @@ export async function onRequest(context) {
     const pass  = (body.password || '');
 
     const user = await db.prepare('SELECT * FROM users WHERE email = ?').bind(email).first();
-    if (!user || user.password_hash !== djb2(pass)) {
+    if (!user) {
       return json({ error: 'invalid_credentials' }, 401);
     }
+    // First-login users have no password yet — let them set one (no password check)
     if (user.must_change_pass) {
-      // Return a short-lived "setup" token
       const setupToken = await signJWT({ id: user.id, name: user.name, email: user.email, role: user.role, action: 'setup' }, jwtSecret);
       return json({ action: 'setup', token: setupToken, name: user.name });
+    }
+    if (user.password_hash !== djb2(pass)) {
+      return json({ error: 'invalid_credentials' }, 401);
     }
     const token = await signJWT({ id: user.id, name: user.name, email: user.email, role: user.role }, jwtSecret);
     return json({ token, user: { id: user.id, name: user.name, email: user.email, role: user.role } });
@@ -164,7 +167,23 @@ export async function onRequest(context) {
     const passHash = body.password ? djb2(body.password) : djb2('__pending__' + id);
     await db.prepare('INSERT INTO users (id, name, email, password_hash, role, must_change_pass) VALUES (?, ?, ?, ?, ?, ?)')
       .bind(id, body.name || '', email, passHash, body.role || 'user', mustChange).run();
-    return json({ id, name: body.name, email, role: body.role || 'user', must_change_pass: mustChange }, 201);
+    const resp = { id, name: body.name, email, role: body.role || 'user', must_change_pass: mustChange };
+    // For first-login users, return an invite token so the admin can share a setup link
+    if (mustChange) {
+      resp.inviteToken = await signJWT({ id, name: body.name, email, role: body.role || 'user', action: 'setup' }, jwtSecret);
+    }
+    return json(resp, 201);
+  }
+
+  /* ─── GET /api/users/:id/invite ─── regenerate a setup link for a pending user */
+  const inviteMatch = path.match(/^\/users\/([^/]+)\/invite$/);
+  if (inviteMatch && method === 'GET') {
+    if (me.role !== 'admin') return json({ error: 'Forbidden' }, 403);
+    const uid = inviteMatch[1];
+    const u = await db.prepare('SELECT * FROM users WHERE id = ?').bind(uid).first();
+    if (!u) return json({ error: 'not_found' }, 404);
+    const inviteToken = await signJWT({ id: u.id, name: u.name, email: u.email, role: u.role, action: 'setup' }, jwtSecret);
+    return json({ inviteToken, name: u.name, email: u.email });
   }
 
   /* ─── PUT /api/users/:id ─── */
