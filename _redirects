@@ -1,4 +1,5 @@
-# Dashboard (team only) — served at /app, internal SPA uses hash routing
-/app      /app.html  200
-/app/*    /app.html  200
-# Public landing page is index.html (served at / by default)
+# Cloudflare Pages serves clean URLs automatically:
+#   index.html  → /        (public landing page)
+#   app.html    → /app      (dashboard, team only; internal routing is hash-based)
+# No explicit rules needed. A /app → /app.html rewrite here conflicts with the
+# automatic .html-stripping and breaks /app, so it is intentionally omitted.
