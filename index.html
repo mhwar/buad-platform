@@ -2871,9 +2871,12 @@ var Nav = {
       // Position menu above the button using fixed coords to escape overflow:hidden
       var rect = btn ? btn.getBoundingClientRect() : null;
       if (rect) {
-        menu.style.bottom = 'auto';
+        var menuW = 244, margin = 8;
+        var leftPos = rect.left;
+        leftPos = Math.max(margin, Math.min(window.innerWidth - menuW - margin, leftPos));
         menu.style.top    = 'auto';
-        menu.style.left   = rect.left + 'px';
+        menu.style.left   = leftPos + 'px';
+        menu.style.right  = 'auto';
         menu.style.bottom = (window.innerHeight - rect.top + 6) + 'px';
       }
       setTimeout(function(){
@@ -5874,9 +5877,13 @@ Pages.toggleProjKebab = function(projId, e) {
     var btn = e ? e.currentTarget : null;
     if (btn) {
       var rect = btn.getBoundingClientRect();
-      menu.style.top  = (rect.bottom + 6) + 'px';
-      menu.style.left = 'auto';
-      menu.style.right = (window.innerWidth - rect.right) + 'px';
+      var menuW = 240, margin = 8;
+      // right-align menu with button, but clamp inside viewport
+      var leftPos = rect.right - menuW;
+      leftPos = Math.max(margin, Math.min(window.innerWidth - menuW - margin, leftPos));
+      menu.style.top   = (rect.bottom + 6) + 'px';
+      menu.style.left  = leftPos + 'px';
+      menu.style.right = 'auto';
     }
     menu.style.display = 'block';
     if (typeof lucide !== 'undefined') lucide.createIcons({rootElement: menu});
