@@ -214,6 +214,25 @@ body.menu-open{overflow:hidden}
 .pstep::after{content:"";position:absolute;top:34px;left:-12px;width:24px;height:2px;background:var(--line)}
 .pstep:last-child::after{display:none}
 
+/* ── 100-day plan banner ── */
+.plan100{padding:0 0 0}
+.plan100-card{position:relative;overflow:hidden;border-radius:var(--radius-lg);background:linear-gradient(135deg,var(--navy-deep),var(--navy));color:#fff;box-shadow:var(--shadow-lg);display:grid;grid-template-columns:1.1fr .9fr;gap:30px;align-items:center;padding:46px 48px}
+.plan100-card::before{content:"";position:absolute;width:420px;height:420px;border-radius:50%;background:radial-gradient(circle,rgba(39,194,172,.22),transparent 65%);top:-140px;left:-120px}
+.plan100-l{position:relative}
+.plan100 .tag{display:inline-flex;align-items:center;gap:8px;background:rgba(39,194,172,.16);color:var(--accent-2);font-size:13px;font-weight:700;padding:6px 14px;border-radius:30px;margin-bottom:16px}
+.plan100 h2{font-size:clamp(24px,3.2vw,34px);font-weight:700;line-height:1.3;margin-bottom:14px;letter-spacing:-.4px}
+.plan100 p{font-size:16px;color:rgba(255,255,255,.8);line-height:1.85;margin-bottom:24px;max-width:520px}
+.plan100-actions{display:flex;gap:13px;flex-wrap:wrap}
+.plan100 .btn-light{background:#fff;color:var(--navy)}
+.plan100 .btn-light:hover{transform:translateY(-2px)}
+.plan100 .btn-line{background:transparent;color:#fff;border-color:rgba(255,255,255,.35)}
+.plan100 .btn-line:hover{border-color:#fff;background:rgba(255,255,255,.08)}
+.plan100-steps{position:relative;display:flex;flex-direction:column;gap:12px}
+.p100-step{display:flex;align-items:center;gap:13px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:13px;padding:13px 16px}
+.p100-step .n{width:34px;height:34px;border-radius:10px;background:rgba(39,194,172,.2);color:var(--accent-2);display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;font-size:14px}
+.p100-step .t{font-size:14px;font-weight:600}
+.p100-step .d{font-size:12px;color:rgba(255,255,255,.6);margin-top:1px}
+
 /* ── CTA / Request form ── */
 .request{background:linear-gradient(160deg,var(--navy-deep),var(--navy));color:#fff;position:relative;overflow:hidden}
 .request::before{content:"";position:absolute;width:500px;height:500px;border-radius:50%;background:radial-gradient(circle,rgba(39,194,172,.18),transparent 65%);top:-160px;right:-120px}
@@ -286,6 +305,7 @@ body.menu-open{overflow:hidden}
   .nav-cta .nav-team{display:none}
   .nav-toggle{display:inline-flex}
   .hero-grid,.why-grid,.request-grid{grid-template-columns:1fr;gap:40px}
+  .plan100-card{grid-template-columns:1fr;gap:26px;padding:36px 30px}
   /* Text first, visual card after — value proposition leads on mobile */
   .hero-text{order:1}
   .hero-visual{order:2;max-width:440px;margin:0 auto;width:100%}
@@ -325,6 +345,8 @@ body.menu-open{overflow:hidden}
   .fgrid{grid-template-columns:1fr}
   .hero-float{display:none}
   .form-card{padding:24px 20px}
+  .plan100-card{padding:30px 22px}
+  .plan100-actions .btn{flex:1;min-width:0}
   .footer-grid{grid-template-columns:1fr;gap:28px;text-align:right}
   .footer-bottom{flex-direction:column;text-align:center;gap:8px}
   .wa-float{bottom:20px;left:20px;width:54px;height:54px}
@@ -346,6 +368,7 @@ body.menu-open{overflow:hidden}
     <a href="#top" class="nav-logo"><img src="assets/logo.svg" alt="بُعد"></a>
     <div class="nav-links">
       <a href="#services">خدماتنا</a>
+      <a href="#plan100">خطة المئة يوم</a>
       <a href="#why">لماذا بُعد</a>
       <a href="#process">منهجيتنا</a>
       <a href="#request">تواصل معنا</a>
@@ -364,6 +387,7 @@ body.menu-open{overflow:hidden}
 <div class="mm-backdrop" id="mm-backdrop" onclick="toggleMenu(false)"></div>
 <div class="mobile-menu" id="mobile-menu">
   <a class="mm-link" href="#services" onclick="toggleMenu(false)">خدماتنا <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m15 18-6-6 6-6"/></svg></a>
+  <a class="mm-link" href="#plan100" onclick="toggleMenu(false)">خطة المئة يوم <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m15 18-6-6 6-6"/></svg></a>
   <a class="mm-link" href="#why" onclick="toggleMenu(false)">لماذا بُعد <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m15 18-6-6 6-6"/></svg></a>
   <a class="mm-link" href="#process" onclick="toggleMenu(false)">منهجيتنا <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m15 18-6-6 6-6"/></svg></a>
   <a class="mm-link" href="#request" onclick="toggleMenu(false)">تواصل معنا <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m15 18-6-6 6-6"/></svg></a>
@@ -443,6 +467,28 @@ body.menu-open{overflow:hidden}
       <p>نُصمّم حلولاً عمليةً تُعالج التحديات الحقيقية للقطاع غير الربحي، من التخطيط الاستراتيجي حتى التنفيذ وقياس الأثر.</p>
     </div>
     <div class="services-grid" id="services-grid"><!-- injected by JS --></div>
+  </div>
+</section>
+
+<!-- ═══ 100-DAY PLAN ═══ -->
+<section class="section" id="plan100">
+  <div class="container">
+    <div class="plan100-card reveal">
+      <div class="plan100-l">
+        <span class="tag"><span class="dot" style="width:7px;height:7px;border-radius:50%;background:var(--accent-2)"></span> أداة مجانية للجمعيات الناشئة</span>
+        <h2>تابِع تنفيذ خطة المئة يوم المعتمدة من المركز الوطني</h2>
+        <p>أنشئ حساب جمعيتك وتابِع إنجاز مهام خطة المئة يوم خطوةً بخطوة — مقرّك، حساباتك، حوكمتك، وخطتك التشغيلية — في لوحة واحدة واضحة، ونحن نرافقك متى احتجت.</p>
+        <div class="plan100-actions">
+          <a href="/plan" class="btn btn-light btn-lg">ابدأ متابعة خطتك مجاناً</a>
+          <a href="/plan" class="btn btn-line btn-lg">لدي حساب — دخول</a>
+        </div>
+      </div>
+      <div class="plan100-steps">
+        <div class="p100-step"><div class="n">١</div><div><div class="t">إنطلاقة الأعمال</div><div class="d">المقر · العنوان الوطني · الحساب البنكي · الهوية</div></div></div>
+        <div class="p100-step"><div class="n">٢</div><div><div class="t">التطوير المؤسسي</div><div class="d">الاستراتيجية · الموارد البشرية · الحوكمة · المبادرات</div></div></div>
+        <div class="p100-step"><div class="n">✓</div><div><div class="t">متابعة لحظية للإنجاز</div><div class="d">نسبة التقدّم والأيام المتبقية محفوظة في حسابك</div></div></div>
+      </div>
+    </div>
   </div>
 </section>
 

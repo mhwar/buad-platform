@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>بُعد · بوابة خطة المئة يوم للجمعيات</title>
+<meta name="description" content="بوابة الجمعيات الناشئة لمتابعة تنفيذ خطة المئة يوم المعتمدة من المركز الوطني — مع بُعد للتمكين.">
+<link rel="icon" href="assets/logo-icon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#00197d; --navy-2:#1e2a4a; --navy-deep:#0a1230;
+  --accent:#1d9b8a; --accent-2:#27c2ac; --gold:#e0a83c;
+  --ink:#13182b; --muted:#5b6478; --line:#e7eaf2;
+  --bg:#fff; --bg-soft:#f6f8fc; --bg-tint:#eef2fb;
+  --ok:#16a34a; --ok-soft:#e9f8ef;
+  --radius:16px; --radius-sm:11px; --radius-lg:24px;
+  --shadow-sm:0 2px 10px rgba(16,24,64,.05);
+  --shadow:0 14px 40px rgba(16,24,64,.10);
+  --shadow-lg:0 28px 64px rgba(16,24,64,.16);
+  --ease:cubic-bezier(.22,.61,.36,1);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{font-family:"IBM Plex Sans Arabic",system-ui,sans-serif;color:var(--ink);background:var(--bg-soft);line-height:1.7;font-variant-numeric:lining-nums;-webkit-font-feature-settings:"lnum" 1;font-feature-settings:"lnum" 1}
+a{color:inherit;text-decoration:none}
+img,svg{display:block;max-width:100%}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-family:inherit;font-size:15px;font-weight:600;cursor:pointer;padding:13px 24px;border-radius:var(--radius-sm);border:1.5px solid transparent;transition:transform .2s var(--ease),box-shadow .2s,background .2s,color .2s,border-color .2s;white-space:nowrap;line-height:1}
+.btn svg{width:18px;height:18px}
+.btn-primary{background:var(--navy);color:#fff;box-shadow:0 8px 22px rgba(0,25,125,.26)}
+.btn-primary:hover{transform:translateY(-2px)}
+.btn-ghost{background:#fff;color:var(--navy);border-color:var(--line)}
+.btn-ghost:hover{border-color:var(--navy)}
+.btn-block{width:100%}
+.btn:disabled{opacity:.6;cursor:default;transform:none}
+
+/* ── Auth screens ── */
+.auth-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:28px 18px;
+  background:radial-gradient(1000px 600px at 85% -10%,rgba(39,194,172,.12),transparent 60%),
+             radial-gradient(800px 600px at 0% 110%,rgba(0,25,125,.07),transparent 55%),var(--bg-soft)}
+.auth-card{background:#fff;border-radius:var(--radius-lg);box-shadow:var(--shadow-lg);width:100%;max-width:440px;padding:40px 36px}
+.auth-logo{height:52px;margin:0 auto 18px}
+.auth-card h1{font-size:22px;font-weight:700;color:var(--navy-deep);text-align:center;margin-bottom:6px}
+.auth-card .sub{font-size:14px;color:var(--muted);text-align:center;margin-bottom:26px}
+.auth-tabs{display:flex;background:var(--bg-soft);border-radius:12px;padding:4px;margin-bottom:24px}
+.auth-tab{flex:1;text-align:center;padding:10px;font-size:14px;font-weight:600;color:var(--muted);border-radius:9px;cursor:pointer;transition:.2s;border:none;background:none;font-family:inherit}
+.auth-tab.active{background:#fff;color:var(--navy);box-shadow:var(--shadow-sm)}
+.field{margin-bottom:15px}
+.field label{display:block;font-size:13px;font-weight:600;color:var(--navy-2);margin-bottom:6px}
+.field label .req{color:#e0533c}
+.field input{width:100%;font-family:inherit;font-size:14.5px;color:var(--ink);padding:12px 14px;border:1.5px solid var(--line);border-radius:11px;background:var(--bg-soft);outline:none;transition:border-color .2s,background .2s,box-shadow .2s}
+.field input:focus{border-color:var(--accent);background:#fff;box-shadow:0 0 0 4px rgba(39,194,172,.12)}
+.field .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.auth-err{display:none;background:#fef2f2;color:#dc2626;font-size:13px;padding:10px 13px;border-radius:9px;margin-bottom:14px;text-align:center}
+.auth-foot{text-align:center;margin-top:18px;font-size:13px;color:var(--muted)}
+.auth-foot a{color:var(--navy);font-weight:600}
+
+/* ── App shell ── */
+.topbar{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.9);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+.topbar-inner{max-width:1080px;margin:0 auto;padding:13px 22px;display:flex;align-items:center;justify-content:space-between;gap:14px}
+.topbar img{height:34px}
+.topbar .org{display:flex;align-items:center;gap:11px}
+.topbar .org .ava{width:38px;height:38px;border-radius:11px;background:linear-gradient(135deg,var(--navy),var(--accent));color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;flex-shrink:0}
+.topbar .org .nm{font-size:14px;font-weight:700;color:var(--navy-deep);line-height:1.2}
+.topbar .org .sub{font-size:11.5px;color:var(--muted)}
+.logout{background:none;border:1px solid var(--line);color:var(--muted);font-family:inherit;font-size:13px;font-weight:600;padding:8px 14px;border-radius:9px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:.15s}
+.logout:hover{border-color:#e0533c;color:#e0533c}
+.logout svg{width:15px;height:15px}
+
+.wrap{max-width:1080px;margin:0 auto;padding:26px 22px 70px}
+
+/* ── Overview ── */
+.hero-card{background:linear-gradient(150deg,var(--navy-deep),var(--navy));color:#fff;border-radius:var(--radius-lg);padding:28px 30px;position:relative;overflow:hidden;box-shadow:var(--shadow-lg);margin-bottom:24px}
+.hero-card::after{content:"";position:absolute;width:280px;height:280px;border-radius:50%;background:radial-gradient(circle,rgba(39,194,172,.28),transparent 70%);top:-90px;left:-70px}
+.hero-card .ttl{font-size:13px;font-weight:600;color:var(--accent-2);margin-bottom:6px;position:relative}
+.hero-card h1{font-size:clamp(22px,3vw,30px);font-weight:700;position:relative;margin-bottom:18px;line-height:1.3}
+.ov-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;position:relative}
+.ov-stat{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:14px 16px}
+.ov-stat .n{font-size:24px;font-weight:700;line-height:1;font-family:"IBM Plex Sans Arabic"}
+.ov-stat .l{font-size:12px;color:rgba(255,255,255,.72);margin-top:5px}
+.ring-wrap{position:relative;display:flex;align-items:center;justify-content:center}
+
+/* progress big bar */
+.bigbar{position:relative;margin-top:20px;height:12px;border-radius:10px;background:rgba(255,255,255,.16);overflow:hidden}
+.bigbar i{display:block;height:100%;border-radius:10px;background:linear-gradient(90deg,var(--accent-2),#7ee8d6);transition:width .6s var(--ease)}
+.bigbar-lbl{display:flex;justify-content:space-between;font-size:12px;color:rgba(255,255,255,.8);margin-top:8px;position:relative}
+
+/* ── Tracks ── */
+.track{background:#fff;border:1px solid var(--line);border-radius:var(--radius);margin-bottom:18px;overflow:hidden;box-shadow:var(--shadow-sm)}
+.track-head{display:flex;align-items:center;gap:14px;padding:18px 22px;cursor:pointer;user-select:none}
+.track-head .tnum{width:40px;height:40px;border-radius:12px;background:var(--bg-tint);color:var(--navy);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;flex-shrink:0}
+.track-head .ti{flex:1;min-width:0}
+.track-head .ti h3{font-size:16.5px;font-weight:700;color:var(--navy-deep)}
+.track-head .ti .meta{font-size:12.5px;color:var(--muted);margin-top:2px}
+.track-head .tpct{font-size:13px;font-weight:700;color:var(--accent);background:var(--bg-tint);padding:5px 12px;border-radius:20px;flex-shrink:0}
+.track-head .chev{color:var(--muted);transition:transform .3s var(--ease);flex-shrink:0}
+.track-head .chev svg{width:20px;height:20px}
+.track.open .chev{transform:rotate(180deg)}
+.track-mini{height:5px;background:var(--bg-soft)}
+.track-mini i{display:block;height:100%;background:linear-gradient(90deg,var(--navy),var(--accent));transition:width .5s var(--ease)}
+.track-body{display:none;padding:8px 14px 16px}
+.track.open .track-body{display:block}
+
+/* ── Task ── */
+.task{display:flex;gap:13px;padding:14px 12px;border-radius:12px;transition:background .15s;align-items:flex-start}
+.task:hover{background:var(--bg-soft)}
+.task+.task{border-top:1px solid var(--line)}
+.task .chk{width:24px;height:24px;border-radius:7px;border:2px solid var(--line);flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.18s;margin-top:2px;background:#fff}
+.task .chk svg{width:14px;height:14px;color:#fff;opacity:0;transition:opacity .15s}
+.task.done .chk{background:var(--ok);border-color:var(--ok)}
+.task.done .chk svg{opacity:1}
+.task .tx{flex:1;min-width:0}
+.task .tx .h{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.task .tx .h .name{font-size:15px;font-weight:600;color:var(--ink)}
+.task.done .tx .h .name{color:var(--muted);text-decoration:line-through}
+.task .tx .h .day{font-size:11px;font-weight:600;color:var(--navy);background:var(--bg-tint);padding:2px 9px;border-radius:20px}
+.task .tx .desc{font-size:13px;color:var(--muted);margin-top:4px;line-height:1.7}
+.task .done-at{font-size:11px;color:var(--ok);margin-top:4px;display:none}
+.task.done .done-at{display:block}
+
+/* ── Future services ── */
+.future{margin-top:30px}
+.future h2{font-size:18px;font-weight:700;color:var(--navy-deep);margin-bottom:6px}
+.future .sub{font-size:13.5px;color:var(--muted);margin-bottom:18px}
+.fgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.fcard{background:#fff;border:1px dashed var(--line);border-radius:var(--radius);padding:22px;position:relative;opacity:.92}
+.fcard .fic{width:48px;height:48px;border-radius:13px;background:var(--bg-tint);color:var(--navy);display:flex;align-items:center;justify-content:center;margin-bottom:14px}
+.fcard .fic svg{width:24px;height:24px}
+.fcard h4{font-size:15.5px;font-weight:700;color:var(--navy-deep);margin-bottom:6px}
+.fcard p{font-size:13px;color:var(--muted);line-height:1.7}
+.fcard .soon{position:absolute;top:16px;left:16px;font-size:10.5px;font-weight:700;color:var(--gold);background:rgba(224,168,60,.12);padding:3px 10px;border-radius:20px}
+.fcard .cta{margin-top:14px;font-size:13px;font-weight:600;color:var(--navy);display:inline-flex;align-items:center;gap:6px}
+.fcard .cta svg{width:15px;height:15px}
+
+.toast{position:fixed;bottom:24px;right:50%;transform:translateX(50%) translateY(20px);background:var(--navy-deep);color:#fff;padding:11px 22px;border-radius:30px;font-size:14px;font-weight:600;box-shadow:var(--shadow-lg);opacity:0;pointer-events:none;transition:.3s var(--ease);z-index:200}
+.toast.show{opacity:1;transform:translateX(50%) translateY(0)}
+
+.backlink{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);margin-bottom:16px}
+.backlink:hover{color:var(--navy)}
+.backlink svg{width:16px;height:16px}
+
+@media(max-width:760px){
+  .ov-stats{grid-template-columns:1fr;gap:10px}
+  .fgrid{grid-template-columns:1fr}
+  .hero-card{padding:22px 20px}
+  .wrap{padding:20px 16px 60px}
+  .topbar-inner{padding:11px 16px}
+  .topbar .org .sub{display:none}
+  .field .row2{grid-template-columns:1fr}
+  .auth-card{padding:30px 22px}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══ AUTH ═══ -->
+<div class="auth-wrap" id="auth-screen">
+  <div class="auth-card">
+    <img src="assets/logo.svg" alt="بُعد" class="auth-logo">
+    <h1>بوابة خطة المئة يوم</h1>
+    <p class="sub">للجمعيات الناشئة — تابِع تنفيذ خطتك المعتمدة من المركز الوطني</p>
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tab-login" onclick="showAuth('login')">دخول</button>
+      <button class="auth-tab" id="tab-register" onclick="showAuth('register')">حساب جديد</button>
+    </div>
+    <div class="auth-err" id="auth-err"></div>
+
+    <!-- Login -->
+    <form id="login-form">
+      <div class="field"><label>البريد الإلكتروني</label><input name="email" type="email" placeholder="example@org.sa" dir="ltr" style="text-align:right" required></div>
+      <div class="field"><label>كلمة المرور</label><input name="password" type="password" placeholder="••••••••" required></div>
+      <button type="submit" class="btn btn-primary btn-block" id="login-btn">تسجيل الدخول</button>
+    </form>
+
+    <!-- Register -->
+    <form id="register-form" style="display:none">
+      <div class="field"><label>اسم الجمعية <span class="req">*</span></label><input name="name" type="text" placeholder="اسم الجمعية" required></div>
+      <div class="field"><div class="row2">
+        <div><label>اسم المسؤول</label><input name="contact_name" type="text" placeholder="الاسم"></div>
+        <div><label>الجوال</label><input name="phone" type="tel" placeholder="05xxxxxxxx" dir="ltr" style="text-align:right"></div>
+      </div></div>
+      <div class="field"><div class="row2">
+        <div><label>المدينة</label><input name="city" type="text" placeholder="المدينة"></div>
+        <div><label>رقم الترخيص</label><input name="license_no" type="text" placeholder="رقم الترخيص" dir="ltr" style="text-align:right"></div>
+      </div></div>
+      <div class="field"><label>البريد الإلكتروني <span class="req">*</span></label><input name="email" type="email" placeholder="example@org.sa" dir="ltr" style="text-align:right" required></div>
+      <div class="field"><label>كلمة المرور <span class="req">*</span></label><input name="password" type="password" placeholder="٦ أحرف على الأقل" required></div>
+      <button type="submit" class="btn btn-primary btn-block" id="register-btn">إنشاء الحساب وبدء الخطة</button>
+    </form>
+
+    <div class="auth-foot"><a href="/">← العودة للموقع الرئيسي</a></div>
+  </div>
+</div>
+
+<!-- ═══ APP ═══ -->
+<div id="app-screen" style="display:none">
+  <div class="topbar">
+    <div class="topbar-inner">
+      <a href="/"><img src="assets/logo.svg" alt="بُعد"></a>
+      <div class="org">
+        <div class="ava" id="org-ava">ج</div>
+        <div><div class="nm" id="org-name">—</div><div class="sub">خطة المئة يوم</div></div>
+        <button class="logout" onclick="logout()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5M21 12H9"/></svg>خروج</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <a href="/" class="backlink"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m9 18 6-6-6-6"/></svg> الموقع الرئيسي</a>
+
+    <div class="hero-card">
+      <div class="ttl">رحلتك نحو منظمة راسخة ومستدامة</div>
+      <h1 id="hero-org">خطة المئة يوم</h1>
+      <div class="ov-stats">
+        <div class="ov-stat"><div class="n"><span id="st-done">0</span>/<span id="st-total">0</span></div><div class="l">مهمة مكتملة</div></div>
+        <div class="ov-stat"><div class="n"><span id="st-day">0</span> <span style="font-size:14px;font-weight:400">من ١٠٠</span></div><div class="l">اليوم الحالي</div></div>
+        <div class="ov-stat"><div class="n"><span id="st-left">100</span></div><div class="l">يوماً متبقياً</div></div>
+      </div>
+      <div class="bigbar"><i id="big-fill" style="width:0%"></i></div>
+      <div class="bigbar-lbl"><span>نسبة الإنجاز</span><span id="big-pct">0%</span></div>
+    </div>
+
+    <div id="tracks"></div>
+
+    <!-- Future services -->
+    <div class="future">
+      <h2>خدمات بُعد القادمة لجمعيتك</h2>
+      <p class="sub">بعد إتمام خطة المئة يوم، نرافقك في النمو عبر خدمات متخصصة — تواصل معنا للبدء مبكراً</p>
+      <div class="fgrid">
+        <div class="fcard"><span class="soon">قريباً</span>
+          <div class="fic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg></div>
+          <h4>تأسيس موقع إلكتروني</h4><p>موقع احترافي للجمعية يعرّف برسالتكم ويستقبل التبرعات والمتطوعين.</p>
+          <a class="cta" id="svc-web">اطلب الخدمة <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m9 18 6-6-6-6"/></svg></a>
+        </div>
+        <div class="fcard"><span class="soon">قريباً</span>
+          <div class="fic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg></div>
+          <h4>إدارة وتتبع المشاريع</h4><p>أدِر مشاريع جمعيتك مالياً وتشغيلياً مع تقارير أداء دورية.</p>
+          <a class="cta" id="svc-proj">اطلب الخدمة <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m9 18 6-6-6-6"/></svg></a>
+        </div>
+        <div class="fcard"><span class="soon">قريباً</span>
+          <div class="fic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg></div>
+          <h4>الحوكمة والامتثال</h4><p>بناء أنظمة الحوكمة واللوائح ومتابعة الامتثال للمعايير التنظيمية.</p>
+          <a class="cta" id="svc-gov">اطلب الخدمة <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m9 18 6-6-6-6"/></svg></a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+var API = '/api';
+var TOKEN_KEY = 'buad_org_jwt';
+var WA = '966500000000'; // updated from site config
+
+/* ── The official National Center 100-day plan (2 tracks, 17 tasks) ── */
+var PLAN = [
+  { id:'t1', title:'المسار الأول — إنطلاقة الأعمال', desc:'تأسيس الدعائم الأساسية للمنظمة والانطلاق الرسمي المنظّم', tasks:[
+    { id:'a1', title:'تأمين مقر للمنظمة', day:'خلال ٢٠ يوماً', desc:'توفير مقر مناسب وآمن (استئجار أو احتضان أو مساهمات) لإدارة الأنشطة الإدارية والتشغيلية.' },
+    { id:'a2', title:'التواصل مع الجهة المشرفة فنياً', day:'الأيام الأولى', desc:'التنسيق مع الجهة الحكومية المختصة بالنشاط للحصول على الدعم الفني والإرشادات التشغيلية.' },
+    { id:'a3', title:'الحصول على العنوان الوطني', day:'٣–٥ أيام', desc:'تسجيل العنوان الوطني عبر البريد السعودي (سبل) لتوحيد عنوان المنشأة في المراسلات الرسمية.' },
+    { id:'a4', title:'فتح الحساب البنكي للمنظمة', day:'٧–١٤ يوماً', desc:'حساب بنكي رسمي باسم الجمعية منفصل تماماً عن الحسابات الشخصية لضمان الشفافية المالية.' },
+    { id:'a5', title:'فتح حساب التأمينات الاجتماعية', day:'٥–٧ أيام', desc:'تسجيل المنظمة في التأمينات الاجتماعية (GOSI) لتوفير الحماية الاجتماعية للعاملين.' },
+    { id:'a6', title:'بناء الهوية البصرية', day:'٧–١٤ يوماً', desc:'تصميم الشعار والألوان والخطوط كترجمة مرئية لرؤية ورسالة المنظمة.' },
+    { id:'a7', title:'إنشاء قنوات التواصل الاجتماعي', day:'٣–٥ أيام', desc:'قنوات رسمية تتيح مشاركة الرسالة والبرامج والتفاعل مع الجمهور والمستفيدين.' }
+  ]},
+  { id:'t2', title:'المسار الثاني — التطوير المؤسسي والاستدامة', desc:'بناء القدرات التشغيلية وإرساء الحوكمة وتحقيق الاستدامة', tasks:[
+    { id:'b1', title:'صياغة رسالة ورؤية المنظمة', day:'٥–١٠ أيام', desc:'تحديد سبب وجود المنظمة وما تقدمه ولمن — الأساس الذي تُبنى عليه الاستراتيجية.' },
+    { id:'b2', title:'إعداد الخطة الاستراتيجية', day:'١٠–١٥ يوماً', desc:'خارطة طريق توجّه الموارد والجهود وتؤطّر اتخاذ القرارات بما يوافق رسالة المنظمة.' },
+    { id:'b3', title:'بناء إدارة الموارد البشرية', day:'١٠–١٤ يوماً', desc:'تحديد الأدوار والمسؤوليات واستقطاب الموظفين والمتطوعين وتدريبهم وخلق بيئة عمل محفّزة.' },
+    { id:'b4', title:'إعداد الخطة المالية', day:'٧–١٠ أيام', desc:'الميزانية التقديرية واستراتيجية جمع التبرعات وأنظمة الرقابة المالية.' },
+    { id:'b5', title:'إعداد الخطة التشغيلية', day:'١٠–١٥ يوماً', desc:'تفصيل المبادرات إلى خطوات ومسؤوليات وجداول زمنية وموارد مطلوبة.' },
+    { id:'b6', title:'إعداد الخطة التنفيذية للمبادرات', day:'٧–١٤ يوماً', desc:'تحديد الموارد والمسؤوليات والجداول الزمنية لكل مبادرة لضمان تنفيذها بفعالية.' },
+    { id:'b7', title:'إعداد الموازنة التقديرية التفصيلية', day:'٥–٧ أيام', desc:'ضمان استخدام الأموال بفعالية ودعم المشاريع وتحقيق الاستدامة المالية.' },
+    { id:'b8', title:'اختيار وإدارة المبادرات', day:'٧–١٠ أيام', desc:'اختيار المبادرات ذات الأثر الأكبر وتوجيه الموارد ومتابعة التنفيذ والتقييم.' },
+    { id:'b9', title:'إرساء نظام الحوكمة', day:'١٠–٢٠ يوماً', desc:'تعزيز الشفافية والمساءلة والالتزام بالقوانين والمعايير لتحقيق ثقة المانحين والمستفيدين.' },
+    { id:'b10', title:'إعداد خطة التواصل والتسويق', day:'٥–٧ أيام', desc:'الرسائل والوسائط والقنوات المناسبة لإيصال المعلومات بوضوح وتعزيز التفاعل.' }
+  ]}
+];
+
+var TOTAL_TASKS = PLAN.reduce(function(s,t){ return s + t.tasks.length; }, 0);
+var org = null;        // current org
+var progress = {};     // { taskId: { done, at } }
+var saveTimer = null;
+
+function token(){ return localStorage.getItem(TOKEN_KEY); }
+function setToken(t){ localStorage.setItem(TOKEN_KEY, t); }
+function clearToken(){ localStorage.removeItem(TOKEN_KEY); }
+function esc(s){ return (s==null?'':String(s)).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+function toAr(n){ return String(n).replace(/[0-9]/g,function(d){ return '٠١٢٣٤٥٦٧٨٩'[+d]; }); }
+
+function toast(msg){
+  var t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
+  clearTimeout(t._tm); t._tm=setTimeout(function(){ t.classList.remove('show'); }, 2200);
+}
+
+/* ── Auth UI ── */
+function showAuth(which){
+  document.getElementById('tab-login').classList.toggle('active', which==='login');
+  document.getElementById('tab-register').classList.toggle('active', which==='register');
+  document.getElementById('login-form').style.display = which==='login' ? '' : 'none';
+  document.getElementById('register-form').style.display = which==='register' ? '' : 'none';
+  document.getElementById('auth-err').style.display='none';
+}
+function authErr(msg){ var e=document.getElementById('auth-err'); e.textContent=msg; e.style.display='block'; }
+
+var ERRORS = { email_exists:'هذا البريد مسجّل مسبقاً — جرّب تسجيل الدخول', invalid_credentials:'البريد أو كلمة المرور غير صحيحة', weak_password:'كلمة المرور قصيرة (٦ أحرف على الأقل)', missing_fields:'يرجى تعبئة الحقول المطلوبة' };
+
+document.getElementById('register-form').addEventListener('submit', function(e){
+  e.preventDefault();
+  var f=e.target, btn=document.getElementById('register-btn');
+  var data={ name:f.name.value.trim(), contact_name:f.contact_name.value.trim(), phone:f.phone.value.trim(),
+             city:f.city.value.trim(), license_no:f.license_no.value.trim(),
+             email:f.email.value.trim(), password:f.password.value };
+  if(!data.name||!data.email||data.password.length<6){ authErr('يرجى تعبئة الاسم والبريد وكلمة مرور من ٦ أحرف'); return; }
+  btn.disabled=true; btn.textContent='جارٍ الإنشاء...';
+  fetch(API+'/org/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)})
+    .then(function(r){ return r.json().then(function(j){ return {ok:r.ok,j:j}; }); })
+    .then(function(res){
+      if(!res.ok){ authErr(ERRORS[res.j.error]||'تعذّر إنشاء الحساب'); btn.disabled=false; btn.textContent='إنشاء الحساب وبدء الخطة'; return; }
+      setToken(res.j.token); org=res.j.org; progress=org.progress||{}; enterApp();
+    })
+    .catch(function(){ authErr('تعذّر الاتصال بالخادم'); btn.disabled=false; btn.textContent='إنشاء الحساب وبدء الخطة'; });
+});
+
+document.getElementById('login-form').addEventListener('submit', function(e){
+  e.preventDefault();
+  var f=e.target, btn=document.getElementById('login-btn');
+  var data={ email:f.email.value.trim(), password:f.password.value };
+  btn.disabled=true; btn.textContent='جارٍ الدخول...';
+  fetch(API+'/org/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)})
+    .then(function(r){ return r.json().then(function(j){ return {ok:r.ok,j:j}; }); })
+    .then(function(res){
+      if(!res.ok){ authErr(ERRORS[res.j.error]||'تعذّر الدخول'); btn.disabled=false; btn.textContent='تسجيل الدخول'; return; }
+      setToken(res.j.token); org=res.j.org; progress=org.progress||{}; enterApp();
+    })
+    .catch(function(){ authErr('تعذّر الاتصال بالخادم'); btn.disabled=false; btn.textContent='تسجيل الدخول'; });
+});
+
+function logout(){ clearToken(); location.reload(); }
+
+/* ── App ── */
+function enterApp(){
+  document.getElementById('auth-screen').style.display='none';
+  document.getElementById('app-screen').style.display='block';
+  var nm = org.name || 'جمعيتي';
+  document.getElementById('org-name').textContent = nm;
+  document.getElementById('org-ava').textContent = nm.charAt(0);
+  document.getElementById('hero-org').textContent = nm;
+  // WhatsApp service links
+  ['svc-web','svc-proj','svc-gov'].forEach(function(id){
+    var labels={ 'svc-web':'تأسيس موقع إلكتروني','svc-proj':'إدارة وتتبع المشاريع','svc-gov':'الحوكمة والامتثال' };
+    var msg='مرحباً، جمعية «'+nm+'» مهتمة بخدمة: '+labels[id];
+    document.getElementById(id).href='https://wa.me/'+WA.replace(/[^0-9]/g,'')+'?text='+encodeURIComponent(msg);
+    document.getElementById(id).target='_blank';
+  });
+  renderTracks();
+  updateOverview();
+}
+
+function renderTracks(){
+  var html = PLAN.map(function(track, ti){
+    var done = track.tasks.filter(function(t){ return progress[t.id] && progress[t.id].done; }).length;
+    var pct = Math.round(done/track.tasks.length*100);
+    var tasks = track.tasks.map(function(t){
+      var p = progress[t.id]||{};
+      var at = p.at ? ('أُنجزت في '+p.at) : '';
+      return '<div class="task'+(p.done?' done':'')+'" data-id="'+t.id+'">'+
+        '<div class="chk" onclick="toggleTask(\''+t.id+'\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>'+
+        '<div class="tx"><div class="h"><span class="name">'+esc(t.title)+'</span><span class="day">'+esc(t.day)+'</span></div>'+
+        '<div class="desc">'+esc(t.desc)+'</div>'+
+        '<div class="done-at">✓ '+at+'</div></div>'+
+      '</div>';
+    }).join('');
+    return '<div class="track'+(ti===0?' open':'')+'" id="track-'+track.id+'">'+
+      '<div class="track-head" onclick="toggleTrack(\''+track.id+'\')">'+
+        '<div class="tnum">'+toAr(ti+1)+'</div>'+
+        '<div class="ti"><h3>'+esc(track.title)+'</h3><div class="meta">'+esc(track.desc)+'</div></div>'+
+        '<span class="tpct" id="pct-'+track.id+'">'+toAr(pct)+'%</span>'+
+        '<span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m6 9 6 6 6-6"/></svg></span>'+
+      '</div>'+
+      '<div class="track-mini"><i id="mini-'+track.id+'" style="width:'+pct+'%"></i></div>'+
+      '<div class="track-body">'+tasks+'</div>'+
+    '</div>';
+  }).join('');
+  document.getElementById('tracks').innerHTML = html;
+}
+
+function toggleTrack(id){ document.getElementById('track-'+id).classList.toggle('open'); }
+
+function toggleTask(taskId){
+  var cur = progress[taskId] && progress[taskId].done;
+  if(cur){ delete progress[taskId]; }
+  else { progress[taskId] = { done:true, at: new Date().toLocaleDateString('ar-SA') }; }
+  // update the DOM for that task + its track
+  var el = document.querySelector('.task[data-id="'+taskId+'"]');
+  if(el){
+    el.classList.toggle('done', !cur);
+    var p=progress[taskId];
+    if(p){ var da=el.querySelector('.done-at'); if(da) da.textContent='✓ أُنجزت في '+p.at; }
+  }
+  refreshTrackBars();
+  updateOverview();
+  scheduleSave();
+}
+
+function refreshTrackBars(){
+  PLAN.forEach(function(track){
+    var done = track.tasks.filter(function(t){ return progress[t.id] && progress[t.id].done; }).length;
+    var pct = Math.round(done/track.tasks.length*100);
+    var p=document.getElementById('pct-'+track.id); if(p) p.textContent=toAr(pct)+'%';
+    var m=document.getElementById('mini-'+track.id); if(m) m.style.width=pct+'%';
+  });
+}
+
+function updateOverview(){
+  var done = Object.keys(progress).filter(function(k){ return progress[k] && progress[k].done; }).length;
+  var pct = Math.round(done/TOTAL_TASKS*100);
+  document.getElementById('st-done').textContent = toAr(done);
+  document.getElementById('st-total').textContent = toAr(TOTAL_TASKS);
+  document.getElementById('big-fill').style.width = pct+'%';
+  document.getElementById('big-pct').textContent = toAr(pct)+'%';
+  // day counters
+  var start = org.plan_start ? new Date(org.plan_start) : new Date();
+  var elapsed = Math.max(1, Math.min(100, Math.floor((Date.now()-start.getTime())/86400000)+1));
+  document.getElementById('st-day').textContent = toAr(elapsed);
+  document.getElementById('st-left').textContent = toAr(Math.max(0,100-elapsed));
+}
+
+function scheduleSave(){
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(function(){
+    fetch(API+'/org/progress',{method:'PUT',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token()},body:JSON.stringify({progress:progress})})
+      .then(function(r){ if(r.ok) toast('تم حفظ تقدّمك ✓'); })
+      .catch(function(){});
+  }, 700);
+}
+
+/* ── Boot: restore session ── */
+(function init(){
+  // optional: pull WhatsApp number from public site config
+  fetch(API+'/public/site').then(function(r){ return r.ok?r.json():null; }).then(function(d){ if(d&&d.whatsapp) WA=d.whatsapp; }).catch(function(){});
+  var t = token();
+  if(t){
+    fetch(API+'/org/me',{headers:{'Authorization':'Bearer '+t}})
+      .then(function(r){ if(!r.ok) throw new Error('x'); return r.json(); })
+      .then(function(o){ org=o; progress=o.progress||{}; enterApp(); })
+      .catch(function(){ clearToken(); });
+  }
+})();
+</script>
+</body>
+</html>
