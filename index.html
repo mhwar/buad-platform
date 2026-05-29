@@ -4312,6 +4312,26 @@ Pages.renderFinCtrl = function(projId) {
   if (typeof lucide !== 'undefined') lucide.createIcons({rootElement: document.getElementById(Pages._ctrlContainer||'ctrl-drawer-body')});
 };
 
+Pages._refreshFinHero = function(projId) {
+  var r = FinCalc.calc(projId);
+  var phsC = document.getElementById('phs-contract'); if(phsC) phsC.textContent = UI.fmt(r.grossTotal);
+  var phsR = document.getElementById('phs-remaining'); if(phsR) phsR.textContent = UI.fmt(r.remaining);
+  var phsP = document.getElementById('phs-profit');   if(phsP) phsP.textContent = UI.fmt(r.profit);
+  // Update profit margin phs
+  var profitPct = r.grossTotal > 0 ? (r.profit / r.grossTotal * 100).toFixed(1) : '0.0';
+  document.querySelectorAll('.phs').forEach(function(phs) {
+    var lbl = phs.querySelector('.phs-lbl');
+    if (lbl && lbl.textContent.indexOf('هامش الربح') >= 0) {
+      var val = phs.querySelector('.phs-val');
+      if (val) val.textContent = profitPct + '%';
+      phs.className = 'phs ph-' + (parseFloat(profitPct)>=20?'success':parseFloat(profitPct)>=0?'warn':'danger');
+    }
+  });
+  // Update overspent color on remaining
+  var phsRBox = phsR && phsR.closest ? phsR.closest('.phs') : null;
+  if (phsRBox) phsRBox.className = 'phs ' + (r.remaining < 0 ? 'ph-danger' : 'ph-warn');
+};
+
 Pages.autoSaveCtrl = function(projId) {
   var fin = DB.getFin(projId);
   fin.ctrl = fin.ctrl||{};
@@ -4598,6 +4618,7 @@ Pages.saveEntryDetail = function(projId, entryId) {
   UI.toast('تم الحفظ', 'success');
   UI.closeModalForce();
   Pages.renderFinEntries(projId);
+  Pages._refreshFinHero(projId);
 };
 
 
@@ -4743,6 +4764,7 @@ Pages.saveEntry = function(projId) {
   UI.toast('تم حفظ القيد','success');
   UI.closeModalForce();
   Pages.renderFinEntries(projId);
+  Pages._refreshFinHero(projId);
 };
 
 Pages.editEntryModal = function(projId, entId) {
@@ -4835,6 +4857,7 @@ Pages.deleteEntry = function(projId, entId) {
   DB.saveFin(projId, fin);
   UI.toast('تم الحذف');
   Pages.renderFinEntries(projId);
+  Pages._refreshFinHero(projId);
 };
 
 /* ─── OVERVIEW TAB ─── */
