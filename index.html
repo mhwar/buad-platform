@@ -1386,6 +1386,37 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
 }
 .proj-hero-edit:hover{background:var(--neutral-100);border-color:var(--border-default)}
 
+/* Project kebab menu */
+.proj-kebab-wrap{position:relative}
+.proj-kebab-btn{
+  background:var(--surface-1);border:1px solid var(--border-subtle);
+  color:var(--fg-2);border-radius:var(--radius-sm);
+  width:36px;height:36px;cursor:pointer;font-family:inherit;
+  transition:var(--transition-fast);flex-shrink:0;
+  display:inline-flex;align-items:center;justify-content:center;
+}
+.proj-kebab-btn:hover{background:var(--neutral-100);border-color:var(--border-default);color:var(--fg-1)}
+.proj-kebab-menu{
+  position:absolute;top:calc(100% + 6px);left:0;
+  background:var(--surface-1);border:1px solid var(--border-subtle);
+  border-radius:var(--radius-md);
+  box-shadow:0 8px 24px rgba(0,0,0,.12),0 2px 8px rgba(0,0,0,.06);
+  min-width:230px;z-index:300;overflow:hidden;padding:5px 0;
+}
+.pkm-section{padding:2px 0}
+.pkm-lbl{padding:5px 14px 3px;font-size:10.5px;font-weight:700;color:var(--fg-4);letter-spacing:.4px}
+.pkm-item{
+  display:flex;align-items:center;gap:9px;
+  padding:9px 14px;font-size:13px;color:var(--fg-1);
+  cursor:pointer;transition:background .1s;
+  border:none;background:none;width:100%;text-align:right;font-family:inherit;
+}
+.pkm-item:hover{background:var(--bg-2)}
+.pkm-item.pkm-active{background:var(--primary-50);color:var(--primary-700);font-weight:600}
+.pkm-item.pkm-danger{color:#dc2626}
+.pkm-item.pkm-danger:hover{background:#fef2f2}
+.pkm-sep{height:1px;background:var(--border-subtle);margin:4px 0}
+
 /* Progress bar in hero */
 .proj-hero-progress{margin-top:var(--space-4);position:relative;z-index:1}
 .proj-hero-progress-labels{display:flex;justify-content:space-between;font-size:var(--font-2xs);color:var(--fg-3);margin-bottom:var(--space-1);font-weight:600}
@@ -4127,6 +4158,7 @@ Pages.render_fin = function(params) {
           '<div class="proj-hero-actions">' +
             '<button class="proj-hero-edit" onclick="Pages.openCtrlDrawer(\''+projId+'\')" style="color:var(--iris-600);border-color:var(--iris-200);background:var(--iris-50)"><i data-lucide="sliders-horizontal"></i>مركز التحكم</button>' +
             '<button class="proj-hero-edit" onclick="Pages.printFinReport(\''+projId+'\')" style="color:var(--accent-600);border-color:var(--accent-200);background:var(--accent-50)"><i data-lucide="file-chart-line"></i>تقارير</button>' +
+            Pages._projKebabHtml(proj) +
           '</div>' +
         '</div>' +
         '<div class="proj-hero-progress">' +
@@ -5778,6 +5810,112 @@ Pages.saveProjectInCtrl = function(projId) {
   UI.toast('تم حفظ بيانات المشروع','success');
   Pages.closeCtrlDrawer();
   Pages.render_fin({projId: projId, tab: Pages._finTab});
+};
+
+/* ─── PROJECT KEBAB MENU ─── */
+Pages._projKebabHtml = function(proj) {
+  var pid = proj.id;
+  var st  = proj.status || 'active';
+  var vis = proj.visibility || 'team';
+  function si(s, lbl, icon) {
+    return '<button class="pkm-item'+(st===s?' pkm-active':'')+'" onclick="Pages.setProjStatus(\''+pid+'\',\''+s+'\')"><i data-lucide="'+icon+'"></i>'+lbl+'</button>';
+  }
+  function vi(v, lbl, icon) {
+    return '<button class="pkm-item'+(vis===v?' pkm-active':'')+'" onclick="Pages.setProjVisibility(\''+pid+'\',\''+v+'\')"><i data-lucide="'+icon+'"></i>'+lbl+'</button>';
+  }
+  return '<div class="proj-kebab-wrap">'+
+    '<button class="proj-kebab-btn" onclick="Pages.toggleProjKebab(\''+pid+'\',event)" title="المزيد من الخيارات"><i data-lucide="ellipsis-vertical"></i></button>'+
+    '<div class="proj-kebab-menu" id="pkm-'+pid+'" style="display:none">'+
+      '<div class="pkm-section">'+
+        '<div class="pkm-lbl">حالة التنفيذ</div>'+
+        si('active',    'نشط',         'play-circle')+
+        si('completed', 'مكتمل',       'check-circle-2')+
+        si('paused',    'متوقف مؤقتاً','pause-circle')+
+        si('cancelled', 'ملغي',        'x-circle')+
+      '</div>'+
+      '<div class="pkm-sep"></div>'+
+      '<div class="pkm-section">'+
+        '<div class="pkm-lbl">الظهور</div>'+
+        vi('team',    'مرئي لكل المستخدمين','users')+
+        vi('private', 'خاص — أنا فقط',      'lock')+
+      '</div>'+
+      '<div class="pkm-sep"></div>'+
+      '<div class="pkm-section">'+
+        '<button class="pkm-item" onclick="Pages.closeProjKebab();Pages.editProjectStatusModal(\''+pid+'\')"><i data-lucide="pencil"></i>تعديل الاسم والنوع</button>'+
+        '<button class="pkm-item" onclick="Pages.closeProjKebab();Pages.duplicateProject(\''+pid+'\')"><i data-lucide="copy-plus"></i>نسخ المشروع</button>'+
+      '</div>'+
+      '<div class="pkm-sep"></div>'+
+      '<div class="pkm-section">'+
+        '<button class="pkm-item pkm-danger" onclick="Pages.closeProjKebab();Pages.deleteProjectConfirm(\''+pid+'\')"><i data-lucide="trash-2"></i>حذف المشروع</button>'+
+      '</div>'+
+    '</div>'+
+  '</div>';
+};
+
+Pages.toggleProjKebab = function(projId, e) {
+  if (e) e.stopPropagation();
+  var menu = document.getElementById('pkm-'+projId);
+  if (!menu) return;
+  var opening = menu.style.display === 'none';
+  document.querySelectorAll('.proj-kebab-menu').forEach(function(m){ m.style.display='none'; });
+  if (opening) {
+    menu.style.display = 'block';
+    if (typeof lucide !== 'undefined') lucide.createIcons({rootElement: menu});
+    setTimeout(function(){
+      document.addEventListener('click', Pages._closeProjKebab, {once:true});
+    }, 0);
+  }
+};
+Pages._closeProjKebab = function() {
+  document.querySelectorAll('.proj-kebab-menu').forEach(function(m){ m.style.display='none'; });
+};
+Pages.closeProjKebab = function() { Pages._closeProjKebab(); };
+
+Pages.setProjStatus = function(projId, status) {
+  var projects = DB.getProjects();
+  var idx = projects.findIndex(function(p){ return p.id===projId; });
+  if (idx < 0) return;
+  projects[idx].status = status;
+  DB.saveProjects(projects);
+  Pages.closeProjKebab();
+  Pages.render_fin({projId:projId, tab:Pages._finTab});
+  var labels = {active:'نشط',completed:'مكتمل',paused:'متوقف مؤقتاً',cancelled:'ملغي'};
+  UI.toast('الحالة: '+labels[status], 'success');
+};
+
+Pages.setProjVisibility = function(projId, vis) {
+  var projects = DB.getProjects();
+  var idx = projects.findIndex(function(p){ return p.id===projId; });
+  if (idx < 0) return;
+  projects[idx].visibility = vis;
+  DB.saveProjects(projects);
+  Pages.closeProjKebab();
+  Pages.render_fin({projId:projId, tab:Pages._finTab});
+  UI.toast(vis==='private' ? 'المشروع أصبح خاصاً 🔒' : 'المشروع مرئي لكل المستخدمين', 'success');
+};
+
+Pages.duplicateProject = function(projId) {
+  var projects = DB.getProjects();
+  var proj = projects.find(function(p){ return p.id===projId; });
+  if (!proj) return;
+  var session = Auth.getSession();
+  var newProj = JSON.parse(JSON.stringify(proj));
+  newProj.id = DB.uid();
+  newProj.name = proj.name + ' (نسخة)';
+  newProj.owner_id = session ? session.id : (proj.owner_id || 'usr_admin_1');
+  newProj.created = new Date().toISOString().slice(0,10);
+  projects.push(newProj);
+  DB.saveProjects(projects);
+  // Copy control settings but clear transactions & contracts (project-specific)
+  var fin = DB.getFin(projId);
+  if (fin && Object.keys(fin).length) {
+    var finCopy = JSON.parse(JSON.stringify(fin));
+    finCopy.entries   = [];
+    finCopy.contracts = [];
+    localStorage.setItem('buad2_fin_'+newProj.id, JSON.stringify(finCopy));
+  }
+  UI.toast('تم نسخ المشروع', 'success');
+  Nav.go('fin', {projId: newProj.id});
 };
 
 Pages.deleteProjectConfirm = function(projId) {
