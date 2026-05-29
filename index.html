@@ -652,7 +652,9 @@ var ICONS = {
   users:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/>',
   trending:'<path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/>',
   layers:'<path d="m12 2 10 5-10 5L2 7l10-5z"/><path d="m2 17 10 5 10-5M2 12l10 5 10-5"/>',
-  handshake:'<path d="m11 17 2 2a1 1 0 1 0 3-3"/><path d="m14 14 2.5 2.5a1 1 0 1 0 3-3l-3.88-3.88a3 3 0 0 0-4.24 0l-.88.88a1 1 0 1 1-3-3l2.81-2.81a5.79 5.79 0 0 1 7.06-.87l.47.28a2 2 0 0 0 1.42.25L21 4"/><path d="m21 3 1 11h-2M3 3 2 14l6.5 6.5a1 1 0 1 0 3-3M3 4h8"/>'
+  handshake:'<path d="m11 17 2 2a1 1 0 1 0 3-3"/><path d="m14 14 2.5 2.5a1 1 0 1 0 3-3l-3.88-3.88a3 3 0 0 0-4.24 0l-.88.88a1 1 0 1 1-3-3l2.81-2.81a5.79 5.79 0 0 1 7.06-.87l.47.28a2 2 0 0 0 1.42.25L21 4"/><path d="m21 3 1 11h-2M3 3 2 14l6.5 6.5a1 1 0 1 0 3-3M3 4h8"/>',
+  palette:'<circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/>',
+  globe:'<circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>'
 };
 function svg(name){ return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'+(ICONS[name]||ICONS.briefcase)+'</svg>'; }
 
@@ -663,7 +665,9 @@ var DEFAULT_SERVICES = [
   { id:'consult',icon:'compass',   title:'الاستشارات والتطوير المؤسسي', desc:'نُرافقكم في رحلة التطوير المؤسسي عبر التخطيط الاستراتيجي وإعادة هيكلة العمليات بما يرفع كفاءة أدائكم.', points:['التخطيط الاستراتيجي','تطوير الهياكل والعمليات','بناء النماذج التشغيلية'], enabled:true },
   { id:'digital',icon:'monitor',   title:'التحول الرقمي للجمعيات', desc:'نقود رقمنة عملياتكم واعتماد الأنظمة الذكية لإدارة المستفيدين والتبرعات والتقارير، لتمكينكم من العمل بكفاءةٍ أعلى.', points:['رقمنة العمليات والخدمات','أنظمة إدارة المستفيدين','حلول البيانات والتقارير'], enabled:true },
   { id:'capacity',icon:'graduation',title:'بناء القدرات والتدريب', desc:'نُطوّر قدرات فرقكم عبر برامج تدريبية متخصصة وورش عملٍ تطبيقية ترفع جاهزيتهم لإدارة العمل الخيري باحترافية.', points:['برامج تدريبية متخصصة','ورش عمل تطبيقية','تأهيل الكوادر القيادية'], enabled:true },
-  { id:'impact',icon:'target',     title:'قياس الأثر الاجتماعي', desc:'نُصمّم أطر قياس الأثر ونوثّق نتائج برامجكم بمنهجياتٍ معتمدة، لتُظهروا قيمتكم الحقيقية للمانحين والمجتمع.', points:['تصميم مؤشرات الأثر','جمع وتحليل البيانات','تقارير الأثر للمانحين'], enabled:true }
+  { id:'impact',icon:'target',     title:'قياس الأثر الاجتماعي', desc:'نُصمّم أطر قياس الأثر ونوثّق نتائج برامجكم بمنهجياتٍ معتمدة، لتُظهروا قيمتكم الحقيقية للمانحين والمجتمع.', points:['تصميم مؤشرات الأثر','جمع وتحليل البيانات','تقارير الأثر للمانحين'], enabled:true },
+  { id:'identity',icon:'palette',  title:'تصميم الهوية البصرية والشعار', desc:'نُصمّم هويةً بصريةً متكاملة لجمعيتكم — شعارٌ مميز، لوح ألوان، وخطوط — تترجم رسالتكم وقيمكم وتُرسّخ حضوركم.', points:['تصميم الشعار والهوية','دليل الهوية البصرية','قوالب ومواد تسويقية'], enabled:true },
+  { id:'web',    icon:'globe',     title:'تصميم وتطوير المواقع الإلكترونية', desc:'نبني موقعاً إلكترونياً احترافياً يُعرّف بجمعيتكم ويعرض برامجها ويستقبل التبرعات وطلبات التطوع بتجربةٍ سلسة.', points:['موقع احترافي متجاوب','بوابة تبرعات وتطوع','ربط مع أنظمتكم'], enabled:true }
 ];
 
 var CFG = {
@@ -752,7 +756,7 @@ document.getElementById('request-form').addEventListener('submit', function(e){
 
   fetch(API+'/public/request', {
     method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data)
-  }).then(function(r){ return r.json().catch(function(){return{};}); })
+  }).then(function(r){ if(!r.ok) throw new Error('bad_status'); return r.json().catch(function(){return{};}); })
     .then(function(res){
       showSuccess(data);
     })
