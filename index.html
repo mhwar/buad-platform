@@ -250,12 +250,14 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .sb-logo{display:flex;align-items:center;gap:var(--space-2);flex:1;overflow:hidden;white-space:nowrap;min-width:0}
 .sb-logo-icon{
   width:32px;height:32px;border-radius:var(--radius-sm);
-  background:var(--iris-500);
+  background:transparent;
   display:flex;align-items:center;justify-content:center;
-  font-size:15px;font-weight:800;color:#fff;flex-shrink:0;
-  letter-spacing:-.5px;
+  flex-shrink:0;
 }
+.sb-logo-icon img{width:32px;height:32px;object-fit:contain;}
+.sb-logo-full{height:28px;flex-shrink:0;object-fit:contain;opacity:1;transition:opacity var(--transition);}
 .sb-logo-text{font-size:var(--font-md);font-weight:700;color:var(--fg-1);opacity:1;transition:opacity var(--transition);letter-spacing:-.2px}
+.sidebar.collapsed .sb-logo-full,
 .sidebar.collapsed .sb-logo-text,
 .sidebar.collapsed .sb-version{opacity:0;pointer-events:none;width:0;overflow:hidden}
 
@@ -419,10 +421,11 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 
 /* ── User profile dropdown menu ── */
 .sb-user-menu{
-  position:absolute;bottom:calc(100% + 4px);inset-inline-start:var(--space-2);inset-inline-end:var(--space-2);
+  position:fixed;bottom:auto;left:auto;
+  min-width:240px;
   background:var(--bg-elevated);border:1px solid var(--border);
   border-radius:var(--radius-md);box-shadow:var(--shadow-lg);
-  padding:var(--space-1_5);z-index:50;
+  padding:var(--space-1_5);z-index:9990;
   opacity:0;transform:translateY(4px);pointer-events:none;
   transition:opacity var(--transition-fast),transform var(--transition-fast);
 }
@@ -1397,11 +1400,11 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
 }
 .proj-kebab-btn:hover{background:var(--neutral-100);border-color:var(--border-default);color:var(--fg-1)}
 .proj-kebab-menu{
-  position:absolute;top:calc(100% + 6px);left:0;
+  position:fixed;
   background:var(--surface-1);border:1px solid var(--border-subtle);
   border-radius:var(--radius-md);
   box-shadow:0 8px 24px rgba(0,0,0,.12),0 2px 8px rgba(0,0,0,.06);
-  min-width:230px;z-index:300;overflow:hidden;padding:5px 0;
+  min-width:230px;z-index:9999;overflow:hidden;padding:5px 0;
 }
 .pkm-section{padding:2px 0}
 .pkm-lbl{padding:5px 14px 3px;font-size:10.5px;font-weight:700;color:var(--fg-4);letter-spacing:.4px}
@@ -2133,8 +2136,7 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
 <!-- Login Page -->
 <div id="pg-login" style="display:none;position:fixed;inset:0;background:linear-gradient(135deg,#f0f4ff 0%,#f8f9fb 100%);z-index:9999;flex-direction:column;align-items:center;justify-content:center;font-family:inherit;">
   <div style="background:#fff;border-radius:20px;box-shadow:0 8px 48px rgba(30,42,74,.12);padding:44px 52px;min-width:360px;max-width:420px;width:90%;text-align:center;">
-    <div style="width:52px;height:52px;background:#1e2a4a;border-radius:14px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:24px;font-weight:800;color:#fff;">ب</div>
-    <div style="font-size:22px;font-weight:800;color:#1e2a4a;margin-bottom:4px;">بُعد</div>
+    <img src="assets/logo.svg" alt="بُعد" style="height:72px;margin:0 auto 20px;display:block;object-fit:contain;">
     <div style="font-size:13px;color:#6b7280;margin-bottom:32px;">منصة إدارة المشاريع والعقود</div>
     <div style="text-align:right;margin-bottom:14px;">
       <label style="font-size:12px;color:#374151;font-weight:600;display:block;margin-bottom:6px;">البريد الإلكتروني</label>
@@ -2196,8 +2198,8 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
   <aside id="sidebar" class="sidebar">
     <div class="sb-header">
       <div class="sb-logo">
-        <div class="sb-logo-icon">ب</div>
-        <span class="sb-logo-text">بُعد</span>
+        <div class="sb-logo-icon"><img src="assets/logo-icon.svg" alt="بُعد"></div>
+        <img src="assets/logo.svg" alt="بُعد" class="sb-logo-full">
         <span class="sb-version">v1.0</span>
       </div>
       <button class="sb-toggle" id="sb-toggle" onclick="Nav.toggleSidebar()" aria-label="طيّ السايدبار"><i data-lucide="chevron-right"></i></button>
@@ -2866,6 +2868,14 @@ var Nav = {
     var isOpen = menu.classList.toggle('open');
     if (btn) btn.classList.toggle('menu-open', isOpen);
     if (isOpen) {
+      // Position menu above the button using fixed coords to escape overflow:hidden
+      var rect = btn ? btn.getBoundingClientRect() : null;
+      if (rect) {
+        menu.style.bottom = 'auto';
+        menu.style.top    = 'auto';
+        menu.style.left   = rect.left + 'px';
+        menu.style.bottom = (window.innerHeight - rect.top + 6) + 'px';
+      }
       setTimeout(function(){
         document.addEventListener('click', Nav._userMenuOutside);
       }, 0);
@@ -5861,6 +5871,13 @@ Pages.toggleProjKebab = function(projId, e) {
   var opening = menu.style.display === 'none';
   document.querySelectorAll('.proj-kebab-menu').forEach(function(m){ m.style.display='none'; });
   if (opening) {
+    var btn = e ? e.currentTarget : null;
+    if (btn) {
+      var rect = btn.getBoundingClientRect();
+      menu.style.top  = (rect.bottom + 6) + 'px';
+      menu.style.left = 'auto';
+      menu.style.right = (window.innerWidth - rect.right) + 'px';
+    }
     menu.style.display = 'block';
     if (typeof lucide !== 'undefined') lucide.createIcons({rootElement: menu});
     setTimeout(function(){
