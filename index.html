@@ -26,7 +26,7 @@
   --ease:cubic-bezier(.22,.61,.36,1);
 }
 *{margin:0;padding:0;box-sizing:border-box}
-html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%;scroll-padding-top:90px}
 body{
   font-family:"IBM Plex Sans Arabic",system-ui,sans-serif;
   color:var(--ink);background:var(--bg);line-height:1.75;
@@ -71,8 +71,29 @@ img,svg{display:block;max-width:100%}
 .nav-cta{display:flex;align-items:center;gap:12px}
 .nav-team{font-size:13.5px;font-weight:500;color:var(--muted);display:inline-flex;align-items:center;gap:5px}
 .nav-team:hover{color:var(--navy)}
-.nav-toggle{display:none;background:none;border:none;cursor:pointer;padding:6px;color:var(--navy-2)}
-.nav-toggle svg{width:26px;height:26px}
+.nav-toggle{display:none;background:none;border:none;cursor:pointer;padding:6px;color:var(--navy-2);border-radius:9px;transition:background .15s}
+.nav-toggle:hover{background:var(--bg-tint)}
+.nav-toggle svg{width:28px;height:28px}
+.nav-toggle .ic-close{display:none}
+.nav-toggle.active .ic-open{display:none}
+.nav-toggle.active .ic-close{display:block}
+
+/* ── Mobile menu ── */
+.mm-backdrop{position:fixed;inset:0;background:rgba(10,18,48,.45);z-index:98;opacity:0;pointer-events:none;transition:opacity .3s}
+.mm-backdrop.open{opacity:1;pointer-events:all}
+.mobile-menu{
+  position:fixed;top:0;right:0;left:0;z-index:99;background:#fff;
+  padding:84px 22px 26px;box-shadow:0 24px 60px rgba(16,24,64,.18);
+  transform:translateY(-105%);transition:transform .38s var(--ease);
+  display:flex;flex-direction:column;
+}
+.mobile-menu.open{transform:translateY(0)}
+.mobile-menu a.mm-link{font-size:17px;font-weight:600;color:var(--navy-2);padding:15px 6px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between}
+.mobile-menu a.mm-link svg{width:18px;height:18px;color:var(--accent);opacity:.7}
+.mm-actions{display:flex;flex-direction:column;gap:11px;margin-top:20px}
+.mm-actions .btn{width:100%;padding:15px}
+.mm-actions .nav-team{justify-content:center;font-size:15px;padding:14px;border:1.5px solid var(--line);border-radius:var(--radius-sm);color:var(--navy-2)}
+body.menu-open{overflow:hidden}
 
 /* ── Hero ── */
 .hero{
@@ -257,26 +278,53 @@ img,svg{display:block;max-width:100%}
 @keyframes wapulse{0%{box-shadow:0 10px 28px rgba(37,211,102,.45),0 0 0 0 rgba(37,211,102,.4)}70%{box-shadow:0 10px 28px rgba(37,211,102,.45),0 0 0 16px rgba(37,211,102,0)}100%{box-shadow:0 10px 28px rgba(37,211,102,.45),0 0 0 0 rgba(37,211,102,0)}}
 
 /* ── Responsive ── */
-@media(max-width:900px){
+@media(max-width:980px){
   .nav-links{display:none}
-  .nav-team{display:none}
-  .hero-grid,.why-grid,.request-grid{grid-template-columns:1fr;gap:40px}
-  .hero-visual{order:-1;max-width:440px;margin:0 auto}
+  .nav-cta .nav-team{display:none}
+  .nav-toggle{display:inline-flex}
+  .hero-grid,.why-grid,.request-grid{grid-template-columns:1fr;gap:44px}
+  .hero-visual{order:-1;max-width:430px;margin:0 auto;width:100%}
   .services-grid{grid-template-columns:1fr 1fr}
-  .stats-grid{grid-template-columns:1fr 1fr;gap:34px 20px}
-  .process{grid-template-columns:1fr 1fr;gap:30px 20px}
+  .stats-grid{grid-template-columns:repeat(2,1fr);gap:38px 20px}
+  .process{grid-template-columns:1fr 1fr;gap:34px 22px}
   .pstep::after{display:none}
-  .footer-grid{grid-template-columns:1fr 1fr;gap:32px}
+  .footer-grid{grid-template-columns:1fr 1fr;gap:34px}
 }
-@media(max-width:560px){
-  .hero{padding:130px 0 70px}
-  .section{padding:64px 0}
-  .services-grid{grid-template-columns:1fr}
-  .stats-grid,.process,.footer-grid{grid-template-columns:1fr;gap:26px}
+@media(max-width:620px){
+  .container{padding:0 18px}
+  .nav{padding:14px 0}
+  .nav.scrolled{padding:9px 0}
+  .nav-cta .btn-primary{display:none}      /* CTA lives in the mobile menu */
+  .hero{padding:118px 0 64px}
+  .hero h1{font-size:clamp(28px,8vw,38px)}
+  .hero h1 .hl{white-space:normal}
+  .hero p.lead{font-size:15.5px}
+  .hero-actions{gap:11px}
+  .hero-actions .btn{flex:1;min-width:0}
+  .hero-trust{margin-top:28px;font-size:12.5px}
+  .hero-card{padding:20px}
+  .section{padding:58px 0}
+  .sec-head{margin-bottom:38px}
+  .sec-head p{font-size:15.5px}
+  .services-grid{grid-template-columns:1fr;gap:16px}
+  .svc{padding:26px 22px}
+  .stats-grid{padding:42px 0;gap:30px 18px}
+  .why-visual{padding:34px 26px}
+  .why-visual .q{font-size:18px}
+  .process{gap:26px 18px}
   .fgrid{grid-template-columns:1fr}
   .hero-float{display:none}
   .form-card{padding:24px 20px}
-  .hero-actions .btn{flex:1}
+  .footer-grid{grid-template-columns:1fr;gap:28px;text-align:right}
+  .footer-bottom{flex-direction:column;text-align:center;gap:8px}
+  .wa-float{bottom:20px;left:20px;width:54px;height:54px}
+}
+@media(max-width:380px){
+  .process{grid-template-columns:1fr}
+}
+@media(prefers-reduced-motion:reduce){
+  *{animation:none!important;scroll-behavior:auto!important}
+  .reveal{opacity:1!important;transform:none!important;transition:none!important}
 }
 </style>
 </head>
@@ -298,9 +346,29 @@ img,svg{display:block;max-width:100%}
         دخول الفريق
       </a>
       <a href="#request" class="btn btn-primary">اطلب خدمة</a>
+      <button class="nav-toggle" id="nav-toggle" aria-label="القائمة" aria-expanded="false" onclick="toggleMenu()">
+        <svg class="ic-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+        <svg class="ic-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
+      </button>
     </div>
   </div>
 </nav>
+
+<!-- ═══ MOBILE MENU ═══ -->
+<div class="mm-backdrop" id="mm-backdrop" onclick="toggleMenu(false)"></div>
+<div class="mobile-menu" id="mobile-menu">
+  <a class="mm-link" href="#services" onclick="toggleMenu(false)">خدماتنا <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m15 18-6-6 6-6"/></svg></a>
+  <a class="mm-link" href="#why" onclick="toggleMenu(false)">لماذا بُعد <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m15 18-6-6 6-6"/></svg></a>
+  <a class="mm-link" href="#process" onclick="toggleMenu(false)">منهجيتنا <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m15 18-6-6 6-6"/></svg></a>
+  <a class="mm-link" href="#request" onclick="toggleMenu(false)">تواصل معنا <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m15 18-6-6 6-6"/></svg></a>
+  <div class="mm-actions">
+    <a href="#request" class="btn btn-primary" onclick="toggleMenu(false)">اطلب خدمة الآن</a>
+    <a href="/app" class="nav-team">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      دخول الفريق
+    </a>
+  </div>
+</div>
 
 <span id="top"></span>
 
@@ -660,6 +728,22 @@ var nav = document.getElementById('nav');
 window.addEventListener('scroll', function(){
   nav.classList.toggle('scrolled', window.scrollY > 30);
 }, {passive:true});
+
+/* ── Mobile menu ── */
+function toggleMenu(force){
+  var menu = document.getElementById('mobile-menu');
+  var bd   = document.getElementById('mm-backdrop');
+  var btn  = document.getElementById('nav-toggle');
+  var open = (typeof force === 'boolean') ? force : !menu.classList.contains('open');
+  menu.classList.toggle('open', open);
+  bd.classList.toggle('open', open);
+  btn.classList.toggle('active', open);
+  btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  document.body.classList.toggle('menu-open', open);
+}
+// Close menu on Escape or when resizing to desktop
+document.addEventListener('keydown', function(e){ if (e.key === 'Escape') toggleMenu(false); });
+window.addEventListener('resize', function(){ if (window.innerWidth > 980) toggleMenu(false); });
 
 /* ── Reveal on scroll ── */
 var io;
