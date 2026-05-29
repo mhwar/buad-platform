@@ -227,6 +227,32 @@ export async function onRequest(context) {
     return json({ ok: true });
   }
 
+  /* ─── POST /api/org/request ─── association requests a service (lands in admin requests) */
+  if (path === '/org/request' && method === 'POST') {
+    if (!orgMe || orgMe.kind !== 'org') return json({ error: 'Unauthorized' }, 401);
+    let body;
+    try { body = await request.json(); } catch (e) { return json({ error: 'Bad request' }, 400); }
+    const service = (body.service || '').trim();
+    if (!service) return json({ error: 'missing_fields' }, 400);
+    // pull the org's own contact details so the admin sees who's asking
+    const o = await db.prepare('SELECT name, email, contact_name, phone FROM orgs WHERE id = ?').bind(orgMe.id).first();
+    const id = 'req_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    await db.prepare(
+      'INSERT INTO service_requests (id, name, org, phone, email, service, budget, message, source) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
+    ).bind(
+      id,
+      (o && o.contact_name) || (o && o.name) || orgMe.name || '',
+      (o && o.name) || orgMe.name || '',
+      (o && o.phone) || '',
+      (o && o.email) || orgMe.email || '',
+      service,
+      '',
+      (body.message || '').trim(),
+      'portal'
+    ).run();
+    return json({ ok: true, id }, 201);
+  }
+
   /* ── Auth required for all routes below (team/admin only) ── */
   const authHeader = request.headers.get('Authorization') || '';
   const rawToken = authHeader.replace('Bearer ', '');

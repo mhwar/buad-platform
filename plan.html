@@ -173,10 +173,16 @@ img,svg{display:block;max-width:100%}
 .svc-card .svc-footer{display:flex;align-items:center;justify-content:space-between;gap:10px;padding-top:14px;border-top:1px solid var(--line)}
 .badge-soon{font-size:10.5px;font-weight:700;color:var(--gold);background:rgba(224,168,60,.11);padding:3px 10px;border-radius:20px}
 .badge-active{font-size:10.5px;font-weight:700;color:var(--ok);background:var(--ok-soft);padding:3px 10px;border-radius:20px}
-.svc-card .btn-wa{display:inline-flex;align-items:center;gap:7px;padding:9px 16px;background:#25d366;color:#fff;border-radius:9px;font-size:13px;font-weight:600;transition:.15s}
-.svc-card .btn-wa:hover{background:#1db954;transform:translateY(-1px)}
-.svc-card .btn-wa svg{width:15px;height:15px}
+.btn-req{display:inline-flex;align-items:center;gap:7px;padding:9px 18px;background:var(--accent);color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:.15s}
+.btn-req:hover{background:#179184;transform:translateY(-1px)}
+.btn-req-soft{background:#fff;color:var(--navy);border:1.5px solid var(--line)}
+.btn-req-soft:hover{background:var(--bg-tint);border-color:var(--navy);transform:none}
+.svc-done{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;color:var(--ok)}
+.svc-done svg{width:15px;height:15px}
+.svc-done-sm{font-size:12px}
+.svc-card.requested{border-color:var(--ok-line);background:linear-gradient(180deg,#fff,var(--ok-soft))}
 .svc-coming-note{font-size:12px;color:var(--muted);text-align:left}
+.task-svc .svc-done-sm{flex-shrink:0}
 
 /* ─── Placeholder tabs ─── */
 .coming-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:420px;text-align:center;padding:40px 20px}
@@ -195,6 +201,21 @@ img,svg{display:block;max-width:100%}
 .gov-card .gov-icon svg{width:20px;height:20px}
 .gov-card h4{font-size:14.5px;font-weight:700;color:var(--navy-deep);margin-bottom:6px}
 .gov-card p{font-size:12.5px;color:var(--muted);line-height:1.65}
+
+/* ─── Modal ─── */
+.modal-overlay{position:fixed;inset:0;background:rgba(10,18,48,.55);backdrop-filter:blur(4px);z-index:900;display:none;align-items:center;justify-content:center;padding:20px;opacity:0;transition:opacity .2s}
+.modal-overlay.show{display:flex;opacity:1}
+.modal-box{background:#fff;border-radius:var(--radius-lg);box-shadow:var(--shadow-lg);width:100%;max-width:440px;padding:34px 32px 28px;position:relative;text-align:center;transform:translateY(14px) scale(.98);transition:transform .25s var(--ease)}
+.modal-overlay.show .modal-box{transform:translateY(0) scale(1)}
+.modal-x{position:absolute;top:14px;left:16px;background:none;border:none;font-size:24px;color:var(--muted);cursor:pointer;line-height:1;width:32px;height:32px;border-radius:8px;transition:.15s}
+.modal-x:hover{background:var(--bg-soft);color:var(--ink)}
+.modal-ico{width:58px;height:58px;border-radius:16px;background:linear-gradient(135deg,rgba(29,155,138,.12),rgba(0,25,125,.06));color:var(--accent);display:flex;align-items:center;justify-content:center;margin:0 auto 16px}
+.modal-ico svg{width:28px;height:28px}
+.modal-box h3{font-size:19px;font-weight:700;color:var(--navy-deep);margin-bottom:8px}
+.modal-box p{font-size:13.5px;color:var(--muted);line-height:1.7;margin-bottom:18px}
+.modal-box .field label{font-size:12.5px}
+.modal-actions{display:flex;gap:10px;margin-top:20px}
+.modal-actions .btn{flex:1}
 
 /* ─── Toast ─── */
 .toast{position:fixed;bottom:24px;right:50%;transform:translateX(50%) translateY(20px);background:var(--navy-deep);color:#fff;padding:11px 22px;border-radius:30px;font-size:13.5px;font-weight:600;box-shadow:var(--shadow-lg);opacity:0;pointer-events:none;transition:.3s var(--ease);z-index:999}
@@ -425,6 +446,24 @@ img,svg{display:block;max-width:100%}
 
 </div><!-- /app-screen -->
 
+<!-- ══════════════════ SERVICE REQUEST MODAL ══════════════════ -->
+<div class="modal-overlay" id="svc-modal">
+  <div class="modal-box">
+    <button class="modal-x" onclick="closeServiceModal()" aria-label="إغلاق">×</button>
+    <div class="modal-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></div>
+    <h3 id="svc-modal-title">طلب خدمة</h3>
+    <p id="svc-modal-desc">سيصلك فريق بُعد خلال ٢٤ ساعة عمل لمتابعة طلبك.</p>
+    <div class="field" style="text-align:right;margin-top:6px">
+      <label>ملاحظة أو تفاصيل إضافية (اختياري)</label>
+      <textarea id="svc-modal-note" rows="3" placeholder="اكتب أي تفاصيل تساعدنا على خدمتك بشكل أفضل..." style="width:100%;font-family:inherit;font-size:14px;color:var(--ink);padding:11px 13px;border:1.5px solid var(--line);border-radius:10px;background:var(--bg-soft);outline:none;resize:vertical;line-height:1.7"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeServiceModal()">إلغاء</button>
+      <button class="btn btn-accent" id="svc-modal-send" onclick="submitServiceRequest()">إرسال الطلب</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -533,18 +572,67 @@ var SERVICES_SOON = [
   }
 ];
 
+/* lookup: service id → catalog entry (active + soon) */
+var SERVICE_BY_ID = {};
+SERVICES_ACTIVE.concat(SERVICES_SOON).forEach(function(s){ SERVICE_BY_ID[s.id] = s; });
+
 /* ── Utils ── */
 function token(){ return localStorage.getItem(TOKEN_KEY); }
 function setToken(t){ localStorage.setItem(TOKEN_KEY, t); }
 function clearToken(){ localStorage.removeItem(TOKEN_KEY); }
 function esc(s){ return (s==null?'':String(s)).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
 function toAr(n){ return String(n).replace(/[0-9]/g,function(d){ return '٠١٢٣٤٥٦٧٨٩'[+d]; }); }
-function waLink(msg){ return 'https://wa.me/'+WA.replace(/[^0-9]/g,'')+'?text='+encodeURIComponent(msg); }
 
 function toast(msg){
   var t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
   clearTimeout(t._tm); t._tm=setTimeout(function(){ t.classList.remove('show'); }, 2500);
 }
+
+/* ── Requested-services state (per org, persisted locally for instant UI) ── */
+var requested = {};   // { serviceTitle: true }
+function reqKey(){ return 'buad_org_reqs_' + (org && org.id ? org.id : 'x'); }
+function loadRequested(){ try{ requested = JSON.parse(localStorage.getItem(reqKey())||'{}'); }catch(e){ requested={}; } }
+function saveRequested(){ try{ localStorage.setItem(reqKey(), JSON.stringify(requested)); }catch(e){} }
+function isRequested(title){ return !!requested[title]; }
+
+/* ── Service request modal ── */
+var pendingSvc = null;   // { id, title }
+function openServiceModal(id, title){
+  pendingSvc = { id:id, title:title };
+  document.getElementById('svc-modal-title').textContent = 'طلب: ' + title;
+  document.getElementById('svc-modal-note').value = '';
+  document.getElementById('svc-modal-send').disabled = false;
+  document.getElementById('svc-modal-send').textContent = 'إرسال الطلب';
+  document.getElementById('svc-modal').classList.add('show');
+}
+function closeServiceModal(){ document.getElementById('svc-modal').classList.remove('show'); pendingSvc = null; }
+function submitServiceRequest(){
+  if(!pendingSvc) return;
+  var note = document.getElementById('svc-modal-note').value.trim();
+  var btn = document.getElementById('svc-modal-send');
+  btn.disabled = true; btn.textContent = 'جارٍ الإرسال...';
+  fetch(API+'/org/request',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+token()},
+    body:JSON.stringify({ service: pendingSvc.title, message: note })
+  })
+  .then(function(r){ return r.json().then(function(j){ return {ok:r.ok,j:j}; }); })
+  .then(function(res){
+    if(!res.ok) throw new Error('x');
+    requested[pendingSvc.title] = true; saveRequested();
+    closeServiceModal();
+    toast('تم إرسال طلبك ✓ سيتواصل معك فريق بُعد');
+    renderServices();
+    renderTracks();
+  })
+  .catch(function(){
+    btn.disabled=false; btn.textContent='إرسال الطلب';
+    toast('تعذّر إرسال الطلب — حاول مجدداً');
+  });
+}
+// close on overlay click / Esc
+document.getElementById('svc-modal').addEventListener('click', function(e){ if(e.target===this) closeServiceModal(); });
+document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeServiceModal(); });
 
 /* ── Tab navigation ── */
 var TABS = ['plan','services','website','projects','governance'];
@@ -616,33 +704,43 @@ function enterApp(){
   document.getElementById('org-name').textContent = nm;
   document.getElementById('org-ava').textContent = nm.charAt(0);
   document.getElementById('hero-org').textContent = nm;
-  setupWaLinks(nm);
+  loadRequested();
+  setupPlaceholderCTAs();
   renderTracks();
-  renderServices(nm);
+  renderServices();
   updateOverview();
   showTab('plan');
 }
 
-function setupWaLinks(nm){
-  var waBase = waLink('مرحباً، جمعية «'+nm+'» مهتمة بخدمة بُعد: ');
-  document.getElementById('wa-website-btn').href = waBase + 'تصميم الموقع الإلكتروني';
-  document.getElementById('wa-website-btn').target = '_blank';
-  document.getElementById('wa-projects-btn').href = waBase + 'إدارة وتتبع المشاريع';
-  document.getElementById('wa-projects-btn').target = '_blank';
-  document.getElementById('wa-governance-btn').href = waBase + 'الحوكمة والامتثال';
-  document.getElementById('wa-governance-btn').target = '_blank';
+// "قريباً" tabs CTAs → register early interest through the platform
+function setupPlaceholderCTAs(){
+  var map = {
+    'wa-website-btn':'تصميم الموقع الإلكتروني',
+    'wa-projects-btn':'إدارة وتتبع المشاريع',
+    'wa-governance-btn':'الحوكمة والامتثال'
+  };
+  Object.keys(map).forEach(function(id){
+    var el = document.getElementById(id);
+    if(el){ el.removeAttribute('href'); el.style.cursor='pointer';
+      el.onclick = function(){ openServiceModal(id, map[id]); }; }
+  });
 }
 
 /* ── Render services tab ── */
-function renderServices(nm){
-  var nm2 = nm || (org && org.name) || 'جمعيتي';
-
+function renderServices(){
   function svcCard(s, active){
-    var wa = waLink('مرحباً، جمعية «'+nm2+'» مهتمة بخدمة: '+s.title);
-    var footer = active
-      ? '<div class="svc-footer"><span class="badge-active">متاحة الآن</span><a class="btn-wa" href="'+wa+'" target="_blank"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/></svg>اطلب الآن</a></div>'
-      : '<div class="svc-footer"><span class="badge-soon">قريباً</span><span class="svc-coming-note">سيتوفر قريباً</span></div>';
-    return '<div class="svc-card '+(active?'active-svc':'soon')+'">'+
+    var done = isRequested(s.title);
+    var footer;
+    if(active){
+      footer = done
+        ? '<div class="svc-footer"><span class="badge-active">متاحة الآن</span><span class="svc-done"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>تم إرسال الطلب</span></div>'
+        : '<div class="svc-footer"><span class="badge-active">متاحة الآن</span><button class="btn-req" onclick="openServiceModal(\''+s.id+'\',\''+esc(s.title)+'\')">اطلب الخدمة</button></div>';
+    } else {
+      footer = done
+        ? '<div class="svc-footer"><span class="badge-soon">قريباً</span><span class="svc-done"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>سجّلنا اهتمامك</span></div>'
+        : '<div class="svc-footer"><span class="badge-soon">قريباً</span><button class="btn-req btn-req-soft" onclick="openServiceModal(\''+s.id+'\',\''+esc(s.title)+'\')">سجّل اهتمامك</button></div>';
+    }
+    return '<div class="svc-card '+(active?'active-svc':'soon')+(done?' requested':'')+'">'+
       '<div class="svc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">'+s.icon+'</svg></div>'+
       '<div class="svc-body"><h4>'+esc(s.title)+'</h4><p>'+esc(s.desc)+'</p>'+
       (s.taskLink?'<div class="task-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m9 18 6-6-6-6"/></svg>'+esc(s.taskLink)+'</div>':'')+
@@ -664,11 +762,14 @@ function renderTracks(){
       var at = p.at ? ('أُنجزت في '+p.at) : '';
       var svcHtml = '';
       if(t.svc){
+        var svcTitle = (SERVICE_BY_ID[t.svc.id] && SERVICE_BY_ID[t.svc.id].title) || t.svc.label;
         if(t.svc.active){
-          var msg = 'مرحباً، جمعية «'+nm+'» مهتمة بخدمة: '+t.svc.label.replace('اطلب خدمة ','').replace('اطلب ','');
+          var reqDone = isRequested(svcTitle);
           svcHtml = '<div class="task-svc">'+
             '<span class="svc-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>'+esc(t.svc.label)+'</span>'+
-            '<a class="btn-svc" href="'+waLink(msg)+'" target="_blank">اطلب عبر واتساب</a>'+
+            (reqDone
+              ? '<span class="svc-done svc-done-sm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>تم الطلب</span>'
+              : '<button class="btn-svc" onclick="openServiceModal(\''+t.svc.id+'\',\''+esc(svcTitle)+'\')">اطلب الخدمة</button>')+
           '</div>';
         } else if(t.svc.soon){
           svcHtml = '<div class="task-svc-soon">'+
