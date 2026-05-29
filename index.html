@@ -1010,17 +1010,32 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
 .empty-state p{font-size:var(--font-xs);color:var(--text-muted);max-width:320px;margin:0 auto}
 
 /* ── Client cards grid (v2) ── */
-.client-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:var(--space-4)}
+.client-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:var(--space-4)}
 .client-card{
   background:var(--bg-elevated);border:1px solid var(--border);
   border-radius:var(--radius-lg);padding:var(--space-5);
-  transition:border-color var(--transition);
+  transition:box-shadow var(--transition),border-color var(--transition),transform var(--transition);
   cursor:default;display:flex;flex-direction:column;
 }
-.client-card:hover{border-color:var(--neutral-300)}
+.client-card:hover{border-color:var(--neutral-300);box-shadow:var(--shadow-md);transform:translateY(-1px)}
 .client-card-name{font-size:var(--font-md);font-weight:700;color:var(--text);margin-bottom:var(--space-1);letter-spacing:-.1px}
 .client-card-meta{font-size:var(--font-xs);color:var(--text-muted);margin-bottom:var(--space-3);line-height:var(--lh-snug)}
 .client-card-actions{display:flex;gap:var(--space-1_5);margin-top:auto}
+.client-logo-box{width:52px;height:52px;flex-shrink:0;border-radius:var(--radius-md);overflow:hidden;display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow-sm)}
+.client-logo-box img{width:100%;height:100%;object-fit:contain;padding:5px;box-sizing:border-box;background:#fff}
+/* List view */
+.client-list{display:flex;flex-direction:column;gap:0;border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;background:var(--bg-elevated)}
+.client-list-hdr{display:grid;grid-template-columns:2.5fr 1fr 1.5fr 1fr auto;gap:var(--space-3);padding:10px var(--space-4);background:var(--bg-2);border-bottom:1px solid var(--border);font-size:11px;font-weight:600;color:var(--fg-3);text-transform:uppercase;letter-spacing:.5px}
+.client-list-row{display:grid;grid-template-columns:2.5fr 1fr 1.5fr 1fr auto;gap:var(--space-3);padding:14px var(--space-4);border-bottom:1px solid var(--border-1);align-items:center;transition:background var(--transition)}
+.client-list-row:last-child{border-bottom:none}
+.client-list-row:hover{background:var(--bg-2)}
+/* Logo upload zone in modal */
+.cl-logo-zone{border:2px dashed var(--border);border-radius:var(--radius-md);padding:16px;text-align:center;cursor:pointer;transition:border-color var(--transition),background var(--transition)}
+.cl-logo-zone:hover{border-color:var(--primary-400);background:var(--primary-50)}
+/* View toggle */
+.view-toggle{display:flex;gap:2px;background:var(--bg-2);border:1px solid var(--border);border-radius:var(--radius-md);padding:2px}
+.view-toggle-btn{padding:5px 9px;border:none;background:none;border-radius:6px;cursor:pointer;color:var(--fg-3);display:flex;align-items:center;gap:4px;font-size:12px;transition:background var(--transition),color var(--transition)}
+.view-toggle-btn.active{background:var(--bg-elevated);color:var(--fg-1);box-shadow:var(--shadow-sm)}
 
 /* ── Project row card (unified list item) ── */
 .proj-row-list{display:flex;flex-direction:column;gap:var(--space-2)}
@@ -3193,42 +3208,103 @@ function _buildDonut(segments, total) {
 }
 
 /* ─── CLIENTS ─── */
+Pages._clientsView = localStorage.getItem('buad2_clients_view') || 'cards';
+
+Pages._clientAvatarHtml = function(cl, size) {
+  size = size || 52;
+  if (cl.logo) {
+    return '<div class="client-logo-box" style="width:'+size+'px;height:'+size+'px"><img src="'+cl.logo+'" alt=""></div>';
+  }
+  var initial = (cl.name||'?').trim().charAt(0);
+  var palette = ['#6366f1','#8b5cf6','#0ea5e9','#10b981','#f59e0b','#ef4444','#ec4899'];
+  var bg = palette[initial.charCodeAt(0) % palette.length];
+  var fs = size > 40 ? '18px' : '13px';
+  return '<div class="client-logo-box" style="width:'+size+'px;height:'+size+'px;background:'+bg+';color:#fff;font-weight:800;font-size:'+fs+';letter-spacing:-.5px">'+UI.escHtml(initial)+'</div>';
+};
+
 Pages.render_clients = function() {
   var clients = DB.getClients();
   var projects = DB.getProjects();
+  var view = Pages._clientsView;
 
-  var cards = '';
-  if (clients.length===0) {
-    cards = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-state-icon"><i data-lucide="users"></i></div><h3>لا يوجد عملاء بعد</h3><p>ابدأ بإضافة أول عميل لتسجيل المشاريع تحت اسمه</p><button class="btn btn-primary" style="margin-top:var(--space-4)" onclick="Pages.addClientModal()"><i data-lucide="user-plus"></i>إضافة عميل</button></div>';
-  } else {
-    clients.forEach(function(cl){
+  var viewToggle =
+    '<div class="view-toggle">'+
+      '<button class="view-toggle-btn'+(view==='cards'?' active':'')+'" onclick="Pages._setClientsView(\'cards\')" title="بطاقات"><i data-lucide="layout-grid"></i></button>'+
+      '<button class="view-toggle-btn'+(view==='list'?' active':'')+'" onclick="Pages._setClientsView(\'list\')" title="قائمة"><i data-lucide="list"></i></button>'+
+    '</div>';
+
+  var content = '';
+  if (clients.length === 0) {
+    content = '<div class="empty-state"><div class="empty-state-icon"><i data-lucide="users"></i></div><h3>لا يوجد عملاء بعد</h3><p>ابدأ بإضافة أول عميل لتسجيل المشاريع تحت اسمه</p><button class="btn btn-primary" style="margin-top:var(--space-4)" onclick="Pages.addClientModal()"><i data-lucide="user-plus"></i>إضافة عميل</button></div>';
+  } else if (view === 'cards') {
+    var cards = '';
+    clients.forEach(function(cl) {
       var pCount = projects.filter(function(p){ return p.client_id===cl.id; }).length;
       var activeCount = projects.filter(function(p){ return p.client_id===cl.id && p.status==='active'; }).length;
-      var initial = (cl.name||'?').trim().charAt(0);
-
-      cards += '<div class="client-card">' +
-        /* Header row: avatar + name + type */
-        '<div style="display:flex;align-items:center;gap:var(--space-3);margin-bottom:var(--space-3)">' +
-          '<div style="width:44px;height:44px;flex-shrink:0;border-radius:var(--radius-md);background:var(--iris-500);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:var(--font-lg);letter-spacing:-.5px;box-shadow:var(--shadow-sm)">'+UI.escHtml(initial)+'</div>' +
-          '<div style="flex:1;min-width:0">' +
-            '<div class="client-card-name" style="margin-bottom:0">'+UI.escHtml(cl.name)+'</div>' +
-            '<div style="font-size:var(--font-2xs);color:var(--text-muted);margin-top:2px">'+clientTypeLabel(cl.type)+(cl.city?' · '+UI.escHtml(cl.city):'')+'</div>' +
+      var completedCount = projects.filter(function(p){ return p.client_id===cl.id && p.status==='completed'; }).length;
+      cards +=
+        '<div class="client-card">' +
+          '<div style="display:flex;align-items:flex-start;gap:var(--space-3);margin-bottom:var(--space-4)">' +
+            Pages._clientAvatarHtml(cl, 52) +
+            '<div style="flex:1;min-width:0">' +
+              '<div class="client-card-name">'+UI.escHtml(cl.name)+'</div>' +
+              '<div style="font-size:var(--font-2xs);color:var(--fg-3);margin-top:2px;display:flex;align-items:center;gap:4px">'+
+                '<span>'+clientTypeLabel(cl.type)+'</span>'+
+                (cl.city ? '<span style="color:var(--border-2)">·</span><span>'+UI.escHtml(cl.city)+'</span>' : '')+
+              '</div>' +
+            '</div>' +
           '</div>' +
-        '</div>' +
-        /* Meta row */
-        '<div style="display:flex;gap:var(--space-2);margin-bottom:var(--space-4);flex-wrap:wrap">' +
-          '<span class="badge brand sm"><i data-lucide="briefcase"></i>'+pCount+' مشروع</span>' +
-          (activeCount>0 ? '<span class="badge success sm with-dot">'+activeCount+' نشط</span>' : '') +
-        '</div>' +
-        (cl.email ? '<div style="font-size:var(--font-2xs);color:var(--text-muted);margin-bottom:var(--space-3);display:flex;align-items:center;gap:5px"><i data-lucide="mail" style="font-size:13px"></i>'+UI.escHtml(cl.email)+'</div>' : '') +
-        /* Actions */
-        '<div class="client-card-actions">' +
-          '<button class="btn btn-sm btn-primary" style="flex:1" onclick="Nav.go(\'client\',{clientId:\''+cl.id+'\'})"><i data-lucide="arrow-left"></i>عرض</button>' +
-          '<button class="btn btn-sm btn-icon" onclick="Pages.editClientModal(\''+cl.id+'\')" title="تعديل"><i data-lucide="pencil"></i></button>' +
-          '<button class="btn btn-sm btn-icon btn-danger" onclick="Pages.deleteClient(\''+cl.id+'\')" title="حذف"><i data-lucide="trash-2"></i></button>' +
-        '</div>' +
-      '</div>';
+          '<div style="display:flex;gap:var(--space-2);flex-wrap:wrap;margin-bottom:var(--space-3)">' +
+            '<span class="badge brand sm"><i data-lucide="briefcase"></i>'+pCount+' مشروع</span>' +
+            (activeCount>0 ? '<span class="badge success sm with-dot">'+activeCount+' نشط</span>' : '') +
+            (completedCount>0 ? '<span class="badge neutral sm">'+completedCount+' مكتمل</span>' : '') +
+          '</div>' +
+          '<div style="flex:1;display:flex;flex-direction:column;gap:5px;margin-bottom:var(--space-4)">' +
+            (cl.email ? '<div style="font-size:var(--font-2xs);color:var(--fg-3);display:flex;align-items:center;gap:5px;overflow:hidden"><i data-lucide="mail" style="width:12px;height:12px;flex-shrink:0"></i><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;direction:ltr">'+UI.escHtml(cl.email)+'</span></div>' : '') +
+            (cl.phone ? '<div style="font-size:var(--font-2xs);color:var(--fg-3);display:flex;align-items:center;gap:5px"><i data-lucide="phone" style="width:12px;height:12px;flex-shrink:0"></i><span style="direction:ltr">'+UI.escHtml(cl.phone)+'</span></div>' : '') +
+          '</div>' +
+          '<div class="client-card-actions">' +
+            '<button class="btn btn-sm btn-primary" style="flex:1" onclick="Nav.go(\'client\',{clientId:\''+cl.id+'\'})"><i data-lucide="arrow-left"></i>عرض الملف</button>' +
+            '<button class="btn btn-sm btn-icon" onclick="Pages.addClientModal(\''+cl.id+'\')" title="تعديل"><i data-lucide="pencil"></i></button>' +
+            '<button class="btn btn-sm btn-icon btn-danger" onclick="Pages.deleteClient(\''+cl.id+'\')" title="حذف"><i data-lucide="trash-2"></i></button>' +
+          '</div>' +
+        '</div>';
     });
+    content = '<div class="client-grid">'+cards+'</div>';
+  } else {
+    var rows = '';
+    clients.forEach(function(cl) {
+      var pCount = projects.filter(function(p){ return p.client_id===cl.id; }).length;
+      var activeCount = projects.filter(function(p){ return p.client_id===cl.id && p.status==='active'; }).length;
+      rows +=
+        '<div class="client-list-row">' +
+          '<div style="display:flex;align-items:center;gap:12px;min-width:0">' +
+            Pages._clientAvatarHtml(cl, 36) +
+            '<div style="min-width:0">' +
+              '<div style="font-weight:600;font-size:13px;color:var(--fg-1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+UI.escHtml(cl.name)+'</div>' +
+              '<div style="font-size:11px;color:var(--fg-3)">'+clientTypeLabel(cl.type)+'</div>' +
+            '</div>' +
+          '</div>' +
+          '<div style="font-size:12px;color:var(--fg-2)">'+UI.escHtml(cl.city||'—')+'</div>' +
+          '<div style="font-size:12px;color:var(--fg-3);direction:ltr;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+UI.escHtml(cl.email||'—')+'</div>' +
+          '<div style="display:flex;gap:6px;align-items:center">' +
+            '<span class="badge brand sm">'+pCount+' مشروع</span>' +
+            (activeCount>0 ? '<span class="badge success sm with-dot">'+activeCount+'</span>' : '') +
+          '</div>' +
+          '<div style="display:flex;gap:4px">' +
+            '<button class="btn btn-sm btn-primary" onclick="Nav.go(\'client\',{clientId:\''+cl.id+'\'})"><i data-lucide="arrow-left"></i>عرض</button>' +
+            '<button class="btn btn-sm btn-icon" onclick="Pages.addClientModal(\''+cl.id+'\')" title="تعديل"><i data-lucide="pencil"></i></button>' +
+            '<button class="btn btn-sm btn-icon btn-danger" onclick="Pages.deleteClient(\''+cl.id+'\')" title="حذف"><i data-lucide="trash-2"></i></button>' +
+          '</div>' +
+        '</div>';
+    });
+    content =
+      '<div class="client-list">' +
+        '<div class="client-list-hdr">' +
+          '<div>العميل</div><div>المدينة</div><div>البريد الإلكتروني</div><div>المشاريع</div><div></div>' +
+        '</div>' +
+        rows +
+      '</div>';
   }
 
   document.getElementById('pg-clients').innerHTML =
@@ -3237,18 +3313,47 @@ Pages.render_clients = function() {
         '<h1>العملاء</h1>' +
         '<div class="page-header-sub">'+clients.length+' عميل مسجَّل في النظام</div>' +
       '</div>' +
-      '<button class="btn btn-primary" onclick="Pages.addClientModal()"><i data-lucide="user-plus"></i>إضافة عميل</button>' +
+      '<div style="display:flex;gap:var(--space-2);align-items:center">' +
+        viewToggle +
+        '<button class="btn btn-primary" onclick="Pages.addClientModal()"><i data-lucide="user-plus"></i>إضافة عميل</button>' +
+      '</div>' +
     '</div>' +
-    '<div class="client-grid">'+cards+'</div>';
-  document.getElementById('top-actions').innerHTML='';
+    content;
+  document.getElementById('top-actions').innerHTML = '';
+};
+
+Pages._setClientsView = function(v) {
+  Pages._clientsView = v;
+  localStorage.setItem('buad2_clients_view', v);
+  Pages.render_clients();
 };
 
 Pages.addClientModal = function(editId) {
   var cl = editId ? (DB.getClients().find(function(c){ return c.id===editId; })||{}) : {};
   var title = editId ? 'تعديل بيانات العميل' : 'إضافة عميل جديد';
+  window._clientLogoData = undefined; // reset temp logo
+  var hasLogo = !!(cl.logo);
   UI.openModal(
     '<div class="modal-header"><h3>'+title+'</h3><button class="modal-close" onclick="UI.closeModalForce()">×</button></div>' +
     '<div class="modal-body">' +
+      /* Logo upload */
+      '<div class="form-group">' +
+        '<label class="field-label">شعار العميل</label>' +
+        '<div style="display:flex;align-items:center;gap:14px">' +
+          '<div class="cl-logo-zone" style="width:80px;height:80px;flex-shrink:0;border-radius:var(--radius-md);padding:0;overflow:hidden;position:relative" onclick="document.getElementById(\'cl-logo-file\').click()" title="انقر لرفع شعار">' +
+            '<img id="cl-logo-preview-img" src="'+(cl.logo||'')+'" style="width:100%;height:100%;object-fit:contain;padding:6px;box-sizing:border-box;'+(hasLogo?'':'display:none')+'">' +
+            '<div id="cl-logo-placeholder" style="width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;'+(hasLogo?'display:none':'')+'">' +
+              '<i data-lucide="image-plus" style="width:22px;height:22px;color:var(--fg-3)"></i>' +
+              '<span style="font-size:10px;color:var(--fg-3)">رفع شعار</span>' +
+            '</div>' +
+            '<input type="file" id="cl-logo-file" accept="image/*" style="display:none" onchange="Pages._handleClientLogoUpload(event)">' +
+          '</div>' +
+          '<div style="flex:1">' +
+            '<div style="font-size:12px;color:var(--fg-2);margin-bottom:6px">PNG أو JPG أو SVG — يُعرض في البطاقة وملف العميل</div>' +
+            '<button id="cl-logo-clear" class="btn btn-sm btn-ghost" style="'+(hasLogo?'':'display:none')+'" onclick="Pages._clearClientLogo()"><i data-lucide="x"></i>إزالة الشعار</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
       '<div class="form-group"><label class="field-label">اسم العميل <span style="color:var(--danger)">*</span></label>' +
         '<input id="cl-name" class="field-input" placeholder="اسم العميل" value="'+UI.escHtml(cl.name||'')+'"></div>' +
       '<div class="form-group"><label class="field-label">نوع العميل</label>' +
@@ -3270,6 +3375,33 @@ Pages.addClientModal = function(editId) {
       '<button class="btn btn-primary" onclick="Pages.saveClient(\''+( editId||'')+'\')">'+( editId?'حفظ التعديلات':'إضافة')+'</button>' +
     '</div>'
   );
+  if (typeof lucide !== 'undefined') setTimeout(function(){ lucide.createIcons({rootElement: document.getElementById('modal-box')}); }, 0);
+};
+
+Pages._handleClientLogoUpload = function(e) {
+  var file = e.target.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(ev) {
+    window._clientLogoData = ev.target.result;
+    var img = document.getElementById('cl-logo-preview-img');
+    var ph  = document.getElementById('cl-logo-placeholder');
+    var clr = document.getElementById('cl-logo-clear');
+    if (img) { img.src = ev.target.result; img.style.display = ''; }
+    if (ph)  ph.style.display = 'none';
+    if (clr) clr.style.display = '';
+  };
+  reader.readAsDataURL(file);
+};
+
+Pages._clearClientLogo = function() {
+  window._clientLogoData = '';
+  var img = document.getElementById('cl-logo-preview-img');
+  var ph  = document.getElementById('cl-logo-placeholder');
+  var clr = document.getElementById('cl-logo-clear');
+  if (img) { img.src = ''; img.style.display = 'none'; }
+  if (ph)  ph.style.display = '';
+  if (clr) clr.style.display = 'none';
 };
 
 Pages.saveClientNotes = function(clientId) {
@@ -3293,28 +3425,34 @@ Pages.editClientModal = function(id) { Pages.addClientModal(id); };
 Pages.saveClient = function(editId) {
   var name = (document.getElementById('cl-name').value||'').trim();
   if (!name) { UI.toast('اسم العميل مطلوب','danger'); return; }
+  // Logo: undefined = not changed, string = new value ('' = removed)
+  var logoChanged = window._clientLogoData !== undefined;
   var clients = DB.getClients();
   if (editId) {
     var idx = clients.findIndex(function(c){ return c.id===editId; });
     if (idx>=0) {
-      clients[idx].name = name;
-      clients[idx].type = document.getElementById('cl-type').value;
+      clients[idx].name  = name;
+      clients[idx].type  = document.getElementById('cl-type').value;
       clients[idx].email = document.getElementById('cl-email').value.trim();
       clients[idx].phone = document.getElementById('cl-phone').value.trim();
-      clients[idx].city = document.getElementById('cl-city').value.trim();
+      clients[idx].city  = document.getElementById('cl-city').value.trim();
+      if (logoChanged) clients[idx].logo = window._clientLogoData || '';
     }
     UI.toast('تم تحديث بيانات العميل','success');
   } else {
-    clients.push({
+    var newCl = {
       id: DB.uid(), name: name,
       type: document.getElementById('cl-type').value,
       email: document.getElementById('cl-email').value.trim(),
       phone: document.getElementById('cl-phone').value.trim(),
-      city: document.getElementById('cl-city').value.trim(),
+      city:  document.getElementById('cl-city').value.trim(),
       created: new Date().toISOString().slice(0,10)
-    });
+    };
+    if (logoChanged) newCl.logo = window._clientLogoData || '';
+    clients.push(newCl);
     UI.toast('تم إضافة العميل','success');
   }
+  window._clientLogoData = undefined;
   DB.saveClients(clients);
   UI.closeModalForce();
   if (Nav._cur==='clients') Pages.render_clients();
