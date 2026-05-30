@@ -409,13 +409,38 @@ export async function onRequest(context) {
       'CREATE TABLE IF NOT EXISTS beneficiaries (id TEXT PRIMARY KEY, org_id TEXT NOT NULL, name TEXT NOT NULL, id_number TEXT NOT NULL DEFAULT "", dob TEXT NOT NULL DEFAULT "", gender TEXT NOT NULL DEFAULT "male", phone TEXT NOT NULL DEFAULT "", phone2 TEXT NOT NULL DEFAULT "", email TEXT NOT NULL DEFAULT "", city TEXT NOT NULL DEFAULT "", district TEXT NOT NULL DEFAULT "", address TEXT NOT NULL DEFAULT "", marital_status TEXT NOT NULL DEFAULT "", dependents INTEGER NOT NULL DEFAULT 0, housing_type TEXT NOT NULL DEFAULT "", income REAL NOT NULL DEFAULT 0, employment_status TEXT NOT NULL DEFAULT "", category TEXT NOT NULL DEFAULT "needy", status TEXT NOT NULL DEFAULT "active", notes TEXT NOT NULL DEFAULT "", created_at INTEGER NOT NULL DEFAULT (unixepoch()), updated_at INTEGER NOT NULL DEFAULT (unixepoch()))',
       'CREATE TABLE IF NOT EXISTS crm_requests (id TEXT PRIMARY KEY, org_id TEXT NOT NULL, beneficiary_id TEXT NOT NULL, service_type TEXT NOT NULL DEFAULT "other", title TEXT NOT NULL DEFAULT "", description TEXT NOT NULL DEFAULT "", amount REAL NOT NULL DEFAULT 0, status TEXT NOT NULL DEFAULT "pending", priority TEXT NOT NULL DEFAULT "normal", assigned_to TEXT NOT NULL DEFAULT "", due_date TEXT NOT NULL DEFAULT "", resolution TEXT NOT NULL DEFAULT "", created_at INTEGER NOT NULL DEFAULT (unixepoch()), updated_at INTEGER NOT NULL DEFAULT (unixepoch()))',
       'CREATE TABLE IF NOT EXISTS crm_aids (id TEXT PRIMARY KEY, org_id TEXT NOT NULL, beneficiary_id TEXT NOT NULL, request_id TEXT NOT NULL DEFAULT "", aid_type TEXT NOT NULL DEFAULT "financial", amount REAL NOT NULL DEFAULT 0, items TEXT NOT NULL DEFAULT "[]", provided_at TEXT NOT NULL DEFAULT "", notes TEXT NOT NULL DEFAULT "", created_by TEXT NOT NULL DEFAULT "", created_at INTEGER NOT NULL DEFAULT (unixepoch()))',
-      'CREATE TABLE IF NOT EXISTS crm_notes (id TEXT PRIMARY KEY, org_id TEXT NOT NULL, beneficiary_id TEXT NOT NULL, request_id TEXT NOT NULL DEFAULT "", type TEXT NOT NULL DEFAULT "note", content TEXT NOT NULL DEFAULT "", created_by TEXT NOT NULL DEFAULT "", created_at INTEGER NOT NULL DEFAULT (unixepoch()))'
+      'CREATE TABLE IF NOT EXISTS crm_notes (id TEXT PRIMARY KEY, org_id TEXT NOT NULL, beneficiary_id TEXT NOT NULL, request_id TEXT NOT NULL DEFAULT "", type TEXT NOT NULL DEFAULT "note", content TEXT NOT NULL DEFAULT "", created_by TEXT NOT NULL DEFAULT "", created_at INTEGER NOT NULL DEFAULT (unixepoch()))',
+      'CREATE TABLE IF NOT EXISTS crm_config (org_id TEXT PRIMARY KEY, config TEXT NOT NULL DEFAULT "{}", updated_at INTEGER NOT NULL DEFAULT (unixepoch()))',
+      'ALTER TABLE beneficiaries ADD COLUMN custom_data TEXT NOT NULL DEFAULT "{}"'
     ];
     for (const sql of crmMigrations) { try { await db.prepare(sql).run(); } catch (_) {} }
     try {
       const row = await db.prepare('SELECT crm_enabled FROM orgs WHERE id = ?').bind(orgMe.id).first();
       return !!(row && row.crm_enabled);
     } catch (_) { return false; }
+  }
+
+  /* ─── GET /api/crm/config ─── per-org CRM taxonomies + form builder ─── */
+  if (path === '/crm/config' && method === 'GET') {
+    if (!await crmGuard()) return json({ error: 'crm_not_enabled' }, 403);
+    try {
+      const row = await db.prepare('SELECT config FROM crm_config WHERE org_id=?').bind(orgMe.id).first();
+      let cfg = {};
+      if (row && row.config) { try { cfg = JSON.parse(row.config); } catch (_) { cfg = {}; } }
+      return json(cfg);
+    } catch (e) { return json({ error: 'db_error', detail: e.message }, 500); }
+  }
+
+  /* ─── PUT /api/crm/config ─── save per-org CRM config (admin role only) ─── */
+  if (path === '/crm/config' && method === 'PUT') {
+    if (!await crmGuard()) return json({ error: 'crm_not_enabled' }, 403);
+    if (orgMe.role && orgMe.role !== 'admin') return json({ error: 'forbidden' }, 403);
+    try {
+      let body; try { body = await request.json(); } catch (e) { return json({ error: 'Bad request' }, 400); }
+      const cfg = JSON.stringify(body || {});
+      await db.prepare('INSERT INTO crm_config (org_id, config, updated_at) VALUES (?, ?, unixepoch()) ON CONFLICT(org_id) DO UPDATE SET config=excluded.config, updated_at=unixepoch()').bind(orgMe.id, cfg).run();
+      return json({ ok: true });
+    } catch (e) { return json({ error: 'db_error', detail: e.message }, 500); }
   }
 
   /* ─── POST /api/admin/run-migrations ─── apply pending DB schema changes ─── */
@@ -501,14 +526,15 @@ export async function onRequest(context) {
       let body; try { body = await request.json(); } catch (e) { return json({ error: 'Bad request' }, 400); }
       if (!(body.name || '').trim()) return json({ error: 'name_required' }, 400);
       const id = 'ben_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+      const customData = JSON.stringify(body.custom_data || {});
       await db.prepare(
-        'INSERT INTO beneficiaries (id,org_id,name,id_number,dob,gender,phone,phone2,email,city,district,address,marital_status,dependents,housing_type,income,employment_status,category,status,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'
+        'INSERT INTO beneficiaries (id,org_id,name,id_number,dob,gender,phone,phone2,email,city,district,address,marital_status,dependents,housing_type,income,employment_status,category,status,notes,custom_data) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'
       ).bind(id, orgMe.id, (body.name||'').trim(), (body.id_number||'').trim(), (body.dob||'').trim(),
         body.gender||'male', (body.phone||'').trim(), (body.phone2||'').trim(), (body.email||'').trim(),
         (body.city||'').trim(), (body.district||'').trim(), (body.address||'').trim(),
         body.marital_status||'', parseInt(body.dependents)||0, body.housing_type||'',
         parseFloat(body.income)||0, body.employment_status||'', body.category||'needy',
-        body.status||'active', (body.notes||'').trim()).run();
+        body.status||'active', (body.notes||'').trim(), customData).run();
       const ben = await db.prepare('SELECT * FROM beneficiaries WHERE id=?').bind(id).first();
       return json(ben, 201);
     } catch (e) { return json({ error: 'db_error', detail: e.message }, 500); }
@@ -535,14 +561,15 @@ export async function onRequest(context) {
     try {
       const benId = crmBenMatch[1];
       let body; try { body = await request.json(); } catch (e) { return json({ error: 'Bad request' }, 400); }
+      const customData = JSON.stringify(body.custom_data || {});
       await db.prepare(
-        'UPDATE beneficiaries SET name=?,id_number=?,dob=?,gender=?,phone=?,phone2=?,email=?,city=?,district=?,address=?,marital_status=?,dependents=?,housing_type=?,income=?,employment_status=?,category=?,status=?,notes=?,updated_at=unixepoch() WHERE id=? AND org_id=?'
+        'UPDATE beneficiaries SET name=?,id_number=?,dob=?,gender=?,phone=?,phone2=?,email=?,city=?,district=?,address=?,marital_status=?,dependents=?,housing_type=?,income=?,employment_status=?,category=?,status=?,notes=?,custom_data=?,updated_at=unixepoch() WHERE id=? AND org_id=?'
       ).bind((body.name||'').trim(), (body.id_number||'').trim(), (body.dob||'').trim(),
         body.gender||'male', (body.phone||'').trim(), (body.phone2||'').trim(), (body.email||'').trim(),
         (body.city||'').trim(), (body.district||'').trim(), (body.address||'').trim(),
         body.marital_status||'', parseInt(body.dependents)||0, body.housing_type||'',
         parseFloat(body.income)||0, body.employment_status||'', body.category||'needy',
-        body.status||'active', (body.notes||'').trim(), benId, orgMe.id).run();
+        body.status||'active', (body.notes||'').trim(), customData, benId, orgMe.id).run();
       const ben = await db.prepare('SELECT * FROM beneficiaries WHERE id=?').bind(benId).first();
       return json(ben);
     } catch (e) { return json({ error: 'db_error', detail: e.message }, 500); }
