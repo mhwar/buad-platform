@@ -6139,7 +6139,7 @@ Pages.pfSyncAllProjects = function() {
   if (added > 0) {
     DB.savePf(pf);
     UI.toast('تمت مزامنة '+added+' مشروع بنجاح', 'success');
-    Pages.renderPfIncome();
+    Pages.renderPfLedger(Pages._pfLedgerFilter||'all');
   } else {
     UI.toast('جميع المشاريع النشطة مُزامَنة بالفعل', 'info');
   }
@@ -10700,15 +10700,29 @@ Pages._pfCalc = function(pf, from, to) {
   return { income: income, expenses: expenses, netProfit: income - expenses };
 };
 
+Pages._pfRetainedTotals = function(pf) {
+  var totals = { ops: 0, dev: 0, reserve: 0 };
+  (pf.distributions||[]).filter(function(d){ return d.status==='completed' && (d.retained_amount||0) > 0; })
+    .forEach(function(d) {
+      var cat = d.retained_category || 'reserve';
+      var amt = Number(d.retained_amount)||0;
+      if (cat==='ops') totals.ops += amt;
+      else if (cat==='dev') totals.dev += amt;
+      else totals.reserve += amt;
+    });
+  totals.total = totals.ops + totals.dev + totals.reserve;
+  return totals;
+};
+
 Pages._pfMonthlyChart = function(pf) {
   var months = [];
   var now = new Date();
   for(var i=5; i>=0; i--) {
     var d = new Date(now.getFullYear(), now.getMonth()-i, 1);
-    var y = d.getFullYear(), m = ('0'+(d.getMonth()+1)).slice(-2);
-    var from = y+'-'+m+'-01';
+    var y = d.getFullYear(), mm = ('0'+(d.getMonth()+1)).slice(-2);
+    var from = y+'-'+mm+'-01';
     var lastDay = new Date(y, d.getMonth()+1, 0).getDate();
-    var to = y+'-'+m+'-'+('0'+lastDay).slice(-2);
+    var to = y+'-'+mm+'-'+('0'+lastDay).slice(-2);
     var c = Pages._pfCalc(pf, from, to);
     var labels = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
     months.push({ label: labels[d.getMonth()], income: c.income, expenses: c.expenses });
@@ -10744,7 +10758,7 @@ Pages.render_pf = function() {
     if (typeof lucide !== 'undefined') lucide.createIcons({rootElement: pg});
     return;
   }
-  Pages._pfTab = Pages._pfTab || 'overview';
+  if (!['overview','ledger','distrib'].includes(Pages._pfTab)) Pages._pfTab = 'overview';
   function tab(id, lbl, icon) {
     return '<button class="hero-tab-pill'+(Pages._pfTab===id?' active':'')+'" onclick="Pages.switchPfTab(\''+id+'\')">'+
       '<i data-lucide="'+icon+'" style="width:14px;height:14px"></i>'+lbl+'</button>';
@@ -10755,15 +10769,13 @@ Pages.render_pf = function() {
         '<div class="page-hero-title"><i data-lucide="banknote"></i>مالية المنصة</div>'+
         '<div class="page-hero-tabs">'+
           tab('overview','نظرة عامة','layout-dashboard')+
-          tab('income','الإيرادات','trending-up')+
-          tab('expenses','المصروفات','trending-down')+
+          tab('ledger','المعاملات','receipt')+
           tab('distrib','توزيع الأرباح','users-round')+
         '</div>'+
       '</div>'+
     '</div>'+
     '<div id="pf-tab-overview" class="tab-content"></div>'+
-    '<div id="pf-tab-income"   class="tab-content"></div>'+
-    '<div id="pf-tab-expenses" class="tab-content"></div>'+
+    '<div id="pf-tab-ledger"   class="tab-content"></div>'+
     '<div id="pf-tab-distrib"  class="tab-content"></div>';
   if (typeof lucide !== 'undefined') lucide.createIcons({rootElement: pg});
   Pages.switchPfTab(Pages._pfTab);
@@ -10772,19 +10784,17 @@ Pages.render_pf = function() {
 Pages.switchPfTab = function(tab) {
   Pages._pfTab = tab;
   document.querySelectorAll('#pg-pf .hero-tab-pill').forEach(function(b) {
-    var match = (tab==='overview'&&b.textContent.indexOf('نظرة عامة')>=0) ||
-                (tab==='income'&&b.textContent.indexOf('الإيرادات')>=0) ||
-                (tab==='expenses'&&b.textContent.indexOf('المصروفات')>=0) ||
-                (tab==='distrib'&&b.textContent.indexOf('توزيع')>=0);
+    var match = (tab==='overview' && b.textContent.indexOf('نظرة عامة')>=0) ||
+                (tab==='ledger'   && b.textContent.indexOf('المعاملات')>=0) ||
+                (tab==='distrib'  && b.textContent.indexOf('توزيع')>=0);
     b.classList.toggle('active', match);
   });
-  ['overview','income','expenses','distrib'].forEach(function(t) {
+  ['overview','ledger','distrib'].forEach(function(t) {
     var el = document.getElementById('pf-tab-'+t);
     if (el) el.className = 'tab-content'+(t===tab?' active':'');
   });
   if      (tab==='overview') Pages.renderPfOverview();
-  else if (tab==='income')   Pages.renderPfIncome();
-  else if (tab==='expenses') Pages.renderPfExpenses();
+  else if (tab==='ledger')   Pages.renderPfLedger(Pages._pfLedgerFilter||'all');
   else                       Pages.renderPfDistrib();
 };
 
@@ -10796,8 +10806,8 @@ Pages.renderPfOverview = function() {
   var c = Pages._pfCalc(pf, from, to);
   var distTotal = (pf.distributions||[]).filter(function(d){return d.status==='completed';})
     .reduce(function(s,d){ return s+(Number(d.distributed_amount)||0); },0);
+  var retained = Pages._pfRetainedTotals(pf);
 
-  // KPI cards
   var kpis = '<div class="kpi-grid" style="margin-bottom:var(--space-5)">'+
     '<div class="kpi-card"><div class="kpi-card-accent" style="background:var(--success-500)"></div>'+
       '<div class="kpi-card-icon" style="background:var(--success-50);color:var(--success-600)"><i data-lucide="trending-up"></i></div>'+
@@ -10821,7 +10831,25 @@ Pages.renderPfOverview = function() {
       '<div class="kpi-card-sub">'+(pf.distributions||[]).filter(function(d){return d.status==='completed';}).length+' توزيع مكتمل</div></div>'+
   '</div>';
 
-  // Recent transactions
+  var retainedHtml = retained.total > 0 ?
+    '<div class="card" style="margin-bottom:var(--space-4)">'+
+      '<div class="dash-sec-hdr" style="margin-bottom:var(--space-3)">'+
+        '<h3><i data-lucide="piggy-bank"></i>الأرصدة المحتجزة</h3>'+
+        '<span class="mono" style="font-size:15px;font-weight:800;color:var(--primary-700)">'+UI.fmt(retained.total)+' ر.س</span>'+
+      '</div>'+
+      '<div style="display:flex;gap:10px;flex-wrap:wrap">'+
+        (retained.ops>0?'<div style="padding:10px 16px;background:var(--bg-soft);border-radius:8px;min-width:120px">'+
+          '<div style="font-size:11px;color:var(--fg-4);margin-bottom:4px">تشغيل</div>'+
+          '<div class="mono" style="font-weight:700;color:var(--primary-700)">'+UI.fmt(retained.ops)+' ر.س</div></div>':'')+
+        (retained.dev>0?'<div style="padding:10px 16px;background:var(--bg-soft);border-radius:8px;min-width:120px">'+
+          '<div style="font-size:11px;color:var(--fg-4);margin-bottom:4px">تطوير</div>'+
+          '<div class="mono" style="font-weight:700;color:var(--accent-600)">'+UI.fmt(retained.dev)+' ر.س</div></div>':'')+
+        (retained.reserve>0?'<div style="padding:10px 16px;background:var(--bg-soft);border-radius:8px;min-width:120px">'+
+          '<div style="font-size:11px;color:var(--fg-4);margin-bottom:4px">احتياطي</div>'+
+          '<div class="mono" style="font-weight:700;color:var(--warning-600)">'+UI.fmt(retained.reserve)+' ر.س</div></div>':'')+
+      '</div>'+
+    '</div>' : '';
+
   var all = (pf.income||[]).map(function(e){return Object.assign({},e,{_type:'income'});})
     .concat((pf.expenses||[]).map(function(e){return Object.assign({},e,{_type:'expense'});}));
   all.sort(function(a,b){ return (b.date||'').localeCompare(a.date||''); });
@@ -10842,80 +10870,138 @@ Pages.renderPfOverview = function() {
 
   var txCard = '<div class="card" style="margin-bottom:var(--space-4)">'+
     '<div class="dash-sec-hdr" style="margin-bottom:var(--space-3)"><h3><i data-lucide="receipt"></i>آخر المعاملات</h3>'+
-      '<div style="display:flex;gap:8px">'+
-        '<button class="btn btn-sm btn-ghost" onclick="Pages.switchPfTab(\'income\')"><i data-lucide="plus"></i>إيراد</button>'+
-        '<button class="btn btn-sm btn-ghost" onclick="Pages.switchPfTab(\'expenses\')"><i data-lucide="plus"></i>مصروف</button>'+
-      '</div></div>'+
+      '<button class="btn btn-sm btn-ghost" onclick="Pages.switchPfTab(\'ledger\')"><i data-lucide="arrow-left"></i>عرض الكل</button>'+
+    '</div>'+
     '<div class="wf-table">'+recentHtml+'</div>'+
   '</div>';
 
-  el.innerHTML = '<div class="page-content">'+kpis+Pages._pfMonthlyChart(pf)+txCard+'</div>';
+  el.innerHTML = '<div class="page-content">'+kpis+retainedHtml+Pages._pfMonthlyChart(pf)+txCard+'</div>';
   if (typeof lucide !== 'undefined') lucide.createIcons({rootElement: el});
 };
 
-Pages.renderPfEntries = function(type) {
-  var el = document.getElementById('pf-tab-'+type); if (!el) return;
+Pages._pfLedgerFilter = 'all';
+
+Pages.renderPfLedger = function(filter) {
+  Pages._pfLedgerFilter = filter || 'all';
+  var el = document.getElementById('pf-tab-ledger'); if (!el) return;
   var pf = DB.getPf();
-  var entries = (pf[type]||[]).slice().sort(function(a,b){ return (b.date||'').localeCompare(a.date||''); });
-  var cats = Pages._pfCats[type];
-  var isInc = type==='income';
-  var total = entries.reduce(function(s,e){ return s+(Number(e.amount)||0); },0);
 
-  var rows = entries.length ? entries.map(function(e, i) {
-    return '<tr>'+
-      '<td>'+UI.escHtml(e.date||'—')+'</td>'+
-      '<td style="font-weight:600;color:var(--fg-1)">'+UI.escHtml(e.desc||'—')+'</td>'+
-      '<td><span class="badge badge-neutral">'+UI.escHtml(cats[e.category]||e.category||'—')+'</span></td>'+
-      '<td class="mono" style="font-weight:700;color:'+(isInc?'var(--success-700)':'var(--danger-700)')+'">'+
-        (isInc?'+':'-')+UI.fmt(Number(e.amount)||0)+' ر.س</td>'+
-      '<td style="color:var(--fg-3);font-size:12px">'+UI.escHtml(e.note||'')+'</td>'+
-      '<td><button class="btn btn-sm btn-ghost" style="color:var(--danger-500)" onclick="Pages.deletePfEntry(\''+type+'\',\''+e.id+'\')">'+
-        '<i data-lucide="trash-2" style="width:14px;height:14px"></i></button></td>'+
-    '</tr>';
-  }).join('') :
-  '<tr><td colspan="6" style="text-align:center;padding:32px;color:var(--fg-4)">لا توجد بيانات — أضف أول قيد</td></tr>';
-
-  var catSums = {};
-  entries.forEach(function(e){ catSums[e.category]=(catSums[e.category]||0)+(Number(e.amount)||0); });
-  var catCards = Object.keys(catSums).map(function(k) {
-    return '<div style="padding:12px 16px;background:var(--bg-soft);border-radius:8px;min-width:140px">'+
-      '<div style="font-size:11px;color:var(--fg-4);margin-bottom:4px">'+UI.escHtml(cats[k]||k)+'</div>'+
-      '<div class="mono" style="font-weight:700;color:'+(isInc?'var(--success-700)':'var(--danger-700)')+'">'+UI.fmt(catSums[k])+' ر.س</div>'+
-    '</div>';
+  var pills = ['all','income','expenses'].map(function(f) {
+    var lbl = f==='all'?'الكل':f==='income'?'الإيرادات':'المصروفات';
+    return '<button class="hero-tab-pill'+(Pages._pfLedgerFilter===f?' active':'')+'" style="font-size:13px;padding:6px 14px" onclick="Pages.renderPfLedger(\''+f+'\')">'+lbl+'</button>';
   }).join('');
 
-  el.innerHTML = '<div class="page-content">'+
-    '<div class="card" style="margin-bottom:var(--space-4)">'+
+  var sections = '';
+
+  if (filter !== 'expenses') {
+    var projIncome = (pf.income||[]).filter(function(e){ return e.category==='project_fee' && e.project_id; });
+    var projIncTotal = projIncome.reduce(function(s,e){ return s+(Number(e.amount)||0); },0);
+    var projRows = projIncome.length ? projIncome.map(function(e) {
+      var fc = null;
+      try { fc = FinCalc.calc(e.project_id); } catch(ex){}
+      var contractVal = fc ? (Number(fc.grossTotal)||0) : 0;
+      var execFee = Number(e.amount)||0;
+      var vat = fc ? (Number(fc.vatAmt)||0) : 0;
+      var netProfit = fc ? (Number(fc.profit)||0) : 0;
+      return '<tr>'+
+        '<td>'+UI.escHtml(e.date||'—')+'</td>'+
+        '<td style="font-weight:600;color:var(--fg-1)">'+UI.escHtml(e.desc||'—')+'</td>'+
+        '<td class="mono" style="color:var(--fg-3)">'+UI.fmt(contractVal)+'</td>'+
+        '<td class="mono" style="font-weight:700;color:var(--success-700)">'+UI.fmt(execFee)+'</td>'+
+        '<td class="mono" style="color:var(--fg-3)">'+UI.fmt(vat)+'</td>'+
+        '<td class="mono" style="font-weight:700;color:var(--primary-700)">'+UI.fmt(netProfit)+'</td>'+
+        '<td><button class="btn btn-sm btn-ghost" style="color:var(--danger-500)" onclick="Pages.deletePfEntry(\'income\',\''+e.id+'\')">'+
+          '<i data-lucide="trash-2" style="width:14px;height:14px"></i></button></td>'+
+      '</tr>';
+    }).join('') :
+    '<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--fg-4)">لا توجد مشاريع — فعِّل مشروعاً أو اضغط مزامنة</td></tr>';
+
+    sections += '<div class="card" style="margin-bottom:var(--space-4)">'+
       '<div class="dash-sec-hdr" style="margin-bottom:var(--space-3)">'+
-        '<h3><i data-lucide="'+(isInc?'trending-up':'trending-down')+'"></i>'+(isInc?'الإيرادات':'المصروفات')+'</h3>'+
-        '<div style="display:flex;gap:8px">'+
-          (isInc?'<button class="btn btn-sm btn-ghost" onclick="Pages.pfSyncAllProjects()" title="استيراد أتعاب المشاريع النشطة"><i data-lucide="refresh-cw"></i>مزامنة المشاريع</button>':'')+
-          '<button class="btn btn-primary btn-sm" onclick="Pages.openAddPfEntry(\''+type+'\')">'+
-            '<i data-lucide="plus"></i>إضافة '+(isInc?'إيراد':'مصروف')+'</button>'+
-        '</div>'+
-      '</div>'+
-      (catCards?'<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:var(--space-3)">'+catCards+'</div>':'')+
-      '<div class="wf-total" style="margin-bottom:var(--space-3)">'+
-        '<span style="font-weight:700">الإجمالي</span>'+
-        '<span class="mono" style="font-weight:800;color:'+(isInc?'var(--success-700)':'var(--danger-700)')+'">'+
-          (isInc?'+':'-')+UI.fmt(total)+' ر.س</span>'+
+        '<h3><i data-lucide="briefcase"></i>إيرادات المشاريع</h3>'+
+        '<button class="btn btn-sm btn-ghost" onclick="Pages.pfSyncAllProjects()"><i data-lucide="refresh-cw"></i>مزامنة</button>'+
       '</div>'+
       '<div style="overflow-x:auto"><table class="data-table">'+
-        '<thead><tr><th>التاريخ</th><th>الوصف</th><th>التصنيف</th><th>المبلغ</th><th>ملاحظة</th><th></th></tr></thead>'+
-        '<tbody>'+rows+'</tbody>'+
+        '<thead><tr><th>التاريخ</th><th>المشروع</th><th>قيمة العقد</th><th>الأتعاب</th><th>الضريبة</th><th>صافي الربح</th><th></th></tr></thead>'+
+        '<tbody>'+projRows+'</tbody>'+
+        (projIncome.length?'<tfoot><tr>'+
+          '<td colspan="3" style="font-weight:700;color:var(--fg-2);font-size:13px">إجمالي الأتعاب</td>'+
+          '<td class="mono" style="font-weight:800;color:var(--success-700)">'+UI.fmt(projIncTotal)+' ر.س</td>'+
+          '<td colspan="3"></td></tr></tfoot>':'')+
       '</table></div>'+
-    '</div>'+
+    '</div>';
+
+    var manualIncome = (pf.income||[]).filter(function(e){ return e.category!=='project_fee'; })
+      .slice().sort(function(a,b){ return (b.date||'').localeCompare(a.date||''); });
+    var manualTotal = manualIncome.reduce(function(s,e){ return s+(Number(e.amount)||0); },0);
+    var manualRows = manualIncome.length ? manualIncome.map(function(e) {
+      return '<tr>'+
+        '<td>'+UI.escHtml(e.date||'—')+'</td>'+
+        '<td style="font-weight:600">'+UI.escHtml(e.desc||'—')+'</td>'+
+        '<td><span class="badge badge-neutral">'+UI.escHtml(Pages._pfCats.income[e.category]||e.category||'—')+'</span></td>'+
+        '<td class="mono" style="font-weight:700;color:var(--success-700)">+'+UI.fmt(Number(e.amount)||0)+' ر.س</td>'+
+        '<td style="color:var(--fg-3);font-size:12px">'+UI.escHtml(e.note||'')+'</td>'+
+        '<td><button class="btn btn-sm btn-ghost" style="color:var(--danger-500)" onclick="Pages.deletePfEntry(\'income\',\''+e.id+'\')">'+
+          '<i data-lucide="trash-2" style="width:14px;height:14px"></i></button></td>'+
+      '</tr>';
+    }).join('') :
+    '<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--fg-4)">لا توجد إيرادات يدوية</td></tr>';
+
+    sections += '<div class="card" style="margin-bottom:var(--space-4)">'+
+      '<div class="dash-sec-hdr" style="margin-bottom:var(--space-3)">'+
+        '<h3><i data-lucide="trending-up"></i>إيرادات أخرى</h3>'+
+        '<button class="btn btn-primary btn-sm" onclick="Pages.openAddPfEntry(\'income\')"><i data-lucide="plus"></i>إضافة إيراد</button>'+
+      '</div>'+
+      (manualIncome.length?'<div class="wf-total" style="margin-bottom:var(--space-3)"><span>الإجمالي</span>'+
+        '<span class="mono" style="font-weight:800;color:var(--success-700)">+'+UI.fmt(manualTotal)+' ر.س</span></div>':'')+
+      '<div style="overflow-x:auto"><table class="data-table">'+
+        '<thead><tr><th>التاريخ</th><th>الوصف</th><th>التصنيف</th><th>المبلغ</th><th>ملاحظة</th><th></th></tr></thead>'+
+        '<tbody>'+manualRows+'</tbody>'+
+      '</table></div>'+
+    '</div>';
+  }
+
+  if (filter !== 'income') {
+    var expenses = (pf.expenses||[]).slice().sort(function(a,b){ return (b.date||'').localeCompare(a.date||''); });
+    var expTotal = expenses.reduce(function(s,e){ return s+(Number(e.amount)||0); },0);
+    var expRows = expenses.length ? expenses.map(function(e) {
+      return '<tr>'+
+        '<td>'+UI.escHtml(e.date||'—')+'</td>'+
+        '<td style="font-weight:600">'+UI.escHtml(e.desc||'—')+'</td>'+
+        '<td><span class="badge badge-neutral">'+UI.escHtml(Pages._pfCats.expenses[e.category]||e.category||'—')+'</span></td>'+
+        '<td class="mono" style="font-weight:700;color:var(--danger-700)">-'+UI.fmt(Number(e.amount)||0)+' ر.س</td>'+
+        '<td style="color:var(--fg-3);font-size:12px">'+UI.escHtml(e.note||'')+'</td>'+
+        '<td><button class="btn btn-sm btn-ghost" style="color:var(--danger-500)" onclick="Pages.deletePfEntry(\'expenses\',\''+e.id+'\')">'+
+          '<i data-lucide="trash-2" style="width:14px;height:14px"></i></button></td>'+
+      '</tr>';
+    }).join('') :
+    '<tr><td colspan="6" style="text-align:center;padding:32px;color:var(--fg-4)">لا توجد مصروفات — أضف أول قيد</td></tr>';
+
+    sections += '<div class="card" style="margin-bottom:var(--space-4)">'+
+      '<div class="dash-sec-hdr" style="margin-bottom:var(--space-3)">'+
+        '<h3><i data-lucide="trending-down"></i>المصروفات</h3>'+
+        '<button class="btn btn-primary btn-sm" onclick="Pages.openAddPfEntry(\'expenses\')"><i data-lucide="plus"></i>إضافة مصروف</button>'+
+      '</div>'+
+      (expenses.length?'<div class="wf-total" style="margin-bottom:var(--space-3)"><span>الإجمالي</span>'+
+        '<span class="mono" style="font-weight:800;color:var(--danger-700)">-'+UI.fmt(expTotal)+' ر.س</span></div>':'')+
+      '<div style="overflow-x:auto"><table class="data-table">'+
+        '<thead><tr><th>التاريخ</th><th>الوصف</th><th>التصنيف</th><th>المبلغ</th><th>ملاحظة</th><th></th></tr></thead>'+
+        '<tbody>'+expRows+'</tbody>'+
+      '</table></div>'+
+    '</div>';
+  }
+
+  el.innerHTML = '<div class="page-content">'+
+    '<div style="display:flex;gap:8px;margin-bottom:var(--space-4)">'+pills+'</div>'+
+    sections+
   '</div>';
   if (typeof lucide !== 'undefined') lucide.createIcons({rootElement: el});
 };
-
-Pages.renderPfIncome   = function() { Pages.renderPfEntries('income'); };
-Pages.renderPfExpenses = function() { Pages.renderPfEntries('expenses'); };
 
 Pages.openAddPfEntry = function(type) {
   var cats = Pages._pfCats[type];
   var isInc = type === 'income';
-  var catOpts = Object.keys(cats).map(function(k){
+  var catOpts = Object.keys(cats).filter(function(k){ return k !== 'project_fee'; }).map(function(k){
     return '<option value="'+k+'">'+cats[k]+'</option>';
   }).join('');
   var html = '<div class="modal-header"><h3><i data-lucide="'+(isInc?'trending-up':'trending-down')+'"></i>إضافة '+(isInc?'إيراد':'مصروف')+'</h3><button class="modal-close" onclick="UI.closeModalForce()">×</button></div>'+
@@ -10947,7 +11033,7 @@ Pages.savePfEntry = function(type) {
   DB.savePf(pf);
   UI.closeModalForce();
   UI.toast('تم الحفظ', 'success');
-  Pages.renderPfEntries(type);
+  Pages.renderPfLedger(Pages._pfLedgerFilter);
 };
 
 Pages.deletePfEntry = function(type, id) {
@@ -10956,7 +11042,51 @@ Pages.deletePfEntry = function(type, id) {
   pf[type] = (pf[type]||[]).filter(function(e){ return e.id !== id; });
   DB.savePf(pf);
   UI.toast('تم الحذف');
-  Pages.renderPfEntries(type);
+  Pages.renderPfLedger(Pages._pfLedgerFilter);
+};
+
+Pages.openPartnersModal = function() {
+  var pf = DB.getPf();
+  var partners = pf.partners || [];
+  var totalPct = partners.reduce(function(s,p){ return s+(Number(p.share_pct)||0); },0);
+  var pctOk = Math.abs(totalPct-100)<0.01;
+
+  var partnerRows = partners.length ? partners.map(function(p) {
+    return '<tr>'+
+      '<td><div style="display:flex;align-items:center;gap:8px">'+
+        '<div style="width:30px;height:30px;border-radius:50%;background:var(--primary-500);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:13px;flex-shrink:0">'+
+          UI.escHtml((p.name||'؟').charAt(0))+'</div>'+
+        '<span style="font-weight:600">'+UI.escHtml(p.name)+'</span></div></td>'+
+      '<td class="mono" style="font-weight:800;color:var(--primary-700);font-size:15px">'+p.share_pct+'٪</td>'+
+      '<td style="color:var(--fg-3);font-size:12px">'+UI.escHtml(p.note||'')+'</td>'+
+      '<td>'+
+        '<button class="btn btn-sm btn-ghost" onclick="Pages.openManagePartner(\''+p.id+'\',true)"><i data-lucide="pencil" style="width:13px;height:13px"></i></button>'+
+        '<button class="btn btn-sm btn-ghost" style="color:var(--danger-500)" onclick="Pages.deletePartner(\''+p.id+'\',true)"><i data-lucide="trash-2" style="width:13px;height:13px"></i></button>'+
+      '</td>'+
+    '</tr>';
+  }).join('') :
+  '<tr><td colspan="4" style="text-align:center;padding:24px;color:var(--fg-4)">لا يوجد شركاء — أضف الشريك الأول</td></tr>';
+
+  var summary = partners.length ?
+    '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--bg-soft);border-radius:8px;margin-bottom:var(--space-3)">'+
+      '<span style="font-size:13px;color:var(--fg-3)">مجموع الحصص</span>'+
+      '<span class="mono" style="font-weight:800;font-size:15px;color:'+(pctOk?'var(--success-700)':'var(--danger-600)')+'">'+totalPct.toFixed(1)+'٪ '+(pctOk?'✓':'⚠')+'</span>'+
+    '</div>' : '';
+
+  var html = '<div class="modal-header"><h3><i data-lucide="users-round"></i>إدارة الشركاء</h3>'+
+    '<button class="modal-close" onclick="UI.closeModalForce()">×</button></div>'+
+    '<div class="modal-body">'+
+      summary+
+      '<table class="data-table"><thead><tr><th>الشريك</th><th>الحصة ٪</th><th>ملاحظة</th><th></th></tr></thead>'+
+        '<tbody>'+partnerRows+'</tbody>'+
+      '</table>'+
+    '</div>'+
+    '<div class="modal-footer">'+
+      '<button class="btn btn-ghost" onclick="UI.closeModalForce()">إغلاق</button>'+
+      '<button class="btn btn-primary" onclick="Pages.openManagePartner(\'\',true)"><i data-lucide="plus"></i>إضافة شريك</button>'+
+    '</div>';
+  UI.openModal(html, true);
+  if (typeof lucide !== 'undefined') lucide.createIcons();
 };
 
 Pages.renderPfDistrib = function() {
@@ -10966,43 +11096,43 @@ Pages.renderPfDistrib = function() {
   var totalPct = partners.reduce(function(s,p){ return s+(Number(p.share_pct)||0); },0);
   var pctOk = Math.abs(totalPct-100)<0.01;
 
-  var partnerCards = partners.length ? partners.map(function(p) {
-    return '<div style="display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--bg-soft);border-radius:10px;margin-bottom:8px">'+
-      '<div style="width:40px;height:40px;border-radius:50%;background:var(--primary-500);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:16px;flex-shrink:0">'+
-        UI.escHtml((p.name||'؟').charAt(0))+'</div>'+
-      '<div style="flex:1;min-width:0">'+
-        '<div style="font-weight:700;color:var(--fg-1)">'+UI.escHtml(p.name)+'</div>'+
-        (p.note?'<div style="font-size:12px;color:var(--fg-4)">'+UI.escHtml(p.note)+'</div>':'')+
-      '</div>'+
-      '<div style="background:var(--primary-50);color:var(--primary-700);font-weight:800;font-size:16px;padding:6px 14px;border-radius:8px;font-family:monospace">'+
-        (Number(p.share_pct)||0)+'%</div>'+
-      '<button class="btn btn-sm btn-ghost" onclick="Pages.openManagePartner(\''+p.id+'\')"><i data-lucide="pencil" style="width:14px;height:14px"></i></button>'+
-      '<button class="btn btn-sm btn-ghost" style="color:var(--danger-500)" onclick="Pages.deletePartner(\''+p.id+'\')"><i data-lucide="trash-2" style="width:14px;height:14px"></i></button>'+
-    '</div>';
-  }).join('') :
-  '<div style="padding:20px;text-align:center;color:var(--fg-4);font-size:13px">لا يوجد شركاء — أضف الشريك الأول</div>';
+  var partnerSummary = partners.length ?
+    '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">'+
+      partners.map(function(p) {
+        return '<div style="display:flex;align-items:center;gap:6px;padding:5px 12px;background:var(--bg-soft);border-radius:20px">'+
+          '<div style="width:22px;height:22px;border-radius:50%;background:var(--primary-500);display:flex;align-items:center;justify-content:center;color:#fff;font-size:10px;font-weight:700;flex-shrink:0">'+
+            UI.escHtml((p.name||'؟').charAt(0))+'</div>'+
+          '<span style="font-weight:600;font-size:13px">'+UI.escHtml(p.name)+'</span>'+
+          '<span style="font-size:12px;font-weight:800;color:var(--primary-600);font-family:monospace">'+p.share_pct+'٪</span>'+
+        '</div>';
+      }).join('')+
+    '</div>' :
+    '<div style="color:var(--fg-4);font-size:13px">لا يوجد شركاء — افتح إدارة الشركاء لإضافة شركاء</div>';
 
-  var pctWarn = (!pctOk && partners.length) ?
-    '<div style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--warning-50);color:var(--warning-700);border-radius:8px;font-size:13px;margin-top:8px">'+
-      '<i data-lucide="alert-triangle" style="width:16px;height:16px;flex-shrink:0"></i>'+
-      'مجموع الحصص = '+totalPct+'٪ — يجب أن يساوي ١٠٠٪ لإنشاء توزيع</div>' : '';
+  var warn = (!pctOk && partners.length) ?
+    '<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--warning-50);color:var(--warning-700);border-radius:8px;font-size:12px;margin-top:8px">'+
+      '<i data-lucide="alert-triangle" style="width:14px;height:14px;flex-shrink:0"></i>'+
+      'مجموع الحصص = '+totalPct+'٪ — يجب ١٠٠٪ لإنشاء توزيع</div>' : '';
 
-  // Distributions table
+  var retainedMap = {ops:'تشغيل',dev:'تطوير',reserve:'احتياطي'};
   var dists = (pf.distributions||[]).slice().sort(function(a,b){ return (b.created_at||'').localeCompare(a.created_at||''); });
   var distRows = dists.length ? dists.map(function(d) {
     var statusHtml = d.status==='completed' ?
       '<span class="badge badge-success">مكتمل</span>' :
       '<span class="badge badge-warning">مسودة</span>';
+    var retainedLine = (d.retained_amount||0) > 0 ?
+      '<div style="font-size:11px;color:var(--fg-4);margin-top:2px">محتجز: '+UI.fmt(d.retained_amount)+' ('+UI.escHtml(retainedMap[d.retained_category]||'')+')</div>' : '';
     return '<tr>'+
       '<td style="font-weight:600">'+UI.escHtml(d.period_label||'—')+'</td>'+
       '<td>'+UI.escHtml((d.created_at||'').slice(0,10))+'</td>'+
       '<td class="mono">'+UI.fmt(Number(d.gross_income)||0)+' ر.س</td>'+
       '<td class="mono">'+UI.fmt(Number(d.gross_expenses)||0)+' ر.س</td>'+
       '<td class="mono" style="font-weight:700;color:'+(Number(d.net_profit)>=0?'var(--success-700)':'var(--danger-700)')+'">'+UI.fmt(Number(d.net_profit)||0)+' ر.س</td>'+
-      '<td class="mono" style="font-weight:700;color:var(--accent-600)">'+UI.fmt(Number(d.distributed_amount)||0)+' ر.س</td>'+
+      '<td class="mono"><div style="font-weight:700;color:var(--accent-600)">'+UI.fmt(Number(d.distributed_amount)||0)+' ر.س</div>'+retainedLine+'</td>'+
       '<td>'+statusHtml+'</td>'+
-      '<td><button class="btn btn-sm btn-ghost" onclick="Pages.viewDistrib(\''+d.id+'\')"><i data-lucide="eye" style="width:14px;height:14px"></i></button>'+
-        (d.status==='draft'?'<button class="btn btn-sm btn-ghost" style="color:var(--danger-500)" onclick="Pages.deletePfDistrib(\''+d.id+'\')"><i data-lucide="trash-2" style="width:14px;height:14px"></i></button>':'')+
+      '<td>'+
+        '<button class="btn btn-sm btn-ghost" onclick="Pages.viewDistrib(\''+d.id+'\')"><i data-lucide="eye" style="width:14px;height:14px"></i></button>'+
+        '<button class="btn btn-sm btn-ghost" style="color:var(--danger-500)" onclick="Pages.deletePfDistrib(\''+d.id+'\')"><i data-lucide="trash-2" style="width:14px;height:14px"></i></button>'+
       '</td>'+
     '</tr>';
   }).join('') :
@@ -11011,10 +11141,11 @@ Pages.renderPfDistrib = function() {
   el.innerHTML = '<div class="page-content">'+
     '<div class="card" style="margin-bottom:var(--space-4)">'+
       '<div class="dash-sec-hdr" style="margin-bottom:var(--space-3)">'+
-        '<h3><i data-lucide="users-round"></i>الشركاء وحصص الملكية</h3>'+
-        '<button class="btn btn-primary btn-sm" onclick="Pages.openManagePartner()"><i data-lucide="plus"></i>إضافة شريك</button>'+
+        '<h3><i data-lucide="users-round"></i>الشركاء</h3>'+
+        '<button class="btn btn-sm btn-ghost" onclick="Pages.openPartnersModal()">'+
+          '<i data-lucide="settings-2"></i>إدارة الشركاء</button>'+
       '</div>'+
-      partnerCards+pctWarn+
+      partnerSummary+warn+
     '</div>'+
     '<div class="card">'+
       '<div class="dash-sec-hdr" style="margin-bottom:var(--space-3)">'+
@@ -11023,7 +11154,7 @@ Pages.renderPfDistrib = function() {
           '<i data-lucide="plus"></i>توزيع جديد</button>'+
       '</div>'+
       '<div style="overflow-x:auto"><table class="data-table">'+
-        '<thead><tr><th>الفترة</th><th>التاريخ</th><th>الإيرادات</th><th>المصروفات</th><th>صافي الربح</th><th>الموزَّع</th><th>الحالة</th><th></th></tr></thead>'+
+        '<thead><tr><th>الفترة</th><th>التاريخ</th><th>الإيرادات</th><th>المصروفات</th><th>صافي الربح</th><th>الموزَّع / المحتجز</th><th>الحالة</th><th></th></tr></thead>'+
         '<tbody>'+distRows+'</tbody>'+
       '</table></div>'+
     '</div>'+
@@ -11031,18 +11162,19 @@ Pages.renderPfDistrib = function() {
   if (typeof lucide !== 'undefined') lucide.createIcons({rootElement: el});
 };
 
-Pages.openManagePartner = function(id) {
+Pages.openManagePartner = function(id, returnToPartners) {
+  Pages._pfPartnerReturn = !!returnToPartners;
   var pf = DB.getPf();
   var p = id ? (pf.partners||[]).find(function(x){return x.id===id;}) : null;
   var html = '<div class="modal-header"><h3><i data-lucide="user-plus"></i>'+(p?'تعديل شريك':'إضافة شريك')+'</h3><button class="modal-close" onclick="UI.closeModalForce()">×</button></div>'+
     '<div class="modal-body">'+
       '<input type="hidden" id="pf-partner-id" value="'+(p?p.id:'')+'">'+
       '<div class="form-group"><label>الاسم</label><input type="text" id="pf-partner-name" class="form-control" value="'+(p?UI.escHtml(p.name||''):'')+'"></div>'+
-      '<div class="form-group"><label>الحصة ٪</label><input type="number" id="pf-partner-pct" class="form-control" value="'+(p?p.share_pct:'')+ '" min="0" max="100" step="0.01" placeholder="مثال: 50"></div>'+
+      '<div class="form-group"><label>الحصة ٪</label><input type="number" id="pf-partner-pct" class="form-control" value="'+(p?p.share_pct:'')+'" min="0" max="100" step="0.01" placeholder="مثال: 50"></div>'+
       '<div class="form-group"><label>ملاحظة (اختياري)</label><input type="text" id="pf-partner-note" class="form-control" value="'+(p?UI.escHtml(p.note||''):'')+'"></div>'+
     '</div>'+
     '<div class="modal-footer">'+
-      '<button class="btn btn-ghost" onclick="UI.closeModalForce()">إلغاء</button>'+
+      '<button class="btn btn-ghost" onclick="'+(returnToPartners?'Pages.openPartnersModal()':'UI.closeModalForce()')+'">إلغاء</button>'+
       '<button class="btn btn-primary" onclick="Pages.savePartner()">حفظ</button>'+
     '</div>';
   UI.openModal(html);
@@ -11066,18 +11198,19 @@ Pages.savePartner = function() {
   var total = pf.partners.reduce(function(s,p){return s+(Number(p.share_pct)||0);},0);
   if (total > 100.01) { UI.toast('مجموع الحصص تجاوز ١٠٠٪ (الحالي: '+total.toFixed(1)+'٪)', 'warning'); }
   DB.savePf(pf);
-  UI.closeModalForce();
   UI.toast('تم الحفظ', 'success');
-  Pages.renderPfDistrib();
+  if (Pages._pfPartnerReturn) { Pages.openPartnersModal(); }
+  else { UI.closeModalForce(); Pages.renderPfDistrib(); }
 };
 
-Pages.deletePartner = function(id) {
+Pages.deletePartner = function(id, returnToPartners) {
   if (!confirm('حذف هذا الشريك؟')) return;
   var pf = DB.getPf();
   pf.partners = (pf.partners||[]).filter(function(p){return p.id!==id;});
   DB.savePf(pf);
   UI.toast('تم الحذف');
-  Pages.renderPfDistrib();
+  if (returnToPartners) { Pages.openPartnersModal(); }
+  else { UI.closeModalForce(); Pages.renderPfDistrib(); }
 };
 
 Pages._pfDistribState = {};
@@ -11111,19 +11244,30 @@ Pages._pfDistribRender = function() {
         '<input type="text" id="pd-label" class="form-control" value="'+UI.escHtml(st.period_label||'')+'" placeholder="مثال: الربع الأول 2025"></div>';
   } else if (st.step === 2) {
     var c = Pages._pfCalc(pf, st.from, st.to);
-    body = '<div style="background:var(--bg-soft);border-radius:10px;padding:16px;margin-bottom:var(--space-3)">'+
-      '<div class="wf-table">'+
-        '<div class="wf-row"><span class="wf-lbl">إجمالي الإيرادات</span><span class="wf-val" style="color:var(--success-700)">+'+UI.fmt(c.income)+' ر.س</span></div>'+
-        '<div class="wf-row"><span class="wf-lbl">إجمالي المصروفات</span><span class="wf-val" style="color:var(--danger-700)">−'+UI.fmt(c.expenses)+' ر.س</span></div>'+
-        '<div class="wf-row wf-total"><span class="wf-lbl">صافي الربح</span><span class="wf-val" style="color:'+(c.netProfit>=0?'var(--success-700)':'var(--danger-700)')+'">'+UI.fmt(c.netProfit)+' ر.س</span></div>'+
-      '</div>'+
-    '</div>'+
-    '<div class="form-group"><label>المبلغ المتاح للتوزيع (ر.س)</label>'+
-      '<input type="number" id="pd-amt" class="form-control" value="'+Math.max(0,c.netProfit).toFixed(2)+'" min="0" step="0.01" '+
-        'oninput="Pages._pfDistribUpdateShares()">'+
-      '<div style="font-size:12px;color:var(--fg-4);margin-top:4px">يمكن توزيع أقل من صافي الربح (الباقي يُبقى احتياطياً)</div></div>'+
-    '<div id="pd-shares"></div>';
     st._income = c.income; st._expenses = c.expenses; st._netProfit = c.netProfit;
+    body =
+      '<div style="background:var(--bg-soft);border-radius:10px;padding:16px;margin-bottom:var(--space-3)">'+
+        '<div class="wf-table">'+
+          '<div class="wf-row"><span class="wf-lbl">إجمالي الإيرادات</span><span class="wf-val" style="color:var(--success-700)">+'+UI.fmt(c.income)+' ر.س</span></div>'+
+          '<div class="wf-row"><span class="wf-lbl">إجمالي المصروفات</span><span class="wf-val" style="color:var(--danger-700)">−'+UI.fmt(c.expenses)+' ر.س</span></div>'+
+          '<div class="wf-row wf-total"><span class="wf-lbl">صافي الربح</span><span class="wf-val" style="color:'+(c.netProfit>=0?'var(--success-700)':'var(--danger-700)')+'">'+UI.fmt(c.netProfit)+' ر.س</span></div>'+
+        '</div>'+
+      '</div>'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:var(--space-3)">'+
+        '<div class="form-group" style="margin:0"><label>نسبة التوزيع ٪</label>'+
+          '<input type="number" id="pd-pct" class="form-control" value="'+(st._distribPct||100)+'" min="0" max="100" step="1" oninput="Pages._pfDistribUpdateShares()">'+
+          '<div style="font-size:11px;color:var(--fg-4);margin-top:3px">٪ من صافي الربح للتوزيع</div>'+
+        '</div>'+
+        '<div class="form-group" style="margin:0"><label>تصنيف المبلغ المحتجز</label>'+
+          '<select id="pd-retained-cat" class="form-control">'+
+            '<option value="ops">تشغيل</option>'+
+            '<option value="dev">تطوير</option>'+
+            '<option value="reserve" selected>احتياطي</option>'+
+          '</select>'+
+          '<div style="font-size:11px;color:var(--fg-4);margin-top:3px">تصنيف ما لم يُوزَّع</div>'+
+        '</div>'+
+      '</div>'+
+      '<div id="pd-shares"></div>';
   }
 
   var html = '<div class="modal-header">'+
@@ -11171,28 +11315,53 @@ Pages._pfDistribNext = function() {
 };
 
 Pages._pfDistribUpdateShares = function() {
-  var amt = parseFloat((document.getElementById('pd-amt')||{}).value)||0;
+  var pct = Math.min(100, Math.max(0, parseFloat((document.getElementById('pd-pct')||{}).value)||100));
+  var st = Pages._pfDistribState;
+  st._distribPct = pct;
   var pf = DB.getPf();
+  var netProfit = st._netProfit || 0;
+  var distribAmt = Math.max(0, Math.round(netProfit * pct / 100 * 100) / 100);
+  var retainedAmt = Math.max(0, Math.round((netProfit - distribAmt) * 100) / 100);
+
   var rows = (pf.partners||[]).map(function(p) {
-    var share = Math.round(amt * (Number(p.share_pct)||0) / 100 * 100)/100;
+    var share = Math.round(distribAmt * (Number(p.share_pct)||0) / 100 * 100)/100;
     return '<div class="wf-row">'+
       '<span class="wf-lbl">'+UI.escHtml(p.name)+'</span>'+
       '<span style="font-size:12px;color:var(--fg-4)">'+p.share_pct+'٪</span>'+
       '<span class="wf-val" style="color:var(--accent-600);font-weight:700"><span class="mono">'+UI.fmt(share)+'</span> ر.س</span>'+
     '</div>';
   }).join('');
+
   var el = document.getElementById('pd-shares');
   if (el) {
-    el.innerHTML = '<div style="background:var(--bg-soft);border-radius:10px;padding:14px;margin-top:8px">'+
-      '<div style="font-size:12px;font-weight:700;color:var(--fg-3);margin-bottom:10px">توزيع الحصص</div>'+
-      '<div class="wf-table">'+rows+'</div></div>';
+    el.innerHTML =
+      '<div style="background:var(--bg-soft);border-radius:10px;padding:14px;margin-bottom:8px">'+
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">'+
+          '<div style="font-size:12px;font-weight:700;color:var(--fg-3)">توزيع الحصص</div>'+
+          '<div class="mono" style="font-size:14px;font-weight:800;color:var(--accent-600)">'+UI.fmt(distribAmt)+' ر.س</div>'+
+        '</div>'+
+        '<div class="wf-table">'+rows+'</div>'+
+      '</div>'+
+      (retainedAmt > 0 ?
+        '<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--primary-50);border-radius:8px">'+
+          '<i data-lucide="piggy-bank" style="width:16px;height:16px;color:var(--primary-600);flex-shrink:0"></i>'+
+          '<div>'+
+            '<div style="font-size:12px;font-weight:700;color:var(--primary-700)">المبلغ المحتجز: '+
+              '<span class="mono">'+UI.fmt(retainedAmt)+'</span> ر.س</div>'+
+            '<div style="font-size:11px;color:var(--primary-600)">سيُسجَّل في التصنيف المختار</div>'+
+          '</div>'+
+        '</div>' : '');
+    if (typeof lucide !== 'undefined') lucide.createIcons({rootElement: el});
   }
 };
 
 Pages.saveDistrib = function(status) {
   var st = Pages._pfDistribState;
-  var amt = parseFloat((document.getElementById('pd-amt')||{}).value)||0;
-  if (status==='completed' && amt<=0) { UI.toast('المبلغ يجب أن يكون أكبر من صفر', 'danger'); return; }
+  var pct = Math.min(100, Math.max(0, parseFloat((document.getElementById('pd-pct')||{}).value)||100));
+  var netProfit = st._netProfit || 0;
+  var amt = Math.max(0, Math.round(netProfit * pct / 100 * 100) / 100);
+  var retainedAmt = Math.max(0, Math.round((netProfit - amt) * 100) / 100);
+  var retainedCat = (document.getElementById('pd-retained-cat')||{}).value || 'reserve';
   var pf = DB.getPf();
   var entries = (pf.partners||[]).map(function(p) {
     return { partner_id: p.id, partner_name: p.name, share_pct: p.share_pct,
@@ -11206,8 +11375,11 @@ Pages.saveDistrib = function(status) {
     from_date: st.from, to_date: st.to,
     gross_income: st._income||0,
     gross_expenses: st._expenses||0,
-    net_profit: st._netProfit||0,
+    net_profit: netProfit,
+    distribution_pct: pct,
     distributed_amount: amt,
+    retained_amount: retainedAmt,
+    retained_category: retainedAmt > 0 ? retainedCat : null,
     entries: entries,
     status: status
   };
@@ -11223,6 +11395,7 @@ Pages.viewDistrib = function(id) {
   var pf = DB.getPf();
   var d = (pf.distributions||[]).find(function(x){return x.id===id;});
   if (!d) return;
+  var retainedMap = {ops:'تشغيل',dev:'تطوير',reserve:'احتياطي'};
   var rows = (d.entries||[]).map(function(e) {
     return '<div class="wf-row">'+
       '<span class="wf-lbl">'+UI.escHtml(e.partner_name)+'</span>'+
@@ -11242,13 +11415,16 @@ Pages.viewDistrib = function(id) {
         '<div class="wf-row"><span class="wf-lbl">إجمالي الإيرادات</span><span class="wf-val" style="color:var(--success-700)">'+UI.fmt(d.gross_income)+' ر.س</span></div>'+
         '<div class="wf-row"><span class="wf-lbl">إجمالي المصروفات</span><span class="wf-val" style="color:var(--danger-700)">'+UI.fmt(d.gross_expenses)+' ر.س</span></div>'+
         '<div class="wf-row wf-total"><span class="wf-lbl">صافي الربح</span><span class="wf-val">'+UI.fmt(d.net_profit)+' ر.س</span></div>'+
+        '<div class="wf-row"><span class="wf-lbl">نسبة التوزيع</span><span class="wf-val" style="color:var(--fg-2)">'+(d.distribution_pct||100)+'٪</span></div>'+
         '<div class="wf-row wf-total"><span class="wf-lbl">المبلغ الموزَّع</span><span class="wf-val" style="color:var(--accent-600)">'+UI.fmt(d.distributed_amount)+' ر.س</span></div>'+
+        ((d.retained_amount||0)>0?'<div class="wf-row"><span class="wf-lbl">المحتجز ('+UI.escHtml(retainedMap[d.retained_category]||'')+')</span><span class="wf-val" style="color:var(--primary-700)">'+UI.fmt(d.retained_amount)+' ر.س</span></div>':'')+
       '</div>'+
       '<div style="font-size:13px;font-weight:700;color:var(--fg-2);margin-bottom:10px">توزيع الحصص</div>'+
       '<div class="wf-table">'+rows+'</div>'+
       (d.note?'<div style="margin-top:12px;font-size:13px;color:var(--fg-4)">'+UI.escHtml(d.note)+'</div>':'')+
     '</div>'+
     '<div class="modal-footer">'+
+      '<button class="btn btn-ghost" style="color:var(--danger-500)" onclick="UI.closeModalForce();setTimeout(function(){Pages.deletePfDistrib(\''+d.id+'\')},100)"><i data-lucide="trash-2" style="width:14px;height:14px"></i>حذف</button>'+
       (d.status==='draft'?'<button class="btn btn-primary" onclick="Pages._pfCompleteDistrib(\''+d.id+'\')">تأكيد التوزيع</button>':'')+
       '<button class="btn btn-ghost" onclick="UI.closeModalForce()">إغلاق</button>'+
     '</div>';
@@ -11265,7 +11441,7 @@ Pages._pfCompleteDistrib = function(id) {
 };
 
 Pages.deletePfDistrib = function(id) {
-  if (!confirm('حذف هذه المسودة؟')) return;
+  if (!confirm('حذف هذا السجل؟')) return;
   var pf = DB.getPf();
   pf.distributions = (pf.distributions||[]).filter(function(d){return d.id!==id;});
   DB.savePf(pf);
@@ -11276,6 +11452,7 @@ Pages.deletePfDistrib = function(id) {
 /* ══════════════════════════════════════════════════════════════
    END PLATFORM FINANCE
    ══════════════════════════════════════════════════════════════ */
+
 
 Pages.render_settings = function(opts) {
   var clients = DB.getClients();
