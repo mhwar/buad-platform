@@ -411,13 +411,40 @@ export async function onRequest(context) {
       'CREATE TABLE IF NOT EXISTS crm_aids (id TEXT PRIMARY KEY, org_id TEXT NOT NULL, beneficiary_id TEXT NOT NULL, request_id TEXT NOT NULL DEFAULT "", aid_type TEXT NOT NULL DEFAULT "financial", amount REAL NOT NULL DEFAULT 0, items TEXT NOT NULL DEFAULT "[]", provided_at TEXT NOT NULL DEFAULT "", notes TEXT NOT NULL DEFAULT "", created_by TEXT NOT NULL DEFAULT "", created_at INTEGER NOT NULL DEFAULT (unixepoch()))',
       'CREATE TABLE IF NOT EXISTS crm_notes (id TEXT PRIMARY KEY, org_id TEXT NOT NULL, beneficiary_id TEXT NOT NULL, request_id TEXT NOT NULL DEFAULT "", type TEXT NOT NULL DEFAULT "note", content TEXT NOT NULL DEFAULT "", created_by TEXT NOT NULL DEFAULT "", created_at INTEGER NOT NULL DEFAULT (unixepoch()))',
       'CREATE TABLE IF NOT EXISTS crm_config (org_id TEXT PRIMARY KEY, config TEXT NOT NULL DEFAULT "{}", updated_at INTEGER NOT NULL DEFAULT (unixepoch()))',
-      'ALTER TABLE beneficiaries ADD COLUMN custom_data TEXT NOT NULL DEFAULT "{}"'
+      'ALTER TABLE beneficiaries ADD COLUMN custom_data TEXT NOT NULL DEFAULT "{}"',
+      // ── Beneficiary onboarding/approval workflow ──
+      'ALTER TABLE beneficiaries ADD COLUMN stage TEXT NOT NULL DEFAULT "active"',
+      'ALTER TABLE beneficiaries ADD COLUMN stage_note TEXT NOT NULL DEFAULT ""',
+      'ALTER TABLE beneficiaries ADD COLUMN assigned_to TEXT NOT NULL DEFAULT ""',
+      // ── Enhanced notes (internal flag + stage link) ──
+      'ALTER TABLE crm_notes ADD COLUMN internal INTEGER NOT NULL DEFAULT 0',
+      'ALTER TABLE crm_notes ADD COLUMN stage TEXT NOT NULL DEFAULT ""',
+      // ── Request multi-stage assignment ──
+      'ALTER TABLE crm_requests ADD COLUMN stage TEXT NOT NULL DEFAULT ""',
+      // ── Document checklist ──
+      'CREATE TABLE IF NOT EXISTS crm_documents (id TEXT PRIMARY KEY, org_id TEXT NOT NULL, beneficiary_id TEXT NOT NULL DEFAULT "", request_id TEXT NOT NULL DEFAULT "", doc_type TEXT NOT NULL DEFAULT "", label TEXT NOT NULL DEFAULT "", status TEXT NOT NULL DEFAULT "required", note TEXT NOT NULL DEFAULT "", file_url TEXT NOT NULL DEFAULT "", created_at INTEGER NOT NULL DEFAULT (unixepoch()), verified_at INTEGER NOT NULL DEFAULT 0, verified_by TEXT NOT NULL DEFAULT "")',
+      'CREATE INDEX IF NOT EXISTS idx_cdoc_ben ON crm_documents(beneficiary_id)',
+      'CREATE INDEX IF NOT EXISTS idx_cdoc_req ON crm_documents(request_id)',
+      // ── Request approval chain ──
+      'CREATE TABLE IF NOT EXISTS crm_approvals (id TEXT PRIMARY KEY, org_id TEXT NOT NULL, request_id TEXT NOT NULL, stage TEXT NOT NULL DEFAULT "", action TEXT NOT NULL DEFAULT "", actor TEXT NOT NULL DEFAULT "", from_status TEXT NOT NULL DEFAULT "", to_status TEXT NOT NULL DEFAULT "", note TEXT NOT NULL DEFAULT "", created_at INTEGER NOT NULL DEFAULT (unixepoch()))',
+      'CREATE INDEX IF NOT EXISTS idx_capp_req ON crm_approvals(request_id)'
     ];
     for (const sql of crmMigrations) { try { await db.prepare(sql).run(); } catch (_) {} }
     try {
       const row = await db.prepare('SELECT crm_enabled FROM orgs WHERE id = ?').bind(orgMe.id).first();
       return !!(row && row.crm_enabled);
     } catch (_) { return false; }
+  }
+
+  /* ─── CRM helper: write an automatic audit-trail note ─── */
+  async function crmLog(beneficiaryId, requestId, type, content, stage) {
+    try {
+      const id = 'nt_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+      await db.prepare(
+        'INSERT INTO crm_notes (id,org_id,beneficiary_id,request_id,type,content,created_by,internal,stage) VALUES (?,?,?,?,?,?,?,?,?)'
+      ).bind(id, orgMe.id, beneficiaryId || '', requestId || '', type || 'system',
+        (content || '').trim(), orgMe.name || '', 1, stage || '').run();
+    } catch (_) {}
   }
 
   /* ─── GET /api/crm/config ─── per-org CRM taxonomies + form builder ─── */
@@ -478,11 +505,12 @@ export async function onRequest(context) {
         db.prepare(
           'SELECT (SELECT COUNT(*) FROM beneficiaries WHERE org_id=?) AS total_bens,' +
           '(SELECT COUNT(*) FROM beneficiaries WHERE org_id=? AND status="active") AS active_bens,' +
+          '(SELECT COUNT(*) FROM beneficiaries WHERE org_id=? AND stage IN ("pending","reviewing")) AS pending_bens,' +
           '(SELECT COUNT(*) FROM crm_requests WHERE org_id=? AND status="pending") AS pending_reqs,' +
           '(SELECT COUNT(*) FROM crm_requests WHERE org_id=? AND status="reviewing") AS reviewing_reqs,' +
           '(SELECT COUNT(*) FROM crm_requests WHERE org_id=? AND status="completed") AS done_reqs,' +
           '(SELECT COALESCE(SUM(amount),0) FROM crm_aids WHERE org_id=?) AS total_spent'
-        ).bind(orgMe.id, orgMe.id, orgMe.id, orgMe.id, orgMe.id, orgMe.id).first(),
+        ).bind(orgMe.id, orgMe.id, orgMe.id, orgMe.id, orgMe.id, orgMe.id, orgMe.id).first(),
         db.prepare('SELECT id,name,category,status,city,created_at FROM beneficiaries WHERE org_id=? ORDER BY created_at DESC LIMIT 6').bind(orgMe.id).all(),
         db.prepare(
           'SELECT r.*,b.name AS ben_name,b.category AS ben_cat FROM crm_requests r ' +
@@ -527,14 +555,20 @@ export async function onRequest(context) {
       if (!(body.name || '').trim()) return json({ error: 'name_required' }, 400);
       const id = 'ben_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
       const customData = JSON.stringify(body.custom_data || {});
+      // New beneficiaries enter the onboarding workflow at "pending" unless the
+      // caller explicitly registers them as already-active (e.g. import / quick add).
+      const stage = body.stage || 'pending';
+      const status = stage === 'approved' ? 'active' : (body.status || 'inactive');
       await db.prepare(
-        'INSERT INTO beneficiaries (id,org_id,name,id_number,dob,gender,phone,phone2,email,city,district,address,marital_status,dependents,housing_type,income,employment_status,category,status,notes,custom_data) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'
+        'INSERT INTO beneficiaries (id,org_id,name,id_number,dob,gender,phone,phone2,email,city,district,address,marital_status,dependents,housing_type,income,employment_status,category,status,stage,assigned_to,notes,custom_data) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'
       ).bind(id, orgMe.id, (body.name||'').trim(), (body.id_number||'').trim(), (body.dob||'').trim(),
         body.gender||'male', (body.phone||'').trim(), (body.phone2||'').trim(), (body.email||'').trim(),
         (body.city||'').trim(), (body.district||'').trim(), (body.address||'').trim(),
         body.marital_status||'', parseInt(body.dependents)||0, body.housing_type||'',
         parseFloat(body.income)||0, body.employment_status||'', body.category||'needy',
-        body.status||'active', (body.notes||'').trim(), customData).run();
+        status, stage, (body.assigned_to||'').trim(), (body.notes||'').trim(), customData).run();
+      // Audit trail
+      await crmLog(id, '', 'system', 'تم تسجيل المستفيد', '');
       const ben = await db.prepare('SELECT * FROM beneficiaries WHERE id=?').bind(id).first();
       return json(ben, 201);
     } catch (e) { return json({ error: 'db_error', detail: e.message }, 500); }
@@ -548,12 +582,13 @@ export async function onRequest(context) {
       const benId = crmBenMatch[1];
       const ben = await db.prepare('SELECT * FROM beneficiaries WHERE id=? AND org_id=?').bind(benId, orgMe.id).first();
       if (!ben) return json({ error: 'not_found' }, 404);
-      const [reqs, aids, notes] = await Promise.all([
+      const [reqs, aids, notes, docs] = await Promise.all([
         db.prepare('SELECT * FROM crm_requests WHERE beneficiary_id=? ORDER BY created_at DESC').bind(benId).all(),
         db.prepare('SELECT * FROM crm_aids WHERE beneficiary_id=? ORDER BY created_at DESC').bind(benId).all(),
-        db.prepare('SELECT * FROM crm_notes WHERE beneficiary_id=? ORDER BY created_at DESC').bind(benId).all()
+        db.prepare('SELECT * FROM crm_notes WHERE beneficiary_id=? ORDER BY created_at DESC').bind(benId).all(),
+        db.prepare('SELECT * FROM crm_documents WHERE beneficiary_id=? AND request_id="" ORDER BY created_at ASC').bind(benId).all()
       ]);
-      return json(Object.assign({}, ben, { requests: reqs.results, aids: aids.results, notes: notes.results }));
+      return json(Object.assign({}, ben, { requests: reqs.results, aids: aids.results, notes: notes.results, documents: docs.results }));
     } catch (e) { return json({ error: 'db_error', detail: e.message }, 500); }
   }
   if (crmBenMatch && method === 'PUT') {
@@ -588,6 +623,161 @@ export async function onRequest(context) {
     } catch (e) { return json({ error: 'db_error', detail: e.message }, 500); }
   }
 
+  /* ─── PATCH /api/crm/beneficiaries/:id/stage ─── onboarding workflow ─── */
+  const crmBenStageMatch = path.match(/^\/crm\/beneficiaries\/([^/]+)\/stage$/);
+  if (crmBenStageMatch && method === 'PATCH') {
+    if (!await crmGuard()) return json({ error: 'crm_not_enabled' }, 403);
+    try {
+      const benId = crmBenStageMatch[1];
+      let body; try { body = await request.json(); } catch (e) { return json({ error: 'Bad request' }, 400); }
+      const stage = body.stage || '';
+      const valid = ['pending', 'reviewing', 'approved', 'rejected'];
+      if (!valid.includes(stage)) return json({ error: 'bad_stage' }, 400);
+      // Approving/rejecting is an admin/reviewer action
+      if (stage === 'approved' || stage === 'rejected') {
+        if (orgMe.role && orgMe.role === 'viewer') return json({ error: 'forbidden' }, 403);
+      }
+      const newStatus = stage === 'approved' ? 'active' : (stage === 'rejected' ? 'inactive' : null);
+      if (newStatus) {
+        await db.prepare('UPDATE beneficiaries SET stage=?, stage_note=?, status=?, updated_at=unixepoch() WHERE id=? AND org_id=?')
+          .bind(stage, (body.note||'').trim(), newStatus, benId, orgMe.id).run();
+      } else {
+        await db.prepare('UPDATE beneficiaries SET stage=?, stage_note=?, updated_at=unixepoch() WHERE id=? AND org_id=?')
+          .bind(stage, (body.note||'').trim(), benId, orgMe.id).run();
+      }
+      const stageLabels = { pending: 'بانتظار المراجعة', reviewing: 'قيد مراجعة الملف', approved: 'اعتماد الملف', rejected: 'رفض الملف' };
+      await crmLog(benId, '', 'system', (stageLabels[stage] || stage) + (body.note ? ' — ' + body.note.trim() : ''), stage);
+      const ben = await db.prepare('SELECT * FROM beneficiaries WHERE id=? AND org_id=?').bind(benId, orgMe.id).first();
+      return json(ben);
+    } catch (e) { return json({ error: 'db_error', detail: e.message }, 500); }
+  }
+
+  /* ─── Documents checklist ─── */
+  if (path === '/crm/documents' && method === 'GET') {
+    if (!await crmGuard()) return json({ error: 'crm_not_enabled' }, 403);
+    try {
+      const url = new URL(request.url);
+      const benId = url.searchParams.get('beneficiary_id') || '';
+      const reqId = url.searchParams.get('request_id') || '';
+      let sql = 'SELECT * FROM crm_documents WHERE org_id=?'; const p = [orgMe.id];
+      if (reqId) { sql += ' AND request_id=?'; p.push(reqId); }
+      else if (benId) { sql += ' AND beneficiary_id=? AND request_id=""'; p.push(benId); }
+      sql += ' ORDER BY created_at ASC';
+      const { results } = await db.prepare(sql).bind(...p).all();
+      return json(results);
+    } catch (e) { return json({ error: 'db_error', detail: e.message }, 500); }
+  }
+  if (path === '/crm/documents' && method === 'POST') {
+    if (!await crmGuard()) return json({ error: 'crm_not_enabled' }, 403);
+    try {
+      let body; try { body = await request.json(); } catch (e) { return json({ error: 'Bad request' }, 400); }
+      // Accept either a single doc or an array (for seeding a checklist at once)
+      const items = Array.isArray(body.items) ? body.items : [body];
+      const ids = [];
+      for (const it of items) {
+        const id = 'doc_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+        await db.prepare(
+          'INSERT INTO crm_documents (id,org_id,beneficiary_id,request_id,doc_type,label,status,note,file_url) VALUES (?,?,?,?,?,?,?,?,?)'
+        ).bind(id, orgMe.id, body.beneficiary_id || it.beneficiary_id || '', body.request_id || it.request_id || '',
+          it.doc_type || '', (it.label || '').trim(), it.status || 'required', (it.note || '').trim(), (it.file_url || '').trim()).run();
+        ids.push(id);
+      }
+      return json({ ok: true, ids }, 201);
+    } catch (e) { return json({ error: 'db_error', detail: e.message }, 500); }
+  }
+  const crmDocMatch = path.match(/^\/crm\/documents\/([^/]+)$/);
+  if (crmDocMatch && method === 'PATCH') {
+    if (!await crmGuard()) return json({ error: 'crm_not_enabled' }, 403);
+    try {
+      let body; try { body = await request.json(); } catch (e) { return json({ error: 'Bad request' }, 400); }
+      const fields = [], vals = [];
+      ['status', 'note', 'label', 'file_url'].forEach(function (k) { if (body[k] !== undefined) { fields.push(k + '=?'); vals.push(body[k]); } });
+      if (body.status === 'verified') { fields.push('verified_at=unixepoch()'); fields.push('verified_by=?'); vals.push(orgMe.name || ''); }
+      if (!fields.length) return json({ error: 'nothing' }, 400);
+      vals.push(crmDocMatch[1], orgMe.id);
+      await db.prepare('UPDATE crm_documents SET ' + fields.join(',') + ' WHERE id=? AND org_id=?').bind(...vals).run();
+      return json({ ok: true });
+    } catch (e) { return json({ error: 'db_error', detail: e.message }, 500); }
+  }
+  if (crmDocMatch && method === 'DELETE') {
+    if (!await crmGuard()) return json({ error: 'crm_not_enabled' }, 403);
+    try { await db.prepare('DELETE FROM crm_documents WHERE id=? AND org_id=?').bind(crmDocMatch[1], orgMe.id).run(); }
+    catch (e) { return json({ error: 'db_error', detail: e.message }, 500); }
+    return json({ ok: true });
+  }
+
+  /* ─── GET /api/crm/requests/:id ─── full request detail with approval chain ─── */
+  const crmReqDetailMatch = path.match(/^\/crm\/requests\/([^/]+)\/detail$/);
+  if (crmReqDetailMatch && method === 'GET') {
+    if (!await crmGuard()) return json({ error: 'crm_not_enabled' }, 403);
+    try {
+      const reqId = crmReqDetailMatch[1];
+      const req = await db.prepare('SELECT r.*,b.name AS ben_name FROM crm_requests r JOIN beneficiaries b ON r.beneficiary_id=b.id WHERE r.id=? AND r.org_id=?').bind(reqId, orgMe.id).first();
+      if (!req) return json({ error: 'not_found' }, 404);
+      const [approvals, docs, notes] = await Promise.all([
+        db.prepare('SELECT * FROM crm_approvals WHERE request_id=? ORDER BY created_at ASC').bind(reqId).all(),
+        db.prepare('SELECT * FROM crm_documents WHERE request_id=? ORDER BY created_at ASC').bind(reqId).all(),
+        db.prepare('SELECT * FROM crm_notes WHERE request_id=? ORDER BY created_at DESC').bind(reqId).all()
+      ]);
+      return json(Object.assign({}, req, { approvals: approvals.results, documents: docs.results, notes: notes.results }));
+    } catch (e) { return json({ error: 'db_error', detail: e.message }, 500); }
+  }
+
+  /* ─── POST /api/crm/requests/:id/action ─── approval chain step ─── */
+  const crmReqActionMatch = path.match(/^\/crm\/requests\/([^/]+)\/action$/);
+  if (crmReqActionMatch && method === 'POST') {
+    if (!await crmGuard()) return json({ error: 'crm_not_enabled' }, 403);
+    try {
+      const reqId = crmReqActionMatch[1];
+      let body; try { body = await request.json(); } catch (e) { return json({ error: 'Bad request' }, 400); }
+      const action = body.action || ''; // advance | approve | reject | return
+      const cur = await db.prepare('SELECT * FROM crm_requests WHERE id=? AND org_id=?').bind(reqId, orgMe.id).first();
+      if (!cur) return json({ error: 'not_found' }, 404);
+      // Final approve/reject is restricted to admin/editor (not viewer)
+      if ((action === 'approve' || action === 'reject') && orgMe.role === 'viewer') return json({ error: 'forbidden' }, 403);
+      const map = { advance: 'reviewing', approve: 'approved', reject: 'rejected', return: 'pending', complete: 'completed' };
+      const toStatus = body.to_status || map[action] || cur.status;
+      const actId = 'app_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+      await db.prepare(
+        'INSERT INTO crm_approvals (id,org_id,request_id,stage,action,actor,from_status,to_status,note) VALUES (?,?,?,?,?,?,?,?,?)'
+      ).bind(actId, orgMe.id, reqId, body.stage || '', action, orgMe.name || '', cur.status, toStatus, (body.note || '').trim()).run();
+      await db.prepare('UPDATE crm_requests SET status=?, updated_at=unixepoch() WHERE id=? AND org_id=?').bind(toStatus, reqId, orgMe.id).run();
+      const actionLabels = { advance: 'إحالة للمراجعة', approve: 'اعتماد الطلب', reject: 'رفض الطلب', return: 'إعادة الطلب', complete: 'إكمال الطلب' };
+      await crmLog(cur.beneficiary_id, reqId, 'system', (actionLabels[action] || action) + (body.note ? ' — ' + body.note.trim() : ''), toStatus);
+      return json({ ok: true, status: toStatus });
+    } catch (e) { return json({ error: 'db_error', detail: e.message }, 500); }
+  }
+
+  /* ─── GET /api/crm/reports ─── analytics & statistics ─── */
+  if (path === '/crm/reports' && method === 'GET') {
+    if (!await crmGuard()) return json({ error: 'crm_not_enabled' }, 403);
+    try {
+      const oid = orgMe.id;
+      const [benStage, benCat, reqStatus, reqSvc, aidType, staff, monthly, missingDocs, procTime] = await Promise.all([
+        db.prepare('SELECT stage, COUNT(*) AS n FROM beneficiaries WHERE org_id=? GROUP BY stage').bind(oid).all(),
+        db.prepare('SELECT category, COUNT(*) AS n FROM beneficiaries WHERE org_id=? GROUP BY category').bind(oid).all(),
+        db.prepare('SELECT status, COUNT(*) AS n FROM crm_requests WHERE org_id=? GROUP BY status').bind(oid).all(),
+        db.prepare('SELECT service_type, COUNT(*) AS n, COALESCE(SUM(amount),0) AS total FROM crm_requests WHERE org_id=? GROUP BY service_type').bind(oid).all(),
+        db.prepare('SELECT aid_type, COUNT(*) AS n, COALESCE(SUM(amount),0) AS total FROM crm_aids WHERE org_id=? GROUP BY aid_type').bind(oid).all(),
+        db.prepare('SELECT assigned_to, COUNT(*) AS n, SUM(CASE WHEN status IN ("approved","completed") THEN 1 ELSE 0 END) AS done FROM crm_requests WHERE org_id=? AND assigned_to<>"" GROUP BY assigned_to').bind(oid).all(),
+        db.prepare("SELECT strftime('%Y-%m', datetime(created_at,'unixepoch')) AS ym, COUNT(*) AS n, COALESCE(SUM(amount),0) AS total FROM crm_aids WHERE org_id=? GROUP BY ym ORDER BY ym DESC LIMIT 12").bind(oid).all(),
+        db.prepare('SELECT COUNT(*) AS n FROM crm_documents WHERE org_id=? AND status IN ("required","missing")').bind(oid).all(),
+        db.prepare('SELECT AVG(updated_at-created_at) AS avg_sec FROM crm_requests WHERE org_id=? AND status IN ("approved","completed","rejected")').bind(oid).all()
+      ]);
+      return json({
+        ben_by_stage: benStage.results,
+        ben_by_category: benCat.results,
+        req_by_status: reqStatus.results,
+        req_by_service: reqSvc.results,
+        aid_by_type: aidType.results,
+        staff: staff.results,
+        monthly_aid: monthly.results,
+        missing_docs: (missingDocs.results[0] || {}).n || 0,
+        avg_process_days: Math.round(((procTime.results[0] || {}).avg_sec || 0) / 86400 * 10) / 10
+      });
+    } catch (e) { return json({ error: 'db_error', detail: e.message }, 500); }
+  }
+
   /* ─── GET /api/crm/requests ─── */
   if (path === '/crm/requests' && method === 'GET') {
     if (!await crmGuard()) return json({ error: 'crm_not_enabled' }, 403);
@@ -611,10 +801,11 @@ export async function onRequest(context) {
       if (!body.beneficiary_id) return json({ error: 'beneficiary_id required' }, 400);
       const id = 'crq_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
       await db.prepare(
-        'INSERT INTO crm_requests (id,org_id,beneficiary_id,service_type,title,description,amount,status,priority,due_date) VALUES (?,?,?,?,?,?,?,?,?,?)'
+        'INSERT INTO crm_requests (id,org_id,beneficiary_id,service_type,title,description,amount,status,priority,assigned_to,due_date) VALUES (?,?,?,?,?,?,?,?,?,?,?)'
       ).bind(id, orgMe.id, body.beneficiary_id, body.service_type||'other',
         (body.title||'').trim(), (body.description||'').trim(),
-        parseFloat(body.amount)||0, 'pending', body.priority||'normal', (body.due_date||'').trim()).run();
+        parseFloat(body.amount)||0, 'pending', body.priority||'normal', (body.assigned_to||'').trim(), (body.due_date||'').trim()).run();
+      await crmLog(body.beneficiary_id, id, 'system', 'تم إنشاء الطلب: ' + (body.title||'').trim(), 'pending');
       return json({ ok: true, id }, 201);
     } catch (e) { return json({ error: 'db_error', detail: e.message }, 500); }
   }
@@ -667,9 +858,9 @@ export async function onRequest(context) {
       let body; try { body = await request.json(); } catch (e) { return json({ error: 'Bad request' }, 400); }
       const id = 'nt_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
       await db.prepare(
-        'INSERT INTO crm_notes (id,org_id,beneficiary_id,request_id,type,content,created_by) VALUES (?,?,?,?,?,?,?)'
+        'INSERT INTO crm_notes (id,org_id,beneficiary_id,request_id,type,content,created_by,internal) VALUES (?,?,?,?,?,?,?,?)'
       ).bind(id, orgMe.id, body.beneficiary_id, body.request_id||'',
-        body.type||'note', (body.content||'').trim(), (body.created_by||'').trim()).run();
+        body.type||'note', (body.content||'').trim(), orgMe.name || (body.created_by||'').trim(), body.internal ? 1 : 0).run();
       return json({ ok: true, id }, 201);
     } catch(e) { return json({ error:'db_error', detail:e.message }, 500); }
   }

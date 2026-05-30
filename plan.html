@@ -704,12 +704,95 @@ img,svg{display:block;max-width:100%}
 .crm-back svg{width:16px;height:16px}
 .crm-back:hover{color:var(--accent)}
 
+/* ── Onboarding stage badges ── */
+.crm-badge-stage-pending{background:#fef3c7;color:#92400e}
+.crm-badge-stage-reviewing{background:#dbeafe;color:#1e40af}
+.crm-badge-stage-approved{background:#d1fae5;color:#065f46}
+.crm-badge-stage-rejected{background:#fee2e2;color:#991b1b}
+
+/* ── Workflow stepper ── */
+.crm-stepper{display:flex;align-items:center;gap:0;margin:0 0 18px;flex-wrap:wrap}
+.crm-step{display:flex;align-items:center;gap:8px;flex:1;min-width:120px}
+.crm-step-dot{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;background:var(--bg-tint);color:var(--muted);border:2px solid var(--line);flex-shrink:0;font-variant-numeric:lining-nums}
+.crm-step.done .crm-step-dot{background:var(--ok,#059669);color:#fff;border-color:var(--ok,#059669)}
+.crm-step.current .crm-step-dot{background:var(--navy);color:#fff;border-color:var(--navy)}
+.crm-step.rejected .crm-step-dot{background:#dc2626;color:#fff;border-color:#dc2626}
+.crm-step-lbl{font-size:12px;font-weight:700;color:var(--muted)}
+.crm-step.done .crm-step-lbl,.crm-step.current .crm-step-lbl{color:var(--navy-deep)}
+.crm-step-line{flex:1;height:2px;background:var(--line);min-width:20px}
+.crm-step-line.done{background:var(--ok,#059669)}
+
+/* ── Workflow action bar ── */
+.crm-wf-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 18px;margin-bottom:20px;box-shadow:var(--shadow-sm)}
+.crm-wf-bar .crm-wf-label{font-size:13px;font-weight:700;color:var(--navy-deep)}
+.crm-wf-spacer{flex:1}
+
+/* ── Documents checklist ── */
+.crm-doc-list{display:flex;flex-direction:column;gap:10px}
+.crm-doc-row{background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:flex;align-items:center;gap:12px;box-shadow:var(--shadow-sm)}
+.crm-doc-ico{width:38px;height:38px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:var(--bg-tint);color:var(--muted)}
+.crm-doc-ico svg{width:18px;height:18px}
+.crm-doc-row.s-submitted .crm-doc-ico{background:#dbeafe;color:#1e40af}
+.crm-doc-row.s-verified .crm-doc-ico{background:#d1fae5;color:#059669}
+.crm-doc-row.s-missing .crm-doc-ico{background:#fee2e2;color:#dc2626}
+.crm-doc-info{flex:1;min-width:0}
+.crm-doc-label{font-size:13px;font-weight:700;color:var(--navy-deep)}
+.crm-doc-meta{font-size:11px;color:var(--muted);margin-top:2px}
+.crm-doc-status{font-size:12px;font-weight:700;border:1.5px solid var(--line);border-radius:7px;padding:5px 8px;background:#fff;color:var(--text);font-family:inherit;cursor:pointer}
+
+/* ── Approval chain ── */
+.crm-appr-list{display:flex;flex-direction:column;gap:0;margin-bottom:8px}
+.crm-appr-item{display:flex;gap:12px;padding-bottom:16px;position:relative}
+.crm-appr-item:not(:last-child)::before{content:'';position:absolute;right:15px;top:32px;bottom:0;width:2px;background:var(--line)}
+.crm-appr-dot{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:var(--bg-tint);color:var(--navy)}
+.crm-appr-dot svg{width:15px;height:15px}
+.crm-appr-dot.approve{background:#d1fae5;color:#059669}
+.crm-appr-dot.reject{background:#fee2e2;color:#dc2626}
+.crm-appr-dot.return{background:#fef3c7;color:#92400e}
+.crm-appr-body{flex:1;min-width:0;padding-top:2px}
+.crm-appr-act{font-size:13px;font-weight:700;color:var(--navy-deep)}
+.crm-appr-meta{font-size:11px;color:var(--muted);margin-top:1px}
+.crm-appr-note{font-size:12px;color:var(--text);margin-top:4px;background:var(--bg-tint);border-radius:7px;padding:6px 9px;line-height:1.6}
+
+/* ── Reports ── */
+.crm-rep-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;margin-bottom:20px}
+.crm-rep-card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;box-shadow:var(--shadow-sm)}
+.crm-rep-card h4{font-size:13px;font-weight:800;color:var(--navy-deep);margin:0 0 14px;display:flex;align-items:center;gap:7px}
+.crm-rep-card h4 svg{width:16px;height:16px;color:var(--accent)}
+.crm-bar-row{display:flex;align-items:center;gap:10px;margin-bottom:9px}
+.crm-bar-lbl{font-size:12px;color:var(--text);width:90px;flex-shrink:0;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.crm-bar-track{flex:1;height:9px;background:var(--bg-tint);border-radius:5px;overflow:hidden}
+.crm-bar-fill{height:100%;border-radius:5px;background:linear-gradient(90deg,var(--navy),var(--accent))}
+.crm-bar-val{font-size:12px;font-weight:800;color:var(--navy-deep);width:auto;min-width:34px;text-align:left;font-variant-numeric:lining-nums}
+.crm-funnel{display:flex;flex-direction:column;gap:8px}
+.crm-funnel-row{display:flex;align-items:center;gap:10px}
+.crm-funnel-bar{height:34px;border-radius:8px;display:flex;align-items:center;padding:0 12px;color:#fff;font-weight:800;font-size:13px;font-variant-numeric:lining-nums;min-width:46px;transition:.3s}
+.crm-funnel-lbl{font-size:12px;color:var(--text);font-weight:600;width:96px;flex-shrink:0}
+
+/* ── Bulk action bar ── */
+.crm-bulk-bar{display:flex;align-items:center;gap:10px;background:var(--navy);color:#fff;border-radius:10px;padding:10px 16px;margin-bottom:14px;flex-wrap:wrap}
+.crm-bulk-bar .crm-bulk-count{font-size:13px;font-weight:700}
+.crm-bulk-bar select{padding:6px 10px;border-radius:7px;border:none;font-family:inherit;font-size:12px}
+.crm-check{width:16px;height:16px;cursor:pointer;accent-color:var(--navy)}
+.crm-row-overdue{background:#fef2f2 !important}
+.crm-overdue-tag{display:inline-block;background:#fee2e2;color:#dc2626;font-size:10px;font-weight:800;padding:1px 6px;border-radius:5px;margin-right:6px}
+
+/* internal note */
+.crm-note-internal{display:inline-block;background:#fef3c7;color:#92400e;font-size:10px;font-weight:800;padding:1px 6px;border-radius:5px;margin-right:6px}
+.crm-tl-dot.system{background:#eef2ff;border-color:#c7d2fe;color:#4f46e5}
+.crm-toggle-inline{display:inline-flex;align-items:center;gap:7px;cursor:pointer;font-size:12px;font-weight:700;color:var(--muted);user-select:none}
+.crm-toggle-inline .cfg-switch{position:relative;width:34px;height:19px;background:var(--line);border-radius:19px;transition:.2s;flex-shrink:0}
+.crm-toggle-inline .cfg-switch.on{background:var(--navy)}
+.crm-toggle-inline .cfg-switch::after{content:'';position:absolute;top:2px;right:2px;width:15px;height:15px;background:#fff;border-radius:50%;transition:.2s}
+.crm-toggle-inline .cfg-switch.on::after{right:17px}
+
 /* Responsive */
 @media(max-width:700px){
   .crm-form-grid{grid-template-columns:1fr}
   .crm-profile-header{flex-direction:column;text-align:center}
   .crm-profile-sub{justify-content:center}
   .crm-stat-grid{grid-template-columns:1fr 1fr}
+  .crm-step-lbl{display:none}
 }
 </style>
 </head>
@@ -2390,8 +2473,13 @@ var CRM_DEFAULTS = {
   housing:     [{k:'owned',l:'مملوك'},{k:'rented',l:'مستأجر'},{k:'shared',l:'مشترك'},{k:'homeless',l:'بلا مسكن'}],
   marital:     [{k:'single',l:'أعزب'},{k:'married',l:'متزوج'},{k:'divorced',l:'مطلق'},{k:'widowed',l:'أرمل/ة'}],
   note_types:  [{k:'note',l:'ملاحظة'},{k:'call',l:'مكالمة'},{k:'visit',l:'زيارة'},{k:'action',l:'إجراء'}],
-  aid_types:   [{k:'financial',l:'مالي'},{k:'food',l:'غذائي'},{k:'medical',l:'طبي'},{k:'clothing',l:'ملابس'},{k:'school',l:'تعليمي'},{k:'other',l:'أخرى'}]
+  aid_types:   [{k:'financial',l:'مالي'},{k:'food',l:'غذائي'},{k:'medical',l:'طبي'},{k:'clothing',l:'ملابس'},{k:'school',l:'تعليمي'},{k:'other',l:'أخرى'}],
+  doc_types:   [{k:'id_copy',l:'صورة الهوية الوطنية'},{k:'family_card',l:'كرت العائلة'},{k:'salary',l:'تعريف بالراتب / كشف بنكي'},{k:'rent',l:'عقد الإيجار'},{k:'medical_report',l:'تقرير طبي'},{k:'other',l:'مستند آخر'}]
 };
+/* Beneficiary onboarding lifecycle stages (fixed workflow). */
+var CRM_STAGE_LABEL = {pending:'بانتظار المراجعة',reviewing:'قيد المراجعة',approved:'معتمد',rejected:'مرفوض',active:'معتمد'};
+var CRM_STAGE_ORDER = ['pending','reviewing','approved'];
+var CRM_DOC_STATUS_LABEL = {required:'مطلوب',submitted:'مُستلَم',verified:'مُعتمَد',missing:'ناقص'};
 /* Beneficiary registration form builder — default fields.
    locked = built-in column that can't be removed (but can be toggled/required except name);
    builtin = maps to a real DB column; custom fields are stored in custom_data JSON. */
@@ -2427,13 +2515,15 @@ function crmBuildCfg(saved){
     cfg[key] = (Array.isArray(saved[key]) && saved[key].length) ? saved[key] : crmDeepCopy(CRM_DEFAULTS[key]);
   });
   cfg.form_fields = (Array.isArray(saved.form_fields) && saved.form_fields.length) ? saved.form_fields : crmDeepCopy(CRM_FORM_DEFAULTS);
+  // Requests at or above this amount require admin approval (0 = always admin-confirmable)
+  cfg.approval_threshold = (typeof saved.approval_threshold === 'number') ? saved.approval_threshold : 5000;
   return cfg;
 }
 /* Convert an ordered array [{k,l}] to a {k:l} label map. */
 function crmMap(arr){ var m={}; (arr||[]).forEach(function(e){ m[e.k]=e.l; }); return m; }
 /* Live label maps rebuilt whenever config changes. */
 var CRM_STATUS_LABEL={}, CRM_PRI_LABEL={}, CRM_SVC_LABEL={}, CRM_CAT_LABEL={},
-    CRM_EMP_LABEL={}, CRM_HOUSING_LABEL={}, CRM_MARITAL_LABEL={}, CRM_NOTE_LABEL={}, CRM_AID_LABEL={};
+    CRM_EMP_LABEL={}, CRM_HOUSING_LABEL={}, CRM_MARITAL_LABEL={}, CRM_NOTE_LABEL={}, CRM_AID_LABEL={}, CRM_DOC_LABEL={};
 function crmApplyCfg(){
   if(!crmCfg) crmCfg = crmBuildCfg({});
   CRM_STATUS_LABEL  = crmMap(crmCfg.statuses);
@@ -2445,6 +2535,7 @@ function crmApplyCfg(){
   CRM_MARITAL_LABEL = crmMap(crmCfg.marital);
   CRM_NOTE_LABEL    = crmMap(crmCfg.note_types);
   CRM_AID_LABEL     = crmMap(crmCfg.aid_types);
+  CRM_DOC_LABEL     = crmMap(crmCfg.doc_types);
 }
 crmApplyCfg(); // seed with defaults so early renders work
 var crmCfgLoaded = false;
@@ -2461,7 +2552,10 @@ function crmTaxFor(type){
 }
 
 /* CRM state */
-var crm = { view:'dash', ben:null, subTab:'info', search:'', statusFilter:'', catFilter:'' };
+var crm = { view:'dash', ben:null, subTab:'info', search:'', statusFilter:'', catFilter:'', stageFilter:'', selected:{}, _benList:[] };
+/* current user's role (admin can do final approvals) */
+function crmRole(){ try{ var s=token().split('.')[1].replace(/-/g,'+').replace(/_/g,'/'); var p=JSON.parse(decodeURIComponent(escape(atob(s)))); return p.role||'admin'; }catch(e){ return 'admin'; } }
+function crmCanApprove(){ return crmRole()!=='viewer'; }
 
 var CRMA = API + '/crm';
 function crmFetch(path, opts){
@@ -2488,7 +2582,7 @@ function crmInitial(name){ return name?name.charAt(0):'?'; }
 
 /* ── Topbar (tabs + action) ── */
 function crmRenderTopbar(addBtn){
-  var tabs = [['dash','لوحة التحكم'],['bens','المستفيدون'],['reqs','الطلبات']];
+  var tabs = [['dash','لوحة التحكم'],['bens','المستفيدون'],['reqs','الطلبات'],['reports','التقارير']];
   var tb = document.getElementById('crm-topbar-wrap');
   if(!tb) return;
   var settingsTab = '<button class="crm-tab crm-tab-gear'+(crm.view==='config'?' active':'')+'" onclick="crmGo(\'config\')" title="إعدادات النظام">'+
@@ -2520,6 +2614,7 @@ function crmGo(view){
   if(view==='dash')  crmLoadDash();
   else if(view==='bens') crmLoadBens();
   else if(view==='reqs') crmLoadReqs();
+  else if(view==='reports') crmLoadReports();
   else if(view==='config') crmLoadConfig();
 }
 
@@ -2534,15 +2629,25 @@ function crmLoadDash(){
       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>'+
       'إضافة مستفيد</button>';
     crmRenderTopbar(addBtn);
+    var attention = '';
+    if((s.pending_bens||0)>0){
+      attention = '<div class="crm-wf-bar" style="background:#fffbeb;border-color:#fde68a">'+
+        '<svg viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2" stroke-linecap="round" style="width:20px;height:20px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>'+
+        '<span class="crm-wf-label">لديك '+(s.pending_bens||0)+' ملف مستفيد بانتظار المراجعة والاعتماد</span>'+
+        '<div class="crm-wf-spacer"></div>'+
+        '<button class="crm-btn crm-btn-primary crm-btn-sm" onclick="crm.stageFilter=\'pending\';crmGo(\'bens\')">مراجعة الآن</button>'+
+      '</div>';
+    }
     el.innerHTML =
       '<div class="crm-stat-grid">'+
         crmStatCard(s.total_bens||0,'إجمالي المستفيدين','','')+
-        crmStatCard(s.active_bens||0,'مستفيدون نشطون','','ok')+
+        crmStatCard(s.pending_bens||0,'بانتظار الاعتماد','','warn')+
+        crmStatCard(s.active_bens||0,'مستفيدون معتمدون','','ok')+
         crmStatCard(s.pending_reqs||0,'طلبات معلّقة','','warn')+
         crmStatCard(s.reviewing_reqs||0,'قيد المراجعة','','accent')+
-        crmStatCard(s.done_reqs||0,'طلبات مكتملة','','')+
         crmStatCard(crmFmtMoney(s.total_spent||0),'إجمالي المساعدات','','ok')+
       '</div>'+
+      attention+
       '<div class="crm-sec">'+
         '<div class="crm-sec-title"><span>المستفيدون الأخيرون</span>'+
           '<button class="crm-btn crm-btn-outline crm-btn-sm" onclick="crmGo(\'bens\')">عرض الكل</button></div>'+
@@ -2570,20 +2675,27 @@ function crmLoadBens(){
   crmRenderTopbar(addBtn);
   var qs = [];
   if(crm.search) qs.push('q='+encodeURIComponent(crm.search));
-  if(crm.statusFilter) qs.push('status='+crm.statusFilter);
   if(crm.catFilter) qs.push('category='+crm.catFilter);
   var query = qs.length ? '?'+qs.join('&') : '';
+  crm.selected = {};
   crmFetch('/beneficiaries'+query).then(function(list){
+    // client-side stage filter (server filters by status/category)
+    if(crm.stageFilter){
+      list = list.filter(function(b){
+        if(crm.stageFilter==='approved') return b.stage==='approved'||b.stage==='active';
+        return (b.stage||'pending')===crm.stageFilter;
+      });
+    }
+    crm._benList = list;
     el.innerHTML =
       '<div class="crm-toolbar">'+
         '<div class="crm-search">'+
           '<input type="text" placeholder="ابحث بالاسم أو الهوية أو الجوال…" value="'+esc(crm.search)+'" oninput="crm.search=this.value" onkeydown="if(event.key===\'Enter\')crmLoadBens()" style="padding-left:14px">'+
           '<span class="crm-search-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>'+
         '</div>'+
-        '<select class="crm-filter" onchange="crm.statusFilter=this.value;crmLoadBens()">'+
-          '<option value="">جميع الحالات</option>'+
-          '<option value="active"'+(crm.statusFilter==='active'?' selected':'')+'>نشط</option>'+
-          '<option value="inactive"'+(crm.statusFilter==='inactive'?' selected':'')+'>غير نشط</option>'+
+        '<select class="crm-filter" onchange="crm.stageFilter=this.value;crmLoadBens()">'+
+          '<option value="">جميع المراحل</option>'+
+          ['pending','reviewing','approved','rejected'].map(function(s){ return '<option value="'+s+'"'+(crm.stageFilter===s?' selected':'')+'>'+CRM_STAGE_LABEL[s]+'</option>'; }).join('')+
         '</select>'+
         '<select class="crm-filter" onchange="crm.catFilter=this.value;crmLoadBens()">'+
           '<option value="">جميع الفئات</option>'+
@@ -2591,8 +2703,15 @@ function crmLoadBens(){
         '</select>'+
         '<button class="crm-btn crm-btn-outline crm-btn-sm" onclick="crmLoadBens()">بحث</button>'+
       '</div>'+
+      '<div id="crm-bulk-wrap"></div>'+
       (list.length===0 ? crmEmpty('لا يوجد مستفيدون بعد','ابدأ بإضافة مستفيد جديد','crmOpenAddBen()') : crmBenTable(list, false));
   }).catch(function(e){ el.innerHTML = '<p style="padding:20px;color:#dc2626">'+esc(e.message)+'</p>'; });
+}
+
+function crmBenStageBadge(b){
+  var st = b.stage || 'pending';
+  if(st==='active') st='approved';
+  return '<span class="crm-badge crm-badge-stage-'+st+'">'+(CRM_STAGE_LABEL[st]||st)+'</span>';
 }
 
 function crmBenTable(list, compact){
@@ -2601,6 +2720,7 @@ function crmBenTable(list, compact){
     var initials = crmInitial(b.name);
     var avatarCls = crmAvatarClass(b.gender);
     return '<tr>'+
+      (compact?'':'<td style="text-align:center"><input type="checkbox" class="crm-check" '+(crm.selected[b.id]?'checked':'')+' onclick="event.stopPropagation();crmToggleSel(\''+b.id+'\',this.checked)"></td>')+
       '<td><div style="display:flex;align-items:center;gap:10px">'+
         '<div class="crm-avatar '+avatarCls+'" style="width:34px;height:34px;font-size:14px">'+esc(initials)+'</div>'+
         '<div><div style="font-weight:700;color:var(--navy-deep)">'+esc(b.name)+'</div>'+
@@ -2608,7 +2728,7 @@ function crmBenTable(list, compact){
         '</div>'+
       '</div></td>'+
       '<td>'+crmBadge(CRM_CAT_LABEL, b.category)+'</td>'+
-      '<td>'+crmBadge({active:'نشط',inactive:'غير نشط'}, b.status)+'</td>'+
+      '<td>'+crmBenStageBadge(b)+'</td>'+
       (compact?'':'<td>'+esc(b.city||'—')+'</td>')+
       '<td style="text-align:center;font-variant-numeric:lining-nums">'+(b.req_count||0)+'</td>'+
       '<td style="text-align:center;font-variant-numeric:lining-nums">'+(b.total_aid?crmFmtMoney(b.total_aid):'—')+'</td>'+
@@ -2616,10 +2736,42 @@ function crmBenTable(list, compact){
     '</tr>';
   }).join('');
   return '<div class="crm-table-wrap"><table class="crm-table"><thead><tr>'+
-    '<th>المستفيد</th><th>الفئة</th><th>الحالة</th>'+
+    (compact?'':'<th style="width:36px;text-align:center"><input type="checkbox" class="crm-check" onclick="crmToggleSelAll(this.checked)"></th>')+
+    '<th>المستفيد</th><th>الفئة</th><th>المرحلة</th>'+
     (compact?'':'<th>المدينة</th>')+
     '<th style="text-align:center">الطلبات</th><th style="text-align:center">المساعدات</th><th></th>'+
   '</tr></thead><tbody>'+rows+'</tbody></table></div>';
+}
+
+/* ── Bulk selection ── */
+function crmToggleSel(id, on){ if(on) crm.selected[id]=true; else delete crm.selected[id]; crmRenderBulkBar(); }
+function crmToggleSelAll(on){
+  crm.selected = {};
+  if(on) (crm._benList||[]).forEach(function(b){ crm.selected[b.id]=true; });
+  crmLoadBens();
+}
+function crmSelCount(){ return Object.keys(crm.selected).length; }
+function crmRenderBulkBar(){
+  var w = document.getElementById('crm-bulk-wrap');
+  if(!w) return;
+  var n = crmSelCount();
+  if(!n){ w.innerHTML=''; return; }
+  w.innerHTML = '<div class="crm-bulk-bar">'+
+    '<span class="crm-bulk-count">'+n+' مستفيد محدد</span>'+
+    '<div class="crm-wf-spacer"></div>'+
+    (crmCanApprove()?'<button class="crm-btn crm-btn-sm" style="background:#fff;color:var(--navy)" onclick="crmBulkStage(\'approved\')">اعتماد المحدد</button>':'')+
+    (crmCanApprove()?'<button class="crm-btn crm-btn-sm" style="background:rgba(255,255,255,.15);color:#fff" onclick="crmBulkStage(\'reviewing\')">إحالة للمراجعة</button>':'')+
+    '<button class="crm-btn crm-btn-sm crm-btn-danger" onclick="crmBulkStage(\'rejected\')">رفض المحدد</button>'+
+  '</div>';
+}
+function crmBulkStage(stage){
+  var ids = Object.keys(crm.selected);
+  if(!ids.length) return;
+  var lbl = CRM_STAGE_LABEL[stage]||stage;
+  if(!confirm('تطبيق "'+lbl+'" على '+ids.length+' مستفيد؟')) return;
+  Promise.all(ids.map(function(id){
+    return crmFetch('/beneficiaries/'+id+'/stage',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({stage:stage})}).catch(function(){});
+  })).then(function(){ toast('تم تحديث '+ids.length+' مستفيد'); crm.selected={}; crmLoadBens(); });
 }
 
 /* ─── BENEFICIARY PROFILE ─── */
@@ -2634,11 +2786,58 @@ function crmOpenBen(id){
   }).catch(function(e){ el.innerHTML = '<p style="padding:20px;color:#dc2626">'+esc(e.message)+'</p>'; });
 }
 
+function crmStepper(stage){
+  if(stage==='active') stage='approved';
+  if(stage==='rejected'){
+    return '<div class="crm-stepper">'+
+      '<div class="crm-step done"><div class="crm-step-dot">✓</div><div class="crm-step-lbl">التسجيل</div></div>'+
+      '<div class="crm-step-line"></div>'+
+      '<div class="crm-step rejected"><div class="crm-step-dot">✕</div><div class="crm-step-lbl">مرفوض</div></div>'+
+    '</div>';
+  }
+  var steps = [['pending','التسجيل'],['reviewing','مراجعة الملف'],['approved','الاعتماد']];
+  var curIdx = CRM_STAGE_ORDER.indexOf(stage); if(curIdx<0) curIdx=0;
+  var html = '<div class="crm-stepper">';
+  steps.forEach(function(s,i){
+    var cls = i<curIdx ? 'done' : (i===curIdx ? 'current' : '');
+    if(stage==='approved') cls = 'done';
+    html += '<div class="crm-step '+cls+'"><div class="crm-step-dot">'+(cls==='done'?'✓':(i+1))+'</div><div class="crm-step-lbl">'+s[1]+'</div></div>';
+    if(i<steps.length-1){
+      var lineDone = (i<curIdx || stage==='approved');
+      html += '<div class="crm-step-line'+(lineDone?' done':'')+'"></div>';
+    }
+  });
+  html += '</div>';
+  return html;
+}
+
+function crmWorkflowBar(b){
+  var stage = b.stage || 'pending'; if(stage==='active') stage='approved';
+  var btns = '';
+  if(stage==='pending'){
+    btns = '<button class="crm-btn crm-btn-outline crm-btn-sm" onclick="crmBenStage(\''+b.id+'\',\'reviewing\')">بدء المراجعة</button>'+
+      (crmCanApprove()?'<button class="crm-btn crm-btn-primary crm-btn-sm" onclick="crmBenStageNote(\''+b.id+'\',\'approved\')">اعتماد مباشر</button>':'')+
+      '<button class="crm-btn crm-btn-danger crm-btn-sm" onclick="crmBenStageNote(\''+b.id+'\',\'rejected\')">رفض</button>';
+  } else if(stage==='reviewing'){
+    btns = (crmCanApprove()?'<button class="crm-btn crm-btn-primary crm-btn-sm" onclick="crmBenStageNote(\''+b.id+'\',\'approved\')">اعتماد الملف</button>':'<span style="font-size:12px;color:var(--muted)">بانتظار اعتماد المشرف</span>')+
+      '<button class="crm-btn crm-btn-danger crm-btn-sm" onclick="crmBenStageNote(\''+b.id+'\',\'rejected\')">رفض</button>';
+  } else if(stage==='approved'){
+    btns = '<span style="font-size:12px;color:var(--ok);font-weight:700">✓ ملف معتمد — يمكن استقبال الطلبات</span>'+
+      '<button class="crm-btn crm-btn-outline crm-btn-sm" onclick="crmBenStageNote(\''+b.id+'\',\'rejected\')">إيقاف</button>';
+  } else if(stage==='rejected'){
+    btns = '<span style="font-size:12px;color:#dc2626;font-weight:700">✕ ملف مرفوض'+(b.stage_note?' — '+esc(b.stage_note):'')+'</span>'+
+      '<button class="crm-btn crm-btn-outline crm-btn-sm" onclick="crmBenStage(\''+b.id+'\',\'reviewing\')">إعادة فتح</button>';
+  }
+  return '<div class="crm-wf-bar"><span class="crm-wf-label">مرحلة الملف:</span>'+crmBenStageBadge(b)+
+    '<div class="crm-wf-spacer"></div>'+btns+'</div>';
+}
+
 function crmRenderBen(){
   var b = crm.ben;
   var el = document.getElementById('crm-content');
   if(!b) return;
-  var subtabs = [['info','البيانات'],['reqs','الطلبات'],['aids','المساعدات'],['notes','السجل']];
+  var docCount = (b.documents||[]).length;
+  var subtabs = [['info','البيانات'],['docs','المستندات'+(docCount?' ('+docCount+')':'')],['reqs','الطلبات'],['aids','المساعدات'],['notes','السجل الكامل']];
   el.innerHTML =
     '<div class="crm-back" onclick="crmGo(\'bens\')">'+
       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>'+
@@ -2650,7 +2849,7 @@ function crmRenderBen(){
         '<div class="crm-profile-name">'+esc(b.name)+'</div>'+
         '<div class="crm-profile-sub">'+
           crmBadge(CRM_CAT_LABEL, b.category)+
-          crmBadge({active:'نشط',inactive:'غير نشط'}, b.status)+
+          crmBenStageBadge(b)+
           (b.phone?'<span class="crm-profile-meta"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13 19.79 19.79 0 0 1 1.61 4.44 2 2 0 0 1 3.6 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 9.91a16 16 0 0 0 6.18 6.18l1-1.04a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>'+esc(b.phone)+'</span>':'') +
           (b.city?'<span class="crm-profile-meta"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>'+esc(b.city)+'</span>':'') +
         '</div>'+
@@ -2659,9 +2858,12 @@ function crmRenderBen(){
         '<button class="crm-btn crm-btn-outline crm-btn-sm" onclick="crmOpenEditBen()">'+
           '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>'+
           'تعديل</button>'+
-        '<button class="crm-btn crm-btn-primary crm-btn-sm" onclick="crmOpenAddReq(\''+b.id+'\')">+ طلب جديد</button>'+
+        ((b.stage==='approved'||b.stage==='active')?'<button class="crm-btn crm-btn-primary crm-btn-sm" onclick="crmOpenAddReq(\''+b.id+'\')">+ طلب جديد</button>':'')+
       '</div>'+
     '</div>'+
+
+    crmStepper(b.stage||'pending')+
+    crmWorkflowBar(b)+
 
     '<div class="crm-subtabs">'+
       subtabs.map(function(t){ return '<button class="crm-subtab'+(crm.subTab===t[0]?' active':'')+'" onclick="crm.subTab=\''+t[0]+'\';crmRenderBenTab()">'+t[1]+'</button>'; }).join('')+
@@ -2672,14 +2874,108 @@ function crmRenderBen(){
   crmRenderBenTab();
 }
 
+/* ── Beneficiary stage transitions ── */
+function crmBenStage(benId, stage, note){
+  crmFetch('/beneficiaries/'+benId+'/stage',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({stage:stage,note:note||''})})
+    .then(function(){ toast('تم تحديث مرحلة الملف'); crmOpenBen(benId); })
+    .catch(function(e){ toast(e.message==='forbidden'?'هذه الصلاحية للمشرف':('خطأ: '+e.message)); });
+}
+function crmBenStageNote(benId, stage){
+  var verb = stage==='approved'?'اعتماد':(stage==='rejected'?'رفض':'تحديث');
+  crmModal(
+    '<div class="crm-modal-title">'+verb+' ملف المستفيد <button class="crm-modal-x" onclick="crmCloseModal()">×</button></div>'+
+    '<div class="crm-field crm-form-full"><label>'+(stage==='rejected'?'سبب الرفض':'ملاحظة (اختياري)')+'</label><textarea id="bst-note" style="min-height:90px"></textarea></div>'+
+    '<div class="crm-modal-foot">'+
+    '<button class="crm-btn crm-btn-outline" onclick="crmCloseModal()">إلغاء</button>'+
+    '<button class="crm-btn '+(stage==='rejected'?'crm-btn-danger':'crm-btn-primary')+'" onclick="crmDoBenStage(\''+benId+'\',\''+stage+'\')">تأكيد</button></div>'
+  );
+}
+function crmDoBenStage(benId, stage){
+  var el = document.getElementById('bst-note');
+  var note = el ? el.value.trim() : '';
+  if(stage==='rejected' && !note){ toast('يرجى كتابة سبب الرفض'); return; }
+  crmCloseModal();
+  crmBenStage(benId, stage, note);
+}
+
 function crmRenderBenTab(){
   var b = crm.ben;
   var el = document.getElementById('crm-ben-tab');
   if(!el||!b) return;
   if(crm.subTab==='info')   el.innerHTML = crmBenInfo(b);
+  if(crm.subTab==='docs')   el.innerHTML = crmBenDocs(b);
   if(crm.subTab==='reqs')   el.innerHTML = crmBenReqs(b);
   if(crm.subTab==='aids')   el.innerHTML = crmBenAids(b);
   if(crm.subTab==='notes')  el.innerHTML = crmBenNotes(b);
+}
+
+/* ── Documents checklist tab ── */
+function crmDocIcon(){ return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>'; }
+function crmBenDocs(b){
+  var list = b.documents||[];
+  var done = list.filter(function(d){ return d.status==='verified'; }).length;
+  var out = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">'+
+    '<div style="font-size:13px;color:var(--muted)">'+(list.length?('تم اعتماد '+done+' من '+list.length+' مستند'):'لا توجد مستندات مطلوبة بعد')+'</div>'+
+    '<div style="display:flex;gap:8px">'+
+      '<button class="crm-btn crm-btn-outline crm-btn-sm" onclick="crmSeedDocs(\''+b.id+'\')">إضافة قائمة المستندات</button>'+
+      '<button class="crm-btn crm-btn-primary crm-btn-sm" onclick="crmOpenAddDoc(\''+b.id+'\')">+ مستند</button>'+
+    '</div>'+
+  '</div>';
+  if(!list.length) return out+crmEmpty('لا توجد مستندات','أضف قائمة المستندات المطلوبة لاستكمال ملف المستفيد','crmSeedDocs(\''+b.id+'\')');
+  out += '<div class="crm-doc-list">'+list.map(function(d){
+    return '<div class="crm-doc-row s-'+d.status+'">'+
+      '<div class="crm-doc-ico">'+crmDocIcon()+'</div>'+
+      '<div class="crm-doc-info">'+
+        '<div class="crm-doc-label">'+esc(d.label||CRM_DOC_LABEL[d.doc_type]||d.doc_type||'مستند')+'</div>'+
+        '<div class="crm-doc-meta">'+(CRM_DOC_STATUS_LABEL[d.status]||d.status)+(d.verified_by?' · اعتمده '+esc(d.verified_by):'')+(d.note?' · '+esc(d.note):'')+'</div>'+
+      '</div>'+
+      '<select class="crm-doc-status" onchange="crmUpdateDoc(\''+d.id+'\',\''+b.id+'\',this.value)">'+
+        Object.keys(CRM_DOC_STATUS_LABEL).map(function(s){ return '<option value="'+s+'"'+(d.status===s?' selected':'')+'>'+CRM_DOC_STATUS_LABEL[s]+'</option>'; }).join('')+
+      '</select>'+
+      '<button class="crm-tl-del" onclick="crmDeleteDoc(\''+d.id+'\',\''+b.id+'\')">×</button>'+
+    '</div>';
+  }).join('')+'</div>';
+  return out;
+}
+function crmSeedDocs(benId){
+  var items = (crmCfg.doc_types||[]).map(function(t){ return {doc_type:t.k, label:t.l, status:'required'}; });
+  if(!items.length){ toast('عرّف أنواع المستندات من الإعدادات أولاً'); return; }
+  crmFetch('/documents',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({beneficiary_id:benId,items:items})})
+    .then(function(){ toast('تمت إضافة قائمة المستندات'); crmOpenBen(benId); })
+    .catch(function(e){ toast('خطأ: '+e.message); });
+}
+function crmOpenAddDoc(benId, reqId){
+  crmModal(
+    '<div class="crm-modal-title">إضافة مستند مطلوب <button class="crm-modal-x" onclick="crmCloseModal()">×</button></div>'+
+    '<div class="crm-form-grid">'+
+      '<div class="crm-field"><label>نوع المستند</label><select id="dc-type">'+crmSelectOptions(CRM_DOC_LABEL, (crmCfg.doc_types[0]||{}).k)+'</select></div>'+
+      '<div class="crm-field"><label>الحالة</label><select id="dc-status">'+crmSelectOptions(CRM_DOC_STATUS_LABEL,'required')+'</select></div>'+
+      '<div class="crm-field crm-form-full"><label>مسمّى مخصص (اختياري)</label><input id="dc-label" placeholder="اتركه فارغاً لاستخدام نوع المستند"></div>'+
+      '<div class="crm-field crm-form-full"><label>ملاحظة</label><input id="dc-note" placeholder="مثال: مطلوب صورة واضحة من الوجهين"></div>'+
+    '</div>'+
+    '<div class="crm-modal-foot">'+
+    '<button class="crm-btn crm-btn-outline" onclick="crmCloseModal()">إلغاء</button>'+
+    '<button class="crm-btn crm-btn-primary" onclick="crmSaveDoc(\''+benId+'\',\''+(reqId||'')+'\')">إضافة</button></div>'
+  );
+}
+function crmSaveDoc(benId, reqId){
+  function fv(i){ var el=document.getElementById(i); return el?el.value.trim():''; }
+  var dt = fv('dc-type');
+  var body = { beneficiary_id:benId, request_id:reqId||'', doc_type:dt, label:fv('dc-label')||CRM_DOC_LABEL[dt]||'', status:fv('dc-status'), note:fv('dc-note') };
+  crmFetch('/documents',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
+    .then(function(){ crmCloseModal(); toast('تمت إضافة المستند'); if(reqId) crmOpenReqDetail(reqId, benId); else crmOpenBen(benId); })
+    .catch(function(e){ toast('خطأ: '+e.message); });
+}
+function crmUpdateDoc(docId, benId, status){
+  crmFetch('/documents/'+docId,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({status:status})})
+    .then(function(){ toast('تم تحديث حالة المستند'); if(crm.view==='ben') crmOpenBen(benId); })
+    .catch(function(e){ toast('خطأ: '+e.message); });
+}
+function crmDeleteDoc(docId, benId){
+  if(!confirm('حذف هذا المستند؟')) return;
+  crmFetch('/documents/'+docId,{method:'DELETE'})
+    .then(function(){ toast('تم الحذف'); crmOpenBen(benId); })
+    .catch(function(e){ toast('خطأ: '+e.message); });
 }
 
 function crmBenInfo(b){
@@ -2752,20 +3048,23 @@ function crmBenNotes(b){
     note:'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>',
     call:'<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13 19.79 19.79 0 0 1 1.61 4.44 2 2 0 0 1 3.6 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 9.91a16 16 0 0 0 6.18 6.18l1-1.04a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>',
     visit:'<path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>',
-    action:'<polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>'
+    action:'<polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>',
+    system:'<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>'
   };
   var out = '<div style="display:flex;justify-content:flex-end;margin-bottom:16px"><button class="crm-btn crm-btn-primary crm-btn-sm" onclick="crmOpenAddNote(\''+b.id+'\')">+ إضافة سجل</button></div>';
   if(!list.length) return out+crmEmpty('لا يوجد سجل نشاط','أضف ملاحظة أو تدوين مكالمة أو زيارة','crmOpenAddNote(\''+b.id+'\')');
   out += '<div class="crm-timeline">'+list.map(function(n){
+    var isSys = n.type==='system';
     var ico = icons[n.type]||icons.note;
+    var typeLabel = isSys ? 'سجل النظام' : (CRM_NOTE_LABEL[n.type]||n.type);
     return '<div class="crm-tl-item">'+
       '<div class="crm-tl-dot '+n.type+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">'+ico+'</svg></div>'+
       '<div class="crm-tl-body">'+
         '<div class="crm-tl-meta">'+
-          '<span class="crm-tl-type">'+esc(CRM_NOTE_LABEL[n.type]||n.type)+'</span>'+
+          '<span class="crm-tl-type">'+(n.internal&&!isSys?'<span class="crm-note-internal">داخلي</span>':'')+esc(typeLabel)+(n.created_by?' · '+esc(n.created_by):'')+'</span>'+
           '<div style="display:flex;align-items:center;gap:8px">'+
             '<span class="crm-tl-date">'+crmFmtDate(n.created_at)+'</span>'+
-            '<button class="crm-tl-del" onclick="crmDeleteNote(\''+n.id+'\',\''+b.id+'\')">×</button>'+
+            (isSys?'':'<button class="crm-tl-del" onclick="crmDeleteNote(\''+n.id+'\',\''+b.id+'\')">×</button>')+
           '</div>'+
         '</div>'+
         '<div class="crm-tl-content">'+esc(n.content)+'</div>'+
@@ -2802,8 +3101,9 @@ function crmReqTable(list, compact){
     '<th></th>'+
   '</tr></thead><tbody>'+
     list.map(function(r){
-      return '<tr>'+
-        '<td style="font-weight:700;color:var(--navy-deep)">'+esc(r.title||'—')+'</td>'+
+      var overdue = r.due_date && r.due_date < new Date().toISOString().slice(0,10) && ['approved','completed','closed','rejected'].indexOf(r.status)<0;
+      return '<tr'+(overdue?' class="crm-row-overdue"':'')+'>'+
+        '<td style="font-weight:700;color:var(--navy-deep)">'+(overdue?'<span class="crm-overdue-tag">متأخر</span>':'')+esc(r.title||'—')+'</td>'+
         '<td>'+esc(r.ben_name||'—')+'</td>'+
         '<td>'+esc(CRM_SVC_LABEL[r.service_type]||r.service_type)+'</td>'+
         '<td>'+crmBadge(CRM_STATUS_LABEL, r.status)+'</td>'+
@@ -2814,6 +3114,93 @@ function crmReqTable(list, compact){
     }).join('')+
   '</tbody></table></div>';
 }
+
+/* ─── REPORTS / ANALYTICS ─── */
+function crmLoadReports(){
+  var el = document.getElementById('crm-content');
+  el.innerHTML = '<div style="padding:40px;text-align:center;color:var(--muted)">جارٍ التحميل…</div>';
+  crmRenderTopbar('');
+  crmFetch('/reports').then(function(d){
+    el.innerHTML =
+      '<div class="crm-stat-grid">'+
+        crmStatCard(crmFmtMoney(crmSum(d.aid_by_type)),'إجمالي المساعدات','','ok')+
+        crmStatCard(d.avg_process_days||0,'متوسط مدة المعالجة','بالأيام','accent')+
+        crmStatCard(d.missing_docs||0,'مستندات ناقصة','بانتظار الاستكمال','warn')+
+        crmStatCard(crmSum(d.req_by_status),'إجمالي الطلبات','','')+
+      '</div>'+
+      '<div class="crm-rep-grid">'+
+        crmRepFunnel('مسار اعتماد المستفيدين', crmOrderRows(d.ben_by_stage,'stage',['pending','reviewing','approved','rejected'],CRM_STAGE_LABEL), ['#f59e0b','#3b82f6','#059669','#dc2626'])+
+        crmRepFunnel('مسار الطلبات', crmOrderRows(d.req_by_status,'status',Object.keys(CRM_STATUS_LABEL),CRM_STATUS_LABEL), ['#f59e0b','#3b82f6','#059669','#dc2626','#6b7280','#9ca3af'])+
+        crmRepBars('المستفيدون حسب الفئة', d.ben_by_category, 'category', CRM_CAT_LABEL)+
+        crmRepBars('الطلبات حسب نوع الخدمة', d.req_by_service, 'service_type', CRM_SVC_LABEL)+
+        crmRepMoneyBars('المساعدات حسب النوع', d.aid_by_type, 'aid_type', CRM_AID_LABEL)+
+        crmRepStaff('أداء الموظفين', d.staff)+
+        crmRepMonthly('المساعدات الشهرية', d.monthly_aid)+
+      '</div>';
+  }).catch(function(e){ el.innerHTML = '<p style="padding:20px;color:#dc2626">'+esc(e.message)+'</p>'; });
+}
+function crmSum(rows){ return (rows||[]).reduce(function(s,r){ return s+(+r.total||+r.n||0); },0); }
+function crmOrderRows(rows, key, order, labels){
+  var map = {}; (rows||[]).forEach(function(r){ map[r[key]]=r.n; });
+  // treat 'active' beneficiaries as approved
+  if(map.active){ map.approved = (map.approved||0)+map.active; delete map.active; }
+  return order.filter(function(k){ return map[k]; }).map(function(k){ return {label:labels[k]||k, n:map[k]}; });
+}
+function crmRepFunnel(title, rows, colors){
+  if(!rows.length) return crmRepEmpty(title);
+  var max = Math.max.apply(null, rows.map(function(r){ return r.n; }));
+  var body = '<div class="crm-funnel">'+rows.map(function(r,i){
+    var w = max? Math.max(8, Math.round(r.n/max*100)) : 8;
+    return '<div class="crm-funnel-row"><span class="crm-funnel-lbl">'+esc(r.label)+'</span>'+
+      '<div class="crm-funnel-bar" style="width:'+w+'%;background:'+(colors[i%colors.length])+'">'+r.n+'</div></div>';
+  }).join('')+'</div>';
+  return crmRepCard(title, body);
+}
+function crmRepBars(title, rows, key, labels){
+  if(!rows||!rows.length) return crmRepEmpty(title);
+  var max = Math.max.apply(null, rows.map(function(r){ return r.n; }));
+  var body = rows.map(function(r){
+    var w = max? Math.round(r.n/max*100):0;
+    return '<div class="crm-bar-row"><span class="crm-bar-lbl">'+esc(labels[r[key]]||r[key]||'—')+'</span>'+
+      '<div class="crm-bar-track"><div class="crm-bar-fill" style="width:'+w+'%"></div></div>'+
+      '<span class="crm-bar-val">'+r.n+'</span></div>';
+  }).join('');
+  return crmRepCard(title, body);
+}
+function crmRepMoneyBars(title, rows, key, labels){
+  if(!rows||!rows.length) return crmRepEmpty(title);
+  var max = Math.max.apply(null, rows.map(function(r){ return +r.total||0; }));
+  var body = rows.map(function(r){
+    var w = max? Math.round((+r.total||0)/max*100):0;
+    return '<div class="crm-bar-row"><span class="crm-bar-lbl">'+esc(labels[r[key]]||r[key]||'—')+'</span>'+
+      '<div class="crm-bar-track"><div class="crm-bar-fill" style="width:'+w+'%"></div></div>'+
+      '<span class="crm-bar-val" style="min-width:70px">'+crmFmtMoney(r.total)+'</span></div>';
+  }).join('');
+  return crmRepCard(title, body);
+}
+function crmRepStaff(title, rows){
+  if(!rows||!rows.length) return crmRepEmpty(title);
+  var body = '<div class="crm-table-wrap" style="box-shadow:none;border:none"><table class="crm-table"><thead><tr><th>الموظف</th><th style="text-align:center">الطلبات</th><th style="text-align:center">المنجزة</th></tr></thead><tbody>'+
+    rows.map(function(r){ return '<tr><td style="font-weight:600">'+esc(r.assigned_to)+'</td><td style="text-align:center;font-variant-numeric:lining-nums">'+r.n+'</td><td style="text-align:center;font-variant-numeric:lining-nums">'+(r.done||0)+'</td></tr>'; }).join('')+
+  '</tbody></table></div>';
+  return crmRepCard(title, body);
+}
+function crmRepMonthly(title, rows){
+  if(!rows||!rows.length) return crmRepEmpty(title);
+  rows = rows.slice().reverse();
+  var max = Math.max.apply(null, rows.map(function(r){ return +r.total||0; }));
+  var body = rows.map(function(r){
+    var w = max? Math.round((+r.total||0)/max*100):0;
+    return '<div class="crm-bar-row"><span class="crm-bar-lbl">'+esc(r.ym)+'</span>'+
+      '<div class="crm-bar-track"><div class="crm-bar-fill" style="width:'+w+'%"></div></div>'+
+      '<span class="crm-bar-val" style="min-width:70px">'+crmFmtMoney(r.total)+'</span></div>';
+  }).join('');
+  return crmRepCard(title, body);
+}
+function crmRepCard(title, body){
+  return '<div class="crm-rep-card"><h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>'+esc(title)+'</h4>'+body+'</div>';
+}
+function crmRepEmpty(title){ return '<div class="crm-rep-card"><h4>'+esc(title)+'</h4><div style="font-size:12px;color:var(--muted);padding:8px 0">لا توجد بيانات كافية بعد.</div></div>'; }
 
 /* ─── MODALS ─── */
 function crmModal(html){
@@ -2934,6 +3321,7 @@ var CRM_TAX_META = [
   ['categories','تصنيفات المستفيدين','الفئات التي يُصنّف بها المستفيدون (محتاج، أرملة، يتيم...)','M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2 M9 7a4 4 0 1 0 0 .01'],
   ['service_types','أنواع الخدمات والطلبات','تصنيف طلبات المستفيدين (دعم مالي، غذائي، طبي...)','M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z'],
   ['aid_types','أنواع المساعدات المقدّمة','تصنيف المساعدات التي تُصرف للمستفيد','M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 1 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z'],
+  ['doc_types','المستندات المطلوبة','قائمة المستندات التي تُطلب من المستفيد (الهوية، كرت العائلة...)','M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z M14 2v6h6 M16 13H8 M16 17H8 M10 9H8'],
   ['statuses','حالات الطلبات','المراحل التي يمر بها الطلب (قيد الانتظار، موافق...)','M9 11l3 3 8-8 M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z'],
   ['priorities','الأولويات','مستويات أولوية الطلبات (عاجل، مرتفع، عادي...)','M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z M4 22v-7'],
   ['marital','الحالة الاجتماعية','خيارات الحالة الاجتماعية للمستفيد','M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2 M9 7a4 4 0 1 0 0 .01'],
@@ -2964,6 +3352,8 @@ function crmCfgSyncFromDom(){
     var i = +inp.getAttribute('data-idx');
     if(crmCfgDraft.form_fields[i]) crmCfgDraft.form_fields[i].l = inp.value;
   });
+  var th = document.getElementById('cfg-threshold');
+  if(th) crmCfgDraft.approval_threshold = parseFloat(th.value||0)||0;
 }
 
 function crmCfgRender(){
@@ -3003,6 +3393,15 @@ function crmCfgRender(){
   }).join('');
   html += '<button class="cfg-add-btn" style="margin-top:6px" onclick="crmCfgAddField()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>إضافة حقل مخصص</button>';
   html += '</div>';
+
+  // ── Approval threshold ──
+  html += '<div class="cfg-card">'+
+    '<div class="cfg-card-hd"><div>'+
+      '<h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 11l3 3 8-8"/><path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z"/></svg>اعتماد الطلبات</h3>'+
+      '<p>الطلبات التي يبلغ مبلغها هذا الحد أو أكثر تتطلب اعتماد المشرف (دور admin). الطلبات الأقل يمكن لأي موظف اعتمادها.</p>'+
+    '</div></div>'+
+    '<div class="crm-field" style="max-width:260px"><label>حد اعتماد المشرف (ر.س)</label><input id="cfg-threshold" type="number" min="0" value="'+esc(d.approval_threshold||0)+'"></div>'+
+  '</div>';
 
   // ── Taxonomy editors ──
   CRM_TAX_META.forEach(function(meta){
@@ -3122,6 +3521,7 @@ function crmOpenAddReq(benId){
       '<div class="crm-field"><label>الأولوية</label><select id="rq-priority">'+crmSelectOptions(CRM_PRI_LABEL,'normal')+'</select></div>'+
       '<div class="crm-field"><label>المبلغ المطلوب (ر.س)</label><input id="rq-amount" type="number" min="0" value="0"></div>'+
       '<div class="crm-field"><label>تاريخ الاستحقاق</label><input id="rq-due_date" type="date"></div>'+
+      '<div class="crm-field"><label>المُعيَّن إليه</label><input id="rq-assigned_to" placeholder="اسم الموظف المسؤول"></div>'+
       '<div class="crm-field crm-form-full"><label>وصف الطلب</label><textarea id="rq-description"></textarea></div>'+
     '</div>'+
     '<div class="crm-modal-foot">'+
@@ -3136,7 +3536,7 @@ function crmSaveReq(benId){
     beneficiary_id:benId, title:fv('rq-title'),
     service_type:fv('rq-service_type'), priority:fv('rq-priority'),
     amount:parseFloat(fv('rq-amount')||0), due_date:fv('rq-due_date'),
-    description:fv('rq-description')
+    assigned_to:fv('rq-assigned_to'), description:fv('rq-description')
   };
   if(!body.title){ toast('العنوان مطلوب'); return; }
   crmFetch('/requests',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
@@ -3146,47 +3546,138 @@ function crmSaveReq(benId){
     }).catch(function(e){ toast('خطأ: '+e.message); });
 }
 
-/* ── Request Detail ── */
+/* ── Request Detail (with approval chain) ── */
 function crmOpenReqDetail(reqId, benId){
-  var req = (crm.ben&&crm.ben.requests||[]).find(function(r){ return r.id===reqId; });
-  if(!req){
-    crmFetch('/requests?ben_id='+benId).then(function(list){
-      var found = list.find(function(r){ return r.id===reqId; });
-      if(found){ crm._currentReq=found; crmShowReqModal(found, benId); }
-    }).catch(function(){});
-    return;
+  crmFetch('/requests/'+reqId+'/detail').then(function(r){
+    crm._currentReq = r;
+    crmShowReqModal(r, benId||r.beneficiary_id);
+  }).catch(function(e){ toast('خطأ: '+e.message); });
+}
+
+function crmApprChain(r){
+  var list = r.approvals||[];
+  var icons = {
+    approve:'<polyline points="20 6 9 17 4 12"/>',
+    reject:'<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>',
+    'return':'<polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/>',
+    advance:'<line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>',
+    complete:'<polyline points="20 6 9 17 4 12"/>'
+  };
+  if(!list.length) return '<div style="font-size:12px;color:var(--muted);padding:8px 0">لا توجد إجراءات بعد على هذا الطلب.</div>';
+  return '<div class="crm-appr-list">'+list.map(function(a){
+    var ic = icons[a.action]||icons.advance;
+    var actLabels = {advance:'إحالة للمراجعة',approve:'اعتماد',reject:'رفض',return:'إعادة',complete:'إكمال'};
+    return '<div class="crm-appr-item">'+
+      '<div class="crm-appr-dot '+a.action+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">'+ic+'</svg></div>'+
+      '<div class="crm-appr-body">'+
+        '<div class="crm-appr-act">'+(actLabels[a.action]||a.action)+' → '+(CRM_STATUS_LABEL[a.to_status]||a.to_status)+'</div>'+
+        '<div class="crm-appr-meta">'+(a.actor?esc(a.actor)+' · ':'')+crmFmtDate(a.created_at)+'</div>'+
+        (a.note?'<div class="crm-appr-note">'+esc(a.note)+'</div>':'')+
+      '</div>'+
+    '</div>';
+  }).join('')+'</div>';
+}
+
+function crmReqActionBtns(r, benId){
+  var st = r.status;
+  var big = (+r.amount||0) >= (crmCfg.approval_threshold||0);
+  var btns = [];
+  if(st==='pending'){
+    btns.push('<button class="crm-btn crm-btn-outline crm-btn-sm" onclick="crmReqAction(\''+r.id+'\',\''+benId+'\',\'advance\')">إحالة للمراجعة</button>');
   }
-  crm._currentReq = req;
-  crmShowReqModal(req, benId);
+  if(st==='pending'||st==='reviewing'){
+    if(big && !crmCanApprove()){
+      btns.push('<span style="font-size:12px;color:var(--muted)">يتطلب اعتماد المشرف (مبلغ '+crmFmtMoney(r.amount)+')</span>');
+    } else {
+      btns.push('<button class="crm-btn crm-btn-primary crm-btn-sm" onclick="crmReqAction(\''+r.id+'\',\''+benId+'\',\'approve\')">اعتماد الطلب</button>');
+    }
+    btns.push('<button class="crm-btn crm-btn-danger crm-btn-sm" onclick="crmReqAction(\''+r.id+'\',\''+benId+'\',\'reject\')">رفض</button>');
+  }
+  if(st==='approved'){
+    btns.push('<button class="crm-btn crm-btn-primary crm-btn-sm" onclick="crmReqAction(\''+r.id+'\',\''+benId+'\',\'complete\')">تأكيد الصرف / إكمال</button>');
+    btns.push('<button class="crm-btn crm-btn-outline crm-btn-sm" onclick="crmReqAction(\''+r.id+'\',\''+benId+'\',\'return\')">إعادة</button>');
+  }
+  if(st==='rejected'||st==='completed'||st==='closed'){
+    btns.push('<button class="crm-btn crm-btn-outline crm-btn-sm" onclick="crmReqAction(\''+r.id+'\',\''+benId+'\',\'return\')">إعادة فتح</button>');
+  }
+  return btns.join('');
 }
 
 function crmShowReqModal(r, benId){
-  var statusOpts = Object.keys(CRM_STATUS_LABEL);
+  var docs = r.documents||[];
+  var docHtml = docs.length ? '<div class="crm-doc-list" style="margin-bottom:8px">'+docs.map(function(d){
+    return '<div class="crm-doc-row s-'+d.status+'" style="padding:9px 12px">'+
+      '<div class="crm-doc-ico" style="width:30px;height:30px">'+crmDocIcon()+'</div>'+
+      '<div class="crm-doc-info"><div class="crm-doc-label" style="font-size:12px">'+esc(d.label||CRM_DOC_LABEL[d.doc_type]||'مستند')+'</div></div>'+
+      '<select class="crm-doc-status" onchange="crmUpdateReqDoc(\''+d.id+'\',\''+r.id+'\',\''+benId+'\',this.value)">'+
+        Object.keys(CRM_DOC_STATUS_LABEL).map(function(s){ return '<option value="'+s+'"'+(d.status===s?' selected':'')+'>'+CRM_DOC_STATUS_LABEL[s]+'</option>'; }).join('')+
+      '</select>'+
+    '</div>';
+  }).join('')+'</div>' : '<div style="font-size:12px;color:var(--muted);margin-bottom:8px">لا توجد مستندات مطلوبة لهذا الطلب.</div>';
+
   crmModal(
     '<div class="crm-modal-title">'+esc(r.title||'طلب خدمة')+'<button class="crm-modal-x" onclick="crmCloseModal()">×</button></div>'+
-    '<div class="crm-form-grid">'+
-      '<div class="crm-field"><label>الحالة</label><select id="rd-status">'+
-        statusOpts.map(function(s){ return '<option value="'+s+'"'+(r.status===s?' selected':'')+'>'+CRM_STATUS_LABEL[s]+'</option>'; }).join('')+
-      '</select></div>'+
+    '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:14px">'+
+      crmBadge(CRM_STATUS_LABEL, r.status)+crmBadge(CRM_PRI_LABEL, r.priority)+
+      '<span style="font-size:13px;color:var(--muted)">'+esc(CRM_SVC_LABEL[r.service_type]||r.service_type)+'</span>'+
+      (+r.amount?'<span style="font-size:14px;font-weight:800;color:var(--navy-deep);margin-right:auto">'+crmFmtMoney(r.amount)+'</span>':'')+
+    '</div>'+
+    (r.description?'<div style="background:var(--bg-tint);border-radius:8px;padding:12px;font-size:13px;color:var(--text);margin-bottom:14px;line-height:1.7">'+esc(r.description)+'</div>':'')+
+
+    '<div class="crm-sec-title" style="font-size:13px;margin-bottom:10px">سلسلة الموافقات</div>'+
+    crmApprChain(r)+
+    '<div class="crm-wf-bar" style="margin:6px 0 16px;padding:12px 14px"><span class="crm-wf-label" style="font-size:12px">الإجراء:</span><div class="crm-wf-spacer"></div>'+crmReqActionBtns(r, benId)+'</div>'+
+
+    '<div class="crm-sec-title" style="font-size:13px;margin-bottom:10px"><span>المستندات المطلوبة</span><button class="crm-btn crm-btn-outline crm-btn-sm" onclick="crmOpenAddDoc(\''+benId+'\',\''+r.id+'\')">+ مستند</button></div>'+
+    docHtml+
+
+    '<div class="crm-form-grid" style="margin-top:8px">'+
       '<div class="crm-field"><label>الأولوية</label><select id="rd-priority">'+crmSelectOptions(CRM_PRI_LABEL,r.priority)+'</select></div>'+
       '<div class="crm-field"><label>المُعيَّن إليه</label><input id="rd-assigned_to" value="'+esc(r.assigned_to||'')+'"></div>'+
       '<div class="crm-field"><label>تاريخ الاستحقاق</label><input id="rd-due_date" type="date" value="'+esc(r.due_date||'')+'"></div>'+
       '<div class="crm-field crm-form-full"><label>قرار / ملاحظات الإغلاق</label><textarea id="rd-resolution">'+esc(r.resolution||'')+'</textarea></div>'+
     '</div>'+
-    (r.description?'<div style="background:var(--bg-tint);border-radius:8px;padding:12px;font-size:13px;color:var(--muted);margin-bottom:4px">'+esc(r.description)+'</div>':'')+
     '<div class="crm-modal-foot">'+
+    '<button class="crm-btn crm-btn-outline" onclick="crmOpenAddNote(\''+benId+'\',\''+r.id+'\')">+ ملاحظة</button>'+
+    '<div class="crm-wf-spacer"></div>'+
     '<button class="crm-btn crm-btn-outline" onclick="crmCloseModal()">إغلاق</button>'+
-    '<button class="crm-btn crm-btn-primary" onclick="crmUpdateReq(\''+r.id+'\',\''+benId+'\')">حفظ</button></div>'
+    '<button class="crm-btn crm-btn-primary" onclick="crmUpdateReq(\''+r.id+'\',\''+benId+'\')">حفظ التعديلات</button></div>'
   );
+}
+
+function crmReqAction(reqId, benId, action){
+  var labels = {advance:'إحالة الطلب للمراجعة',approve:'اعتماد الطلب',reject:'رفض الطلب',return:'إعادة الطلب',complete:'إكمال الطلب وتأكيد الصرف'};
+  var needNote = (action==='reject'||action==='return');
+  crmModal(
+    '<div class="crm-modal-title">'+(labels[action]||'إجراء')+' <button class="crm-modal-x" onclick="crmCloseModal()">×</button></div>'+
+    '<div class="crm-field crm-form-full"><label>'+(needNote?'السبب / الملاحظة *':'ملاحظة (اختياري)')+'</label><textarea id="ra-note" style="min-height:90px"></textarea></div>'+
+    '<div class="crm-modal-foot">'+
+    '<button class="crm-btn crm-btn-outline" onclick="crmOpenReqDetail(\''+reqId+'\',\''+benId+'\')">رجوع</button>'+
+    '<button class="crm-btn '+(action==='reject'?'crm-btn-danger':'crm-btn-primary')+'" onclick="crmDoReqAction(\''+reqId+'\',\''+benId+'\',\''+action+'\')">تأكيد</button></div>'
+  );
+}
+function crmDoReqAction(reqId, benId, action){
+  var el = document.getElementById('ra-note');
+  var note = el ? el.value.trim() : '';
+  if((action==='reject'||action==='return') && !note){ toast('يرجى كتابة السبب'); return; }
+  crmFetch('/requests/'+reqId+'/action',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:action,note:note})})
+    .then(function(){ crmCloseModal(); toast('تم تنفيذ الإجراء'); crmOpenReqDetail(reqId, benId); })
+    .catch(function(e){ toast(e.message==='forbidden'?'هذه الصلاحية للمشرف':('خطأ: '+e.message)); });
+}
+function crmUpdateReqDoc(docId, reqId, benId, status){
+  crmFetch('/documents/'+docId,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({status:status})})
+    .then(function(){ toast('تم تحديث المستند'); crmOpenReqDetail(reqId, benId); })
+    .catch(function(e){ toast('خطأ: '+e.message); });
 }
 
 function crmUpdateReq(reqId, benId){
   function fv(i){ var el=document.getElementById(i); return el?el.value.trim():''; }
-  var body = { status:fv('rd-status'), priority:fv('rd-priority'), assigned_to:fv('rd-assigned_to'), due_date:fv('rd-due_date'), resolution:fv('rd-resolution') };
+  var body = { priority:fv('rd-priority'), assigned_to:fv('rd-assigned_to'), due_date:fv('rd-due_date'), resolution:fv('rd-resolution') };
   crmFetch('/requests/'+reqId,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
     .then(function(){
       crmCloseModal(); toast('تم تحديث الطلب');
       if(crm.ben && crm.ben.id===benId) crmOpenBen(benId);
+      else if(crm.view==='reqs') crmLoadReqs();
     }).catch(function(e){ toast('خطأ: '+e.message); });
 }
 
@@ -3222,26 +3713,28 @@ function crmDeleteAid(aidId, benId){
 }
 
 /* ── Add Note ── */
-function crmOpenAddNote(benId){
+function crmOpenAddNote(benId, reqId){
   crmModal(
     '<div class="crm-modal-title">إضافة سجل نشاط <button class="crm-modal-x" onclick="crmCloseModal()">×</button></div>'+
     '<div class="crm-form-grid">'+
       '<div class="crm-field"><label>نوع السجل</label><select id="nt-type">'+crmSelectOptions(CRM_NOTE_LABEL,'note')+'</select></div>'+
+      '<div class="crm-field" style="justify-content:flex-end"><label class="crm-toggle-inline" onclick="var s=document.getElementById(\'nt-internal\');s.dataset.on=s.dataset.on===\'1\'?\'0\':\'1\';this.querySelector(\'.cfg-switch\').classList.toggle(\'on\')"><span id="nt-internal" data-on="0" style="display:none"></span><span class="cfg-switch"></span>ملاحظة داخلية (لا تظهر للمستفيد)</label></div>'+
       '<div class="crm-field crm-form-full"><label>المحتوى *</label><textarea id="nt-content" style="min-height:100px"></textarea></div>'+
     '</div>'+
     '<div class="crm-modal-foot">'+
     '<button class="crm-btn crm-btn-outline" onclick="crmCloseModal()">إلغاء</button>'+
-    '<button class="crm-btn crm-btn-primary" onclick="crmSaveNote(\''+benId+'\')">حفظ</button></div>'
+    '<button class="crm-btn crm-btn-primary" onclick="crmSaveNote(\''+benId+'\',\''+(reqId||'')+'\')">حفظ</button></div>'
   );
 }
 
-function crmSaveNote(benId){
+function crmSaveNote(benId, reqId){
   function fv(i){ var el=document.getElementById(i); return el?el.value.trim():''; }
   var content = fv('nt-content');
   if(!content){ toast('المحتوى مطلوب'); return; }
-  var body = { beneficiary_id:benId, type:fv('nt-type'), content:content };
+  var intEl = document.getElementById('nt-internal');
+  var body = { beneficiary_id:benId, request_id:reqId||'', type:fv('nt-type'), content:content, internal:(intEl&&intEl.dataset.on==='1') };
   crmFetch('/notes',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
-    .then(function(){ crmCloseModal(); toast('تمت الإضافة'); crmOpenBen(benId); })
+    .then(function(){ crmCloseModal(); toast('تمت الإضافة'); if(reqId) crmOpenReqDetail(reqId, benId); else crmOpenBen(benId); })
     .catch(function(e){ toast('خطأ: '+e.message); });
 }
 
