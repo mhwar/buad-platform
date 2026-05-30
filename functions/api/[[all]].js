@@ -522,9 +522,19 @@ export async function onRequest(context) {
 
   /* ─── GET /api/orgs ─── list registered associations + progress (team) */
   if (path === '/orgs' && method === 'GET') {
-    const { results } = await db.prepare(
-      'SELECT id, name, email, contact_name, phone, city, license_no, plan_start, progress, created_at, last_active, website_enabled, crm_enabled FROM orgs ORDER BY last_active DESC'
-    ).all();
+    let results;
+    try {
+      const r = await db.prepare(
+        'SELECT id, name, email, contact_name, phone, city, license_no, plan_start, progress, created_at, last_active, website_enabled, crm_enabled FROM orgs ORDER BY last_active DESC'
+      ).all();
+      results = r.results;
+    } catch (e) {
+      // crm_enabled column may not exist yet (migration pending) — fallback without it
+      const r = await db.prepare(
+        'SELECT id, name, email, contact_name, phone, city, license_no, plan_start, progress, created_at, last_active, website_enabled, 0 as crm_enabled FROM orgs ORDER BY last_active DESC'
+      ).all();
+      results = r.results;
+    }
     return json((results || []).map(function (o) {
       return Object.assign({}, o, { progress: JSON.parse(o.progress || '{}') });
     }));
@@ -550,8 +560,33 @@ export async function onRequest(context) {
     let body;
     try { body = await request.json(); } catch (e) { return json({ error: 'Bad request' }, 400); }
     const enabled = body.enabled ? 1 : 0;
+    // Ensure column exists (safe no-op if already present)
+    try { await db.prepare('ALTER TABLE orgs ADD COLUMN crm_enabled INTEGER NOT NULL DEFAULT 0').run(); } catch (_) {}
     await db.prepare('UPDATE orgs SET crm_enabled = ? WHERE id = ?').bind(enabled, orgId).run();
     return json({ ok: true, crm_enabled: enabled });
+  }
+
+  /* ─── POST /api/admin/enable-tool ─── enable/disable a tool for an org by email (from request flow) */
+  if (path === '/admin/enable-tool' && method === 'POST') {
+    if (me.role !== 'admin') return json({ error: 'Forbidden' }, 403);
+    let body;
+    try { body = await request.json(); } catch (e) { return json({ error: 'Bad request' }, 400); }
+    const { org_email, org_id, tool, enabled } = body;
+    if ((!org_email && !org_id) || !tool) return json({ error: 'missing fields' }, 400);
+    const val = enabled ? 1 : 0;
+    if (tool === 'website') {
+      const clause = org_id ? 'WHERE id = ?' : 'WHERE email = ?';
+      await db.prepare('UPDATE orgs SET website_enabled = ? ' + clause).bind(val, org_id || org_email).run();
+    } else if (tool === 'crm') {
+      try { await db.prepare('ALTER TABLE orgs ADD COLUMN crm_enabled INTEGER NOT NULL DEFAULT 0').run(); } catch (_) {}
+      const clause = org_id ? 'WHERE id = ?' : 'WHERE email = ?';
+      await db.prepare('UPDATE orgs SET crm_enabled = ? ' + clause).bind(val, org_id || org_email).run();
+    } else {
+      return json({ error: 'unknown tool' }, 400);
+    }
+    const findClause = org_id ? 'WHERE id = ?' : 'WHERE email = ?';
+    const org = await db.prepare('SELECT id, name FROM orgs ' + findClause).bind(org_id || org_email).first();
+    return json({ ok: true, org_id: org && org.id, org_name: org && org.name });
   }
 
   /* ─── DELETE /api/orgs/:id ─── (admin) */

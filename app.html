@@ -9808,13 +9808,11 @@ Pages.render_orgs = function(opts) {
             '</div>'+
             (s.next?'<div style="font-size:12.5px;color:var(--iris-700);background:var(--iris-50);padding:7px 11px;border-radius:8px;margin-top:8px;display:inline-block"><strong>نقطة التدخّل المقترحة:</strong> '+UI.escHtml(s.next.t)+' <span style="color:var(--fg-4)">('+UI.escHtml(s.next.track)+')</span></div>':'<div style="font-size:12.5px;color:var(--success-700);margin-top:8px">أكملت جميع مهام الخطة 🎉</div>')+
           '</div>'+
-          '<div style="display:flex;flex-direction:column;gap:7px;align-items:stretch;min-width:130px">'+
+          '<div style="display:flex;flex-direction:column;gap:7px;align-items:stretch;min-width:160px">'+
             (wa?'<a href="'+wa+'" target="_blank" class="btn btn-sm" style="background:#25d366;color:#fff;border:none;justify-content:center"><i data-lucide="message-circle"></i>واتساب</a>':'')+
             (o.phone?'<a href="tel:'+UI.escHtml(o.phone)+'" class="btn btn-sm btn-ghost" style="justify-content:center"><i data-lucide="phone"></i>'+UI.escHtml(o.phone)+'</a>':'')+
-            '<button onclick="Pages.toggleOrgWebsite(\''+o.id+'\','+(o.website_enabled?1:0)+',\''+UI.escHtml(o.name||'').replace(/'/g,"\\'")+'\')"\n             class="btn btn-sm btn-ghost" style="justify-content:center;'+(o.website_enabled?'color:var(--success-600)':'')+'">\n              <i data-lucide="'+(o.website_enabled?'globe-2':'globe')+'"></i>'+
-            (o.website_enabled?'الموقع مفعّل':'تفعيل الموقع')+'</button>'+
-            '<button onclick="Pages.toggleOrgCrm(\''+o.id+'\','+(o.crm_enabled?1:0)+',\''+UI.escHtml(o.name||'').replace(/'/g,"\\'")+'\')"\n             class="btn btn-sm btn-ghost" style="justify-content:center;'+(o.crm_enabled?'color:var(--iris-600)':'')+'">\n              <i data-lucide="'+(o.crm_enabled?'users':'user-plus')+'"></i>'+
-            (o.crm_enabled?'CRM مفعّل':'تفعيل CRM')+'</button>'+
+            '<button onclick="Pages.openOrgToolsModal(\''+o.id+'\',\''+UI.escHtml(o.name||'').replace(/'/g,"\\'")+'\','+o.website_enabled+','+o.crm_enabled+')" class="btn btn-sm btn-ghost" style="justify-content:center;font-weight:700">'+
+              '<i data-lucide="layers"></i>إدارة الأدوات</button>'+
             '<button onclick="Pages.deleteOrgConfirm(\''+o.id+'\',\''+UI.escHtml(o.name||'').replace(/'/g,"\\'")+'\')" class="btn btn-sm btn-ghost" style="justify-content:center;color:var(--danger-600)"><i data-lucide="trash-2"></i>حذف</button>'+
           '</div>'+
         '</div>'+
@@ -9889,6 +9887,89 @@ Pages.doToggleOrgCrm = function(id, enable) {
       UI.toast('تعذّر تحديث حالة CRM', 'danger');
     }
   });
+};
+
+/* ─── Org Tools Modal ─── */
+Pages.openOrgToolsModal = function(orgId, orgName, websiteEnabled, crmEnabled) {
+  var ws = !!+websiteEnabled, crm = !!+crmEnabled;
+  function toolRow(label, icon, enabled, toggleFn) {
+    return '<div style="display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid var(--bg-2)">'+
+      '<div style="display:flex;align-items:center;gap:10px">'+
+        '<div style="width:36px;height:36px;border-radius:9px;background:'+(enabled?'var(--iris-50)':'var(--bg-2)')+';color:'+(enabled?'var(--iris-600)':'var(--fg-3)')+';display:flex;align-items:center;justify-content:center">'+
+          '<i data-lucide="'+icon+'" style="width:17px;height:17px"></i>'+
+        '</div>'+
+        '<div><div style="font-weight:700;font-size:14px;color:var(--fg-1)">'+label+'</div>'+
+          '<div style="font-size:12px;color:'+(enabled?'var(--success-600)':'var(--fg-3)')+'">'+
+            (enabled?'مفعّلة ✓':'غير مفعّلة')+'</div>'+
+        '</div>'+
+      '</div>'+
+      '<button onclick="'+toggleFn+'" class="btn btn-sm '+(enabled?'btn-danger':'btn-primary')+'" style="min-width:90px">'+
+        (enabled?'إيقاف':'تفعيل')+'</button>'+
+    '</div>';
+  }
+  UI.openModal(
+    '<div class="modal-header"><h3>إدارة أدوات «'+UI.escHtml(orgName)+'»</h3>'+
+    '<button class="modal-close" onclick="UI.closeModalForce()">×</button></div>'+
+    '<div style="padding:0 20px 4px">'+
+      toolRow('الموقع الإلكتروني','globe', ws,
+        'Pages.doToggleOrgWebsite(\''+orgId+'\','+(ws?0:1)+')') +
+      toolRow('إدارة المستفيدين (CRM)','users', crm,
+        'Pages.doToggleOrgCrm(\''+orgId+'\','+(crm?0:1)+')') +
+    '</div>'+
+    '<div style="padding:12px 20px;color:var(--fg-4);font-size:12px">'+
+      'يُطبَّق التغيير فوراً على حساب الجمعية.</div>'
+  );
+  if (typeof lucide !== 'undefined') setTimeout(function(){ lucide.createIcons(); }, 50);
+};
+
+/* ─── Enable Tool from Service Request ─── */
+Pages._TOOL_KEYWORDS = {
+  crm: ['مستفيد','CRM','crm','إدارة المستفيدين','نظام إدارة المستفيدين'],
+  website: ['موقع','website','الموقع الإلكتروني','تصميم وتطوير الموقع']
+};
+Pages._detectTool = function(service) {
+  if (!service) return null;
+  var s = service.toLowerCase();
+  if (Pages._TOOL_KEYWORDS.crm.some(function(k){ return service.includes(k)||s.includes(k.toLowerCase()); })) return 'crm';
+  if (Pages._TOOL_KEYWORDS.website.some(function(k){ return service.includes(k)||s.includes(k.toLowerCase()); })) return 'website';
+  return null;
+};
+Pages.enableToolFromRequest = function(reqId, service, orgEmail, orgName) {
+  var tool = Pages._detectTool(service);
+  if (!tool) { UI.toast('لا يمكن تحديد الأداة تلقائياً', 'danger'); return; }
+  var toolLabel = tool === 'crm' ? 'إدارة المستفيدين (CRM)' : 'الموقع الإلكتروني';
+  UI.openModal(
+    '<div class="modal-header"><h3>تفعيل الأداة</h3><button class="modal-close" onclick="UI.closeModalForce()">×</button></div>'+
+    '<div style="padding:18px 20px">'+
+      '<p style="margin-bottom:12px">تفعيل <strong>'+UI.escHtml(toolLabel)+'</strong> لـ «'+UI.escHtml(orgName||orgEmail)+'»؟</p>'+
+      '<div style="font-size:13px;color:var(--fg-3);background:var(--bg-2);padding:10px 12px;border-radius:8px">'+
+        'الخدمة المطلوبة: '+UI.escHtml(service)+'</div>'+
+    '</div>'+
+    '<div class="modal-footer">'+
+      '<button class="btn btn-ghost" onclick="UI.closeModalForce()">إلغاء</button>'+
+      '<button class="btn btn-primary" onclick="Pages.doEnableToolFromReq(\''+reqId+'\',\''+tool+'\',\''+UI.escHtml(orgEmail)+'\')">تفعيل الآن</button>'+
+    '</div>'
+  );
+};
+Pages.doEnableToolFromReq = function(reqId, tool, orgEmail) {
+  UI.closeModalForce();
+  fetch('/api/admin/enable-tool', {
+    method: 'POST',
+    headers: DB._apiHeaders(),
+    body: JSON.stringify({ org_email: orgEmail, tool: tool, enabled: true })
+  }).then(function(r){ return r.json(); }).then(function(d){
+    if (d.ok) {
+      UI.toast('تم تفعيل الأداة لـ «'+(d.org_name||orgEmail)+'»', 'success');
+      // Mark request as done
+      DB._updateRequest(reqId, { status: 'done' }).then(function(){
+        if (Nav._cur === 'website') Pages.render_website({ _loaded: true });
+      });
+      // Refresh orgs list if loaded
+      Pages._orgs = null;
+    } else {
+      UI.toast('تعذّر التفعيل', 'danger');
+    }
+  }).catch(function(){ UI.toast('تعذّر الاتصال', 'danger'); });
 };
 
 /* ═══════════════════════════════════════════
@@ -10276,7 +10357,12 @@ Pages._renderRequestsTab = function(){
             (r.source==='portal'?'<span style="font-size:11px;font-weight:600;padding:2px 10px;border-radius:20px;color:var(--iris-600);background:var(--iris-50)"><i data-lucide="landmark" style="width:12px;height:12px;display:inline;vertical-align:-2px"></i> بوابة الجمعيات</span>':'')+
           '</div>'+
           (r.org?'<div style="font-size:13px;color:var(--fg-2);margin-bottom:2px"><i data-lucide="building-2" style="width:13px;height:13px;display:inline;vertical-align:-2px"></i> '+UI.escHtml(r.org)+'</div>':'')+
-          (r.service?'<div style="font-size:13px;color:var(--iris-600);margin-bottom:2px">الخدمة: '+UI.escHtml(r.service)+(r.budget?' · '+UI.escHtml(r.budget):'')+'</div>':'')+
+          (r.service?'<div style="font-size:13px;color:var(--iris-600);margin-bottom:2px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">'+
+            '<span>الخدمة: '+UI.escHtml(r.service)+(r.budget?' · '+UI.escHtml(r.budget):'')+'</span>'+
+            (r.source==='portal' && Pages._detectTool(r.service)
+              ? '<button onclick="Pages.enableToolFromRequest(\''+r.id+'\',\''+UI.escHtml(r.service)+'\',\''+UI.escHtml(r.email||'')+'\',\''+UI.escHtml(r.org||r.name||'')+'\')"\n              style="font-size:11px;font-weight:700;padding:3px 10px;background:var(--iris-500);color:#fff;border:none;border-radius:6px;cursor:pointer;font-family:inherit">⚡ تفعيل الأداة</button>'
+              : '') +
+          '</div>':'')+
           (r.message?'<div style="font-size:13px;color:var(--fg-2);margin-top:6px;background:var(--bg-2);padding:8px 11px;border-radius:8px">'+UI.escHtml(r.message)+'</div>':'')+
           (r.notes?'<div style="font-size:12.5px;color:var(--warning-700);margin-top:6px"><i data-lucide="sticky-note" style="width:13px;height:13px;display:inline;vertical-align:-2px"></i> '+UI.escHtml(r.notes)+'</div>':'')+
           '<div style="font-size:11.5px;color:var(--fg-4);margin-top:8px">'+dateStr+'</div>'+
