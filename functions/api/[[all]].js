@@ -329,155 +329,209 @@ export async function onRequest(context) {
   /* ─── CRM helper: verify org has CRM enabled ─── */
   async function crmGuard() {
     if (!orgMe || orgMe.kind !== 'org') return false;
-    const row = await db.prepare('SELECT crm_enabled FROM orgs WHERE id = ?').bind(orgMe.id).first();
-    return !!(row && row.crm_enabled);
+    // Ensure crm_enabled column exists (lazy migration, no-op if already present)
+    try { await db.prepare('ALTER TABLE orgs ADD COLUMN crm_enabled INTEGER NOT NULL DEFAULT 0').run(); } catch (_) {}
+    try {
+      const row = await db.prepare('SELECT crm_enabled FROM orgs WHERE id = ?').bind(orgMe.id).first();
+      return !!(row && row.crm_enabled);
+    } catch (_) { return false; }
+  }
+
+  /* ─── POST /api/admin/run-migrations ─── apply pending DB schema changes ─── */
+  if (path === '/admin/run-migrations' && method === 'POST') {
+    if (!me || me.role !== 'admin') return json({ error: 'Forbidden' }, 403);
+    const stmts = [
+      'ALTER TABLE orgs ADD COLUMN crm_enabled INTEGER NOT NULL DEFAULT 0',
+      'CREATE TABLE IF NOT EXISTS beneficiaries (id TEXT PRIMARY KEY, org_id TEXT NOT NULL, name TEXT NOT NULL, id_number TEXT NOT NULL DEFAULT "", dob TEXT NOT NULL DEFAULT "", gender TEXT NOT NULL DEFAULT "male", phone TEXT NOT NULL DEFAULT "", phone2 TEXT NOT NULL DEFAULT "", email TEXT NOT NULL DEFAULT "", city TEXT NOT NULL DEFAULT "", district TEXT NOT NULL DEFAULT "", address TEXT NOT NULL DEFAULT "", marital_status TEXT NOT NULL DEFAULT "", dependents INTEGER NOT NULL DEFAULT 0, housing_type TEXT NOT NULL DEFAULT "", income REAL NOT NULL DEFAULT 0, employment_status TEXT NOT NULL DEFAULT "", category TEXT NOT NULL DEFAULT "needy", status TEXT NOT NULL DEFAULT "active", notes TEXT NOT NULL DEFAULT "", created_at INTEGER NOT NULL DEFAULT (unixepoch()), updated_at INTEGER NOT NULL DEFAULT (unixepoch()))',
+      'CREATE INDEX IF NOT EXISTS idx_ben_org ON beneficiaries(org_id)',
+      'CREATE INDEX IF NOT EXISTS idx_ben_status ON beneficiaries(org_id, status)',
+      'CREATE INDEX IF NOT EXISTS idx_ben_cat ON beneficiaries(org_id, category)',
+      'CREATE TABLE IF NOT EXISTS crm_requests (id TEXT PRIMARY KEY, org_id TEXT NOT NULL, beneficiary_id TEXT NOT NULL, service_type TEXT NOT NULL DEFAULT "other", title TEXT NOT NULL DEFAULT "", description TEXT NOT NULL DEFAULT "", amount REAL NOT NULL DEFAULT 0, status TEXT NOT NULL DEFAULT "pending", priority TEXT NOT NULL DEFAULT "normal", assigned_to TEXT NOT NULL DEFAULT "", due_date TEXT NOT NULL DEFAULT "", resolution TEXT NOT NULL DEFAULT "", created_at INTEGER NOT NULL DEFAULT (unixepoch()), updated_at INTEGER NOT NULL DEFAULT (unixepoch()))',
+      'CREATE INDEX IF NOT EXISTS idx_creq_org ON crm_requests(org_id)',
+      'CREATE INDEX IF NOT EXISTS idx_creq_ben ON crm_requests(beneficiary_id)',
+      'CREATE INDEX IF NOT EXISTS idx_creq_status ON crm_requests(org_id, status)',
+      'CREATE TABLE IF NOT EXISTS crm_aids (id TEXT PRIMARY KEY, org_id TEXT NOT NULL, beneficiary_id TEXT NOT NULL, request_id TEXT NOT NULL DEFAULT "", aid_type TEXT NOT NULL DEFAULT "financial", amount REAL NOT NULL DEFAULT 0, items TEXT NOT NULL DEFAULT "[]", provided_at TEXT NOT NULL DEFAULT "", notes TEXT NOT NULL DEFAULT "", created_by TEXT NOT NULL DEFAULT "", created_at INTEGER NOT NULL DEFAULT (unixepoch()))',
+      'CREATE INDEX IF NOT EXISTS idx_caid_org ON crm_aids(org_id)',
+      'CREATE INDEX IF NOT EXISTS idx_caid_ben ON crm_aids(beneficiary_id)',
+      'CREATE TABLE IF NOT EXISTS crm_notes (id TEXT PRIMARY KEY, org_id TEXT NOT NULL, beneficiary_id TEXT NOT NULL, request_id TEXT NOT NULL DEFAULT "", type TEXT NOT NULL DEFAULT "note", content TEXT NOT NULL DEFAULT "", created_by TEXT NOT NULL DEFAULT "", created_at INTEGER NOT NULL DEFAULT (unixepoch()))',
+      'CREATE INDEX IF NOT EXISTS idx_cnote_ben ON crm_notes(beneficiary_id)'
+    ];
+    const results = [];
+    for (const sql of stmts) {
+      try { await db.prepare(sql).run(); results.push({ ok: true, sql: sql.slice(0, 60) }); }
+      catch (e) { results.push({ ok: false, sql: sql.slice(0, 60), err: e.message }); }
+    }
+    return json({ ok: true, results });
   }
 
   /* ─── GET /api/crm/dashboard ─── */
   if (path === '/crm/dashboard' && method === 'GET') {
-    if (!await crmGuard()) return json({ error: 'Unauthorized' }, 401);
-    const [stats, recentBens, pendingReqs] = await Promise.all([
-      db.prepare(
-        'SELECT (SELECT COUNT(*) FROM beneficiaries WHERE org_id=?) AS total_bens,' +
-        '(SELECT COUNT(*) FROM beneficiaries WHERE org_id=? AND status="active") AS active_bens,' +
-        '(SELECT COUNT(*) FROM crm_requests WHERE org_id=? AND status="pending") AS pending_reqs,' +
-        '(SELECT COUNT(*) FROM crm_requests WHERE org_id=? AND status="reviewing") AS reviewing_reqs,' +
-        '(SELECT COUNT(*) FROM crm_requests WHERE org_id=? AND status="completed") AS done_reqs,' +
-        '(SELECT COALESCE(SUM(amount),0) FROM crm_aids WHERE org_id=?) AS total_spent'
-      ).bind(orgMe.id, orgMe.id, orgMe.id, orgMe.id, orgMe.id, orgMe.id).first(),
-      db.prepare('SELECT id,name,category,status,city,created_at FROM beneficiaries WHERE org_id=? ORDER BY created_at DESC LIMIT 6').bind(orgMe.id).all(),
-      db.prepare(
-        'SELECT r.*,b.name AS ben_name,b.category AS ben_cat FROM crm_requests r ' +
-        'JOIN beneficiaries b ON r.beneficiary_id=b.id ' +
-        'WHERE r.org_id=? AND r.status IN ("pending","reviewing") ' +
-        'ORDER BY CASE r.priority WHEN "urgent" THEN 0 WHEN "high" THEN 1 ELSE 2 END, r.created_at LIMIT 10'
-      ).bind(orgMe.id).all()
-    ]);
-    return json({ ...stats, recent_bens: recentBens.results, pending_reqs: pendingReqs.results });
+    if (!await crmGuard()) return json({ error: 'crm_not_enabled' }, 403);
+    try {
+      const [stats, recentBens, pendingReqs] = await Promise.all([
+        db.prepare(
+          'SELECT (SELECT COUNT(*) FROM beneficiaries WHERE org_id=?) AS total_bens,' +
+          '(SELECT COUNT(*) FROM beneficiaries WHERE org_id=? AND status="active") AS active_bens,' +
+          '(SELECT COUNT(*) FROM crm_requests WHERE org_id=? AND status="pending") AS pending_reqs,' +
+          '(SELECT COUNT(*) FROM crm_requests WHERE org_id=? AND status="reviewing") AS reviewing_reqs,' +
+          '(SELECT COUNT(*) FROM crm_requests WHERE org_id=? AND status="completed") AS done_reqs,' +
+          '(SELECT COALESCE(SUM(amount),0) FROM crm_aids WHERE org_id=?) AS total_spent'
+        ).bind(orgMe.id, orgMe.id, orgMe.id, orgMe.id, orgMe.id, orgMe.id).first(),
+        db.prepare('SELECT id,name,category,status,city,created_at FROM beneficiaries WHERE org_id=? ORDER BY created_at DESC LIMIT 6').bind(orgMe.id).all(),
+        db.prepare(
+          'SELECT r.*,b.name AS ben_name,b.category AS ben_cat FROM crm_requests r ' +
+          'JOIN beneficiaries b ON r.beneficiary_id=b.id ' +
+          'WHERE r.org_id=? AND r.status IN ("pending","reviewing") ' +
+          'ORDER BY CASE r.priority WHEN "urgent" THEN 0 WHEN "high" THEN 1 ELSE 2 END, r.created_at LIMIT 10'
+        ).bind(orgMe.id).all()
+      ]);
+      return json({ stats, recent_bens: recentBens.results, pending_reqs_list: pendingReqs.results });
+    } catch (e) {
+      return json({ error: 'db_error', detail: e.message }, 500);
+    }
   }
 
   /* ─── GET /api/crm/beneficiaries ─── */
   if (path === '/crm/beneficiaries' && method === 'GET') {
-    if (!await crmGuard()) return json({ error: 'Unauthorized' }, 401);
-    const url = new URL(request.url);
-    const q = (url.searchParams.get('q') || '').trim();
-    const status = url.searchParams.get('status') || '';
-    const category = url.searchParams.get('category') || '';
-    let sql = 'SELECT b.*,' +
-      '(SELECT COUNT(*) FROM crm_requests r WHERE r.beneficiary_id=b.id) AS req_count,' +
-      '(SELECT COALESCE(SUM(a.amount),0) FROM crm_aids a WHERE a.beneficiary_id=b.id) AS total_aid ' +
-      'FROM beneficiaries b WHERE b.org_id=?';
-    const params = [orgMe.id];
-    if (q) { sql += ' AND (b.name LIKE ? OR b.id_number LIKE ? OR b.phone LIKE ?)'; params.push('%'+q+'%', '%'+q+'%', '%'+q+'%'); }
-    if (status) { sql += ' AND b.status=?'; params.push(status); }
-    if (category) { sql += ' AND b.category=?'; params.push(category); }
-    sql += ' ORDER BY b.created_at DESC LIMIT 200';
-    const { results } = await db.prepare(sql).bind(...params).all();
-    return json(results);
+    if (!await crmGuard()) return json({ error: 'crm_not_enabled' }, 403);
+    try {
+      const url = new URL(request.url);
+      const q = (url.searchParams.get('q') || '').trim();
+      const status = url.searchParams.get('status') || '';
+      const category = url.searchParams.get('category') || '';
+      let sql = 'SELECT b.*,' +
+        '(SELECT COUNT(*) FROM crm_requests r WHERE r.beneficiary_id=b.id) AS req_count,' +
+        '(SELECT COALESCE(SUM(a.amount),0) FROM crm_aids a WHERE a.beneficiary_id=b.id) AS total_aid ' +
+        'FROM beneficiaries b WHERE b.org_id=?';
+      const params = [orgMe.id];
+      if (q) { sql += ' AND (b.name LIKE ? OR b.id_number LIKE ? OR b.phone LIKE ?)'; params.push('%'+q+'%', '%'+q+'%', '%'+q+'%'); }
+      if (status) { sql += ' AND b.status=?'; params.push(status); }
+      if (category) { sql += ' AND b.category=?'; params.push(category); }
+      sql += ' ORDER BY b.created_at DESC LIMIT 200';
+      const { results } = await db.prepare(sql).bind(...params).all();
+      return json(results);
+    } catch (e) { return json({ error: 'db_error', detail: e.message }, 500); }
   }
 
   /* ─── POST /api/crm/beneficiaries ─── */
   if (path === '/crm/beneficiaries' && method === 'POST') {
-    if (!await crmGuard()) return json({ error: 'Unauthorized' }, 401);
-    let body; try { body = await request.json(); } catch (e) { return json({ error: 'Bad request' }, 400); }
-    if (!(body.name || '').trim()) return json({ error: 'name_required' }, 400);
-    const id = 'ben_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-    await db.prepare(
-      'INSERT INTO beneficiaries (id,org_id,name,id_number,dob,gender,phone,phone2,email,city,district,address,marital_status,dependents,housing_type,income,employment_status,category,status,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'
-    ).bind(id, orgMe.id, (body.name||'').trim(), (body.id_number||'').trim(), (body.dob||'').trim(),
-      body.gender||'male', (body.phone||'').trim(), (body.phone2||'').trim(), (body.email||'').trim(),
-      (body.city||'').trim(), (body.district||'').trim(), (body.address||'').trim(),
-      body.marital_status||'', parseInt(body.dependents)||0, body.housing_type||'',
-      parseFloat(body.income)||0, body.employment_status||'', body.category||'needy',
-      body.status||'active', (body.notes||'').trim()).run();
-    return json({ ok: true, id }, 201);
+    if (!await crmGuard()) return json({ error: 'crm_not_enabled' }, 403);
+    try {
+      let body; try { body = await request.json(); } catch (e) { return json({ error: 'Bad request' }, 400); }
+      if (!(body.name || '').trim()) return json({ error: 'name_required' }, 400);
+      const id = 'ben_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+      await db.prepare(
+        'INSERT INTO beneficiaries (id,org_id,name,id_number,dob,gender,phone,phone2,email,city,district,address,marital_status,dependents,housing_type,income,employment_status,category,status,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'
+      ).bind(id, orgMe.id, (body.name||'').trim(), (body.id_number||'').trim(), (body.dob||'').trim(),
+        body.gender||'male', (body.phone||'').trim(), (body.phone2||'').trim(), (body.email||'').trim(),
+        (body.city||'').trim(), (body.district||'').trim(), (body.address||'').trim(),
+        body.marital_status||'', parseInt(body.dependents)||0, body.housing_type||'',
+        parseFloat(body.income)||0, body.employment_status||'', body.category||'needy',
+        body.status||'active', (body.notes||'').trim()).run();
+      const ben = await db.prepare('SELECT * FROM beneficiaries WHERE id=?').bind(id).first();
+      return json(ben, 201);
+    } catch (e) { return json({ error: 'db_error', detail: e.message }, 500); }
   }
 
-  /* ─── GET /PUT /api/crm/beneficiaries/:id ─── */
+  /* ─── GET /PUT /DELETE /api/crm/beneficiaries/:id ─── */
   const crmBenMatch = path.match(/^\/crm\/beneficiaries\/([^/]+)$/);
   if (crmBenMatch && method === 'GET') {
-    if (!await crmGuard()) return json({ error: 'Unauthorized' }, 401);
-    const benId = crmBenMatch[1];
-    const ben = await db.prepare('SELECT * FROM beneficiaries WHERE id=? AND org_id=?').bind(benId, orgMe.id).first();
-    if (!ben) return json({ error: 'not_found' }, 404);
-    const [reqs, aids, notes] = await Promise.all([
-      db.prepare('SELECT * FROM crm_requests WHERE beneficiary_id=? ORDER BY created_at DESC').bind(benId).all(),
-      db.prepare('SELECT * FROM crm_aids WHERE beneficiary_id=? ORDER BY created_at DESC').bind(benId).all(),
-      db.prepare('SELECT * FROM crm_notes WHERE beneficiary_id=? ORDER BY created_at DESC').bind(benId).all()
-    ]);
-    return json({ ben, requests: reqs.results, aids: aids.results, notes: notes.results });
+    if (!await crmGuard()) return json({ error: 'crm_not_enabled' }, 403);
+    try {
+      const benId = crmBenMatch[1];
+      const ben = await db.prepare('SELECT * FROM beneficiaries WHERE id=? AND org_id=?').bind(benId, orgMe.id).first();
+      if (!ben) return json({ error: 'not_found' }, 404);
+      const [reqs, aids, notes] = await Promise.all([
+        db.prepare('SELECT * FROM crm_requests WHERE beneficiary_id=? ORDER BY created_at DESC').bind(benId).all(),
+        db.prepare('SELECT * FROM crm_aids WHERE beneficiary_id=? ORDER BY created_at DESC').bind(benId).all(),
+        db.prepare('SELECT * FROM crm_notes WHERE beneficiary_id=? ORDER BY created_at DESC').bind(benId).all()
+      ]);
+      return json(Object.assign({}, ben, { requests: reqs.results, aids: aids.results, notes: notes.results }));
+    } catch (e) { return json({ error: 'db_error', detail: e.message }, 500); }
   }
   if (crmBenMatch && method === 'PUT') {
-    if (!await crmGuard()) return json({ error: 'Unauthorized' }, 401);
-    const benId = crmBenMatch[1];
-    let body; try { body = await request.json(); } catch (e) { return json({ error: 'Bad request' }, 400); }
-    await db.prepare(
-      'UPDATE beneficiaries SET name=?,id_number=?,dob=?,gender=?,phone=?,phone2=?,email=?,city=?,district=?,address=?,marital_status=?,dependents=?,housing_type=?,income=?,employment_status=?,category=?,status=?,notes=?,updated_at=unixepoch() WHERE id=? AND org_id=?'
-    ).bind((body.name||'').trim(), (body.id_number||'').trim(), (body.dob||'').trim(),
-      body.gender||'male', (body.phone||'').trim(), (body.phone2||'').trim(), (body.email||'').trim(),
-      (body.city||'').trim(), (body.district||'').trim(), (body.address||'').trim(),
-      body.marital_status||'', parseInt(body.dependents)||0, body.housing_type||'',
-      parseFloat(body.income)||0, body.employment_status||'', body.category||'needy',
-      body.status||'active', (body.notes||'').trim(), benId, orgMe.id).run();
-    return json({ ok: true });
+    if (!await crmGuard()) return json({ error: 'crm_not_enabled' }, 403);
+    try {
+      const benId = crmBenMatch[1];
+      let body; try { body = await request.json(); } catch (e) { return json({ error: 'Bad request' }, 400); }
+      await db.prepare(
+        'UPDATE beneficiaries SET name=?,id_number=?,dob=?,gender=?,phone=?,phone2=?,email=?,city=?,district=?,address=?,marital_status=?,dependents=?,housing_type=?,income=?,employment_status=?,category=?,status=?,notes=?,updated_at=unixepoch() WHERE id=? AND org_id=?'
+      ).bind((body.name||'').trim(), (body.id_number||'').trim(), (body.dob||'').trim(),
+        body.gender||'male', (body.phone||'').trim(), (body.phone2||'').trim(), (body.email||'').trim(),
+        (body.city||'').trim(), (body.district||'').trim(), (body.address||'').trim(),
+        body.marital_status||'', parseInt(body.dependents)||0, body.housing_type||'',
+        parseFloat(body.income)||0, body.employment_status||'', body.category||'needy',
+        body.status||'active', (body.notes||'').trim(), benId, orgMe.id).run();
+      const ben = await db.prepare('SELECT * FROM beneficiaries WHERE id=?').bind(benId).first();
+      return json(ben);
+    } catch (e) { return json({ error: 'db_error', detail: e.message }, 500); }
   }
   if (crmBenMatch && method === 'DELETE') {
-    if (!await crmGuard()) return json({ error: 'Unauthorized' }, 401);
-    const benId = crmBenMatch[1];
-    await Promise.all([
-      db.prepare('DELETE FROM crm_notes WHERE beneficiary_id=? AND org_id=?').bind(benId, orgMe.id).run(),
-      db.prepare('DELETE FROM crm_aids WHERE beneficiary_id=? AND org_id=?').bind(benId, orgMe.id).run(),
-      db.prepare('DELETE FROM crm_requests WHERE beneficiary_id=? AND org_id=?').bind(benId, orgMe.id).run(),
-      db.prepare('DELETE FROM beneficiaries WHERE id=? AND org_id=?').bind(benId, orgMe.id).run()
-    ]);
-    return json({ ok: true });
+    if (!await crmGuard()) return json({ error: 'crm_not_enabled' }, 403);
+    try {
+      const benId = crmBenMatch[1];
+      await Promise.all([
+        db.prepare('DELETE FROM crm_notes WHERE beneficiary_id=? AND org_id=?').bind(benId, orgMe.id).run(),
+        db.prepare('DELETE FROM crm_aids WHERE beneficiary_id=? AND org_id=?').bind(benId, orgMe.id).run(),
+        db.prepare('DELETE FROM crm_requests WHERE beneficiary_id=? AND org_id=?').bind(benId, orgMe.id).run(),
+        db.prepare('DELETE FROM beneficiaries WHERE id=? AND org_id=?').bind(benId, orgMe.id).run()
+      ]);
+      return json({ ok: true });
+    } catch (e) { return json({ error: 'db_error', detail: e.message }, 500); }
   }
 
   /* ─── GET /api/crm/requests ─── */
   if (path === '/crm/requests' && method === 'GET') {
-    if (!await crmGuard()) return json({ error: 'Unauthorized' }, 401);
-    const url = new URL(request.url);
-    const status = url.searchParams.get('status') || '';
-    let sql = 'SELECT r.*,b.name AS ben_name,b.category AS ben_cat FROM crm_requests r JOIN beneficiaries b ON r.beneficiary_id=b.id WHERE r.org_id=?';
-    const params = [orgMe.id];
-    if (status) { sql += ' AND r.status=?'; params.push(status); }
-    sql += ' ORDER BY CASE r.priority WHEN "urgent" THEN 0 WHEN "high" THEN 1 ELSE 2 END, r.created_at DESC LIMIT 300';
-    const { results } = await db.prepare(sql).bind(...params).all();
-    return json(results);
+    if (!await crmGuard()) return json({ error: 'crm_not_enabled' }, 403);
+    try {
+      const url = new URL(request.url);
+      const status = url.searchParams.get('status') || '';
+      let sql = 'SELECT r.*,b.name AS ben_name,b.category AS ben_cat FROM crm_requests r JOIN beneficiaries b ON r.beneficiary_id=b.id WHERE r.org_id=?';
+      const params = [orgMe.id];
+      if (status) { sql += ' AND r.status=?'; params.push(status); }
+      sql += ' ORDER BY CASE r.priority WHEN "urgent" THEN 0 WHEN "high" THEN 1 ELSE 2 END, r.created_at DESC LIMIT 300';
+      const { results } = await db.prepare(sql).bind(...params).all();
+      return json(results);
+    } catch (e) { return json({ error: 'db_error', detail: e.message }, 500); }
   }
 
   /* ─── POST /api/crm/requests ─── */
   if (path === '/crm/requests' && method === 'POST') {
-    if (!await crmGuard()) return json({ error: 'Unauthorized' }, 401);
-    let body; try { body = await request.json(); } catch (e) { return json({ error: 'Bad request' }, 400); }
-    if (!body.beneficiary_id) return json({ error: 'beneficiary_id required' }, 400);
-    const id = 'crq_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-    await db.prepare(
-      'INSERT INTO crm_requests (id,org_id,beneficiary_id,service_type,title,description,amount,status,priority,due_date) VALUES (?,?,?,?,?,?,?,?,?,?)'
-    ).bind(id, orgMe.id, body.beneficiary_id, body.service_type||'other',
-      (body.title||'').trim(), (body.description||'').trim(),
-      parseFloat(body.amount)||0, 'pending', body.priority||'normal', (body.due_date||'').trim()).run();
-    return json({ ok: true, id }, 201);
+    if (!await crmGuard()) return json({ error: 'crm_not_enabled' }, 403);
+    try {
+      let body; try { body = await request.json(); } catch (e) { return json({ error: 'Bad request' }, 400); }
+      if (!body.beneficiary_id) return json({ error: 'beneficiary_id required' }, 400);
+      const id = 'crq_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+      await db.prepare(
+        'INSERT INTO crm_requests (id,org_id,beneficiary_id,service_type,title,description,amount,status,priority,due_date) VALUES (?,?,?,?,?,?,?,?,?,?)'
+      ).bind(id, orgMe.id, body.beneficiary_id, body.service_type||'other',
+        (body.title||'').trim(), (body.description||'').trim(),
+        parseFloat(body.amount)||0, 'pending', body.priority||'normal', (body.due_date||'').trim()).run();
+      return json({ ok: true, id }, 201);
+    } catch (e) { return json({ error: 'db_error', detail: e.message }, 500); }
   }
 
   /* ─── PATCH /api/crm/requests/:id ─── */
   const crmReqMatch = path.match(/^\/crm\/requests\/([^/]+)$/);
   if (crmReqMatch && method === 'PATCH') {
-    if (!await crmGuard()) return json({ error: 'Unauthorized' }, 401);
-    let body; try { body = await request.json(); } catch (e) { return json({ error: 'Bad request' }, 400); }
-    const fields = [], vals = [];
-    ['status','priority','assigned_to','due_date','resolution','title','description','amount'].forEach(k => {
-      if (body[k] !== undefined) { fields.push(k+'=?'); vals.push(body[k]); }
-    });
-    if (!fields.length) return json({ error: 'nothing' }, 400);
-    fields.push('updated_at=unixepoch()'); vals.push(crmReqMatch[1], orgMe.id);
-    await db.prepare('UPDATE crm_requests SET '+fields.join(',')+' WHERE id=? AND org_id=?').bind(...vals).run();
-    return json({ ok: true });
+    if (!await crmGuard()) return json({ error: 'crm_not_enabled' }, 403);
+    try {
+      let body; try { body = await request.json(); } catch (e) { return json({ error: 'Bad request' }, 400); }
+      const fields = [], vals = [];
+      ['status','priority','assigned_to','due_date','resolution','title','description','amount'].forEach(function(k) {
+        if (body[k] !== undefined) { fields.push(k+'=?'); vals.push(body[k]); }
+      });
+      if (!fields.length) return json({ error: 'nothing' }, 400);
+      fields.push('updated_at=unixepoch()'); vals.push(crmReqMatch[1], orgMe.id);
+      await db.prepare('UPDATE crm_requests SET '+fields.join(',')+' WHERE id=? AND org_id=?').bind(...vals).run();
+      return json({ ok: true });
+    } catch (e) { return json({ error: 'db_error', detail: e.message }, 500); }
   }
 
   /* ─── POST /api/crm/aids ─── */
   if (path === '/crm/aids' && method === 'POST') {
-    if (!await crmGuard()) return json({ error: 'Unauthorized' }, 401);
+    if (!await crmGuard()) return json({ error: 'crm_not_enabled' }, 403);
+    try {
     let body; try { body = await request.json(); } catch (e) { return json({ error: 'Bad request' }, 400); }
     const id = 'aid_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
     await db.prepare(
@@ -488,29 +542,34 @@ export async function onRequest(context) {
       body.provided_at||new Date().toISOString().slice(0,10),
       (body.notes||'').trim(), (body.created_by||'').trim()).run();
     return json({ ok: true, id }, 201);
+    } catch(e) { return json({ error:'db_error', detail:e.message }, 500); }
   }
   const crmAidMatch = path.match(/^\/crm\/aids\/([^/]+)$/);
   if (crmAidMatch && method === 'DELETE') {
-    if (!await crmGuard()) return json({ error: 'Unauthorized' }, 401);
-    await db.prepare('DELETE FROM crm_aids WHERE id=? AND org_id=?').bind(crmAidMatch[1], orgMe.id).run();
+    if (!await crmGuard()) return json({ error: 'crm_not_enabled' }, 403);
+    try { await db.prepare('DELETE FROM crm_aids WHERE id=? AND org_id=?').bind(crmAidMatch[1], orgMe.id).run(); }
+    catch(e) { return json({ error:'db_error', detail:e.message }, 500); }
     return json({ ok: true });
   }
 
   /* ─── POST /api/crm/notes ─── */
   if (path === '/crm/notes' && method === 'POST') {
-    if (!await crmGuard()) return json({ error: 'Unauthorized' }, 401);
-    let body; try { body = await request.json(); } catch (e) { return json({ error: 'Bad request' }, 400); }
-    const id = 'nt_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-    await db.prepare(
-      'INSERT INTO crm_notes (id,org_id,beneficiary_id,request_id,type,content,created_by) VALUES (?,?,?,?,?,?,?)'
-    ).bind(id, orgMe.id, body.beneficiary_id, body.request_id||'',
-      body.type||'note', (body.content||'').trim(), (body.created_by||'').trim()).run();
-    return json({ ok: true, id }, 201);
+    if (!await crmGuard()) return json({ error: 'crm_not_enabled' }, 403);
+    try {
+      let body; try { body = await request.json(); } catch (e) { return json({ error: 'Bad request' }, 400); }
+      const id = 'nt_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+      await db.prepare(
+        'INSERT INTO crm_notes (id,org_id,beneficiary_id,request_id,type,content,created_by) VALUES (?,?,?,?,?,?,?)'
+      ).bind(id, orgMe.id, body.beneficiary_id, body.request_id||'',
+        body.type||'note', (body.content||'').trim(), (body.created_by||'').trim()).run();
+      return json({ ok: true, id }, 201);
+    } catch(e) { return json({ error:'db_error', detail:e.message }, 500); }
   }
   const crmNoteMatch = path.match(/^\/crm\/notes\/([^/]+)$/);
   if (crmNoteMatch && method === 'DELETE') {
-    if (!await crmGuard()) return json({ error: 'Unauthorized' }, 401);
-    await db.prepare('DELETE FROM crm_notes WHERE id=? AND org_id=?').bind(crmNoteMatch[1], orgMe.id).run();
+    if (!await crmGuard()) return json({ error: 'crm_not_enabled' }, 403);
+    try { await db.prepare('DELETE FROM crm_notes WHERE id=? AND org_id=?').bind(crmNoteMatch[1], orgMe.id).run(); }
+    catch(e) { return json({ error:'db_error', detail:e.message }, 500); }
     return json({ ok: true });
   }
 
@@ -560,8 +619,15 @@ export async function onRequest(context) {
     let body;
     try { body = await request.json(); } catch (e) { return json({ error: 'Bad request' }, 400); }
     const enabled = body.enabled ? 1 : 0;
-    // Ensure column exists (safe no-op if already present)
-    try { await db.prepare('ALTER TABLE orgs ADD COLUMN crm_enabled INTEGER NOT NULL DEFAULT 0').run(); } catch (_) {}
+    // Ensure crm_enabled column + all CRM tables exist (safe idempotent migrations)
+    const crmSetup = [
+      'ALTER TABLE orgs ADD COLUMN crm_enabled INTEGER NOT NULL DEFAULT 0',
+      'CREATE TABLE IF NOT EXISTS beneficiaries (id TEXT PRIMARY KEY, org_id TEXT NOT NULL, name TEXT NOT NULL, id_number TEXT NOT NULL DEFAULT "", dob TEXT NOT NULL DEFAULT "", gender TEXT NOT NULL DEFAULT "male", phone TEXT NOT NULL DEFAULT "", phone2 TEXT NOT NULL DEFAULT "", email TEXT NOT NULL DEFAULT "", city TEXT NOT NULL DEFAULT "", district TEXT NOT NULL DEFAULT "", address TEXT NOT NULL DEFAULT "", marital_status TEXT NOT NULL DEFAULT "", dependents INTEGER NOT NULL DEFAULT 0, housing_type TEXT NOT NULL DEFAULT "", income REAL NOT NULL DEFAULT 0, employment_status TEXT NOT NULL DEFAULT "", category TEXT NOT NULL DEFAULT "needy", status TEXT NOT NULL DEFAULT "active", notes TEXT NOT NULL DEFAULT "", created_at INTEGER NOT NULL DEFAULT (unixepoch()), updated_at INTEGER NOT NULL DEFAULT (unixepoch()))',
+      'CREATE TABLE IF NOT EXISTS crm_requests (id TEXT PRIMARY KEY, org_id TEXT NOT NULL, beneficiary_id TEXT NOT NULL, service_type TEXT NOT NULL DEFAULT "other", title TEXT NOT NULL DEFAULT "", description TEXT NOT NULL DEFAULT "", amount REAL NOT NULL DEFAULT 0, status TEXT NOT NULL DEFAULT "pending", priority TEXT NOT NULL DEFAULT "normal", assigned_to TEXT NOT NULL DEFAULT "", due_date TEXT NOT NULL DEFAULT "", resolution TEXT NOT NULL DEFAULT "", created_at INTEGER NOT NULL DEFAULT (unixepoch()), updated_at INTEGER NOT NULL DEFAULT (unixepoch()))',
+      'CREATE TABLE IF NOT EXISTS crm_aids (id TEXT PRIMARY KEY, org_id TEXT NOT NULL, beneficiary_id TEXT NOT NULL, request_id TEXT NOT NULL DEFAULT "", aid_type TEXT NOT NULL DEFAULT "financial", amount REAL NOT NULL DEFAULT 0, items TEXT NOT NULL DEFAULT "[]", provided_at TEXT NOT NULL DEFAULT "", notes TEXT NOT NULL DEFAULT "", created_by TEXT NOT NULL DEFAULT "", created_at INTEGER NOT NULL DEFAULT (unixepoch()))',
+      'CREATE TABLE IF NOT EXISTS crm_notes (id TEXT PRIMARY KEY, org_id TEXT NOT NULL, beneficiary_id TEXT NOT NULL, request_id TEXT NOT NULL DEFAULT "", type TEXT NOT NULL DEFAULT "note", content TEXT NOT NULL DEFAULT "", created_by TEXT NOT NULL DEFAULT "", created_at INTEGER NOT NULL DEFAULT (unixepoch()))'
+    ];
+    for (const sql of crmSetup) { try { await db.prepare(sql).run(); } catch (_) {} }
     await db.prepare('UPDATE orgs SET crm_enabled = ? WHERE id = ?').bind(enabled, orgId).run();
     return json({ ok: true, crm_enabled: enabled });
   }
