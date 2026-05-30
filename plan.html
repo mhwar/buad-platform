@@ -1218,7 +1218,9 @@ function renderWebsite(){
   var domain = wsData.custom_domain || '';
   var orgId = org && org.id ? org.id : '';
   var defaultUrl = window.location.origin + '/org-site?org=' + orgId;
-  var previewUrl = domain ? 'https://'+domain : defaultUrl;
+  // Live/public URL (what visitors see); preview always uses the owner's draft view.
+  var liveUrl = domain ? 'https://'+domain : defaultUrl;
+  var previewUrl = window.location.origin + '/org-site?org=' + orgId + '&preview=1';
 
   var tabs = [
     { id:'content', label:'المحتوى' },
@@ -1319,7 +1321,7 @@ function renderWebsite(){
     '</div>'+
     '<div class="ws-preview-bar">'+
       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0;color:var(--muted)"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>'+
-      '<span class="ws-preview-url">'+esc(previewUrl)+'</span>'+
+      '<span class="ws-preview-url">'+esc(liveUrl)+'</span>'+
       '<label class="ws-publish-toggle">'+
         '<span style="font-size:12.5px;font-weight:600;color:var(--navy-2)">'+(published?'إلغاء النشر':'نشر الموقع')+'</span>'+
         '<label class="ws-toggle">'+

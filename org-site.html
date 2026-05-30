@@ -113,12 +113,12 @@ function getOrgId(){
   return m ? decodeURIComponent(m[1]) : null;
 }
 
-function renderError(msg){
+function renderError(title, sub){
   document.getElementById('site-root').innerHTML =
     '<div class="state-wrap">'+
       '<div class="state-ico">🌐</div>'+
-      '<div class="state-title">'+esc(msg||'الموقع غير متاح')+'</div>'+
-      '<div class="state-sub">يبدو أن الموقع لم يُنشر بعد أو الرابط غير صحيح</div>'+
+      '<div class="state-title">'+esc(title||'الموقع غير متاح')+'</div>'+
+      '<div class="state-sub">'+esc(sub||'يبدو أن الموقع لم يُنشر بعد أو الرابط غير صحيح')+'</div>'+
       '<a href="https://buad.sa" style="margin-top:8px;color:#1d9b8a;font-weight:700;font-size:15px">← الرجوع لبُعد</a>'+
     '</div>';
 }
@@ -130,6 +130,13 @@ function renderLoading(){
       '<div class="state-sub">جارٍ التحميل...</div>'+
     '</div>'+
     '<style>@keyframes spin{to{transform:rotate(360deg)}}</style>';
+}
+
+function renderPreviewBanner(){
+  var b = document.createElement('div');
+  b.style.cssText = 'position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:9999;background:#1e2a4a;color:#fff;padding:10px 20px;border-radius:30px;font-family:"IBM Plex Sans Arabic",sans-serif;font-size:13px;font-weight:600;box-shadow:0 6px 24px rgba(0,0,0,.3);display:flex;align-items:center;gap:8px';
+  b.innerHTML = '<span style="width:8px;height:8px;border-radius:50%;background:#fbbf24;display:inline-block"></span>وضع المعاينة — هذه نسخة مسودة لم تُنشر للعامة بعد';
+  document.body.appendChild(b);
 }
 
 function renderSite(data){
@@ -233,15 +240,54 @@ function renderSite(data){
   document.getElementById('site-root').innerHTML = html;
 }
 
+function isPreview(){ return /[?&]preview=1/.test(location.search); }
+
 (function init(){
   var orgId = getOrgId();
-  if(!orgId){ renderError('الموقع غير موجود'); return; }
+  if(!orgId){ renderError('الرابط غير صحيح', 'لم يُحدَّد معرّف الجمعية في الرابط'); return; }
   renderLoading();
-  fetch(API+'/public/org-site/'+encodeURIComponent(orgId))
-    .then(function(r){ if(!r.ok) throw new Error(r.status); return r.json(); })
-    .then(function(data){ renderSite(data); })
-    .catch(function(){ renderError('الموقع غير منشور أو غير متاح'); });
+
+  // Preview mode: the org owner opened this from their portal — use their token
+  // to show the draft even before it's published to the public.
+  if(isPreview()){
+    var token = null;
+    try { token = localStorage.getItem('buad_org_jwt'); } catch(e){}
+    if(token){
+      fetch(API+'/org/website',{ headers:{ 'Authorization':'Bearer '+token } })
+        .then(function(r){ if(!r.ok) throw new Error(r.status); return r.json(); })
+        .then(function(d){
+          renderSite(d);
+          if(!d.published) renderPreviewBanner();
+        })
+        .catch(function(){
+          // Fall back to the public (published) view if the token route fails
+          loadPublic(orgId);
+        });
+      return;
+    }
+  }
+  loadPublic(orgId);
 })();
+
+function loadPublic(orgId){
+  fetch(API+'/public/org-site/'+encodeURIComponent(orgId))
+    .then(function(r){
+      if(r.status === 404){
+        return r.json().then(function(j){
+          if(j && j.error === 'not_published'){
+            renderError('الموقع لم يُنشر بعد', 'فعّل مفتاح «نشر الموقع» ثم اضغط «حفظ التغييرات» من بوابة جمعيتك لجعله مرئياً للعامة.');
+          } else {
+            renderError('الموقع غير متاح', 'تأكد من تفعيل الموقع من إدارة بُعد، ومن صحة الرابط.');
+          }
+          throw new Error('handled');
+        });
+      }
+      if(!r.ok) throw new Error(r.status);
+      return r.json();
+    })
+    .then(function(data){ if(data) renderSite(data); })
+    .catch(function(e){ if(e && e.message !== 'handled') renderError('تعذّر تحميل الموقع', 'حدث خطأ غير متوقع. حاول لاحقاً.'); });
+}
 </script>
 </body>
 </html>
