@@ -2281,13 +2281,13 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
       </a>
       <div class="sb-section-label">الموقع</div>
       <a class="sb-item" id="nav-website" onclick="Nav.go('website')">
-        <span class="sb-icon"><i data-lucide="globe"></i></span>
-        <span class="sb-label">الموقع والطلبات</span>
+        <span class="sb-icon"><i data-lucide="inbox"></i></span>
+        <span class="sb-label">الطلبات الواردة</span>
         <span class="sb-badge" id="sb-badge-requests" style="display:none">0</span>
       </a>
       <a class="sb-item" id="nav-orgs" onclick="Nav.go('orgs')">
-        <span class="sb-icon"><i data-lucide="building"></i></span>
-        <span class="sb-label">الجمعيات وخطة المئة يوم</span>
+        <span class="sb-icon"><i data-lucide="calendar-check"></i></span>
+        <span class="sb-label">خطة المئة يوم</span>
         <span class="sb-badge" id="sb-badge-orgs" style="display:none">0</span>
       </a>
       <a class="sb-item" id="nav-resources" onclick="Nav.go('resources')">
@@ -3709,7 +3709,8 @@ Pages.render_clients = function(opts) {
   var q = (Pages._clientsSearch||'').toLowerCase().trim();
   var typeFilter = Pages._clientsFilter;
   var clients = allClients.filter(function(cl) {
-    if (typeFilter !== 'all' && cl.type !== typeFilter) return false;
+    if (typeFilter === '100day') { if (cl.source !== '100day') return false; }
+    else if (typeFilter !== 'all' && cl.type !== typeFilter) return false;
     if (q && (cl.name||'').toLowerCase().indexOf(q) < 0 &&
              (cl.city||'').toLowerCase().indexOf(q) < 0 &&
              (cl.email||'').toLowerCase().indexOf(q) < 0) return false;
@@ -3723,7 +3724,7 @@ Pages.render_clients = function(opts) {
 
   /* type counts */
   var typeMap = {company:'شركة',association:'جمعية',government:'حكومي',individual:'أفراد',other:'أخرى'};
-  var typeCounts = {all: allClients.length};
+  var typeCounts = {all: allClients.length, '100day': allClients.filter(function(c){ return c.source==='100day'; }).length};
   Object.keys(typeMap).forEach(function(k){ typeCounts[k] = allClients.filter(function(c){ return c.type===k; }).length; });
 
   /* avatar color palette */
@@ -3745,6 +3746,7 @@ Pages.render_clients = function(opts) {
           return '<button class="sec-pill'+(typeFilter===k?' active':'')+'" onclick="Pages.render_clients({filter:\''+k+'\'})">'+
             typeMap[k]+'<span class="sec-pill-count"> '+typeCounts[k]+'</span></button>';
         }).join('')+
+        (typeCounts['100day']>0?'<button class="sec-pill'+(typeFilter==='100day'?' active':'')+'" onclick="Pages.render_clients({filter:\'100day\'})" style="'+(typeFilter==='100day'?'':'border-color:var(--iris-300);color:var(--iris-600)')+'">'+'خطة المئة يوم<span class="sec-pill-count"> '+typeCounts['100day']+'</span></button>':'')+
       '</div>'+
       '<div style="flex:1"></div>'+
       '<select class="sec-sort" onchange="Pages.render_clients({sort:this.value})">'+
@@ -10129,9 +10131,30 @@ Pages._doSaveContractAsTemplate = function(projId, contractId) {
 
 /* ─── SETTINGS ─── */
 /* ═══════════════════════════════════════════
-   ASSOCIATIONS — 100-DAY PLAN TRACKING (admin view)
+   ASSOCIATIONS — 100-DAY PLAN (admin view)
 ═══════════════════════════════════════════ */
+
+/* Plan details & org extensions stored in localStorage */
+var _PLAN_DETAILS_KEY = 'buad2_plan_details';
+var _ORG_EXT_KEY = 'buad2_org_ext';
+Pages._getPlanDetails = function(tid) {
+  try { var d=JSON.parse(localStorage.getItem(_PLAN_DETAILS_KEY)||'{}'); return Object.assign({desc:'',stages:[],refs:[]},d[tid]||{}); } catch(e){ return {desc:'',stages:[],refs:[]}; }
+};
+Pages._savePlanDetails = function(tid, data) {
+  try { var d=JSON.parse(localStorage.getItem(_PLAN_DETAILS_KEY)||'{}'); d[tid]=data; localStorage.setItem(_PLAN_DETAILS_KEY,JSON.stringify(d)); } catch(e){}
+};
+Pages._getOrgExt = function(oid) {
+  try { var d=JSON.parse(localStorage.getItem(_ORG_EXT_KEY)||'{}'); return d[oid]||{}; } catch(e){ return {}; }
+};
+Pages._saveOrgExt = function(oid, data) {
+  try { var d=JSON.parse(localStorage.getItem(_ORG_EXT_KEY)||'{}'); d[oid]=Object.assign(d[oid]||{},data); localStorage.setItem(_ORG_EXT_KEY,JSON.stringify(d)); } catch(e){}
+};
+
 Pages._orgs = null;
+Pages._orgsTab = Pages._orgsTab || 'subs';
+Pages._orgsSearch = Pages._orgsSearch || '';
+Pages._orgsFilter = Pages._orgsFilter || 'all';
+
 Pages._planTracks = [
   { id:'t1', title:'المسار الأول — إنطلاقة الأعمال', tasks:[
     {id:'a1',t:'تأمين مقر للمنظمة'},{id:'a2',t:'التواصل مع الجهة المشرفة'},{id:'a3',t:'العنوان الوطني'},
@@ -10143,116 +10166,473 @@ Pages._planTracks = [
     {id:'b7',t:'الموازنة التقديرية'},{id:'b8',t:'إدارة المبادرات'},{id:'b9',t:'الحوكمة'},{id:'b10',t:'التواصل والتسويق'}
   ]}
 ];
-Pages._planAllTasks = (function(){ var a=[]; Pages._planTracks.forEach(function(tr){ tr.tasks.forEach(function(t){ a.push({id:t.id,t:t.t,track:tr.title}); }); }); return a; })();
+Pages._planAllTasks = (function(){ var a=[]; Pages._planTracks.forEach(function(tr){ tr.tasks.forEach(function(t){ a.push({id:t.id,t:t.t,track:tr.id,trackTitle:tr.title}); }); }); return a; })();
 
 Pages._orgStats = function(o) {
   var prog = o.progress || {};
   var total = Pages._planAllTasks.length;
   var done = Pages._planAllTasks.filter(function(t){ return prog[t.id] && prog[t.id].done; }).length;
-  var pct = Math.round(done/total*100);
+  var pct = total ? Math.round(done/total*100) : 0;
   var next = null;
   for (var i=0;i<Pages._planAllTasks.length;i++){ var t=Pages._planAllTasks[i]; if(!(prog[t.id]&&prog[t.id].done)){ next=t; break; } }
-  var startMs = o.plan_start ? new Date(o.plan_start).getTime() : (o.created_at*1000);
+  var startMs = o.plan_start ? new Date(o.plan_start).getTime() : ((o.created_at||0)*1000);
   var day = Math.max(1, Math.min(100, Math.floor((Date.now()-startMs)/86400000)+1));
   var idleDays = o.last_active ? Math.floor((Date.now()/1000 - o.last_active)/86400) : 999;
   return { done:done, total:total, pct:pct, next:next, day:day, idleDays:idleDays };
 };
 
+/* ─── Main render ─── */
 Pages.render_orgs = function(opts) {
+  var el = document.getElementById('pg-orgs');
   if (!DB._token) {
-    document.getElementById('pg-orgs').innerHTML =
-      '<div class="page-header"><div><h1>الجمعيات وخطة المئة يوم</h1>'+
-      '<div class="page-header-sub">متابعة الجمعيات الناشئة المسجّلة في بوابة الخطة</div></div></div>'+
+    el.innerHTML = '<div class="page-header"><div><h1>خطة المئة يوم</h1>'+
+      '<div class="page-header-sub">تتابع تقدّم الجمعيات الناشئة المنضمّة للبرنامج</div></div></div>'+
       '<div class="card" style="text-align:center;padding:40px;color:var(--fg-3)">هذه الميزة تتطلب الاتصال بالخادم.</div>';
     return;
   }
   if (!(opts && opts._loaded)) {
-    document.getElementById('pg-orgs').innerHTML =
-      '<div class="page-header"><div><h1>الجمعيات وخطة المئة يوم</h1>'+
+    el.innerHTML = '<div class="page-header"><div><h1>خطة المئة يوم</h1>'+
       '<div class="page-header-sub">جارٍ التحميل...</div></div></div>'+
       '<div class="card" style="text-align:center;padding:50px;color:var(--fg-3)">جارٍ التحميل…</div>';
     DB._getOrgs().then(function(orgs){
       Pages._orgs = orgs || [];
-      var b=document.getElementById('sb-badge-orgs'); if(b){ b.textContent=Pages._orgs.length; b.style.display=Pages._orgs.length?'':'none'; }
+      var b=document.getElementById('sb-badge-orgs');
+      if(b){ b.textContent=Pages._orgs.length; b.style.display=Pages._orgs.length?'':'none'; }
       if (Nav._cur==='orgs') Pages.render_orgs({_loaded:true});
     });
     return;
   }
-
   var orgs = Pages._orgs || [];
-  var withStats = orgs.map(function(o){ return { o:o, s:Pages._orgStats(o) }; });
-  var avg = withStats.length ? Math.round(withStats.reduce(function(s,x){ return s+x.s.pct; },0)/withStats.length) : 0;
-  var completed = withStats.filter(function(x){ return x.s.pct>=100; }).length;
-  var needHelp = withStats.filter(function(x){ return x.s.pct<100 && x.s.idleDays>=7; }).length;
+  var withStats = orgs.map(function(o){ return {o:o, s:Pages._orgStats(o)}; });
 
-  var kpis = '<div class="kpi-grid" style="margin-bottom:var(--space-5)">'+
-    '<div class="kpi-card"><div class="kpi-card-accent" style="background:var(--primary-500)"></div><div class="kpi-card-label">الجمعيات المسجّلة</div><div class="kpi-card-value" style="color:var(--primary-600)">'+orgs.length+'</div><div class="kpi-card-sub">جمعية</div></div>'+
-    '<div class="kpi-card"><div class="kpi-card-accent" style="background:var(--accent-500)"></div><div class="kpi-card-label">متوسط الإنجاز</div><div class="kpi-card-value" style="color:var(--accent-600)">'+avg+'%</div><div class="kpi-card-sub">عبر كل الجمعيات</div></div>'+
+  function tabBtn(k, lbl, icon) {
+    var active = Pages._orgsTab === k;
+    return '<button class="hero-tab-pill'+(active?' active':'')+'" onclick="Pages.switchOrgsTab(\''+k+'\')">'+
+      '<i data-lucide="'+icon+'" style="width:14px;height:14px"></i>'+lbl+'</button>';
+  }
+  var html =
+    '<div class="page-header">'+
+      '<div><h1>خطة المئة يوم</h1>'+
+        '<div class="page-header-sub">متابعة الجمعيات الناشئة المنضمّة للبرنامج وإدارة محتوى الخطة</div>'+
+      '</div>'+
+      '<a href="/plan" target="_blank" class="btn btn-ghost btn-sm"><i data-lucide="external-link"></i>البوابة</a>'+
+    '</div>'+
+    '<div class="hero-tab-bar" style="margin-bottom:22px">'+
+      tabBtn('subs','المشتركون','users')+
+      tabBtn('plan','إدارة الخطة','list-checks')+
+      tabBtn('stats','الإحصائيات','bar-chart-2')+
+    '</div>';
+
+  if (Pages._orgsTab === 'plan') html += Pages._renderOrgsPlanTab();
+  else if (Pages._orgsTab === 'stats') html += Pages._renderOrgsStatsTab(withStats);
+  else html += Pages._renderOrgsSubsTab(withStats);
+
+  el.innerHTML = html;
+  if (typeof lucide !== 'undefined') lucide.createIcons({rootElement: el});
+};
+
+Pages.switchOrgsTab = function(tab) { Pages._orgsTab = tab; Pages.render_orgs({_loaded:true}); };
+
+/* ─── Tab: Subscribers ─── */
+Pages._renderOrgsSubsTab = function(withStats) {
+  var q = (Pages._orgsSearch||'').toLowerCase().trim();
+  var f = Pages._orgsFilter || 'all';
+  var list = withStats.filter(function(x){
+    if (f==='done'&&x.s.pct<100) return false;
+    if (f==='needhelp'&&!(x.s.pct<100&&x.s.idleDays>=7)) return false;
+    if (f==='active'&&(x.s.pct>=100||(x.s.pct<100&&x.s.idleDays>=7))) return false;
+    if (q){var o=x.o; if((o.name||'').toLowerCase().indexOf(q)<0&&(o.email||'').toLowerCase().indexOf(q)<0&&(o.city||'').toLowerCase().indexOf(q)<0&&(o.contact_name||'').toLowerCase().indexOf(q)<0) return false;}
+    return true;
+  });
+  list.sort(function(a,b){ var an=(a.s.pct<100&&a.s.idleDays>=7)?0:1,bn=(b.s.pct<100&&b.s.idleDays>=7)?0:1; if(an!==bn) return an-bn; return b.s.pct-a.s.pct; });
+  var needHelp=withStats.filter(function(x){return x.s.pct<100&&x.s.idleDays>=7;}).length;
+  var done=withStats.filter(function(x){return x.s.pct>=100;}).length;
+  var active=withStats.filter(function(x){return x.s.pct<100&&x.s.idleDays<7;}).length;
+  function pill(k,lbl,cnt){
+    return '<button class="sec-pill'+(f===k?' active':'')+'" onclick="Pages._orgsFilter=\''+k+'\';Pages.switchOrgsTab(\'subs\')">'+lbl+'<span class="sec-pill-count"> '+cnt+'</span></button>';
+  }
+  var toolbar='<div class="sec-toolbar" style="margin-bottom:18px">'+
+    '<div class="sec-search"><i data-lucide="search" class="sec-search-icon"></i>'+
+    '<input type="text" placeholder="بحث..." value="'+UI.escHtml(Pages._orgsSearch||'')+'" oninput="Pages._orgsSearch=this.value;Pages.switchOrgsTab(\'subs\')"></div>'+
+    '<div class="sec-pills">'+pill('all','الكل',withStats.length)+pill('active','نشطة',active)+pill('needhelp','تحتاج متابعة',needHelp)+pill('done','مكتملة',done)+'</div>'+
+  '</div>';
+  if(!list.length){
+    return toolbar+'<div class="card" style="text-align:center;padding:48px">'+
+      '<i data-lucide="users" style="width:44px;height:44px;color:var(--fg-3)"></i>'+
+      '<p style="margin-top:14px;color:var(--fg-2);font-weight:600">'+(q||f!=='all'?'لا توجد نتائج':'لا توجد جمعيات مسجّلة بعد')+'</p>'+
+      (q||f!=='all'?'<button class="btn btn-ghost btn-sm" onclick="Pages._orgsSearch=\'\';Pages._orgsFilter=\'all\';Pages.switchOrgsTab(\'subs\')">مسح الفلتر</button>':
+      '<p style="color:var(--fg-3);font-size:13px;margin-top:4px">ستظهر هنا الجمعيات التي تسجّل عبر البوابة</p>')+
+    '</div>';
+  }
+  var palette2=['#6366f1','#0ea5e9','#10b981','#f59e0b','#8b5cf6'];
+  var cards=list.map(function(x){
+    var o=x.o,s=x.s,ext=Pages._getOrgExt(o.id);
+    var help=s.pct<100&&s.idleDays>=7;
+    var ic=palette2[(o.name||'?').charCodeAt(0)%palette2.length];
+    var phone=(o.phone||'').replace(/[^0-9]/g,'');
+    var wa=phone?'https://wa.me/'+(phone.indexOf('966')===0?phone:phone.replace(/^0/,'966'))+'?text='+encodeURIComponent('مرحباً '+(o.name||'')+'، نتابع معكم تقدّم خطة المئة يوم'):'';
+    var barColor=s.pct>=100?'var(--success-500)':s.pct>=50?'var(--iris-500)':'var(--warning-500)';
+    var avatar=ext.logo?
+      '<div style="width:52px;height:52px;border-radius:12px;overflow:hidden;flex-shrink:0;border:1px solid var(--border-subtle);background:var(--neutral-50)"><img src="'+ext.logo+'" style="width:100%;height:100%;object-fit:contain;padding:4px;box-sizing:border-box"></div>':
+      '<div style="width:52px;height:52px;border-radius:12px;background:'+ic+';color:#fff;font-size:20px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0">'+UI.escHtml((o.name||'?')[0])+'</div>';
+    return '<div class="card" style="margin-bottom:12px;padding:16px 18px'+(help?';border-right:3px solid var(--warning-500)':'')+'">'+
+      '<div style="display:flex;gap:14px;align-items:flex-start">'+
+        avatar+
+        '<div style="flex:1;min-width:0">'+
+          '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap">'+
+            '<span style="font-weight:700;font-size:15.5px;color:var(--fg-1)">'+UI.escHtml(o.name||'—')+'</span>'+
+            (help?'<span style="font-size:11px;font-weight:600;color:var(--warning-700);background:var(--warning-50);padding:2px 9px;border-radius:20px">يحتاج متابعة</span>':'')+
+            (s.pct>=100?'<span style="font-size:11px;font-weight:600;color:var(--success-700);background:var(--success-50);padding:2px 9px;border-radius:20px">مكتملة ✓</span>':'')+
+            (ext.license_verified?'<span style="font-size:11px;font-weight:600;color:var(--info-600);background:var(--info-50);padding:2px 9px;border-radius:20px">موثّقة ✓</span>':'')+
+          '</div>'+
+          '<div style="font-size:12.5px;color:var(--fg-3);margin-bottom:7px;display:flex;gap:12px;flex-wrap:wrap">'+
+            (o.contact_name?'<span><i data-lucide="user" style="width:12px;height:12px;display:inline;vertical-align:-2px"></i> '+UI.escHtml(o.contact_name)+'</span>':'')+
+            (o.city?'<span><i data-lucide="map-pin" style="width:12px;height:12px;display:inline;vertical-align:-2px"></i> '+UI.escHtml(o.city)+'</span>':'')+
+            (o.license_no?'<span><i data-lucide="file-text" style="width:12px;height:12px;display:inline;vertical-align:-2px"></i> ترخيص '+UI.escHtml(o.license_no)+'</span>':'')+
+          '</div>'+
+          '<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">'+
+            '<div style="flex:1;height:8px;border-radius:6px;background:var(--bg-2);overflow:hidden;max-width:300px"><div style="height:100%;width:'+s.pct+'%;background:'+barColor+';border-radius:6px"></div></div>'+
+            '<span style="font-size:14px;font-weight:800;color:var(--fg-1)">'+s.pct+'%</span>'+
+            '<span style="font-size:12px;color:var(--fg-4)">'+s.done+'/'+s.total+' مهمة</span>'+
+          '</div>'+
+          '<div style="font-size:12px;color:var(--fg-3);display:flex;gap:14px;flex-wrap:wrap">'+
+            '<span><i data-lucide="calendar-clock" style="width:12px;height:12px;display:inline;vertical-align:-2px"></i> اليوم '+s.day+' من ١٠٠</span>'+
+            '<span>آخر نشاط: '+(s.idleDays>900?'—':(s.idleDays===0?'اليوم':'قبل '+s.idleDays+' يوم'))+'</span>'+
+          '</div>'+
+          (s.next?'<div style="font-size:12px;color:var(--iris-700);background:var(--iris-50);padding:5px 10px;border-radius:7px;margin-top:7px;display:inline-block">المهمة التالية: <strong>'+UI.escHtml(s.next.t)+'</strong></div>':'')+
+        '</div>'+
+        '<div style="display:flex;flex-direction:column;gap:6px;min-width:140px">'+
+          '<button onclick="Pages.openOrgProfile(\''+o.id+'\')" class="btn btn-sm btn-primary" style="justify-content:center"><i data-lucide="user-round"></i>ملف الجمعية</button>'+
+          (wa?'<a href="'+wa+'" target="_blank" class="btn btn-sm" style="background:#25d366;color:#fff;border:none;justify-content:center"><i data-lucide="message-circle"></i>واتساب</a>':'')+
+          '<button onclick="Pages.openOrgToolsModal(\''+o.id+'\',\''+UI.escHtml(o.name||'').replace(/'/g,"\\'")+'\','+o.website_enabled+','+o.crm_enabled+')" class="btn btn-sm btn-ghost" style="justify-content:center"><i data-lucide="layers"></i>الأدوات</button>'+
+          '<button onclick="Pages.deleteOrgConfirm(\''+o.id+'\',\''+UI.escHtml(o.name||'').replace(/'/g,"\\'")+'\') " class="btn btn-sm btn-ghost" style="justify-content:center;color:var(--danger-600)"><i data-lucide="trash-2"></i>حذف</button>'+
+        '</div>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+  return toolbar+cards;
+};
+
+/* ─── Tab: Plan Editor ─── */
+Pages._renderOrgsPlanTab = function() {
+  var allDetails={};
+  try { allDetails=JSON.parse(localStorage.getItem(_PLAN_DETAILS_KEY)||'{}'); } catch(e){}
+  var html='<div style="margin-bottom:14px;display:flex;justify-content:space-between;align-items:center">'+
+    '<div style="font-size:13.5px;color:var(--fg-3)">أضف وصفاً ومراحل ومراجع لكل مهمة في الخطة — تُستخدم لإثراء تجربة الجمعيات في البوابة.</div></div>';
+  Pages._planTracks.forEach(function(tr){
+    html+='<div class="card" style="margin-bottom:16px;overflow:hidden">'+
+      '<div style="padding:13px 18px;background:var(--iris-50);border-bottom:1px solid var(--border-subtle);display:flex;align-items:center;gap:10px">'+
+        '<i data-lucide="layers" style="width:15px;height:15px;color:var(--iris-600)"></i>'+
+        '<span style="font-weight:700;font-size:15px;color:var(--iris-700)">'+UI.escHtml(tr.title)+'</span>'+
+        '<span style="font-size:12px;color:var(--fg-4);margin-right:auto">'+tr.tasks.length+' مهمة</span>'+
+      '</div>';
+    tr.tasks.forEach(function(task,idx){
+      var det=allDetails[task.id]||{desc:'',stages:[],refs:[]};
+      var hasDesc=!!(det.desc&&det.desc.trim()), sc=(det.stages||[]).length, rc=(det.refs||[]).length;
+      html+='<div style="padding:11px 18px;'+(idx<tr.tasks.length-1?'border-bottom:1px solid var(--border-subtle)':'')+';display:flex;align-items:center;gap:12px">'+
+        '<div style="width:30px;height:30px;border-radius:8px;background:var(--iris-100);color:var(--iris-600);font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">'+UI.escHtml(task.id)+'</div>'+
+        '<div style="flex:1;min-width:0">'+
+          '<div style="font-weight:600;font-size:14px;color:var(--fg-1)">'+UI.escHtml(task.t)+'</div>'+
+          '<div style="font-size:11.5px;color:var(--fg-4);margin-top:2px;display:flex;gap:10px">'+
+            (hasDesc?'<span style="color:var(--success-600)">✓ وصف</span>':'<span>بدون وصف</span>')+
+            (sc?'<span style="color:var(--iris-600)">'+sc+' مرحلة</span>':'<span>لا مراحل</span>')+
+            (rc?'<span style="color:var(--accent-600)">'+rc+' مرجع</span>':'<span>لا مراجع</span>')+
+          '</div>'+
+        '</div>'+
+        '<button onclick="Pages.openPlanTaskEditor(\''+task.id+'\',\''+UI.escHtml(task.t).replace(/\\/g,'\\\\').replace(/'/g,"\\'")+'\',\''+tr.id+'\')" class="btn btn-sm btn-ghost"><i data-lucide="pencil"></i>تفاصيل</button>'+
+      '</div>';
+    });
+    html+='</div>';
+  });
+  return html;
+};
+
+/* ─── Tab: Stats ─── */
+Pages._renderOrgsStatsTab = function(withStats) {
+  var avg=withStats.length?Math.round(withStats.reduce(function(s,x){return s+x.s.pct;},0)/withStats.length):0;
+  var completed=withStats.filter(function(x){return x.s.pct>=100;}).length;
+  var needHelp=withStats.filter(function(x){return x.s.pct<100&&x.s.idleDays>=7;}).length;
+  var kpis='<div class="kpi-grid" style="margin-bottom:var(--space-5)">'+
+    '<div class="kpi-card"><div class="kpi-card-accent" style="background:var(--iris-500)"></div><div class="kpi-card-label">إجمالي المشتركين</div><div class="kpi-card-value" style="color:var(--iris-600)">'+withStats.length+'</div><div class="kpi-card-sub">جمعية</div></div>'+
+    '<div class="kpi-card"><div class="kpi-card-accent" style="background:var(--accent-500)"></div><div class="kpi-card-label">متوسط الإنجاز</div><div class="kpi-card-value" style="color:var(--accent-600)">'+avg+'%</div><div class="kpi-card-sub">عبر الجميع</div></div>'+
     '<div class="kpi-card"><div class="kpi-card-accent" style="background:var(--success-500)"></div><div class="kpi-card-label">أكملت الخطة</div><div class="kpi-card-value" style="color:var(--success-600)">'+completed+'</div><div class="kpi-card-sub">جمعية ١٠٠٪</div></div>'+
     '<div class="kpi-card"><div class="kpi-card-accent" style="background:var(--warning-500)"></div><div class="kpi-card-label">تحتاج تدخّلاً</div><div class="kpi-card-value" style="color:var(--warning-600)">'+needHelp+'</div><div class="kpi-card-sub">متوقفة ٧+ أيام</div></div>'+
   '</div>';
+  var ranges=[{l:'0-24%',f:0,t:24,c:'var(--danger-400)'},{l:'25-49%',f:25,t:49,c:'var(--warning-400)'},{l:'50-74%',f:50,t:74,c:'var(--accent-400)'},{l:'75-99%',f:75,t:99,c:'var(--info-400)'},{l:'100%',f:100,t:100,c:'var(--success-500)'}];
+  var mx=1,rc=ranges.map(function(r){var c=withStats.filter(function(x){return x.s.pct>=r.f&&x.s.pct<=r.t;}).length;if(c>mx)mx=c;return c;});
+  var chart='<div class="card" style="margin-bottom:16px;padding:18px">'+
+    '<div style="font-weight:700;font-size:14px;color:var(--fg-2);margin-bottom:14px">توزيع الإنجاز</div>'+
+    '<div style="display:flex;align-items:flex-end;gap:10px;height:110px">'+
+    ranges.map(function(r,i){
+      var p=mx?Math.round(rc[i]/mx*100):0;
+      return '<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:5px">'+
+        '<span style="font-size:12px;font-weight:700;color:var(--fg-2)">'+rc[i]+'</span>'+
+        '<div style="width:100%;background:var(--bg-2);border-radius:4px;height:70px;display:flex;flex-direction:column;justify-content:flex-end;overflow:hidden">'+
+          '<div style="width:100%;height:'+p+'%;background:'+r.c+';border-radius:4px 4px 0 0"></div>'+
+        '</div>'+
+        '<span style="font-size:10px;color:var(--fg-4)">'+r.l+'</span>'+
+      '</div>';
+    }).join('')+
+    '</div></div>';
+  var recent=withStats.slice().sort(function(a,b){return (b.o.last_active||0)-(a.o.last_active||0);}).slice(0,5);
+  var recentHtml=recent.length?'<div class="card" style="overflow:hidden">'+
+    '<div style="padding:13px 18px;border-bottom:1px solid var(--border-subtle);font-weight:700;font-size:14px;color:var(--fg-2)">آخر نشاط</div>'+
+    recent.map(function(x){var o=x.o,s=x.s;var palette3=['#6366f1','#0ea5e9','#10b981','#f59e0b','#8b5cf6'];var ic=palette3[(o.name||'?').charCodeAt(0)%palette3.length];
+      return '<div style="padding:11px 18px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border-subtle)">'+
+        '<div style="width:34px;height:34px;border-radius:9px;background:'+ic+';color:#fff;font-weight:800;font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0">'+UI.escHtml((o.name||'?')[0])+'</div>'+
+        '<div style="flex:1;min-width:0"><div style="font-weight:600;font-size:13.5px;color:var(--fg-1)">'+UI.escHtml(o.name)+'</div>'+
+        '<div style="font-size:12px;color:var(--fg-3)">اليوم '+s.day+' · '+s.pct+'% مكتمل</div></div>'+
+        '<span style="font-size:12px;color:var(--fg-4)">'+(s.idleDays>900?'—':(s.idleDays===0?'اليوم':'قبل '+s.idleDays+' يوم'))+'</span>'+
+      '</div>';
+    }).join('')+
+  '</div>':'';
+  return kpis+chart+recentHtml;
+};
 
-  var rows;
-  if (!orgs.length) {
-    rows = '<div class="card" style="text-align:center;padding:48px"><i data-lucide="building-2" style="width:44px;height:44px;color:var(--fg-3)"></i>'+
-      '<p style="margin-top:14px;color:var(--fg-2);font-weight:600">لا توجد جمعيات مسجّلة بعد</p>'+
-      '<p style="color:var(--fg-3);font-size:13px;margin-top:4px">ستظهر هنا الجمعيات التي تسجّل عبر بوابة خطة المئة يوم تلقائياً</p></div>';
-  } else {
-    // sort: need-help first
-    withStats.sort(function(a,b){
-      var an=(a.s.pct<100&&a.s.idleDays>=7)?0:1, bn=(b.s.pct<100&&b.s.idleDays>=7)?0:1;
-      if(an!==bn) return an-bn; return b.s.pct-a.s.pct;
-    });
-    rows = withStats.map(function(x){
-      var o=x.o, s=x.s;
-      var help = s.pct<100 && s.idleDays>=7;
-      var phone=(o.phone||'').replace(/[^0-9]/g,'');
-      var wa = phone ? 'https://wa.me/'+(phone.indexOf('966')===0?phone:phone.replace(/^0/,'966'))+'?text='+encodeURIComponent('مرحباً '+(o.name||'')+'، نتابع معكم تقدّم خطة المئة يوم') : '';
-      var barColor = s.pct>=100?'var(--success-500)':s.pct>=50?'var(--accent-500)':'var(--warning-500)';
-      return '<div class="card" style="margin-bottom:12px;padding:16px 18px'+(help?';border-right:3px solid var(--warning-500)':'')+'">'+
-        '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap">'+
-          '<div style="flex:1;min-width:220px">'+
-            '<div style="display:flex;align-items:center;gap:10px;margin-bottom:3px">'+
-              '<span style="font-weight:700;font-size:15.5px;color:var(--fg-1)">'+UI.escHtml(o.name||'—')+'</span>'+
-              (help?'<span style="font-size:11px;font-weight:600;color:var(--warning-700);background:var(--warning-50);padding:2px 9px;border-radius:20px">يحتاج متابعة</span>':'')+
-              (s.pct>=100?'<span style="font-size:11px;font-weight:600;color:var(--success-700);background:var(--success-50);padding:2px 9px;border-radius:20px">مكتملة ✓</span>':'')+
-            '</div>'+
-            '<div style="font-size:12.5px;color:var(--fg-3)">'+
-              (o.contact_name?UI.escHtml(o.contact_name)+' · ':'')+
-              (o.city?UI.escHtml(o.city)+' · ':'')+
-              (o.license_no?'ترخيص '+UI.escHtml(o.license_no):'')+
-            '</div>'+
-            (o.email?'<div style="font-size:12px;color:var(--fg-4);margin-top:2px;direction:ltr;text-align:right">'+UI.escHtml(o.email)+'</div>':'')+
-            // progress bar
-            '<div style="margin-top:10px;display:flex;align-items:center;gap:10px">'+
-              '<div style="flex:1;height:8px;border-radius:6px;background:var(--bg-2);overflow:hidden;max-width:280px"><div style="height:100%;width:'+s.pct+'%;background:'+barColor+';border-radius:6px"></div></div>'+
-              '<span style="font-size:13px;font-weight:700;color:var(--fg-2)">'+s.pct+'%</span>'+
-              '<span style="font-size:12px;color:var(--fg-4)">'+s.done+'/'+s.total+' مهمة</span>'+
-            '</div>'+
-            '<div style="font-size:12px;color:var(--fg-3);margin-top:8px">'+
-              '<i data-lucide="calendar-clock" style="width:13px;height:13px;display:inline;vertical-align:-2px"></i> اليوم '+s.day+' من ١٠٠ · '+
-              'آخر نشاط: '+(s.idleDays>900?'—':(s.idleDays===0?'اليوم':'قبل '+s.idleDays+' يوم'))+
-            '</div>'+
-            (s.next?'<div style="font-size:12.5px;color:var(--iris-700);background:var(--iris-50);padding:7px 11px;border-radius:8px;margin-top:8px;display:inline-block"><strong>نقطة التدخّل المقترحة:</strong> '+UI.escHtml(s.next.t)+' <span style="color:var(--fg-4)">('+UI.escHtml(s.next.track)+')</span></div>':'<div style="font-size:12.5px;color:var(--success-700);margin-top:8px">أكملت جميع مهام الخطة 🎉</div>')+
+/* ─── Org Profile Modal ─── */
+Pages.openOrgProfile = function(orgId) {
+  var org=(Pages._orgs||[]).find(function(x){return x.id===orgId;});
+  if(!org){UI.toast('الجمعية غير موجودة','danger');return;}
+  var ext=Pages._getOrgExt(orgId),s=Pages._orgStats(org),prog=org.progress||{};
+  var pal=['#6366f1','#0ea5e9','#10b981','#f59e0b','#8b5cf6'],ic=pal[(org.name||'?').charCodeAt(0)%pal.length];
+  var barColor=s.pct>=100?'var(--success-500)':s.pct>=50?'var(--iris-500)':'var(--warning-500)';
+  var avatar=ext.logo?
+    '<div style="width:68px;height:68px;border-radius:14px;overflow:hidden;border:1px solid var(--border-subtle);background:var(--neutral-50);flex-shrink:0"><img src="'+ext.logo+'" style="width:100%;height:100%;object-fit:contain;padding:5px;box-sizing:border-box"></div>':
+    '<div style="width:68px;height:68px;border-radius:14px;background:'+ic+';color:#fff;font-size:26px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0">'+UI.escHtml((org.name||'?')[0])+'</div>';
+  var tracksHtml=Pages._planTracks.map(function(tr){
+    return '<div style="margin-bottom:14px"><div style="font-weight:700;font-size:12px;color:var(--iris-700);text-transform:uppercase;letter-spacing:.4px;margin-bottom:7px">'+UI.escHtml(tr.title)+'</div>'+
+      tr.tasks.map(function(t){var done=!!(prog[t.id]&&prog[t.id].done);
+        return '<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border-subtle)">'+
+          '<div style="width:18px;height:18px;border-radius:4px;border:2px solid '+(done?'var(--success-500)':'var(--border-default)')+';background:'+(done?'var(--success-500)':'transparent')+';display:flex;align-items:center;justify-content:center;flex-shrink:0">'+
+            (done?'<svg width="10" height="10" viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3" stroke="#fff" stroke-width="2.2" fill="none" stroke-linecap="round"/></svg>':'')+
           '</div>'+
-          '<div style="display:flex;flex-direction:column;gap:7px;align-items:stretch;min-width:160px">'+
-            (wa?'<a href="'+wa+'" target="_blank" class="btn btn-sm" style="background:#25d366;color:#fff;border:none;justify-content:center"><i data-lucide="message-circle"></i>واتساب</a>':'')+
-            (o.phone?'<a href="tel:'+UI.escHtml(o.phone)+'" class="btn btn-sm btn-ghost" style="justify-content:center"><i data-lucide="phone"></i>'+UI.escHtml(o.phone)+'</a>':'')+
-            '<button onclick="Pages.openOrgToolsModal(\''+o.id+'\',\''+UI.escHtml(o.name||'').replace(/'/g,"\\'")+'\','+o.website_enabled+','+o.crm_enabled+')" class="btn btn-sm btn-ghost" style="justify-content:center;font-weight:700">'+
-              '<i data-lucide="layers"></i>إدارة الأدوات</button>'+
-            '<button onclick="Pages.deleteOrgConfirm(\''+o.id+'\',\''+UI.escHtml(o.name||'').replace(/'/g,"\\'")+'\')" class="btn btn-sm btn-ghost" style="justify-content:center;color:var(--danger-600)"><i data-lucide="trash-2"></i>حذف</button>'+
+          '<span style="font-size:13px;color:'+(done?'var(--fg-3)':'var(--fg-1)')+'">'+(done?'<s>':'')+UI.escHtml(t.t)+(done?'</s>':'')+'</span>'+
+        '</div>';
+      }).join('')+
+    '</div>';
+  }).join('');
+  var existClients=DB.getClients();
+  var linked=existClients.find(function(c){return c.source==='100day'&&(c.email===org.email||c.name===org.name);});
+  var clientBtn=linked?
+    '<button onclick="UI.closeModalForce();Nav.go(\'client\',{clientId:\''+linked.id+'\'})" class="btn btn-sm btn-ghost" style="justify-content:flex-start"><i data-lucide="external-link"></i>عرض بطاقة العميل</button>':
+    '<button onclick="Pages.createClientFromOrg(\''+orgId+'\')" class="btn btn-sm btn-primary" style="justify-content:flex-start"><i data-lucide="user-plus"></i>إنشاء بطاقة عميل في قسم العملاء</button>';
+  var phone=(org.phone||'').replace(/[^0-9]/g,'');
+  var wa=phone?'https://wa.me/'+(phone.indexOf('966')===0?phone:phone.replace(/^0/,'966'))+'?text='+encodeURIComponent('مرحباً '+(org.name||'')+'، نتابع معكم تقدّم خطة المئة يوم'):'';
+  UI.openModal(
+    '<div class="modal-header"><h3>ملف الجمعية</h3><button class="modal-close" onclick="UI.closeModalForce()">×</button></div>'+
+    '<div style="max-height:78vh;overflow-y:auto">'+
+      '<div style="padding:16px 20px;background:var(--iris-50);border-bottom:1px solid var(--border-subtle);display:flex;gap:14px;align-items:flex-start">'+
+        avatar+
+        '<div style="flex:1;min-width:0">'+
+          '<div style="font-weight:800;font-size:17px;color:var(--fg-1);margin-bottom:3px">'+UI.escHtml(org.name||'—')+'</div>'+
+          '<div style="font-size:13px;color:var(--fg-3)">'+(org.contact_name?UI.escHtml(org.contact_name)+' · ':'')+UI.escHtml(org.city||'')+'</div>'+
+          '<div style="margin-top:10px;display:flex;align-items:center;gap:8px">'+
+            '<div style="flex:1;max-width:200px;height:7px;border-radius:6px;background:var(--bg-2);overflow:hidden"><div style="height:100%;width:'+s.pct+'%;background:'+barColor+'"></div></div>'+
+            '<span style="font-size:13px;font-weight:800;color:var(--fg-1)">'+s.pct+'%</span>'+
+            '<span style="font-size:12px;color:var(--fg-4)">اليوم '+s.day+'/١٠٠</span>'+
           '</div>'+
         '</div>'+
-      '</div>';
-    }).join('');
-  }
+        '<label title="تحميل الشعار" style="cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 10px;border-radius:8px;border:1px dashed var(--border-default);color:var(--fg-3);font-size:11px;flex-shrink:0">'+
+          '<i data-lucide="image-plus" style="width:16px;height:16px"></i>شعار'+
+          '<input type="file" accept="image/*" onchange="Pages._uploadOrgLogo(\''+orgId+'\',this)" style="display:none">'+
+        '</label>'+
+      '</div>'+
+      '<div style="padding:14px 20px;border-bottom:1px solid var(--border-subtle)">'+
+        '<div style="font-weight:700;font-size:11px;color:var(--fg-4);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">معلومات التواصل</div>'+
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px 14px">'+
+          '<div style="font-size:13px"><span style="color:var(--fg-4)">البريد: </span><span dir="ltr">'+UI.escHtml(org.email||'—')+'</span></div>'+
+          '<div style="font-size:13px"><span style="color:var(--fg-4)">الجوال: </span>'+UI.escHtml(org.phone||'—')+'</div>'+
+          '<div style="font-size:13px"><span style="color:var(--fg-4)">المدينة: </span>'+UI.escHtml(org.city||'—')+'</div>'+
+          '<div style="font-size:13px"><span style="color:var(--fg-4)">رقم الترخيص: </span>'+UI.escHtml(org.license_no||'—')+'</div>'+
+        '</div>'+
+      '</div>'+
+      '<div style="padding:12px 20px;border-bottom:1px solid var(--border-subtle);display:flex;align-items:center;gap:12px;flex-wrap:wrap">'+
+        '<div style="flex:1;min-width:160px">'+
+          '<div style="font-weight:600;font-size:13px;color:var(--fg-2)">ملف الترخيص</div>'+
+          '<div style="font-size:12px;color:var(--fg-4);margin-top:2px">'+UI.escHtml(ext.license_file||'لم يُرفق بعد')+'</div>'+
+        '</div>'+
+        '<label class="btn btn-sm btn-ghost" style="cursor:pointer"><i data-lucide="upload"></i>رفع الملف<input type="file" accept=".pdf,.jpg,.png,.jpeg" onchange="Pages._uploadOrgLicense(\''+orgId+'\',this)" style="display:none"></label>'+
+        '<label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">'+
+          '<input type="checkbox" '+(ext.license_verified?'checked':'')+' onchange="Pages._saveOrgExt(\''+orgId+'\',{license_verified:this.checked});Pages.render_orgs({_loaded:true})">'+
+          '<span style="color:'+(ext.license_verified?'var(--success-700)':'var(--fg-2)')+'">'+
+          (ext.license_verified?'موثّقة ✓':'لم يُتحقق منه')+'</span>'+
+        '</label>'+
+      '</div>'+
+      '<div style="padding:14px 20px;border-bottom:1px solid var(--border-subtle)">'+
+        '<div style="font-weight:700;font-size:11px;color:var(--fg-4);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">تقدم الخطة — '+s.done+'/'+s.total+' مهمة</div>'+
+        tracksHtml+
+      '</div>'+
+      '<div style="padding:14px 20px">'+
+        '<div style="font-weight:700;font-size:11px;color:var(--fg-4);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">الإجراءات السريعة</div>'+
+        '<div style="display:flex;flex-direction:column;gap:8px">'+
+          clientBtn+
+          '<button onclick="Pages.openSendProposalModal(\''+orgId+'\')" class="btn btn-sm btn-ghost" style="justify-content:flex-start"><i data-lucide="send"></i>إرسال عرض خدمة</button>'+
+          (wa?'<a href="'+wa+'" target="_blank" class="btn btn-sm btn-ghost" style="justify-content:flex-start"><i data-lucide="message-circle" style="color:#25d366"></i>تواصل عبر واتساب</a>':'')+
+          '<button onclick="UI.closeModalForce();Pages.openOrgToolsModal(\''+orgId+'\',\''+UI.escHtml(org.name||'').replace(/'/g,"\\'")+'\','+org.website_enabled+','+org.crm_enabled+')" class="btn btn-sm btn-ghost" style="justify-content:flex-start"><i data-lucide="layers"></i>إدارة الأدوات الرقمية</button>'+
+        '</div>'+
+      '</div>'+
+    '</div>'+
+    '<div class="modal-footer"><button class="btn btn-ghost" onclick="UI.closeModalForce()">إغلاق</button></div>'
+  );
+  if(typeof lucide!=='undefined') setTimeout(function(){lucide.createIcons({rootElement:document.getElementById('modal-box')});},30);
+};
 
-  document.getElementById('pg-orgs').innerHTML =
-    '<div class="page-header"><div><h1>الجمعيات وخطة المئة يوم</h1>'+
-    '<div class="page-header-sub">متابعة تقدّم الجمعيات الناشئة المسجّلة في البوابة ومعرفة أين نتدخّل بخدماتنا</div></div>'+
-    '<a href="/plan" target="_blank" class="btn btn-ghost btn-sm" style="display:inline-flex;align-items:center;gap:6px"><i data-lucide="external-link"></i>البوابة</a></div>'+
-    kpis + rows;
-  if (typeof lucide!=='undefined') lucide.createIcons();
+Pages._uploadOrgLogo = function(oid, input) {
+  var file=input.files&&input.files[0]; if(!file) return;
+  if(file.size>600000){UI.toast('حجم الشعار كبير (أقصى 600KB)','danger');return;}
+  var reader=new FileReader();
+  reader.onload=function(e){Pages._saveOrgExt(oid,{logo:e.target.result});UI.toast('تم حفظ الشعار','success');UI.closeModalForce();Pages.openOrgProfile(oid);};
+  reader.readAsDataURL(file);
+};
+Pages._uploadOrgLicense = function(oid, input) {
+  var file=input.files&&input.files[0]; if(!file) return;
+  Pages._saveOrgExt(oid,{license_file:file.name});
+  UI.toast('تم تسجيل اسم ملف الترخيص: '+file.name,'success');
+  UI.closeModalForce(); Pages.openOrgProfile(oid);
+};
+
+/* ─── Send Proposal Modal ─── */
+Pages.openSendProposalModal = function(orgId) {
+  var org=(Pages._orgs||[]).find(function(x){return x.id===orgId;}); if(!org) return;
+  var svcs=(Pages._siteData?Pages._siteData().services:null)||Pages._defaultServices||[];
+  UI.openModal(
+    '<div class="modal-header"><h3>إرسال عرض خدمة</h3><button class="modal-close" onclick="UI.closeModalForce()">×</button></div>'+
+    '<div style="padding:18px 20px">'+
+      '<div style="background:var(--iris-50);padding:10px 14px;border-radius:8px;margin-bottom:14px;font-size:13px;color:var(--iris-700)">'+
+        '<i data-lucide="building-2" style="width:14px;height:14px;display:inline;vertical-align:-2px"></i> '+UI.escHtml(org.name)+
+      '</div>'+
+      '<div class="form-group"><label class="field-label">الخدمة المقترحة</label>'+
+        '<select id="prop-svc" class="field-input">'+
+          svcs.map(function(s){return '<option value="'+UI.escHtml(s.title)+'">'+UI.escHtml(s.title)+'</option>';}).join('')+
+        '</select></div>'+
+      '<div class="form-group"><label class="field-label">رسالة العرض (اختياري)</label>'+
+        '<textarea id="prop-msg" class="field-input" rows="3" placeholder="أضف تفاصيل إضافية للعرض..."></textarea></div>'+
+    '</div>'+
+    '<div class="modal-footer">'+
+      '<button class="btn btn-ghost" onclick="UI.closeModalForce()">إلغاء</button>'+
+      '<button class="btn btn-primary" onclick="Pages.doSendProposal(\''+orgId+'\')"><i data-lucide="send"></i>إنشاء الطلب</button>'+
+    '</div>'
+  );
+  if(typeof lucide!=='undefined') setTimeout(function(){lucide.createIcons({rootElement:document.getElementById('modal-box')});},30);
+};
+Pages.doSendProposal = function(orgId) {
+  var org=(Pages._orgs||[]).find(function(x){return x.id===orgId;}); if(!org) return;
+  var svc=document.getElementById('prop-svc'),msg=document.getElementById('prop-msg'); if(!svc) return;
+  var nr={id:'req_'+Date.now().toString(36),name:org.contact_name||org.name,email:org.email,phone:org.phone,
+    org:org.name,service:svc.value,message:msg?msg.value:'',status:'new',source:'proposal',created_at:Math.floor(Date.now()/1000)};
+  if(!Pages._requests) Pages._requests=[];
+  Pages._requests.unshift(nr);
+  if(Pages._updateRequestsBadge) Pages._updateRequestsBadge();
+  DB._updateRequest&&DB._updateRequest(nr.id,nr).catch(function(){});
+  UI.closeModalForce();
+  UI.toast('تم إنشاء العرض في قسم الطلبات','success');
+};
+
+/* ─── Create Client Card from Org ─── */
+Pages.createClientFromOrg = function(orgId) {
+  var org=(Pages._orgs||[]).find(function(x){return x.id===orgId;}); if(!org) return;
+  var existing=DB.getClients().find(function(c){return c.source==='100day'&&(c.email===org.email||c.name===org.name);});
+  if(existing){UI.toast('بطاقة العميل موجودة بالفعل','warning');UI.closeModalForce();Nav.go('client',{clientId:existing.id});return;}
+  var nc={id:'cl_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,5),
+    name:org.name||'',type:'association',email:org.email||'',phone:org.phone||'',city:org.city||'',
+    contact:org.contact_name||'',source:'100day',created:new Date().toISOString().slice(0,10),
+    note:'مشترك في برنامج خطة المئة يوم'};
+  var clients=DB.getClients(); clients.push(nc); DB.saveClients(clients);
+  Pages._saveOrgExt(orgId,{client_id:nc.id});
+  UI.closeModalForce();
+  UI.toast('تم إنشاء بطاقة العميل بنجاح','success');
+  Nav.go('client',{clientId:nc.id});
+};
+
+/* ─── Plan Task Editor Modal ─── */
+Pages.openPlanTaskEditor = function(taskId, taskTitle, trackId) {
+  var det=Pages._getPlanDetails(taskId);
+  function stRow(st,i){
+    return '<div class="pte-row" data-type="stage" data-idx="'+i+'">'+
+      '<div style="flex:1;display:flex;gap:6px;background:var(--bg-2);padding:7px 10px;border-radius:8px">'+
+        '<input type="text" placeholder="اسم المرحلة" value="'+UI.escHtml(st.label||'')+'" class="field-input" data-lbl style="flex:1;height:36px;padding:4px 8px;font-size:13px">'+
+        '<input type="text" placeholder="وصف (اختياري)" value="'+UI.escHtml(st.desc||'')+'" class="field-input" data-desc style="flex:2;height:36px;padding:4px 8px;font-size:13px">'+
+      '</div>'+
+      '<button onclick="this.parentElement.remove()" class="btn btn-sm btn-ghost" style="color:var(--danger-500);padding:4px 7px">×</button>'+
+    '</div>';
+  }
+  function rfRow(r,i){
+    return '<div class="pte-row" data-type="ref" data-idx="'+i+'">'+
+      '<div style="flex:1;display:flex;gap:6px;background:var(--bg-2);padding:7px 10px;border-radius:8px">'+
+        '<input type="text" placeholder="عنوان المرجع" value="'+UI.escHtml(r.title||'')+'" class="field-input" data-lbl style="flex:1;height:36px;padding:4px 8px;font-size:13px">'+
+        '<input type="url" placeholder="https://..." value="'+UI.escHtml(r.url||'')+'" class="field-input" data-desc dir="ltr" style="flex:2;height:36px;padding:4px 8px;font-size:13px">'+
+      '</div>'+
+      '<button onclick="this.parentElement.remove()" class="btn btn-sm btn-ghost" style="color:var(--danger-500);padding:4px 7px">×</button>'+
+    '</div>';
+  }
+  UI.openModal(
+    '<div class="modal-header">'+
+      '<div><h3>تفاصيل المهمة</h3><div style="font-size:12px;color:var(--fg-4);margin-top:1px">'+UI.escHtml(taskTitle)+'</div></div>'+
+      '<button class="modal-close" onclick="UI.closeModalForce()">×</button>'+
+    '</div>'+
+    '<div style="padding:18px 20px;max-height:68vh;overflow-y:auto">'+
+      '<div class="form-group"><label class="field-label">وصف المهمة وأهميتها</label>'+
+        '<textarea id="ptask-desc" class="field-input" rows="4" placeholder="اشرح هذه المهمة وسبب أهميتها للجمعية...">'+UI.escHtml(det.desc||'')+'</textarea></div>'+
+      '<div style="margin-bottom:16px">'+
+        '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">'+
+          '<label class="field-label" style="margin-bottom:0">المراحل التفضيلية</label>'+
+          '<button onclick="Pages._addPteRow(\'stage\')" class="btn btn-sm btn-ghost"><i data-lucide="plus"></i>مرحلة</button>'+
+        '</div>'+
+        '<div id="pte-stages" style="display:flex;flex-direction:column;gap:6px">'+
+          (det.stages||[]).map(stRow).join('')+
+        '</div>'+
+      '</div>'+
+      '<div>'+
+        '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">'+
+          '<label class="field-label" style="margin-bottom:0">المراجع والروابط</label>'+
+          '<button onclick="Pages._addPteRow(\'ref\')" class="btn btn-sm btn-ghost"><i data-lucide="plus"></i>مرجع</button>'+
+        '</div>'+
+        '<div id="pte-refs" style="display:flex;flex-direction:column;gap:6px">'+
+          (det.refs||[]).map(rfRow).join('')+
+        '</div>'+
+      '</div>'+
+    '</div>'+
+    '<div class="modal-footer">'+
+      '<button class="btn btn-ghost" onclick="UI.closeModalForce()">إلغاء</button>'+
+      '<button class="btn btn-primary" onclick="Pages.savePlanTaskDetails(\''+taskId+'\')">حفظ التفاصيل</button>'+
+    '</div>'
+  );
+  if(typeof lucide!=='undefined') setTimeout(function(){lucide.createIcons({rootElement:document.getElementById('modal-box')});},30);
+};
+Pages._addPteRow = function(type) {
+  var containerId=type==='stage'?'pte-stages':'pte-refs';
+  var list=document.getElementById(containerId); if(!list) return;
+  var i=list.children.length,div=document.createElement('div');
+  div.className='pte-row'; div.setAttribute('data-type',type); div.setAttribute('data-idx',i);
+  div.style.cssText='display:flex;gap:8px;align-items:center';
+  if(type==='stage'){
+    div.innerHTML='<div style="flex:1;display:flex;gap:6px;background:var(--bg-2);padding:7px 10px;border-radius:8px">'+
+      '<input type="text" placeholder="اسم المرحلة" class="field-input" data-lbl style="flex:1;height:36px;padding:4px 8px;font-size:13px">'+
+      '<input type="text" placeholder="وصف (اختياري)" class="field-input" data-desc style="flex:2;height:36px;padding:4px 8px;font-size:13px">'+
+      '</div><button onclick="this.parentElement.remove()" class="btn btn-sm btn-ghost" style="color:var(--danger-500);padding:4px 7px">×</button>';
+  } else {
+    div.innerHTML='<div style="flex:1;display:flex;gap:6px;background:var(--bg-2);padding:7px 10px;border-radius:8px">'+
+      '<input type="text" placeholder="عنوان المرجع" class="field-input" data-lbl style="flex:1;height:36px;padding:4px 8px;font-size:13px">'+
+      '<input type="url" placeholder="https://..." class="field-input" data-desc dir="ltr" style="flex:2;height:36px;padding:4px 8px;font-size:13px">'+
+      '</div><button onclick="this.parentElement.remove()" class="btn btn-sm btn-ghost" style="color:var(--danger-500);padding:4px 7px">×</button>';
+  }
+  list.appendChild(div);
+};
+Pages.savePlanTaskDetails = function(taskId) {
+  var desc=(document.getElementById('ptask-desc')||{}).value||'';
+  var stages=[],stList=document.getElementById('pte-stages');
+  if(stList) Array.from(stList.children).forEach(function(row){
+    var lbl=row.querySelector('[data-lbl]'),dsc=row.querySelector('[data-desc]');
+    if(lbl&&lbl.value.trim()) stages.push({label:lbl.value.trim(),desc:dsc?dsc.value.trim():''});
+  });
+  var refs=[],rfList=document.getElementById('pte-refs');
+  if(rfList) Array.from(rfList.children).forEach(function(row){
+    var ttl=row.querySelector('[data-lbl]'),url=row.querySelector('[data-desc]');
+    if(ttl&&ttl.value.trim()) refs.push({title:ttl.value.trim(),url:url?url.value.trim():''});
+  });
+  Pages._savePlanDetails(taskId,{desc:desc,stages:stages,refs:refs});
+  UI.closeModalForce(); UI.toast('تم حفظ تفاصيل المهمة','success');
+  if(Pages._orgsTab==='plan') Pages.render_orgs({_loaded:true});
 };
 
 Pages.deleteOrgConfirm = function(id, name) {
@@ -10265,74 +10645,38 @@ Pages.deleteOrgConfirm = function(id, name) {
 };
 Pages.doDeleteOrg = function(id) {
   UI.closeModalForce();
-  Pages._orgs = (Pages._orgs||[]).filter(function(x){ return x.id!==id; });
-  DB._deleteOrg(id).then(function(ok){ UI.toast(ok?'تم حذف الجمعية':'تعذّر الحذف', ok?'success':'danger'); Pages.render_orgs({_loaded:true}); });
-};
-Pages.toggleOrgWebsite = function(id, currentEnabled, name) {
-  var enable = !currentEnabled;
-  var msg = enable ? ('تفعيل الموقع الإلكتروني لـ «'+name+'»؟') : ('إيقاف الموقع الإلكتروني لـ «'+name+'»؟ سيصبح غير متاح للجمعية.');
-  UI.openModal(
-    '<div class="modal-header"><h3>'+(enable?'تفعيل الموقع':'إيقاف الموقع')+'</h3><button class="modal-close" onclick="UI.closeModalForce()">×</button></div>'+
-    '<div style="padding:18px 20px;color:var(--fg-2)">'+msg+'</div>'+
-    '<div class="modal-footer"><button class="btn btn-ghost" onclick="UI.closeModalForce()">إلغاء</button>'+
-    '<button class="btn '+(enable?'btn-primary':'btn-danger')+'" onclick="Pages.doToggleOrgWebsite(\''+id+'\','+(enable?1:0)+')">'+
-    (enable?'تفعيل':'إيقاف')+'</button></div>'
-  );
+  Pages._orgs=(Pages._orgs||[]).filter(function(x){return x.id!==id;});
+  DB._deleteOrg(id).then(function(ok){UI.toast(ok?'تم حذف الجمعية':'تعذّر الحذف',ok?'success':'danger');Pages.render_orgs({_loaded:true});});
 };
 Pages.doToggleOrgWebsite = function(id, enable) {
   UI.closeModalForce();
   DB._toggleOrgWebsite(id, enable).then(function(ok) {
-    if (ok) {
-      Pages._orgs = (Pages._orgs||[]).map(function(x){ return x.id===id ? Object.assign({},x,{website_enabled:enable}) : x; });
-      UI.toast(enable?'تم تفعيل الموقع':'تم إيقاف الموقع', 'success');
-      Pages.render_orgs({_loaded:true});
-    } else {
-      UI.toast('تعذّر تحديث حالة الموقع', 'danger');
-    }
+    if(ok){Pages._orgs=(Pages._orgs||[]).map(function(x){return x.id===id?Object.assign({},x,{website_enabled:enable}):x;});UI.toast(enable?'تم تفعيل الموقع':'تم إيقاف الموقع','success');Pages.render_orgs({_loaded:true});}
+    else UI.toast('تعذّر تحديث حالة الموقع','danger');
   });
-};
-
-Pages.toggleOrgCrm = function(id, currentEnabled, name) {
-  var enable = !currentEnabled;
-  var msg = enable ? ('تفعيل نظام إدارة المستفيدين (CRM) لـ «'+name+'»؟') : ('إيقاف CRM لـ «'+name+'»؟ لن تتمكن الجمعية من الوصول للنظام.');
-  UI.openModal(
-    '<div class="modal-header"><h3>'+(enable?'تفعيل CRM':'إيقاف CRM')+'</h3><button class="modal-close" onclick="UI.closeModalForce()">×</button></div>'+
-    '<div style="padding:18px 20px;color:var(--fg-2)">'+msg+'</div>'+
-    '<div class="modal-footer"><button class="btn btn-ghost" onclick="UI.closeModalForce()">إلغاء</button>'+
-    '<button class="btn '+(enable?'btn-primary':'btn-danger')+'" onclick="Pages.doToggleOrgCrm(\''+id+'\','+(enable?1:0)+')">'+
-    (enable?'تفعيل':'إيقاف')+'</button></div>'
-  );
 };
 Pages.doToggleOrgCrm = function(id, enable) {
   UI.closeModalForce();
   DB._toggleOrgCrm(id, enable).then(function(ok) {
-    if (ok) {
-      Pages._orgs = (Pages._orgs||[]).map(function(x){ return x.id===id ? Object.assign({},x,{crm_enabled:enable}) : x; });
-      UI.toast(enable?'تم تفعيل CRM':'تم إيقاف CRM', 'success');
-      Pages.render_orgs({_loaded:true});
-    } else {
-      UI.toast('تعذّر تحديث حالة CRM', 'danger');
-    }
+    if(ok){Pages._orgs=(Pages._orgs||[]).map(function(x){return x.id===id?Object.assign({},x,{crm_enabled:enable}):x;});UI.toast(enable?'تم تفعيل CRM':'تم إيقاف CRM','success');Pages.render_orgs({_loaded:true});}
+    else UI.toast('تعذّر تحديث حالة CRM','danger');
   });
 };
 
 /* ─── Org Tools Modal ─── */
 Pages.openOrgToolsModal = function(orgId, orgName, websiteEnabled, crmEnabled) {
-  var ws = !!+websiteEnabled, crm = !!+crmEnabled;
+  var ws=!!+websiteEnabled, crm=!!+crmEnabled;
   function toolRow(label, icon, enabled, toggleFn) {
     return '<div style="display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid var(--bg-2)">'+
       '<div style="display:flex;align-items:center;gap:10px">'+
         '<div style="width:36px;height:36px;border-radius:9px;background:'+(enabled?'var(--iris-50)':'var(--bg-2)')+';color:'+(enabled?'var(--iris-600)':'var(--fg-3)')+';display:flex;align-items:center;justify-content:center">'+
-          '<i data-lucide="'+icon+'" style="width:17px;height:17px"></i>'+
-        '</div>'+
+          '<i data-lucide="'+icon+'" style="width:17px;height:17px"></i></div>'+
         '<div><div style="font-weight:700;font-size:14px;color:var(--fg-1)">'+label+'</div>'+
           '<div style="font-size:12px;color:'+(enabled?'var(--success-600)':'var(--fg-3)')+'">'+
-            (enabled?'مفعّلة ✓':'غير مفعّلة')+'</div>'+
-        '</div>'+
+          (enabled?'مفعّلة ✓':'غير مفعّلة')+'</div></div>'+
       '</div>'+
       '<button onclick="'+toggleFn+'" class="btn btn-sm '+(enabled?'btn-danger':'btn-primary')+'" style="min-width:90px">'+
-        (enabled?'إيقاف':'تفعيل')+'</button>'+
-    '</div>';
+        (enabled?'إيقاف':'تفعيل')+'</button></div>';
   }
   UI.openModal(
     '<div class="modal-header"><h3>إدارة أدوات «'+UI.escHtml(orgName)+'»</h3>'+
@@ -10680,7 +11024,7 @@ Pages._siteData = function(){
 Pages.render_website = function(opts) {
   if (!DB._token) {
     document.getElementById('pg-website').innerHTML =
-      '<div class="page-header"><div><h1>الموقع والطلبات</h1>'+
+      '<div class="page-header"><div><h1>الطلبات الواردة</h1>'+
       '<div class="page-header-sub">إدارة اللاندنق بيج والخدمات وطلبات العملاء</div></div></div>'+
       '<div class="card" style="text-align:center;padding:40px"><i data-lucide="cloud-off" style="width:40px;height:40px;color:var(--fg-3)"></i>'+
       '<p style="margin-top:14px;color:var(--fg-2)">هذه الميزة تتطلب الاتصال بالخادم. سجّل الدخول بحساب متصل بالخادم.</p></div>';
@@ -10691,7 +11035,7 @@ Pages.render_website = function(opts) {
   // Load data once per visit, then re-render
   if (!(opts && opts._loaded)) {
     document.getElementById('pg-website').innerHTML =
-      '<div class="page-header"><div><h1>الموقع والطلبات</h1>'+
+      '<div class="page-header"><div><h1>الطلبات الواردة</h1>'+
       '<div class="page-header-sub">جارٍ تحميل البيانات...</div></div></div>'+
       '<div class="card" style="text-align:center;padding:50px;color:var(--fg-3)">جارٍ التحميل…</div>';
     Promise.all([DB._getSite(), DB._getRequests()]).then(function(res){
@@ -10715,8 +11059,8 @@ Pages.render_website = function(opts) {
 
   var body =
     '<div class="page-header"><div>'+
-      '<h1>الموقع والطلبات</h1>'+
-      '<div class="page-header-sub">إدارة اللاندنق بيج · الخدمات المعروضة · متابعة طلبات العملاء</div>'+
+      '<h1>الطلبات الواردة</h1>'+
+      '<div class="page-header-sub">إدارة جميع الطلبات الواردة · الخدمات المعروضة · إعدادات الموقع</div>'+
     '</div>'+
     '<div style="display:flex;gap:10px">'+
       '<a href="/" target="_blank" class="btn btn-ghost btn-sm" style="display:inline-flex;align-items:center;gap:6px"><i data-lucide="external-link"></i>معاينة الموقع</a>'+
