@@ -538,6 +538,56 @@ img,svg{display:block;max-width:100%}
 .ws-layout-opt small{font-size:11.5px;color:var(--muted)}
 .ws-layout-opt.active span{color:var(--accent)}
 
+/* ── Quick tools dashboard (redesigned) ── */
+.ws-qt-hero{background:linear-gradient(135deg,var(--navy) 0%,var(--navy-deep) 100%);border-radius:18px;padding:22px 26px;color:#fff;display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;margin-bottom:16px}
+.ws-qt-hero-l{display:flex;align-items:center;gap:16px;min-width:0}
+.ws-qt-hero-dot{width:48px;height:48px;border-radius:14px;background:rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.ws-qt-hero-dot svg{width:24px;height:24px}
+.ws-qt-hero-tx{min-width:0}
+.ws-qt-hero-tx .st{display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:800;padding:4px 12px;border-radius:20px;margin-bottom:6px}
+.ws-qt-hero-tx .st.pub{background:#34d399;color:#063}
+.ws-qt-hero-tx .st.draft{background:rgba(255,255,255,.18);color:#fff}
+.ws-qt-hero-url{font-size:12px;color:rgba(255,255,255,.75);font-family:monospace;direction:ltr;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:340px;display:block}
+.ws-qt-hero-r{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.ws-qt-hero .btn-ghost{color:#fff;border-color:rgba(255,255,255,.4)}
+.ws-qt-hero .btn-ghost:hover{background:rgba(255,255,255,.12)}
+.ws-qt-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px;margin-bottom:18px}
+.ws-qt-stat{background:#fff;border:1.5px solid var(--line);border-radius:14px;padding:16px 18px;cursor:pointer;transition:.15s}
+.ws-qt-stat:hover{border-color:var(--accent);box-shadow:0 4px 14px rgba(0,0,0,.06);transform:translateY(-2px)}
+.ws-qt-stat .n{font-size:26px;font-weight:800;color:var(--navy-deep);line-height:1}
+.ws-qt-stat .l{font-size:12px;color:var(--muted);margin-top:6px;font-weight:600;display:flex;align-items:center;gap:6px}
+.ws-qt-stat .l svg{width:14px;height:14px;color:var(--accent)}
+.ws-qt-sec-title{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:4px 2px 12px}
+.ws-qt-sec-title h3{font-size:15.5px;font-weight:800;color:var(--navy-deep);display:flex;align-items:center;gap:9px}
+.ws-qt-sec-title h3 svg{width:18px;height:18px;color:var(--accent)}
+.ws-qt-list{display:flex;flex-direction:column;gap:10px}
+.ws-qt-row{display:flex;align-items:center;gap:14px;background:#fff;border:1.5px solid var(--line);border-radius:13px;padding:12px 14px;transition:.15s}
+.ws-qt-row:hover{border-color:var(--accent);box-shadow:0 2px 10px rgba(0,0,0,.05)}
+.ws-qt-thumb{width:60px;height:60px;border-radius:10px;object-fit:cover;background:var(--bg-tint);flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--muted)}
+.ws-qt-thumb svg{width:24px;height:24px;opacity:.5}
+.ws-qt-row-tx{flex:1;min-width:0}
+.ws-qt-row-tx b{display:block;font-size:14px;font-weight:700;color:var(--navy-deep);margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ws-qt-row-tx span{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px}
+.ws-qt-row-tx span svg{width:13px;height:13px;flex-shrink:0}
+.ws-qt-row-tag{font-size:11px;font-weight:700;color:var(--accent);background:rgba(29,155,138,.1);padding:3px 10px;border-radius:20px;white-space:nowrap}
+.ws-qt-row-acts{display:flex;gap:6px;flex-shrink:0}
+.ws-qt-icon-btn{width:34px;height:34px;border-radius:9px;border:1.5px solid var(--line);background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--navy-2);transition:.13s}
+.ws-qt-icon-btn:hover{background:var(--bg-soft);border-color:var(--accent);color:var(--accent)}
+.ws-qt-icon-btn.del:hover{background:#fef2f2;border-color:#fca5a5;color:#dc2626}
+.ws-qt-icon-btn svg{width:16px;height:16px}
+.ws-qt-add-btn{display:inline-flex;align-items:center;gap:7px;padding:9px 16px;border-radius:10px;border:none;background:var(--navy);color:#fff;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;transition:.15s}
+.ws-qt-add-btn:hover{background:var(--navy-deep)}
+.ws-qt-add-btn svg{width:16px;height:16px}
+.ws-qt-empty{text-align:center;padding:28px;color:var(--muted);font-size:13px;background:var(--bg-soft);border:1.5px dashed var(--line);border-radius:13px}
+.ws-qt-block{margin-bottom:24px}
+.ws-modal-field{margin-bottom:13px;text-align:right}
+.ws-modal-field label{display:block;font-size:12.5px;font-weight:600;color:var(--navy-2);margin-bottom:5px}
+.ws-modal-field input,.ws-modal-field textarea,.ws-modal-field select{width:100%;padding:9px 12px;border:1.5px solid var(--line);border-radius:8px;font-size:14px;font-family:inherit;color:var(--ink);background:#fff;box-sizing:border-box}
+.ws-modal-field input:focus,.ws-modal-field textarea:focus,.ws-modal-field select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(29,155,138,.12)}
+.ws-modal-field textarea{resize:vertical;line-height:1.7}
+.ws-modal-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:640px){.ws-modal-row{grid-template-columns:1fr}.ws-qt-hero-url{max-width:220px}}
+
 /* ── CRM: Beneficiary Management ── */
 .crm-topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;gap:12px;flex-wrap:wrap}
 .crm-tabs{display:flex;gap:4px;background:var(--bg-tint);border-radius:10px;padding:4px}
@@ -2237,145 +2287,258 @@ function wsGoTab(tab){
   renderWebsite();
 }
 
+function wsFmtDate(d){ if(!d) return ''; try{ return new Date(d).toLocaleDateString('ar-u-ca-gregory-nu-latn',{year:'numeric',month:'long',day:'numeric'}); }catch(e){ return d; } }
+
 function renderWsQuickTools(published, liveUrl){
-  var secToggleable = WS_SECTIONS.filter(function(s){ return s.toggle; });
-  var secItems = secToggleable.map(function(s){
+  var c = wsC();
+  var news = wsArr('news'), programs = wsArr('programs'), docs = wsArr('governance');
+  var board = wsArr('board'), partners = wsArr('partners');
+  var visibleSecs = WS_SECTIONS.filter(function(s){ return s.toggle && wsSecVisible(s.id); }).length;
+  var previewUrl = window.location.origin + '/org-site?org=' + ((org&&org.id)||'') + '&preview=1';
+
+  /* hero: publish status + actions */
+  var hero =
+    '<div class="ws-qt-hero">'+
+      '<div class="ws-qt-hero-l">'+
+        '<div class="ws-qt-hero-dot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20 15 15 0 0 1 0-20z"/></svg></div>'+
+        '<div class="ws-qt-hero-tx">'+
+          '<span class="st '+(published?'pub':'draft')+'" id="qt-status-badge">'+(published?'● منشور ومرئي للعامة':'● مسودة — غير منشور')+'</span>'+
+          '<span class="ws-qt-hero-url">'+esc(liveUrl)+'</span>'+
+        '</div>'+
+      '</div>'+
+      '<div class="ws-qt-hero-r">'+
+        '<button class="btn btn-ghost btn-sm" onclick="wsCopyUrl(\''+esc(liveUrl)+'\')">نسخ الرابط</button>'+
+        '<a href="'+esc(previewUrl)+'" target="_blank" rel="noopener" class="btn btn-ghost btn-sm">معاينة</a>'+
+        '<button class="btn '+(published?'btn-ghost':'btn-primary')+' btn-sm" onclick="wsTogglePublishNow('+(published?'false':'true')+')">'+(published?'إلغاء النشر':'نشر الموقع الآن')+'</button>'+
+      '</div>'+
+    '</div>';
+
+  /* overview stat tiles */
+  var stats =
+    '<div class="ws-qt-stats">'+
+      wsQtStat(news.length, 'خبر منشور', 'news', '<path d="M4 4h16v16H4z"/><path d="M8 8h8M8 12h8M8 16h5"/>')+
+      wsQtStat(programs.length, 'برنامج', 'programs', '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>')+
+      wsQtStat(docs.length, 'وثيقة', 'governance', '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/>')+
+      wsQtStat(board.length, 'عضو مجلس', 'board', '<circle cx="9" cy="7" r="3"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/>')+
+      wsQtStat(visibleSecs, 'قسم ظاهر', 'about', '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>')+
+    '</div>';
+
+  /* news manager */
+  var newsRows = news.length ? news.map(function(n,i){
+    var thumb = n.image_url
+      ? '<img class="ws-qt-thumb" src="'+esc(n.image_url)+'" onerror="this.outerHTML=\'<div class=\\\'ws-qt-thumb\\\'><svg viewBox=\\\'0 0 24 24\\\' fill=\\\'none\\\' stroke=\\\'currentColor\\\' stroke-width=\\\'2\\\'><rect x=\\\'3\\\' y=\\\'3\\\' width=\\\'18\\\' height=\\\'18\\\' rx=\\\'2\\\'/><circle cx=\\\'8.5\\\' cy=\\\'8.5\\\' r=\\\'1.5\\\'/><polyline points=\\\'21 15 16 10 5 21\\\'/></svg></div>\'">'
+      : '<div class="ws-qt-thumb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></div>';
+    return '<div class="ws-qt-row">'+thumb+
+      '<div class="ws-qt-row-tx"><b>'+esc(n.title||'(بدون عنوان)')+'</b>'+
+        '<span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>'+esc(wsFmtDate(n.date)||'بدون تاريخ')+'</span>'+
+      '</div>'+
+      '<div class="ws-qt-row-acts">'+
+        '<button class="ws-qt-icon-btn" title="تعديل" onclick="wsOpenNewsEditor('+i+')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></button>'+
+        '<button class="ws-qt-icon-btn del" title="حذف" onclick="wsDeleteNews('+i+')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>'+
+      '</div>'+
+    '</div>';
+  }).join('') : '<div class="ws-qt-empty">لا توجد أخبار بعد — اضغط «نشر خبر جديد» لإضافة أول خبر.</div>';
+
+  var newsBlock =
+    '<div class="ws-qt-block">'+
+      '<div class="ws-qt-sec-title">'+
+        '<h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 4h16v16H4z"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>الأخبار والمستجدّات</h3>'+
+        '<button class="ws-qt-add-btn" onclick="wsOpenNewsEditor(-1)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>نشر خبر جديد</button>'+
+      '</div>'+
+      '<div class="ws-qt-list">'+newsRows+'</div>'+
+    '</div>';
+
+  /* documents manager */
+  var docRows = docs.length ? docs.map(function(d,i){
+    return '<div class="ws-qt-row">'+
+      '<div class="ws-qt-thumb" style="background:#fef2f2;color:#dc2626"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg></div>'+
+      '<div class="ws-qt-row-tx"><b>'+esc(d.title||'(بدون عنوان)')+'</b>'+
+        '<span>'+(d.url?'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>ملف مرفق':'لا يوجد ملف بعد')+'</span>'+
+      '</div>'+
+      '<span class="ws-qt-row-tag">'+esc(d.category||'وثيقة')+'</span>'+
+      '<div class="ws-qt-row-acts">'+
+        '<button class="ws-qt-icon-btn" title="تعديل" onclick="wsOpenDocEditor('+i+')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></button>'+
+        '<button class="ws-qt-icon-btn del" title="حذف" onclick="wsDeleteDoc('+i+')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>'+
+      '</div>'+
+    '</div>';
+  }).join('') : '<div class="ws-qt-empty">لا توجد وثائق بعد — أضف تقاريرك ووثائقك النظامية.</div>';
+
+  var docBlock =
+    '<div class="ws-qt-block">'+
+      '<div class="ws-qt-sec-title">'+
+        '<h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>وثائق الحوكمة والتقارير</h3>'+
+        '<button class="ws-qt-add-btn" onclick="wsOpenDocEditor(-1)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>إضافة وثيقة</button>'+
+      '</div>'+
+      '<div class="ws-qt-list">'+docRows+'</div>'+
+    '</div>';
+
+  /* section visibility */
+  var secItems = WS_SECTIONS.filter(function(s){ return s.toggle; }).map(function(s){
     var on = wsSecVisible(s.id);
     return '<div class="ws-qt-sec-item">'+
       '<span>'+s.label+'</span>'+
       '<label class="ws-mini-toggle">'+
-        '<input type="checkbox" '+(on?'checked':'')+' onchange="wsToggleSec(\''+s.id+'\',this.checked)">'+
+        '<input type="checkbox" '+(on?'checked':'')+' onchange="wsToggleSecLive(\''+s.id+'\',this.checked)">'+
         '<div class="ws-mini-track"></div><div class="ws-mini-thumb"></div>'+
       '</label>'+
     '</div>';
   }).join('');
 
-  return '<div class="ws-qt">'+
-    /* quick news */
-    '<div class="ws-qt-card">'+
-      '<h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 4h16v16H4z"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>نشر خبر جديد</h3>'+
-      '<div class="sub">أضف خبراً مباشرة إلى موقعك — يظهر فوراً بعد الحفظ</div>'+
-      '<div class="ws-field"><label>عنوان الخبر</label><input id="qt-news-title" type="text" placeholder="إطلاق مبادرة..." oninput=""></div>'+
-      '<div class="ws-row">'+
-        '<div class="ws-field"><label>التاريخ</label><input id="qt-news-date" type="date" value="'+new Date().toISOString().slice(0,10)+'" dir="ltr"></div>'+
-        '<div class="ws-field"><label>رابط صورة (اختياري)</label><input id="qt-news-img" type="url" placeholder="https://..." dir="ltr"></div>'+
+  var secBlock =
+    '<div class="ws-qt-block">'+
+      '<div class="ws-qt-sec-title">'+
+        '<h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>إظهار وإخفاء الأقسام</h3>'+
       '</div>'+
-      '<div class="ws-field"><label>مقتطف قصير</label><textarea id="qt-news-excerpt" placeholder="جملة تلخّص الخبر..." style="min-height:60px"></textarea></div>'+
-      '<div class="ws-field"><label>نص الخبر الكامل</label><textarea id="qt-news-body" placeholder="اكتب تفاصيل الخبر هنا..." style="min-height:90px"></textarea></div>'+
-      '<div class="ws-qt-actions">'+
-        '<button class="btn btn-primary" onclick="wsQuickAddNews()">'+
-          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" style="width:15px;height:15px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>'+
-          'حفظ ونشر الخبر'+
-        '</button>'+
-      '</div>'+
-    '</div>'+
-    /* quick doc */
-    '<div class="ws-qt-card">'+
-      '<h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>رفع وثيقة</h3>'+
-      '<div class="sub">أضف وثيقة PDF تظهر في قسم الحوكمة والشفافية</div>'+
-      '<div class="ws-field"><label>عنوان الوثيقة</label><input id="qt-doc-title" type="text" placeholder="التقرير السنوي 2025"></div>'+
-      '<div class="ws-row">'+
-        '<div class="ws-field"><label>التصنيف</label>'+
-          '<select id="qt-doc-cat">'+
-            ['التقارير السنوية','القوائم المالية','النظام الأساسي','لائحة الحوكمة','السياسات','محاضر الاجتماعات','أخرى'].map(function(c){ return '<option>'+c+'</option>'; }).join('')+
-          '</select>'+
-        '</div>'+
-        '<div class="ws-field"><label>رابط ملف PDF</label><input id="qt-doc-url" type="url" placeholder="https://..." dir="ltr"></div>'+
-      '</div>'+
-      '<div class="ws-qt-actions">'+
-        '<button class="btn btn-primary" onclick="wsQuickAddDoc()">'+
-          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" style="width:15px;height:15px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>'+
-          'إضافة الوثيقة'+
-        '</button>'+
-      '</div>'+
-    '</div>'+
-    /* section visibility */
-    '<div class="ws-qt-card">'+
-      '<h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>أقسام الموقع</h3>'+
-      '<div class="sub">تحكّم بأقسام الموقع التي تظهر للزوار</div>'+
       '<div class="ws-qt-sec-grid">'+secItems+'</div>'+
-      '<div class="ws-qt-actions">'+
-        '<button class="btn btn-primary" onclick="wsSave()">حفظ التغييرات</button>'+
-      '</div>'+
-    '</div>'+
-    /* website status */
-    '<div class="ws-qt-card">'+
-      '<h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20 15 15 0 0 1 0-20z"/></svg>حالة الموقع</h3>'+
-      '<div class="sub">رابط الموقع العام: <span dir="ltr" style="font-family:monospace;font-size:12px;color:var(--navy-2)">'+esc(liveUrl)+'</span></div>'+
-      '<div class="ws-qt-status-row">'+
-        '<span class="ws-qt-status-badge '+(published?'pub':'draft')+'" id="qt-status-badge">'+(published?'✓ منشور':'مسودة — غير منشور')+'</span>'+
-        '<label class="ws-publish-toggle" style="gap:10px">'+
-          '<span style="font-size:13px;font-weight:600;color:var(--navy-2)">'+(published?'إلغاء النشر':'نشر الموقع')+'</span>'+
-          '<label class="ws-toggle" style="transform:none">'+
-            '<input type="checkbox" id="qt-pub-chk" '+(published?'checked':'')+' onchange="wsQtTogglePublish(this.checked)">'+
-            '<div class="ws-toggle-track" style="background:var(--line)"></div><div class="ws-toggle-thumb"></div>'+
-          '</label>'+
-        '</label>'+
-      '</div>'+
-      '<div class="ws-qt-actions">'+
-        '<button class="btn btn-primary" onclick="wsQtSaveStatus()">'+
-          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" style="width:15px;height:15px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>'+
-          'تحديث الحالة'+
-        '</button>'+
-      '</div>'+
-    '</div>'+
+    '</div>';
+
+  return '<div class="ws-qt-wrap" id="qt-status-card">'+hero+stats+newsBlock+docBlock+secBlock+'</div>';
+}
+
+function wsQtStat(n, label, secId, iconPath){
+  return '<div class="ws-qt-stat" onclick="wsJumpToSection(\''+secId+'\')">'+
+    '<div class="n">'+n+'</div>'+
+    '<div class="l"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+iconPath+'</svg>'+label+'</div>'+
   '</div>';
 }
 
-function wsQuickAddNews(){
-  var title = (document.getElementById('qt-news-title').value||'').trim();
-  if(!title){ toast('أدخل عنوان الخبر'); return; }
-  var a = wsArr('news');
-  a.unshift({
-    id: wsUid(),
-    title: title,
-    date: document.getElementById('qt-news-date').value || new Date().toISOString().slice(0,10),
-    excerpt: (document.getElementById('qt-news-excerpt').value||'').trim(),
-    body: (document.getElementById('qt-news-body').value||'').trim(),
-    image_url: (document.getElementById('qt-news-img').value||'').trim()
-  });
-  wsSave(function(){ toast('تم نشر الخبر ✓'); wsGoTab('quicktools'); });
+function wsJumpToSection(secId){
+  wsTab = 'builder';
+  wsNavId = secId;
+  renderWebsite();
 }
 
-function wsQuickAddDoc(){
-  var title = (document.getElementById('qt-doc-title').value||'').trim();
-  var url = (document.getElementById('qt-doc-url').value||'').trim();
-  if(!title){ toast('أدخل عنوان الوثيقة'); return; }
-  var a = wsArr('governance');
-  a.push({
-    title: title,
-    category: document.getElementById('qt-doc-cat').value,
-    url: url
-  });
-  var c = wsC(); if(!c.sections) c.sections={}; c.sections['governance'] = true;
-  wsSave(function(){ toast('تمت إضافة الوثيقة ✓'); wsGoTab('quicktools'); });
+function wsCopyUrl(url){
+  try{
+    if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(url); toast('تم نسخ الرابط ✓'); }
+    else { var t=document.createElement('textarea'); t.value=url; document.body.appendChild(t); t.select(); document.execCommand('copy'); document.body.removeChild(t); toast('تم نسخ الرابط ✓'); }
+  }catch(e){ toast('تعذّر النسخ'); }
 }
 
-function wsQtTogglePublish(checked){
-  var badge = document.getElementById('qt-status-badge');
-  if(badge){ badge.className = 'ws-qt-status-badge '+(checked?'pub':'draft'); badge.textContent = checked?'✓ منشور':'مسودة — غير منشور'; }
-  var lbl = document.querySelector('#page-website .ws-publish-toggle span');
-  if(lbl) lbl.textContent = checked ? 'منشور' : 'نشر الموقع';
+function wsToggleSecLive(secId, on){
+  var c = wsC(); if(!c.sections) c.sections={}; c.sections[secId] = !!on;
+  wsSave(function(){ toast(on?'تم إظهار القسم ✓':'تم إخفاء القسم'); });
 }
 
-function wsQtSaveStatus(){
-  var chk = document.getElementById('qt-pub-chk');
-  var publish = chk ? chk.checked : (wsData&&wsData.published?true:false);
+function wsTogglePublishNow(makePublished){
   var cfg = wsC();
   cfg.theme = cfg.theme || (cfg.brand&&cfg.brand.theme) || 'navy';
   fetch(API+'/org/website',{
     method:'PUT',
     headers:{'Content-Type':'application/json','Authorization':'Bearer '+token()},
-    body:JSON.stringify({ config:cfg, publish:publish, custom_domain:wsData.custom_domain||'' })
+    body:JSON.stringify({ config:cfg, publish:makePublished, custom_domain:wsData.custom_domain||'' })
   })
   .then(function(r){ return r.json().then(function(j){ return {ok:r.ok,j:j}; }).catch(function(){ return {ok:r.ok,j:{}}; }); })
   .then(function(res){
-    if(!res.ok){ toast('تعذّر الحفظ — حاول مجدداً'); return; }
-    wsData.published = publish?1:0;
-    toast(publish?'تم نشر الموقع ✓':'تم إلغاء النشر');
-    wsGoTab('quicktools');
+    if(!res.ok){ toast('تعذّر التحديث — حاول مجدداً'); return; }
+    wsData.published = makePublished?1:0;
+    if(makePublished && !wsData.published_at) wsData.published_at = Math.floor(Date.now()/1000);
+    toast(makePublished?'تم نشر الموقع ✓':'تم إلغاء النشر');
+    renderWebsite();
   })
-  .catch(function(){ toast('تعذّر الحفظ — حاول مجدداً'); });
+  .catch(function(){ toast('تعذّر التحديث — حاول مجدداً'); });
+}
+
+/* ── News editor modal (add / edit) ── */
+function wsOpenNewsEditor(idx){
+  var isNew = idx < 0;
+  var n = isNew ? {title:'',date:new Date().toISOString().slice(0,10),image_url:'',excerpt:'',body:''} : (wsArr('news')[idx]||{});
+  wsModal(
+    '<div class="crm-modal-title">'+(isNew?'نشر خبر جديد':'تعديل الخبر')+' <button class="crm-modal-x" onclick="wsCloseModal()">×</button></div>'+
+    '<div class="ws-modal-field"><label>عنوان الخبر *</label><input id="wsm-news-title" type="text" value="'+esc(n.title||'')+'" placeholder="إطلاق مبادرة..."></div>'+
+    '<div class="ws-modal-row">'+
+      '<div class="ws-modal-field"><label>التاريخ</label><input id="wsm-news-date" type="date" value="'+esc(n.date||'')+'" dir="ltr"></div>'+
+      '<div class="ws-modal-field"><label>رابط صورة (اختياري)</label><input id="wsm-news-img" type="url" value="'+esc(n.image_url||'')+'" placeholder="https://..." dir="ltr"></div>'+
+    '</div>'+
+    '<div class="ws-modal-field"><label>مقتطف قصير (يظهر في القائمة)</label><textarea id="wsm-news-excerpt" style="min-height:56px" placeholder="جملة تلخّص الخبر...">'+esc(n.excerpt||'')+'</textarea></div>'+
+    '<div class="ws-modal-field"><label>نص الخبر الكامل</label><textarea id="wsm-news-body" style="min-height:120px" placeholder="اكتب تفاصيل الخبر هنا...">'+esc(n.body||'')+'</textarea></div>'+
+    '<div class="crm-modal-foot">'+
+      '<button class="btn btn-ghost btn-sm" onclick="wsCloseModal()">إلغاء</button>'+
+      '<button class="btn btn-primary btn-sm" onclick="wsSaveNews('+idx+')">'+(isNew?'نشر الخبر':'حفظ التعديل')+'</button>'+
+    '</div>'
+  );
+}
+function wsSaveNews(idx){
+  var title = (document.getElementById('wsm-news-title').value||'').trim();
+  if(!title){ toast('أدخل عنوان الخبر'); return; }
+  var data = {
+    title: title,
+    date: document.getElementById('wsm-news-date').value || new Date().toISOString().slice(0,10),
+    excerpt: (document.getElementById('wsm-news-excerpt').value||'').trim(),
+    body: (document.getElementById('wsm-news-body').value||'').trim(),
+    image_url: (document.getElementById('wsm-news-img').value||'').trim()
+  };
+  var a = wsArr('news');
+  if(idx < 0){ data.id = wsUid(); a.unshift(data); }
+  else if(a[idx]){ data.id = a[idx].id || wsUid(); a[idx] = data; }
+  var c = wsC(); if(!c.sections) c.sections={}; if(c.sections.news===undefined) c.sections.news=true;
+  wsSave(function(){ wsCloseModal(); toast(idx<0?'تم نشر الخبر ✓':'تم حفظ التعديل ✓'); renderWebsite(); });
+}
+function wsDeleteNews(idx){
+  wsConfirm('حذف هذا الخبر؟', 'لا يمكن التراجع بعد الحفظ.', function(){
+    wsArr('news').splice(idx,1);
+    wsSave(function(){ toast('تم حذف الخبر'); renderWebsite(); });
+  });
+}
+
+/* ── Document editor modal (add / edit) ── */
+function wsOpenDocEditor(idx){
+  var isNew = idx < 0;
+  var d = isNew ? {title:'',category:'التقارير السنوية',url:''} : (wsArr('governance')[idx]||{});
+  var cats = ['التقارير السنوية','القوائم المالية','النظام الأساسي','لائحة الحوكمة','السياسات','محاضر الاجتماعات','أخرى'];
+  var opts = cats.map(function(cat){ return '<option'+((d.category===cat)?' selected':'')+'>'+cat+'</option>'; }).join('');
+  wsModal(
+    '<div class="crm-modal-title">'+(isNew?'إضافة وثيقة':'تعديل الوثيقة')+' <button class="crm-modal-x" onclick="wsCloseModal()">×</button></div>'+
+    '<div class="ws-modal-field"><label>عنوان الوثيقة *</label><input id="wsm-doc-title" type="text" value="'+esc(d.title||'')+'" placeholder="التقرير السنوي 2025"></div>'+
+    '<div class="ws-modal-field"><label>التصنيف</label><select id="wsm-doc-cat">'+opts+'</select></div>'+
+    '<div class="ws-modal-field"><label>رابط ملف PDF</label><input id="wsm-doc-url" type="url" value="'+esc(d.url||'')+'" placeholder="https://..." dir="ltr"><div class="hint" style="font-size:11.5px;color:var(--muted);margin-top:4px">ارفع الملف على Google Drive أو أي خدمة استضافة والصق الرابط هنا</div></div>'+
+    '<div class="crm-modal-foot">'+
+      '<button class="btn btn-ghost btn-sm" onclick="wsCloseModal()">إلغاء</button>'+
+      '<button class="btn btn-primary btn-sm" onclick="wsSaveDoc('+idx+')">'+(isNew?'إضافة':'حفظ التعديل')+'</button>'+
+    '</div>'
+  );
+}
+function wsSaveDoc(idx){
+  var title = (document.getElementById('wsm-doc-title').value||'').trim();
+  if(!title){ toast('أدخل عنوان الوثيقة'); return; }
+  var data = {
+    title: title,
+    category: document.getElementById('wsm-doc-cat').value,
+    url: (document.getElementById('wsm-doc-url').value||'').trim()
+  };
+  var a = wsArr('governance');
+  if(idx < 0) a.push(data); else if(a[idx]) a[idx] = data;
+  var c = wsC(); if(!c.sections) c.sections={}; if(c.sections.governance===undefined) c.sections.governance=true;
+  wsSave(function(){ wsCloseModal(); toast(idx<0?'تمت إضافة الوثيقة ✓':'تم حفظ التعديل ✓'); renderWebsite(); });
+}
+function wsDeleteDoc(idx){
+  wsConfirm('حذف هذه الوثيقة؟', 'لا يمكن التراجع بعد الحفظ.', function(){
+    wsArr('governance').splice(idx,1);
+    wsSave(function(){ toast('تم حذف الوثيقة'); renderWebsite(); });
+  });
+}
+
+/* ── small modal helpers for the website quick tools ── */
+function wsModal(html){
+  var d = document.createElement('div');
+  d.className = 'crm-modal-overlay';
+  d.id = 'ws-modal-overlay';
+  d.innerHTML = '<div class="crm-modal">'+html+'</div>';
+  d.addEventListener('click', function(e){ if(e.target===d) wsCloseModal(); });
+  document.body.appendChild(d);
+}
+function wsCloseModal(){ var d=document.getElementById('ws-modal-overlay'); if(d) d.remove(); }
+function wsConfirm(title, msg, onYes){
+  wsModal(
+    '<div class="crm-modal-title">'+esc(title)+' <button class="crm-modal-x" onclick="wsCloseModal()">×</button></div>'+
+    '<p style="font-size:13.5px;color:var(--muted);line-height:1.7;margin-bottom:4px">'+esc(msg)+'</p>'+
+    '<div class="crm-modal-foot">'+
+      '<button class="btn btn-ghost btn-sm" onclick="wsCloseModal()">إلغاء</button>'+
+      '<button class="btn btn-sm" style="background:#dc2626;color:#fff" id="ws-confirm-yes">حذف</button>'+
+    '</div>'
+  );
+  var y = document.getElementById('ws-confirm-yes');
+  if(y) y.onclick = function(){ wsCloseModal(); onYes(); };
 }
 
 function wsNavHtml(){
@@ -2644,57 +2807,157 @@ function wsTogglePublish(checked){
   var stat = document.getElementById('ws-status'); if(stat){ stat.className = 'ws-status '+(checked?'published':'draft'); stat.textContent = checked?'منشور ✓':'مسودة'; }
 }
 
+/* Recent-ish ISO date n days ago (Latin numerals via slice). */
+function wsDaysAgo(n){ var d=new Date(); d.setDate(d.getDate()-n); return d.toISOString().slice(0,10); }
+
 function wsSeedDefaults(){
   var c = wsC();
-  var orgName = (org && org.name) || 'جمعيتنا';
+  var orgName = (org && org.name) || 'جمعية بُعد للتنمية الاجتماعية';
   if(!c.sections) c.sections = {};
-  // migrate legacy flat fields into the new schema
-  if(!c.brand){ c.brand = { name:c.name||orgName, tagline:c.tagline||'معاً نصنع أثراً مستداماً', logo_url:c.logo_url||'', theme:c.theme||'navy', accent:'' }; }
-  if(!c.hero){ c.hero = { title:c.tagline||('مرحباً بكم في '+orgName), subtitle:'نسعى إلى تحقيق التنمية المستدامة وخدمة المجتمع بأعلى معايير الجودة والمهنية.', image_url:c.hero_url||'' }; }
-  if(!c.about || typeof c.about==='string'){
-    c.about = {
-      text: (typeof c.about==='string'?c.about:('تأسست '+orgName+' بهدف خدمة المجتمع وتحقيق التنمية المستدامة. نعمل على تقديم برامج ومبادرات نوعية تستهدف الفئات المحتاجة وتنمية القدرات البشرية.')),
-      vision: 'أن نكون الجهة الرائدة في العمل الخيري والتنموي على مستوى المنطقة.',
-      mission: 'تقديم خدمات اجتماعية وتنموية متكاملة تُعزّز استدامة المجتمع وتُمكّن أفراده.'
+
+  if(!c.brand){ c.brand = { name:c.name||orgName, tagline:c.tagline||'معاً نحو مجتمع مُمكَّن ومستدام', logo_url:c.logo_url||'', theme:c.theme||'navy', accent:'' }; }
+  if(!c.brand.tagline) c.brand.tagline = 'معاً نحو مجتمع مُمكَّن ومستدام';
+
+  if(!c.hero){
+    c.hero = {
+      title:'نصنع أثراً يمتد، ونبني مستقبلاً أكثر إشراقاً',
+      subtitle:'جمعية بُعد للتنمية الاجتماعية تعمل على تمكين الأسر والأفراد، وتقديم برامج نوعية ترتقي بجودة الحياة وتحقق تنمية مستدامة في مجتمعنا.',
+      image_url:c.hero_url||'https://images.unsplash.com/photo-1469571486292-0ba58a3f068b?auto=format&fit=crop&w=1600&q=80',
+      primary_label:'تبرّع الآن', primary_link:'#donate',
+      secondary_label:'تعرّف علينا', secondary_link:'#about'
     };
   }
-  if(!c.contact){ c.contact = { phone:c.phone||'', email:c.email||'', address:c.address||'', whatsapp:c.whatsapp||'', twitter:c.twitter||'' }; }
-  if(!c.seo){ c.seo = { title:c.seo_title||(orgName+' | الموقع الرسمي'), desc:c.seo_desc||(orgName+' — جمعية خيرية تعمل على خدمة المجتمع وتحقيق التنمية المستدامة.') }; }
+
+  if(!c.about || typeof c.about==='string'){
+    c.about = {
+      text: 'تأسست جمعية بُعد للتنمية الاجتماعية لتكون شريكاً موثوقاً في خدمة المجتمع، انطلاقاً من إيمانها بأن التنمية الحقيقية تبدأ من تمكين الإنسان. نعمل منذ انطلاقتنا على تصميم برامج ومبادرات نوعية تستهدف الأسر محدودة الدخل والأيتام وذوي الاحتياجات الخاصة والشباب الباحثين عن فرص، بمنهجية تقوم على الاستدامة وقياس الأثر والشفافية.\n\nنُسخّر مواردنا وكفاءاتنا وشراكاتنا لإحداث تغيير إيجابي ملموس، ونحرص على أن يصل كل ريال يُتبرّع به إلى مستحقيه عبر آليات حوكمة دقيقة تضمن الكفاءة والأمانة.',
+      vision: 'أن نكون من أكثر الجمعيات أثراً وريادةً في التنمية الاجتماعية المستدامة على مستوى المملكة.',
+      mission: 'تقديم خدمات وبرامج تنموية متكاملة تُمكّن الفئات المستهدفة وتُعزّز جودة حياتها، عبر شراكات فاعلة وحوكمة شفافة وقياس مستمر للأثر.',
+      image_url: 'https://images.unsplash.com/photo-1559027615-cd4628902d4a?auto=format&fit=crop&w=1100&q=80'
+    };
+  }
+
+  if(!c.contact){
+    c.contact = {
+      phone:c.phone||'0112345678',
+      email:c.email||((org&&org.email)||'info@buad.org.sa'),
+      address:c.address||'الرياض — حي الملقا، طريق الملك فهد، مبنى الجمعية',
+      whatsapp:c.whatsapp||'966500000000',
+      twitter:c.twitter||'@buad_sa',
+      instagram:'@buad_sa',
+      map_url:'https://www.google.com/maps?q=Riyadh&output=embed'
+    };
+  }
+
+  if(!c.seo){
+    c.seo = {
+      title:c.seo_title||(orgName+' | الموقع الرسمي'),
+      desc:c.seo_desc||'جمعية بُعد للتنمية الاجتماعية — نُمكّن الأسر والأفراد عبر برامج تنموية مستدامة وخدمات نوعية تحقق أثراً يمتد في المجتمع.'
+    };
+  }
   if(!c.theme) c.theme = (c.brand&&c.brand.theme)||'navy';
   if(!c.layout_theme) c.layout_theme = 'classic';
-  // seed demo values/stats/programs if empty (can be edited/deleted)
+
   if(!c.values || !c.values.length){
     c.values = [
-      {title:'الشفافية',desc:'نلتزم بالإفصاح والوضوح في جميع أعمالنا وبرامجنا.'},
-      {title:'الأثر',desc:'نقيس نجاحنا بالتغيير الإيجابي الملموس في حياة المستفيدين.'},
-      {title:'المشاركة',desc:'نؤمن بالعمل التشاركي مع المجتمع والجهات الداعمة.'}
+      {title:'الشفافية والأمانة',desc:'نلتزم بأعلى معايير الإفصاح والوضوح في مواردنا وبرامجنا وتقاريرنا.'},
+      {title:'الأثر المستدام',desc:'نقيس نجاحنا بالتغيير الإيجابي الملموس والمستمر في حياة المستفيدين.'},
+      {title:'الإتقان والاحترافية',desc:'نُدير أعمالنا بمنهجية مؤسسية تضمن الكفاءة وجودة الخدمة.'},
+      {title:'الشراكة المجتمعية',desc:'نؤمن بأن الأثر الأكبر يتحقق بتكامل الجهود مع شركائنا والمجتمع.'},
+      {title:'الرحمة والكرامة',desc:'نخدم المستفيدين بما يحفظ كرامتهم ويلبّي احتياجاتهم الحقيقية.'},
+      {title:'الابتكار',desc:'نطوّر حلولاً إبداعية للتحديات الاجتماعية بما يواكب المتغيّرات.'}
     ];
-    if(!c.sections.values) c.sections.values = true;
+    if(c.sections.values===undefined) c.sections.values = true;
   }
+
   if(!c.stats || !c.stats.length){
     c.stats = [
-      {number:'5,000+',label:'مستفيد'},
-      {number:'20+',label:'برنامجاً'},
-      {number:'200+',label:'متطوع'},
-      {number:'10',label:'سنوات خبرة'}
+      {number:'12,500+',label:'مستفيد ومستفيدة'},
+      {number:'35+',label:'برنامجاً ومبادرة'},
+      {number:'480+',label:'متطوع ومتطوعة'},
+      {number:'12',label:'سنة من العطاء'}
     ];
-    if(!c.sections.stats) c.sections.stats = true;
+    if(c.sections.stats===undefined) c.sections.stats = true;
   }
+
   if(!c.programs || !c.programs.length){
     c.programs = [
-      {title:'كفالة الأسر المحتاجة',desc:'برنامج شامل لدعم الأسر ذات الدخل المحدود بالمساعدات المادية والعينية.',image_url:''},
-      {title:'تمكين الشباب',desc:'مبادرات تدريبية ومهنية تهدف إلى تطوير مهارات الشباب وتحسين فرص توظيفهم.',image_url:''},
-      {title:'الرعاية الصحية',desc:'تقديم خدمات طبية ودوائية للفئات غير القادرة بالتعاون مع كبرى المستشفيات.',image_url:''}
+      {title:'كفالة الأسر المحتاجة',desc:'دعم شهري متكامل للأسر محدودة الدخل يشمل المساعدات المالية والعينية لتغطية الاحتياجات الأساسية.',image_url:'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&w=900&q=80'},
+      {title:'كسوة وكفالة الأيتام',desc:'برنامج يرعى الأيتام تعليمياً وصحياً ونفسياً ويوفّر بيئة داعمة لنموهم.',image_url:'https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?auto=format&fit=crop&w=900&q=80'},
+      {title:'تمكين الشباب والتوظيف',desc:'مسارات تدريبية ومهنية ترفع جاهزية الشباب لسوق العمل وتربطهم بفرص حقيقية.',image_url:'https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&w=900&q=80'},
+      {title:'الرعاية الصحية',desc:'تغطية تكاليف العلاج والأجهزة الطبية والأدوية للفئات غير القادرة بالتعاون مع المستشفيات.',image_url:'https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&w=900&q=80'},
+      {title:'سلة الخير الغذائية',desc:'توزيع سلال غذائية شهرية ومشاريع إفطار صائم وأضاحٍ على المستفيدين في المواسم.',image_url:'https://images.unsplash.com/photo-1593113630400-ea4288922497?auto=format&fit=crop&w=900&q=80'},
+      {title:'ترميم وتأثيث المساكن',desc:'إعادة تأهيل مساكن الأسر المتعففة وتوفير الأثاث الأساسي لتوفير بيئة سكنية كريمة.',image_url:'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=900&q=80'}
     ];
-    if(!c.sections.programs) c.sections.programs = true;
+    if(c.sections.programs===undefined) c.sections.programs = true;
   }
+
+  if(!c.news || !c.news.length){
+    c.news = [
+      {id:wsUid(),title:'الجمعية تطلق الحملة الشتوية لكسوة 800 أسرة',date:wsDaysAgo(4),image_url:'https://images.unsplash.com/photo-1607968565043-36af90dde238?auto=format&fit=crop&w=1000&q=80',excerpt:'انطلقت الحملة الشتوية لتوفير الكسوة والتدفئة للأسر المتعففة في عدد من الأحياء.',body:'أطلقت جمعية بُعد للتنمية الاجتماعية حملتها الشتوية السنوية التي تستهدف هذا العام كسوة وتدفئة 800 أسرة متعففة في مختلف الأحياء.\n\nوتشمل الحملة توزيع الملابس الشتوية والبطانيات وأجهزة التدفئة، إضافة إلى قسائم شرائية تُمكّن الأسر من تلبية احتياجاتها. ودعت الجمعية المحسنين للمساهمة في الحملة عبر بوابة التبرع الإلكترونية.'},
+      {id:wsUid(),title:'تخريج الدفعة الخامسة من برنامج تمكين الشباب',date:wsDaysAgo(12),image_url:'https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=1000&q=80',excerpt:'احتفلت الجمعية بتخريج 120 شاباً وشابة بعد إتمام مسارات تدريبية مهنية.',body:'احتفلت جمعية بُعد بتخريج الدفعة الخامسة من برنامج تمكين الشباب، والذي أتمّ خلاله 120 متدرباً ومتدربة مساراتٍ مهنية في مجالات التقنية وريادة الأعمال والمهارات الإدارية.\n\nوقد تم توظيف أكثر من 60% من الخريجين لدى جهات شريكة، في إطار سعي الجمعية لربط التدريب بفرص العمل الحقيقية.'},
+      {id:wsUid(),title:'توقيع شراكة استراتيجية لدعم الرعاية الصحية',date:wsDaysAgo(21),image_url:'https://images.unsplash.com/photo-1505751172876-fa1923c5c528?auto=format&fit=crop&w=1000&q=80',excerpt:'وقّعت الجمعية اتفاقية تعاون لتغطية تكاليف العلاج للأسر غير القادرة.',body:'وقّعت جمعية بُعد اتفاقية شراكة استراتيجية مع أحد المراكز الطبية الكبرى، تهدف إلى تغطية تكاليف العلاج والأجهزة الطبية للأسر غير القادرة.\n\nوبموجب الاتفاقية، سيتم تقديم خدمات صحية بأسعار رمزية لمستفيدي الجمعية، مع برامج توعية صحية دورية في المجتمع.'},
+      {id:wsUid(),title:'تقرير الأثر السنوي يكشف نمو المستفيدين بنسبة 30%',date:wsDaysAgo(34),image_url:'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=1000&q=80',excerpt:'أصدرت الجمعية تقريرها السنوي موثّقةً نمو عدد المستفيدين وتوسّع البرامج.',body:'أصدرت جمعية بُعد تقرير الأثر السنوي الذي وثّق نمو عدد المستفيدين بنسبة 30% مقارنة بالعام السابق، إلى جانب التوسع في عدد البرامج والمبادرات.\n\nوأكد التقرير التزام الجمعية بالشفافية والإفصاح، حيث تضمّن القوائم المالية المدققة وتفصيل أوجه صرف التبرعات.'}
+    ];
+    if(c.sections.news===undefined) c.sections.news = true;
+  }
+
+  if(!c.board || !c.board.length){
+    c.board = [
+      {name:'أ. عبدالله بن محمد القحطاني',role:'رئيس مجلس الإدارة',image_url:''},
+      {name:'د. سارة بنت أحمد العتيبي',role:'نائب الرئيس',image_url:''},
+      {name:'أ. فهد بن سعد الدوسري',role:'المشرف المالي',image_url:''},
+      {name:'أ. نورة بنت خالد الحربي',role:'عضو مجلس الإدارة',image_url:''},
+      {name:'م. تركي بن ناصر الشمري',role:'عضو مجلس الإدارة',image_url:''},
+      {name:'أ. منى بنت علي الزهراني',role:'أمين عام الجمعية',image_url:''}
+    ];
+    if(c.sections.board===undefined) c.sections.board = true;
+  }
+
+  if(!c.governance || !c.governance.length){
+    c.governance = [
+      {title:'النظام الأساسي للجمعية',category:'النظام الأساسي',url:''},
+      {title:'لائحة الحوكمة',category:'لائحة الحوكمة',url:''},
+      {title:'سياسة تعارض المصالح',category:'السياسات',url:''},
+      {title:'سياسة حفظ الوثائق وإتلافها',category:'السياسات',url:''},
+      {title:'التقرير السنوي 2024',category:'التقارير السنوية',url:''},
+      {title:'القوائم المالية المدققة 2024',category:'القوائم المالية',url:''}
+    ];
+    if(c.sections.governance===undefined) c.sections.governance = true;
+  }
+
+  if(!c.partners || !c.partners.length){
+    c.partners = [
+      {name:'المركز الوطني لتنمية القطاع غير الربحي',logo_url:''},
+      {name:'وزارة الموارد البشرية والتنمية الاجتماعية',logo_url:''},
+      {name:'منصة إحسان',logo_url:''},
+      {name:'الهيئة العامة للأوقاف',logo_url:''},
+      {name:'بنك التنمية الاجتماعية',logo_url:''},
+      {name:'جمعية الملك عبدالعزيز الخيرية',logo_url:''}
+    ];
+    if(c.sections.partners===undefined) c.sections.partners = true;
+  }
+
   if(!c.faq || !c.faq.length){
     c.faq = [
-      {q:'كيف يمكنني التبرع لدعم برامج الجمعية؟',a:'يمكنك التبرع عبر بوابة التبرع الإلكترونية المتاحة في الموقع، أو التواصل معنا مباشرة.'},
-      {q:'كيف يمكنني الانضمام كمتطوع؟',a:'نرحّب بالمتطوعين! تواصل معنا عبر البريد الإلكتروني أو قسم التواصل في الموقع.'},
-      {q:'ما هي الفئات المستفيدة من برامج الجمعية؟',a:'تستهدف برامجنا الأسر محدودة الدخل، والأيتام، وذوي الاحتياجات الخاصة، والشباب الباحثين عن عمل.'}
+      {q:'كيف يمكنني التبرع لدعم برامج الجمعية؟',a:'يمكنك التبرع عبر بوابة التبرع الإلكترونية في الموقع، أو التحويل المباشر على حساب الجمعية المعتمد، أو التواصل معنا لتفاصيل أكثر.'},
+      {q:'هل الجمعية مرخّصة ومعتمدة رسمياً؟',a:'نعم، الجمعية مرخّصة من المركز الوطني لتنمية القطاع غير الربحي وتخضع لإشرافه ورقابته، وتلتزم بكامل المتطلبات النظامية.'},
+      {q:'كيف أضمن وصول تبرعي إلى مستحقيه؟',a:'تعتمد الجمعية آليات حوكمة دقيقة وتدقيقاً مالياً مستقلاً، وتنشر تقاريرها وقوائمها المالية في قسم الحوكمة لضمان الشفافية الكاملة.'},
+      {q:'كيف يمكنني الانضمام كمتطوع؟',a:'نرحّب بالمتطوعين في مختلف المجالات. تواصل معنا عبر قسم التواصل أو البريد الإلكتروني وسيقوم فريقنا بتوجيهك للفرص المناسبة.'},
+      {q:'ما هي الفئات المستفيدة من برامج الجمعية؟',a:'تستهدف برامجنا الأسر محدودة الدخل، والأيتام، وذوي الاحتياجات الخاصة، والشباب الباحثين عن عمل، وكبار السن.'},
+      {q:'هل يمكنني تخصيص تبرعي لبرنامج معيّن؟',a:'بالتأكيد، يمكنك تخصيص تبرعك لأي من برامجنا مثل كفالة الأيتام أو الرعاية الصحية أو السلال الغذائية عبر اختيار البرنامج عند التبرع.'}
     ];
-    if(!c.sections.faq) c.sections.faq = true;
+    if(c.sections.faq===undefined) c.sections.faq = true;
+  }
+
+  if(!c.donation || (!c.donation.title && !c.donation.desc && !c.donation.url)){
+    c.donation = {
+      title:'تبرّعك اليوم يصنع أثراً يمتد',
+      desc:'كل مساهمة، مهما كانت، تُحدث فرقاً حقيقياً في حياة أسرة محتاجة. شاركنا في صناعة الأمل وكن جزءاً من قصة عطاء مستدامة.',
+      url:'https://ehsan.sa',
+      account:'SA00 0000 0000 0000 0000 0000'
+    };
+    if(c.sections.donation===undefined) c.sections.donation = true;
   }
 }
 
