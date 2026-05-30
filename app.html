@@ -4731,39 +4731,7 @@ Pages.renderFinCtrl = function(projId) {
         '<span>الإجمالي المخطط</span>' +
         '<span class="mono" style="color:var(--iris-600)">'+UI.fmt(r.budgetTotal)+' ر.س</span>' +
       '</div>' : '') +
-    '</div>' +
-    // ── Row 4: Project Info ──
-    (function(){
-      var projs = DB.getProjects();
-      var proj  = projs.find(function(p){return p.id===projId;})||{};
-      var typeOpt = function(v,l){return '<option value="'+v+'"'+(proj.type===v?' selected':'')+'>'+l+'</option>';};
-      var stOpt  = function(v,l){return '<option value="'+v+'"'+(proj.status===v?' selected':'')+'>'+l+'</option>';};
-      return '<div class="card" style="border-top:2px solid var(--border-2)">' +
-        '<details>' +
-          '<summary style="cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;padding:4px 0;font-size:13px;font-weight:700;color:var(--fg-1)">' +
-            '<span style="display:flex;align-items:center;gap:6px"><i data-lucide="pencil" style="width:13px;height:13px;color:var(--fg-3)"></i>بيانات المشروع</span>' +
-            '<i data-lucide="chevron-down" style="width:14px;height:14px;color:var(--fg-3)"></i>' +
-          '</summary>' +
-          '<div style="margin-top:12px;display:grid;gap:10px">' +
-            '<div class="var-field"><div class="var-field-lbl">اسم المشروع</div><input class="var-field-inp" id="cp-name" value="'+UI.escHtml(proj.name||'')+'"></div>' +
-            '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">' +
-              '<div class="var-field"><div class="var-field-lbl">النوع</div>' +
-                '<select class="var-field-inp" id="cp-type">' +
-                  typeOpt('training','تدريب')+typeOpt('consulting','استشارات')+typeOpt('event','فعالية')+typeOpt('other','أخرى') +
-                '</select></div>' +
-              '<div class="var-field"><div class="var-field-lbl">الحالة</div>' +
-                '<select class="var-field-inp" id="cp-status">' +
-                  stOpt('draft','مسودة')+stOpt('active','جاري التنفيذ')+stOpt('completed','مكتمل')+stOpt('paused','متوقف')+stOpt('cancelled','ملغي') +
-                '</select></div>' +
-            '</div>' +
-            '<div style="display:flex;gap:8px">' +
-              '<button class="btn btn-primary btn-sm" style="flex:1" onclick="Pages.saveProjectInCtrl(\''+projId+'\')"><i data-lucide="check"></i>حفظ</button>' +
-              '<button class="btn btn-danger btn-sm" onclick="Pages.closeCtrlDrawer();Pages.deleteProjectConfirm(\''+projId+'\')"><i data-lucide="trash-2"></i>حذف المشروع</button>' +
-            '</div>' +
-          '</div>' +
-        '</details>' +
-      '</div>';
-    })();
+    '</div>';
   if (typeof lucide !== 'undefined') lucide.createIcons({rootElement: document.getElementById(Pages._ctrlContainer||'ctrl-drawer-body')});
 };
 
@@ -6036,6 +6004,7 @@ Pages._projKebabHtml = function(proj) {
       '</div>'+
       '<div class="pkm-sep"></div>'+
       '<div class="pkm-section">'+
+        '<button class="pkm-item" onclick="Pages.openProjectDatesModal(\''+pid+'\')"><i data-lucide="calendar-days"></i>بيانات وتواريخ المشروع</button>'+
         '<button class="pkm-item" onclick="Pages.closeProjKebab();Pages.editProjectStatusModal(\''+pid+'\')"><i data-lucide="pencil"></i>تعديل الاسم والنوع</button>'+
         '<button class="pkm-item" onclick="Pages.closeProjKebab();Pages.duplicateProject(\''+pid+'\')"><i data-lucide="copy-plus"></i>نسخ المشروع</button>'+
       '</div>'+
@@ -6076,6 +6045,97 @@ Pages._closeProjKebab = function() {
   document.querySelectorAll('.proj-kebab-menu').forEach(function(m){ m.style.display='none'; });
 };
 Pages.closeProjKebab = function() { Pages._closeProjKebab(); };
+
+Pages.openProjectDatesModal = function(projId) {
+  Pages.closeProjKebab();
+  var projects = DB.getProjects();
+  var proj = projects.find(function(p){ return p.id===projId; })||{};
+  var pf = DB.getPf();
+  var incEntry = (pf.income||[]).find(function(e){ return e.project_id===projId; });
+  var payDate = incEntry ? (incEntry.payment_date||incEntry.date||'') : '';
+
+  var typeOpt = function(v,l){ return '<option value="'+v+'"'+(proj.type===v?' selected':'')+'>'+l+'</option>'; };
+
+  UI.openModal(
+    '<div class="modal-header" style="border-bottom:3px solid var(--iris-500)">'+
+      '<h3 style="display:flex;align-items:center;gap:8px"><i data-lucide="calendar-days" style="color:var(--iris-500)"></i>بيانات وتواريخ المشروع</h3>'+
+    '</div>'+
+    '<div class="modal-body" style="display:grid;gap:14px">'+
+      '<div><label class="field-label">اسم المشروع</label>'+
+        '<input class="form-control" id="pjd-name" value="'+UI.escHtml(proj.name||'')+'"></div>'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'+
+        '<div><label class="field-label">نوع المشروع</label>'+
+          '<select class="form-control" id="pjd-type">'+
+            typeOpt('training','تدريب')+typeOpt('consulting','استشارات')+typeOpt('event','فعالية')+typeOpt('other','أخرى')+
+          '</select></div>'+
+        '<div><label class="field-label">حالة المشروع</label>'+
+          '<select class="form-control" id="pjd-status">'+
+            '<option value="draft"'+(proj.status==='draft'?' selected':'')+'>مسودة</option>'+
+            '<option value="active"'+(proj.status==='active'?' selected':'')+'>جاري التنفيذ</option>'+
+            '<option value="completed"'+(proj.status==='completed'?' selected':'')+'>مكتمل</option>'+
+            '<option value="paused"'+(proj.status==='paused'?' selected':'')+'>متوقف</option>'+
+            '<option value="cancelled"'+(proj.status==='cancelled'?' selected':'')+'>ملغي</option>'+
+          '</select></div>'+
+      '</div>'+
+      '<div style="background:var(--neutral-50);border-radius:8px;padding:12px;border:1px solid var(--border)">'+
+        '<div style="font-size:12px;font-weight:700;color:var(--fg-2);margin-bottom:10px">تواريخ التنفيذ</div>'+
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'+
+          '<div><label class="field-label">تاريخ بدء التنفيذ</label>'+
+            '<input type="date" class="form-control" id="pjd-start" value="'+(proj.start_date||'')+'"></div>'+
+          '<div><label class="field-label">تاريخ انتهاء التنفيذ</label>'+
+            '<input type="date" class="form-control" id="pjd-end" value="'+(proj.end_date||'')+'"></div>'+
+        '</div>'+
+      '</div>'+
+      '<div style="background:var(--success-50);border-radius:8px;padding:12px;border:1px solid var(--success-200)">'+
+        '<div style="font-size:12px;font-weight:700;color:var(--success-700);margin-bottom:6px">تاريخ استلام الدفعة المالية</div>'+
+        '<div style="font-size:11px;color:var(--fg-3);margin-bottom:8px">تاريخ وصول قيمة العقد للحساب البنكي — يُستخدم لتحديد ربع الإيراد في المالية</div>'+
+        '<input type="date" class="form-control" id="pjd-pay" value="'+payDate+'">'+
+      '</div>'+
+      '<div><label class="field-label">ملاحظة</label>'+
+        '<textarea class="form-control" id="pjd-note" rows="2" style="resize:vertical">'+UI.escHtml(proj.note||'')+'</textarea></div>'+
+    '</div>'+
+    '<div class="modal-footer">'+
+      '<button class="btn btn-ghost" onclick="UI.closeModalForce()">إلغاء</button>'+
+      '<button class="btn btn-primary" onclick="Pages.saveProjectDates(\''+projId+'\')"><i data-lucide="check"></i>حفظ</button>'+
+    '</div>',
+    false
+  );
+  var mb = document.querySelector('.modal-body');
+  if (mb && typeof lucide !== 'undefined') lucide.createIcons({rootElement: mb});
+};
+
+Pages.saveProjectDates = function(projId) {
+  var g = function(id){ var e=document.getElementById(id); return e?e.value.trim():''; };
+  var projects = DB.getProjects();
+  var idx = projects.findIndex(function(p){ return p.id===projId; });
+  if (idx < 0) { UI.closeModalForce(); return; }
+  var oldStatus = projects[idx].status;
+  projects[idx].name       = g('pjd-name') || projects[idx].name;
+  projects[idx].type       = g('pjd-type');
+  projects[idx].status     = g('pjd-status');
+  projects[idx].start_date = g('pjd-start');
+  projects[idx].end_date   = g('pjd-end');
+  projects[idx].note       = g('pjd-note');
+  DB.saveProjects(projects);
+  if (projects[idx].status === 'active' && oldStatus !== 'active') {
+    Pages._pfSyncProjectFee(projId, projects[idx].name);
+  }
+  /* update payment_date on pf income entry */
+  var payVal = g('pjd-pay');
+  if (payVal) {
+    var pf = DB.getPf();
+    var eIdx = (pf.income||[]).findIndex(function(e){ return e.project_id===projId; });
+    if (eIdx >= 0) {
+      pf.income[eIdx].payment_date = payVal;
+      DB.savePf(pf);
+    }
+  }
+  UI.closeModalForce();
+  UI.toast('تم حفظ بيانات المشروع', 'success');
+  if (typeof Pages._finProjId !== 'undefined' && Pages._finProjId === projId) {
+    Pages.render_fin({projId: projId, tab: Pages._finTab});
+  }
+};
 
 Pages.setProjStatus = function(projId, status) {
   var projects = DB.getProjects();
@@ -10821,39 +10881,121 @@ Pages.switchPfTab = function(tab) {
   else                       Pages.renderPfDistrib();
 };
 
-Pages.renderPfOverview = function() {
+Pages._pfOverviewPeriod = {type:'year'};
+
+Pages.renderPfOverview = function(period) {
   var el = document.getElementById('pf-tab-overview'); if (!el) return;
+  if (period !== undefined) Pages._pfOverviewPeriod = period;
+  var p = Pages._pfOverviewPeriod || {type:'year'};
   var pf = DB.getPf();
-  var range = Pages._pfPeriodRanges('quarter');
-  var from = range[0], to = range[1];
-  var c = Pages._pfCalc(pf, from, to);
-  var distTotal = (pf.distributions||[]).filter(function(d){return d.status==='completed';})
+  var now = new Date(), curY = now.getFullYear();
+  var yr = p.year || curY;
+
+  /* compute range */
+  function getRange(pp) {
+    if (!pp || pp.type === 'all_time') return null;
+    var y = pp.year || curY;
+    if (pp.type === 'year')   return [y+'-01-01', y+'-12-31'];
+    if (pp.type === 'q1')     return [y+'-01-01', y+'-03-31'];
+    if (pp.type === 'q2')     return [y+'-04-01', y+'-06-30'];
+    if (pp.type === 'q3')     return [y+'-07-01', y+'-09-30'];
+    if (pp.type === 'q4')     return [y+'-10-01', y+'-12-31'];
+    if (pp.type === 'custom') return [pp.from||'', pp.to||''];
+    return null;
+  }
+  var range  = getRange(p);
+  var c      = Pages._pfCalc(pf, range?range[0]:null, range?range[1]:null);
+  var cAll   = Pages._pfCalc(pf, null, null);
+
+  /* period label */
+  var pLabelMap = {year:'السنة '+yr, q1:'ق١ '+yr, q2:'ق٢ '+yr, q3:'ق٣ '+yr, q4:'ق٤ '+yr, all_time:'الكل', custom:'مخصص'};
+  var pLabel = pLabelMap[p.type] || 'الفترة';
+
+  /* distributions in period */
+  function distInRange(d) {
+    if (!range) return true;
+    var dt = d.created_at ? d.created_at.slice(0,10) : '';
+    return dt >= range[0] && dt <= range[1];
+  }
+  var distPeriod = (pf.distributions||[]).filter(function(d){ return d.status==='completed' && distInRange(d); })
+    .reduce(function(s,d){ return s+(Number(d.distributed_amount)||0); },0);
+  var distAll = (pf.distributions||[]).filter(function(d){ return d.status==='completed'; })
     .reduce(function(s,d){ return s+(Number(d.distributed_amount)||0); },0);
   var retained = Pages._pfRetainedTotals(pf);
 
-  var kpis = '<div class="kpi-grid" style="margin-bottom:var(--space-5)">'+
-    '<div class="kpi-card"><div class="kpi-card-accent" style="background:var(--success-500)"></div>'+
-      '<div class="kpi-card-icon" style="background:var(--success-50);color:var(--success-600)"><i data-lucide="trending-up"></i></div>'+
-      '<div class="kpi-card-label">إيرادات الربع الحالي</div>'+
-      '<div class="kpi-card-value" style="color:var(--success-700)"><span class="mono">'+UI.fmt(c.income)+'</span></div>'+
-      '<div class="kpi-card-sub">ريال سعودي</div></div>'+
-    '<div class="kpi-card"><div class="kpi-card-accent" style="background:var(--danger-500)"></div>'+
-      '<div class="kpi-card-icon" style="background:var(--danger-50);color:var(--danger-600)"><i data-lucide="trending-down"></i></div>'+
-      '<div class="kpi-card-label">مصروفات الربع الحالي</div>'+
-      '<div class="kpi-card-value" style="color:var(--danger-700)"><span class="mono">'+UI.fmt(c.expenses)+'</span></div>'+
-      '<div class="kpi-card-sub">ريال سعودي</div></div>'+
-    '<div class="kpi-card"><div class="kpi-card-accent" style="background:'+(c.netProfit>=0?'var(--primary-500)':'var(--danger-500)')+'"></div>'+
-      '<div class="kpi-card-icon" style="background:var(--primary-50);color:var(--primary-600)"><i data-lucide="circle-dollar-sign"></i></div>'+
-      '<div class="kpi-card-label">صافي الربح (الربع)</div>'+
-      '<div class="kpi-card-value" style="color:'+(c.netProfit>=0?'var(--primary-700)':'var(--danger-700)')+'"><span class="mono">'+UI.fmt(Math.abs(c.netProfit))+'</span></div>'+
-      '<div class="kpi-card-sub">'+(c.netProfit>=0?'ربح':'خسارة')+'</div></div>'+
-    '<div class="kpi-card"><div class="kpi-card-accent" style="background:var(--accent-500)"></div>'+
-      '<div class="kpi-card-icon" style="background:var(--accent-50);color:var(--accent-600)"><i data-lucide="users-round"></i></div>'+
-      '<div class="kpi-card-label">إجمالي التوزيعات</div>'+
-      '<div class="kpi-card-value" style="color:var(--accent-600)"><span class="mono">'+UI.fmt(distTotal)+'</span></div>'+
-      '<div class="kpi-card-sub">'+(pf.distributions||[]).filter(function(d){return d.status==='completed';}).length+' توزيع مكتمل</div></div>'+
-  '</div>';
+  /* filter bar */
+  var years = [];
+  for (var y2=curY; y2>=curY-3; y2--) years.push(y2);
+  function pill(type, lbl, ppyr) {
+    var active = p.type===type && (ppyr===undefined || p.year===ppyr);
+    var obj = ppyr !== undefined ? JSON.stringify({type:type,year:ppyr}) : JSON.stringify({type:type,year:yr});
+    return '<button class="btn btn-sm '+(active?'btn-primary':'btn-ghost')+'" style="border-radius:20px;padding:4px 12px" '+
+      'onclick="Pages.renderPfOverview('+obj+')">'+lbl+'</button>';
+  }
+  var customBlock = p.type==='custom' ?
+    '<div style="display:flex;align-items:center;gap:6px;margin-top:8px">'+
+      '<input type="date" id="pfo-cf" class="form-control" style="width:140px;font-size:12px;padding:5px 8px" value="'+(p.from||'')+'">'+
+      '<span style="color:var(--fg-4)">—</span>'+
+      '<input type="date" id="pfo-ct" class="form-control" style="width:140px;font-size:12px;padding:5px 8px" value="'+(p.to||'')+'">'+
+      '<button class="btn btn-sm btn-primary" style="padding:5px 10px" onclick="Pages.renderPfOverview({type:\'custom\',from:(document.getElementById(\'pfo-cf\')||{}).value,to:(document.getElementById(\'pfo-ct\')||{}).value})">تطبيق</button>'+
+    '</div>' : '';
 
+  var filterBar =
+    '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:var(--space-5)">'+
+      '<select class="form-control" style="width:80px;font-size:12px;padding:5px 8px" '+
+        'onchange="Pages.renderPfOverview(Object.assign({},Pages._pfOverviewPeriod,{year:parseInt(this.value)}))">'+
+        years.map(function(yy){ return '<option value="'+yy+'"'+(yy===yr?' selected':'')+'>'+yy+'</option>'; }).join('')+
+      '</select>'+
+      pill('q1','ق١',yr)+pill('q2','ق٢',yr)+pill('q3','ق٣',yr)+pill('q4','ق٤',yr)+
+      pill('year','السنة كاملة',yr)+
+      pill('all_time','الكل')+
+      '<button class="btn btn-sm '+(p.type==='custom'?'btn-primary':'btn-ghost')+'" style="border-radius:20px;padding:4px 12px" '+
+        'onclick="Pages.renderPfOverview({type:\'custom\',year:'+yr+'})">مخصص</button>'+
+    '</div>'+customBlock;
+
+  /* ── Period KPIs ── */
+  var kpis =
+    '<div class="kpi-grid" style="margin-bottom:var(--space-4)">'+
+      '<div class="kpi-card"><div class="kpi-card-accent" style="background:var(--success-500)"></div>'+
+        '<div class="kpi-card-icon" style="background:var(--success-50);color:var(--success-600)"><i data-lucide="trending-up"></i></div>'+
+        '<div class="kpi-card-label">إيرادات '+pLabel+'</div>'+
+        '<div class="kpi-card-value" style="color:var(--success-700)"><span class="mono">'+UI.fmt(c.income)+'</span></div>'+
+        '<div class="kpi-card-sub">ريال سعودي</div></div>'+
+      '<div class="kpi-card"><div class="kpi-card-accent" style="background:var(--danger-500)"></div>'+
+        '<div class="kpi-card-icon" style="background:var(--danger-50);color:var(--danger-600)"><i data-lucide="trending-down"></i></div>'+
+        '<div class="kpi-card-label">مصروفات '+pLabel+'</div>'+
+        '<div class="kpi-card-value" style="color:var(--danger-700)"><span class="mono">'+UI.fmt(c.expenses)+'</span></div>'+
+        '<div class="kpi-card-sub">ريال سعودي</div></div>'+
+      '<div class="kpi-card"><div class="kpi-card-accent" style="background:'+(c.netProfit>=0?'var(--primary-500)':'var(--danger-500)')+'"></div>'+
+        '<div class="kpi-card-icon" style="background:var(--primary-50);color:var(--primary-600)"><i data-lucide="circle-dollar-sign"></i></div>'+
+        '<div class="kpi-card-label">صافي الربح — '+pLabel+'</div>'+
+        '<div class="kpi-card-value" style="color:'+(c.netProfit>=0?'var(--primary-700)':'var(--danger-700)')+'"><span class="mono">'+UI.fmt(Math.abs(c.netProfit))+'</span></div>'+
+        '<div class="kpi-card-sub">'+(c.netProfit>=0?'ربح':'خسارة')+'</div></div>'+
+      '<div class="kpi-card"><div class="kpi-card-accent" style="background:var(--accent-500)"></div>'+
+        '<div class="kpi-card-icon" style="background:var(--accent-50);color:var(--accent-600)"><i data-lucide="users-round"></i></div>'+
+        '<div class="kpi-card-label">موزَّع — '+pLabel+'</div>'+
+        '<div class="kpi-card-value" style="color:var(--accent-600)"><span class="mono">'+UI.fmt(distPeriod)+'</span></div>'+
+        '<div class="kpi-card-sub">'+(pf.distributions||[]).filter(function(d){return d.status==='completed'&&distInRange(d);}).length+' توزيع</div></div>'+
+    '</div>';
+
+  /* ── All-time summary bar ── */
+  var summaryBar =
+    '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:var(--space-4)">'+
+      '<div style="background:var(--success-50);border:1px solid var(--success-200);border-radius:10px;padding:12px 16px">'+
+        '<div style="font-size:11px;color:var(--success-600);font-weight:600;margin-bottom:4px">إجمالي الإيرادات الكلي</div>'+
+        '<div class="mono" style="font-size:18px;font-weight:800;color:var(--success-700)">'+UI.fmt(cAll.income)+' <span style="font-size:12px;font-weight:500">ر.س</span></div>'+
+      '</div>'+
+      '<div style="background:var(--primary-50);border:1px solid var(--primary-200);border-radius:10px;padding:12px 16px">'+
+        '<div style="font-size:11px;color:var(--primary-600);font-weight:600;margin-bottom:4px">إجمالي صافي الأرباح</div>'+
+        '<div class="mono" style="font-size:18px;font-weight:800;color:var(--primary-700)">'+UI.fmt(cAll.netProfit)+' <span style="font-size:12px;font-weight:500">ر.س</span></div>'+
+      '</div>'+
+      '<div style="background:var(--accent-50);border:1px solid var(--accent-200);border-radius:10px;padding:12px 16px;cursor:pointer" onclick="Pages.switchPfTab(\'distrib\')" title="عرض التوزيعات">'+
+        '<div style="font-size:11px;color:var(--accent-600);font-weight:600;margin-bottom:4px">إجمالي التوزيعات</div>'+
+        '<div class="mono" style="font-size:18px;font-weight:800;color:var(--accent-700)">'+UI.fmt(distAll)+' <span style="font-size:12px;font-weight:500">ر.س</span></div>'+
+      '</div>'+
+    '</div>';
+
+  /* retained block */
   var retainedHtml = retained.total > 0 ?
     '<div class="card" style="margin-bottom:var(--space-4);cursor:pointer" onclick="Pages.openReservedModal()" title="اضغط لعرض التفاصيل">'+
       '<div class="dash-sec-hdr" style="margin-bottom:var(--space-3)">'+
@@ -10864,21 +11006,50 @@ Pages.renderPfOverview = function() {
         '</div>'+
       '</div>'+
       '<div style="display:flex;gap:10px;flex-wrap:wrap">'+
-        (retained.ops>0?'<div style="padding:10px 16px;background:var(--primary-50);border-radius:8px;min-width:120px;border:1px solid var(--primary-100)">'+
-          '<div style="font-size:11px;color:var(--primary-600);margin-bottom:4px;font-weight:600">تشغيل</div>'+
-          '<div class="mono" style="font-weight:700;color:var(--primary-700)">'+UI.fmt(retained.ops)+' ر.س</div></div>':'')+
-        (retained.dev>0?'<div style="padding:10px 16px;background:var(--success-50);border-radius:8px;min-width:120px;border:1px solid var(--success-100)">'+
-          '<div style="font-size:11px;color:var(--success-600);margin-bottom:4px;font-weight:600">تطوير</div>'+
-          '<div class="mono" style="font-weight:700;color:var(--success-700)">'+UI.fmt(retained.dev)+' ر.س</div></div>':'')+
-        (retained.reserve>0?'<div style="padding:10px 16px;background:var(--warning-50);border-radius:8px;min-width:120px;border:1px solid var(--warning-100)">'+
-          '<div style="font-size:11px;color:var(--warning-600);margin-bottom:4px;font-weight:600">احتياطي</div>'+
-          '<div class="mono" style="font-weight:700;color:var(--warning-700)">'+UI.fmt(retained.reserve)+' ر.س</div></div>':'')+
+        (retained.ops>0?'<div style="padding:10px 16px;background:var(--primary-50);border-radius:8px;min-width:120px;border:1px solid var(--primary-100)"><div style="font-size:11px;color:var(--primary-600);margin-bottom:4px;font-weight:600">تشغيل</div><div class="mono" style="font-weight:700;color:var(--primary-700)">'+UI.fmt(retained.ops)+' ر.س</div></div>':'')+
+        (retained.dev>0?'<div style="padding:10px 16px;background:var(--success-50);border-radius:8px;min-width:120px;border:1px solid var(--success-100)"><div style="font-size:11px;color:var(--success-600);margin-bottom:4px;font-weight:600">تطوير</div><div class="mono" style="font-weight:700;color:var(--success-700)">'+UI.fmt(retained.dev)+' ر.س</div></div>':'')+
+        (retained.reserve>0?'<div style="padding:10px 16px;background:var(--warning-50);border-radius:8px;min-width:120px;border:1px solid var(--warning-100)"><div style="font-size:11px;color:var(--warning-600);margin-bottom:4px;font-weight:600">احتياطي</div><div class="mono" style="font-weight:700;color:var(--warning-700)">'+UI.fmt(retained.reserve)+' ر.س</div></div>':'')+
       '</div>'+
     '</div>' : '';
 
-  var all = (pf.income||[]).map(function(e){return Object.assign({},e,{_type:'income'});})
-    .concat((pf.expenses||[]).map(function(e){return Object.assign({},e,{_type:'expense'});}));
-  all.sort(function(a,b){ return (b.date||'').localeCompare(a.date||''); });
+  /* monthly chart — use year from filter */
+  var chartYr = (p.type === 'all_time') ? curY : yr;
+  var months = [];
+  for (var mi=0; mi<12; mi++) {
+    var mm = ('0'+(mi+1)).slice(-2);
+    var lastD = new Date(chartYr, mi+1, 0).getDate();
+    var mFrom = chartYr+'-'+mm+'-01', mTo = chartYr+'-'+mm+'-'+('0'+lastD).slice(-2);
+    var mc = Pages._pfCalc(pf, mFrom, mTo);
+    var lbls = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+    months.push({label:lbls[mi].slice(0,3), income:mc.income, expenses:mc.expenses});
+  }
+  var maxVal = months.reduce(function(mx,m){ return Math.max(mx, m.income, m.expenses); }, 1);
+  var bars = months.map(function(m) {
+    var iH = Math.round(m.income/maxVal*100);
+    var eH = Math.round(m.expenses/maxVal*100);
+    return '<div style="display:flex;flex-direction:column;align-items:center;gap:3px;flex:1;min-width:0">'+
+      '<div style="display:flex;align-items:flex-end;gap:2px;height:70px">'+
+        '<div title="إيراد '+UI.fmt(m.income)+' ر.س" style="width:10px;border-radius:3px 3px 0 0;background:var(--success-400);height:'+iH+'%;min-height:'+(m.income?2:0)+'px"></div>'+
+        '<div title="مصروف '+UI.fmt(m.expenses)+' ر.س" style="width:10px;border-radius:3px 3px 0 0;background:var(--danger-300);height:'+eH+'%;min-height:'+(m.expenses?2:0)+'px"></div>'+
+      '</div>'+
+      '<div style="font-size:9px;color:var(--fg-4);text-align:center">'+m.label+'</div>'+
+    '</div>';
+  }).join('');
+  var chart = '<div class="card" style="margin-bottom:var(--space-4)">'+
+    '<div class="dash-sec-hdr" style="margin-bottom:var(--space-3)">'+
+      '<h3><i data-lucide="bar-chart-2"></i>الإيرادات والمصروفات '+chartYr+'</h3>'+
+      '<div style="display:flex;gap:12px;align-items:center;font-size:12px;color:var(--fg-3)">'+
+        '<span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:2px;background:var(--success-400);display:inline-block"></span>إيرادات</span>'+
+        '<span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:2px;background:var(--danger-300);display:inline-block"></span>مصروفات</span>'+
+      '</div>'+
+    '</div>'+
+    '<div style="display:flex;align-items:flex-end;gap:4px;padding:0 4px">'+bars+'</div>'+
+  '</div>';
+
+  /* recent transactions */
+  var all = (pf.income||[]).map(function(e){return Object.assign({},e,{_type:'income',_sort:e.payment_date||e.date});})
+    .concat((pf.expenses||[]).map(function(e){return Object.assign({},e,{_type:'expense',_sort:e.date});}));
+  all.sort(function(a,b){ return (b._sort||'').localeCompare(a._sort||''); });
   var recent = all.slice(0,8);
   var recentHtml = recent.length ?
     recent.map(function(e) {
@@ -10887,13 +11058,12 @@ Pages.renderPfOverview = function() {
         '<span class="wf-sign" style="color:'+(e._type==='income'?'var(--success-600)':'var(--danger-500)')+'">'+
           (e._type==='income'?'↑':'↓')+'</span>'+
         '<span class="wf-lbl">'+UI.escHtml(e.desc||'-')+'<span style="font-size:11px;color:var(--fg-4);margin-right:8px">'+(catMap[e.category]||e.category||'')+'</span></span>'+
-        '<span style="font-size:11px;color:var(--fg-4)">'+UI.escHtml(e.date||'')+'</span>'+
+        '<span style="font-size:11px;color:var(--fg-4)">'+UI.escHtml(e._sort||'')+'</span>'+
         '<span class="wf-val" style="color:'+(e._type==='income'?'var(--success-700)':'var(--danger-700)')+'">'+
           (e._type==='income'?'+':'-')+UI.fmt(Number(e.amount)||0)+' ر.س</span>'+
       '</div>';
     }).join('') :
     '<div style="padding:24px;text-align:center;color:var(--fg-4);font-size:13px">لا توجد معاملات بعد</div>';
-
   var txCard = '<div class="card" style="margin-bottom:var(--space-4)">'+
     '<div class="dash-sec-hdr" style="margin-bottom:var(--space-3)"><h3><i data-lucide="receipt"></i>آخر المعاملات</h3>'+
       '<button class="btn btn-sm btn-ghost" onclick="Pages.switchPfTab(\'ledger\')"><i data-lucide="arrow-left"></i>عرض الكل</button>'+
@@ -10901,7 +11071,7 @@ Pages.renderPfOverview = function() {
     '<div class="wf-table">'+recentHtml+'</div>'+
   '</div>';
 
-  el.innerHTML = '<div class="page-content">'+kpis+retainedHtml+Pages._pfMonthlyChart(pf)+txCard+'</div>';
+  el.innerHTML = '<div class="page-content">'+filterBar+kpis+summaryBar+retainedHtml+chart+txCard+'</div>';
   if (typeof lucide !== 'undefined') lucide.createIcons({rootElement: el});
 };
 
