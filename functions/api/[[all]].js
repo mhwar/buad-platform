@@ -203,21 +203,37 @@ export async function onRequest(context) {
     return json({ token, org: { id, name, email, plan_start: today, progress: {} } }, 201);
   }
 
-  /* ─── PUBLIC: POST /api/org/login ─── association login */
+  /* ─── PUBLIC: POST /api/org/login ─── association login (org admin or team member) */
   if (path === '/org/login' && method === 'POST') {
     let body;
     try { body = await request.json(); } catch (e) { return json({ error: 'Bad request' }, 400); }
     const email = (body.email || '').toLowerCase().trim();
     const pass  = (body.password || '');
+    // Check org admin first
     const org = await db.prepare('SELECT * FROM orgs WHERE email = ?').bind(email).first();
-    if (!org || org.password_hash !== djb2(pass)) return json({ error: 'invalid_credentials' }, 401);
-    const token = await signJWT({ id: org.id, name: org.name, email: org.email, kind: 'org' }, jwtSecret);
-    return json({
-      token,
-      org: { id: org.id, name: org.name, email: org.email, plan_start: org.plan_start,
-             progress: JSON.parse(org.progress || '{}'), contact_name: org.contact_name,
-             phone: org.phone, city: org.city, license_no: org.license_no }
-    });
+    if (org && org.password_hash === djb2(pass)) {
+      const token = await signJWT({ id: org.id, name: org.name, email: org.email, kind: 'org', role: 'admin' }, jwtSecret);
+      return json({
+        token,
+        org: { id: org.id, name: org.name, email: org.email, plan_start: org.plan_start,
+               progress: JSON.parse(org.progress || '{}'), contact_name: org.contact_name,
+               phone: org.phone, city: org.city, license_no: org.license_no }
+      });
+    }
+    // Check team members
+    try {
+      const mem = await db.prepare('SELECT m.*, o.id AS org_id, o.name AS org_name, o.plan_start, o.progress, o.contact_name, o.phone, o.city, o.license_no FROM org_members m JOIN orgs o ON m.org_id=o.id WHERE m.email=?').bind(email).first();
+      if (mem && mem.password_hash === djb2(pass)) {
+        const token = await signJWT({ id: mem.org_id, name: mem.name, email: mem.email, kind: 'org', role: mem.role, member_id: mem.id }, jwtSecret);
+        return json({
+          token,
+          org: { id: mem.org_id, name: mem.org_name, email: mem.email, plan_start: mem.plan_start,
+                 progress: JSON.parse(mem.progress || '{}'), contact_name: mem.contact_name,
+                 phone: mem.phone, city: mem.city, license_no: mem.license_no }
+        });
+      }
+    } catch (_) {}
+    return json({ error: 'invalid_credentials' }, 401);
   }
 
   /* ── Org-authenticated routes (association portal) ── */
@@ -267,6 +283,65 @@ export async function onRequest(context) {
     return json({ ok: true, org: { id: org.id, name: org.name, email: org.email, plan_start: org.plan_start,
       progress: JSON.parse(org.progress || '{}'), contact_name: org.contact_name,
       phone: org.phone, city: org.city, license_no: org.license_no } });
+  }
+
+  /* ─── GET /api/org/members ─── list team members */
+  if (path === '/org/members' && method === 'GET') {
+    if (!orgMe || orgMe.kind !== 'org') return json({ error: 'Unauthorized' }, 401);
+    try {
+      await db.prepare('CREATE TABLE IF NOT EXISTS org_members (id TEXT PRIMARY KEY, org_id TEXT NOT NULL, name TEXT NOT NULL, email TEXT NOT NULL, password_hash TEXT NOT NULL, role TEXT NOT NULL DEFAULT "editor", created_at INTEGER NOT NULL DEFAULT (unixepoch()))').run();
+      const { results } = await db.prepare('SELECT id,name,email,role,created_at FROM org_members WHERE org_id=? ORDER BY created_at ASC').bind(orgMe.id).all();
+      // Include org admin as main member
+      const orgRow = await db.prepare('SELECT name,email FROM orgs WHERE id=?').bind(orgMe.id).first();
+      const mainMember = orgRow ? [{ id: 'main', name: orgRow.name, email: orgRow.email, role: 'admin', is_main: true }] : [];
+      return json([...mainMember, ...results.map(function(m){ return { ...m, is_main: false }; })]);
+    } catch (e) { return json([], 200); }
+  }
+
+  /* ─── POST /api/org/members ─── add team member */
+  if (path === '/org/members' && method === 'POST') {
+    if (!orgMe || orgMe.kind !== 'org') return json({ error: 'Unauthorized' }, 401);
+    let body; try { body = await request.json(); } catch (e) { return json({ error: 'Bad request' }, 400); }
+    const name = (body.name || '').trim();
+    const email = (body.email || '').toLowerCase().trim();
+    const pass = body.password || '';
+    const role = ['admin','editor','viewer'].includes(body.role) ? body.role : 'editor';
+    if (!name || !email || !pass) return json({ error: 'missing_fields' }, 400);
+    try {
+      await db.prepare('CREATE TABLE IF NOT EXISTS org_members (id TEXT PRIMARY KEY, org_id TEXT NOT NULL, name TEXT NOT NULL, email TEXT NOT NULL, password_hash TEXT NOT NULL, role TEXT NOT NULL DEFAULT "editor", created_at INTEGER NOT NULL DEFAULT (unixepoch()))').run();
+      // Check email unique across orgs + org_members
+      const existOrg = await db.prepare('SELECT id FROM orgs WHERE email=?').bind(email).first();
+      const existMem = await db.prepare('SELECT id FROM org_members WHERE email=?').bind(email).first();
+      if (existOrg || existMem) return json({ error: 'email_taken' }, 409);
+      const id = 'mem_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+      await db.prepare('INSERT INTO org_members (id,org_id,name,email,password_hash,role) VALUES (?,?,?,?,?,?)').bind(id, orgMe.id, name, email, djb2(pass), role).run();
+      return json({ ok: true, id, name, email, role }, 201);
+    } catch (e) { return json({ error: 'db_error', detail: e.message }, 500); }
+  }
+
+  /* ─── DELETE /api/org/members/:id ─── remove team member */
+  const orgMemDelMatch = path.match(/^\/org\/members\/([^/]+)$/);
+  if (orgMemDelMatch && method === 'DELETE') {
+    if (!orgMe || orgMe.kind !== 'org') return json({ error: 'Unauthorized' }, 401);
+    const memId = orgMemDelMatch[1];
+    try {
+      await db.prepare('DELETE FROM org_members WHERE id=? AND org_id=?').bind(memId, orgMe.id).run();
+      return json({ ok: true });
+    } catch (e) { return json({ error: 'db_error', detail: e.message }, 500); }
+  }
+
+  /* ─── POST /api/org/change-password ─── */
+  if (path === '/org/change-password' && method === 'POST') {
+    if (!orgMe || orgMe.kind !== 'org') return json({ error: 'Unauthorized' }, 401);
+    let body; try { body = await request.json(); } catch (e) { return json({ error: 'Bad request' }, 400); }
+    const oldPass = body.old_password || '';
+    const newPass = body.new_password || '';
+    if (!oldPass || !newPass) return json({ error: 'missing_fields' }, 400);
+    if (newPass.length < 6) return json({ error: 'password_too_short' }, 400);
+    const orgRow = await db.prepare('SELECT password_hash FROM orgs WHERE id=?').bind(orgMe.id).first();
+    if (!orgRow || orgRow.password_hash !== djb2(oldPass)) return json({ error: 'wrong_password' }, 401);
+    await db.prepare('UPDATE orgs SET password_hash=? WHERE id=?').bind(djb2(newPass), orgMe.id).run();
+    return json({ ok: true });
   }
 
   /* ─── GET /api/org/website ─── get org's website config */
@@ -326,11 +401,17 @@ export async function onRequest(context) {
     return json({ ok: true, id }, 201);
   }
 
-  /* ─── CRM helper: verify org has CRM enabled ─── */
+  /* ─── CRM helper: verify org has CRM enabled + ensure tables exist ─── */
   async function crmGuard() {
     if (!orgMe || orgMe.kind !== 'org') return false;
-    // Ensure crm_enabled column exists (lazy migration, no-op if already present)
-    try { await db.prepare('ALTER TABLE orgs ADD COLUMN crm_enabled INTEGER NOT NULL DEFAULT 0').run(); } catch (_) {}
+    const crmMigrations = [
+      'ALTER TABLE orgs ADD COLUMN crm_enabled INTEGER NOT NULL DEFAULT 0',
+      'CREATE TABLE IF NOT EXISTS beneficiaries (id TEXT PRIMARY KEY, org_id TEXT NOT NULL, name TEXT NOT NULL, id_number TEXT NOT NULL DEFAULT "", dob TEXT NOT NULL DEFAULT "", gender TEXT NOT NULL DEFAULT "male", phone TEXT NOT NULL DEFAULT "", phone2 TEXT NOT NULL DEFAULT "", email TEXT NOT NULL DEFAULT "", city TEXT NOT NULL DEFAULT "", district TEXT NOT NULL DEFAULT "", address TEXT NOT NULL DEFAULT "", marital_status TEXT NOT NULL DEFAULT "", dependents INTEGER NOT NULL DEFAULT 0, housing_type TEXT NOT NULL DEFAULT "", income REAL NOT NULL DEFAULT 0, employment_status TEXT NOT NULL DEFAULT "", category TEXT NOT NULL DEFAULT "needy", status TEXT NOT NULL DEFAULT "active", notes TEXT NOT NULL DEFAULT "", created_at INTEGER NOT NULL DEFAULT (unixepoch()), updated_at INTEGER NOT NULL DEFAULT (unixepoch()))',
+      'CREATE TABLE IF NOT EXISTS crm_requests (id TEXT PRIMARY KEY, org_id TEXT NOT NULL, beneficiary_id TEXT NOT NULL, service_type TEXT NOT NULL DEFAULT "other", title TEXT NOT NULL DEFAULT "", description TEXT NOT NULL DEFAULT "", amount REAL NOT NULL DEFAULT 0, status TEXT NOT NULL DEFAULT "pending", priority TEXT NOT NULL DEFAULT "normal", assigned_to TEXT NOT NULL DEFAULT "", due_date TEXT NOT NULL DEFAULT "", resolution TEXT NOT NULL DEFAULT "", created_at INTEGER NOT NULL DEFAULT (unixepoch()), updated_at INTEGER NOT NULL DEFAULT (unixepoch()))',
+      'CREATE TABLE IF NOT EXISTS crm_aids (id TEXT PRIMARY KEY, org_id TEXT NOT NULL, beneficiary_id TEXT NOT NULL, request_id TEXT NOT NULL DEFAULT "", aid_type TEXT NOT NULL DEFAULT "financial", amount REAL NOT NULL DEFAULT 0, items TEXT NOT NULL DEFAULT "[]", provided_at TEXT NOT NULL DEFAULT "", notes TEXT NOT NULL DEFAULT "", created_by TEXT NOT NULL DEFAULT "", created_at INTEGER NOT NULL DEFAULT (unixepoch()))',
+      'CREATE TABLE IF NOT EXISTS crm_notes (id TEXT PRIMARY KEY, org_id TEXT NOT NULL, beneficiary_id TEXT NOT NULL, request_id TEXT NOT NULL DEFAULT "", type TEXT NOT NULL DEFAULT "note", content TEXT NOT NULL DEFAULT "", created_by TEXT NOT NULL DEFAULT "", created_at INTEGER NOT NULL DEFAULT (unixepoch()))'
+    ];
+    for (const sql of crmMigrations) { try { await db.prepare(sql).run(); } catch (_) {} }
     try {
       const row = await db.prepare('SELECT crm_enabled FROM orgs WHERE id = ?').bind(orgMe.id).first();
       return !!(row && row.crm_enabled);
@@ -644,7 +725,14 @@ export async function onRequest(context) {
       const clause = org_id ? 'WHERE id = ?' : 'WHERE email = ?';
       await db.prepare('UPDATE orgs SET website_enabled = ? ' + clause).bind(val, org_id || org_email).run();
     } else if (tool === 'crm') {
-      try { await db.prepare('ALTER TABLE orgs ADD COLUMN crm_enabled INTEGER NOT NULL DEFAULT 0').run(); } catch (_) {}
+      const crmSetup = [
+        'ALTER TABLE orgs ADD COLUMN crm_enabled INTEGER NOT NULL DEFAULT 0',
+        'CREATE TABLE IF NOT EXISTS beneficiaries (id TEXT PRIMARY KEY, org_id TEXT NOT NULL, name TEXT NOT NULL, id_number TEXT NOT NULL DEFAULT "", dob TEXT NOT NULL DEFAULT "", gender TEXT NOT NULL DEFAULT "male", phone TEXT NOT NULL DEFAULT "", phone2 TEXT NOT NULL DEFAULT "", email TEXT NOT NULL DEFAULT "", city TEXT NOT NULL DEFAULT "", district TEXT NOT NULL DEFAULT "", address TEXT NOT NULL DEFAULT "", marital_status TEXT NOT NULL DEFAULT "", dependents INTEGER NOT NULL DEFAULT 0, housing_type TEXT NOT NULL DEFAULT "", income REAL NOT NULL DEFAULT 0, employment_status TEXT NOT NULL DEFAULT "", category TEXT NOT NULL DEFAULT "needy", status TEXT NOT NULL DEFAULT "active", notes TEXT NOT NULL DEFAULT "", created_at INTEGER NOT NULL DEFAULT (unixepoch()), updated_at INTEGER NOT NULL DEFAULT (unixepoch()))',
+        'CREATE TABLE IF NOT EXISTS crm_requests (id TEXT PRIMARY KEY, org_id TEXT NOT NULL, beneficiary_id TEXT NOT NULL, service_type TEXT NOT NULL DEFAULT "other", title TEXT NOT NULL DEFAULT "", description TEXT NOT NULL DEFAULT "", amount REAL NOT NULL DEFAULT 0, status TEXT NOT NULL DEFAULT "pending", priority TEXT NOT NULL DEFAULT "normal", assigned_to TEXT NOT NULL DEFAULT "", due_date TEXT NOT NULL DEFAULT "", resolution TEXT NOT NULL DEFAULT "", created_at INTEGER NOT NULL DEFAULT (unixepoch()), updated_at INTEGER NOT NULL DEFAULT (unixepoch()))',
+        'CREATE TABLE IF NOT EXISTS crm_aids (id TEXT PRIMARY KEY, org_id TEXT NOT NULL, beneficiary_id TEXT NOT NULL, request_id TEXT NOT NULL DEFAULT "", aid_type TEXT NOT NULL DEFAULT "financial", amount REAL NOT NULL DEFAULT 0, items TEXT NOT NULL DEFAULT "[]", provided_at TEXT NOT NULL DEFAULT "", notes TEXT NOT NULL DEFAULT "", created_by TEXT NOT NULL DEFAULT "", created_at INTEGER NOT NULL DEFAULT (unixepoch()))',
+        'CREATE TABLE IF NOT EXISTS crm_notes (id TEXT PRIMARY KEY, org_id TEXT NOT NULL, beneficiary_id TEXT NOT NULL, request_id TEXT NOT NULL DEFAULT "", type TEXT NOT NULL DEFAULT "note", content TEXT NOT NULL DEFAULT "", created_by TEXT NOT NULL DEFAULT "", created_at INTEGER NOT NULL DEFAULT (unixepoch()))'
+      ];
+      for (const sql of crmSetup) { try { await db.prepare(sql).run(); } catch (_) {} }
       const clause = org_id ? 'WHERE id = ?' : 'WHERE email = ?';
       await db.prepare('UPDATE orgs SET crm_enabled = ? ' + clause).bind(val, org_id || org_email).run();
     } else {
