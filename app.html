@@ -6113,6 +6113,38 @@ Pages._pfSyncProjectFee = function(projId, projName) {
   UI.toast('تم عكس أتعاب المنصة في مالية المنصة', 'success');
 };
 
+Pages.pfSyncAllProjects = function() {
+  var projects = DB.getProjects().filter(function(p){
+    return p.status === 'active' || p.status === 'completed';
+  });
+  var pf = DB.getPf();
+  if (!pf.income) pf.income = [];
+  var syncedIds = (pf.income||[]).filter(function(e){ return e.project_id; }).map(function(e){ return e.project_id; });
+  var added = 0;
+  projects.forEach(function(p) {
+    if (syncedIds.indexOf(p.id) >= 0) return;
+    var r = FinCalc.calc(p.id);
+    if (!r || !r.execAmt || r.execAmt <= 0) return;
+    pf.income.push({
+      id: DB.uid(),
+      project_id: p.id,
+      date: (p.created || new Date().toISOString()).slice(0,10),
+      desc: 'أتعاب تنفيذ: ' + (p.name || p.id),
+      category: 'project_fee',
+      amount: r.execAmt,
+      note: 'تم الإضافة تلقائياً عند تفعيل المشروع'
+    });
+    added++;
+  });
+  if (added > 0) {
+    DB.savePf(pf);
+    UI.toast('تمت مزامنة '+added+' مشروع بنجاح', 'success');
+    Pages.renderPfIncome();
+  } else {
+    UI.toast('جميع المشاريع النشطة مُزامَنة بالفعل', 'info');
+  }
+};
+
 Pages.setProjVisibility = function(projId, vis) {
   var projects = DB.getProjects();
   var idx = projects.findIndex(function(p){ return p.id===projId; });
@@ -10856,8 +10888,11 @@ Pages.renderPfEntries = function(type) {
     '<div class="card" style="margin-bottom:var(--space-4)">'+
       '<div class="dash-sec-hdr" style="margin-bottom:var(--space-3)">'+
         '<h3><i data-lucide="'+(isInc?'trending-up':'trending-down')+'"></i>'+(isInc?'الإيرادات':'المصروفات')+'</h3>'+
-        '<button class="btn btn-primary btn-sm" onclick="Pages.openAddPfEntry(\''+type+'\')">'+
-          '<i data-lucide="plus"></i>إضافة '+(isInc?'إيراد':'مصروف')+'</button>'+
+        '<div style="display:flex;gap:8px">'+
+          (isInc?'<button class="btn btn-sm btn-ghost" onclick="Pages.pfSyncAllProjects()" title="استيراد أتعاب المشاريع النشطة"><i data-lucide="refresh-cw"></i>مزامنة المشاريع</button>':'')+
+          '<button class="btn btn-primary btn-sm" onclick="Pages.openAddPfEntry(\''+type+'\')">'+
+            '<i data-lucide="plus"></i>إضافة '+(isInc?'إيراد':'مصروف')+'</button>'+
+        '</div>'+
       '</div>'+
       (catCards?'<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:var(--space-3)">'+catCards+'</div>':'')+
       '<div class="wf-total" style="margin-bottom:var(--space-3)">'+
