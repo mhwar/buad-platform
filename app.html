@@ -1013,7 +1013,7 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
 .empty-state p{font-size:var(--font-xs);color:var(--text-muted);max-width:320px;margin:0 auto}
 
 /* ── Client cards grid (v2) ── */
-.client-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:var(--space-4)}
+.client-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:var(--space-4)}
 .client-card{
   background:var(--bg-elevated);border:1px solid var(--border);
   border-radius:var(--radius-lg);padding:var(--space-5);
@@ -1095,21 +1095,22 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
 }
 
 /* ── Clients redesign ── */
-.client-card{background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;cursor:pointer;transition:box-shadow .15s,border-color .15s;display:flex;flex-direction:column}
-.client-card:hover{box-shadow:var(--shadow-md);border-color:var(--neutral-300)}
-.client-card-logo-band{height:88px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,oklch(0.94 0.04 275) 0%,oklch(0.97 0.02 250) 100%);position:relative;overflow:hidden;flex-shrink:0}
-.client-card-logo-band img{max-height:60px;max-width:80%;object-fit:contain;filter:drop-shadow(0 1px 3px rgba(0,0,0,.12))}
-.client-card-logo-band .cc-avatar{width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800;color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.15)}
-.client-card-body{padding:14px 16px;flex:1;display:flex;flex-direction:column;gap:6px}
-.client-card-name{font-size:var(--font-md);font-weight:700;color:var(--fg-1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.client-card-type{font-size:11px;font-weight:600;color:var(--fg-3);background:var(--neutral-100);padding:2px 8px;border-radius:20px;display:inline-block}
-.client-card-stats{display:flex;gap:12px;margin-top:4px;padding-top:8px;border-top:1px solid var(--border-subtle)}
-.client-card-stat{flex:1;text-align:center}
-.client-card-stat-val{font-size:15px;font-weight:800;color:var(--fg-1);font-family:var(--font-mono)}
-.client-card-stat-lbl{font-size:10px;color:var(--fg-4);margin-top:1px}
-.client-card-meta-row{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--fg-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.client-card-meta-row [data-lucide]{width:12px;height:12px;flex-shrink:0;opacity:.6}
-.client-card-actions{display:flex;gap:6px;padding:10px 16px;border-top:1px solid var(--border-subtle);background:var(--neutral-50)}
+.client-card{background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;cursor:pointer;transition:box-shadow .15s,border-color .15s,transform .15s;display:flex;flex-direction:column}
+.client-card:hover{box-shadow:var(--shadow-md);border-color:var(--neutral-300);transform:translateY(-1px)}
+.client-card-header{padding:14px 16px 12px;display:flex;align-items:flex-start;gap:12px}
+.client-card-avatar{width:52px;height:52px;border-radius:12px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800;color:#fff;overflow:hidden;box-shadow:0 2px 6px rgba(0,0,0,.12);background:var(--neutral-200)}
+.client-card-avatar img{width:100%;height:100%;object-fit:contain;padding:4px}
+.client-card-info{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.client-card-name{font-size:var(--font-md);font-weight:700;color:var(--fg-1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3}
+.client-card-type{font-size:11px;font-weight:600;color:var(--fg-3);background:var(--neutral-100);padding:2px 8px;border-radius:20px;display:inline-block;margin-top:2px}
+.client-card-meta-row{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--fg-4);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
+.client-card-meta-row [data-lucide]{width:11px;height:11px;flex-shrink:0;opacity:.55}
+.client-card-stats{display:flex;gap:0;border-top:1px solid var(--border-subtle)}
+.client-card-stat{flex:1;text-align:center;padding:8px 4px}
+.client-card-stat+.client-card-stat{border-right:1px solid var(--border-subtle)}
+.client-card-stat-val{font-size:14px;font-weight:800;color:var(--fg-1);font-family:var(--font-mono);line-height:1}
+.client-card-stat-lbl{font-size:10px;color:var(--fg-4);margin-top:2px}
+.client-card-actions{display:flex;gap:6px;padding:8px 12px;border-top:1px solid var(--border-subtle);background:var(--neutral-50)}
 /* ── Projects redesign ── */
 .proj-card-v2{background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;cursor:pointer;transition:box-shadow .15s,border-color .15s;display:flex;flex-direction:column}
 .proj-card-v2:hover{box-shadow:var(--shadow-md);border-color:var(--neutral-300)}
@@ -1167,7 +1168,7 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
   width:64px;height:64px;flex-shrink:0;border-radius:var(--radius-lg);
   background:var(--iris-500);color:#fff;font-weight:800;font-size:var(--font-2xl);
   display:flex;align-items:center;justify-content:center;
-  box-shadow:0 2px 10px oklch(0.52 0.22 275 / 0.22);
+  box-shadow:0 2px 10px oklch(0.52 0.22 275 / 0.22);overflow:hidden;
 }
 .client-hero-info{flex:1;min-width:0}
 .client-hero-name{font-size:var(--font-2xl);font-weight:700;color:var(--fg-1);line-height:var(--lh-tight);letter-spacing:-.015em;margin-bottom:var(--space-1_5)}
@@ -3775,39 +3776,37 @@ Pages.render_clients = function(opts) {
           return s + (Number(r && r.grossTotal)||0);
         }, 0);
         var color = avatarColor(cl.name);
-        var logoHtml = cl.logo ?
-          '<img src="'+cl.logo+'" alt="">' :
-          '<div class="cc-avatar" style="background:'+color+'">'+UI.escHtml((cl.name||'?')[0])+'</div>';
+        var avatarHtml = cl.logo ?
+          '<div class="client-card-avatar"><img src="'+cl.logo+'" alt=""></div>' :
+          '<div class="client-card-avatar" style="background:'+color+'">'+UI.escHtml((cl.name||'?')[0])+'</div>';
+        var valStr = totalVal>0 ? UI.fmt(totalVal) : '—';
         return '<div class="client-card" onclick="Nav.go(\'client\',{clientId:\''+cl.id+'\'})">'+
-          '<div class="client-card-logo-band">'+logoHtml+'</div>'+
-          '<div class="client-card-body">'+
-            '<div style="display:flex;align-items:center;gap:8px;justify-content:space-between">'+
-              '<div class="client-card-name">'+UI.escHtml(cl.name)+'</div>'+
-              '<span class="client-card-type">'+( typeMap[cl.type]||cl.type||'')+'</span>'+
+          '<div class="client-card-header">'+
+            avatarHtml+
+            '<div class="client-card-info">'+
+              '<div class="client-card-name" title="'+UI.escHtml(cl.name)+'">'+UI.escHtml(cl.name)+'</div>'+
+              (typeMap[cl.type]||cl.type ? '<span class="client-card-type">'+(typeMap[cl.type]||cl.type||'')+'</span>' : '')+
+              (cl.city  ? '<div class="client-card-meta-row"><i data-lucide="map-pin"></i>'+UI.escHtml(cl.city)+'</div>' : '')+
+              (cl.email ? '<div class="client-card-meta-row"><i data-lucide="mail"></i>'+UI.escHtml(cl.email)+'</div>' : '')+
+              (cl.phone ? '<div class="client-card-meta-row"><i data-lucide="phone"></i>'+UI.escHtml(cl.phone)+'</div>' : '')+
             '</div>'+
-            (cl.city||cl.phone||cl.email ?
-              '<div style="display:flex;flex-direction:column;gap:3px">'+
-                (cl.city  ? '<div class="client-card-meta-row"><i data-lucide="map-pin"></i>'+UI.escHtml(cl.city)+'</div>' : '')+
-                (cl.email ? '<div class="client-card-meta-row"><i data-lucide="mail"></i>'+UI.escHtml(cl.email)+'</div>' : '')+
-                (cl.phone ? '<div class="client-card-meta-row"><i data-lucide="phone"></i>'+UI.escHtml(cl.phone)+'</div>' : '')+
-              '</div>' : '')+
-            '<div class="client-card-stats">'+
-              '<div class="client-card-stat">'+
-                '<div class="client-card-stat-val">'+projs.length+'</div>'+
-                '<div class="client-card-stat-lbl">المشاريع</div>'+
-              '</div>'+
-              '<div class="client-card-stat" style="border-right:1px solid var(--border-subtle);border-left:1px solid var(--border-subtle)">'+
-                '<div class="client-card-stat-val" style="color:var(--success-600)">'+active+'</div>'+
-                '<div class="client-card-stat-lbl">نشط</div>'+
-              '</div>'+
-              '<div class="client-card-stat">'+
-                '<div class="client-card-stat-val" style="font-size:12px">'+UI.fmt(totalVal)+'</div>'+
-                '<div class="client-card-stat-lbl">ر.س</div>'+
-              '</div>'+
+          '</div>'+
+          '<div class="client-card-stats">'+
+            '<div class="client-card-stat">'+
+              '<div class="client-card-stat-val">'+projs.length+'</div>'+
+              '<div class="client-card-stat-lbl">مشاريع</div>'+
+            '</div>'+
+            '<div class="client-card-stat">'+
+              '<div class="client-card-stat-val" style="color:var(--success-600)">'+active+'</div>'+
+              '<div class="client-card-stat-lbl">نشط</div>'+
+            '</div>'+
+            '<div class="client-card-stat">'+
+              '<div class="client-card-stat-val" style="font-size:11px;color:var(--iris-600)">'+valStr+'</div>'+
+              '<div class="client-card-stat-lbl">قيمة العقود</div>'+
             '</div>'+
           '</div>'+
           '<div class="client-card-actions" onclick="event.stopPropagation()">'+
-            '<button class="btn btn-sm btn-primary" style="flex:1" onclick="Nav.go(\'client\',{clientId:\''+cl.id+'\'})"><i data-lucide="folder-open"></i>الملف</button>'+
+            '<button class="btn btn-sm btn-primary" style="flex:1" onclick="Nav.go(\'client\',{clientId:\''+cl.id+'\'})"><i data-lucide="folder-open"></i>فتح الملف</button>'+
             '<button class="btn btn-sm btn-ghost" onclick="Pages.addClientModal(\''+cl.id+'\')" title="تعديل"><i data-lucide="pencil"></i></button>'+
             '<button class="btn btn-sm btn-ghost" style="color:var(--danger-600)" onclick="Pages.deleteClient(\''+cl.id+'\')" title="حذف"><i data-lucide="trash-2"></i></button>'+
           '</div>'+
@@ -4028,8 +4027,8 @@ Pages.render_client = function(params) {
     '<div class="client-hero">' +
       '<div class="client-hero-band">' +
         (cl.logo ?
-          '<div class="client-hero-avatar" style="background:var(--neutral-100);padding:4px">'+
-            '<img src="'+cl.logo+'" style="height:56px;max-width:140px;object-fit:contain;border-radius:6px">'+
+          '<div class="client-hero-avatar" style="background:var(--neutral-50);border:1px solid var(--border-subtle);overflow:hidden">'+
+            '<img src="'+cl.logo+'" style="width:100%;height:100%;object-fit:contain;padding:8px;box-sizing:border-box">'+
           '</div>' :
           '<div class="client-hero-avatar">'+UI.escHtml(initial)+'</div>') +
         '<div class="client-hero-info">' +
@@ -4346,13 +4345,17 @@ Pages.render_projects = function(opts) {
                 '</div>'+
               '</div>'+
               '<div class="proj-card-v2-progress"><div class="proj-card-v2-progress-fill" style="width:'+expPct+'%;background:'+(expPct>90?'var(--danger-400)':expPct>60?'var(--warning-400)':'var(--success-400)')+'"></div></div>'
-            : '')+
+            :
+              '<div style="padding:8px 0 4px;display:flex;align-items:center;gap:6px;font-size:11px;color:var(--fg-4)">'+
+                '<i data-lucide="circle-dashed" style="width:13px;height:13px;opacity:.5"></i>'+
+                'لم يُضَف عقد بعد'+
+              '</div>'
+            )+
           '</div>'+
           '<div class="proj-card-v2-actions" onclick="event.stopPropagation()">'+
             '<button class="btn btn-sm btn-primary" style="flex:1" onclick="Nav.go(\'fin\',{projId:\''+p.id+'\'})"><i data-lucide="folder-open"></i>الملف المالي</button>'+
             '<button class="btn btn-sm btn-ghost" onclick="Pages.toggleProjKebab(\''+p.id+'\',event)" title="المزيد"><i data-lucide="more-horizontal"></i></button>'+
           '</div>'+
-          Pages._projKebabHtml(p)+
         '</div>';
       }).join('')+
     '</div>';
