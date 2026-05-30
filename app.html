@@ -2245,6 +2245,10 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
         <span class="sb-label">الموارد والأدلة</span>
       </a>
       <div class="sb-section-label">الحساب</div>
+      <a class="sb-item" id="nav-pf" onclick="Nav.go('pf')">
+        <span class="sb-icon"><i data-lucide="banknote"></i></span>
+        <span class="sb-label">مالية المنصة</span>
+      </a>
       <a class="sb-item" id="nav-settings" onclick="Nav.go('settings')">
         <span class="sb-icon"><i data-lucide="settings-2"></i></span>
         <span class="sb-label">الإعدادات</span>
@@ -2296,6 +2300,7 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
     <div id="pg-contract" class="page contract-editor-page"></div>
     <div id="pg-templates" class="page"></div>
     <div id="pg-template-editor" class="page contract-editor-page"></div>
+    <div id="pg-pf"       class="page"></div>
     <div id="pg-website"  class="page"></div>
     <div id="pg-orgs"     class="page"></div>
     <div id="pg-resources" class="page"></div>
@@ -2366,6 +2371,17 @@ DB.saveSettings = function(upd) {
   DB._scheduleSave();
 };
 
+DB._PF_KEY = 'buad2_pf';
+DB.getPf = function() {
+  try { return JSON.parse(localStorage.getItem(DB._PF_KEY)||'null') ||
+    {income:[],expenses:[],partners:[],distributions:[]}; }
+  catch(e){ return {income:[],expenses:[],partners:[],distributions:[]}; }
+};
+DB.savePf = function(data) {
+  localStorage.setItem(DB._PF_KEY, JSON.stringify(data));
+  DB._scheduleSave();
+};
+
 /* ── API sync layer ──────────────────────────────────────────────────── */
 DB._token    = null;  // JWT set after login
 DB._saveTimer = null;
@@ -2393,6 +2409,7 @@ DB._buildWorkspace = function() {
   // Don't send users/passwords to workspace
   delete ws.settings.users;
   DB.getProjects().forEach(function(p) { ws.fin[p.id] = DB.getFin(p.id); });
+  ws.pf = DB.getPf();
   return ws;
 };
 
@@ -2428,6 +2445,7 @@ DB._pullFromServer = function() {
           localStorage.setItem('buad2_fin_' + pid, JSON.stringify(ws.fin[pid]));
         });
       }
+      if (ws.pf) localStorage.setItem(DB._PF_KEY, JSON.stringify(ws.pf));
       return true;
     })
     .catch(function(e) { console.warn('Sync pull failed:', e); return false; });
@@ -2905,6 +2923,7 @@ var Nav = {
       if (typeof lucide !== 'undefined') lucide.createIcons({rootElement: bc});
       return;
     }
+    if (page==='pf')        { bc.innerHTML = iconHtml('banknote')+'<span class="bc-page">مالية المنصة</span>'; if (typeof lucide !== 'undefined') lucide.createIcons({rootElement: bc}); return; }
     if (page==='templates') { bc.innerHTML = iconHtml('layout-template')+'<span class="bc-page">النماذج</span>'; if (typeof lucide !== 'undefined') lucide.createIcons({rootElement: bc}); return; }
     if (page==='template-editor') {
       var tid = params && params.templateId;
@@ -10577,6 +10596,613 @@ Pages.saveSiteData = function(){
     if (Nav._cur==='website') Pages.render_website({_loaded:true});
   });
 };
+
+/* ══════════════════════════════════════════════════════════════
+   PLATFORM FINANCE — مالية المنصة
+   ══════════════════════════════════════════════════════════════ */
+
+Pages._pfCats = {
+  income:   {subscription:'رسوم اشتراك', setup:'رسوم إعداد وتشغيل', consulting:'خدمات استشارية', commission:'عمولات', other:'أخرى'},
+  expenses: {hosting:'استضافة وبنية تحتية', marketing:'تسويق وإعلان', payroll:'رواتب وأجور', tools:'خدمات وأدوات', legal:'قانونية وإدارية', other:'أخرى'}
+};
+
+Pages._pfPeriodRanges = function(type) {
+  var now = new Date();
+  var y = now.getFullYear();
+  var m = now.getMonth();
+  var q = Math.floor(m/3);
+  var map = {
+    q1: [y+'-01-01', y+'-03-31'],
+    q2: [y+'-04-01', y+'-06-30'],
+    q3: [y+'-07-01', y+'-09-30'],
+    q4: [y+'-10-01', y+'-12-31'],
+    annual: [y+'-01-01', y+'-12-31'],
+    quarter: [[y+'-01-01',y+'-03-31'],[y+'-04-01',y+'-06-30'],[y+'-07-01',y+'-09-30'],[y+'-10-01',y+'-12-31']][q]
+  };
+  return map[type] || map.quarter;
+};
+
+Pages._pfCalc = function(pf, from, to) {
+  function inRange(d){ if(!d) return true; var t=d; if(from && t<from) return false; if(to && t>to) return false; return true; }
+  var income = 0, expenses = 0;
+  (pf.income||[]).forEach(function(e){ if(inRange(e.date)) income += Number(e.amount)||0; });
+  (pf.expenses||[]).forEach(function(e){ if(inRange(e.date)) expenses += Number(e.amount)||0; });
+  return { income: income, expenses: expenses, netProfit: income - expenses };
+};
+
+Pages._pfMonthlyChart = function(pf) {
+  var months = [];
+  var now = new Date();
+  for(var i=5; i>=0; i--) {
+    var d = new Date(now.getFullYear(), now.getMonth()-i, 1);
+    var y = d.getFullYear(), m = ('0'+(d.getMonth()+1)).slice(-2);
+    var from = y+'-'+m+'-01';
+    var lastDay = new Date(y, d.getMonth()+1, 0).getDate();
+    var to = y+'-'+m+'-'+('0'+lastDay).slice(-2);
+    var c = Pages._pfCalc(pf, from, to);
+    var labels = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+    months.push({ label: labels[d.getMonth()], income: c.income, expenses: c.expenses });
+  }
+  var maxVal = months.reduce(function(mx,m){ return Math.max(mx, m.income, m.expenses); }, 1);
+  var bars = months.map(function(m) {
+    var iH = Math.round(m.income/maxVal*100);
+    var eH = Math.round(m.expenses/maxVal*100);
+    return '<div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;min-width:0">'+
+      '<div style="display:flex;align-items:flex-end;gap:3px;height:80px">'+
+        '<div title="إيراد '+UI.fmt(m.income)+' ر.س" style="width:12px;border-radius:3px 3px 0 0;background:var(--success-400);height:'+iH+'%;min-height:'+(m.income?2:0)+'px;transition:.3s"></div>'+
+        '<div title="مصروف '+UI.fmt(m.expenses)+' ر.س" style="width:12px;border-radius:3px 3px 0 0;background:var(--danger-300);height:'+eH+'%;min-height:'+(m.expenses?2:0)+'px;transition:.3s"></div>'+
+      '</div>'+
+      '<div style="font-size:10px;color:var(--fg-4);text-align:center;white-space:nowrap">'+m.label+'</div>'+
+    '</div>';
+  }).join('');
+  return '<div class="card" style="margin-bottom:var(--space-4)">'+
+    '<div class="dash-sec-hdr" style="margin-bottom:var(--space-3)"><h3><i data-lucide="bar-chart-2"></i>الإيرادات والمصروفات (٦ أشهر)</h3>'+
+      '<div style="display:flex;gap:12px;align-items:center;font-size:12px;color:var(--fg-3)">'+
+        '<span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:2px;background:var(--success-400);display:inline-block"></span>إيرادات</span>'+
+        '<span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:2px;background:var(--danger-300);display:inline-block"></span>مصروفات</span>'+
+      '</div>'+
+    '</div>'+
+    '<div style="display:flex;align-items:flex-end;gap:6px;padding:0 4px">'+bars+'</div>'+
+  '</div>';
+};
+
+Pages.render_pf = function() {
+  var s = Auth.getSession();
+  var pg = document.getElementById('pg-pf');
+  if (!s || s.role !== 'admin') {
+    pg.innerHTML = '<div style="padding:60px;text-align:center;color:var(--fg-3)"><i data-lucide="lock" style="width:40px;height:40px;margin-bottom:12px;opacity:.3"></i><div>هذه الصفحة للمديرين فقط</div></div>';
+    if (typeof lucide !== 'undefined') lucide.createIcons({rootElement: pg});
+    return;
+  }
+  Pages._pfTab = Pages._pfTab || 'overview';
+  function tab(id, lbl, icon) {
+    return '<button class="hero-tab-pill'+(Pages._pfTab===id?' active':'')+'" onclick="Pages.switchPfTab(\''+id+'\')">'+
+      '<i data-lucide="'+icon+'" style="width:14px;height:14px"></i>'+lbl+'</button>';
+  }
+  pg.innerHTML =
+    '<div class="page-hero">'+
+      '<div class="page-hero-inner">'+
+        '<div class="page-hero-title"><i data-lucide="banknote"></i>مالية المنصة</div>'+
+        '<div class="page-hero-tabs">'+
+          tab('overview','نظرة عامة','layout-dashboard')+
+          tab('income','الإيرادات','trending-up')+
+          tab('expenses','المصروفات','trending-down')+
+          tab('distrib','توزيع الأرباح','users-round')+
+        '</div>'+
+      '</div>'+
+    '</div>'+
+    '<div id="pf-tab-overview" class="tab-content"></div>'+
+    '<div id="pf-tab-income"   class="tab-content"></div>'+
+    '<div id="pf-tab-expenses" class="tab-content"></div>'+
+    '<div id="pf-tab-distrib"  class="tab-content"></div>';
+  if (typeof lucide !== 'undefined') lucide.createIcons({rootElement: pg});
+  Pages.switchPfTab(Pages._pfTab);
+};
+
+Pages.switchPfTab = function(tab) {
+  Pages._pfTab = tab;
+  document.querySelectorAll('#pg-pf .hero-tab-pill').forEach(function(b) {
+    var match = (tab==='overview'&&b.textContent.indexOf('نظرة عامة')>=0) ||
+                (tab==='income'&&b.textContent.indexOf('الإيرادات')>=0) ||
+                (tab==='expenses'&&b.textContent.indexOf('المصروفات')>=0) ||
+                (tab==='distrib'&&b.textContent.indexOf('توزيع')>=0);
+    b.classList.toggle('active', match);
+  });
+  ['overview','income','expenses','distrib'].forEach(function(t) {
+    var el = document.getElementById('pf-tab-'+t);
+    if (el) el.className = 'tab-content'+(t===tab?' active':'');
+  });
+  if      (tab==='overview') Pages.renderPfOverview();
+  else if (tab==='income')   Pages.renderPfIncome();
+  else if (tab==='expenses') Pages.renderPfExpenses();
+  else                       Pages.renderPfDistrib();
+};
+
+Pages.renderPfOverview = function() {
+  var el = document.getElementById('pf-tab-overview'); if (!el) return;
+  var pf = DB.getPf();
+  var range = Pages._pfPeriodRanges('quarter');
+  var from = range[0], to = range[1];
+  var c = Pages._pfCalc(pf, from, to);
+  var distTotal = (pf.distributions||[]).filter(function(d){return d.status==='completed';})
+    .reduce(function(s,d){ return s+(Number(d.distributed_amount)||0); },0);
+
+  // KPI cards
+  var kpis = '<div class="kpi-grid" style="margin-bottom:var(--space-5)">'+
+    '<div class="kpi-card"><div class="kpi-card-accent" style="background:var(--success-500)"></div>'+
+      '<div class="kpi-card-icon" style="background:var(--success-50);color:var(--success-600)"><i data-lucide="trending-up"></i></div>'+
+      '<div class="kpi-card-label">إيرادات الربع الحالي</div>'+
+      '<div class="kpi-card-value" style="color:var(--success-700)"><span class="mono">'+UI.fmt(c.income)+'</span></div>'+
+      '<div class="kpi-card-sub">ريال سعودي</div></div>'+
+    '<div class="kpi-card"><div class="kpi-card-accent" style="background:var(--danger-500)"></div>'+
+      '<div class="kpi-card-icon" style="background:var(--danger-50);color:var(--danger-600)"><i data-lucide="trending-down"></i></div>'+
+      '<div class="kpi-card-label">مصروفات الربع الحالي</div>'+
+      '<div class="kpi-card-value" style="color:var(--danger-700)"><span class="mono">'+UI.fmt(c.expenses)+'</span></div>'+
+      '<div class="kpi-card-sub">ريال سعودي</div></div>'+
+    '<div class="kpi-card"><div class="kpi-card-accent" style="background:'+(c.netProfit>=0?'var(--primary-500)':'var(--danger-500)')+'"></div>'+
+      '<div class="kpi-card-icon" style="background:var(--primary-50);color:var(--primary-600)"><i data-lucide="circle-dollar-sign"></i></div>'+
+      '<div class="kpi-card-label">صافي الربح (الربع)</div>'+
+      '<div class="kpi-card-value" style="color:'+(c.netProfit>=0?'var(--primary-700)':'var(--danger-700)')+'"><span class="mono">'+UI.fmt(Math.abs(c.netProfit))+'</span></div>'+
+      '<div class="kpi-card-sub">'+(c.netProfit>=0?'ربح':'خسارة')+'</div></div>'+
+    '<div class="kpi-card"><div class="kpi-card-accent" style="background:var(--accent-500)"></div>'+
+      '<div class="kpi-card-icon" style="background:var(--accent-50);color:var(--accent-600)"><i data-lucide="users-round"></i></div>'+
+      '<div class="kpi-card-label">إجمالي التوزيعات</div>'+
+      '<div class="kpi-card-value" style="color:var(--accent-600)"><span class="mono">'+UI.fmt(distTotal)+'</span></div>'+
+      '<div class="kpi-card-sub">'+(pf.distributions||[]).filter(function(d){return d.status==='completed';}).length+' توزيع مكتمل</div></div>'+
+  '</div>';
+
+  // Recent transactions
+  var all = (pf.income||[]).map(function(e){return Object.assign({},e,{_type:'income'});})
+    .concat((pf.expenses||[]).map(function(e){return Object.assign({},e,{_type:'expense'});}));
+  all.sort(function(a,b){ return (b.date||'').localeCompare(a.date||''); });
+  var recent = all.slice(0,8);
+  var recentHtml = recent.length ?
+    recent.map(function(e) {
+      var catMap = e._type==='income' ? Pages._pfCats.income : Pages._pfCats.expenses;
+      return '<div class="wf-row">'+
+        '<span class="wf-sign" style="color:'+(e._type==='income'?'var(--success-600)':'var(--danger-500)')+'">'+
+          (e._type==='income'?'↑':'↓')+'</span>'+
+        '<span class="wf-lbl">'+UI.escHtml(e.desc||'-')+'<span style="font-size:11px;color:var(--fg-4);margin-right:8px">'+(catMap[e.category]||e.category||'')+'</span></span>'+
+        '<span style="font-size:11px;color:var(--fg-4)">'+UI.escHtml(e.date||'')+'</span>'+
+        '<span class="wf-val" style="color:'+(e._type==='income'?'var(--success-700)':'var(--danger-700)')+'">'+
+          (e._type==='income'?'+':'-')+UI.fmt(Number(e.amount)||0)+' ر.س</span>'+
+      '</div>';
+    }).join('') :
+    '<div style="padding:24px;text-align:center;color:var(--fg-4);font-size:13px">لا توجد معاملات بعد</div>';
+
+  var txCard = '<div class="card" style="margin-bottom:var(--space-4)">'+
+    '<div class="dash-sec-hdr" style="margin-bottom:var(--space-3)"><h3><i data-lucide="receipt"></i>آخر المعاملات</h3>'+
+      '<div style="display:flex;gap:8px">'+
+        '<button class="btn btn-sm btn-ghost" onclick="Pages.switchPfTab(\'income\')"><i data-lucide="plus"></i>إيراد</button>'+
+        '<button class="btn btn-sm btn-ghost" onclick="Pages.switchPfTab(\'expenses\')"><i data-lucide="plus"></i>مصروف</button>'+
+      '</div></div>'+
+    '<div class="wf-table">'+recentHtml+'</div>'+
+  '</div>';
+
+  el.innerHTML = '<div class="page-content">'+kpis+Pages._pfMonthlyChart(pf)+txCard+'</div>';
+  if (typeof lucide !== 'undefined') lucide.createIcons({rootElement: el});
+};
+
+Pages.renderPfEntries = function(type) {
+  var el = document.getElementById('pf-tab-'+type); if (!el) return;
+  var pf = DB.getPf();
+  var entries = (pf[type]||[]).slice().sort(function(a,b){ return (b.date||'').localeCompare(a.date||''); });
+  var cats = Pages._pfCats[type];
+  var isInc = type==='income';
+  var total = entries.reduce(function(s,e){ return s+(Number(e.amount)||0); },0);
+
+  var rows = entries.length ? entries.map(function(e, i) {
+    return '<tr>'+
+      '<td>'+UI.escHtml(e.date||'—')+'</td>'+
+      '<td style="font-weight:600;color:var(--fg-1)">'+UI.escHtml(e.desc||'—')+'</td>'+
+      '<td><span class="badge badge-neutral">'+UI.escHtml(cats[e.category]||e.category||'—')+'</span></td>'+
+      '<td class="mono" style="font-weight:700;color:'+(isInc?'var(--success-700)':'var(--danger-700)')+'">'+
+        (isInc?'+':'-')+UI.fmt(Number(e.amount)||0)+' ر.س</td>'+
+      '<td style="color:var(--fg-3);font-size:12px">'+UI.escHtml(e.note||'')+'</td>'+
+      '<td><button class="btn btn-sm btn-ghost" style="color:var(--danger-500)" onclick="Pages.deletePfEntry(\''+type+'\',\''+e.id+'\')">'+
+        '<i data-lucide="trash-2" style="width:14px;height:14px"></i></button></td>'+
+    '</tr>';
+  }).join('') :
+  '<tr><td colspan="6" style="text-align:center;padding:32px;color:var(--fg-4)">لا توجد بيانات — أضف أول قيد</td></tr>';
+
+  var catSums = {};
+  entries.forEach(function(e){ catSums[e.category]=(catSums[e.category]||0)+(Number(e.amount)||0); });
+  var catCards = Object.keys(catSums).map(function(k) {
+    return '<div style="padding:12px 16px;background:var(--bg-soft);border-radius:8px;min-width:140px">'+
+      '<div style="font-size:11px;color:var(--fg-4);margin-bottom:4px">'+UI.escHtml(cats[k]||k)+'</div>'+
+      '<div class="mono" style="font-weight:700;color:'+(isInc?'var(--success-700)':'var(--danger-700)')+'">'+UI.fmt(catSums[k])+' ر.س</div>'+
+    '</div>';
+  }).join('');
+
+  el.innerHTML = '<div class="page-content">'+
+    '<div class="card" style="margin-bottom:var(--space-4)">'+
+      '<div class="dash-sec-hdr" style="margin-bottom:var(--space-3)">'+
+        '<h3><i data-lucide="'+(isInc?'trending-up':'trending-down')+'"></i>'+(isInc?'الإيرادات':'المصروفات')+'</h3>'+
+        '<button class="btn btn-primary btn-sm" onclick="Pages.openAddPfEntry(\''+type+'\')">'+
+          '<i data-lucide="plus"></i>إضافة '+(isInc?'إيراد':'مصروف')+'</button>'+
+      '</div>'+
+      (catCards?'<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:var(--space-3)">'+catCards+'</div>':'')+
+      '<div class="wf-total" style="margin-bottom:var(--space-3)">'+
+        '<span style="font-weight:700">الإجمالي</span>'+
+        '<span class="mono" style="font-weight:800;color:'+(isInc?'var(--success-700)':'var(--danger-700)')+'">'+
+          (isInc?'+':'-')+UI.fmt(total)+' ر.س</span>'+
+      '</div>'+
+      '<div style="overflow-x:auto"><table class="data-table">'+
+        '<thead><tr><th>التاريخ</th><th>الوصف</th><th>التصنيف</th><th>المبلغ</th><th>ملاحظة</th><th></th></tr></thead>'+
+        '<tbody>'+rows+'</tbody>'+
+      '</table></div>'+
+    '</div>'+
+  '</div>';
+  if (typeof lucide !== 'undefined') lucide.createIcons({rootElement: el});
+};
+
+Pages.renderPfIncome   = function() { Pages.renderPfEntries('income'); };
+Pages.renderPfExpenses = function() { Pages.renderPfEntries('expenses'); };
+
+Pages.openAddPfEntry = function(type) {
+  var cats = Pages._pfCats[type];
+  var isInc = type === 'income';
+  var catOpts = Object.keys(cats).map(function(k){
+    return '<option value="'+k+'">'+cats[k]+'</option>';
+  }).join('');
+  var html = '<div class="modal-header"><h3><i data-lucide="'+(isInc?'trending-up':'trending-down')+'"></i>إضافة '+(isInc?'إيراد':'مصروف')+'</h3><button class="modal-close" onclick="UI.closeModalForce()">×</button></div>'+
+    '<div class="modal-body">'+
+      '<div class="form-group"><label>التاريخ</label><input type="date" id="pf-entry-date" class="form-control" value="'+new Date().toISOString().slice(0,10)+'"></div>'+
+      '<div class="form-group"><label>الوصف</label><input type="text" id="pf-entry-desc" class="form-control" placeholder="وصف القيد"></div>'+
+      '<div class="form-group"><label>التصنيف</label><select id="pf-entry-cat" class="form-control">'+catOpts+'</select></div>'+
+      '<div class="form-group"><label>المبلغ (ر.س)</label><input type="number" id="pf-entry-amount" class="form-control" placeholder="0.00" min="0" step="0.01"></div>'+
+      '<div class="form-group"><label>ملاحظة (اختياري)</label><input type="text" id="pf-entry-note" class="form-control"></div>'+
+    '</div>'+
+    '<div class="modal-footer">'+
+      '<button class="btn btn-ghost" onclick="UI.closeModalForce()">إلغاء</button>'+
+      '<button class="btn btn-primary" onclick="Pages.savePfEntry(\''+type+'\')">حفظ</button>'+
+    '</div>';
+  UI.openModal(html);
+  if (typeof lucide !== 'undefined') lucide.createIcons();
+};
+
+Pages.savePfEntry = function(type) {
+  var date   = (document.getElementById('pf-entry-date')||{}).value||'';
+  var desc   = (document.getElementById('pf-entry-desc')||{}).value||'';
+  var cat    = (document.getElementById('pf-entry-cat')||{}).value||'other';
+  var amount = parseFloat((document.getElementById('pf-entry-amount')||{}).value)||0;
+  var note   = (document.getElementById('pf-entry-note')||{}).value||'';
+  if (!desc || !amount) { UI.toast('أدخل الوصف والمبلغ', 'danger'); return; }
+  var pf = DB.getPf();
+  if (!pf[type]) pf[type] = [];
+  pf[type].push({ id: DB.uid(), date: date, desc: desc, category: cat, amount: amount, note: note });
+  DB.savePf(pf);
+  UI.closeModalForce();
+  UI.toast('تم الحفظ', 'success');
+  Pages.renderPfEntries(type);
+};
+
+Pages.deletePfEntry = function(type, id) {
+  if (!confirm('حذف هذا القيد؟')) return;
+  var pf = DB.getPf();
+  pf[type] = (pf[type]||[]).filter(function(e){ return e.id !== id; });
+  DB.savePf(pf);
+  UI.toast('تم الحذف');
+  Pages.renderPfEntries(type);
+};
+
+Pages.renderPfDistrib = function() {
+  var el = document.getElementById('pf-tab-distrib'); if (!el) return;
+  var pf = DB.getPf();
+  var partners = pf.partners || [];
+  var totalPct = partners.reduce(function(s,p){ return s+(Number(p.share_pct)||0); },0);
+  var pctOk = Math.abs(totalPct-100)<0.01;
+
+  var partnerCards = partners.length ? partners.map(function(p) {
+    return '<div style="display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--bg-soft);border-radius:10px;margin-bottom:8px">'+
+      '<div style="width:40px;height:40px;border-radius:50%;background:var(--primary-500);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:16px;flex-shrink:0">'+
+        UI.escHtml((p.name||'؟').charAt(0))+'</div>'+
+      '<div style="flex:1;min-width:0">'+
+        '<div style="font-weight:700;color:var(--fg-1)">'+UI.escHtml(p.name)+'</div>'+
+        (p.note?'<div style="font-size:12px;color:var(--fg-4)">'+UI.escHtml(p.note)+'</div>':'')+
+      '</div>'+
+      '<div style="background:var(--primary-50);color:var(--primary-700);font-weight:800;font-size:16px;padding:6px 14px;border-radius:8px;font-family:monospace">'+
+        (Number(p.share_pct)||0)+'%</div>'+
+      '<button class="btn btn-sm btn-ghost" onclick="Pages.openManagePartner(\''+p.id+'\')"><i data-lucide="pencil" style="width:14px;height:14px"></i></button>'+
+      '<button class="btn btn-sm btn-ghost" style="color:var(--danger-500)" onclick="Pages.deletePartner(\''+p.id+'\')"><i data-lucide="trash-2" style="width:14px;height:14px"></i></button>'+
+    '</div>';
+  }).join('') :
+  '<div style="padding:20px;text-align:center;color:var(--fg-4);font-size:13px">لا يوجد شركاء — أضف الشريك الأول</div>';
+
+  var pctWarn = (!pctOk && partners.length) ?
+    '<div style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--warning-50);color:var(--warning-700);border-radius:8px;font-size:13px;margin-top:8px">'+
+      '<i data-lucide="alert-triangle" style="width:16px;height:16px;flex-shrink:0"></i>'+
+      'مجموع الحصص = '+totalPct+'٪ — يجب أن يساوي ١٠٠٪ لإنشاء توزيع</div>' : '';
+
+  // Distributions table
+  var dists = (pf.distributions||[]).slice().sort(function(a,b){ return (b.created_at||'').localeCompare(a.created_at||''); });
+  var distRows = dists.length ? dists.map(function(d) {
+    var statusHtml = d.status==='completed' ?
+      '<span class="badge badge-success">مكتمل</span>' :
+      '<span class="badge badge-warning">مسودة</span>';
+    return '<tr>'+
+      '<td style="font-weight:600">'+UI.escHtml(d.period_label||'—')+'</td>'+
+      '<td>'+UI.escHtml((d.created_at||'').slice(0,10))+'</td>'+
+      '<td class="mono">'+UI.fmt(Number(d.gross_income)||0)+' ر.س</td>'+
+      '<td class="mono">'+UI.fmt(Number(d.gross_expenses)||0)+' ر.س</td>'+
+      '<td class="mono" style="font-weight:700;color:'+(Number(d.net_profit)>=0?'var(--success-700)':'var(--danger-700)')+'">'+UI.fmt(Number(d.net_profit)||0)+' ر.س</td>'+
+      '<td class="mono" style="font-weight:700;color:var(--accent-600)">'+UI.fmt(Number(d.distributed_amount)||0)+' ر.س</td>'+
+      '<td>'+statusHtml+'</td>'+
+      '<td><button class="btn btn-sm btn-ghost" onclick="Pages.viewDistrib(\''+d.id+'\')"><i data-lucide="eye" style="width:14px;height:14px"></i></button>'+
+        (d.status==='draft'?'<button class="btn btn-sm btn-ghost" style="color:var(--danger-500)" onclick="Pages.deletePfDistrib(\''+d.id+'\')"><i data-lucide="trash-2" style="width:14px;height:14px"></i></button>':'')+
+      '</td>'+
+    '</tr>';
+  }).join('') :
+  '<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--fg-4)">لا توجد توزيعات — أنشئ أول توزيع</td></tr>';
+
+  el.innerHTML = '<div class="page-content">'+
+    '<div class="card" style="margin-bottom:var(--space-4)">'+
+      '<div class="dash-sec-hdr" style="margin-bottom:var(--space-3)">'+
+        '<h3><i data-lucide="users-round"></i>الشركاء وحصص الملكية</h3>'+
+        '<button class="btn btn-primary btn-sm" onclick="Pages.openManagePartner()"><i data-lucide="plus"></i>إضافة شريك</button>'+
+      '</div>'+
+      partnerCards+pctWarn+
+    '</div>'+
+    '<div class="card">'+
+      '<div class="dash-sec-hdr" style="margin-bottom:var(--space-3)">'+
+        '<h3><i data-lucide="pie-chart"></i>سجل توزيعات الأرباح</h3>'+
+        '<button class="btn btn-primary btn-sm" onclick="Pages.openNewDistrib()" '+(pctOk&&partners.length?'':'disabled')+'>'+
+          '<i data-lucide="plus"></i>توزيع جديد</button>'+
+      '</div>'+
+      '<div style="overflow-x:auto"><table class="data-table">'+
+        '<thead><tr><th>الفترة</th><th>التاريخ</th><th>الإيرادات</th><th>المصروفات</th><th>صافي الربح</th><th>الموزَّع</th><th>الحالة</th><th></th></tr></thead>'+
+        '<tbody>'+distRows+'</tbody>'+
+      '</table></div>'+
+    '</div>'+
+  '</div>';
+  if (typeof lucide !== 'undefined') lucide.createIcons({rootElement: el});
+};
+
+Pages.openManagePartner = function(id) {
+  var pf = DB.getPf();
+  var p = id ? (pf.partners||[]).find(function(x){return x.id===id;}) : null;
+  var html = '<div class="modal-header"><h3><i data-lucide="user-plus"></i>'+(p?'تعديل شريك':'إضافة شريك')+'</h3><button class="modal-close" onclick="UI.closeModalForce()">×</button></div>'+
+    '<div class="modal-body">'+
+      '<input type="hidden" id="pf-partner-id" value="'+(p?p.id:'')+'">'+
+      '<div class="form-group"><label>الاسم</label><input type="text" id="pf-partner-name" class="form-control" value="'+(p?UI.escHtml(p.name||''):'')+'"></div>'+
+      '<div class="form-group"><label>الحصة ٪</label><input type="number" id="pf-partner-pct" class="form-control" value="'+(p?p.share_pct:'')+ '" min="0" max="100" step="0.01" placeholder="مثال: 50"></div>'+
+      '<div class="form-group"><label>ملاحظة (اختياري)</label><input type="text" id="pf-partner-note" class="form-control" value="'+(p?UI.escHtml(p.note||''):'')+'"></div>'+
+    '</div>'+
+    '<div class="modal-footer">'+
+      '<button class="btn btn-ghost" onclick="UI.closeModalForce()">إلغاء</button>'+
+      '<button class="btn btn-primary" onclick="Pages.savePartner()">حفظ</button>'+
+    '</div>';
+  UI.openModal(html);
+  if (typeof lucide !== 'undefined') lucide.createIcons();
+};
+
+Pages.savePartner = function() {
+  var id   = (document.getElementById('pf-partner-id')||{}).value||'';
+  var name = (document.getElementById('pf-partner-name')||{}).value||'';
+  var pct  = parseFloat((document.getElementById('pf-partner-pct')||{}).value)||0;
+  var note = (document.getElementById('pf-partner-note')||{}).value||'';
+  if (!name || !pct) { UI.toast('أدخل الاسم والحصة', 'danger'); return; }
+  var pf = DB.getPf();
+  if (!pf.partners) pf.partners = [];
+  if (id) {
+    var idx = pf.partners.findIndex(function(x){return x.id===id;});
+    if (idx>=0) pf.partners[idx] = {id:id, name:name, share_pct:pct, note:note};
+  } else {
+    pf.partners.push({id:DB.uid(), name:name, share_pct:pct, note:note});
+  }
+  var total = pf.partners.reduce(function(s,p){return s+(Number(p.share_pct)||0);},0);
+  if (total > 100.01) { UI.toast('مجموع الحصص تجاوز ١٠٠٪ (الحالي: '+total.toFixed(1)+'٪)', 'warning'); }
+  DB.savePf(pf);
+  UI.closeModalForce();
+  UI.toast('تم الحفظ', 'success');
+  Pages.renderPfDistrib();
+};
+
+Pages.deletePartner = function(id) {
+  if (!confirm('حذف هذا الشريك؟')) return;
+  var pf = DB.getPf();
+  pf.partners = (pf.partners||[]).filter(function(p){return p.id!==id;});
+  DB.savePf(pf);
+  UI.toast('تم الحذف');
+  Pages.renderPfDistrib();
+};
+
+Pages._pfDistribState = {};
+
+Pages.openNewDistrib = function() {
+  Pages._pfDistribState = { step: 1, from: '', to: '', period_type: 'quarter', period_label: '' };
+  Pages._pfDistribRender();
+};
+
+Pages._pfDistribRender = function() {
+  var st = Pages._pfDistribState;
+  var pf = DB.getPf();
+  var body = '';
+
+  if (st.step === 1) {
+    var periodOpts = [
+      ['q1','الربع الأول (يناير - مارس)'],['q2','الربع الثاني (أبريل - يونيو)'],
+      ['q3','الربع الثالث (يوليو - سبتمبر)'],['q4','الربع الرابع (أكتوبر - ديسمبر)'],
+      ['annual','سنوي (يناير - ديسمبر)'],['custom','مخصص']
+    ].map(function(o){
+      return '<option value="'+o[0]+'"'+(st.period_type===o[0]?' selected':'')+'>'+o[1]+'</option>';
+    }).join('');
+    var range = Pages._pfPeriodRanges(st.period_type==='custom'?'quarter':st.period_type);
+    body = '<div class="form-group"><label>نوع الفترة</label>'+
+      '<select class="form-control" id="pd-type" onchange="Pages._pfPeriodTypeChange()">'+periodOpts+'</select></div>'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">'+
+        '<div class="form-group"><label>من</label><input type="date" id="pd-from" class="form-control" value="'+(st.from||range[0])+'"></div>'+
+        '<div class="form-group"><label>إلى</label><input type="date" id="pd-to" class="form-control" value="'+(st.to||range[1])+'"></div>'+
+      '</div>'+
+      '<div class="form-group"><label>اسم الفترة (يظهر في التقرير)</label>'+
+        '<input type="text" id="pd-label" class="form-control" value="'+UI.escHtml(st.period_label||'')+'" placeholder="مثال: الربع الأول 2025"></div>';
+  } else if (st.step === 2) {
+    var c = Pages._pfCalc(pf, st.from, st.to);
+    body = '<div style="background:var(--bg-soft);border-radius:10px;padding:16px;margin-bottom:var(--space-3)">'+
+      '<div class="wf-table">'+
+        '<div class="wf-row"><span class="wf-lbl">إجمالي الإيرادات</span><span class="wf-val" style="color:var(--success-700)">+'+UI.fmt(c.income)+' ر.س</span></div>'+
+        '<div class="wf-row"><span class="wf-lbl">إجمالي المصروفات</span><span class="wf-val" style="color:var(--danger-700)">−'+UI.fmt(c.expenses)+' ر.س</span></div>'+
+        '<div class="wf-row wf-total"><span class="wf-lbl">صافي الربح</span><span class="wf-val" style="color:'+(c.netProfit>=0?'var(--success-700)':'var(--danger-700)')+'">'+UI.fmt(c.netProfit)+' ر.س</span></div>'+
+      '</div>'+
+    '</div>'+
+    '<div class="form-group"><label>المبلغ المتاح للتوزيع (ر.س)</label>'+
+      '<input type="number" id="pd-amt" class="form-control" value="'+Math.max(0,c.netProfit).toFixed(2)+'" min="0" step="0.01" '+
+        'oninput="Pages._pfDistribUpdateShares()">'+
+      '<div style="font-size:12px;color:var(--fg-4);margin-top:4px">يمكن توزيع أقل من صافي الربح (الباقي يُبقى احتياطياً)</div></div>'+
+    '<div id="pd-shares"></div>';
+    st._income = c.income; st._expenses = c.expenses; st._netProfit = c.netProfit;
+  }
+
+  var html = '<div class="modal-header">'+
+    '<h3><i data-lucide="pie-chart"></i>توزيع جديد'+
+      '<span style="font-size:12px;color:var(--fg-4);font-weight:400;margin-right:8px">الخطوة '+st.step+' من 2</span></h3>'+
+    '<button class="modal-close" onclick="UI.closeModalForce()">×</button></div>'+
+    '<div class="modal-body">'+body+'</div>'+
+    '<div class="modal-footer">'+
+      (st.step>1?'<button class="btn btn-ghost" onclick="Pages._pfDistribState.step--;Pages._pfDistribRender()">السابق</button>':'<button class="btn btn-ghost" onclick="UI.closeModalForce()">إلغاء</button>')+
+      (st.step<2?'<button class="btn btn-primary" onclick="Pages._pfDistribNext()">التالي</button>':
+        '<button class="btn btn-ghost" onclick="Pages.saveDistrib(\'draft\')">حفظ مسودة</button>'+
+        '<button class="btn btn-primary" onclick="Pages.saveDistrib(\'completed\')">تأكيد التوزيع</button>')+
+    '</div>';
+  UI.openModal(html, true);
+  if (typeof lucide !== 'undefined') lucide.createIcons();
+  if (st.step===2) Pages._pfDistribUpdateShares();
+};
+
+Pages._pfPeriodTypeChange = function() {
+  var type = (document.getElementById('pd-type')||{}).value||'quarter';
+  if (type !== 'custom') {
+    var r = Pages._pfPeriodRanges(type);
+    var f = document.getElementById('pd-from');
+    var t = document.getElementById('pd-to');
+    if (f) f.value = r[0];
+    if (t) t.value = r[1];
+  }
+  Pages._pfDistribState.period_type = type;
+};
+
+Pages._pfDistribNext = function() {
+  var st = Pages._pfDistribState;
+  st.from  = (document.getElementById('pd-from')||{}).value||'';
+  st.to    = (document.getElementById('pd-to')||{}).value||'';
+  st.period_type  = (document.getElementById('pd-type')||{}).value||'quarter';
+  st.period_label = (document.getElementById('pd-label')||{}).value||'';
+  if (!st.from || !st.to) { UI.toast('حدد تاريخ البداية والنهاية', 'danger'); return; }
+  if (!st.period_label) {
+    var y = (st.from||'').slice(0,4);
+    var map = {q1:'الربع الأول '+y, q2:'الربع الثاني '+y, q3:'الربع الثالث '+y, q4:'الربع الرابع '+y, annual:'سنة '+y};
+    st.period_label = map[st.period_type] || (st.from+' — '+st.to);
+  }
+  st.step++;
+  Pages._pfDistribRender();
+};
+
+Pages._pfDistribUpdateShares = function() {
+  var amt = parseFloat((document.getElementById('pd-amt')||{}).value)||0;
+  var pf = DB.getPf();
+  var rows = (pf.partners||[]).map(function(p) {
+    var share = Math.round(amt * (Number(p.share_pct)||0) / 100 * 100)/100;
+    return '<div class="wf-row">'+
+      '<span class="wf-lbl">'+UI.escHtml(p.name)+'</span>'+
+      '<span style="font-size:12px;color:var(--fg-4)">'+p.share_pct+'٪</span>'+
+      '<span class="wf-val" style="color:var(--accent-600);font-weight:700"><span class="mono">'+UI.fmt(share)+'</span> ر.س</span>'+
+    '</div>';
+  }).join('');
+  var el = document.getElementById('pd-shares');
+  if (el) {
+    el.innerHTML = '<div style="background:var(--bg-soft);border-radius:10px;padding:14px;margin-top:8px">'+
+      '<div style="font-size:12px;font-weight:700;color:var(--fg-3);margin-bottom:10px">توزيع الحصص</div>'+
+      '<div class="wf-table">'+rows+'</div></div>';
+  }
+};
+
+Pages.saveDistrib = function(status) {
+  var st = Pages._pfDistribState;
+  var amt = parseFloat((document.getElementById('pd-amt')||{}).value)||0;
+  if (status==='completed' && amt<=0) { UI.toast('المبلغ يجب أن يكون أكبر من صفر', 'danger'); return; }
+  var pf = DB.getPf();
+  var entries = (pf.partners||[]).map(function(p) {
+    return { partner_id: p.id, partner_name: p.name, share_pct: p.share_pct,
+      amount: Math.round(amt*(Number(p.share_pct)||0)/100*100)/100 };
+  });
+  var dist = {
+    id: DB.uid(),
+    created_at: new Date().toISOString(),
+    period_type: st.period_type,
+    period_label: st.period_label,
+    from_date: st.from, to_date: st.to,
+    gross_income: st._income||0,
+    gross_expenses: st._expenses||0,
+    net_profit: st._netProfit||0,
+    distributed_amount: amt,
+    entries: entries,
+    status: status
+  };
+  if (!pf.distributions) pf.distributions = [];
+  pf.distributions.push(dist);
+  DB.savePf(pf);
+  UI.closeModalForce();
+  UI.toast(status==='completed'?'تم تأكيد التوزيع':'تم حفظ المسودة', 'success');
+  Pages.renderPfDistrib();
+};
+
+Pages.viewDistrib = function(id) {
+  var pf = DB.getPf();
+  var d = (pf.distributions||[]).find(function(x){return x.id===id;});
+  if (!d) return;
+  var rows = (d.entries||[]).map(function(e) {
+    return '<div class="wf-row">'+
+      '<span class="wf-lbl">'+UI.escHtml(e.partner_name)+'</span>'+
+      '<span style="font-size:12px;color:var(--fg-4)">'+e.share_pct+'٪</span>'+
+      '<span class="wf-val" style="color:var(--accent-600);font-weight:700"><span class="mono">'+UI.fmt(Number(e.amount)||0)+'</span> ر.س</span>'+
+    '</div>';
+  }).join('');
+  var statusHtml = d.status==='completed' ?
+    '<span class="badge badge-success">مكتمل</span>' :
+    '<span class="badge badge-warning">مسودة</span>';
+  var html = '<div class="modal-header"><h3><i data-lucide="pie-chart"></i>'+UI.escHtml(d.period_label||'توزيع')+'</h3>'+
+    '<button class="modal-close" onclick="UI.closeModalForce()">×</button></div>'+
+    '<div class="modal-body">'+
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--space-3)">'+
+        '<span style="color:var(--fg-3);font-size:13px">'+UI.escHtml(d.from_date||'')+'  —  '+UI.escHtml(d.to_date||'')+'</span>'+statusHtml+'</div>'+
+      '<div class="wf-table" style="background:var(--bg-soft);border-radius:10px;padding:12px;margin-bottom:var(--space-3)">'+
+        '<div class="wf-row"><span class="wf-lbl">إجمالي الإيرادات</span><span class="wf-val" style="color:var(--success-700)">'+UI.fmt(d.gross_income)+' ر.س</span></div>'+
+        '<div class="wf-row"><span class="wf-lbl">إجمالي المصروفات</span><span class="wf-val" style="color:var(--danger-700)">'+UI.fmt(d.gross_expenses)+' ر.س</span></div>'+
+        '<div class="wf-row wf-total"><span class="wf-lbl">صافي الربح</span><span class="wf-val">'+UI.fmt(d.net_profit)+' ر.س</span></div>'+
+        '<div class="wf-row wf-total"><span class="wf-lbl">المبلغ الموزَّع</span><span class="wf-val" style="color:var(--accent-600)">'+UI.fmt(d.distributed_amount)+' ر.س</span></div>'+
+      '</div>'+
+      '<div style="font-size:13px;font-weight:700;color:var(--fg-2);margin-bottom:10px">توزيع الحصص</div>'+
+      '<div class="wf-table">'+rows+'</div>'+
+      (d.note?'<div style="margin-top:12px;font-size:13px;color:var(--fg-4)">'+UI.escHtml(d.note)+'</div>':'')+
+    '</div>'+
+    '<div class="modal-footer">'+
+      (d.status==='draft'?'<button class="btn btn-primary" onclick="Pages._pfCompleteDistrib(\''+d.id+'\')">تأكيد التوزيع</button>':'')+
+      '<button class="btn btn-ghost" onclick="UI.closeModalForce()">إغلاق</button>'+
+    '</div>';
+  UI.openModal(html, true);
+  if (typeof lucide !== 'undefined') lucide.createIcons();
+};
+
+Pages._pfCompleteDistrib = function(id) {
+  var pf = DB.getPf();
+  var d = (pf.distributions||[]).find(function(x){return x.id===id;});
+  if (d) { d.status = 'completed'; DB.savePf(pf); UI.toast('تم التأكيد', 'success'); }
+  UI.closeModalForce();
+  Pages.renderPfDistrib();
+};
+
+Pages.deletePfDistrib = function(id) {
+  if (!confirm('حذف هذه المسودة؟')) return;
+  var pf = DB.getPf();
+  pf.distributions = (pf.distributions||[]).filter(function(d){return d.id!==id;});
+  DB.savePf(pf);
+  UI.toast('تم الحذف');
+  Pages.renderPfDistrib();
+};
+
+/* ══════════════════════════════════════════════════════════════
+   END PLATFORM FINANCE
+   ══════════════════════════════════════════════════════════════ */
 
 Pages.render_settings = function(opts) {
   var clients = DB.getClients();
