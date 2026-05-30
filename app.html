@@ -10716,9 +10716,9 @@ Pages._pfPeriodRanges = function(type) {
 };
 
 Pages._pfCalc = function(pf, from, to) {
-  function inRange(d){ if(!d) return true; var t=d; if(from && t<from) return false; if(to && t>to) return false; return true; }
+  function inRange(d){ if(!d) return true; if(from && d<from) return false; if(to && d>to) return false; return true; }
   var income = 0, expenses = 0;
-  (pf.income||[]).forEach(function(e){ if(inRange(e.date)) income += Number(e.amount)||0; });
+  (pf.income||[]).forEach(function(e){ if(inRange(e.payment_date||e.date)) income += Number(e.amount)||0; });
   (pf.expenses||[]).forEach(function(e){ if(inRange(e.date)) expenses += Number(e.amount)||0; });
   return { income: income, expenses: expenses, netProfit: income - expenses };
 };
