@@ -1400,11 +1400,11 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
 }
 .proj-kebab-btn:hover{background:var(--neutral-100);border-color:var(--border-default);color:var(--fg-1)}
 .proj-kebab-menu{
-  position:fixed;
+  position:relative;
   background:var(--surface-1);border:1px solid var(--border-subtle);
   border-radius:var(--radius-md);
   box-shadow:0 8px 24px rgba(0,0,0,.12),0 2px 8px rgba(0,0,0,.06);
-  min-width:230px;z-index:9999;overflow:hidden;padding:5px 0;
+  min-width:250px;overflow:hidden;padding:5px 0;
 }
 .pkm-section{padding:2px 0}
 .pkm-lbl{padding:5px 14px 3px;font-size:10.5px;font-weight:700;color:var(--fg-4);letter-spacing:.4px}
@@ -5977,72 +5977,82 @@ Pages.saveProjectInCtrl = function(projId) {
 /* ─── PROJECT KEBAB MENU ─── */
 Pages._projKebabHtml = function(proj) {
   var pid = proj.id;
+  return '<div class="proj-kebab-wrap">'+
+    '<button class="proj-kebab-btn" onclick="Pages.toggleProjKebab(\''+pid+'\',event)" title="المزيد من الخيارات" style="font-size:20px;font-weight:700;letter-spacing:0;line-height:1">⋮</button>'+
+  '</div>';
+};
+
+Pages._projKebabMenuHtml = function(projId) {
+  var projects = DB.getProjects();
+  var proj = projects.find(function(p){ return p.id===projId; })||{};
   var st  = proj.status || 'active';
   var vis = proj.visibility || 'team';
   function si(s, lbl, icon) {
-    return '<button class="pkm-item'+(st===s?' pkm-active':'')+'" onclick="Pages.setProjStatus(\''+pid+'\',\''+s+'\')"><i data-lucide="'+icon+'"></i>'+lbl+'</button>';
+    return '<button class="pkm-item'+(st===s?' pkm-active':'')+'" onclick="Pages.setProjStatus(\''+projId+'\',\''+s+'\')"><i data-lucide="'+icon+'"></i>'+lbl+'</button>';
   }
   function vi(v, lbl, icon) {
-    return '<button class="pkm-item'+(vis===v?' pkm-active':'')+'" onclick="Pages.setProjVisibility(\''+pid+'\',\''+v+'\')"><i data-lucide="'+icon+'"></i>'+lbl+'</button>';
+    return '<button class="pkm-item'+(vis===v?' pkm-active':'')+'" onclick="Pages.setProjVisibility(\''+projId+'\',\''+v+'\')"><i data-lucide="'+icon+'"></i>'+lbl+'</button>';
   }
-  return '<div class="proj-kebab-wrap">'+
-    '<button class="proj-kebab-btn" onclick="Pages.toggleProjKebab(\''+pid+'\',event)" title="المزيد من الخيارات" style="font-size:20px;font-weight:700;letter-spacing:0;line-height:1">⋮</button>'+
-    '<div class="proj-kebab-menu" id="pkm-'+pid+'" style="display:none">'+
-      '<div class="pkm-section">'+
-        '<div class="pkm-lbl">حالة التنفيذ</div>'+
-        si('draft',     'مسودة',         'file-pen-line')+
-        si('active',    'جاري التنفيذ', 'play-circle')+
-        si('completed', 'مكتمل',        'check-circle-2')+
-        si('paused',    'متوقف مؤقتاً', 'pause-circle')+
-        si('cancelled', 'ملغي',         'x-circle')+
-      '</div>'+
-      '<div class="pkm-sep"></div>'+
-      '<div class="pkm-section">'+
-        '<div class="pkm-lbl">الظهور</div>'+
-        vi('team',    'مرئي لكل المستخدمين','users')+
-        vi('private', 'خاص — أنا فقط',      'lock')+
-      '</div>'+
-      '<div class="pkm-sep"></div>'+
-      '<div class="pkm-section">'+
-        '<button class="pkm-item" onclick="Pages.openProjectDatesModal(\''+pid+'\')"><i data-lucide="calendar-days"></i>بيانات وتواريخ المشروع</button>'+
-        '<button class="pkm-item" onclick="Pages.closeProjKebab();Pages.editProjectStatusModal(\''+pid+'\')"><i data-lucide="pencil"></i>تعديل الاسم والنوع</button>'+
-        '<button class="pkm-item" onclick="Pages.closeProjKebab();Pages.duplicateProject(\''+pid+'\')"><i data-lucide="copy-plus"></i>نسخ المشروع</button>'+
-      '</div>'+
-      '<div class="pkm-sep"></div>'+
-      '<div class="pkm-section">'+
-        '<button class="pkm-item pkm-danger" onclick="Pages.closeProjKebab();Pages.deleteProjectConfirm(\''+pid+'\')"><i data-lucide="trash-2"></i>حذف المشروع</button>'+
-      '</div>'+
+  return '<div class="proj-kebab-menu" style="display:block;pointer-events:all">'+
+    '<div class="pkm-section">'+
+      '<div class="pkm-lbl">حالة التنفيذ</div>'+
+      si('draft',     'مسودة',         'file-pen-line')+
+      si('active',    'جاري التنفيذ', 'play-circle')+
+      si('completed', 'مكتمل',        'check-circle-2')+
+      si('paused',    'متوقف مؤقتاً', 'pause-circle')+
+      si('cancelled', 'ملغي',         'x-circle')+
+    '</div>'+
+    '<div class="pkm-sep"></div>'+
+    '<div class="pkm-section">'+
+      '<div class="pkm-lbl">الظهور</div>'+
+      vi('team',    'مرئي لكل المستخدمين','users')+
+      vi('private', 'خاص — أنا فقط',      'lock')+
+    '</div>'+
+    '<div class="pkm-sep"></div>'+
+    '<div class="pkm-section">'+
+      '<button class="pkm-item" onclick="Pages.closeProjKebab();Pages.openProjectDatesModal(\''+projId+'\')"><i data-lucide="calendar-days"></i>بيانات وتواريخ المشروع</button>'+
+      '<button class="pkm-item" onclick="Pages.closeProjKebab();Pages.editProjectStatusModal(\''+projId+'\')"><i data-lucide="pencil"></i>تعديل الاسم والنوع</button>'+
+      '<button class="pkm-item" onclick="Pages.closeProjKebab();Pages.duplicateProject(\''+projId+'\')"><i data-lucide="copy-plus"></i>نسخ المشروع</button>'+
+    '</div>'+
+    '<div class="pkm-sep"></div>'+
+    '<div class="pkm-section">'+
+      '<button class="pkm-item pkm-danger" onclick="Pages.closeProjKebab();Pages.deleteProjectConfirm(\''+projId+'\')"><i data-lucide="trash-2"></i>حذف المشروع</button>'+
     '</div>'+
   '</div>';
 };
 
 Pages.toggleProjKebab = function(projId, e) {
   if (e) e.stopPropagation();
-  var menu = document.getElementById('pkm-'+projId);
-  if (!menu) return;
-  var opening = menu.style.display === 'none';
-  document.querySelectorAll('.proj-kebab-menu').forEach(function(m){ m.style.display='none'; });
-  if (opening) {
-    var btn = e ? e.currentTarget : null;
-    if (btn) {
-      var rect = btn.getBoundingClientRect();
-      var menuW = 240, margin = 8;
-      // right-align menu with button, but clamp inside viewport
-      var leftPos = rect.right - menuW;
-      leftPos = Math.max(margin, Math.min(window.innerWidth - menuW - margin, leftPos));
-      menu.style.top   = (rect.bottom + 6) + 'px';
-      menu.style.left  = leftPos + 'px';
-      menu.style.right = 'auto';
-    }
-    menu.style.display = 'block';
-    if (typeof lucide !== 'undefined') lucide.createIcons({rootElement: menu});
-    setTimeout(function(){
-      document.addEventListener('click', Pages._closeProjKebab, {once:true});
-    }, 0);
+  var portal = document.getElementById('proj-kebab-portal');
+  if (!portal) return;
+  /* if this menu is already open, close it */
+  if (portal._openFor === projId) {
+    Pages._closeProjKebab();
+    return;
   }
+  Pages._closeProjKebab();
+  var btn = e ? e.currentTarget : null;
+  if (!btn) return;
+  var rect = btn.getBoundingClientRect();
+  var menuW = 250, margin = 8;
+  var leftPos = rect.right - menuW;
+  leftPos = Math.max(margin, Math.min(window.innerWidth - menuW - margin, leftPos));
+  var topPos = rect.bottom + 6;
+  /* flip upward if not enough space below */
+  if (topPos + 420 > window.innerHeight) topPos = Math.max(margin, rect.top - 6);
+  portal.innerHTML = Pages._projKebabMenuHtml(projId);
+  portal.style.top   = topPos + 'px';
+  portal.style.left  = leftPos + 'px';
+  portal.style.pointerEvents = 'all';
+  portal._openFor = projId;
+  if (typeof lucide !== 'undefined') lucide.createIcons({rootElement: portal});
+  setTimeout(function(){
+    document.addEventListener('click', Pages._closeProjKebab, {once:true});
+  }, 0);
 };
 Pages._closeProjKebab = function() {
-  document.querySelectorAll('.proj-kebab-menu').forEach(function(m){ m.style.display='none'; });
+  var portal = document.getElementById('proj-kebab-portal');
+  if (portal) { portal.innerHTML = ''; portal.style.pointerEvents = 'none'; portal._openFor = null; }
 };
 Pages.closeProjKebab = function() { Pages._closeProjKebab(); };
 
@@ -12765,6 +12775,7 @@ Pages._initApp = function() {
 </script>
 
 <!-- Ctrl Drawer -->
+<div id="proj-kebab-portal" style="position:fixed;z-index:99999;top:0;left:0;pointer-events:none"></div>
 <div id="ctrl-drawer-overlay" class="ctrl-drawer-overlay" onclick="Pages.closeCtrlDrawer()"></div>
 <div id="ctrl-drawer" class="ctrl-drawer">
   <div class="ctrl-drawer-header">
