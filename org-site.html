@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title id="page-title">الموقع الرسمي</title>
+<meta id="page-desc" name="description" content="">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--brand:#1e2a4a;--brand-2:#162035;--accent:#1d9b8a;--fg:#1a1f2e;--fg-2:#374151;--fg-3:#6b7280;--bg:#f8f9fb;--white:#fff;--line:#e5e7eb;--shadow:0 2px 16px rgba(0,0,0,.09)}
+[data-theme="green"]{--brand:#1d9b8a;--brand-2:#147063;--accent:#1e2a4a}
+[data-theme="violet"]{--brand:#6d28d9;--brand-2:#5b21b6;--accent:#1d9b8a}
+[data-theme="rose"]{--brand:#e11d48;--brand-2:#be123c;--accent:#1e2a4a}
+html{scroll-behavior:smooth}
+body{font-family:'IBM Plex Sans Arabic',sans-serif;background:var(--bg);color:var(--fg);font-feature-settings:'lnum';-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+img{max-width:100%;display:block}
+.container{max-width:1100px;margin:0 auto;padding:0 20px}
+
+/* ── Navbar ── */
+.nav{background:var(--brand);color:#fff;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,.15)}
+.nav-inner{display:flex;align-items:center;justify-content:space-between;height:64px;gap:16px}
+.nav-logo{display:flex;align-items:center;gap:10px}
+.nav-logo-img{width:40px;height:40px;border-radius:10px;object-fit:contain;background:rgba(255,255,255,.15)}
+.nav-logo-abbr{width:40px;height:40px;border-radius:10px;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:#fff}
+.nav-name{font-size:17px;font-weight:800;color:#fff}
+.nav-links{display:flex;gap:24px}
+.nav-links a{color:rgba(255,255,255,.85);font-size:14px;font-weight:500;transition:.15s}
+.nav-links a:hover{color:#fff}
+.nav-cta{background:var(--accent);color:#fff;border:none;padding:9px 20px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:.15s;display:inline-flex;align-items:center;gap:6px}
+.nav-cta:hover{filter:brightness(1.1)}
+
+/* ── Hero ── */
+.hero{background:var(--brand);color:#fff;padding:80px 0 70px;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;inset:0;background:url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="60" height="60"><circle cx="30" cy="30" r="1.5" fill="rgba(255,255,255,.06)"/></svg>') repeat;opacity:.5}
+.hero-inner{position:relative;display:flex;gap:48px;align-items:center;flex-wrap:wrap}
+.hero-text{flex:1;min-width:280px}
+.hero-tag{display:inline-block;background:rgba(255,255,255,.15);color:rgba(255,255,255,.9);font-size:12.5px;font-weight:600;padding:4px 14px;border-radius:20px;margin-bottom:18px}
+.hero-title{font-size:clamp(26px,4vw,44px);font-weight:800;line-height:1.25;margin-bottom:16px}
+.hero-sub{font-size:16px;color:rgba(255,255,255,.8);line-height:1.75;margin-bottom:28px;max-width:480px}
+.hero-btns{display:flex;gap:12px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:12px 24px;border-radius:10px;font-size:15px;font-weight:700;font-family:inherit;border:none;cursor:pointer;transition:.15s}
+.btn-white{background:#fff;color:var(--brand)}
+.btn-outline{background:transparent;color:#fff;border:1.5px solid rgba(255,255,255,.5)}
+.btn-white:hover{filter:brightness(.95)}
+.btn-outline:hover{background:rgba(255,255,255,.1)}
+.hero-img{width:min(400px,100%);border-radius:18px;overflow:hidden;box-shadow:0 20px 48px rgba(0,0,0,.3)}
+.hero-img img{width:100%;height:260px;object-fit:cover}
+
+/* ── Section common ── */
+section{padding:64px 0}
+.sec-label{font-size:12.5px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px}
+.sec-title{font-size:clamp(22px,3vw,32px);font-weight:800;color:var(--fg);margin-bottom:14px}
+.sec-sub{font-size:15.5px;color:var(--fg-3);line-height:1.75;max-width:580px}
+
+/* ── About ── */
+.about{background:#fff}
+.about-inner{display:flex;gap:60px;align-items:flex-start;flex-wrap:wrap}
+.about-text{flex:1;min-width:260px}
+.about-text p{font-size:15.5px;color:var(--fg-2);line-height:1.85;white-space:pre-line}
+.about-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:32px}
+.about-stat{background:var(--bg);border-radius:14px;padding:20px 16px;text-align:center}
+.about-stat .n{font-size:28px;font-weight:800;color:var(--brand)}
+.about-stat .l{font-size:13px;color:var(--fg-3);margin-top:4px}
+
+/* ── Contact ── */
+.contact{background:var(--brand);color:#fff}
+.contact-inner{display:flex;gap:48px;align-items:flex-start;flex-wrap:wrap}
+.contact-text{flex:1;min-width:260px}
+.contact-text .sec-title{color:#fff}
+.contact-text .sec-sub{color:rgba(255,255,255,.8)}
+.contact-items{flex:1;min-width:260px;display:flex;flex-direction:column;gap:14px}
+.contact-item{display:flex;align-items:center;gap:14px;background:rgba(255,255,255,.1);border-radius:12px;padding:14px 16px;color:rgba(255,255,255,.95);font-size:14.5px}
+.contact-item svg{flex-shrink:0;color:rgba(255,255,255,.6)}
+.contact-wa{display:inline-flex;align-items:center;gap:8px;background:#25d366;color:#fff;padding:12px 24px;border-radius:10px;font-size:15px;font-weight:700;margin-top:20px;cursor:pointer;border:none;font-family:inherit;transition:.15s}
+.contact-wa:hover{filter:brightness(.95)}
+
+/* ── Footer ── */
+footer{background:var(--brand-2);color:rgba(255,255,255,.5);padding:24px 0;text-align:center;font-size:13px}
+footer a{color:rgba(255,255,255,.7);font-weight:600}
+footer a:hover{color:#fff}
+
+/* ── Error / Loading ── */
+.state-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;text-align:center;gap:16px;padding:40px}
+.state-ico{font-size:48px}
+.state-title{font-size:22px;font-weight:700;color:var(--fg)}
+.state-sub{font-size:14.5px;color:var(--fg-3)}
+
+@media(max-width:768px){
+  .nav-links{display:none}
+  .hero{padding:52px 0 48px}
+  .about-stats{grid-template-columns:1fr 1fr}
+  .contact-inner,.about-inner,.hero-inner{gap:32px}
+}
+</style>
+</head>
+<body>
+
+<div id="site-root"></div>
+
+<script>
+var API = '/api';
+
+function esc(s){ return (s==null?'':String(s)).replace(/[&<>"]/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+
+var THEMES = { blue:'#1e2a4a', green:'#1d9b8a', violet:'#6d28d9', rose:'#e11d48' };
+
+function getOrgId(){
+  var m = location.search.match(/[?&]org=([^&]+)/);
+  return m ? decodeURIComponent(m[1]) : null;
+}
+
+function renderError(msg){
+  document.getElementById('site-root').innerHTML =
+    '<div class="state-wrap">'+
+      '<div class="state-ico">🌐</div>'+
+      '<div class="state-title">'+esc(msg||'الموقع غير متاح')+'</div>'+
+      '<div class="state-sub">يبدو أن الموقع لم يُنشر بعد أو الرابط غير صحيح</div>'+
+      '<a href="https://buad.sa" style="margin-top:8px;color:#1d9b8a;font-weight:700;font-size:15px">← الرجوع لبُعد</a>'+
+    '</div>';
+}
+
+function renderLoading(){
+  document.getElementById('site-root').innerHTML =
+    '<div class="state-wrap">'+
+      '<div style="width:40px;height:40px;border:3px solid #e5e7eb;border-top-color:#1e2a4a;border-radius:50%;animation:spin .8s linear infinite"></div>'+
+      '<div class="state-sub">جارٍ التحميل...</div>'+
+    '</div>'+
+    '<style>@keyframes spin{to{transform:rotate(360deg)}}</style>';
+}
+
+function renderSite(data){
+  var cfg = data.config || {};
+  var name = cfg.name || 'جمعيتنا';
+  var tagline = cfg.tagline || '';
+  var about = cfg.about || '';
+  var theme = cfg.theme || 'blue';
+  var logo = cfg.logo_url || '';
+  var hero = cfg.hero_url || '';
+  var phone = cfg.phone || '';
+  var email = cfg.email || '';
+  var address = cfg.address || '';
+  var wa = cfg.whatsapp || '';
+  var tw = cfg.twitter || '';
+  var seoTitle = cfg.seo_title || (name + ' | الموقع الرسمي');
+  var seoDesc = cfg.seo_desc || tagline;
+
+  document.getElementById('page-title').textContent = seoTitle;
+  var descMeta = document.getElementById('page-desc');
+  if(descMeta) descMeta.content = seoDesc;
+  document.body.setAttribute('data-theme', theme);
+
+  var waUrl = wa ? 'https://wa.me/'+wa.replace(/\D/g,'')+'?text='+encodeURIComponent('السلام عليكم، أود الاستفسار...') : '';
+  var twUrl = tw ? 'https://twitter.com/'+tw.replace('@','') : '';
+
+  var logoHtml = logo
+    ? '<img src="'+esc(logo)+'" alt="'+esc(name)+'" class="nav-logo-img" onerror="this.style.display=\'none\'">'
+    : '<div class="nav-logo-abbr">'+esc(name.charAt(0))+'</div>';
+
+  var heroImgHtml = hero ? '<div class="hero-img"><img src="'+esc(hero)+'" alt="'+esc(name)+'" loading="lazy" onerror="this.parentElement.style.display=\'none\'"></div>' : '';
+
+  var contactItems = '';
+  if(phone) contactItems += '<div class="contact-item"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.11 12 19.79 19.79 0 0 1 1.07 3.36 2 2 0 0 1 3.06 1h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.09 8.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg><span>'+esc(phone)+'</span></div>';
+  if(email) contactItems += '<div class="contact-item"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg><span>'+esc(email)+'</span></div>';
+  if(address) contactItems += '<div class="contact-item"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg><span>'+esc(address)+'</span></div>';
+
+  var html =
+    '<nav class="nav">'+
+      '<div class="container"><div class="nav-inner">'+
+        '<div class="nav-logo">'+logoHtml+'<span class="nav-name">'+esc(name)+'</span></div>'+
+        '<div class="nav-links">'+
+          '<a href="#about">من نحن</a>'+
+          '<a href="#contact">تواصل معنا</a>'+
+        '</div>'+
+        (waUrl?'<a href="'+esc(waUrl)+'" target="_blank" rel="noopener" class="nav-cta"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.123 1.532 5.856L.048 24l6.29-1.488A11.945 11.945 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.85 0-3.613-.476-5.158-1.313l-.37-.219-3.732.882.9-3.624-.24-.38A9.944 9.944 0 0 1 2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>واتساب</a>':'<span></span>')+
+      '</div></div>'+
+    '</nav>'+
+
+    '<div class="hero">'+
+      '<div class="container"><div class="hero-inner">'+
+        '<div class="hero-text">'+
+          '<div class="hero-tag">الموقع الرسمي</div>'+
+          '<h1 class="hero-title">'+esc(name)+'</h1>'+
+          (tagline?'<p class="hero-sub">'+esc(tagline)+'</p>':'')+
+          '<div class="hero-btns">'+
+            (waUrl?'<a href="'+esc(waUrl)+'" target="_blank" rel="noopener" class="btn btn-white">تواصل واتساب</a>':'')+
+            '<a href="#about" class="btn btn-outline">اعرف أكثر</a>'+
+          '</div>'+
+        '</div>'+
+        heroImgHtml+
+      '</div></div>'+
+    '</div>'+
+
+    (about?
+      '<section class="about" id="about">'+
+        '<div class="container"><div class="about-inner">'+
+          '<div class="about-text">'+
+            '<div class="sec-label">من نحن</div>'+
+            '<h2 class="sec-title">'+esc(name)+'</h2>'+
+            '<p>'+esc(about)+'</p>'+
+          '</div>'+
+        '</div></div>'+
+      '</section>'
+    :'<section id="about"></section>')+
+
+    ((phone||email||address||waUrl)?
+      '<section class="contact" id="contact">'+
+        '<div class="container"><div class="contact-inner">'+
+          '<div class="contact-text">'+
+            '<div class="sec-label" style="color:rgba(255,255,255,.7)">تواصل معنا</div>'+
+            '<h2 class="sec-title">نسعد بخدمتكم</h2>'+
+            '<p class="sec-sub">نحن هنا للإجابة على استفساراتكم والتواصل معكم في أي وقت.</p>'+
+            (waUrl?'<a href="'+esc(waUrl)+'" target="_blank" rel="noopener" class="contact-wa">'+
+              '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.123 1.532 5.856L.048 24l6.29-1.488A11.945 11.945 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.85 0-3.613-.476-5.158-1.313l-.37-.219-3.732.882.9-3.624-.24-.38A9.944 9.944 0 0 1 2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>'+
+              'تواصل عبر واتساب</a>'
+            :'')+
+          '</div>'+
+          (contactItems?'<div class="contact-items">'+contactItems+'</div>':'')+
+        '</div></div>'+
+      '</section>'
+    :'')+
+
+    '<footer>'+
+      '<div class="container">'+
+        '<p>'+esc(name)+' — جميع الحقوق محفوظة '+new Date().getFullYear()+'</p>'+
+        '<p style="margin-top:6px">موقع مبني بـ <a href="https://buad.sa" target="_blank">بُعد</a> · منصة الجمعيات الأهلية</p>'+
+      '</div>'+
+    '</footer>';
+
+  document.getElementById('site-root').innerHTML = html;
+}
+
+(function init(){
+  var orgId = getOrgId();
+  if(!orgId){ renderError('الموقع غير موجود'); return; }
+  renderLoading();
+  fetch(API+'/public/org-site/'+encodeURIComponent(orgId))
+    .then(function(r){ if(!r.ok) throw new Error(r.status); return r.json(); })
+    .then(function(data){ renderSite(data); })
+    .catch(function(){ renderError('الموقع غير منشور أو غير متاح'); });
+})();
+</script>
+</body>
+</html>

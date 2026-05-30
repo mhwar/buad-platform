@@ -138,6 +138,17 @@ export async function onRequest(context) {
     return json({ token, user: { id: payload.id, name: payload.name, email: payload.email, role: payload.role } });
   }
 
+  /* ─── PUBLIC: GET /api/public/org-site/:orgId ─── published org website data (no auth) */
+  const pubOrgSiteMatch = path.match(/^\/public\/org-site\/([^/]+)$/);
+  if (pubOrgSiteMatch && method === 'GET') {
+    const orgId = pubOrgSiteMatch[1];
+    const org = await db.prepare('SELECT id, name, website_enabled FROM orgs WHERE id = ?').bind(orgId).first();
+    if (!org || !org.website_enabled) return json({ error: 'not_found' }, 404);
+    const ws = await db.prepare('SELECT * FROM org_websites WHERE org_id = ?').bind(orgId).first();
+    if (!ws || !ws.published) return json({ error: 'not_published' }, 404);
+    return json({ org_id: orgId, config: JSON.parse(ws.config || '{}'), published_at: ws.published_at });
+  }
+
   /* ─── PUBLIC: GET /api/public/site ─── landing-page content (no auth) */
   if (path === '/public/site' && method === 'GET') {
     const row = await db.prepare('SELECT data FROM site_content WHERE id = ?').bind('main').first();
@@ -214,7 +225,8 @@ export async function onRequest(context) {
     if (!org) return json({ error: 'not_found' }, 404);
     return json({ id: org.id, name: org.name, email: org.email, plan_start: org.plan_start,
       progress: JSON.parse(org.progress || '{}'), contact_name: org.contact_name,
-      phone: org.phone, city: org.city, license_no: org.license_no });
+      phone: org.phone, city: org.city, license_no: org.license_no,
+      website_enabled: org.website_enabled ? 1 : 0 });
   }
 
   if (path === '/org/progress' && method === 'PUT') {
@@ -248,6 +260,37 @@ export async function onRequest(context) {
     return json({ ok: true, org: { id: org.id, name: org.name, email: org.email, plan_start: org.plan_start,
       progress: JSON.parse(org.progress || '{}'), contact_name: org.contact_name,
       phone: org.phone, city: org.city, license_no: org.license_no } });
+  }
+
+  /* ─── GET /api/org/website ─── get org's website config */
+  if (path === '/org/website' && method === 'GET') {
+    if (!orgMe || orgMe.kind !== 'org') return json({ error: 'Unauthorized' }, 401);
+    const org = await db.prepare('SELECT website_enabled FROM orgs WHERE id = ?').bind(orgMe.id).first();
+    if (!org || !org.website_enabled) return json({ error: 'not_enabled' }, 403);
+    const ws = await db.prepare('SELECT * FROM org_websites WHERE org_id = ?').bind(orgMe.id).first();
+    if (!ws) return json({ org_id: orgMe.id, config: {}, published: 0, published_at: null, custom_domain: '' });
+    return json({ org_id: orgMe.id, config: JSON.parse(ws.config || '{}'), published: ws.published,
+      published_at: ws.published_at, custom_domain: ws.custom_domain });
+  }
+
+  /* ─── PUT /api/org/website ─── save org's website config */
+  if (path === '/org/website' && method === 'PUT') {
+    if (!orgMe || orgMe.kind !== 'org') return json({ error: 'Unauthorized' }, 401);
+    const org = await db.prepare('SELECT website_enabled FROM orgs WHERE id = ?').bind(orgMe.id).first();
+    if (!org || !org.website_enabled) return json({ error: 'not_enabled' }, 403);
+    let body;
+    try { body = await request.json(); } catch (e) { return json({ error: 'Bad request' }, 400); }
+    const config = JSON.stringify(body.config || {});
+    const publish = body.publish ? 1 : 0;
+    const customDomain = (body.custom_domain || '').trim();
+    const publishedAt = publish ? Math.floor(Date.now() / 1000) : null;
+    await db.prepare(
+      'INSERT INTO org_websites (org_id, config, published, published_at, custom_domain) VALUES (?, ?, ?, ?, ?) ' +
+      'ON CONFLICT(org_id) DO UPDATE SET config = excluded.config, published = excluded.published, ' +
+      'published_at = CASE WHEN excluded.published = 1 THEN excluded.published_at ELSE published_at END, ' +
+      'custom_domain = excluded.custom_domain, updated_at = unixepoch()'
+    ).bind(orgMe.id, config, publish, publishedAt, customDomain).run();
+    return json({ ok: true, published: publish });
   }
 
   /* ─── POST /api/org/request ─── association requests a service (lands in admin requests) */
@@ -285,11 +328,23 @@ export async function onRequest(context) {
   /* ─── GET /api/orgs ─── list registered associations + progress (team) */
   if (path === '/orgs' && method === 'GET') {
     const { results } = await db.prepare(
-      'SELECT id, name, email, contact_name, phone, city, license_no, plan_start, progress, created_at, last_active FROM orgs ORDER BY last_active DESC'
+      'SELECT id, name, email, contact_name, phone, city, license_no, plan_start, progress, created_at, last_active, website_enabled FROM orgs ORDER BY last_active DESC'
     ).all();
     return json((results || []).map(function (o) {
       return Object.assign({}, o, { progress: JSON.parse(o.progress || '{}') });
     }));
+  }
+
+  /* ─── PATCH /api/orgs/:id/toggle-website ─── admin enables/disables website for org */
+  const toggleWebMatch = path.match(/^\/orgs\/([^/]+)\/toggle-website$/);
+  if (toggleWebMatch && method === 'PATCH') {
+    if (me.role !== 'admin') return json({ error: 'Forbidden' }, 403);
+    const orgId = toggleWebMatch[1];
+    let body;
+    try { body = await request.json(); } catch (e) { return json({ error: 'Bad request' }, 400); }
+    const enabled = body.enabled ? 1 : 0;
+    await db.prepare('UPDATE orgs SET website_enabled = ? WHERE id = ?').bind(enabled, orgId).run();
+    return json({ ok: true, website_enabled: enabled });
   }
 
   /* ─── DELETE /api/orgs/:id ─── (admin) */

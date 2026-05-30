@@ -2486,6 +2486,14 @@ DB._deleteOrg = function(id) {
   return fetch('/api/orgs/'+id, { method:'DELETE', headers: DB._apiHeaders() })
     .then(function(r){ return r.ok; }).catch(function(){ return false; });
 };
+DB._toggleOrgWebsite = function(id, enabled) {
+  if (!DB._token) return Promise.resolve(false);
+  return fetch('/api/orgs/'+id+'/toggle-website', {
+    method: 'PATCH',
+    headers: DB._apiHeaders(),
+    body: JSON.stringify({ enabled: enabled })
+  }).then(function(r){ return r.ok; }).catch(function(){ return false; });
+};
 
 DB.getContracts = function(pid) {
   var fin = DB.getFin(pid);
@@ -9790,6 +9798,8 @@ Pages.render_orgs = function(opts) {
           '<div style="display:flex;flex-direction:column;gap:7px;align-items:stretch;min-width:130px">'+
             (wa?'<a href="'+wa+'" target="_blank" class="btn btn-sm" style="background:#25d366;color:#fff;border:none;justify-content:center"><i data-lucide="message-circle"></i>واتساب</a>':'')+
             (o.phone?'<a href="tel:'+UI.escHtml(o.phone)+'" class="btn btn-sm btn-ghost" style="justify-content:center"><i data-lucide="phone"></i>'+UI.escHtml(o.phone)+'</a>':'')+
+            '<button onclick="Pages.toggleOrgWebsite(\''+o.id+'\','+(o.website_enabled?1:0)+',\''+UI.escHtml(o.name||'').replace(/'/g,"\\'")+'\')"\n             class="btn btn-sm btn-ghost" style="justify-content:center;'+(o.website_enabled?'color:var(--success-600)':'')+'">\n              <i data-lucide="'+(o.website_enabled?'globe-2':'globe')+'"></i>'+
+            (o.website_enabled?'الموقع مفعّل':'تفعيل الموقع')+'</button>'+
             '<button onclick="Pages.deleteOrgConfirm(\''+o.id+'\',\''+UI.escHtml(o.name||'').replace(/'/g,"\\'")+'\')" class="btn btn-sm btn-ghost" style="justify-content:center;color:var(--danger-600)"><i data-lucide="trash-2"></i>حذف</button>'+
           '</div>'+
         '</div>'+
@@ -9817,6 +9827,29 @@ Pages.doDeleteOrg = function(id) {
   UI.closeModalForce();
   Pages._orgs = (Pages._orgs||[]).filter(function(x){ return x.id!==id; });
   DB._deleteOrg(id).then(function(ok){ UI.toast(ok?'تم حذف الجمعية':'تعذّر الحذف', ok?'success':'danger'); Pages.render_orgs({_loaded:true}); });
+};
+Pages.toggleOrgWebsite = function(id, currentEnabled, name) {
+  var enable = !currentEnabled;
+  var msg = enable ? ('تفعيل الموقع الإلكتروني لـ «'+name+'»؟') : ('إيقاف الموقع الإلكتروني لـ «'+name+'»؟ سيصبح غير متاح للجمعية.');
+  UI.openModal(
+    '<div class="modal-header"><h3>'+(enable?'تفعيل الموقع':'إيقاف الموقع')+'</h3><button class="modal-close" onclick="UI.closeModalForce()">×</button></div>'+
+    '<div style="padding:18px 20px;color:var(--fg-2)">'+msg+'</div>'+
+    '<div class="modal-footer"><button class="btn btn-ghost" onclick="UI.closeModalForce()">إلغاء</button>'+
+    '<button class="btn '+(enable?'btn-primary':'btn-danger')+'" onclick="Pages.doToggleOrgWebsite(\''+id+'\','+(enable?1:0)+')">'+
+    (enable?'تفعيل':'إيقاف')+'</button></div>'
+  );
+};
+Pages.doToggleOrgWebsite = function(id, enable) {
+  UI.closeModalForce();
+  DB._toggleOrgWebsite(id, enable).then(function(ok) {
+    if (ok) {
+      Pages._orgs = (Pages._orgs||[]).map(function(x){ return x.id===id ? Object.assign({},x,{website_enabled:enable}) : x; });
+      UI.toast(enable?'تم تفعيل الموقع':'تم إيقاف الموقع', 'success');
+      Pages.render_orgs({_loaded:true});
+    } else {
+      UI.toast('تعذّر تحديث حالة الموقع', 'danger');
+    }
+  });
 };
 
 /* ═══════════════════════════════════════════

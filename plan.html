@@ -117,6 +117,7 @@ img,svg{display:block;max-width:100%}
 .content{flex:1;max-width:1080px;width:100%;margin:0 auto;padding:30px 30px 80px}
 .page{display:none}.page.active{display:block;animation:fade .3s var(--ease)}
 @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@keyframes spin{to{transform:rotate(360deg)}}
 
 /* page header */
 .page-head{margin-bottom:24px}
@@ -284,7 +285,7 @@ img,svg{display:block;max-width:100%}
 .modal-overlay.show{display:flex;opacity:1}
 .modal-box{background:#fff;border-radius:var(--radius-lg);box-shadow:var(--shadow-lg);width:100%;max-width:460px;padding:34px 32px 28px;position:relative;text-align:center;transform:translateY(14px) scale(.98);transition:transform .25s var(--ease);max-height:90vh;overflow-y:auto}
 .modal-overlay.show .modal-box{transform:translateY(0) scale(1)}
-.modal-x{position:absolute;top:14px;left:16px;background:none;border:none;font-size:24px;color:var(--muted);cursor:pointer;line-height:1;width:32px;height:32px;border-radius:8px;transition:.15s}
+.modal-x{position:absolute;top:14px;right:16px;background:none;border:none;font-size:24px;color:var(--muted);cursor:pointer;line-height:1;width:32px;height:32px;border-radius:8px;transition:.15s}
 .modal-x:hover{background:var(--bg-soft);color:var(--ink)}
 .modal-ico{width:58px;height:58px;border-radius:16px;background:linear-gradient(135deg,rgba(29,155,138,.12),rgba(0,25,125,.06));color:var(--accent);display:flex;align-items:center;justify-content:center;margin:0 auto 16px}
 .modal-ico svg{width:28px;height:28px}
@@ -319,6 +320,41 @@ img,svg{display:block;max-width:100%}
   .prof-field:nth-child(odd){border-left:none}
   .page-head h1{font-size:21px}
 }
+/* ── Website Builder ── */
+.ws-header{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:24px;flex-wrap:wrap}
+.ws-title{font-size:20px;font-weight:800;color:var(--navy-deep)}
+.ws-status{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;padding:4px 12px;border-radius:20px}
+.ws-status.published{background:#dcfce7;color:#15803d}
+.ws-status.draft{background:var(--bg-tint);color:var(--muted)}
+.ws-tabs{display:flex;gap:4px;border-bottom:1.5px solid var(--line);margin-bottom:20px;flex-wrap:wrap}
+.ws-tab{padding:8px 18px;font-size:13.5px;font-weight:600;color:var(--muted);border:none;background:none;cursor:pointer;border-bottom:2.5px solid transparent;margin-bottom:-1.5px;border-radius:0;transition:.15s}
+.ws-tab.active{color:var(--navy);border-bottom-color:var(--accent)}
+.ws-section{display:none}
+.ws-section.active{display:block}
+.ws-card{background:#fff;border:1.5px solid var(--line);border-radius:14px;padding:20px 22px;margin-bottom:16px}
+.ws-card h4{font-size:14px;font-weight:700;color:var(--navy-deep);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.ws-card h4 svg{width:16px;height:16px;color:var(--accent);flex-shrink:0}
+.ws-field{margin-bottom:14px}
+.ws-field label{display:block;font-size:12.5px;font-weight:600;color:var(--navy-2);margin-bottom:5px}
+.ws-field input,.ws-field textarea,.ws-field select{width:100%;padding:9px 12px;border:1.5px solid var(--line);border-radius:8px;font-size:14px;font-family:inherit;color:var(--ink);background:#fff;box-sizing:border-box;transition:.15s}
+.ws-field input:focus,.ws-field textarea:focus,.ws-field select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(29,155,138,.12)}
+.ws-field textarea{resize:vertical;min-height:80px}
+.ws-field .hint{font-size:11.5px;color:var(--muted);margin-top:4px}
+.ws-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.ws-preview-bar{background:var(--bg-tint);border:1.5px solid var(--line);border-radius:12px;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:20px;flex-wrap:wrap}
+.ws-preview-url{font-size:13px;color:var(--navy-2);direction:ltr;font-family:monospace;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ws-publish-toggle{display:flex;align-items:center;gap:10px}
+.ws-toggle{position:relative;width:46px;height:26px;cursor:pointer}
+.ws-toggle input{opacity:0;width:0;height:0;position:absolute}
+.ws-toggle-track{position:absolute;inset:0;border-radius:13px;background:var(--line);transition:.2s}
+.ws-toggle input:checked+.ws-toggle-track{background:var(--accent)}
+.ws-toggle-thumb{position:absolute;top:3px;right:3px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.25);transition:.2s}
+.ws-toggle input:checked~.ws-toggle-thumb{right:auto;left:3px}
+.ws-actions{display:flex;justify-content:flex-end;gap:10px;padding-top:8px;border-top:1.5px solid var(--line);margin-top:4px}
+.ws-theme-grid{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
+.ws-theme-opt{width:36px;height:36px;border-radius:50%;border:3px solid transparent;cursor:pointer;transition:.15s;flex-shrink:0}
+.ws-theme-opt.active,.ws-theme-opt:hover{border-color:var(--navy)}
+@media(max-width:640px){.ws-row{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -387,7 +423,7 @@ img,svg{display:block;max-width:100%}
         </div>
       </div>
       <div class="sb-org-bar">
-        <div class="sb-org-bar-top"><span>إنجاز خطة المئة يوم</span><b id="sb-org-pct">٠٪</b></div>
+        <div class="sb-org-bar-top"><span>إنجاز خطة المئة يوم</span><b id="sb-org-pct">0%</b></div>
         <div class="sb-org-bar-track"><i id="sb-org-fill" style="width:0%"></i></div>
       </div>
     </button>
@@ -415,11 +451,12 @@ img,svg{display:block;max-width:100%}
         ملف الجمعية
       </button>
 
-      <div class="sb-group">قريباً</div>
       <button class="sb-item" id="nav-website" onclick="go('website')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-        موقعي الإلكتروني <span class="soon-pill">قريباً</span>
+        موقعي الإلكتروني <span class="soon-pill" id="ws-nav-pill">قريباً</span>
       </button>
+
+      <div class="sb-group">قريباً</div>
       <button class="sb-item" id="nav-projects" onclick="go('projects')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
         مشاريعي <span class="soon-pill">قريباً</span>
@@ -560,20 +597,8 @@ img,svg{display:block;max-width:100%}
         </div>
       </section>
 
-      <!-- ─── Website (soon) ─── -->
-      <section class="page" id="page-website">
-        <div class="coming-wrap">
-          <div class="coming-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></div>
-          <h2>إدارة موقعك الإلكتروني</h2>
-          <p>ستتمكن قريباً من متابعة حالة موقع جمعيتك، ومراجعة المحتوى، وإرسال طلبات التحديث مباشرة عبر البوابة.</p>
-          <div class="coming-features">
-            <span class="coming-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>طلبات تحديث المحتوى</span>
-            <span class="coming-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>إحصائيات الزوار</span>
-            <span class="coming-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>نشر التحديثات</span>
-          </div>
-          <button class="btn btn-primary" onclick="openServiceModal('web','تصميم الموقع الإلكتروني')">اطلب تأسيس موقع جمعيتك</button>
-        </div>
-      </section>
+      <!-- ─── Website Builder ─── -->
+      <section class="page" id="page-website"></section>
 
       <!-- ─── Projects (soon) ─── -->
       <section class="page" id="page-projects">
@@ -781,7 +806,6 @@ function token(){ return localStorage.getItem(TOKEN_KEY); }
 function setToken(t){ localStorage.setItem(TOKEN_KEY, t); }
 function clearToken(){ localStorage.removeItem(TOKEN_KEY); }
 function esc(s){ return (s==null?'':String(s)).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
-function toAr(n){ return String(n).replace(/[0-9]/g,function(d){ return '٠١٢٣٤٥٦٧٨٩'[+d]; }); }
 function toast(msg){
   var t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
   clearTimeout(t._tm); t._tm=setTimeout(function(){ t.classList.remove('show'); }, 2500);
@@ -805,6 +829,7 @@ function go(id){
   document.querySelector('.content').scrollTop = 0;
   window.scrollTo(0,0);
   if(id==='profile') renderProfile();
+  if(id==='website') renderWebsite();
 }
 
 /* ── Requested-services state (per org, persisted locally for instant UI) ── */
@@ -837,7 +862,7 @@ function submitServiceRequest(){
   })
   .then(function(r){ return r.json().then(function(j){ return {ok:r.ok,j:j}; }); })
   .then(function(res){
-    if(!res.ok) throw new Error('x');
+    if(!res.ok){ btn.disabled=false; btn.textContent='إرسال الطلب'; toast('تعذّر إرسال الطلب — حاول مجدداً'); return; }
     requested[pendingSvc.title] = true; saveRequested();
     closeServiceModal();
     toast('تم إرسال طلبك ✓ سيتواصل معك فريق بُعد');
@@ -1030,9 +1055,9 @@ function renderProfile(){
   var pct = TOTAL_TASKS ? Math.round(done/TOTAL_TASKS*100) : 0;
   var reqCount = Object.keys(requested).length;
   document.getElementById('prof-stats').innerHTML =
-    '<div class="prof-stat accent"><div class="n">'+toAr(pct)+'٪</div><div class="l">إنجاز خطة المئة يوم</div></div>'+
-    '<div class="prof-stat"><div class="n">'+toAr(done)+'<span style="font-size:15px;color:var(--muted)">/'+toAr(TOTAL_TASKS)+'</span></div><div class="l">مهمة مكتملة</div></div>'+
-    '<div class="prof-stat"><div class="n">'+toAr(reqCount)+'</div><div class="l">خدمة مطلوبة</div></div>';
+    '<div class="prof-stat accent"><div class="n">'+pct+'%</div><div class="l">إنجاز خطة المئة يوم</div></div>'+
+    '<div class="prof-stat"><div class="n">'+done+'<span style="font-size:15px;color:var(--muted)">/'+TOTAL_TASKS+'</span></div><div class="l">مهمة مكتملة</div></div>'+
+    '<div class="prof-stat"><div class="n">'+reqCount+'</div><div class="l">خدمة مطلوبة</div></div>';
 
   function field(icon,label,val){
     var empty = !val;
@@ -1089,9 +1114,9 @@ function renderTracks(){
     }).join('');
     return '<div class="track'+(ti===0?' open':'')+'" id="track-'+track.id+'">'+
       '<div class="track-head" onclick="toggleTrack(\''+track.id+'\')">'+
-        '<div class="tnum">'+toAr(ti+1)+'</div>'+
+        '<div class="tnum">'+(ti+1)+'</div>'+
         '<div class="ti"><h3>'+esc(track.title)+'</h3><div class="meta">'+esc(track.desc)+'</div></div>'+
-        '<span class="tpct" id="pct-'+track.id+'">'+toAr(pct)+'%</span>'+
+        '<span class="tpct" id="pct-'+track.id+'">'+pct+'%</span>'+
         '<span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m6 9 6 6 6-6"/></svg></span>'+
       '</div>'+
       '<div class="track-mini"><i id="mini-'+track.id+'" style="width:'+pct+'%"></i></div>'+
@@ -1122,7 +1147,7 @@ function refreshTrackBars(){
   PLAN.forEach(function(track){
     var done = track.tasks.filter(function(t){ return progress[t.id] && progress[t.id].done; }).length;
     var pct = Math.round(done/track.tasks.length*100);
-    var p=document.getElementById('pct-'+track.id); if(p) p.textContent=toAr(pct)+'%';
+    var p=document.getElementById('pct-'+track.id); if(p) p.textContent=pct+'%';
     var m=document.getElementById('mini-'+track.id); if(m) m.style.width=pct+'%';
   });
 }
@@ -1130,17 +1155,17 @@ function refreshTrackBars(){
 function updateOverview(){
   var done = Object.keys(progress).filter(function(k){ return progress[k] && progress[k].done; }).length;
   var pct = TOTAL_TASKS ? Math.round(done/TOTAL_TASKS*100) : 0;
-  document.getElementById('st-done').textContent = toAr(done);
-  document.getElementById('st-total').textContent = toAr(TOTAL_TASKS);
+  document.getElementById('st-done').textContent = done;
+  document.getElementById('st-total').textContent = TOTAL_TASKS;
   document.getElementById('big-fill').style.width = pct+'%';
-  document.getElementById('big-pct').innerHTML = toAr(pct)+'<span>%</span>';
+  document.getElementById('big-pct').innerHTML = pct+'<span>%</span>';
   // sidebar mini-bar
-  document.getElementById('sb-org-pct').textContent = toAr(pct)+'٪';
+  document.getElementById('sb-org-pct').textContent = pct+'%';
   document.getElementById('sb-org-fill').style.width = pct+'%';
   var start = org && org.plan_start ? new Date(org.plan_start) : new Date();
   var elapsed = Math.max(1, Math.min(100, Math.floor((Date.now()-start.getTime())/86400000)+1));
-  document.getElementById('st-day').textContent = toAr(elapsed);
-  document.getElementById('st-left').textContent = toAr(Math.max(0,100-elapsed));
+  document.getElementById('st-day').textContent = elapsed;
+  document.getElementById('st-left').textContent = Math.max(0,100-elapsed);
 }
 
 function scheduleSave(){
@@ -1152,6 +1177,228 @@ function scheduleSave(){
   }, 700);
 }
 
+/* ── Website builder ── */
+var wsEnabled = false;
+var wsData = null; // { config:{}, published:0, published_at:null, custom_domain:'' }
+var wsTab = 'content';
+
+function renderWebsite(){
+  var el = document.getElementById('page-website');
+  if(!el) return;
+  if(!wsEnabled){
+    el.innerHTML =
+      '<div class="coming-wrap">'+
+        '<div class="coming-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></div>'+
+        '<h2>الموقع الإلكتروني</h2>'+
+        '<p>لم تُفعَّل خدمة الموقع الإلكتروني لجمعيتك بعد. تواصل مع فريق بُعد لتفعيلها أو اطلب تأسيس موقع جمعيتك.</p>'+
+        '<div class="coming-features">'+
+          '<span class="coming-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>تخصيص المحتوى والهوية</span>'+
+          '<span class="coming-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/></svg>دومين خاص بجمعيتك</span>'+
+          '<span class="coming-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>نشر فوري</span>'+
+        '</div>'+
+        '<button class="btn btn-primary" onclick="openServiceModal(\'web\',\'تصميم الموقع الإلكتروني\')">اطلب تأسيس موقع جمعيتك</button>'+
+      '</div>';
+    return;
+  }
+  if(!wsData){
+    el.innerHTML = '<div class="coming-wrap"><div class="coming-icon"><div style="width:32px;height:32px;border:3px solid var(--accent);border-top-color:transparent;border-radius:50%;animation:spin .8s linear infinite"></div></div><p>جارٍ تحميل بيانات الموقع...</p></div>';
+    fetch(API+'/org/website',{headers:{'Authorization':'Bearer '+token()}})
+      .then(function(r){ return r.ok ? r.json() : null; })
+      .then(function(d){
+        wsData = d || { config:{}, published:0, published_at:null, custom_domain:'' };
+        renderWebsite();
+      }).catch(function(){
+        wsData = { config:{}, published:0, published_at:null, custom_domain:'' };
+        renderWebsite();
+      });
+    return;
+  }
+  var cfg = wsData.config || {};
+  var published = wsData.published ? true : false;
+  var domain = wsData.custom_domain || '';
+  var orgId = org && org.id ? org.id : '';
+  var defaultUrl = window.location.origin + '/org-site?org=' + orgId;
+  var previewUrl = domain ? 'https://'+domain : defaultUrl;
+
+  var tabs = [
+    { id:'content', label:'المحتوى' },
+    { id:'media', label:'الصور والألوان' },
+    { id:'contact', label:'التواصل' },
+    { id:'seo', label:'SEO' },
+    { id:'domain', label:'الدومين' }
+  ];
+
+  var tabsHtml = tabs.map(function(t){
+    return '<button class="ws-tab'+(wsTab===t.id?' active':'')+'" onclick="wsSetTab(\''+t.id+'\')">'+t.label+'</button>';
+  }).join('');
+
+  var themes = [
+    { id:'blue', color:'#1e2a4a' },
+    { id:'green', color:'#1d9b8a' },
+    { id:'violet', color:'#6d28d9' },
+    { id:'rose', color:'#e11d48' }
+  ];
+  var curTheme = cfg.theme || 'blue';
+  var themeHtml = themes.map(function(th){
+    return '<div class="ws-theme-opt'+(curTheme===th.id?' active':'')+'" title="'+th.id+'" style="background:'+th.color+'" onclick="wsPickTheme(\''+th.id+'\')"></div>';
+  }).join('');
+
+  function s(k){ return esc(cfg[k]||''); }
+
+  var secContent =
+    '<div class="ws-section'+(wsTab==='content'?' active':'')+'" id="ws-sec-content">'+
+      '<div class="ws-card"><h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>معلومات الجمعية</h4>'+
+        '<div class="ws-field"><label>اسم الجمعية</label><input id="ws-name" type="text" value="'+s('name')+'" placeholder="'+(org&&org.name?esc(org.name):'اسم جمعيتك')+'"></div>'+
+        '<div class="ws-field"><label>الشعار / الوصف المختصر</label><input id="ws-tagline" type="text" value="'+s('tagline')+'" placeholder="جمعية تعنى بـ..."></div>'+
+        '<div class="ws-field"><label>التعريف بالجمعية</label><textarea id="ws-about" placeholder="نبذة تعريفية مفصّلة عن رسالة الجمعية وأهدافها وبرامجها">'+s('about')+'</textarea></div>'+
+      '</div>'+
+    '</div>';
+
+  var secMedia =
+    '<div class="ws-section'+(wsTab==='media'?' active':'')+'" id="ws-sec-media">'+
+      '<div class="ws-card"><h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>الصور</h4>'+
+        '<div class="ws-row">'+
+          '<div class="ws-field"><label>رابط الشعار (Logo URL)</label><input id="ws-logo" type="url" value="'+s('logo_url')+'" placeholder="https://..."><div class="hint">JPG أو PNG، يُفضّل خلفية شفافة</div></div>'+
+          '<div class="ws-field"><label>رابط صورة البانر (Hero)</label><input id="ws-hero" type="url" value="'+s('hero_url')+'" placeholder="https://..."><div class="hint">صورة عريضة ١٢٠٠×٦٠٠</div></div>'+
+        '</div>'+
+      '</div>'+
+      '<div class="ws-card"><h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg>لون الهوية</h4>'+
+        '<div class="ws-field"><label>اختر اللون الرئيسي</label><div class="ws-theme-grid">'+themeHtml+'</div></div>'+
+      '</div>'+
+    '</div>';
+
+  var secContact =
+    '<div class="ws-section'+(wsTab==='contact'?' active':'')+'" id="ws-sec-contact">'+
+      '<div class="ws-card"><h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.11 12 19.79 19.79 0 0 1 1.07 3.36 2 2 0 0 1 3.06 1h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.09 8.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>معلومات التواصل</h4>'+
+        '<div class="ws-row">'+
+          '<div class="ws-field"><label>الجوال / الهاتف</label><input id="ws-phone" type="tel" value="'+s('phone')+'" placeholder="05xxxxxxxx" dir="ltr"></div>'+
+          '<div class="ws-field"><label>البريد الإلكتروني</label><input id="ws-email" type="email" value="'+s('email')+'" placeholder="info@..." dir="ltr"></div>'+
+        '</div>'+
+        '<div class="ws-field"><label>العنوان / المدينة</label><input id="ws-address" type="text" value="'+s('address')+'" placeholder="الرياض — حي ..."></div>'+
+        '<div class="ws-row">'+
+          '<div class="ws-field"><label>واتساب (رقم كامل)</label><input id="ws-wa" type="tel" value="'+s('whatsapp')+'" placeholder="9665xxxxxxxx" dir="ltr"></div>'+
+          '<div class="ws-field"><label>تويتر / X (المعرّف)</label><input id="ws-tw" type="text" value="'+s('twitter')+'" placeholder="@handle" dir="ltr"></div>'+
+        '</div>'+
+      '</div>'+
+    '</div>';
+
+  var secSeo =
+    '<div class="ws-section'+(wsTab==='seo'?' active':'')+'" id="ws-sec-seo">'+
+      '<div class="ws-card"><h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>تحسين محركات البحث (SEO)</h4>'+
+        '<div class="ws-field"><label>عنوان الصفحة (Title)</label><input id="ws-seo-title" type="text" value="'+s('seo_title')+'" placeholder="جمعية ... | الموقع الرسمي" maxlength="70"><div class="hint">الحد الأمثل: 50-70 حرف</div></div>'+
+        '<div class="ws-field"><label>وصف الصفحة (Description)</label><textarea id="ws-seo-desc" placeholder="وصف مختصر يظهر في نتائج البحث..." maxlength="160" style="min-height:70px">'+s('seo_desc')+'</textarea><div class="hint">الحد الأمثل: 120-160 حرف</div></div>'+
+      '</div>'+
+    '</div>';
+
+  var secDomain =
+    '<div class="ws-section'+(wsTab==='domain'?' active':'')+'" id="ws-sec-domain">'+
+      '<div class="ws-card"><h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>الدومين المخصص</h4>'+
+        '<div class="ws-field"><label>نطاق مخصص (اختياري)</label><input id="ws-domain" type="text" value="'+esc(domain)+'" placeholder="association.org.sa" dir="ltr"><div class="hint">أدخل النطاق فقط دون https — مثال: namaa.org.sa</div></div>'+
+        '<div style="background:var(--bg-tint);border-radius:10px;padding:14px 16px;margin-top:6px;font-size:13px;color:var(--navy-2)">'+
+          '<strong>خطوات الربط:</strong>'+
+          '<ol style="margin:8px 0 0;padding-right:18px;line-height:2">'+
+            '<li>أضف سجل CNAME في لوحة تحكم الدومين يشير إلى: <code style="background:#e8eef5;padding:2px 7px;border-radius:4px;font-size:12px;direction:ltr">buad-platform.pages.dev</code></li>'+
+            '<li>احفظ التغييرات هنا وانتظر 24-48 ساعة لانتشار DNS</li>'+
+            '<li>تواصل مع فريق بُعد لتفعيل الشهادة الأمنية (SSL)</li>'+
+          '</ol>'+
+        '</div>'+
+      '</div>'+
+    '</div>';
+
+  el.innerHTML =
+    '<div class="ws-header">'+
+      '<div>'+
+        '<div class="ws-title">موقعي الإلكتروني</div>'+
+        '<div style="font-size:12.5px;color:var(--muted);margin-top:2px">أدر محتوى وإعدادات موقع جمعيتك</div>'+
+      '</div>'+
+      '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">'+
+        '<span class="ws-status '+(published?'published':'draft')+'">'+(published?'منشور ✓':'مسودة')+'</span>'+
+        '<a href="'+esc(previewUrl)+'" target="_blank" rel="noopener" class="btn btn-ghost btn-sm">'+
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:14px;height:14px"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>معاينة</a>'+
+      '</div>'+
+    '</div>'+
+    '<div class="ws-preview-bar">'+
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0;color:var(--muted)"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>'+
+      '<span class="ws-preview-url">'+esc(previewUrl)+'</span>'+
+      '<label class="ws-publish-toggle">'+
+        '<span style="font-size:12.5px;font-weight:600;color:var(--navy-2)">'+(published?'إلغاء النشر':'نشر الموقع')+'</span>'+
+        '<label class="ws-toggle">'+
+          '<input type="checkbox" id="ws-pub-chk" '+(published?'checked':'')+' onchange="wsTogglePublish(this.checked)">'+
+          '<div class="ws-toggle-track"></div>'+
+          '<div class="ws-toggle-thumb"></div>'+
+        '</label>'+
+      '</label>'+
+    '</div>'+
+    '<div class="ws-tabs">'+tabsHtml+'</div>'+
+    secContent + secMedia + secContact + secSeo + secDomain +
+    '<div class="ws-actions">'+
+      '<button class="btn btn-ghost" onclick="renderWebsite()">تراجع</button>'+
+      '<button class="btn btn-primary" id="ws-save-btn" onclick="wsSave()">حفظ التغييرات</button>'+
+    '</div>';
+}
+
+function wsSetTab(id){
+  wsTab = id;
+  document.querySelectorAll('.ws-tab').forEach(function(t){ t.classList.remove('active'); });
+  var btn = document.querySelector('.ws-tab[onclick*="\''+id+'\'"]');
+  if(btn) btn.classList.add('active');
+  document.querySelectorAll('.ws-section').forEach(function(s){ s.classList.remove('active'); });
+  var sec = document.getElementById('ws-sec-'+id);
+  if(sec) sec.classList.add('active');
+}
+
+function wsPickTheme(id){
+  if(!wsData) return;
+  wsData.config = wsData.config || {};
+  wsData.config.theme = id;
+  document.querySelectorAll('.ws-theme-opt').forEach(function(el){ el.classList.toggle('active', el.title===id); });
+}
+
+function wsTogglePublish(checked){
+  var lbl = document.querySelector('.ws-publish-toggle span');
+  if(lbl) lbl.textContent = checked ? 'إلغاء النشر' : 'نشر الموقع';
+  var stat = document.querySelector('.ws-status');
+  if(stat){ stat.className = 'ws-status '+(checked?'published':'draft'); stat.textContent = checked?'منشور ✓':'مسودة'; }
+}
+
+function wsReadForm(){
+  function v(id){ var el=document.getElementById(id); return el ? el.value.trim() : ''; }
+  return {
+    name: v('ws-name'), tagline: v('ws-tagline'), about: v('ws-about'),
+    logo_url: v('ws-logo'), hero_url: v('ws-hero'),
+    theme: (wsData&&wsData.config&&wsData.config.theme)||'blue',
+    phone: v('ws-phone'), email: v('ws-email'), address: v('ws-address'),
+    whatsapp: v('ws-wa'), twitter: v('ws-tw'),
+    seo_title: v('ws-seo-title'), seo_desc: v('ws-seo-desc')
+  };
+}
+
+function wsSave(){
+  var btn = document.getElementById('ws-save-btn');
+  if(btn){ btn.disabled=true; btn.textContent='جارٍ الحفظ...'; }
+  var cfg = wsReadForm();
+  var pubChk = document.getElementById('ws-pub-chk');
+  var publish = pubChk ? pubChk.checked : (wsData&&wsData.published?true:false);
+  var domEl = document.getElementById('ws-domain');
+  var customDomain = domEl ? domEl.value.trim().replace(/^https?:\/\//,'') : (wsData&&wsData.custom_domain||'');
+  fetch(API+'/org/website',{
+    method:'PUT',
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+token()},
+    body:JSON.stringify({ config:cfg, publish:publish, custom_domain:customDomain })
+  })
+  .then(function(r){ return r.json().then(function(j){ return {ok:r.ok,j:j}; }); })
+  .then(function(res){
+    if(!res.ok){ if(btn){ btn.disabled=false; btn.textContent='حفظ التغييرات'; } toast('تعذّر الحفظ — حاول مجدداً'); return; }
+    wsData = { config:cfg, published:publish?1:0, published_at: publish?(wsData&&wsData.published_at||Math.floor(Date.now()/1000)):null, custom_domain:customDomain };
+    if(btn){ btn.disabled=false; btn.textContent='حفظ التغييرات'; }
+    toast('تم حفظ إعدادات الموقع ✓');
+  })
+  .catch(function(){
+    if(btn){ btn.disabled=false; btn.textContent='حفظ التغييرات'; }
+    toast('تعذّر الحفظ — حاول مجدداً');
+  });
+}
+
 /* ── Boot ── */
 (function init(){
   fetch(API+'/public/site').then(function(r){ return r.ok?r.json():null; }).then(function(d){ if(d&&d.whatsapp) WA=d.whatsapp; }).catch(function(){});
@@ -1159,7 +1406,15 @@ function scheduleSave(){
   if(t){
     fetch(API+'/org/me',{headers:{'Authorization':'Bearer '+t}})
       .then(function(r){ if(!r.ok) throw new Error('x'); return r.json(); })
-      .then(function(o){ org=o; progress=o.progress||{}; enterApp(); })
+      .then(function(o){
+        org=o; progress=o.progress||{};
+        wsEnabled = !!(o.website_enabled);
+        var pill = document.getElementById('ws-nav-pill');
+        if(pill) pill.style.display = wsEnabled ? 'none' : '';
+        var wsNav = document.getElementById('nav-website');
+        if(wsNav && wsEnabled) wsNav.parentNode.insertBefore(wsNav, wsNav.parentNode.querySelector('.sb-group'));
+        enterApp();
+      })
       .catch(function(){ clearToken(); });
   }
 })();
