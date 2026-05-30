@@ -347,6 +347,12 @@ img,svg{display:block;max-width:100%}
 .store-status{font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px}
 .store-status.on{color:var(--ok);background:var(--ok-soft)}
 .store-status.soon{color:var(--gold);background:rgba(224,168,60,.11)}
+.store-status.available{color:var(--navy);background:var(--bg-tint)}
+.store-tabs-wrap{display:flex;gap:8px;margin-bottom:24px}
+.store-tab{display:flex;align-items:center;gap:8px;padding:10px 20px;border-radius:10px;border:2px solid var(--line);background:#fff;font-size:14px;font-weight:700;color:var(--muted);cursor:pointer;font-family:inherit;transition:.15s}
+.store-tab svg{width:17px;height:17px}
+.store-tab.active{border-color:var(--navy);color:var(--navy-deep);background:#fff;box-shadow:0 2px 8px rgba(30,42,74,.1)}
+.store-tab:hover:not(.active){color:var(--navy);border-color:#c8cdd6}
 
 /* ─── Modal ─── */
 .modal-overlay{position:fixed;inset:0;background:rgba(10,18,48,.55);backdrop-filter:blur(4px);z-index:900;display:none;align-items:center;justify-content:center;padding:20px;opacity:0;transition:opacity .2s}
@@ -930,14 +936,28 @@ img,svg{display:block;max-width:100%}
         </div>
       </section>
 
-      <!-- ─── Store (متجر الأدوات) ─── -->
+      <!-- ─── Store (متجر بُعد) ─── -->
       <section class="page" id="page-store">
         <div class="store-header">
-          <h1>متجر أدوات بُعد</h1>
-          <p>منصة بُعد توفّر لك أدوات متخصصة لتمكين جمعيتك — من الموقع الإلكتروني إلى إدارة المشاريع والحوكمة. فعّل الأداة التي تحتاجها وابدأ فوراً.</p>
+          <h1>متجر بُعد</h1>
+          <p>أدوات رقمية تُدمج في منصتك + خدمات احترافية يُنفّذها فريق بُعد. كل ما تحتاجه لتشغيل جمعيتك بكفاءة عالية في مكان واحد.</p>
         </div>
-        <div class="section-h">الأدوات المتاحة</div>
-        <div class="store-grid" id="store-tools-grid"></div>
+        <div class="store-tabs-wrap">
+          <button class="store-tab active" id="store-tab-tools" onclick="switchStoreTab('tools')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+            الأدوات الرقمية
+          </button>
+          <button class="store-tab" id="store-tab-services" onclick="switchStoreTab('services')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            الخدمات الاحترافية
+          </button>
+        </div>
+        <div id="store-tools-panel">
+          <div class="store-grid" id="store-tools-grid"></div>
+        </div>
+        <div id="store-services-panel" style="display:none">
+          <div class="store-grid" id="store-services-grid"></div>
+        </div>
       </section>
 
       <!-- ─── CRM: إدارة المستفيدين ─── -->
@@ -1337,27 +1357,172 @@ function renderServices(){
 }
 
 /* ── Render resources ── */
-/* ── Render store ── */
+/* ── Store ── */
+var _storeTab = 'tools';
+function switchStoreTab(tab){
+  _storeTab = tab;
+  document.getElementById('store-tab-tools').classList.toggle('active', tab==='tools');
+  document.getElementById('store-tab-services').classList.toggle('active', tab==='services');
+  document.getElementById('store-tools-panel').style.display = tab==='tools' ? '' : 'none';
+  document.getElementById('store-services-panel').style.display = tab==='services' ? '' : 'none';
+}
+
 var STORE_TOOLS = [
-  { id:'website', icon:'<circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>', name:'الموقع الإلكتروني', desc:'أنشئ موقعاً احترافياً لجمعيتك يعكس هويتها ويعرض برامجها وتقاريرها الحوكمية بشكل جذّاب.', getEnabled: function(){ return wsEnabled; }, onClick: function(){ wsEnabled ? go('website') : toast('تواصل مع فريق بُعد لتفعيل الموقع الإلكتروني'); } },
-  { id:'crm', icon:'<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>', name:'إدارة المستفيدين', desc:'نظام متكامل لتسجيل المستفيدين وإدارة طلبات الخدمة وتتبع المساعدات المقدّمة ومتابعة الحالات.', getEnabled: function(){ return crmEnabled; }, onClick: function(){ crmEnabled ? go('crm') : toast('تواصل مع فريق بُعد لتفعيل نظام إدارة المستفيدين'); } },
-  { id:'projects', icon:'<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>', name:'إدارة المشاريع', desc:'تتبع مشاريع جمعيتك مع بُعد — ميزانيات، جداول زمنية، تقارير دورية، وإشراف من فريق متخصص.', getEnabled: function(){ return false; }, onClick: function(){ openServiceModal('projects','إدارة وتتبع المشاريع'); } },
-  { id:'governance', icon:'<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/>', name:'الحوكمة والامتثال', desc:'إعداد اللوائح والأنظمة الداخلية وضمان الامتثال لاشتراطات المركز الوطني للقطاع غير الربحي.', getEnabled: function(){ return false; }, onClick: function(){ openServiceModal('governance','الحوكمة والامتثال'); } },
-  { id:'identity', icon:'<path d="M12 2l2.4 7.4H22l-6 4.6 2.3 7.4L12 16.8 5.7 21.4 8 14 2 9.4h7.6z"/>', name:'الهوية البصرية', desc:'بناء هوية بصرية متكاملة للجمعية — شعار، ألوان، خطوط، وأدلة تطبيق احترافية.', getEnabled: function(){ return false; }, onClick: function(){ openServiceModal('identity','الهوية البصرية'); } }
+  /* ── مفعّلة ── */
+  { id:'website', available:true, getEnabled:function(){ return wsEnabled; },
+    icon:'<circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>',
+    name:'الموقع الإلكتروني', tag:'موقع',
+    desc:'موقع احترافي متكامل لجمعيتك — يعرض هويتها وبرامجها ويستقبل تبرعات وطلبات تطوع ومستفيدين.',
+    onClick:function(){ wsEnabled ? go('website') : openServiceModal('web','الموقع الإلكتروني'); } },
+  { id:'crm', available:true, getEnabled:function(){ return crmEnabled; },
+    icon:'<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+    name:'إدارة المستفيدين', tag:'CRM',
+    desc:'نظام متكامل لتسجيل المستفيدين، إدارة طلبات الخدمة، تتبع المساعدات المالية والعينية، وسجل النشاط.',
+    onClick:function(){ crmEnabled ? go('crm') : openServiceModal('crm','نظام إدارة المستفيدين'); } },
+  /* ── قادمة ── */
+  { id:'projects', available:false, getEnabled:function(){ return false; },
+    icon:'<path d="M22 12h-4l-3 9L9 3l-3 9H2"/>',
+    name:'إدارة المشاريع والمبادرات', tag:'مشاريع',
+    desc:'تتبع كل مشاريع جمعيتك ومبادراتها — ميزانيات، جداول زمنية، مراحل التنفيذ، وتقارير الأداء.',
+    onClick:function(){ openServiceModal('projects','إدارة المشاريع والمبادرات'); } },
+  { id:'governance2', available:false, getEnabled:function(){ return false; },
+    icon:'<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/>',
+    name:'منظومة الحوكمة', tag:'حوكمة',
+    desc:'إدارة لوائح الجمعية، قرارات مجلس الإدارة، محاضر الاجتماعات، والامتثال للمتطلبات التنظيمية.',
+    onClick:function(){ openServiceModal('governance','الحوكمة والامتثال'); } },
+  { id:'board', available:false, getEnabled:function(){ return false; },
+    icon:'<rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 3H8"/><path d="M12 3v4"/>',
+    name:'إدارة مجلس الإدارة', tag:'مجلس',
+    desc:'جدولة اجتماعات مجلس الإدارة وتوزيع الأعضاء ومتابعة التوصيات وتوثيق المحاضر الرسمية.',
+    onClick:function(){ openServiceModal('board','إدارة مجلس الإدارة'); } },
+  { id:'campaigns', available:false, getEnabled:function(){ return false; },
+    icon:'<path d="M22 12A10 10 0 1 1 12 2"/><path d="M22 2 11 13"/><path d="m16 2 6 6-1.5 1.5"/>',
+    name:'الحملات والتبرعات', tag:'حملات',
+    desc:'أطلق حملات تبرع احترافية، تتبع المتبرعين، وأدر العلاقة معهم بنظام CRM مخصص للجمعيات.',
+    onClick:function(){ openServiceModal('campaigns','الحملات والتبرعات'); } },
+  { id:'volunteers', available:false, getEnabled:function(){ return false; },
+    icon:'<path d="M20.42 4.58a5.4 5.4 0 0 0-7.65 0l-.77.78-.77-.78a5.4 5.4 0 0 0-7.65 7.65l8.42 8.42 8.42-8.42a5.4 5.4 0 0 0 0-7.65z"/>',
+    name:'إدارة المتطوعين', tag:'تطوع',
+    desc:'سجّل المتطوعين، وزّع المهام، تتبع الساعات والإنجازات، وأصدر شهادات التطوع تلقائياً.',
+    onClick:function(){ openServiceModal('volunteers','إدارة المتطوعين'); } },
+  { id:'hr2', available:false, getEnabled:function(){ return false; },
+    icon:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="16 11 18 13 22 9"/>',
+    name:'الموارد البشرية', tag:'HR',
+    desc:'إدارة الموظفين، الإجازات، التقييم الوظيفي، والهيكل التنظيمي للجمعية وفق اللوائح السعودية.',
+    onClick:function(){ openServiceModal('hr','إدارة الموارد البشرية'); } },
+  { id:'finance2', available:false, getEnabled:function(){ return false; },
+    icon:'<path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>',
+    name:'المحاسبة والمالية', tag:'مالية',
+    desc:'نظام محاسبة مخصص للجمعيات — فواتير، ميزانيات، تقارير مالية، وربط مع ميزانية المشاريع.',
+    onClick:function(){ openServiceModal('finance','الاستشارات المالية'); } },
+  { id:'events', available:false, getEnabled:function(){ return false; },
+    icon:'<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>',
+    name:'إدارة الفعاليات', tag:'فعاليات',
+    desc:'خطط لفعالياتك وأدر التسجيل والبطاقات وإشعارات الحضور وتقييم ما بعد الفعالية.',
+    onClick:function(){ openServiceModal('events','إدارة الفعاليات'); } },
+  { id:'media', available:false, getEnabled:function(){ return false; },
+    icon:'<path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/>',
+    name:'مكتبة المحتوى والإعلام', tag:'محتوى',
+    desc:'أرشفة مرئيات ومستندات الجمعية، توزيعها على الفريق، ونشرها عبر القنوات الرقمية باحترافية.',
+    onClick:function(){ openServiceModal('media','مكتبة المحتوى'); } }
+];
+
+var STORE_SERVICES = [
+  /* ── متاحة الآن ── */
+  { id:'identity', available:true,
+    icon:'<path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/>',
+    name:'تصميم الهوية البصرية والشعار', tag:'تصميم',
+    desc:'شعار احترافي، لوح ألوان، خطوط، وهوية بصرية متكاملة تعكس رسالة جمعيتك وقيمها.' },
+  { id:'web', available:true,
+    icon:'<circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>',
+    name:'تصميم وتطوير الموقع الإلكتروني', tag:'تطوير',
+    desc:'موقع احترافي يُعرّف بجمعيتك ويستقبل التبرعات والتطوع — مع تدريب فريقك على الإدارة.' },
+  { id:'strategy', available:true,
+    icon:'<path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/>',
+    name:'الاستشارات الاستراتيجية', tag:'استشارات',
+    desc:'جلسات لصياغة الرؤية والرسالة وبناء الخطة الاستراتيجية متوافقة مع معايير الحوكمة.' },
+  { id:'finance', available:true,
+    icon:'<path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>',
+    name:'الاستشارات المالية', tag:'مالية',
+    desc:'إعداد الخطة المالية والموازنة التقديرية واستراتيجية جمع الموارد وأنظمة الرقابة المالية.' },
+  { id:'governance', available:true,
+    icon:'<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/>',
+    name:'الحوكمة والامتثال المؤسسي', tag:'حوكمة',
+    desc:'بناء منظومة الحوكمة المؤسسية، وإعداد اللوائح، ومتابعة الامتثال للمعايير التنظيمية.' },
+  /* ── قادمة ── */
+  { id:'social', available:false,
+    icon:'<path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>',
+    name:'إدارة التواصل الرقمي والمحتوى', tag:'إعلام',
+    desc:'إدارة قنوات التواصل، إنتاج محتوى احترافي، وتنمية الجمهور الرقمي لجمعيتك.' },
+  { id:'hr', available:false,
+    icon:'<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+    name:'تطوير كوادر وإدارة الموارد البشرية', tag:'تدريب',
+    desc:'أنظمة التوظيف والتقييم وتطوير الكفاءات وإدارة المتطوعين للمنظمات غير الربحية.' },
+  { id:'projects', available:false,
+    icon:'<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',
+    name:'إدارة وتتبع المشاريع', tag:'مشاريع',
+    desc:'تتبع مشاريع الجمعية مالياً وتشغيلياً مع تقارير أداء ولوحات متابعة ومراجعة دورية.' },
+  { id:'impact', available:false,
+    icon:'<path d="M2 20h.01M7 20v-4"/><path d="M12 20v-8"/><path d="M17 20V8"/><path d="M22 4v16"/>',
+    name:'قياس الأثر الاجتماعي', tag:'أثر',
+    desc:'إطار منهجي لقياس الأثر الحقيقي لبرامج جمعيتك وإعداد تقارير أثر احترافية للمانحين.' },
+  { id:'fundraising', available:false,
+    icon:'<path d="M22 12A10 10 0 1 1 12 2"/><path d="M22 2 11 13"/><path d="m16 2 6 6-1.5 1.5"/>',
+    name:'استراتيجية جمع التبرعات والحملات', tag:'تمويل',
+    desc:'بناء استراتيجية تمويل فعّالة وإطلاق حملات تبرع ناجحة وتطوير العلاقة مع المانحين.' },
+  { id:'legal', available:false,
+    icon:'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>',
+    name:'الخدمات القانونية واللوائح التنظيمية', tag:'قانوني',
+    desc:'مراجعة اللوائح الداخلية، الاتفاقيات، والمساعدة في استيفاء المتطلبات الرسمية للجهات المانحة.' }
 ];
 
 function renderStore(){
+  _renderStoreTools();
+  _renderStoreServices();
+}
+
+function _renderStoreTools(){
   var grid = document.getElementById('store-tools-grid');
   if(!grid) return;
   grid.innerHTML = STORE_TOOLS.map(function(t){
     var on = t.getEnabled();
+    var avail = t.available;
+    var statusCls = on ? 'on' : (avail ? 'available' : 'soon');
+    var statusTxt = on ? 'مفعّلة ✓' : (avail ? 'متاحة — تواصل معنا' : 'قريباً');
+    var btnTxt    = on ? 'إدارة ←' : 'اطلب التفعيل ←';
     return '<div class="store-card'+(on?' enabled':'')+'" onclick="('+t.onClick.toString()+')()">'+
-      '<div class="store-card-ico'+(on?' on':'')+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">'+t.icon+'</svg></div>'+
+      '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">'+
+        '<div class="store-card-ico'+(on?' on':'')+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">'+t.icon+'</svg></div>'+
+        (t.tag?'<span style="font-size:10px;font-weight:700;color:var(--muted);background:var(--bg-tint);border:1px solid var(--line);padding:2px 8px;border-radius:20px;white-space:nowrap;align-self:center">'+t.tag+'</span>':'')+
+      '</div>'+
       '<h3>'+esc(t.name)+'</h3>'+
       '<p>'+esc(t.desc)+'</p>'+
       '<div class="store-card-foot">'+
-        '<span class="store-status '+(on?'on':'soon')+'">'+(on?'مفعّلة':'قريباً / تواصل معنا')+'</span>'+
-        '<span style="font-size:12px;color:var(--accent);font-weight:600">'+(on?'إدارة &larr;':'اطلب الخدمة &larr;')+'</span>'+
+        '<span class="store-status '+statusCls+'">'+statusTxt+'</span>'+
+        '<span style="font-size:12px;color:var(--accent);font-weight:600">'+btnTxt+'</span>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+
+function _renderStoreServices(){
+  var grid = document.getElementById('store-services-grid');
+  if(!grid) return;
+  grid.innerHTML = STORE_SERVICES.map(function(s){
+    var avail = s.available;
+    var statusCls = avail ? 'available' : 'soon';
+    var statusTxt = avail ? 'متاحة الآن' : 'قريباً';
+    var btnTxt = avail ? 'اطلب الخدمة ←' : 'قريباً';
+    return '<div class="store-card'+(avail?' enabled':'')+'" onclick="'+(avail?'openServiceModal(\''+s.id+'\',\''+s.name+'\')':'null')+'">'+
+      '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">'+
+        '<div class="store-card-ico'+(avail?' on':'')+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">'+s.icon+'</svg></div>'+
+        (s.tag?'<span style="font-size:10px;font-weight:700;color:var(--muted);background:var(--bg-tint);border:1px solid var(--line);padding:2px 8px;border-radius:20px;white-space:nowrap;align-self:center">'+s.tag+'</span>':'')+
+      '</div>'+
+      '<h3>'+esc(s.name)+'</h3>'+
+      '<p>'+esc(s.desc)+'</p>'+
+      '<div class="store-card-foot">'+
+        '<span class="store-status '+statusCls+'">'+statusTxt+'</span>'+
+        (avail?'<span style="font-size:12px;color:var(--accent);font-weight:600">'+btnTxt+'</span>':'')+
       '</div>'+
     '</div>';
   }).join('');
