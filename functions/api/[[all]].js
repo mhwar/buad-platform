@@ -156,6 +156,12 @@ export async function onRequest(context) {
     return json(data);
   }
 
+  /* ─── PUBLIC: GET /api/public/resources ─── resources for org portal (no auth) */
+  if (path === '/public/resources' && method === 'GET') {
+    const row = await db.prepare('SELECT data FROM site_content WHERE id = ?').bind('resources').first();
+    return json(row ? JSON.parse(row.data) : null);
+  }
+
   /* ─── PUBLIC: POST /api/public/request ─── submit a service request (no auth) */
   if (path === '/public/request' && method === 'POST') {
     let body;
@@ -368,6 +374,24 @@ export async function onRequest(context) {
     try { body = await request.json(); } catch (e) { return json({ error: 'Bad request' }, 400); }
     await db.prepare('INSERT OR REPLACE INTO site_content (id, data, updated_at) VALUES (?, ?, unixepoch())')
       .bind('main', JSON.stringify(body)).run();
+    return json({ ok: true });
+  }
+
+  /* ─── GET /api/resources ─── admin: get portal resources */
+  if (path === '/resources' && method === 'GET') {
+    if (me.role !== 'admin') return json({ error: 'Forbidden' }, 403);
+    const row = await db.prepare('SELECT data FROM site_content WHERE id = ?').bind('resources').first();
+    return json(row ? JSON.parse(row.data) : null);
+  }
+
+  /* ─── PUT /api/resources ─── admin: save portal resources */
+  if (path === '/resources' && method === 'PUT') {
+    if (me.role !== 'admin') return json({ error: 'Forbidden' }, 403);
+    let body;
+    try { body = await request.json(); } catch (e) { return json({ error: 'Bad request' }, 400); }
+    if (!Array.isArray(body)) return json({ error: 'expected array' }, 400);
+    await db.prepare('INSERT OR REPLACE INTO site_content (id, data, updated_at) VALUES (?, ?, unixepoch())')
+      .bind('resources', JSON.stringify(body)).run();
     return json({ ok: true });
   }
 

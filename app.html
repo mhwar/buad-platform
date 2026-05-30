@@ -2240,6 +2240,10 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
         <span class="sb-label">الجمعيات وخطة المئة يوم</span>
         <span class="sb-badge" id="sb-badge-orgs" style="display:none">0</span>
       </a>
+      <a class="sb-item" id="nav-resources" onclick="Nav.go('resources')">
+        <span class="sb-icon"><i data-lucide="book-open"></i></span>
+        <span class="sb-label">الموارد والأدلة</span>
+      </a>
       <div class="sb-section-label">الحساب</div>
       <a class="sb-item" id="nav-settings" onclick="Nav.go('settings')">
         <span class="sb-icon"><i data-lucide="settings-2"></i></span>
@@ -2294,6 +2298,7 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
     <div id="pg-template-editor" class="page contract-editor-page"></div>
     <div id="pg-website"  class="page"></div>
     <div id="pg-orgs"     class="page"></div>
+    <div id="pg-resources" class="page"></div>
     <div id="pg-settings" class="page"></div>
   </main>
 </div>
@@ -9849,6 +9854,243 @@ Pages.doToggleOrgWebsite = function(id, enable) {
     } else {
       UI.toast('تعذّر تحديث حالة الموقع', 'danger');
     }
+  });
+};
+
+/* ═══════════════════════════════════════════
+   RESOURCES MANAGEMENT (الموارد والأدلة)
+═══════════════════════════════════════════ */
+var _RES_DEFAULT = [
+  { cat:'الجهات التنظيمية والإشرافية', sub:'الجهات الرسمية المشرفة على القطاع غير الربحي',
+    icon:'<path d="M3 21h18"/><path d="M5 21V7l8-4v18"/><path d="M19 21V11l-6-4"/>',
+    links:[
+      { name:'المركز الوطني للقطاع غير الربحي', desc:'تسجيل الجمعيات، اللوائح، والخدمات الإلكترونية.', abbr:'NC', color:'#00197d', url:'https://ncnp.gov.sa', tag:'gov' },
+      { name:'وزارة الموارد البشرية والتنمية الاجتماعية', desc:'الإشراف على العمل الاجتماعي والتنموي.', abbr:'HR', color:'#1d9b8a', url:'https://www.hrsd.gov.sa', tag:'gov' },
+      { name:'هيئة الزكاة والضريبة والجمارك', desc:'متطلبات الزكاة والضريبة للمنشآت غير الربحية.', abbr:'ZA', color:'#1e2a4a', url:'https://zatca.gov.sa', tag:'gov' }
+    ]},
+  { cat:'الأدلة والسياسات والنماذج', sub:'الأدلة الإرشادية واللوائح المنشورة للجمعيات',
+    icon:'<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>',
+    links:[
+      { name:'نظام الجمعيات والمؤسسات الأهلية', desc:'النظام الأساسي المنظّم لعمل الجمعيات.', abbr:'نظ', color:'#00197d', url:'https://ncnp.gov.sa', tag:'gov' },
+      { name:'لائحة الحوكمة للجمعيات', desc:'مبادئ ومعايير الحوكمة الرشيدة المعتمدة.', abbr:'حو', color:'#1d9b8a', url:'https://ncnp.gov.sa', tag:'gov' }
+    ]},
+  { cat:'منصات التشغيل والتمكين', sub:'منصات تدعم التبرعات والتطوع والتشغيل',
+    icon:'<path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 1 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"/>',
+    links:[
+      { name:'منصة إحسان للتبرعات', desc:'المنصة الوطنية للأعمال الخيرية والتبرعات.', abbr:'إح', color:'#1d9b8a', url:'https://ehsan.sa', tag:'gov' },
+      { name:'منصة العمل التطوعي', desc:'تسجيل الفرص التطوعية وتوثيق ساعات التطوع.', abbr:'تط', color:'#00197d', url:'https://nvg.gov.sa', tag:'gov' }
+    ]},
+  { cat:'نماذج بُعد الجاهزة', sub:'نماذج وأدوات أعدّها فريق بُعد لمساعدة الجمعيات',
+    icon:'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>',
+    links:[
+      { name:'نموذج خطة العمل التشغيلية', desc:'قالب جاهز لإعداد خطة عمل الجمعية.', abbr:'خ', color:'#1d9b8a', url:'', tag:'tpl' },
+      { name:'نموذج الموازنة التقديرية', desc:'جدول لإعداد ميزانية الجمعية السنوية.', abbr:'م', color:'#1d9b8a', url:'', tag:'tpl' }
+    ]}
+];
+
+Pages.render_resources = function(opts) {
+  var pg = document.getElementById('pg-resources');
+  if (!DB._token) {
+    pg.innerHTML = '<div class="page-header"><div><h1>الموارد والأدلة</h1></div></div><div class="card" style="text-align:center;padding:40px;color:var(--fg-3)">تتطلب الاتصال بالخادم.</div>';
+    return;
+  }
+  if (!(opts && opts._loaded)) {
+    pg.innerHTML = '<div class="page-header"><div><h1>الموارد والأدلة</h1><div class="page-header-sub">جارٍ التحميل...</div></div></div>';
+    fetch('/api/resources', { headers: DB._apiHeaders() })
+      .then(function(r){ return r.ok ? r.json() : null; })
+      .then(function(d){
+        Pages._resData = (Array.isArray(d) && d.length) ? JSON.parse(JSON.stringify(d)) : JSON.parse(JSON.stringify(_RES_DEFAULT));
+        if (Nav._cur === 'resources') Pages.render_resources({_loaded:true});
+      })
+      .catch(function(){
+        Pages._resData = JSON.parse(JSON.stringify(_RES_DEFAULT));
+        if (Nav._cur === 'resources') Pages.render_resources({_loaded:true});
+      });
+    return;
+  }
+  Pages._resData = Pages._resData || JSON.parse(JSON.stringify(_RES_DEFAULT));
+  var data = Pages._resData;
+
+  var catsHtml = data.map(function(cat, ci){
+    var linksHtml = cat.links.map(function(l, li){
+      var isTpl = l.tag==='tpl';
+      return '<tr>'+
+        '<td><div style="width:34px;height:34px;border-radius:8px;background:'+UI.escHtml(l.color)+';color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px">'+UI.escHtml(l.abbr)+'</div></td>'+
+        '<td><div style="font-weight:600;font-size:13.5px">'+UI.escHtml(l.name)+'</div><div style="font-size:12px;color:var(--fg-3);margin-top:2px">'+UI.escHtml(l.desc)+'</div></td>'+
+        '<td><span style="font-size:11px;font-weight:700;padding:2px 9px;border-radius:20px;'+(isTpl?'color:#1d9b8a;background:rgba(29,155,138,.1)':'color:#00197d;background:rgba(0,25,125,.08)')+'">'+UI.escHtml(l.tag==='tpl'?'نموذج':'جهة رسمية')+'</span></td>'+
+        '<td style="direction:ltr;font-size:12px;color:var(--fg-3);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(l.url?('<a href="'+UI.escHtml(l.url)+'" target="_blank" style="color:var(--primary-500)">'+UI.escHtml(l.url.replace(/^https?:\/\//,''))+'</a>'):'—')+'</td>'+
+        '<td style="white-space:nowrap">'+
+          '<button class="btn btn-sm btn-ghost" style="padding:5px 10px" onclick="Pages.editResLink('+ci+','+li+')"><i data-lucide="pencil" style="width:13px;height:13px"></i></button>'+
+          '<button class="btn btn-sm btn-ghost" style="padding:5px 10px;color:var(--danger-600);margin-right:4px" onclick="Pages.delResLink('+ci+','+li+')"><i data-lucide="trash-2" style="width:13px;height:13px"></i></button>'+
+        '</td>'+
+      '</tr>';
+    }).join('');
+
+    return '<div class="card" style="margin-bottom:14px">'+
+      '<div style="display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--border-1)">'+
+        '<div>'+
+          '<div style="font-size:16px;font-weight:700;color:var(--fg-1)">'+UI.escHtml(cat.cat)+'</div>'+
+          '<div style="font-size:13px;color:var(--fg-3);margin-top:2px">'+UI.escHtml(cat.sub)+'</div>'+
+        '</div>'+
+        '<div style="display:flex;gap:8px">'+
+          '<button class="btn btn-sm btn-ghost" onclick="Pages.editResCat('+ci+')"><i data-lucide="pencil"></i>تعديل</button>'+
+          '<button class="btn btn-sm btn-ghost" style="color:var(--danger-600)" onclick="Pages.delResCat('+ci+')"><i data-lucide="trash-2"></i>حذف</button>'+
+        '</div>'+
+      '</div>'+
+      (cat.links.length ?
+        '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse">'+
+          '<thead><tr style="font-size:11px;font-weight:600;color:var(--fg-3);text-align:right">'+
+            '<th style="padding:0 8px 10px;width:44px">رمز</th>'+
+            '<th style="padding:0 8px 10px">الاسم والوصف</th>'+
+            '<th style="padding:0 8px 10px">النوع</th>'+
+            '<th style="padding:0 8px 10px">الرابط</th>'+
+            '<th style="padding:0 8px 10px">إجراء</th>'+
+          '</tr></thead>'+
+          '<tbody>'+linksHtml+'</tbody>'+
+        '</table></div>'
+        : '<p style="color:var(--fg-3);font-size:13px;text-align:center;padding:14px 0">لا توجد روابط في هذا التصنيف بعد.</p>')+
+      '<div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border-1)">'+
+        '<button class="btn btn-sm btn-ghost" onclick="Pages.addResLink('+ci+')"><i data-lucide="plus"></i>إضافة رابط</button>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+
+  pg.innerHTML =
+    '<div class="page-header">'+
+      '<div><h1>الموارد والأدلة</h1><div class="page-header-sub">المحتوى الذي تراه الجمعيات في صفحة الموارد — أي تعديل يتطلب حفظاً</div></div>'+
+      '<button class="btn btn-primary" id="res-save-btn" onclick="Pages.saveResources()"><i data-lucide="save"></i>حفظ التغييرات</button>'+
+    '</div>'+
+    '<div style="background:rgba(29,155,138,.06);border:1px solid rgba(29,155,138,.2);border-radius:12px;padding:14px 18px;font-size:13.5px;color:var(--fg-2);display:flex;gap:12px;align-items:center;margin-bottom:20px">'+
+      '<i data-lucide="info" style="width:18px;height:18px;color:var(--accent-600);flex-shrink:0"></i>'+
+      '<span>التغييرات هنا ستظهر فوراً للجمعيات في صفحة الموارد والأدلة بعد الحفظ.</span>'+
+    '</div>'+
+    catsHtml+
+    '<button class="btn btn-ghost" style="margin-top:4px" onclick="Pages.addResCat()"><i data-lucide="folder-plus"></i>إضافة تصنيف جديد</button>';
+  if (typeof lucide !== 'undefined') lucide.createIcons();
+};
+
+Pages.saveResources = function() {
+  var btn = document.getElementById('res-save-btn');
+  if(btn){ btn.disabled=true; btn.innerHTML='<i data-lucide="loader-2" style="animation:spin .8s linear infinite"></i>جارٍ الحفظ...'; if(typeof lucide!=='undefined') lucide.createIcons(); }
+  fetch('/api/resources', {
+    method: 'PUT',
+    headers: Object.assign({'Content-Type':'application/json'}, DB._apiHeaders()),
+    body: JSON.stringify(Pages._resData)
+  }).then(function(r){
+    if(r.ok){ UI.toast('تم حفظ الموارد بنجاح', 'success'); }
+    else { UI.toast('تعذّر الحفظ — حاول مجدداً', 'danger'); }
+    Pages.render_resources({_loaded:true});
+  }).catch(function(){
+    UI.toast('خطأ في الاتصال', 'danger');
+    Pages.render_resources({_loaded:true});
+  });
+};
+
+Pages.editResCat = function(ci) {
+  var cat = Pages._resData[ci];
+  UI.openModal(
+    '<div class="modal-header"><h3>تعديل التصنيف</h3><button class="modal-close" onclick="UI.closeModalForce()">×</button></div>'+
+    '<div style="padding:18px 20px">'+
+      '<div class="form-group" style="margin-bottom:14px"><label style="font-size:12px;font-weight:600;display:block;margin-bottom:5px">اسم التصنيف</label>'+
+      '<input id="res-cat-name" class="form-input" value="'+UI.escHtml(cat.cat||'')+'"></div>'+
+      '<div class="form-group"><label style="font-size:12px;font-weight:600;display:block;margin-bottom:5px">الوصف</label>'+
+      '<input id="res-cat-sub" class="form-input" value="'+UI.escHtml(cat.sub||'')+'"></div>'+
+    '</div>'+
+    '<div class="modal-footer"><button class="btn btn-ghost" onclick="UI.closeModalForce()">إلغاء</button>'+
+    '<button class="btn btn-primary" onclick="Pages.doEditResCat('+ci+')">حفظ</button></div>'
+  );
+};
+Pages.doEditResCat = function(ci) {
+  Pages._resData[ci].cat = document.getElementById('res-cat-name').value.trim();
+  Pages._resData[ci].sub = document.getElementById('res-cat-sub').value.trim();
+  UI.closeModalForce();
+  Pages.render_resources({_loaded:true});
+};
+Pages.delResCat = function(ci) {
+  if(!confirm('حذف هذا التصنيف وجميع روابطه؟')) return;
+  Pages._resData.splice(ci, 1);
+  Pages.render_resources({_loaded:true});
+};
+Pages.addResCat = function() {
+  UI.openModal(
+    '<div class="modal-header"><h3>إضافة تصنيف جديد</h3><button class="modal-close" onclick="UI.closeModalForce()">×</button></div>'+
+    '<div style="padding:18px 20px">'+
+      '<div class="form-group" style="margin-bottom:14px"><label style="font-size:12px;font-weight:600;display:block;margin-bottom:5px">اسم التصنيف</label>'+
+      '<input id="res-cat-name" class="form-input" placeholder="مثال: الأدوات الرقمية"></div>'+
+      '<div class="form-group"><label style="font-size:12px;font-weight:600;display:block;margin-bottom:5px">الوصف</label>'+
+      '<input id="res-cat-sub" class="form-input" placeholder="وصف مختصر للتصنيف"></div>'+
+    '</div>'+
+    '<div class="modal-footer"><button class="btn btn-ghost" onclick="UI.closeModalForce()">إلغاء</button>'+
+    '<button class="btn btn-primary" onclick="Pages.doAddResCat()">إضافة</button></div>'
+  );
+};
+Pages.doAddResCat = function() {
+  var name = (document.getElementById('res-cat-name').value||'').trim();
+  if(!name) return;
+  Pages._resData.push({ cat:name, sub:(document.getElementById('res-cat-sub').value||'').trim(), icon:'<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>', links:[] });
+  UI.closeModalForce();
+  Pages.render_resources({_loaded:true});
+};
+
+function _resLinkModal(cat, link, onSave) {
+  UI.openModal(
+    '<div class="modal-header"><h3>'+UI.escHtml(cat.cat)+'</h3><button class="modal-close" onclick="UI.closeModalForce()">×</button></div>'+
+    '<div style="padding:18px 20px;display:grid;gap:12px">'+
+      '<div class="form-group"><label style="font-size:12px;font-weight:600;display:block;margin-bottom:5px">الاسم <span style="color:red">*</span></label>'+
+      '<input id="rl-name" class="form-input" value="'+UI.escHtml(link.name||'')+'" placeholder="اسم المصدر"></div>'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">'+
+        '<div class="form-group"><label style="font-size:12px;font-weight:600;display:block;margin-bottom:5px">الرمز المختصر</label>'+
+        '<input id="rl-abbr" class="form-input" value="'+UI.escHtml(link.abbr||'')+'" placeholder="NC" maxlength="4"></div>'+
+        '<div class="form-group"><label style="font-size:12px;font-weight:600;display:block;margin-bottom:5px">النوع</label>'+
+        '<select id="rl-tag" class="form-input"><option value="gov"'+(link.tag!=='tpl'?' selected':'')+'>جهة رسمية</option><option value="tpl"'+(link.tag==='tpl'?' selected':'')+'>نموذج</option></select></div>'+
+      '</div>'+
+      '<div class="form-group"><label style="font-size:12px;font-weight:600;display:block;margin-bottom:5px">الوصف</label>'+
+      '<input id="rl-desc" class="form-input" value="'+UI.escHtml(link.desc||'')+'" placeholder="وصف مختصر"></div>'+
+      '<div class="form-group"><label style="font-size:12px;font-weight:600;display:block;margin-bottom:5px">الرابط (URL)</label>'+
+      '<input id="rl-url" class="form-input" value="'+UI.escHtml(link.url||'')+'" placeholder="https://..." dir="ltr"></div>'+
+      '<div class="form-group"><label style="font-size:12px;font-weight:600;display:block;margin-bottom:5px">لون الرمز</label>'+
+      '<input id="rl-color" type="color" value="'+(link.color||'#00197d')+'" style="width:100%;height:38px;border:1px solid var(--border-1);border-radius:8px;cursor:pointer"></div>'+
+    '</div>'+
+    '<div class="modal-footer"><button class="btn btn-ghost" onclick="UI.closeModalForce()">إلغاء</button>'+
+    '<button class="btn btn-primary" onclick="('+onSave.toString()+')()">حفظ</button></div>'
+  );
+}
+Pages.editResLink = function(ci, li) {
+  var cat = Pages._resData[ci], link = cat.links[li];
+  _resLinkModal(cat, link, function(){
+    var name = (document.getElementById('rl-name').value||'').trim();
+    if(!name) return;
+    Pages._resData[ci].links[li] = {
+      name: name,
+      abbr: (document.getElementById('rl-abbr').value||'').trim() || name.slice(0,2),
+      desc: (document.getElementById('rl-desc').value||'').trim(),
+      url:  (document.getElementById('rl-url').value||'').trim(),
+      color:(document.getElementById('rl-color').value||'#00197d'),
+      tag:  document.getElementById('rl-tag').value
+    };
+    UI.closeModalForce();
+    Pages.render_resources({_loaded:true});
+  });
+};
+Pages.delResLink = function(ci, li) {
+  if(!confirm('حذف هذا الرابط؟')) return;
+  Pages._resData[ci].links.splice(li, 1);
+  Pages.render_resources({_loaded:true});
+};
+Pages.addResLink = function(ci) {
+  _resLinkModal(Pages._resData[ci], {}, function(){
+    var name = (document.getElementById('rl-name').value||'').trim();
+    if(!name) return;
+    Pages._resData[ci].links.push({
+      name: name,
+      abbr: (document.getElementById('rl-abbr').value||'').trim() || name.slice(0,2),
+      desc: (document.getElementById('rl-desc').value||'').trim(),
+      url:  (document.getElementById('rl-url').value||'').trim(),
+      color:(document.getElementById('rl-color').value||'#00197d'),
+      tag:  document.getElementById('rl-tag').value
+    });
+    UI.closeModalForce();
+    Pages.render_resources({_loaded:true});
   });
 };
 

@@ -280,6 +280,74 @@ img,svg{display:block;max-width:100%}
 .coming-feat{background:#fff;border:1px solid var(--line);border-radius:20px;padding:7px 16px;font-size:13px;color:var(--navy-2);font-weight:500;display:flex;align-items:center;gap:7px}
 .coming-feat svg{width:14px;height:14px;color:var(--accent)}
 
+/* ─── Sidebar two-tier groups ─── */
+.sb-enabled-dot{margin-right:auto;width:7px;height:7px;border-radius:50%;background:#22c55e;flex-shrink:0;box-shadow:0 0 0 2px rgba(34,197,94,.25)}
+.sb-item .sb-tag{margin-right:auto;font-size:9px;font-weight:700;color:var(--accent-2);background:rgba(39,194,172,.18);padding:2px 7px;border-radius:20px;line-height:1.5;letter-spacing:.02em}
+
+/* ─── Overview: next tasks ─── */
+.ov-two{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:24px}
+.ov-panel{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:20px 22px;box-shadow:var(--shadow-sm)}
+.ov-panel-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.ov-panel-hd h3{font-size:15px;font-weight:700;color:var(--navy-deep)}
+.ov-panel-hd a{font-size:12px;color:var(--accent);font-weight:600;cursor:pointer}
+.ov-task-row{display:flex;align-items:center;gap:11px;padding:10px 0;border-bottom:1px solid var(--line);cursor:pointer;transition:background .12s}
+.ov-task-row:last-child{border-bottom:none;padding-bottom:0}
+.ov-task-row:first-child{padding-top:0}
+.ov-task-row .ot-chk{width:20px;height:20px;border-radius:6px;border:2px solid var(--line);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:.15s}
+.ov-task-row.done .ot-chk{background:var(--ok);border-color:var(--ok)}
+.ov-task-row.done .ot-chk::after{content:"";display:block;width:10px;height:7px;border-left:2.5px solid #fff;border-bottom:2.5px solid #fff;transform:rotate(-45deg) translate(1px,-1px)}
+.ov-task-row .ot-tx{flex:1;min-width:0}
+.ov-task-row .ot-nm{font-size:13px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ov-task-row.done .ot-nm{color:var(--muted);text-decoration:line-through}
+.ov-task-row .ot-day{font-size:10px;color:var(--navy);background:var(--bg-tint);padding:2px 8px;border-radius:20px;flex-shrink:0;font-weight:600}
+.ov-empty{font-size:13px;color:var(--muted);text-align:center;padding:16px 0}
+.ov-act-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line)}
+.ov-act-row:last-child{border-bottom:none}
+.ov-act-dot{width:8px;height:8px;border-radius:50%;background:var(--ok);flex-shrink:0}
+.ov-act-nm{font-size:13px;font-weight:500;color:var(--ink);flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ov-act-at{font-size:11px;color:var(--muted);flex-shrink:0}
+@media(max-width:680px){.ov-two{grid-template-columns:1fr}}
+
+/* ─── Profile: enabled tools ─── */
+.prof-tools-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;margin-top:4px}
+.prof-tool{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;box-shadow:var(--shadow-sm);display:flex;align-items:center;gap:14px}
+.prof-tool-ico{width:42px;height:42px;border-radius:12px;background:var(--bg-tint);color:var(--navy);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.prof-tool-ico svg{width:21px;height:21px}
+.prof-tool-ico.on{background:linear-gradient(135deg,rgba(29,155,138,.12),rgba(0,25,125,.06));color:var(--accent)}
+.prof-tool-tx{flex:1;min-width:0}
+.prof-tool-nm{font-size:14px;font-weight:700;color:var(--navy-deep)}
+.prof-tool-st{font-size:12px;margin-top:2px;font-weight:600}
+.prof-tool-st.on{color:var(--ok)}
+.prof-tool-st.off{color:var(--muted);font-weight:400}
+.prof-btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:4px}
+.prof-contact-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:0;border-top:1px solid var(--line);margin-top:0}
+.prof-contact-field{padding:16px 28px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px}
+.prof-contact-field:nth-child(odd){border-left:1px solid var(--line)}
+.prof-contact-field .cf-ico{width:34px;height:34px;border-radius:9px;background:var(--bg-tint);color:var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.prof-contact-field .cf-ico svg{width:16px;height:16px}
+.prof-contact-field .cf-tx .l{font-size:11px;font-weight:600;color:var(--muted)}
+.prof-contact-field .cf-tx .v{font-size:14px;font-weight:600;color:var(--ink)}
+.prof-contact-field .cf-tx .v.empty{color:var(--muted);font-weight:400;font-style:italic}
+
+/* ─── Store page ─── */
+.store-header{background:linear-gradient(148deg,var(--navy-deep) 0%,var(--navy) 60%,#0c3a8a 100%);color:#fff;border-radius:var(--radius-lg);padding:34px;position:relative;overflow:hidden;margin-bottom:24px;box-shadow:var(--shadow-lg)}
+.store-header::before{content:"";position:absolute;width:340px;height:340px;border-radius:50%;background:radial-gradient(circle,rgba(39,194,172,.18),transparent 65%);top:-140px;left:-80px;pointer-events:none}
+.store-header h1{font-size:24px;font-weight:700;margin-bottom:8px;position:relative}
+.store-header p{font-size:14px;color:rgba(255,255,255,.72);max-width:520px;line-height:1.7;position:relative}
+.store-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
+.store-card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow-sm);display:flex;flex-direction:column;gap:14px;transition:.2s}
+.store-card:hover{box-shadow:var(--shadow);transform:translateY(-2px)}
+.store-card.enabled{border-color:var(--ok-line);background:linear-gradient(180deg,#fff,var(--ok-soft))}
+.store-card-ico{width:52px;height:52px;border-radius:14px;background:var(--bg-tint);color:var(--navy);display:flex;align-items:center;justify-content:center}
+.store-card-ico svg{width:26px;height:26px}
+.store-card-ico.on{background:linear-gradient(135deg,rgba(29,155,138,.12),rgba(0,25,125,.06));color:var(--accent)}
+.store-card h3{font-size:16px;font-weight:700;color:var(--navy-deep)}
+.store-card p{font-size:13px;color:var(--muted);line-height:1.7;flex:1}
+.store-card-foot{display:flex;align-items:center;justify-content:space-between;padding-top:12px;border-top:1px solid var(--line)}
+.store-status{font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px}
+.store-status.on{color:var(--ok);background:var(--ok-soft)}
+.store-status.soon{color:var(--gold);background:rgba(224,168,60,.11)}
+
 /* ─── Modal ─── */
 .modal-overlay{position:fixed;inset:0;background:rgba(10,18,48,.55);backdrop-filter:blur(4px);z-index:900;display:none;align-items:center;justify-content:center;padding:20px;opacity:0;transition:opacity .2s}
 .modal-overlay.show{display:flex;opacity:1}
@@ -472,6 +540,7 @@ img,svg{display:block;max-width:100%}
 
     <!-- nav -->
     <nav class="sb-nav">
+      <div class="sb-group">الأدوات الأساسية</div>
       <button class="sb-item active" id="nav-overview" onclick="go('overview')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
         لوحة التحكم
@@ -493,12 +562,18 @@ img,svg{display:block;max-width:100%}
         ملف الجمعية
       </button>
 
-      <button class="sb-item" id="nav-website" onclick="go('website')">
+      <div class="sb-group" id="sb-group-enabled" style="display:none">أدواتك المفعّلة</div>
+      <button class="sb-item" id="nav-website" onclick="go('website')" style="display:none">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-        موقعي الإلكتروني <span class="soon-pill" id="ws-nav-pill">قريباً</span>
+        موقعي الإلكتروني
+        <span class="sb-enabled-dot"></span>
       </button>
 
-      <div class="sb-group">قريباً</div>
+      <div class="sb-group">أدوات قادمة</div>
+      <button class="sb-item" id="nav-store" onclick="go('store')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+        متجر الأدوات <span class="soon-pill">قريباً</span>
+      </button>
       <button class="sb-item" id="nav-projects" onclick="go('projects')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
         مشاريعي <span class="soon-pill">قريباً</span>
@@ -546,14 +621,14 @@ img,svg{display:block;max-width:100%}
           </div>
           <div class="ov-stats">
             <div class="ov-stat"><div class="n"><span id="st-done">0</span>/<span id="st-total">0</span></div><div class="l">مهمة مكتملة</div></div>
-            <div class="ov-stat"><div class="n"><span id="st-day">1</span> <span style="font-size:12px;font-weight:400;opacity:.75">من ١٠٠</span></div><div class="l">اليوم الحالي</div></div>
+            <div class="ov-stat"><div class="n"><span id="st-day">1</span> <span style="font-size:12px;font-weight:400;opacity:.75">من 100</span></div><div class="l">اليوم في خطتك</div></div>
             <div class="ov-stat"><div class="n"><span id="st-left">99</span></div><div class="l">يوماً متبقياً</div></div>
           </div>
           <div class="bigbar"><i id="big-fill" style="width:0%"></i></div>
         </div>
 
         <div class="section-h">اختصارات سريعة</div>
-        <div class="quick-grid">
+        <div class="quick-grid" id="ov-quick-grid">
           <button class="quick-card" onclick="go('plan')">
             <div class="quick-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 11l3 3 8-8"/><path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z"/></svg></div>
             <h4>خطة المئة يوم</h4>
@@ -572,6 +647,17 @@ img,svg{display:block;max-width:100%}
             <p>الأدلة والسياسات الرسمية من الجهات المعنية بالقطاع غير الربحي.</p>
             <span class="go">افتح الموارد <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="m15 18-6-6 6-6"/></svg></span>
           </button>
+        </div>
+
+        <div class="ov-two">
+          <div class="ov-panel">
+            <div class="ov-panel-hd"><h3>المهام التالية</h3><a onclick="go('plan')">عرض الكل</a></div>
+            <div id="ov-next-tasks"><p class="ov-empty">جارٍ التحميل…</p></div>
+          </div>
+          <div class="ov-panel">
+            <div class="ov-panel-hd"><h3>آخر الإنجازات</h3><a onclick="go('plan')">الخطة كاملة</a></div>
+            <div id="ov-recent-done"><p class="ov-empty">لا توجد مهام مكتملة بعد.</p></div>
+          </div>
         </div>
       </section>
 
@@ -635,7 +721,7 @@ img,svg{display:block;max-width:100%}
               تعديل البيانات
             </button>
           </div>
-          <div class="prof-grid" id="prof-grid"></div>
+          <div class="prof-contact-grid" id="prof-grid"></div>
         </div>
       </section>
 
@@ -670,6 +756,16 @@ img,svg{display:block;max-width:100%}
           </div>
           <button class="btn btn-primary" onclick="openServiceModal('governance','الحوكمة والامتثال')">استفسر عن خدمة الحوكمة</button>
         </div>
+      </section>
+
+      <!-- ─── Store (متجر الأدوات) ─── -->
+      <section class="page" id="page-store">
+        <div class="store-header">
+          <h1>متجر أدوات بُعد</h1>
+          <p>منصة بُعد توفّر لك أدوات متخصصة لتمكين جمعيتك — من الموقع الإلكتروني إلى إدارة المشاريع والحوكمة. فعّل الأداة التي تحتاجها وابدأ فوراً.</p>
+        </div>
+        <div class="section-h">الأدوات المتاحة</div>
+        <div class="store-grid" id="store-tools-grid"></div>
       </section>
 
     </div><!-- /content -->
@@ -858,7 +954,7 @@ function openSidebar(){ document.getElementById('sidebar').classList.add('open')
 function closeSidebar(){ document.getElementById('sidebar').classList.remove('open'); document.getElementById('sb-overlay').classList.remove('show'); }
 
 /* ── Navigation ── */
-var PAGES = ['overview','plan','services','resources','profile','website','projects','governance'];
+var PAGES = ['overview','plan','services','resources','profile','website','projects','governance','store'];
 function go(id){
   PAGES.forEach(function(p){
     var pg = document.getElementById('page-'+p);
@@ -872,6 +968,7 @@ function go(id){
   window.scrollTo(0,0);
   if(id==='profile') renderProfile();
   if(id==='website') renderWebsite();
+  if(id==='store') renderStore();
 }
 
 /* ── Requested-services state (per org, persisted locally for instant UI) ── */
@@ -1061,8 +1158,44 @@ function renderServices(){
 }
 
 /* ── Render resources ── */
+/* ── Render store ── */
+var STORE_TOOLS = [
+  { id:'website', icon:'<circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>', name:'الموقع الإلكتروني', desc:'أنشئ موقعاً احترافياً لجمعيتك يعكس هويتها ويعرض برامجها وتقاريرها الحوكمية بشكل جذّاب.', getEnabled: function(){ return wsEnabled; }, onClick: function(){ wsEnabled ? go('website') : toast('تواصل مع فريق بُعد لتفعيل الموقع الإلكتروني'); } },
+  { id:'projects', icon:'<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>', name:'إدارة المشاريع', desc:'تتبع مشاريع جمعيتك مع بُعد — ميزانيات، جداول زمنية، تقارير دورية، وإشراف من فريق متخصص.', getEnabled: function(){ return false; }, onClick: function(){ openServiceModal('projects','إدارة وتتبع المشاريع'); } },
+  { id:'governance', icon:'<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/>', name:'الحوكمة والامتثال', desc:'إعداد اللوائح والأنظمة الداخلية وضمان الامتثال لاشتراطات المركز الوطني للقطاع غير الربحي.', getEnabled: function(){ return false; }, onClick: function(){ openServiceModal('governance','الحوكمة والامتثال'); } },
+  { id:'identity', icon:'<path d="M12 2l2.4 7.4H22l-6 4.6 2.3 7.4L12 16.8 5.7 21.4 8 14 2 9.4h7.6z"/>', name:'الهوية البصرية', desc:'بناء هوية بصرية متكاملة للجمعية — شعار، ألوان، خطوط، وأدلة تطبيق احترافية.', getEnabled: function(){ return false; }, onClick: function(){ openServiceModal('identity','الهوية البصرية'); } }
+];
+
+function renderStore(){
+  var grid = document.getElementById('store-tools-grid');
+  if(!grid) return;
+  grid.innerHTML = STORE_TOOLS.map(function(t){
+    var on = t.getEnabled();
+    return '<div class="store-card'+(on?' enabled':'')+'" onclick="('+t.onClick.toString()+')()">'+
+      '<div class="store-card-ico'+(on?' on':'')+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">'+t.icon+'</svg></div>'+
+      '<h3>'+esc(t.name)+'</h3>'+
+      '<p>'+esc(t.desc)+'</p>'+
+      '<div class="store-card-foot">'+
+        '<span class="store-status '+(on?'on':'soon')+'">'+(on?'مفعّلة':'قريباً / تواصل معنا')+'</span>'+
+        '<span style="font-size:12px;color:var(--accent);font-weight:600">'+(on?'إدارة &larr;':'اطلب الخدمة &larr;')+'</span>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+
+var _resourcesData = null;
 function renderResources(){
-  var html = RESOURCES.map(function(cat){
+  if(_resourcesData){ renderResourcesData(_resourcesData); return; }
+  fetch(API+'/public/resources')
+    .then(function(r){ return r.ok ? r.json() : null; })
+    .then(function(d){
+      _resourcesData = (Array.isArray(d) && d.length) ? d : RESOURCES;
+      renderResourcesData(_resourcesData);
+    })
+    .catch(function(){ _resourcesData = RESOURCES; renderResourcesData(RESOURCES); });
+}
+function renderResourcesData(data){
+  var html = data.map(function(cat){
     var cards = cat.links.map(function(l){
       var isTpl = l.tag==='tpl';
       var clickable = l.url ? 'onclick="window.open(\''+l.url+'\',\'_blank\',\'noopener\')"' :
@@ -1096,26 +1229,72 @@ function renderProfile(){
   var done = Object.keys(progress).filter(function(k){ return progress[k] && progress[k].done; }).length;
   var pct = TOTAL_TASKS ? Math.round(done/TOTAL_TASKS*100) : 0;
   var reqCount = Object.keys(requested).length;
+  var start = org.plan_start ? new Date(org.plan_start) : null;
+  var elapsed = start ? Math.max(1, Math.min(100, Math.floor((Date.now()-start.getTime())/86400000)+1)) : 0;
+
   document.getElementById('prof-stats').innerHTML =
     '<div class="prof-stat accent"><div class="n">'+pct+'%</div><div class="l">إنجاز خطة المئة يوم</div></div>'+
     '<div class="prof-stat"><div class="n">'+done+'<span style="font-size:15px;color:var(--muted)">/'+TOTAL_TASKS+'</span></div><div class="l">مهمة مكتملة</div></div>'+
+    '<div class="prof-stat"><div class="n">'+elapsed+'</div><div class="l">يوم من 100</div></div>'+
     '<div class="prof-stat"><div class="n">'+reqCount+'</div><div class="l">خدمة مطلوبة</div></div>';
 
-  function field(icon,label,val){
-    var empty = !val;
-    return '<div class="prof-field"><div class="lbl">'+
-      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">'+icon+'</svg>'+esc(label)+'</div>'+
-      '<div class="val'+(empty?' empty':'')+'">'+(empty?'غير محدّد':esc(val))+'</div></div>';
-  }
   var startTxt = '';
-  if(org.plan_start){ try{ startTxt = new Date(org.plan_start).toLocaleDateString('ar-SA'); }catch(e){} }
+  if(org.plan_start){ try{ startTxt = new Date(org.plan_start).toLocaleDateString('ar-u-nu-latn'); }catch(e){} }
+
+  function cf(icoPath, label, val){
+    var empty = !val;
+    return '<div class="prof-contact-field">'+
+      '<div class="cf-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">'+icoPath+'</svg></div>'+
+      '<div class="cf-tx"><div class="l">'+esc(label)+'</div><div class="v'+(empty?' empty':'')+'">'+(empty?'غير محدّد':esc(val))+'</div></div>'+
+    '</div>';
+  }
+
   document.getElementById('prof-grid').innerHTML =
-    field('<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>','المسؤول عن الجمعية', org.contact_name)+
-    field('<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/>','رقم الجوال', org.phone)+
-    field('<path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>','البريد الإلكتروني', org.email)+
-    field('<path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>','المدينة', org.city)+
-    field('<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>','رقم الترخيص', org.license_no)+
-    field('<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>','تاريخ بدء الخطة', startTxt);
+    cf('<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>','المسؤول عن الجمعية', org.contact_name)+
+    cf('<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/>','رقم الجوال', org.phone)+
+    cf('<path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>','البريد الإلكتروني', org.email)+
+    cf('<path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>','المدينة', org.city)+
+    cf('<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>','رقم الترخيص', org.license_no)+
+    cf('<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>','تاريخ بدء الخطة', startTxt);
+
+  var profCard = document.querySelector('#page-profile .prof-card');
+  var toolsId = 'prof-tools-section';
+  var existing = document.getElementById(toolsId);
+  if(existing) existing.remove();
+  var toolsDiv = document.createElement('div');
+  toolsDiv.id = toolsId;
+  toolsDiv.innerHTML =
+    '<div class="section-h" style="margin:22px 0 14px">الأدوات والمزايا</div>'+
+    '<div class="prof-tools-grid">'+
+      profToolCard(
+        '<circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>',
+        'الموقع الإلكتروني',
+        wsEnabled,
+        wsEnabled ? function(){ go('website'); } : function(){ go('store'); }
+      )+
+      profToolCard(
+        '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',
+        'إدارة المشاريع', false, null)+
+      profToolCard(
+        '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/>',
+        'الحوكمة والامتثال', false, null)+
+    '</div>';
+  var profCardParent = document.getElementById('page-profile');
+  profCardParent.appendChild(toolsDiv);
+}
+
+function profToolCard(iconPath, label, on, clickFn){
+  var id = 'ptc-'+label.replace(/\s/g,'');
+  var html = '<div class="prof-tool" id="'+id+'" style="cursor:'+(on||clickFn?'pointer':'default')+'">'+
+    '<div class="prof-tool-ico'+(on?' on':'')+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">'+iconPath+'</svg></div>'+
+    '<div class="prof-tool-tx"><div class="prof-tool-nm">'+esc(label)+'</div>'+
+    '<div class="prof-tool-st '+(on?'on':'off')+'">'+(on?'مفعّلة ✓':'غير مفعّلة — قريباً')+'</div></div>'+
+  '</div>';
+  setTimeout(function(){
+    var el = document.getElementById(id);
+    if(el && clickFn) el.onclick = clickFn;
+  }, 0);
+  return html;
 }
 
 /* ── Render plan tracks ── */
@@ -1201,13 +1380,60 @@ function updateOverview(){
   document.getElementById('st-total').textContent = TOTAL_TASKS;
   document.getElementById('big-fill').style.width = pct+'%';
   document.getElementById('big-pct').innerHTML = pct+'<span>%</span>';
-  // sidebar mini-bar
   document.getElementById('sb-org-pct').textContent = pct+'%';
   document.getElementById('sb-org-fill').style.width = pct+'%';
   var start = org && org.plan_start ? new Date(org.plan_start) : new Date();
   var elapsed = Math.max(1, Math.min(100, Math.floor((Date.now()-start.getTime())/86400000)+1));
   document.getElementById('st-day').textContent = elapsed;
   document.getElementById('st-left').textContent = Math.max(0,100-elapsed);
+  renderOvTasks();
+}
+
+function renderOvTasks(){
+  var nextEl = document.getElementById('ov-next-tasks');
+  var doneEl = document.getElementById('ov-recent-done');
+  if(!nextEl || !doneEl || !PLAN.length) return;
+  var allTasks = [];
+  PLAN.forEach(function(track){ track.tasks.forEach(function(t){ allTasks.push(t); }); });
+  var pending = allTasks.filter(function(t){ return !(progress[t.id]&&progress[t.id].done); }).slice(0,5);
+  var recent = allTasks.filter(function(t){ return progress[t.id]&&progress[t.id].done; })
+    .sort(function(a,b){ var da=progress[a.id].at||'';var db=progress[b.id].at||'';return db>da?1:db<da?-1:0; })
+    .slice(0,5);
+  if(!pending.length){
+    nextEl.innerHTML = '<p class="ov-empty">أحسنت — أكملت جميع المهام!</p>';
+  } else {
+    nextEl.innerHTML = pending.map(function(t){
+      return '<div class="ov-task-row" onclick="go(\'plan\')">'+
+        '<div class="ot-chk"></div>'+
+        '<div class="ot-tx"><div class="ot-nm">'+esc(t.title)+'</div></div>'+
+        '<span class="ot-day">'+esc(t.day)+'</span>'+
+      '</div>';
+    }).join('');
+  }
+  if(!recent.length){
+    doneEl.innerHTML = '<p class="ov-empty">لا توجد مهام مكتملة بعد.</p>';
+  } else {
+    doneEl.innerHTML = recent.map(function(t){
+      return '<div class="ov-act-row">'+
+        '<div class="ov-act-dot"></div>'+
+        '<div class="ov-act-nm">'+esc(t.title)+'</div>'+
+        '<span class="ov-act-at">'+esc(progress[t.id].at||'')+'</span>'+
+      '</div>';
+    }).join('');
+  }
+  // Add website quick card dynamically if enabled
+  var qg = document.getElementById('ov-quick-grid');
+  if(qg && wsEnabled && !document.getElementById('ov-qc-website')){
+    var wc = document.createElement('button');
+    wc.className = 'quick-card';
+    wc.id = 'ov-qc-website';
+    wc.onclick = function(){ go('website'); };
+    wc.innerHTML = '<div class="quick-ico" style="background:linear-gradient(135deg,rgba(29,155,138,.12),rgba(0,25,125,.06));color:var(--accent)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></div>'+
+      '<h4>موقعي الإلكتروني</h4>'+
+      '<p>أنشئ وأدر موقع جمعيتك الإلكتروني باحترافية عالية.</p>'+
+      '<span class="go">إدارة الموقع <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="m15 18-6-6 6-6"/></svg></span>';
+    qg.appendChild(wc);
+  }
 }
 
 function scheduleSave(){
@@ -1629,10 +1855,12 @@ function wsSave(){
       .then(function(o){
         org=o; progress=o.progress||{};
         wsEnabled = !!(o.website_enabled);
-        var pill = document.getElementById('ws-nav-pill');
-        if(pill) pill.style.display = wsEnabled ? 'none' : '';
-        var wsNav = document.getElementById('nav-website');
-        if(wsNav && wsEnabled) wsNav.parentNode.insertBefore(wsNav, wsNav.parentNode.querySelector('.sb-group'));
+        var wsNavBtn = document.getElementById('nav-website');
+        var wsGroup = document.getElementById('sb-group-enabled');
+        if(wsEnabled){
+          if(wsNavBtn) wsNavBtn.style.display = '';
+          if(wsGroup) wsGroup.style.display = '';
+        }
         enterApp();
       })
       .catch(function(){ clearToken(); });
