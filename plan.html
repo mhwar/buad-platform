@@ -321,40 +321,82 @@ img,svg{display:block;max-width:100%}
   .page-head h1{font-size:21px}
 }
 /* ── Website Builder ── */
-.ws-header{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:24px;flex-wrap:wrap}
+.ws-header{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:18px;flex-wrap:wrap}
 .ws-title{font-size:20px;font-weight:800;color:var(--navy-deep)}
 .ws-status{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;padding:4px 12px;border-radius:20px}
 .ws-status.published{background:#dcfce7;color:#15803d}
 .ws-status.draft{background:var(--bg-tint);color:var(--muted)}
-.ws-tabs{display:flex;gap:4px;border-bottom:1.5px solid var(--line);margin-bottom:20px;flex-wrap:wrap}
-.ws-tab{padding:8px 18px;font-size:13.5px;font-weight:600;color:var(--muted);border:none;background:none;cursor:pointer;border-bottom:2.5px solid transparent;margin-bottom:-1.5px;border-radius:0;transition:.15s}
-.ws-tab.active{color:var(--navy);border-bottom-color:var(--accent)}
-.ws-section{display:none}
+.ws-preview-bar{background:linear-gradient(135deg,var(--navy) 0%,var(--navy-deep) 100%);color:#fff;border-radius:14px;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px;flex-wrap:wrap}
+.ws-preview-url{font-size:12.5px;color:rgba(255,255,255,.85);direction:ltr;font-family:monospace;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ws-publish-toggle{display:flex;align-items:center;gap:10px}
+.ws-toggle{position:relative;width:46px;height:26px;cursor:pointer;flex-shrink:0}
+.ws-toggle input{opacity:0;width:0;height:0;position:absolute}
+.ws-toggle-track{position:absolute;inset:0;border-radius:13px;background:rgba(255,255,255,.3);transition:.2s}
+.ws-toggle input:checked+.ws-toggle-track{background:#34d399}
+.ws-toggle-thumb{position:absolute;top:3px;right:3px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.25);transition:.2s}
+.ws-toggle input:checked~.ws-toggle-thumb{right:auto;left:3px}
+/* layout: side nav + panel */
+.ws-shell{display:grid;grid-template-columns:208px 1fr;gap:20px;align-items:start}
+.ws-nav{position:sticky;top:8px;display:flex;flex-direction:column;gap:2px;background:#fff;border:1.5px solid var(--line);border-radius:14px;padding:8px;max-height:calc(100vh - 40px);overflow:auto}
+.ws-nav-item{display:flex;align-items:center;gap:9px;padding:9px 12px;border-radius:9px;border:none;background:none;cursor:pointer;font-family:inherit;font-size:13px;font-weight:600;color:var(--navy-2);text-align:right;width:100%;transition:.12s}
+.ws-nav-item svg{width:16px;height:16px;flex-shrink:0;color:var(--muted)}
+.ws-nav-item:hover{background:var(--bg-soft)}
+.ws-nav-item.active{background:var(--navy);color:#fff}
+.ws-nav-item.active svg{color:#fff}
+.ws-nav-item .dot{margin-right:auto;width:7px;height:7px;border-radius:50%;background:#34d399;flex-shrink:0}
+.ws-panel{min-width:0}
+.ws-section{display:none;animation:fade .25s ease}
 .ws-section.active{display:block}
-.ws-card{background:#fff;border:1.5px solid var(--line);border-radius:14px;padding:20px 22px;margin-bottom:16px}
-.ws-card h4{font-size:14px;font-weight:700;color:var(--navy-deep);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.ws-sec-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+.ws-sec-head h3{font-size:17px;font-weight:800;color:var(--navy-deep)}
+.ws-sec-head p{font-size:12.5px;color:var(--muted);margin-top:2px}
+.ws-sec-toggle{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:600;color:var(--navy-2);background:var(--bg-tint);padding:6px 12px;border-radius:20px}
+.ws-mini-toggle{position:relative;width:38px;height:22px;cursor:pointer;flex-shrink:0}
+.ws-mini-toggle input{opacity:0;position:absolute;width:0;height:0}
+.ws-mini-track{position:absolute;inset:0;border-radius:11px;background:var(--line);transition:.2s}
+.ws-mini-toggle input:checked+.ws-mini-track{background:var(--accent)}
+.ws-mini-thumb{position:absolute;top:3px;right:3px;width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:.2s}
+.ws-mini-toggle input:checked~.ws-mini-thumb{right:auto;left:3px}
+.ws-card{background:#fff;border:1.5px solid var(--line);border-radius:14px;padding:18px 20px;margin-bottom:14px}
+.ws-card h4{font-size:13.5px;font-weight:700;color:var(--navy-deep);margin-bottom:14px;display:flex;align-items:center;gap:8px}
 .ws-card h4 svg{width:16px;height:16px;color:var(--accent);flex-shrink:0}
-.ws-field{margin-bottom:14px}
+.ws-field{margin-bottom:13px}
+.ws-field:last-child{margin-bottom:0}
 .ws-field label{display:block;font-size:12.5px;font-weight:600;color:var(--navy-2);margin-bottom:5px}
 .ws-field input,.ws-field textarea,.ws-field select{width:100%;padding:9px 12px;border:1.5px solid var(--line);border-radius:8px;font-size:14px;font-family:inherit;color:var(--ink);background:#fff;box-sizing:border-box;transition:.15s}
 .ws-field input:focus,.ws-field textarea:focus,.ws-field select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(29,155,138,.12)}
-.ws-field textarea{resize:vertical;min-height:80px}
+.ws-field textarea{resize:vertical;min-height:80px;line-height:1.7}
 .ws-field .hint{font-size:11.5px;color:var(--muted);margin-top:4px}
 .ws-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.ws-preview-bar{background:var(--bg-tint);border:1.5px solid var(--line);border-radius:12px;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:20px;flex-wrap:wrap}
-.ws-preview-url{font-size:13px;color:var(--navy-2);direction:ltr;font-family:monospace;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.ws-publish-toggle{display:flex;align-items:center;gap:10px}
-.ws-toggle{position:relative;width:46px;height:26px;cursor:pointer}
-.ws-toggle input{opacity:0;width:0;height:0;position:absolute}
-.ws-toggle-track{position:absolute;inset:0;border-radius:13px;background:var(--line);transition:.2s}
-.ws-toggle input:checked+.ws-toggle-track{background:var(--accent)}
-.ws-toggle-thumb{position:absolute;top:3px;right:3px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.25);transition:.2s}
-.ws-toggle input:checked~.ws-toggle-thumb{right:auto;left:3px}
-.ws-actions{display:flex;justify-content:flex-end;gap:10px;padding-top:8px;border-top:1.5px solid var(--line);margin-top:4px}
+.ws-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+/* repeater item cards */
+.ws-item{background:var(--bg-soft);border:1.5px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:12px;position:relative}
+.ws-item-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+.ws-item-badge{font-size:11px;font-weight:700;color:var(--accent);background:rgba(29,155,138,.1);padding:3px 10px;border-radius:20px}
+.ws-item-del{width:28px;height:28px;border-radius:7px;border:1.5px solid var(--line);background:#fff;color:#dc2626;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.12s;flex-shrink:0}
+.ws-item-del:hover{background:#fef2f2;border-color:#fca5a5}
+.ws-item-del svg{width:15px;height:15px}
+.ws-add-btn{width:100%;padding:12px;border:1.5px dashed var(--accent);background:rgba(29,155,138,.05);color:var(--accent);border-radius:11px;font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;transition:.15s}
+.ws-add-btn:hover{background:rgba(29,155,138,.12)}
+.ws-add-btn svg{width:17px;height:17px}
+.ws-empty{text-align:center;padding:24px;color:var(--muted);font-size:13px}
+/* theme + accent */
 .ws-theme-grid{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
-.ws-theme-opt{width:36px;height:36px;border-radius:50%;border:3px solid transparent;cursor:pointer;transition:.15s;flex-shrink:0}
-.ws-theme-opt.active,.ws-theme-opt:hover{border-color:var(--navy)}
-@media(max-width:640px){.ws-row{grid-template-columns:1fr}}
+.ws-theme-opt{width:38px;height:38px;border-radius:50%;border:3px solid transparent;cursor:pointer;transition:.15s;flex-shrink:0;position:relative}
+.ws-theme-opt.active{border-color:var(--navy)}
+.ws-theme-opt.active::after{content:'✓';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:15px;font-weight:800}
+.ws-color-input{display:flex;align-items:center;gap:10px}
+.ws-color-input input[type=color]{width:46px;height:38px;padding:2px;border-radius:8px;cursor:pointer}
+.ws-actions{display:flex;justify-content:flex-end;gap:10px;padding:14px 0 4px;position:sticky;bottom:0;background:linear-gradient(transparent,var(--bg) 30%);margin-top:8px}
+.ws-img-preview{width:100%;height:120px;object-fit:cover;border-radius:8px;margin-top:8px;border:1.5px solid var(--line);background:var(--bg-tint)}
+.ws-logo-preview{width:56px;height:56px;object-fit:contain;border-radius:10px;border:1.5px solid var(--line);background:var(--bg-tint);padding:4px}
+@media(max-width:860px){
+  .ws-shell{grid-template-columns:1fr}
+  .ws-nav{position:static;flex-direction:row;flex-wrap:nowrap;overflow-x:auto;max-height:none;gap:4px}
+  .ws-nav-item{white-space:nowrap;width:auto}
+  .ws-nav-item .dot{display:none}
+}
+@media(max-width:640px){.ws-row,.ws-row-3{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -1180,7 +1222,52 @@ function scheduleSave(){
 /* ── Website builder ── */
 var wsEnabled = false;
 var wsData = null; // { config:{}, published:0, published_at:null, custom_domain:'' }
-var wsTab = 'content';
+var wsNavId = 'brand';
+
+var WS_SECTIONS = [
+  { id:'brand', label:'الهوية والألوان', icon:'<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M14 9h4M14 13h4M6 16h6"/>' },
+  { id:'hero', label:'الواجهة الرئيسية', icon:'<rect x="3" y="4" width="18" height="14" rx="2"/><path d="M3 21h18"/>' },
+  { id:'about', label:'من نحن', toggle:true, icon:'<circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/>' },
+  { id:'values', label:'الرؤية والقيم', toggle:true, icon:'<path d="M12 2l2.4 7.4H22l-6 4.6 2.3 7.4L12 16.8 5.7 21.4 8 14 2 9.4h7.6z"/>' },
+  { id:'stats', label:'الأثر والإنجازات', toggle:true, icon:'<path d="M3 3v18h18"/><rect x="7" y="11" width="3" height="6"/><rect x="12" y="7" width="3" height="10"/><rect x="17" y="13" width="3" height="4"/>' },
+  { id:'programs', label:'البرامج والخدمات', toggle:true, icon:'<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>' },
+  { id:'news', label:'الأخبار والمقالات', toggle:true, icon:'<path d="M4 4h16v16H4z"/><path d="M8 8h8M8 12h8M8 16h5"/>' },
+  { id:'board', label:'مجلس الإدارة', toggle:true, icon:'<circle cx="9" cy="7" r="3"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><circle cx="18" cy="8" r="2.5"/>' },
+  { id:'governance', label:'الحوكمة والشفافية', toggle:true, icon:'<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/>' },
+  { id:'partners', label:'الشركاء والداعمون', toggle:true, icon:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/>' },
+  { id:'faq', label:'الأسئلة الشائعة', toggle:true, icon:'<circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/>' },
+  { id:'donation', label:'بوابة التبرع', toggle:true, icon:'<path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 1 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"/>' },
+  { id:'pages', label:'صفحات مخصصة', icon:'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/>' },
+  { id:'contact', label:'التواصل', toggle:true, icon:'<path d="M22 16.92v3a2 2 0 0 1-2.18 2A19.79 19.79 0 0 1 2 4.18 2 2 0 0 1 4 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L7.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/>' },
+  { id:'seo', label:'الظهور بالبحث', icon:'<circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>' },
+  { id:'domain', label:'الدومين والنشر', icon:'<circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20 15 15 0 0 1 0-20z"/>' }
+];
+
+var ICDEL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>';
+var ICADD = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>';
+
+function wsUid(){ return 'i'+Date.now().toString(36)+Math.random().toString(36).slice(2,5); }
+function wsC(){ if(!wsData.config||typeof wsData.config!=='object') wsData.config={}; return wsData.config; }
+function wsArr(name){ var c=wsC(); if(!Array.isArray(c[name])) c[name]=[]; return c[name]; }
+function wsField(path,val){ var o=wsC(); var ks=path.split('.'); var t=o; for(var i=0;i<ks.length-1;i++){ if(typeof t[ks[i]]!=='object'||t[ks[i]]==null) t[ks[i]]={}; t=t[ks[i]]; } t[ks[ks.length-1]]=val; }
+function wsGet(path){ var t=wsC(); var ks=path.split('.'); for(var i=0;i<ks.length;i++){ if(t==null) return ''; t=t[ks[i]]; } return t==null?'':t; }
+function wsItem(name,idx,field,val){ var a=wsArr(name); if(a[idx]) a[idx][field]=val; }
+function wsSecVisible(key){ var c=wsC(); if(!c.sections) return key!=='donation'; if(c.sections[key]===undefined) return key!=='donation'; return !!c.sections[key]; }
+function wsToggleSec(key,on){ var c=wsC(); if(!c.sections) c.sections={}; c.sections[key]=!!on; wsRerenderSec(key); document.getElementById('ws-nav').innerHTML = wsNavHtml(); }
+
+var WS_TEMPLATES = {
+  values: function(){ return {title:'',desc:''}; },
+  stats: function(){ return {number:'',label:''}; },
+  programs: function(){ return {title:'',desc:'',image_url:''}; },
+  news: function(){ return {id:wsUid(),title:'',date:new Date().toISOString().slice(0,10),excerpt:'',body:'',image_url:''}; },
+  board: function(){ return {name:'',role:'',image_url:''}; },
+  governance: function(){ return {title:'',category:'تقارير',url:''}; },
+  partners: function(){ return {name:'',logo_url:''}; },
+  faq: function(){ return {q:'',a:''}; },
+  pages: function(){ return {id:wsUid(),slug:'',title:'',body:''}; }
+};
+function wsAdd(name){ var a=wsArr(name); a.push(WS_TEMPLATES[name]()); wsRerenderSec(name); }
+function wsDel(name,idx){ var a=wsArr(name); a.splice(idx,1); wsRerenderSec(name); }
 
 function renderWebsite(){
   var el = document.getElementById('page-website');
@@ -1204,196 +1291,327 @@ function renderWebsite(){
     el.innerHTML = '<div class="coming-wrap"><div class="coming-icon"><div style="width:32px;height:32px;border:3px solid var(--accent);border-top-color:transparent;border-radius:50%;animation:spin .8s linear infinite"></div></div><p>جارٍ تحميل بيانات الموقع...</p></div>';
     fetch(API+'/org/website',{headers:{'Authorization':'Bearer '+token()}})
       .then(function(r){ return r.ok ? r.json() : null; })
-      .then(function(d){
-        wsData = d || { config:{}, published:0, published_at:null, custom_domain:'' };
-        renderWebsite();
-      }).catch(function(){
-        wsData = { config:{}, published:0, published_at:null, custom_domain:'' };
-        renderWebsite();
-      });
+      .then(function(d){ wsData = d || { config:{}, published:0, published_at:null, custom_domain:'' }; wsSeedDefaults(); renderWebsite(); })
+      .catch(function(){ wsData = { config:{}, published:0, published_at:null, custom_domain:'' }; wsSeedDefaults(); renderWebsite(); });
     return;
   }
-  var cfg = wsData.config || {};
   var published = wsData.published ? true : false;
   var domain = wsData.custom_domain || '';
   var orgId = org && org.id ? org.id : '';
-  var defaultUrl = window.location.origin + '/org-site?org=' + orgId;
-  // Live/public URL (what visitors see); preview always uses the owner's draft view.
-  var liveUrl = domain ? 'https://'+domain : defaultUrl;
+  var liveUrl = domain ? 'https://'+domain : (window.location.origin + '/org-site?org=' + orgId);
   var previewUrl = window.location.origin + '/org-site?org=' + orgId + '&preview=1';
 
-  var tabs = [
-    { id:'content', label:'المحتوى' },
-    { id:'media', label:'الصور والألوان' },
-    { id:'contact', label:'التواصل' },
-    { id:'seo', label:'SEO' },
-    { id:'domain', label:'الدومين' }
-  ];
-
-  var tabsHtml = tabs.map(function(t){
-    return '<button class="ws-tab'+(wsTab===t.id?' active':'')+'" onclick="wsSetTab(\''+t.id+'\')">'+t.label+'</button>';
+  var panels = WS_SECTIONS.map(function(s){
+    return '<div class="ws-section'+(wsNavId===s.id?' active':'')+'" id="ws-sec-'+s.id+'">'+wsSecInner(s.id)+'</div>';
   }).join('');
-
-  var themes = [
-    { id:'blue', color:'#1e2a4a' },
-    { id:'green', color:'#1d9b8a' },
-    { id:'violet', color:'#6d28d9' },
-    { id:'rose', color:'#e11d48' }
-  ];
-  var curTheme = cfg.theme || 'blue';
-  var themeHtml = themes.map(function(th){
-    return '<div class="ws-theme-opt'+(curTheme===th.id?' active':'')+'" title="'+th.id+'" style="background:'+th.color+'" onclick="wsPickTheme(\''+th.id+'\')"></div>';
-  }).join('');
-
-  function s(k){ return esc(cfg[k]||''); }
-
-  var secContent =
-    '<div class="ws-section'+(wsTab==='content'?' active':'')+'" id="ws-sec-content">'+
-      '<div class="ws-card"><h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>معلومات الجمعية</h4>'+
-        '<div class="ws-field"><label>اسم الجمعية</label><input id="ws-name" type="text" value="'+s('name')+'" placeholder="'+(org&&org.name?esc(org.name):'اسم جمعيتك')+'"></div>'+
-        '<div class="ws-field"><label>الشعار / الوصف المختصر</label><input id="ws-tagline" type="text" value="'+s('tagline')+'" placeholder="جمعية تعنى بـ..."></div>'+
-        '<div class="ws-field"><label>التعريف بالجمعية</label><textarea id="ws-about" placeholder="نبذة تعريفية مفصّلة عن رسالة الجمعية وأهدافها وبرامجها">'+s('about')+'</textarea></div>'+
-      '</div>'+
-    '</div>';
-
-  var secMedia =
-    '<div class="ws-section'+(wsTab==='media'?' active':'')+'" id="ws-sec-media">'+
-      '<div class="ws-card"><h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>الصور</h4>'+
-        '<div class="ws-row">'+
-          '<div class="ws-field"><label>رابط الشعار (Logo URL)</label><input id="ws-logo" type="url" value="'+s('logo_url')+'" placeholder="https://..."><div class="hint">JPG أو PNG، يُفضّل خلفية شفافة</div></div>'+
-          '<div class="ws-field"><label>رابط صورة البانر (Hero)</label><input id="ws-hero" type="url" value="'+s('hero_url')+'" placeholder="https://..."><div class="hint">صورة عريضة ١٢٠٠×٦٠٠</div></div>'+
-        '</div>'+
-      '</div>'+
-      '<div class="ws-card"><h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg>لون الهوية</h4>'+
-        '<div class="ws-field"><label>اختر اللون الرئيسي</label><div class="ws-theme-grid">'+themeHtml+'</div></div>'+
-      '</div>'+
-    '</div>';
-
-  var secContact =
-    '<div class="ws-section'+(wsTab==='contact'?' active':'')+'" id="ws-sec-contact">'+
-      '<div class="ws-card"><h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.11 12 19.79 19.79 0 0 1 1.07 3.36 2 2 0 0 1 3.06 1h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.09 8.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>معلومات التواصل</h4>'+
-        '<div class="ws-row">'+
-          '<div class="ws-field"><label>الجوال / الهاتف</label><input id="ws-phone" type="tel" value="'+s('phone')+'" placeholder="05xxxxxxxx" dir="ltr"></div>'+
-          '<div class="ws-field"><label>البريد الإلكتروني</label><input id="ws-email" type="email" value="'+s('email')+'" placeholder="info@..." dir="ltr"></div>'+
-        '</div>'+
-        '<div class="ws-field"><label>العنوان / المدينة</label><input id="ws-address" type="text" value="'+s('address')+'" placeholder="الرياض — حي ..."></div>'+
-        '<div class="ws-row">'+
-          '<div class="ws-field"><label>واتساب (رقم كامل)</label><input id="ws-wa" type="tel" value="'+s('whatsapp')+'" placeholder="9665xxxxxxxx" dir="ltr"></div>'+
-          '<div class="ws-field"><label>تويتر / X (المعرّف)</label><input id="ws-tw" type="text" value="'+s('twitter')+'" placeholder="@handle" dir="ltr"></div>'+
-        '</div>'+
-      '</div>'+
-    '</div>';
-
-  var secSeo =
-    '<div class="ws-section'+(wsTab==='seo'?' active':'')+'" id="ws-sec-seo">'+
-      '<div class="ws-card"><h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>تحسين محركات البحث (SEO)</h4>'+
-        '<div class="ws-field"><label>عنوان الصفحة (Title)</label><input id="ws-seo-title" type="text" value="'+s('seo_title')+'" placeholder="جمعية ... | الموقع الرسمي" maxlength="70"><div class="hint">الحد الأمثل: 50-70 حرف</div></div>'+
-        '<div class="ws-field"><label>وصف الصفحة (Description)</label><textarea id="ws-seo-desc" placeholder="وصف مختصر يظهر في نتائج البحث..." maxlength="160" style="min-height:70px">'+s('seo_desc')+'</textarea><div class="hint">الحد الأمثل: 120-160 حرف</div></div>'+
-      '</div>'+
-    '</div>';
-
-  var secDomain =
-    '<div class="ws-section'+(wsTab==='domain'?' active':'')+'" id="ws-sec-domain">'+
-      '<div class="ws-card"><h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>الدومين المخصص</h4>'+
-        '<div class="ws-field"><label>نطاق مخصص (اختياري)</label><input id="ws-domain" type="text" value="'+esc(domain)+'" placeholder="association.org.sa" dir="ltr"><div class="hint">أدخل النطاق فقط دون https — مثال: namaa.org.sa</div></div>'+
-        '<div style="background:var(--bg-tint);border-radius:10px;padding:14px 16px;margin-top:6px;font-size:13px;color:var(--navy-2)">'+
-          '<strong>خطوات الربط:</strong>'+
-          '<ol style="margin:8px 0 0;padding-right:18px;line-height:2">'+
-            '<li>أضف سجل CNAME في لوحة تحكم الدومين يشير إلى: <code style="background:#e8eef5;padding:2px 7px;border-radius:4px;font-size:12px;direction:ltr">buad-platform.pages.dev</code></li>'+
-            '<li>احفظ التغييرات هنا وانتظر 24-48 ساعة لانتشار DNS</li>'+
-            '<li>تواصل مع فريق بُعد لتفعيل الشهادة الأمنية (SSL)</li>'+
-          '</ol>'+
-        '</div>'+
-      '</div>'+
-    '</div>';
 
   el.innerHTML =
     '<div class="ws-header">'+
       '<div>'+
         '<div class="ws-title">موقعي الإلكتروني</div>'+
-        '<div style="font-size:12.5px;color:var(--muted);margin-top:2px">أدر محتوى وإعدادات موقع جمعيتك</div>'+
+        '<div style="font-size:12.5px;color:var(--muted);margin-top:2px">صمّم موقع جمعيتك بالكامل وأدر محتواه وانشره</div>'+
       '</div>'+
       '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">'+
-        '<span class="ws-status '+(published?'published':'draft')+'">'+(published?'منشور ✓':'مسودة')+'</span>'+
+        '<span class="ws-status '+(published?'published':'draft')+'" id="ws-status">'+(published?'منشور ✓':'مسودة')+'</span>'+
         '<a href="'+esc(previewUrl)+'" target="_blank" rel="noopener" class="btn btn-ghost btn-sm">'+
           '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:14px;height:14px"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>معاينة</a>'+
       '</div>'+
     '</div>'+
     '<div class="ws-preview-bar">'+
-      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0;color:var(--muted)"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>'+
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:17px;height:17px;flex-shrink:0;opacity:.8"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>'+
       '<span class="ws-preview-url">'+esc(liveUrl)+'</span>'+
       '<label class="ws-publish-toggle">'+
-        '<span style="font-size:12.5px;font-weight:600;color:var(--navy-2)">'+(published?'إلغاء النشر':'نشر الموقع')+'</span>'+
+        '<span id="ws-pub-lbl" style="font-size:12.5px;font-weight:600;color:#fff">'+(published?'منشور':'نشر الموقع')+'</span>'+
         '<label class="ws-toggle">'+
           '<input type="checkbox" id="ws-pub-chk" '+(published?'checked':'')+' onchange="wsTogglePublish(this.checked)">'+
-          '<div class="ws-toggle-track"></div>'+
-          '<div class="ws-toggle-thumb"></div>'+
+          '<div class="ws-toggle-track"></div><div class="ws-toggle-thumb"></div>'+
         '</label>'+
       '</label>'+
     '</div>'+
-    '<div class="ws-tabs">'+tabsHtml+'</div>'+
-    secContent + secMedia + secContact + secSeo + secDomain +
-    '<div class="ws-actions">'+
-      '<button class="btn btn-ghost" onclick="renderWebsite()">تراجع</button>'+
-      '<button class="btn btn-primary" id="ws-save-btn" onclick="wsSave()">حفظ التغييرات</button>'+
+    '<div class="ws-shell">'+
+      '<nav class="ws-nav" id="ws-nav">'+wsNavHtml()+'</nav>'+
+      '<div class="ws-panel">'+panels+
+        '<div class="ws-actions">'+
+          '<button class="btn btn-primary" id="ws-save-btn" onclick="wsSave()">حفظ التغييرات</button>'+
+        '</div>'+
+      '</div>'+
     '</div>';
 }
 
-function wsSetTab(id){
-  wsTab = id;
-  document.querySelectorAll('.ws-tab').forEach(function(t){ t.classList.remove('active'); });
-  var btn = document.querySelector('.ws-tab[onclick*="\''+id+'\'"]');
-  if(btn) btn.classList.add('active');
+function wsNavHtml(){
+  return WS_SECTIONS.map(function(s){
+    var dot = (s.toggle && wsSecVisible(s.id)) ? '<span class="dot" title="ظاهر"></span>' : '';
+    return '<button class="ws-nav-item'+(wsNavId===s.id?' active':'')+'" onclick="wsNav(\''+s.id+'\')">'+
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+s.icon+'</svg>'+
+      '<span>'+s.label+'</span>'+dot+'</button>';
+  }).join('');
+}
+
+function wsNav(id){
+  wsNavId = id;
+  document.querySelectorAll('.ws-nav-item').forEach(function(b){ b.classList.remove('active'); });
   document.querySelectorAll('.ws-section').forEach(function(s){ s.classList.remove('active'); });
-  var sec = document.getElementById('ws-sec-'+id);
-  if(sec) sec.classList.add('active');
+  var sec = document.getElementById('ws-sec-'+id); if(sec) sec.classList.add('active');
+  document.getElementById('ws-nav').innerHTML = wsNavHtml();
+  var panel = document.querySelector('.ws-panel'); if(panel) panel.scrollIntoView({block:'nearest'});
+}
+
+function wsRerenderSec(id){ var el=document.getElementById('ws-sec-'+id); if(el) el.innerHTML = wsSecInner(id); }
+
+/* field builders */
+function wsTxt(label,path,ph,opts){ opts=opts||{}; var dir=opts.dir?' dir="'+opts.dir+'"':''; var ml=opts.maxlength?' maxlength="'+opts.maxlength+'"':''; var t=opts.type||'text';
+  return '<div class="ws-field"><label>'+label+'</label><input type="'+t+'" value="'+esc(wsGet(path))+'" placeholder="'+esc(ph||'')+'"'+dir+ml+' oninput="wsField(\''+path+'\',this.value)">'+(opts.hint?'<div class="hint">'+opts.hint+'</div>':'')+'</div>'; }
+function wsArea(label,path,ph,opts){ opts=opts||{}; var ml=opts.maxlength?' maxlength="'+opts.maxlength+'"':'';
+  return '<div class="ws-field"><label>'+label+'</label><textarea placeholder="'+esc(ph||'')+'"'+ml+' oninput="wsField(\''+path+'\',this.value)" style="min-height:'+(opts.h||90)+'px">'+esc(wsGet(path))+'</textarea>'+(opts.hint?'<div class="hint">'+opts.hint+'</div>':'')+'</div>'; }
+function wsItemTxt(label,name,idx,field,ph,opts){ opts=opts||{}; var dir=opts.dir?' dir="'+opts.dir+'"':''; var a=wsArr(name); var v=a[idx]&&a[idx][field]!=null?a[idx][field]:'';
+  return '<div class="ws-field"><label>'+label+'</label><input type="'+(opts.type||'text')+'" value="'+esc(v)+'" placeholder="'+esc(ph||'')+'"'+dir+' oninput="wsItem(\''+name+'\','+idx+',\''+field+'\',this.value)"></div>'; }
+function wsItemArea(label,name,idx,field,ph,opts){ opts=opts||{}; var a=wsArr(name); var v=a[idx]&&a[idx][field]!=null?a[idx][field]:'';
+  return '<div class="ws-field"><label>'+label+'</label><textarea placeholder="'+esc(ph||'')+'" oninput="wsItem(\''+name+'\','+idx+',\''+field+'\',this.value)" style="min-height:'+(opts.h||80)+'px">'+esc(v)+'</textarea></div>'; }
+function wsSecHead(id,title,sub){
+  var meta = null; for(var i=0;i<WS_SECTIONS.length;i++){ if(WS_SECTIONS[i].id===id){ meta=WS_SECTIONS[i]; break; } }
+  var tog = (meta&&meta.toggle) ?
+    '<label class="ws-sec-toggle"><span>'+(wsSecVisible(id)?'ظاهر في الموقع':'مخفي')+'</span>'+
+      '<label class="ws-mini-toggle"><input type="checkbox" '+(wsSecVisible(id)?'checked':'')+' onchange="wsToggleSec(\''+id+'\',this.checked)"><div class="ws-mini-track"></div><div class="ws-mini-thumb"></div></label></label>' : '';
+  return '<div class="ws-sec-head"><div><h3>'+title+'</h3><p>'+sub+'</p></div>'+tog+'</div>';
+}
+function wsRepHead(name,singular){
+  return '<div class="ws-item-head"><span class="ws-item-badge">{B}</span><button class="ws-item-del" onclick="wsDel(\''+name+'\',{I})" title="حذف">'+ICDEL+'</button></div>';
+}
+
+function wsSecInner(id){
+  var c = wsC();
+  if(id==='brand'){
+    var themes=[{id:'navy',c:'#1e2a4a'},{id:'teal',c:'#0d7e6e'},{id:'emerald',c:'#047857'},{id:'royal',c:'#1d4ed8'},{id:'violet',c:'#6d28d9'},{id:'maroon',c:'#9f1239'},{id:'amber',c:'#b45309'}];
+    var cur=c.theme||'navy';
+    var swatches=themes.map(function(t){ return '<div class="ws-theme-opt'+(cur===t.id?' active':'')+'" title="'+t.id+'" style="background:'+t.c+'" onclick="wsPickTheme(\''+t.id+'\')"></div>'; }).join('');
+    return wsSecHead('brand','الهوية والألوان','اسم جمعيتك وشعارها ولون هويتها الأساسي')+
+      '<div class="ws-card"><h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7h18M3 12h18M3 17h12"/></svg>الاسم والشعار النصي</h4>'+
+        wsTxt('اسم الجمعية','brand.name', (org&&org.name)||'اسم جمعيتك')+
+        wsTxt('الجملة التعريفية (Slogan)','brand.tagline','معاً نصنع أثراً مستداماً')+
+      '</div>'+
+      '<div class="ws-card"><h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>شعار الجمعية (Logo)</h4>'+
+        wsTxt('رابط الشعار','brand.logo_url','https://...', {type:'url', dir:'ltr', hint:'PNG بخلفية شفافة يعطي أفضل نتيجة'})+
+        (wsGet('brand.logo_url')?'<img src="'+esc(wsGet('brand.logo_url'))+'" class="ws-logo-preview" onerror="this.style.display=\'none\'">':'')+
+      '</div>'+
+      '<div class="ws-card"><h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="13.5" cy="6.5" r=".5"/><circle cx="17.5" cy="10.5" r=".5"/><circle cx="8.5" cy="7.5" r=".5"/><circle cx="6.5" cy="12.5" r=".5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.555C21.965 6.012 17.461 2 12 2z"/></svg>لون الهوية</h4>'+
+        '<div class="ws-field"><label>اختر لوناً جاهزاً</label><div class="ws-theme-grid">'+swatches+'</div></div>'+
+        '<div class="ws-field"><label>أو لون مخصص دقيق (اختياري)</label><div class="ws-color-input"><input type="color" value="'+(esc(wsGet('brand.accent')||'#1d9b8a'))+'" oninput="wsField(\'brand.accent\',this.value)"><span class="hint">يُستخدم للأزرار والروابط المميّزة</span></div></div>'+
+      '</div>';
+  }
+  if(id==='hero'){
+    return wsSecHead('hero','الواجهة الرئيسية','أول ما يراه الزائر — العنوان والصورة وأزرار الإجراء')+
+      '<div class="ws-card"><h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7V5a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v2M9 20h6M12 4v16"/></svg>العنوان والوصف</h4>'+
+        wsTxt('العنوان الرئيسي','hero.title','نبني مستقبلاً أفضل لمجتمعنا')+
+        wsArea('الوصف تحت العنوان','hero.subtitle','جملة أو جملتان تلخّص رسالة الجمعية وتشجّع الزائر على التفاعل.',{h:70})+
+        wsTxt('رابط صورة الخلفية / البانر','hero.image_url','https://...', {type:'url', dir:'ltr', hint:'صورة عالية الجودة بعرض 1600 بكسل تعطي أفضل نتيجة'})+
+        (wsGet('hero.image_url')?'<img src="'+esc(wsGet('hero.image_url'))+'" class="ws-img-preview" onerror="this.style.display=\'none\'">':'')+
+      '</div>'+
+      '<div class="ws-card"><h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="8" width="18" height="8" rx="2"/></svg>أزرار الإجراء</h4>'+
+        '<div class="ws-row">'+wsTxt('نص الزر الأساسي','hero.primary_label','تبرّع الآن')+wsTxt('رابط الزر الأساسي','hero.primary_link','#donate', {dir:'ltr'})+'</div>'+
+        '<div class="ws-row">'+wsTxt('نص الزر الثانوي','hero.secondary_label','تعرّف علينا')+wsTxt('رابط الزر الثانوي','hero.secondary_link','#about', {dir:'ltr'})+'</div>'+
+      '</div>';
+  }
+  if(id==='about'){
+    return wsSecHead('about','من نحن','نبذة تعريفية + الرؤية والرسالة')+
+      '<div class="ws-card"><h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>التعريف بالجمعية</h4>'+
+        wsArea('نبذة عن الجمعية','about.text','اكتب تعريفاً واضحاً عن نشأة الجمعية ومجال عملها وأبرز ما تقدّمه للمجتمع.',{h:120})+
+        wsTxt('رابط صورة تعريفية (اختياري)','about.image_url','https://...', {type:'url', dir:'ltr'})+
+      '</div>'+
+      '<div class="ws-card"><h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>الرؤية والرسالة</h4>'+
+        wsArea('الرؤية','about.vision','أن نكون...',{h:70})+
+        wsArea('الرسالة','about.mission','نعمل على...',{h:70})+
+      '</div>';
+  }
+  if(id==='values'){
+    var arr=wsArr('values');
+    var items = arr.length ? arr.map(function(it,i){
+      return '<div class="ws-item">'+wsRepHead('values').replace('{B}','قيمة '+(i+1)).replace('{I}',i)+
+        wsItemTxt('عنوان القيمة','values',i,'title','الشفافية')+
+        wsItemArea('وصف مختصر','values',i,'desc','نلتزم بالوضوح والإفصاح في كل أعمالنا.',{h:60})+'</div>';
+    }).join('') : '<div class="ws-empty">لا توجد قيم بعد — أضف قيم جمعيتك الأساسية.</div>';
+    return wsSecHead('values','الرؤية والقيم','القيم الجوهرية التي تتبناها الجمعية')+
+      '<div class="ws-card">'+items+'<button class="ws-add-btn" onclick="wsAdd(\'values\')">'+ICADD+'إضافة قيمة</button></div>';
+  }
+  if(id==='stats'){
+    var arr=wsArr('stats');
+    var items = arr.length ? arr.map(function(it,i){
+      return '<div class="ws-item">'+wsRepHead('stats').replace('{B}','إحصائية '+(i+1)).replace('{I}',i)+
+        '<div class="ws-row">'+wsItemTxt('الرقم','stats',i,'number','15,000', {dir:'ltr'})+wsItemTxt('الوصف','stats',i,'label','مستفيد')+'</div></div>';
+    }).join('') : '<div class="ws-empty">أضف أرقام الأثر: عدد المستفيدين، البرامج، المتطوعين...</div>';
+    return wsSecHead('stats','الأثر والإنجازات','أرقام تبرز حجم أثر الجمعية')+
+      '<div class="ws-card">'+items+'<button class="ws-add-btn" onclick="wsAdd(\'stats\')">'+ICADD+'إضافة إحصائية</button></div>';
+  }
+  if(id==='programs'){
+    var arr=wsArr('programs');
+    var items = arr.length ? arr.map(function(it,i){
+      return '<div class="ws-item">'+wsRepHead('programs').replace('{B}','برنامج '+(i+1)).replace('{I}',i)+
+        wsItemTxt('اسم البرنامج / الخدمة','programs',i,'title','كفالة الأيتام')+
+        wsItemArea('الوصف','programs',i,'desc','وصف موجز للبرنامج وأهدافه والفئة المستفيدة.',{h:70})+
+        wsItemTxt('رابط صورة (اختياري)','programs',i,'image_url','https://...', {dir:'ltr'})+'</div>';
+    }).join('') : '<div class="ws-empty">أضف البرامج والخدمات التي تقدّمها الجمعية.</div>';
+    return wsSecHead('programs','البرامج والخدمات','ما تقدّمه الجمعية من برامج ومبادرات')+
+      '<div class="ws-card">'+items+'<button class="ws-add-btn" onclick="wsAdd(\'programs\')">'+ICADD+'إضافة برنامج</button></div>';
+  }
+  if(id==='news'){
+    var arr=wsArr('news');
+    var items = arr.length ? arr.map(function(it,i){
+      return '<div class="ws-item">'+wsRepHead('news').replace('{B}','خبر '+(i+1)).replace('{I}',i)+
+        wsItemTxt('عنوان الخبر','news',i,'title','إطلاق مبادرة...')+
+        '<div class="ws-row">'+wsItemTxt('التاريخ','news',i,'date','', {type:'date', dir:'ltr'})+wsItemTxt('رابط صورة','news',i,'image_url','https://...', {dir:'ltr'})+'</div>'+
+        wsItemArea('مقتطف قصير (يظهر في القائمة)','news',i,'excerpt','جملة تلخّص الخبر.',{h:50})+
+        wsItemArea('نص الخبر الكامل','news',i,'body','اكتب تفاصيل الخبر هنا...',{h:120})+'</div>';
+    }).join('') : '<div class="ws-empty">لا توجد أخبار بعد — انشر أول خبر لجمعيتك.</div>';
+    return wsSecHead('news','الأخبار والمقالات','انشر أخبار ومستجدّات الجمعية — لكل خبر صفحة خاصة')+
+      '<div class="ws-card">'+items+'<button class="ws-add-btn" onclick="wsAdd(\'news\')">'+ICADD+'نشر خبر جديد</button></div>';
+  }
+  if(id==='board'){
+    var arr=wsArr('board');
+    var items = arr.length ? arr.map(function(it,i){
+      return '<div class="ws-item">'+wsRepHead('board').replace('{B}','عضو '+(i+1)).replace('{I}',i)+
+        '<div class="ws-row">'+wsItemTxt('الاسم','board',i,'name','أ. محمد العبدالله')+wsItemTxt('المنصب','board',i,'role','رئيس مجلس الإدارة')+'</div>'+
+        wsItemTxt('رابط صورة (اختياري)','board',i,'image_url','https://...', {dir:'ltr'})+'</div>';
+    }).join('') : '<div class="ws-empty">أضف أعضاء مجلس الإدارة (مطلب أساسي للشفافية).</div>';
+    return wsSecHead('board','مجلس الإدارة','أعضاء مجلس إدارة الجمعية')+
+      '<div class="ws-card">'+items+'<button class="ws-add-btn" onclick="wsAdd(\'board\')">'+ICADD+'إضافة عضو</button></div>';
+  }
+  if(id==='governance'){
+    var arr=wsArr('governance');
+    var cats=['النظام الأساسي','لائحة الحوكمة','السياسات','التقارير السنوية','القوائم المالية','محاضر الاجتماعات','أخرى'];
+    var items = arr.length ? arr.map(function(it,i){
+      var opts=cats.map(function(cat){ return '<option'+((it.category===cat)?' selected':'')+'>'+cat+'</option>'; }).join('');
+      return '<div class="ws-item">'+wsRepHead('governance').replace('{B}','وثيقة '+(i+1)).replace('{I}',i)+
+        wsItemTxt('عنوان الوثيقة','governance',i,'title','التقرير السنوي 2025')+
+        '<div class="ws-field"><label>التصنيف</label><select onchange="wsItem(\'governance\','+i+',\'category\',this.value)">'+opts+'</select></div>'+
+        wsItemTxt('رابط الملف (PDF)','governance',i,'url','https://...', {dir:'ltr'})+'</div>';
+    }).join('') : '<div class="ws-empty">أضف وثائق الحوكمة والشفافية: النظام الأساسي، اللوائح، التقارير، القوائم المالية.</div>';
+    return wsSecHead('governance','الحوكمة والشفافية','الإفصاح عن وثائق الجمعية النظامية — ركيزة الثقة والامتثال')+
+      '<div class="ws-card" style="background:rgba(29,155,138,.05);border-color:rgba(29,155,138,.3)"><div style="font-size:12.5px;color:var(--navy-2);line-height:1.7"><strong>لماذا هذا القسم مهم؟</strong> يتطلب المركز الوطني لتنمية القطاع غير الربحي إفصاح الجمعيات عن وثائقها النظامية وتقاريرها لتعزيز الشفافية وثقة المتبرّعين.</div></div>'+
+      '<div class="ws-card">'+items+'<button class="ws-add-btn" onclick="wsAdd(\'governance\')">'+ICADD+'إضافة وثيقة</button></div>';
+  }
+  if(id==='partners'){
+    var arr=wsArr('partners');
+    var items = arr.length ? arr.map(function(it,i){
+      return '<div class="ws-item">'+wsRepHead('partners').replace('{B}','شريك '+(i+1)).replace('{I}',i)+
+        '<div class="ws-row">'+wsItemTxt('اسم الجهة','partners',i,'name','مؤسسة ...')+wsItemTxt('رابط الشعار','partners',i,'logo_url','https://...', {dir:'ltr'})+'</div></div>';
+    }).join('') : '<div class="ws-empty">أضف شعارات الشركاء والداعمين.</div>';
+    return wsSecHead('partners','الشركاء والداعمون','الجهات الداعمة والشريكة للجمعية')+
+      '<div class="ws-card">'+items+'<button class="ws-add-btn" onclick="wsAdd(\'partners\')">'+ICADD+'إضافة شريك</button></div>';
+  }
+  if(id==='faq'){
+    var arr=wsArr('faq');
+    var items = arr.length ? arr.map(function(it,i){
+      return '<div class="ws-item">'+wsRepHead('faq').replace('{B}','سؤال '+(i+1)).replace('{I}',i)+
+        wsItemTxt('السؤال','faq',i,'q','كيف يمكنني التبرّع؟')+
+        wsItemArea('الإجابة','faq',i,'a','يمكنك التبرّع عبر...',{h:70})+'</div>';
+    }).join('') : '<div class="ws-empty">أضف الأسئلة المتكررة من المتبرّعين والمستفيدين.</div>';
+    return wsSecHead('faq','الأسئلة الشائعة','إجابات للأسئلة المتكررة')+
+      '<div class="ws-card">'+items+'<button class="ws-add-btn" onclick="wsAdd(\'faq\')">'+ICADD+'إضافة سؤال</button></div>';
+  }
+  if(id==='donation'){
+    return wsSecHead('donation','بوابة التبرع','قسم بارز يحفّز الزوار على التبرّع')+
+      '<div class="ws-card"><h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 1 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"/></svg>محتوى قسم التبرع</h4>'+
+        wsTxt('عنوان القسم','donation.title','تبرّعك يصنع الفرق')+
+        wsArea('نص تحفيزي','donation.desc','ساهم معنا في إحداث أثر مستدام في حياة المستفيدين.',{h:70})+
+        wsTxt('رابط بوابة التبرع','donation.url','https://...', {type:'url', dir:'ltr', hint:'رابط منصة إحسان أو بوابة التبرع المعتمدة لديكم'})+
+        wsTxt('رقم الحساب / آيبان (اختياري)','donation.account','SA00 0000 ...', {dir:'ltr'})+
+      '</div>';
+  }
+  if(id==='pages'){
+    var arr=wsArr('pages');
+    var items = arr.length ? arr.map(function(it,i){
+      var slug = it.slug || '';
+      return '<div class="ws-item">'+wsRepHead('pages').replace('{B}','صفحة '+(i+1)).replace('{I}',i)+
+        wsItemTxt('عنوان الصفحة','pages',i,'title','سياسة الخصوصية')+
+        wsItemTxt('المعرّف بالرابط (slug)','pages',i,'slug','privacy', {dir:'ltr'})+
+        wsItemArea('محتوى الصفحة','pages',i,'body','اكتب محتوى الصفحة هنا...',{h:140})+
+        (slug?'<div class="hint" style="direction:ltr;text-align:left">/org-site?org='+esc((org&&org.id)||'')+'#/page/'+esc(slug)+'</div>':'')+'</div>';
+    }).join('') : '<div class="ws-empty">أنشئ صفحات إضافية مثل: سياسة الخصوصية، شروط الاستخدام، تطوّع معنا.</div>';
+    return wsSecHead('pages','صفحات مخصصة','أنشئ صفحات إضافية بمحتوى حر تظهر في تذييل الموقع')+
+      '<div class="ws-card">'+items+'<button class="ws-add-btn" onclick="wsAdd(\'pages\')">'+ICADD+'إنشاء صفحة</button></div>';
+  }
+  if(id==='contact'){
+    return wsSecHead('contact','التواصل','بيانات التواصل وروابط التواصل الاجتماعي')+
+      '<div class="ws-card"><h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2A19.79 19.79 0 0 1 2 4.18 2 2 0 0 1 4 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L7.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg>بيانات التواصل</h4>'+
+        '<div class="ws-row">'+wsTxt('الجوال / الهاتف','contact.phone','05xxxxxxxx', {type:'tel', dir:'ltr'})+wsTxt('البريد الإلكتروني','contact.email','info@...', {type:'email', dir:'ltr'})+'</div>'+
+        wsTxt('العنوان','contact.address','الرياض — حي ...')+
+        wsTxt('رابط الموقع على الخريطة (اختياري)','contact.map_url','https://maps.google.com/...', {type:'url', dir:'ltr'})+
+      '</div>'+
+      '<div class="ws-card"><h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-4 8"/></svg>التواصل الاجتماعي</h4>'+
+        '<div class="ws-row">'+wsTxt('واتساب (رقم كامل)','contact.whatsapp','9665xxxxxxxx', {type:'tel', dir:'ltr'})+wsTxt('تويتر / X','contact.twitter','@handle', {dir:'ltr'})+'</div>'+
+        '<div class="ws-row">'+wsTxt('انستقرام','contact.instagram','@handle', {dir:'ltr'})+wsTxt('لينكدإن','contact.linkedin','company/...', {dir:'ltr'})+'</div>'+
+        wsTxt('سناب شات (اختياري)','contact.snapchat','@handle', {dir:'ltr'})+
+      '</div>';
+  }
+  if(id==='seo'){
+    return wsSecHead('seo','الظهور في محركات البحث','عنوان ووصف موقعك في نتائج البحث ومشاركات السوشال')+
+      '<div class="ws-card"><h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>إعدادات SEO</h4>'+
+        wsTxt('عنوان الصفحة (Title)','seo.title','جمعية ... | الموقع الرسمي', {maxlength:70, hint:'الأمثل 50-70 حرف'})+
+        wsArea('وصف الصفحة (Description)','seo.desc','وصف مختصر يظهر في نتائج البحث.', {h:70, maxlength:160, hint:'الأمثل 120-160 حرف'})+
+      '</div>';
+  }
+  if(id==='domain'){
+    return wsSecHead('domain','الدومين والنشر','اربط نطاقك الخاص وتحكّم بحالة النشر')+
+      '<div class="ws-card"><h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20 15 15 0 0 1 0-20z"/></svg>الدومين المخصص</h4>'+
+        '<div class="ws-field"><label>نطاق مخصص (اختياري)</label><input type="text" value="'+esc(wsData.custom_domain||'')+'" placeholder="namaa.org.sa" dir="ltr" oninput="wsDomain(this.value)"><div class="hint">أدخل النطاق فقط دون https</div></div>'+
+        '<div style="background:var(--bg-tint);border-radius:10px;padding:14px 16px;margin-top:6px;font-size:13px;color:var(--navy-2)">'+
+          '<strong>خطوات الربط:</strong>'+
+          '<ol style="margin:8px 0 0;padding-right:18px;line-height:2">'+
+            '<li>أضف سجل CNAME في لوحة الدومين يشير إلى: <code style="background:#e8eef5;padding:2px 7px;border-radius:4px;font-size:12px;direction:ltr">buad-platform.pages.dev</code></li>'+
+            '<li>احفظ التغييرات وانتظر 24-48 ساعة لانتشار DNS</li>'+
+            '<li>تواصل مع فريق بُعد لتفعيل شهادة الأمان (SSL)</li>'+
+          '</ol>'+
+        '</div>'+
+      '</div>'+
+      '<div class="ws-card"><h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>حالة النشر</h4>'+
+        '<div style="font-size:13px;color:var(--navy-2);line-height:1.7">استخدم مفتاح «نشر الموقع» بالأعلى لجعل الموقع مرئياً للعامة، ثم اضغط «حفظ التغييرات». يمكنك إلغاء النشر في أي وقت لإعادته لوضع المسودة.</div>'+
+      '</div>';
+  }
+  return '';
 }
 
 function wsPickTheme(id){
-  if(!wsData) return;
-  wsData.config = wsData.config || {};
-  wsData.config.theme = id;
-  document.querySelectorAll('.ws-theme-opt').forEach(function(el){ el.classList.toggle('active', el.title===id); });
+  wsField('theme', id);
+  document.querySelectorAll('#ws-sec-brand .ws-theme-opt').forEach(function(el){ el.classList.toggle('active', el.title===id); });
 }
+function wsDomain(v){ wsData.custom_domain = (v||'').trim().replace(/^https?:\/\//,''); }
 
 function wsTogglePublish(checked){
-  var lbl = document.querySelector('.ws-publish-toggle span');
-  if(lbl) lbl.textContent = checked ? 'إلغاء النشر' : 'نشر الموقع';
-  var stat = document.querySelector('.ws-status');
-  if(stat){ stat.className = 'ws-status '+(checked?'published':'draft'); stat.textContent = checked?'منشور ✓':'مسودة'; }
+  var lbl = document.getElementById('ws-pub-lbl'); if(lbl) lbl.textContent = checked ? 'منشور' : 'نشر الموقع';
+  var stat = document.getElementById('ws-status'); if(stat){ stat.className = 'ws-status '+(checked?'published':'draft'); stat.textContent = checked?'منشور ✓':'مسودة'; }
 }
 
-function wsReadForm(){
-  function v(id){ var el=document.getElementById(id); return el ? el.value.trim() : ''; }
-  return {
-    name: v('ws-name'), tagline: v('ws-tagline'), about: v('ws-about'),
-    logo_url: v('ws-logo'), hero_url: v('ws-hero'),
-    theme: (wsData&&wsData.config&&wsData.config.theme)||'blue',
-    phone: v('ws-phone'), email: v('ws-email'), address: v('ws-address'),
-    whatsapp: v('ws-wa'), twitter: v('ws-tw'),
-    seo_title: v('ws-seo-title'), seo_desc: v('ws-seo-desc')
-  };
+function wsSeedDefaults(){
+  var c = wsC();
+  if(!c.sections) c.sections = {};
+  // migrate legacy flat fields (from the old simple builder) into the new schema
+  if(!c.brand){ c.brand = { name:c.name||'', tagline:c.tagline||'', logo_url:c.logo_url||'', theme:c.theme||'navy', accent:'' }; }
+  if(!c.hero){ c.hero = { title:c.tagline||'', subtitle:'', image_url:c.hero_url||'' }; }
+  if(!c.about || typeof c.about==='string'){ c.about = { text: (typeof c.about==='string'?c.about:'') , vision:'', mission:'' }; }
+  if(!c.contact){ c.contact = { phone:c.phone||'', email:c.email||'', address:c.address||'', whatsapp:c.whatsapp||'', twitter:c.twitter||'' }; }
+  if(!c.seo){ c.seo = { title:c.seo_title||'', desc:c.seo_desc||'' }; }
+  if(!c.theme) c.theme = (c.brand&&c.brand.theme)||'navy';
 }
 
 function wsSave(){
   var btn = document.getElementById('ws-save-btn');
   if(btn){ btn.disabled=true; btn.textContent='جارٍ الحفظ...'; }
-  var cfg = wsReadForm();
+  var cfg = wsC();
+  cfg.theme = cfg.theme || (cfg.brand&&cfg.brand.theme) || 'navy';
   var pubChk = document.getElementById('ws-pub-chk');
   var publish = pubChk ? pubChk.checked : (wsData&&wsData.published?true:false);
-  var domEl = document.getElementById('ws-domain');
-  var customDomain = domEl ? domEl.value.trim().replace(/^https?:\/\//,'') : (wsData&&wsData.custom_domain||'');
+  var customDomain = wsData.custom_domain || '';
   fetch(API+'/org/website',{
     method:'PUT',
     headers:{'Content-Type':'application/json','Authorization':'Bearer '+token()},
     body:JSON.stringify({ config:cfg, publish:publish, custom_domain:customDomain })
   })
-  .then(function(r){ return r.json().then(function(j){ return {ok:r.ok,j:j}; }); })
+  .then(function(r){ return r.json().then(function(j){ return {ok:r.ok,j:j}; }).catch(function(){ return {ok:r.ok,j:{}}; }); })
   .then(function(res){
-    if(!res.ok){ if(btn){ btn.disabled=false; btn.textContent='حفظ التغييرات'; } toast('تعذّر الحفظ — حاول مجدداً'); return; }
-    wsData = { config:cfg, published:publish?1:0, published_at: publish?(wsData&&wsData.published_at||Math.floor(Date.now()/1000)):null, custom_domain:customDomain };
     if(btn){ btn.disabled=false; btn.textContent='حفظ التغييرات'; }
-    toast('تم حفظ إعدادات الموقع ✓');
+    if(!res.ok){ toast('تعذّر الحفظ — حاول مجدداً'); return; }
+    wsData.published = publish?1:0;
+    if(publish && !wsData.published_at) wsData.published_at = Math.floor(Date.now()/1000);
+    toast(publish?'تم حفظ ونشر الموقع ✓':'تم حفظ التغييرات ✓');
   })
   .catch(function(){
     if(btn){ btn.disabled=false; btn.textContent='حفظ التغييرات'; }
