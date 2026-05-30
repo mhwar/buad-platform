@@ -1013,7 +1013,7 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
 .empty-state p{font-size:var(--font-xs);color:var(--text-muted);max-width:320px;margin:0 auto}
 
 /* ── Client cards grid (v2) ── */
-.client-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:var(--space-4)}
+.client-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:var(--space-4)}
 .client-card{
   background:var(--bg-elevated);border:1px solid var(--border);
   border-radius:var(--radius-lg);padding:var(--space-5);
@@ -1093,6 +1093,55 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
   .prc-meta{font-size:11px;gap:var(--space-2)}
   .prc-arrow{width:28px;height:28px}
 }
+
+/* ── Clients redesign ── */
+.client-card{background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;cursor:pointer;transition:box-shadow .15s,border-color .15s;display:flex;flex-direction:column}
+.client-card:hover{box-shadow:var(--shadow-md);border-color:var(--neutral-300)}
+.client-card-logo-band{height:88px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,oklch(0.94 0.04 275) 0%,oklch(0.97 0.02 250) 100%);position:relative;overflow:hidden;flex-shrink:0}
+.client-card-logo-band img{max-height:60px;max-width:80%;object-fit:contain;filter:drop-shadow(0 1px 3px rgba(0,0,0,.12))}
+.client-card-logo-band .cc-avatar{width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800;color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+.client-card-body{padding:14px 16px;flex:1;display:flex;flex-direction:column;gap:6px}
+.client-card-name{font-size:var(--font-md);font-weight:700;color:var(--fg-1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.client-card-type{font-size:11px;font-weight:600;color:var(--fg-3);background:var(--neutral-100);padding:2px 8px;border-radius:20px;display:inline-block}
+.client-card-stats{display:flex;gap:12px;margin-top:4px;padding-top:8px;border-top:1px solid var(--border-subtle)}
+.client-card-stat{flex:1;text-align:center}
+.client-card-stat-val{font-size:15px;font-weight:800;color:var(--fg-1);font-family:var(--font-mono)}
+.client-card-stat-lbl{font-size:10px;color:var(--fg-4);margin-top:1px}
+.client-card-meta-row{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--fg-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.client-card-meta-row [data-lucide]{width:12px;height:12px;flex-shrink:0;opacity:.6}
+.client-card-actions{display:flex;gap:6px;padding:10px 16px;border-top:1px solid var(--border-subtle);background:var(--neutral-50)}
+/* ── Projects redesign ── */
+.proj-card-v2{background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;cursor:pointer;transition:box-shadow .15s,border-color .15s;display:flex;flex-direction:column}
+.proj-card-v2:hover{box-shadow:var(--shadow-md);border-color:var(--neutral-300)}
+.proj-card-v2-strip{height:4px;flex-shrink:0}
+.proj-card-v2-body{padding:14px 16px;flex:1;display:flex;flex-direction:column;gap:8px}
+.proj-card-v2-header{display:flex;align-items:flex-start;gap:10px}
+.proj-card-v2-status{font-size:10px;font-weight:700;letter-spacing:.3px;padding:3px 9px;border-radius:20px;flex-shrink:0;margin-top:2px}
+.proj-card-v2-name{font-size:var(--font-md);font-weight:700;color:var(--fg-1);line-height:1.3;flex:1}
+.proj-card-v2-client{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--fg-3)}
+.proj-card-v2-client-av{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;flex-shrink:0}
+.proj-card-v2-finances{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:10px;background:var(--neutral-50);border-radius:8px}
+.proj-card-v2-fin-item{text-align:center}
+.proj-card-v2-fin-val{font-size:13px;font-weight:800;font-family:var(--font-mono);color:var(--fg-1)}
+.proj-card-v2-fin-lbl{font-size:9px;color:var(--fg-4);margin-top:1px}
+.proj-card-v2-progress{height:4px;background:var(--neutral-200);border-radius:2px;overflow:hidden}
+.proj-card-v2-progress-fill{height:100%;border-radius:2px;transition:width .3s}
+.proj-card-v2-actions{display:flex;gap:6px;padding:10px 16px;border-top:1px solid var(--border-subtle);background:var(--neutral-50)}
+.sec-toolbar{display:flex;align-items:center;gap:var(--space-2);margin-bottom:var(--space-4);flex-wrap:wrap}
+.sec-search{flex:1;min-width:160px;max-width:260px;position:relative}
+.sec-search input{width:100%;padding:7px 10px 7px 32px;border:1px solid var(--border);border-radius:var(--radius-md);background:var(--bg-elevated);font-size:var(--font-sm);color:var(--fg-1);font-family:inherit}
+.sec-search input:focus{outline:none;border-color:var(--iris-400)}
+.sec-search-icon{position:absolute;left:9px;top:50%;transform:translateY(-50%);width:14px;height:14px;color:var(--fg-4);pointer-events:none}
+.sec-pills{display:flex;gap:4px;flex-wrap:wrap}
+.sec-pill{padding:5px 13px;border-radius:20px;font-size:12px;font-weight:600;border:1px solid var(--border);background:var(--bg-elevated);color:var(--fg-2);cursor:pointer;transition:all .12s;white-space:nowrap}
+.sec-pill:hover{border-color:var(--neutral-300);color:var(--fg-1)}
+.sec-pill.active{background:var(--iris-500);border-color:var(--iris-500);color:#fff}
+.sec-pill-count{font-size:10px;opacity:.75;margin-right:3px}
+.sec-view-toggle{display:flex;border:1px solid var(--border);border-radius:var(--radius-md);overflow:hidden}
+.sec-view-btn{padding:6px 10px;background:var(--bg-elevated);border:none;cursor:pointer;color:var(--fg-3);display:flex;align-items:center;transition:background .1s}
+.sec-view-btn:hover{background:var(--neutral-100)}
+.sec-view-btn.active{background:var(--iris-50);color:var(--iris-600)}
+.sec-sort{padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-md);background:var(--bg-elevated);font-size:var(--font-xs);color:var(--fg-2);cursor:pointer;font-family:inherit}
 
 /* ── Status distribution bar (client overview) ── */
 .status-dist{display:flex;flex-direction:column;gap:var(--space-2_5)}
@@ -3627,7 +3676,10 @@ function _buildDonut(segments, total) {
 }
 
 /* ─── CLIENTS ─── */
-Pages._clientsView = localStorage.getItem('buad2_clients_view') || 'cards';
+Pages._clientsView   = Pages._clientsView   || 'grid';
+Pages._clientsFilter = Pages._clientsFilter || 'all';
+Pages._clientsSearch = Pages._clientsSearch || '';
+Pages._clientsSort   = Pages._clientsSort   || 'name';
 
 Pages._clientAvatarHtml = function(cl, size) {
   size = size || 52;
@@ -3641,110 +3693,164 @@ Pages._clientAvatarHtml = function(cl, size) {
   return '<div class="client-logo-box" style="width:'+size+'px;height:'+size+'px;background:'+bg+';color:#fff;font-weight:800;font-size:'+fs+';letter-spacing:-.5px">'+UI.escHtml(initial)+'</div>';
 };
 
-Pages.render_clients = function() {
-  var clients = DB.getClients();
-  var projects = DB.getProjects();
-  var view = Pages._clientsView;
+Pages.render_clients = function(opts) {
+  opts = opts||{};
+  if (opts.view   !== undefined) Pages._clientsView   = opts.view;
+  if (opts.filter !== undefined) Pages._clientsFilter = opts.filter;
+  if (opts.search !== undefined) Pages._clientsSearch = opts.search;
+  if (opts.sort   !== undefined) Pages._clientsSort   = opts.sort;
 
-  var viewToggle =
-    '<div class="view-toggle">'+
-      '<button class="view-toggle-btn'+(view==='cards'?' active':'')+'" onclick="Pages._setClientsView(\'cards\')" title="بطاقات"><i data-lucide="layout-grid"></i></button>'+
-      '<button class="view-toggle-btn'+(view==='list'?' active':'')+'" onclick="Pages._setClientsView(\'list\')" title="قائمة"><i data-lucide="list"></i></button>'+
+  var el = document.getElementById('pg-clients'); if (!el) return;
+  var allClients = DB.getClients();
+  var projects   = DB.getProjects();
+
+  /* search + filter */
+  var q = (Pages._clientsSearch||'').toLowerCase().trim();
+  var typeFilter = Pages._clientsFilter;
+  var clients = allClients.filter(function(cl) {
+    if (typeFilter !== 'all' && cl.type !== typeFilter) return false;
+    if (q && (cl.name||'').toLowerCase().indexOf(q) < 0 &&
+             (cl.city||'').toLowerCase().indexOf(q) < 0 &&
+             (cl.email||'').toLowerCase().indexOf(q) < 0) return false;
+    return true;
+  });
+  /* sort */
+  clients = clients.slice().sort(function(a, b) {
+    if (Pages._clientsSort === 'created') return (b.created||'').localeCompare(a.created||'');
+    return (a.name||'').localeCompare(b.name||'');
+  });
+
+  /* type counts */
+  var typeMap = {company:'شركة',association:'جمعية',government:'حكومي',individual:'أفراد',other:'أخرى'};
+  var typeCounts = {all: allClients.length};
+  Object.keys(typeMap).forEach(function(k){ typeCounts[k] = allClients.filter(function(c){ return c.type===k; }).length; });
+
+  /* avatar color palette */
+  var palette = ['#6366f1','#0ea5e9','#10b981','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#84cc16'];
+  function avatarColor(name) { var c=0; for(var i=0;i<(name||'').length;i++) c+=name.charCodeAt(i); return palette[c%palette.length]; }
+
+  /* ── toolbar ── */
+  var toolbar =
+    '<div class="sec-toolbar">'+
+      '<div class="sec-search">'+
+        '<i data-lucide="search" class="sec-search-icon"></i>'+
+        '<input type="text" placeholder="بحث..." value="'+UI.escHtml(Pages._clientsSearch)+'" '+
+          'oninput="Pages.render_clients({search:this.value})">'+
+      '</div>'+
+      '<div class="sec-pills">'+
+        '<button class="sec-pill'+(typeFilter==='all'?' active':'')+'" onclick="Pages.render_clients({filter:\'all\'})">'+
+          'الكل<span class="sec-pill-count"> '+typeCounts.all+'</span></button>'+
+        Object.keys(typeMap).filter(function(k){ return typeCounts[k]>0; }).map(function(k){
+          return '<button class="sec-pill'+(typeFilter===k?' active':'')+'" onclick="Pages.render_clients({filter:\''+k+'\'})">'+
+            typeMap[k]+'<span class="sec-pill-count"> '+typeCounts[k]+'</span></button>';
+        }).join('')+
+      '</div>'+
+      '<div style="flex:1"></div>'+
+      '<select class="sec-sort" onchange="Pages.render_clients({sort:this.value})">'+
+        '<option value="name"'+(Pages._clientsSort==='name'?' selected':'')+'>أ — ي</option>'+
+        '<option value="created"'+(Pages._clientsSort==='created'?' selected':'')+'>الأحدث</option>'+
+      '</select>'+
+      '<div class="sec-view-toggle">'+
+        '<button class="sec-view-btn'+(Pages._clientsView==='grid'?' active':'')+'" onclick="Pages.render_clients({view:\'grid\'})" title="شبكة"><i data-lucide="layout-grid"></i></button>'+
+        '<button class="sec-view-btn'+(Pages._clientsView==='list'?' active':'')+'" onclick="Pages.render_clients({view:\'list\'})" title="قائمة"><i data-lucide="list"></i></button>'+
+      '</div>'+
+      '<button class="btn btn-primary btn-sm" onclick="Pages.addClientModal()" style="display:inline-flex;align-items:center;gap:5px"><i data-lucide="plus"></i>عميل جديد</button>'+
     '</div>';
 
-  var content = '';
+  var body = '';
+
   if (clients.length === 0) {
-    content = '<div class="empty-state"><div class="empty-state-icon"><i data-lucide="users"></i></div><h3>لا يوجد عملاء بعد</h3><p>ابدأ بإضافة أول عميل لتسجيل المشاريع تحت اسمه</p><button class="btn btn-primary" style="margin-top:var(--space-4)" onclick="Pages.addClientModal()"><i data-lucide="user-plus"></i>إضافة عميل</button></div>';
-  } else if (view === 'cards') {
-    var cards = '';
-    clients.forEach(function(cl) {
-      var pCount = projects.filter(function(p){ return p.client_id===cl.id; }).length;
-      var activeCount = projects.filter(function(p){ return p.client_id===cl.id && p.status==='active'; }).length;
-      var completedCount = projects.filter(function(p){ return p.client_id===cl.id && p.status==='completed'; }).length;
-      cards +=
-        '<div class="client-card">' +
-          '<div style="display:flex;align-items:flex-start;gap:var(--space-3);margin-bottom:var(--space-4)">' +
-            Pages._clientAvatarHtml(cl, 52) +
-            '<div style="flex:1;min-width:0">' +
-              '<div class="client-card-name">'+UI.escHtml(cl.name)+'</div>' +
-              '<div style="font-size:var(--font-2xs);color:var(--fg-3);margin-top:2px;display:flex;align-items:center;gap:4px">'+
-                '<span>'+clientTypeLabel(cl.type)+'</span>'+
-                (cl.city ? '<span style="color:var(--border-2)">·</span><span>'+UI.escHtml(cl.city)+'</span>' : '')+
-              '</div>' +
-            '</div>' +
-          '</div>' +
-          '<div style="display:flex;gap:var(--space-2);flex-wrap:wrap;margin-bottom:var(--space-3)">' +
-            '<span class="badge brand sm"><i data-lucide="briefcase"></i>'+pCount+' مشروع</span>' +
-            (activeCount>0 ? '<span class="badge success sm with-dot">'+activeCount+' جاري التنفيذ</span>' : '') +
-            (completedCount>0 ? '<span class="badge neutral sm">'+completedCount+' مكتمل</span>' : '') +
-          '</div>' +
-          '<div style="flex:1;display:flex;flex-direction:column;gap:5px;margin-bottom:var(--space-4)">' +
-            (cl.email ? '<div style="font-size:var(--font-2xs);color:var(--fg-3);display:flex;align-items:center;gap:5px;overflow:hidden"><i data-lucide="mail" style="width:12px;height:12px;flex-shrink:0"></i><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;direction:ltr">'+UI.escHtml(cl.email)+'</span></div>' : '') +
-            (cl.phone ? '<div style="font-size:var(--font-2xs);color:var(--fg-3);display:flex;align-items:center;gap:5px"><i data-lucide="phone" style="width:12px;height:12px;flex-shrink:0"></i><span style="direction:ltr">'+UI.escHtml(cl.phone)+'</span></div>' : '') +
-          '</div>' +
-          '<div class="client-card-actions">' +
-            '<button class="btn btn-sm btn-primary" style="flex:1" onclick="Nav.go(\'client\',{clientId:\''+cl.id+'\'})"><i data-lucide="arrow-left"></i>عرض الملف</button>' +
-            '<button class="btn btn-sm btn-icon" onclick="Pages.addClientModal(\''+cl.id+'\')" title="تعديل"><i data-lucide="pencil"></i></button>' +
-            '<button class="btn btn-sm btn-icon btn-danger" onclick="Pages.deleteClient(\''+cl.id+'\')" title="حذف"><i data-lucide="trash-2"></i></button>' +
-          '</div>' +
+    body = '<div class="empty-state"><div style="margin-bottom:var(--space-3)"><i data-lucide="users" style="width:40px;height:40px;opacity:.25"></i></div>'+
+      (q || typeFilter!=='all' ? '<p>لا توجد نتائج</p><button class="btn btn-ghost btn-sm" onclick="Pages.render_clients({filter:\'all\',search:\'\'})">مسح الفلتر</button>' :
+        '<p>لم تُضَف أي عملاء بعد</p><button class="btn btn-primary btn-sm" onclick="Pages.addClientModal()">+ إضافة عميل</button>')+
+    '</div>';
+  } else if (Pages._clientsView === 'grid') {
+    body = '<div class="client-grid">'+
+      clients.map(function(cl) {
+        var projs = projects.filter(function(p){ return p.client_id===cl.id; });
+        var active = projs.filter(function(p){ return p.status==='active'; }).length;
+        var done   = projs.filter(function(p){ return p.status==='completed'; }).length;
+        var totalVal = projs.reduce(function(s, p) {
+          var r = FinCalc.calc(p.id);
+          return s + (Number(r && r.grossTotal)||0);
+        }, 0);
+        var color = avatarColor(cl.name);
+        var logoHtml = cl.logo ?
+          '<img src="'+cl.logo+'" alt="">' :
+          '<div class="cc-avatar" style="background:'+color+'">'+UI.escHtml((cl.name||'?')[0])+'</div>';
+        return '<div class="client-card" onclick="Nav.go(\'client\',{clientId:\''+cl.id+'\'})">'+
+          '<div class="client-card-logo-band">'+logoHtml+'</div>'+
+          '<div class="client-card-body">'+
+            '<div style="display:flex;align-items:center;gap:8px;justify-content:space-between">'+
+              '<div class="client-card-name">'+UI.escHtml(cl.name)+'</div>'+
+              '<span class="client-card-type">'+( typeMap[cl.type]||cl.type||'')+'</span>'+
+            '</div>'+
+            (cl.city||cl.phone||cl.email ?
+              '<div style="display:flex;flex-direction:column;gap:3px">'+
+                (cl.city  ? '<div class="client-card-meta-row"><i data-lucide="map-pin"></i>'+UI.escHtml(cl.city)+'</div>' : '')+
+                (cl.email ? '<div class="client-card-meta-row"><i data-lucide="mail"></i>'+UI.escHtml(cl.email)+'</div>' : '')+
+                (cl.phone ? '<div class="client-card-meta-row"><i data-lucide="phone"></i>'+UI.escHtml(cl.phone)+'</div>' : '')+
+              '</div>' : '')+
+            '<div class="client-card-stats">'+
+              '<div class="client-card-stat">'+
+                '<div class="client-card-stat-val">'+projs.length+'</div>'+
+                '<div class="client-card-stat-lbl">المشاريع</div>'+
+              '</div>'+
+              '<div class="client-card-stat" style="border-right:1px solid var(--border-subtle);border-left:1px solid var(--border-subtle)">'+
+                '<div class="client-card-stat-val" style="color:var(--success-600)">'+active+'</div>'+
+                '<div class="client-card-stat-lbl">نشط</div>'+
+              '</div>'+
+              '<div class="client-card-stat">'+
+                '<div class="client-card-stat-val" style="font-size:12px">'+UI.fmt(totalVal)+'</div>'+
+                '<div class="client-card-stat-lbl">ر.س</div>'+
+              '</div>'+
+            '</div>'+
+          '</div>'+
+          '<div class="client-card-actions" onclick="event.stopPropagation()">'+
+            '<button class="btn btn-sm btn-primary" style="flex:1" onclick="Nav.go(\'client\',{clientId:\''+cl.id+'\'})"><i data-lucide="folder-open"></i>الملف</button>'+
+            '<button class="btn btn-sm btn-ghost" onclick="Pages.addClientModal(\''+cl.id+'\')" title="تعديل"><i data-lucide="pencil"></i></button>'+
+            '<button class="btn btn-sm btn-ghost" style="color:var(--danger-600)" onclick="Pages.deleteClient(\''+cl.id+'\')" title="حذف"><i data-lucide="trash-2"></i></button>'+
+          '</div>'+
         '</div>';
-    });
-    content = '<div class="client-grid">'+cards+'</div>';
+      }).join('')+
+    '</div>';
   } else {
-    var rows = '';
-    clients.forEach(function(cl) {
-      var pCount = projects.filter(function(p){ return p.client_id===cl.id; }).length;
-      var activeCount = projects.filter(function(p){ return p.client_id===cl.id && p.status==='active'; }).length;
-      rows +=
-        '<div class="client-list-row">' +
-          '<div style="display:flex;align-items:center;gap:12px;min-width:0">' +
-            Pages._clientAvatarHtml(cl, 36) +
-            '<div style="min-width:0">' +
-              '<div style="font-weight:600;font-size:13px;color:var(--fg-1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+UI.escHtml(cl.name)+'</div>' +
-              '<div style="font-size:11px;color:var(--fg-3)">'+clientTypeLabel(cl.type)+'</div>' +
-            '</div>' +
-          '</div>' +
-          '<div style="font-size:12px;color:var(--fg-2)">'+UI.escHtml(cl.city||'—')+'</div>' +
-          '<div style="font-size:12px;color:var(--fg-3);direction:ltr;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+UI.escHtml(cl.email||'—')+'</div>' +
-          '<div style="display:flex;gap:6px;align-items:center">' +
-            '<span class="badge brand sm">'+pCount+' مشروع</span>' +
-            (activeCount>0 ? '<span class="badge success sm with-dot">'+activeCount+'</span>' : '') +
-          '</div>' +
-          '<div style="display:flex;gap:4px">' +
-            '<button class="btn btn-sm btn-primary" onclick="Nav.go(\'client\',{clientId:\''+cl.id+'\'})"><i data-lucide="arrow-left"></i>عرض</button>' +
-            '<button class="btn btn-sm btn-icon" onclick="Pages.addClientModal(\''+cl.id+'\')" title="تعديل"><i data-lucide="pencil"></i></button>' +
-            '<button class="btn btn-sm btn-icon btn-danger" onclick="Pages.deleteClient(\''+cl.id+'\')" title="حذف"><i data-lucide="trash-2"></i></button>' +
-          '</div>' +
-        '</div>';
-    });
-    content =
-      '<div class="client-list">' +
-        '<div class="client-list-hdr">' +
-          '<div>العميل</div><div>المدينة</div><div>البريد الإلكتروني</div><div>المشاريع</div><div></div>' +
-        '</div>' +
-        rows +
+    /* list view */
+    body =
+      '<div style="background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden">'+
+        '<div style="display:grid;grid-template-columns:2.5fr 1fr 1.5fr 0.8fr 1fr auto;align-items:center;gap:12px;padding:10px 16px;font-size:11px;font-weight:700;color:var(--fg-4);letter-spacing:.4px;text-transform:uppercase;border-bottom:1px solid var(--border-subtle);background:var(--neutral-50)">'+
+          '<span>العميل</span><span>النوع</span><span>المدينة / البريد</span><span style="text-align:center">المشاريع</span><span style="text-align:left">قيمة العقود</span><span></span>'+
+        '</div>'+
+        clients.map(function(cl) {
+          var projs = projects.filter(function(p){ return p.client_id===cl.id; });
+          var totalVal = projs.reduce(function(s,p){ var r=FinCalc.calc(p.id); return s+(Number(r&&r.grossTotal)||0); }, 0);
+          var color = avatarColor(cl.name);
+          return '<div style="display:grid;grid-template-columns:2.5fr 1fr 1.5fr 0.8fr 1fr auto;align-items:center;gap:12px;padding:11px 16px;border-bottom:1px solid var(--border-subtle);cursor:pointer;transition:background .1s" '+
+            'onmouseover="this.style.background=\'var(--neutral-50)\'" onmouseout="this.style.background=\'\'" '+
+            'onclick="Nav.go(\'client\',{clientId:\''+cl.id+'\'})" >'+
+            '<div style="display:flex;align-items:center;gap:10px;min-width:0">'+
+              '<div style="width:34px;height:34px;border-radius:8px;flex-shrink:0;display:flex;align-items:center;justify-content:center;overflow:hidden;background:'+color+'">'+
+                (cl.logo ? '<img src="'+cl.logo+'" style="width:100%;height:100%;object-fit:contain">' : '<span style="font-size:13px;font-weight:800;color:#fff">'+UI.escHtml((cl.name||'?')[0])+'</span>')+
+              '</div>'+
+              '<span style="font-size:13px;font-weight:600;color:var(--fg-1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+UI.escHtml(cl.name)+'</span>'+
+            '</div>'+
+            '<span style="font-size:12px;color:var(--fg-3)">'+(typeMap[cl.type]||'-')+'</span>'+
+            '<div style="min-width:0"><div style="font-size:12px;color:var(--fg-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(cl.city||'-')+'</div>'+
+              (cl.email?'<div style="font-size:11px;color:var(--fg-4);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+UI.escHtml(cl.email)+'</div>':'')+
+            '</div>'+
+            '<span style="font-size:14px;font-weight:700;text-align:center;color:var(--fg-1)">'+projs.length+'</span>'+
+            '<span style="font-size:13px;font-family:var(--font-mono);font-weight:700;color:var(--iris-600)">'+UI.fmt(totalVal)+' <span style="font-size:10px;font-weight:500;color:var(--fg-4)">ر.س</span></span>'+
+            '<div style="display:flex;gap:4px" onclick="event.stopPropagation()">'+
+              '<button class="btn btn-sm btn-ghost" onclick="Pages.addClientModal(\''+cl.id+'\')" title="تعديل"><i data-lucide="pencil"></i></button>'+
+              '<button class="btn btn-sm btn-ghost" style="color:var(--danger-600)" onclick="Pages.deleteClient(\''+cl.id+'\')" title="حذف"><i data-lucide="trash-2"></i></button>'+
+            '</div>'+
+          '</div>';
+        }).join('')+
       '</div>';
   }
 
-  document.getElementById('pg-clients').innerHTML =
-    '<div class="page-header">' +
-      '<div>' +
-        '<h1>العملاء</h1>' +
-        '<div class="page-header-sub">'+clients.length+' عميل مسجَّل في النظام</div>' +
-      '</div>' +
-      '<div style="display:flex;gap:var(--space-2);align-items:center">' +
-        viewToggle +
-        '<button class="btn btn-primary" onclick="Pages.addClientModal()"><i data-lucide="user-plus"></i>إضافة عميل</button>' +
-      '</div>' +
-    '</div>' +
-    content;
-  document.getElementById('top-actions').innerHTML = '';
-};
-
-Pages._setClientsView = function(v) {
-  Pages._clientsView = v;
-  localStorage.setItem('buad2_clients_view', v);
-  Pages.render_clients();
+  el.innerHTML = toolbar + body;
+  if (typeof lucide !== 'undefined') lucide.createIcons({rootElement: el});
 };
 
 Pages.addClientModal = function(editId) {
@@ -3921,7 +4027,11 @@ Pages.render_client = function(params) {
   var heroHtml =
     '<div class="client-hero">' +
       '<div class="client-hero-band">' +
-        '<div class="client-hero-avatar">'+UI.escHtml(initial)+'</div>' +
+        (cl.logo ?
+          '<div class="client-hero-avatar" style="background:var(--neutral-100);padding:4px">'+
+            '<img src="'+cl.logo+'" style="height:56px;max-width:140px;object-fit:contain;border-radius:6px">'+
+          '</div>' :
+          '<div class="client-hero-avatar">'+UI.escHtml(initial)+'</div>') +
         '<div class="client-hero-info">' +
           '<div class="client-hero-name">'+UI.escHtml(cl.name)+'</div>' +
           '<div class="client-hero-meta">' +
@@ -4099,59 +4209,191 @@ Pages._projRowCard = function(p, cl, opts) {
   '</div>';
 };
 
-Pages.render_projects = function() {
-  var projects = DB.getProjectsForUser();
-  var clients = DB.getClients();
-  var filterStatus = window._projFilter||'all';
-  var filtered = filterStatus==='all' ? projects : projects.filter(function(p){ return p.status===filterStatus; });
+Pages._projsView   = Pages._projsView   || 'grid';
+Pages._projsFilter = Pages._projsFilter || 'all';
+Pages._projsType   = Pages._projsType   || 'all';
+Pages._projsSearch = Pages._projsSearch || '';
+Pages._projsSort   = Pages._projsSort   || 'created';
 
-  var listHtml = '';
-  if (projects.length===0) {
-    listHtml = '<div class="empty-state" style="padding:var(--space-10)">' +
-      '<div class="empty-state-icon"><i data-lucide="briefcase"></i></div>' +
-      '<h3>لا توجد مشاريع بعد</h3>' +
-      '<p>أضف أول مشروع لبدء تتبع أعمالك</p>' +
-      '<button class="btn btn-primary" onclick="Pages.addProjectModal(null)" style="margin-top:var(--space-4);display:inline-flex;align-items:center;gap:var(--space-1_5)"><i data-lucide="plus"></i>مشروع جديد</button>' +
+Pages.render_projects = function(opts) {
+  opts = opts||{};
+  if (opts.view   !== undefined) Pages._projsView   = opts.view;
+  if (opts.filter !== undefined) Pages._projsFilter = opts.filter;
+  if (opts.type   !== undefined) Pages._projsType   = opts.type;
+  if (opts.search !== undefined) Pages._projsSearch = opts.search;
+  if (opts.sort   !== undefined) Pages._projsSort   = opts.sort;
+
+  var el = document.getElementById('pg-projects'); if (!el) return;
+  var allProjects = DB.getProjectsForUser();
+  var clients     = DB.getClients();
+
+  /* status config */
+  var stCfg = {
+    draft:     {lbl:'مسودة',       color:'#94a3b8', bg:'#f1f5f9'},
+    active:    {lbl:'نشط',         color:'#10b981', bg:'#f0fdf4'},
+    completed: {lbl:'مكتمل',       color:'#6366f1', bg:'#eef2ff'},
+    paused:    {lbl:'متوقف',       color:'#f59e0b', bg:'#fffbeb'},
+    cancelled: {lbl:'ملغي',        color:'#ef4444', bg:'#fef2f2'}
+  };
+  var typeCfg = {training:'تدريب', consulting:'استشارات', event:'فعالية', other:'أخرى'};
+
+  /* filter */
+  var q = (Pages._projsSearch||'').toLowerCase().trim();
+  var projects = allProjects.filter(function(p) {
+    if (Pages._projsFilter !== 'all' && p.status !== Pages._projsFilter) return false;
+    if (Pages._projsType   !== 'all' && p.type   !== Pages._projsType)   return false;
+    if (q) {
+      var cl = clients.find(function(c){ return c.id===p.client_id; });
+      var hay = ((p.name||'')+(cl?cl.name:'')).toLowerCase();
+      if (hay.indexOf(q) < 0) return false;
+    }
+    return true;
+  });
+
+  /* sort */
+  projects = projects.slice().sort(function(a, b) {
+    if (Pages._projsSort === 'name')  return (a.name||'').localeCompare(b.name||'');
+    if (Pages._projsSort === 'value') {
+      return (FinCalc.calc(b.id).grossTotal||0) - (FinCalc.calc(a.id).grossTotal||0);
+    }
+    return (b.created||'').localeCompare(a.created||'');
+  });
+
+  /* counts per status */
+  var stCounts = {all: allProjects.length};
+  Object.keys(stCfg).forEach(function(k){ stCounts[k] = allProjects.filter(function(p){ return p.status===k; }).length; });
+
+  /* avatar color */
+  var palette = ['#6366f1','#0ea5e9','#10b981','#f59e0b','#ef4444','#8b5cf6'];
+  function avatarColor(name) { var c=0; for(var i=0;i<(name||'').length;i++) c+=name.charCodeAt(i); return palette[c%palette.length]; }
+
+  /* ── toolbar ── */
+  var toolbar =
+    '<div class="sec-toolbar">'+
+      '<div class="sec-search">'+
+        '<i data-lucide="search" class="sec-search-icon"></i>'+
+        '<input type="text" placeholder="بحث..." value="'+UI.escHtml(Pages._projsSearch)+'" '+
+          'oninput="Pages.render_projects({search:this.value})">'+
+      '</div>'+
+      '<div class="sec-pills">'+
+        ['all','active','draft','completed','paused','cancelled'].map(function(k) {
+          var cfg = stCfg[k];
+          var lbl = k==='all' ? 'الكل' : cfg.lbl;
+          var cnt = stCounts[k];
+          if (k!=='all' && !cnt) return '';
+          return '<button class="sec-pill'+(Pages._projsFilter===k?' active':'')+'" onclick="Pages.render_projects({filter:\''+k+'\'})">'+
+            lbl+'<span class="sec-pill-count"> '+cnt+'</span></button>';
+        }).join('')+
+      '</div>'+
+      '<div style="flex:1"></div>'+
+      '<select class="sec-sort" onchange="Pages.render_projects({sort:this.value})">'+
+        '<option value="created"'+(Pages._projsSort==='created'?' selected':'')+'>الأحدث</option>'+
+        '<option value="name"'+(Pages._projsSort==='name'?' selected':'')+'>الاسم</option>'+
+        '<option value="value"'+(Pages._projsSort==='value'?' selected':'')+'>القيمة</option>'+
+      '</select>'+
+      '<div class="sec-view-toggle">'+
+        '<button class="sec-view-btn'+(Pages._projsView==='grid'?' active':'')+'" onclick="Pages.render_projects({view:\'grid\'})" title="شبكة"><i data-lucide="layout-grid"></i></button>'+
+        '<button class="sec-view-btn'+(Pages._projsView==='list'?' active':'')+'" onclick="Pages.render_projects({view:\'list\'})" title="قائمة"><i data-lucide="list"></i></button>'+
+      '</div>'+
+      '<button class="btn btn-primary btn-sm" onclick="Pages.addProjectModal()" style="display:inline-flex;align-items:center;gap:5px"><i data-lucide="plus"></i>مشروع جديد</button>'+
     '</div>';
-  } else if (filtered.length===0) {
-    listHtml = '<div class="proj-row-empty">لا توجد مشاريع بهذه الحالة</div>';
-  } else {
-    listHtml = '<div class="proj-row-list">' +
-      filtered.slice().sort(function(a,b){ return (b.created||'').localeCompare(a.created||''); }).map(function(p){
+
+  var body = '';
+
+  if (projects.length === 0) {
+    body = '<div class="empty-state"><div style="margin-bottom:var(--space-3)"><i data-lucide="briefcase" style="width:40px;height:40px;opacity:.25"></i></div>'+
+      (q||Pages._projsFilter!=='all'||Pages._projsType!=='all' ?
+        '<p>لا توجد نتائج</p><button class="btn btn-ghost btn-sm" onclick="Pages.render_projects({filter:\'all\',type:\'all\',search:\'\'})">مسح الفلتر</button>' :
+        '<p>لم يُضَف أي مشروع بعد</p><button class="btn btn-primary btn-sm" onclick="Pages.addProjectModal()">+ مشروع جديد</button>')+
+    '</div>';
+  } else if (Pages._projsView === 'grid') {
+    body = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:var(--space-4)">'+
+      projects.map(function(p) {
         var cl = clients.find(function(c){ return c.id===p.client_id; });
-        return Pages._projRowCard(p, cl);
-      }).join('') +
+        var r  = FinCalc.calc(p.id);
+        var cfg = stCfg[p.status]||stCfg.draft;
+        var typeLbl = typeCfg[p.type]||p.type||'';
+        var expPct = r.grossTotal>0 ? Math.min(100,Math.round(r.totalExpenses/r.grossTotal*100)) : 0;
+        var clColor = avatarColor(cl?cl.name:'?');
+        return '<div class="proj-card-v2" onclick="Nav.go(\'fin\',{projId:\''+p.id+'\'})">'+
+          '<div class="proj-card-v2-strip" style="background:'+cfg.color+'"></div>'+
+          '<div class="proj-card-v2-body">'+
+            '<div class="proj-card-v2-header">'+
+              '<span class="proj-card-v2-status" style="background:'+cfg.bg+';color:'+cfg.color+'">'+cfg.lbl+'</span>'+
+              '<div class="proj-card-v2-name">'+UI.escHtml(p.name)+'</div>'+
+            '</div>'+
+            (cl ? '<div class="proj-card-v2-client">'+
+              '<div class="proj-card-v2-client-av" style="background:'+clColor+'">'+
+                (cl.logo ? '<img src="'+cl.logo+'" style="width:100%;height:100%;object-fit:contain;border-radius:50%">' : UI.escHtml((cl.name||'?')[0]))+
+              '</div>'+
+              '<span>'+UI.escHtml(cl.name)+'</span>'+
+              '<span style="margin-right:4px;color:var(--fg-4);font-size:10px">·</span>'+
+              '<span style="color:var(--fg-4)">'+typeLbl+'</span>'+
+            '</div>' : '')+
+            (r.grossTotal > 0 ?
+              '<div class="proj-card-v2-finances">'+
+                '<div class="proj-card-v2-fin-item">'+
+                  '<div class="proj-card-v2-fin-val" style="color:var(--iris-600)">'+UI.fmt(r.grossTotal)+'</div>'+
+                  '<div class="proj-card-v2-fin-lbl">قيمة العقد</div>'+
+                '</div>'+
+                '<div class="proj-card-v2-fin-item" style="border-right:1px solid var(--border-subtle);border-left:1px solid var(--border-subtle)">'+
+                  '<div class="proj-card-v2-fin-val" style="color:var(--success-600)">'+UI.fmt(r.profit)+'</div>'+
+                  '<div class="proj-card-v2-fin-lbl">صافي الربح</div>'+
+                '</div>'+
+                '<div class="proj-card-v2-fin-item">'+
+                  '<div class="proj-card-v2-fin-val" style="color:'+(r.remaining<0?'var(--danger-600)':'var(--fg-1)')+'">'+UI.fmt(r.remaining)+'</div>'+
+                  '<div class="proj-card-v2-fin-lbl">المتبقي</div>'+
+                '</div>'+
+              '</div>'+
+              '<div class="proj-card-v2-progress"><div class="proj-card-v2-progress-fill" style="width:'+expPct+'%;background:'+(expPct>90?'var(--danger-400)':expPct>60?'var(--warning-400)':'var(--success-400)')+'"></div></div>'
+            : '')+
+          '</div>'+
+          '<div class="proj-card-v2-actions" onclick="event.stopPropagation()">'+
+            '<button class="btn btn-sm btn-primary" style="flex:1" onclick="Nav.go(\'fin\',{projId:\''+p.id+'\'})"><i data-lucide="folder-open"></i>الملف المالي</button>'+
+            '<button class="btn btn-sm btn-ghost" onclick="Pages.toggleProjKebab(\''+p.id+'\',event)" title="المزيد"><i data-lucide="more-horizontal"></i></button>'+
+          '</div>'+
+          Pages._projKebabHtml(p)+
+        '</div>';
+      }).join('')+
     '</div>';
+  } else {
+    /* list view */
+    body =
+      '<div style="background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden">'+
+        '<div style="display:grid;grid-template-columns:2.5fr 1fr 1fr 1fr 0.8fr auto;align-items:center;gap:12px;padding:10px 16px;font-size:11px;font-weight:700;color:var(--fg-4);letter-spacing:.4px;text-transform:uppercase;border-bottom:1px solid var(--border-subtle);background:var(--neutral-50)">'+
+          '<span>المشروع</span><span>العميل</span><span style="text-align:left">قيمة العقد</span><span style="text-align:left">صافي الربح</span><span>الحالة</span><span></span>'+
+        '</div>'+
+        projects.map(function(p) {
+          var cl  = clients.find(function(c){ return c.id===p.client_id; });
+          var r   = FinCalc.calc(p.id);
+          var cfg = stCfg[p.status]||stCfg.draft;
+          var clColor = avatarColor(cl?cl.name:'?');
+          return '<div style="display:grid;grid-template-columns:2.5fr 1fr 1fr 1fr 0.8fr auto;align-items:center;gap:12px;padding:11px 16px;border-bottom:1px solid var(--border-subtle);cursor:pointer;transition:background .1s;border-right:3px solid '+cfg.color+'" '+
+            'onmouseover="this.style.background=\'var(--neutral-50)\'" onmouseout="this.style.background=\'\'" '+
+            'onclick="Nav.go(\'fin\',{projId:\''+p.id+'\'})" >'+
+            '<div style="min-width:0">'+
+              '<div style="font-size:13px;font-weight:600;color:var(--fg-1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+UI.escHtml(p.name)+'</div>'+
+              '<div style="font-size:11px;color:var(--fg-4)">'+(typeCfg[p.type]||'')+(p.created?' · '+p.created.slice(0,7):'')+'</div>'+
+            '</div>'+
+            '<div style="display:flex;align-items:center;gap:7px;min-width:0">'+
+              (cl ? '<div style="width:22px;height:22px;border-radius:5px;flex-shrink:0;background:'+clColor+';display:flex;align-items:center;justify-content:center;overflow:hidden">'+
+                (cl.logo?'<img src="'+cl.logo+'" style="width:100%;height:100%;object-fit:contain">':'<span style="font-size:10px;font-weight:800;color:#fff">'+UI.escHtml((cl.name||'?')[0])+'</span>')+
+              '</div><span style="font-size:12px;color:var(--fg-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+UI.escHtml(cl.name)+'</span>' : '<span style="color:var(--fg-4)">—</span>')+
+            '</div>'+
+            '<span style="font-size:13px;font-family:var(--font-mono);font-weight:700;color:var(--iris-600)">'+UI.fmt(r.grossTotal)+'</span>'+
+            '<span style="font-size:13px;font-family:var(--font-mono);font-weight:700;color:var(--success-600)">'+UI.fmt(r.profit)+'</span>'+
+            '<span style="font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px;background:'+cfg.bg+';color:'+cfg.color+'">'+cfg.lbl+'</span>'+
+            '<div style="display:flex;gap:4px" onclick="event.stopPropagation()">'+
+              '<button class="btn btn-sm btn-ghost" onclick="Nav.go(\'fin\',{projId:\''+p.id+'\'})" title="فتح"><i data-lucide="arrow-left"></i></button>'+
+              Pages._projKebabHtml(p)+
+            '</div>'+
+          '</div>';
+        }).join('')+
+      '</div>';
   }
 
-  var filterOpts = [
-    {v:'all',l:'الكل'},
-    {v:'draft',l:'مسودة'},
-    {v:'active',l:'جاري التنفيذ'},
-    {v:'completed',l:'مكتمل'},
-    {v:'paused',l:'متوقف'},
-    {v:'cancelled',l:'ملغي'}
-  ];
-  var pillsHtml = '<div class="proj-filter-bar">' +
-    filterOpts.map(function(o){
-      var isActive = filterStatus===o.v;
-      var count = o.v==='all' ? projects.length : projects.filter(function(p){return p.status===o.v;}).length;
-      return '<button class="proj-filter-btn'+(isActive?' active':'')+'" onclick="window._projFilter=\''+o.v+'\';Pages.render_projects()">' +
-        o.l+'<span class="proj-filter-count">'+count+'</span></button>';
-    }).join('') +
-    '</div>';
-
-  document.getElementById('pg-projects').innerHTML =
-    '<div class="page-header">' +
-      '<div>' +
-        '<h1>المشاريع</h1>' +
-        '<div class="page-header-sub">'+projects.length+' مشروع · '+filtered.length+' معروض</div>' +
-      '</div>' +
-      '<button class="btn btn-primary" onclick="Pages.addProjectModal(null)" style="display:inline-flex;align-items:center;gap:var(--space-1_5)"><i data-lucide="plus"></i>مشروع جديد</button>' +
-    '</div>' +
-    pillsHtml +
-    listHtml;
-  document.getElementById('top-actions').innerHTML='';
+  el.innerHTML = toolbar + body;
+  if (typeof lucide !== 'undefined') lucide.createIcons({rootElement: el});
 };
 
 Pages.addProjectModal = function(clientId) {
