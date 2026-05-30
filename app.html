@@ -2499,6 +2499,14 @@ DB._toggleOrgWebsite = function(id, enabled) {
     body: JSON.stringify({ enabled: enabled })
   }).then(function(r){ return r.ok; }).catch(function(){ return false; });
 };
+DB._toggleOrgCrm = function(id, enabled) {
+  if (!DB._token) return Promise.resolve(false);
+  return fetch('/api/orgs/'+id+'/toggle-crm', {
+    method: 'PATCH',
+    headers: DB._apiHeaders(),
+    body: JSON.stringify({ enabled: enabled })
+  }).then(function(r){ return r.ok; }).catch(function(){ return false; });
+};
 
 DB.getContracts = function(pid) {
   var fin = DB.getFin(pid);
@@ -9805,6 +9813,8 @@ Pages.render_orgs = function(opts) {
             (o.phone?'<a href="tel:'+UI.escHtml(o.phone)+'" class="btn btn-sm btn-ghost" style="justify-content:center"><i data-lucide="phone"></i>'+UI.escHtml(o.phone)+'</a>':'')+
             '<button onclick="Pages.toggleOrgWebsite(\''+o.id+'\','+(o.website_enabled?1:0)+',\''+UI.escHtml(o.name||'').replace(/'/g,"\\'")+'\')"\n             class="btn btn-sm btn-ghost" style="justify-content:center;'+(o.website_enabled?'color:var(--success-600)':'')+'">\n              <i data-lucide="'+(o.website_enabled?'globe-2':'globe')+'"></i>'+
             (o.website_enabled?'الموقع مفعّل':'تفعيل الموقع')+'</button>'+
+            '<button onclick="Pages.toggleOrgCrm(\''+o.id+'\','+(o.crm_enabled?1:0)+',\''+UI.escHtml(o.name||'').replace(/'/g,"\\'")+'\')"\n             class="btn btn-sm btn-ghost" style="justify-content:center;'+(o.crm_enabled?'color:var(--iris-600)':'')+'">\n              <i data-lucide="'+(o.crm_enabled?'users':'user-plus')+'"></i>'+
+            (o.crm_enabled?'CRM مفعّل':'تفعيل CRM')+'</button>'+
             '<button onclick="Pages.deleteOrgConfirm(\''+o.id+'\',\''+UI.escHtml(o.name||'').replace(/'/g,"\\'")+'\')" class="btn btn-sm btn-ghost" style="justify-content:center;color:var(--danger-600)"><i data-lucide="trash-2"></i>حذف</button>'+
           '</div>'+
         '</div>'+
@@ -9853,6 +9863,30 @@ Pages.doToggleOrgWebsite = function(id, enable) {
       Pages.render_orgs({_loaded:true});
     } else {
       UI.toast('تعذّر تحديث حالة الموقع', 'danger');
+    }
+  });
+};
+
+Pages.toggleOrgCrm = function(id, currentEnabled, name) {
+  var enable = !currentEnabled;
+  var msg = enable ? ('تفعيل نظام إدارة المستفيدين (CRM) لـ «'+name+'»؟') : ('إيقاف CRM لـ «'+name+'»؟ لن تتمكن الجمعية من الوصول للنظام.');
+  UI.openModal(
+    '<div class="modal-header"><h3>'+(enable?'تفعيل CRM':'إيقاف CRM')+'</h3><button class="modal-close" onclick="UI.closeModalForce()">×</button></div>'+
+    '<div style="padding:18px 20px;color:var(--fg-2)">'+msg+'</div>'+
+    '<div class="modal-footer"><button class="btn btn-ghost" onclick="UI.closeModalForce()">إلغاء</button>'+
+    '<button class="btn '+(enable?'btn-primary':'btn-danger')+'" onclick="Pages.doToggleOrgCrm(\''+id+'\','+(enable?1:0)+')">'+
+    (enable?'تفعيل':'إيقاف')+'</button></div>'
+  );
+};
+Pages.doToggleOrgCrm = function(id, enable) {
+  UI.closeModalForce();
+  DB._toggleOrgCrm(id, enable).then(function(ok) {
+    if (ok) {
+      Pages._orgs = (Pages._orgs||[]).map(function(x){ return x.id===id ? Object.assign({},x,{crm_enabled:enable}) : x; });
+      UI.toast(enable?'تم تفعيل CRM':'تم إيقاف CRM', 'success');
+      Pages.render_orgs({_loaded:true});
+    } else {
+      UI.toast('تعذّر تحديث حالة CRM', 'danger');
     }
   });
 };

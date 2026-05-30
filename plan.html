@@ -465,6 +465,173 @@ img,svg{display:block;max-width:100%}
   .ws-nav-item .dot{display:none}
 }
 @media(max-width:640px){.ws-row,.ws-row-3{grid-template-columns:1fr}}
+
+/* ── CRM: Beneficiary Management ── */
+.crm-topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;gap:12px;flex-wrap:wrap}
+.crm-tabs{display:flex;gap:4px;background:var(--bg-tint);border-radius:10px;padding:4px}
+.crm-tab{padding:7px 16px;border-radius:7px;border:none;background:transparent;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;transition:.15s;font-family:inherit}
+.crm-tab.active{background:#fff;color:var(--navy-deep);box-shadow:0 1px 4px rgba(0,0,0,.1)}
+.crm-tab:hover:not(.active){color:var(--navy)}
+.crm-actions{display:flex;gap:8px;align-items:center}
+.crm-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;border:none;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:.15s}
+.crm-btn-primary{background:var(--navy);color:#fff}
+.crm-btn-primary:hover{background:var(--navy-deep)}
+.crm-btn-outline{background:#fff;color:var(--navy);border:1.5px solid var(--line)}
+.crm-btn-outline:hover{border-color:var(--navy);background:var(--bg-tint)}
+.crm-btn-sm{padding:5px 11px;font-size:12px}
+.crm-btn-danger{background:#fef2f2;color:#dc2626;border:1.5px solid #fecaca}
+.crm-btn-danger:hover{background:#fee2e2}
+.crm-btn svg{width:15px;height:15px}
+
+/* Stats */
+.crm-stat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px;margin-bottom:24px}
+.crm-stat{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;box-shadow:var(--shadow-sm)}
+.crm-stat-val{font-size:28px;font-weight:800;color:var(--navy-deep);line-height:1;margin-bottom:4px;font-variant-numeric:lining-nums}
+.crm-stat-lbl{font-size:12px;color:var(--muted);font-weight:600}
+.crm-stat-sub{font-size:11px;color:var(--muted);margin-top:4px}
+.crm-stat.accent .crm-stat-val{color:var(--accent)}
+.crm-stat.warn .crm-stat-val{color:#d97706}
+.crm-stat.ok .crm-stat-val{color:#059669}
+
+/* Badges */
+.crm-badge{display:inline-block;padding:2px 9px;border-radius:12px;font-size:11px;font-weight:700;white-space:nowrap}
+.crm-badge-pending{background:#fef3c7;color:#92400e}
+.crm-badge-reviewing{background:#dbeafe;color:#1e40af}
+.crm-badge-approved{background:#d1fae5;color:#065f46}
+.crm-badge-rejected{background:#fee2e2;color:#991b1b}
+.crm-badge-completed{background:#e5e7eb;color:#374151}
+.crm-badge-closed{background:#f3f4f6;color:#6b7280}
+.crm-badge-active{background:#d1fae5;color:#065f46}
+.crm-badge-inactive{background:#f3f4f6;color:#6b7280}
+.crm-badge-urgent{background:#fee2e2;color:#dc2626}
+.crm-badge-high{background:#ffedd5;color:#c2410c}
+.crm-badge-normal{background:#e0f2fe;color:#0369a1}
+.crm-badge-low{background:#f3f4f6;color:#6b7280}
+.crm-badge-needy{background:#ede9fe;color:#5b21b6}
+.crm-badge-widow{background:#fce7f3;color:#9d174d}
+.crm-badge-orphan{background:#dbeafe;color:#1e3a8a}
+.crm-badge-disabled{background:#d1fae5;color:#065f46}
+.crm-badge-family{background:#fef9c3;color:#713f12}
+.crm-badge-other{background:#f3f4f6;color:#374151}
+
+/* Table */
+.crm-table-wrap{overflow-x:auto;border-radius:var(--radius);border:1px solid var(--line);background:#fff;box-shadow:var(--shadow-sm)}
+.crm-table{width:100%;border-collapse:collapse;font-size:13px}
+.crm-table thead th{background:var(--bg-tint);padding:10px 14px;font-weight:700;color:var(--muted);text-align:right;font-size:12px;border-bottom:1px solid var(--line);white-space:nowrap}
+.crm-table tbody td{padding:11px 14px;border-bottom:1px solid #f3f4f6;color:var(--text);vertical-align:middle}
+.crm-table tbody tr:last-child td{border-bottom:none}
+.crm-table tbody tr:hover{background:#fafafa}
+.crm-table-action{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:6px;border:1px solid var(--line);background:#fff;font-size:12px;font-weight:600;color:var(--navy);cursor:pointer;font-family:inherit;transition:.15s}
+.crm-table-action:hover{background:var(--navy);color:#fff;border-color:var(--navy)}
+.crm-table-action svg{width:13px;height:13px}
+
+/* Search / filters */
+.crm-toolbar{display:flex;gap:8px;align-items:center;margin-bottom:16px;flex-wrap:wrap}
+.crm-search{flex:1;min-width:200px;max-width:360px;position:relative}
+.crm-search input{width:100%;padding:8px 36px 8px 14px;border:1.5px solid var(--line);border-radius:8px;font-size:13px;font-family:inherit;box-sizing:border-box;color:var(--text);background:#fff}
+.crm-search input:focus{outline:none;border-color:var(--navy)}
+.crm-search-ico{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none}
+.crm-search-ico svg{width:15px;height:15px}
+.crm-filter{padding:8px 12px;border:1.5px solid var(--line);border-radius:8px;font-size:13px;font-family:inherit;color:var(--text);background:#fff;cursor:pointer}
+.crm-filter:focus{outline:none;border-color:var(--navy)}
+
+/* Profile / detail view */
+.crm-profile-header{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow-sm);display:flex;align-items:center;gap:20px;margin-bottom:20px;flex-wrap:wrap}
+.crm-avatar{width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:800;color:#fff;flex-shrink:0}
+.crm-avatar-male{background:linear-gradient(135deg,#1e2a4a,#3b5280)}
+.crm-avatar-female{background:linear-gradient(135deg,#be185d,#db2777)}
+.crm-profile-info{flex:1;min-width:0}
+.crm-profile-name{font-size:20px;font-weight:800;color:var(--navy-deep);margin-bottom:4px}
+.crm-profile-sub{font-size:13px;color:var(--muted);display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.crm-profile-meta{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted)}
+.crm-profile-meta svg{width:14px;height:14px;flex-shrink:0}
+.crm-profile-btns{display:flex;gap:8px;flex-wrap:wrap}
+
+/* Sub-tabs */
+.crm-subtabs{display:flex;gap:0;border-bottom:2px solid var(--line);margin-bottom:20px}
+.crm-subtab{padding:10px 18px;border:none;background:transparent;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;font-family:inherit;border-bottom:2px solid transparent;margin-bottom:-2px;transition:.15s}
+.crm-subtab.active{color:var(--navy-deep);border-bottom-color:var(--navy)}
+.crm-subtab:hover:not(.active){color:var(--navy)}
+
+/* Info grid */
+.crm-info-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;margin-bottom:20px}
+.crm-info-box{background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px 16px;box-shadow:var(--shadow-sm)}
+.crm-info-box-label{font-size:11px;color:var(--muted);font-weight:600;margin-bottom:4px;text-transform:uppercase;letter-spacing:.4px}
+.crm-info-box-val{font-size:14px;color:var(--text);font-weight:600}
+
+/* Timeline */
+.crm-timeline{display:flex;flex-direction:column;gap:0}
+.crm-tl-item{display:flex;gap:14px;padding-bottom:20px;position:relative}
+.crm-tl-item:not(:last-child)::before{content:'';position:absolute;right:19px;top:38px;bottom:0;width:2px;background:var(--line)}
+.crm-tl-dot{width:40px;height:40px;border-radius:50%;background:var(--bg-tint);border:2px solid var(--line);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--navy)}
+.crm-tl-dot svg{width:17px;height:17px}
+.crm-tl-dot.note{background:#f0f9ff;border-color:#bae6fd;color:#0284c7}
+.crm-tl-dot.call{background:#f0fdf4;border-color:#bbf7d0;color:#16a34a}
+.crm-tl-dot.visit{background:#fdf4ff;border-color:#e9d5ff;color:#9333ea}
+.crm-tl-dot.action{background:#fff7ed;border-color:#fed7aa;color:#ea580c}
+.crm-tl-body{flex:1;min-width:0;background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px 14px;box-shadow:var(--shadow-sm)}
+.crm-tl-meta{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.crm-tl-type{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
+.crm-tl-date{font-size:11px;color:var(--muted)}
+.crm-tl-content{font-size:13px;color:var(--text);line-height:1.6}
+.crm-tl-del{padding:2px 6px;border:none;background:transparent;color:#ef4444;cursor:pointer;border-radius:4px;font-size:12px;opacity:.6}
+.crm-tl-del:hover{opacity:1;background:#fee2e2}
+
+/* Aid rows */
+.crm-aid-list{display:flex;flex-direction:column;gap:10px}
+.crm-aid-row{background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:flex;align-items:center;gap:14px;box-shadow:var(--shadow-sm)}
+.crm-aid-ico{width:40px;height:40px;border-radius:10px;background:#d1fae5;color:#059669;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.crm-aid-ico svg{width:19px;height:19px}
+.crm-aid-info{flex:1;min-width:0}
+.crm-aid-type{font-size:13px;font-weight:700;color:var(--navy-deep)}
+.crm-aid-meta{font-size:12px;color:var(--muted);margin-top:2px}
+.crm-aid-amount{font-size:16px;font-weight:800;color:var(--ok);font-variant-numeric:lining-nums}
+
+/* Section header */
+.crm-sec{margin-bottom:20px}
+.crm-sec-title{font-size:14px;font-weight:700;color:var(--navy-deep);margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+
+/* Modal */
+.crm-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:2000;display:flex;align-items:center;justify-content:center;padding:20px}
+.crm-modal{background:#fff;border-radius:16px;padding:28px;max-width:520px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 8px 48px rgba(0,0,0,.2)}
+.crm-modal-title{font-size:18px;font-weight:800;color:var(--navy-deep);margin-bottom:20px;display:flex;align-items:center;justify-content:space-between}
+.crm-modal-x{border:none;background:transparent;font-size:22px;cursor:pointer;color:var(--muted);line-height:1}
+.crm-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.crm-form-full{grid-column:1/-1}
+.crm-field{display:flex;flex-direction:column;gap:5px}
+.crm-field label{font-size:12px;font-weight:700;color:var(--muted)}
+.crm-field input,.crm-field select,.crm-field textarea{padding:9px 12px;border:1.5px solid var(--line);border-radius:8px;font-size:13px;font-family:inherit;color:var(--text);background:#fff;width:100%;box-sizing:border-box}
+.crm-field input:focus,.crm-field select:focus,.crm-field textarea:focus{outline:none;border-color:var(--navy)}
+.crm-field textarea{resize:vertical;min-height:80px}
+.crm-modal-foot{display:flex;justify-content:flex-end;gap:8px;margin-top:20px;padding-top:16px;border-top:1px solid var(--line)}
+.crm-section-wrap{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow-sm);margin-bottom:20px}
+.crm-section-wrap-hd{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--line)}
+.crm-section-wrap-hd span{font-size:14px;font-weight:700;color:var(--navy-deep)}
+.crm-section-wrap-body{padding:16px 18px}
+
+/* Ben amount summary */
+.crm-ben-totals{display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap}
+.crm-ben-total{background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px 18px;flex:1;min-width:140px;box-shadow:var(--shadow-sm)}
+.crm-ben-total-val{font-size:22px;font-weight:800;color:var(--navy-deep);font-variant-numeric:lining-nums}
+.crm-ben-total-lbl{font-size:12px;color:var(--muted);font-weight:600;margin-top:2px}
+
+/* Empty state */
+.crm-empty{text-align:center;padding:48px 24px;color:var(--muted)}
+.crm-empty svg{width:48px;height:48px;margin-bottom:12px;opacity:.4}
+.crm-empty p{font-size:14px;margin-bottom:16px}
+
+/* Back link */
+.crm-back{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:var(--navy);cursor:pointer;margin-bottom:18px;padding:6px 0}
+.crm-back svg{width:16px;height:16px}
+.crm-back:hover{color:var(--accent)}
+
+/* Responsive */
+@media(max-width:700px){
+  .crm-form-grid{grid-template-columns:1fr}
+  .crm-profile-header{flex-direction:column;text-align:center}
+  .crm-profile-sub{justify-content:center}
+  .crm-stat-grid{grid-template-columns:1fr 1fr}
+}
 </style>
 </head>
 <body>
@@ -566,6 +733,11 @@ img,svg{display:block;max-width:100%}
       <button class="sb-item" id="nav-website" onclick="go('website')" style="display:none">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
         موقعي الإلكتروني
+        <span class="sb-enabled-dot"></span>
+      </button>
+      <button class="sb-item" id="nav-crm" onclick="go('crm')" style="display:none">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        إدارة المستفيدين
         <span class="sb-enabled-dot"></span>
       </button>
 
@@ -768,6 +940,12 @@ img,svg{display:block;max-width:100%}
         <div class="store-grid" id="store-tools-grid"></div>
       </section>
 
+      <!-- ─── CRM: إدارة المستفيدين ─── -->
+      <section class="page" id="page-crm">
+        <div id="crm-topbar-wrap"></div>
+        <div id="crm-content"></div>
+      </section>
+
     </div><!-- /content -->
   </div><!-- /main -->
 </div><!-- /app-screen -->
@@ -954,7 +1132,7 @@ function openSidebar(){ document.getElementById('sidebar').classList.add('open')
 function closeSidebar(){ document.getElementById('sidebar').classList.remove('open'); document.getElementById('sb-overlay').classList.remove('show'); }
 
 /* ── Navigation ── */
-var PAGES = ['overview','plan','services','resources','profile','website','projects','governance','store'];
+var PAGES = ['overview','plan','services','resources','profile','website','projects','governance','store','crm'];
 function go(id){
   PAGES.forEach(function(p){
     var pg = document.getElementById('page-'+p);
@@ -969,6 +1147,7 @@ function go(id){
   if(id==='profile') renderProfile();
   if(id==='website') renderWebsite();
   if(id==='store') renderStore();
+  if(id==='crm') crmGo(crm.view);
 }
 
 /* ── Requested-services state (per org, persisted locally for instant UI) ── */
@@ -1161,6 +1340,7 @@ function renderServices(){
 /* ── Render store ── */
 var STORE_TOOLS = [
   { id:'website', icon:'<circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>', name:'الموقع الإلكتروني', desc:'أنشئ موقعاً احترافياً لجمعيتك يعكس هويتها ويعرض برامجها وتقاريرها الحوكمية بشكل جذّاب.', getEnabled: function(){ return wsEnabled; }, onClick: function(){ wsEnabled ? go('website') : toast('تواصل مع فريق بُعد لتفعيل الموقع الإلكتروني'); } },
+  { id:'crm', icon:'<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>', name:'إدارة المستفيدين', desc:'نظام متكامل لتسجيل المستفيدين وإدارة طلبات الخدمة وتتبع المساعدات المقدّمة ومتابعة الحالات.', getEnabled: function(){ return crmEnabled; }, onClick: function(){ crmEnabled ? go('crm') : toast('تواصل مع فريق بُعد لتفعيل نظام إدارة المستفيدين'); } },
   { id:'projects', icon:'<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>', name:'إدارة المشاريع', desc:'تتبع مشاريع جمعيتك مع بُعد — ميزانيات، جداول زمنية، تقارير دورية، وإشراف من فريق متخصص.', getEnabled: function(){ return false; }, onClick: function(){ openServiceModal('projects','إدارة وتتبع المشاريع'); } },
   { id:'governance', icon:'<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/>', name:'الحوكمة والامتثال', desc:'إعداد اللوائح والأنظمة الداخلية وضمان الامتثال لاشتراطات المركز الوطني للقطاع غير الربحي.', getEnabled: function(){ return false; }, onClick: function(){ openServiceModal('governance','الحوكمة والامتثال'); } },
   { id:'identity', icon:'<path d="M12 2l2.4 7.4H22l-6 4.6 2.3 7.4L12 16.8 5.7 21.4 8 14 2 9.4h7.6z"/>', name:'الهوية البصرية', desc:'بناء هوية بصرية متكاملة للجمعية — شعار، ألوان، خطوط، وأدلة تطبيق احترافية.', getEnabled: function(){ return false; }, onClick: function(){ openServiceModal('identity','الهوية البصرية'); } }
@@ -1447,6 +1627,7 @@ function scheduleSave(){
 
 /* ── Website builder ── */
 var wsEnabled = false;
+var crmEnabled = false;
 var wsData = null; // { config:{}, published:0, published_at:null, custom_domain:'' }
 var wsNavId = 'brand';
 
@@ -1845,6 +2026,599 @@ function wsSave(){
   });
 }
 
+/* ══════════════════════════════════════════════════════════
+   CRM — إدارة المستفيدين
+   ══════════════════════════════════════════════════════════ */
+
+var CRM_STATUS_LABEL = {pending:'قيد الانتظار',reviewing:'قيد المراجعة',approved:'موافق',rejected:'مرفوض',completed:'مكتمل',closed:'مغلق'};
+var CRM_PRI_LABEL    = {urgent:'عاجل',high:'مرتفع',normal:'عادي',low:'منخفض'};
+var CRM_SVC_LABEL    = {financial:'دعم مالي',food:'مواد غذائية',medical:'دعم طبي',education:'دعم تعليمي',housing:'مسكن',employment:'توظيف',other:'أخرى'};
+var CRM_CAT_LABEL    = {needy:'محتاج',widow:'أرملة',orphan:'يتيم',disabled:'معاق',family:'أسرة',other:'أخرى'};
+var CRM_GENDER_LABEL = {male:'ذكر',female:'أنثى'};
+var CRM_EMP_LABEL    = {employed:'موظف',unemployed:'غير موظف',retired:'متقاعد',self:'عمل حر',other:'أخرى'};
+var CRM_HOUSING_LABEL= {owned:'مملوك',rented:'مستأجر',shared:'مشترك',homeless:'بلا مسكن'};
+var CRM_MARITAL_LABEL= {single:'أعزب',married:'متزوج',divorced:'مطلق',widowed:'أرمل/ة'};
+var CRM_NOTE_LABEL   = {note:'ملاحظة',call:'مكالمة',visit:'زيارة',action:'إجراء'};
+var CRM_AID_LABEL    = {financial:'مالي',food:'غذائي',medical:'طبي',clothing:'ملابس',school:'تعليمي',other:'أخرى'};
+
+/* CRM state */
+var crm = { view:'dash', ben:null, subTab:'info', search:'', statusFilter:'', catFilter:'' };
+
+var CRMA = API + '/crm';
+function crmFetch(path, opts){
+  var t = token();
+  var headers = Object.assign({'Authorization':'Bearer '+t}, opts&&opts.headers);
+  return fetch(CRMA+path, Object.assign({}, opts, {headers:headers})).then(function(r){
+    if(!r.ok) return r.json().then(function(e){ throw new Error(e.error||'error'); });
+    return r.json();
+  });
+}
+
+/* ── Helpers ── */
+function crmBadge(type, val){
+  return '<span class="crm-badge crm-badge-'+val+'">'+(type[val]||val)+'</span>';
+}
+function crmFmtDate(ts){
+  if(!ts) return '—';
+  var d = new Date(typeof ts==='number' ? ts*1000 : ts);
+  return d.toLocaleDateString('ar-SA-u-nu-latn',{year:'numeric',month:'short',day:'numeric'});
+}
+function crmFmtMoney(n){ return (+n||0).toLocaleString('ar-SA-u-nu-latn',{maximumFractionDigits:0})+' ر.س'; }
+function crmAvatarClass(g){ return g==='female'?'crm-avatar-female':'crm-avatar-male'; }
+function crmInitial(name){ return name?name.charAt(0):'?'; }
+
+/* ── Topbar (tabs + action) ── */
+function crmRenderTopbar(addBtn){
+  var tabs = [['dash','لوحة التحكم'],['bens','المستفيدون'],['reqs','الطلبات']];
+  var tb = document.getElementById('crm-topbar-wrap');
+  if(!tb) return;
+  tb.innerHTML = '<div class="crm-topbar">'+
+    '<div class="crm-tabs">'+
+      tabs.map(function(t){ return '<button class="crm-tab'+(crm.view===t[0]?' active':'')+'" onclick="crmGo(\''+t[0]+'\')">'+t[1]+'</button>'; }).join('')+
+    '</div>'+
+    (addBtn||'')+
+  '</div>';
+}
+
+/* ── Main navigation ── */
+function crmGo(view){
+  crm.view = view;
+  crm.ben = null;
+  if(view==='dash')  crmLoadDash();
+  else if(view==='bens') crmLoadBens();
+  else if(view==='reqs') crmLoadReqs();
+}
+
+/* ─── DASHBOARD ─── */
+function crmLoadDash(){
+  var el = document.getElementById('crm-content');
+  el.innerHTML = '<div style="padding:40px;text-align:center;color:var(--muted)">جارٍ التحميل…</div>';
+  crmRenderTopbar('');
+  crmFetch('/dashboard').then(function(d){
+    var s = d.stats||{};
+    var addBtn = '<button class="crm-btn crm-btn-primary" onclick="crmOpenAddBen()">'+
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>'+
+      'إضافة مستفيد</button>';
+    crmRenderTopbar(addBtn);
+    el.innerHTML =
+      '<div class="crm-stat-grid">'+
+        crmStatCard(s.total_bens||0,'إجمالي المستفيدين','','')+
+        crmStatCard(s.active_bens||0,'مستفيدون نشطون','','ok')+
+        crmStatCard(s.pending_reqs||0,'طلبات معلّقة','','warn')+
+        crmStatCard(s.reviewing_reqs||0,'قيد المراجعة','','accent')+
+        crmStatCard(s.done_reqs||0,'طلبات مكتملة','','')+
+        crmStatCard(crmFmtMoney(s.total_spent||0),'إجمالي المساعدات','','ok')+
+      '</div>'+
+      '<div class="crm-sec">'+
+        '<div class="crm-sec-title"><span>المستفيدون الأخيرون</span>'+
+          '<button class="crm-btn crm-btn-outline crm-btn-sm" onclick="crmGo(\'bens\')">عرض الكل</button></div>'+
+        crmBenTable(d.recent_bens||[], true)+
+      '</div>'+
+      '<div class="crm-sec">'+
+        '<div class="crm-sec-title"><span>الطلبات المعلّقة</span>'+
+          '<button class="crm-btn crm-btn-outline crm-btn-sm" onclick="crmGo(\'reqs\')">عرض الكل</button></div>'+
+        crmReqTable(d.pending_reqs_list||[], true)+
+      '</div>';
+  }).catch(function(e){ document.getElementById('crm-content').innerHTML = '<p style="padding:20px;color:#dc2626">'+esc(e.message)+'</p>'; });
+}
+
+function crmStatCard(val,lbl,sub,cls){
+  return '<div class="crm-stat'+(cls?' '+cls:'')+'"><div class="crm-stat-val">'+esc(String(val))+'</div><div class="crm-stat-lbl">'+lbl+'</div>'+(sub?'<div class="crm-stat-sub">'+sub+'</div>':'')+'</div>';
+}
+
+/* ─── BENEFICIARY LIST ─── */
+function crmLoadBens(){
+  var el = document.getElementById('crm-content');
+  el.innerHTML = '<div style="padding:40px;text-align:center;color:var(--muted)">جارٍ التحميل…</div>';
+  var addBtn = '<button class="crm-btn crm-btn-primary" onclick="crmOpenAddBen()">'+
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>'+
+    'إضافة مستفيد</button>';
+  crmRenderTopbar(addBtn);
+  var qs = [];
+  if(crm.search) qs.push('q='+encodeURIComponent(crm.search));
+  if(crm.statusFilter) qs.push('status='+crm.statusFilter);
+  if(crm.catFilter) qs.push('category='+crm.catFilter);
+  var query = qs.length ? '?'+qs.join('&') : '';
+  crmFetch('/beneficiaries'+query).then(function(list){
+    el.innerHTML =
+      '<div class="crm-toolbar">'+
+        '<div class="crm-search">'+
+          '<input type="text" placeholder="ابحث بالاسم أو الهوية أو الجوال…" value="'+esc(crm.search)+'" oninput="crm.search=this.value" onkeydown="if(event.key===\'Enter\')crmLoadBens()" style="padding-left:14px">'+
+          '<span class="crm-search-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>'+
+        '</div>'+
+        '<select class="crm-filter" onchange="crm.statusFilter=this.value;crmLoadBens()">'+
+          '<option value="">جميع الحالات</option>'+
+          '<option value="active"'+(crm.statusFilter==='active'?' selected':'')+'>نشط</option>'+
+          '<option value="inactive"'+(crm.statusFilter==='inactive'?' selected':'')+'>غير نشط</option>'+
+        '</select>'+
+        '<select class="crm-filter" onchange="crm.catFilter=this.value;crmLoadBens()">'+
+          '<option value="">جميع الفئات</option>'+
+          Object.entries(CRM_CAT_LABEL).map(function(e){ return '<option value="'+e[0]+'"'+(crm.catFilter===e[0]?' selected':'')+'>'+e[1]+'</option>'; }).join('')+
+        '</select>'+
+        '<button class="crm-btn crm-btn-outline crm-btn-sm" onclick="crmLoadBens()">بحث</button>'+
+      '</div>'+
+      (list.length===0 ? crmEmpty('لا يوجد مستفيدون بعد','ابدأ بإضافة مستفيد جديد','crmOpenAddBen()') : crmBenTable(list, false));
+  }).catch(function(e){ el.innerHTML = '<p style="padding:20px;color:#dc2626">'+esc(e.message)+'</p>'; });
+}
+
+function crmBenTable(list, compact){
+  if(!list||!list.length) return crmEmpty('لا توجد بيانات','','');
+  var rows = list.map(function(b){
+    var initials = crmInitial(b.name);
+    var avatarCls = crmAvatarClass(b.gender);
+    return '<tr>'+
+      '<td><div style="display:flex;align-items:center;gap:10px">'+
+        '<div class="crm-avatar '+avatarCls+'" style="width:34px;height:34px;font-size:14px">'+esc(initials)+'</div>'+
+        '<div><div style="font-weight:700;color:var(--navy-deep)">'+esc(b.name)+'</div>'+
+          '<div style="font-size:11px;color:var(--muted)">'+esc(b.phone||'—')+'</div>'+
+        '</div>'+
+      '</div></td>'+
+      '<td>'+crmBadge(CRM_CAT_LABEL, b.category)+'</td>'+
+      '<td>'+crmBadge({active:'نشط',inactive:'غير نشط'}, b.status)+'</td>'+
+      (compact?'':'<td>'+esc(b.city||'—')+'</td>')+
+      '<td style="text-align:center;font-variant-numeric:lining-nums">'+(b.req_count||0)+'</td>'+
+      '<td style="text-align:center;font-variant-numeric:lining-nums">'+(b.total_aid?crmFmtMoney(b.total_aid):'—')+'</td>'+
+      '<td><button class="crm-table-action" onclick="crmOpenBen(\''+b.id+'\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>عرض</button></td>'+
+    '</tr>';
+  }).join('');
+  return '<div class="crm-table-wrap"><table class="crm-table"><thead><tr>'+
+    '<th>المستفيد</th><th>الفئة</th><th>الحالة</th>'+
+    (compact?'':'<th>المدينة</th>')+
+    '<th style="text-align:center">الطلبات</th><th style="text-align:center">المساعدات</th><th></th>'+
+  '</tr></thead><tbody>'+rows+'</tbody></table></div>';
+}
+
+/* ─── BENEFICIARY PROFILE ─── */
+function crmOpenBen(id){
+  crm.view = 'ben'; crm.subTab = 'info';
+  var el = document.getElementById('crm-content');
+  el.innerHTML = '<div style="padding:40px;text-align:center;color:var(--muted)">جارٍ التحميل…</div>';
+  crmRenderTopbar('');
+  crmFetch('/beneficiaries/'+id).then(function(d){
+    crm.ben = d;
+    crmRenderBen();
+  }).catch(function(e){ el.innerHTML = '<p style="padding:20px;color:#dc2626">'+esc(e.message)+'</p>'; });
+}
+
+function crmRenderBen(){
+  var b = crm.ben;
+  var el = document.getElementById('crm-content');
+  if(!b) return;
+  var subtabs = [['info','البيانات'],['reqs','الطلبات'],['aids','المساعدات'],['notes','السجل']];
+  el.innerHTML =
+    '<div class="crm-back" onclick="crmGo(\'bens\')">'+
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>'+
+      'العودة للمستفيدين</div>'+
+
+    '<div class="crm-profile-header">'+
+      '<div class="crm-avatar '+crmAvatarClass(b.gender)+'" style="width:64px;height:64px;font-size:26px">'+esc(crmInitial(b.name))+'</div>'+
+      '<div class="crm-profile-info">'+
+        '<div class="crm-profile-name">'+esc(b.name)+'</div>'+
+        '<div class="crm-profile-sub">'+
+          crmBadge(CRM_CAT_LABEL, b.category)+
+          crmBadge({active:'نشط',inactive:'غير نشط'}, b.status)+
+          (b.phone?'<span class="crm-profile-meta"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13 19.79 19.79 0 0 1 1.61 4.44 2 2 0 0 1 3.6 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 9.91a16 16 0 0 0 6.18 6.18l1-1.04a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>'+esc(b.phone)+'</span>':'') +
+          (b.city?'<span class="crm-profile-meta"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>'+esc(b.city)+'</span>':'') +
+        '</div>'+
+      '</div>'+
+      '<div class="crm-profile-btns">'+
+        '<button class="crm-btn crm-btn-outline crm-btn-sm" onclick="crmOpenEditBen()">'+
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>'+
+          'تعديل</button>'+
+        '<button class="crm-btn crm-btn-primary crm-btn-sm" onclick="crmOpenAddReq(\''+b.id+'\')">+ طلب جديد</button>'+
+      '</div>'+
+    '</div>'+
+
+    '<div class="crm-subtabs">'+
+      subtabs.map(function(t){ return '<button class="crm-subtab'+(crm.subTab===t[0]?' active':'')+'" onclick="crm.subTab=\''+t[0]+'\';crmRenderBenTab()">'+t[1]+'</button>'; }).join('')+
+    '</div>'+
+
+    '<div id="crm-ben-tab"></div>';
+
+  crmRenderBenTab();
+}
+
+function crmRenderBenTab(){
+  var b = crm.ben;
+  var el = document.getElementById('crm-ben-tab');
+  if(!el||!b) return;
+  if(crm.subTab==='info')   el.innerHTML = crmBenInfo(b);
+  if(crm.subTab==='reqs')   el.innerHTML = crmBenReqs(b);
+  if(crm.subTab==='aids')   el.innerHTML = crmBenAids(b);
+  if(crm.subTab==='notes')  el.innerHTML = crmBenNotes(b);
+}
+
+function crmBenInfo(b){
+  function infoBox(lbl,val){ return '<div class="crm-info-box"><div class="crm-info-box-label">'+lbl+'</div><div class="crm-info-box-val">'+esc(val||'—')+'</div></div>'; }
+  return '<div class="crm-info-grid">'+
+    infoBox('رقم الهوية', b.id_number)+
+    infoBox('تاريخ الميلاد', crmFmtDate(b.dob))+
+    infoBox('الجنس', CRM_GENDER_LABEL[b.gender]||b.gender)+
+    infoBox('الحالة الاجتماعية', CRM_MARITAL_LABEL[b.marital_status]||b.marital_status)+
+    infoBox('المعالون', b.dependents!=null?String(b.dependents):'—')+
+    infoBox('رقم الجوال', b.phone)+
+    infoBox('رقم بديل', b.phone2)+
+    infoBox('البريد الإلكتروني', b.email)+
+    infoBox('المدينة', b.city)+
+    infoBox('الحي', b.district)+
+    infoBox('العنوان', b.address)+
+    infoBox('نوع السكن', CRM_HOUSING_LABEL[b.housing_type]||b.housing_type)+
+    infoBox('حالة العمل', CRM_EMP_LABEL[b.employment_status]||b.employment_status)+
+    infoBox('الدخل الشهري', b.income?crmFmtMoney(b.income):'')+
+    '</div>'+
+    (b.notes?'<div class="crm-info-box" style="margin-bottom:16px"><div class="crm-info-box-label">ملاحظات عامة</div><div class="crm-info-box-val" style="font-weight:400;line-height:1.7">'+esc(b.notes)+'</div></div>':'')+
+    '<div style="font-size:12px;color:var(--muted);margin-top:8px">تاريخ التسجيل: '+crmFmtDate(b.created_at)+'</div>';
+}
+
+function crmBenReqs(b){
+  var list = b.requests||[];
+  if(!list.length) return crmEmpty('لا توجد طلبات','أضف طلباً لهذا المستفيد','crmOpenAddReq(\''+b.id+'\')');
+  return '<div class="crm-table-wrap"><table class="crm-table"><thead><tr><th>الطلب</th><th>نوع الخدمة</th><th>الحالة</th><th>الأولوية</th><th>تاريخ الإنشاء</th><th></th></tr></thead><tbody>'+
+    list.map(function(r){
+      return '<tr>'+
+        '<td style="font-weight:700;color:var(--navy-deep)">'+esc(r.title||'—')+'</td>'+
+        '<td>'+esc(CRM_SVC_LABEL[r.service_type]||r.service_type)+'</td>'+
+        '<td>'+crmBadge(CRM_STATUS_LABEL, r.status)+'</td>'+
+        '<td>'+crmBadge(CRM_PRI_LABEL, r.priority)+'</td>'+
+        '<td>'+crmFmtDate(r.created_at)+'</td>'+
+        '<td><button class="crm-table-action" onclick="crmOpenReqDetail(\''+r.id+'\',\''+b.id+'\')">تفاصيل</button></td>'+
+      '</tr>';
+    }).join('')+
+  '</tbody></table></div>';
+}
+
+function crmBenAids(b){
+  var list = b.aids||[];
+  var total = list.reduce(function(s,a){ return s+(+a.amount||0); },0);
+  var out = '';
+  if(total>0) out += '<div class="crm-ben-totals"><div class="crm-ben-total"><div class="crm-ben-total-val">'+crmFmtMoney(total)+'</div><div class="crm-ben-total-lbl">إجمالي المساعدات المقدّمة</div></div></div>';
+  if(!list.length) return out+crmEmpty('لا توجد مساعدات مسجّلة','سجّل مساعدة مقدّمة لهذا المستفيد','crmOpenAddAid(\''+b.id+'\')');
+  out += '<div style="display:flex;justify-content:flex-end;margin-bottom:12px"><button class="crm-btn crm-btn-primary crm-btn-sm" onclick="crmOpenAddAid(\''+b.id+'\')">+ تسجيل مساعدة</button></div>';
+  out += '<div class="crm-aid-list">'+list.map(function(a){
+    return '<div class="crm-aid-row">'+
+      '<div class="crm-aid-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>'+
+      '<div class="crm-aid-info">'+
+        '<div class="crm-aid-type">'+esc(CRM_AID_LABEL[a.aid_type]||a.aid_type)+'</div>'+
+        '<div class="crm-aid-meta">'+crmFmtDate(a.provided_at||a.created_at)+(a.notes?' · '+esc(a.notes):'')+'</div>'+
+      '</div>'+
+      '<div class="crm-aid-amount">'+(+a.amount?crmFmtMoney(a.amount):'عيني')+'</div>'+
+      '<button class="crm-tl-del" onclick="crmDeleteAid(\''+a.id+'\',\''+b.id+'\')">×</button>'+
+    '</div>';
+  }).join('')+'</div>';
+  return out;
+}
+
+function crmBenNotes(b){
+  var list = b.notes||[];
+  var icons = {
+    note:'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>',
+    call:'<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13 19.79 19.79 0 0 1 1.61 4.44 2 2 0 0 1 3.6 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 9.91a16 16 0 0 0 6.18 6.18l1-1.04a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>',
+    visit:'<path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>',
+    action:'<polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>'
+  };
+  var out = '<div style="display:flex;justify-content:flex-end;margin-bottom:16px"><button class="crm-btn crm-btn-primary crm-btn-sm" onclick="crmOpenAddNote(\''+b.id+'\')">+ إضافة سجل</button></div>';
+  if(!list.length) return out+crmEmpty('لا يوجد سجل نشاط','أضف ملاحظة أو تدوين مكالمة أو زيارة','crmOpenAddNote(\''+b.id+'\')');
+  out += '<div class="crm-timeline">'+list.map(function(n){
+    var ico = icons[n.type]||icons.note;
+    return '<div class="crm-tl-item">'+
+      '<div class="crm-tl-dot '+n.type+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">'+ico+'</svg></div>'+
+      '<div class="crm-tl-body">'+
+        '<div class="crm-tl-meta">'+
+          '<span class="crm-tl-type">'+esc(CRM_NOTE_LABEL[n.type]||n.type)+'</span>'+
+          '<div style="display:flex;align-items:center;gap:8px">'+
+            '<span class="crm-tl-date">'+crmFmtDate(n.created_at)+'</span>'+
+            '<button class="crm-tl-del" onclick="crmDeleteNote(\''+n.id+'\',\''+b.id+'\')">×</button>'+
+          '</div>'+
+        '</div>'+
+        '<div class="crm-tl-content">'+esc(n.content)+'</div>'+
+      '</div>'+
+    '</div>';
+  }).join('')+'</div>';
+  return out;
+}
+
+/* ─── REQUESTS LIST ─── */
+function crmLoadReqs(){
+  var el = document.getElementById('crm-content');
+  el.innerHTML = '<div style="padding:40px;text-align:center;color:var(--muted)">جارٍ التحميل…</div>';
+  crmRenderTopbar('');
+  var qs = crm.statusFilter ? '?status='+crm.statusFilter : '';
+  crmFetch('/requests'+qs).then(function(list){
+    var statusOptions = ['','pending','reviewing','approved','rejected','completed','closed'];
+    el.innerHTML =
+      '<div class="crm-toolbar">'+
+        '<select class="crm-filter" onchange="crm.statusFilter=this.value;crmLoadReqs()">'+
+          statusOptions.map(function(s){ return '<option value="'+s+'"'+(crm.statusFilter===s?' selected':'')+'>'+
+            (s?CRM_STATUS_LABEL[s]:'جميع الحالات')+'</option>'; }).join('')+
+        '</select>'+
+      '</div>'+
+      (list.length===0 ? crmEmpty('لا توجد طلبات','ستظهر هنا طلبات الخدمة بعد إضافتها من ملف المستفيد','') : crmReqTable(list, false));
+  }).catch(function(e){ el.innerHTML = '<p style="padding:20px;color:#dc2626">'+esc(e.message)+'</p>'; });
+}
+
+function crmReqTable(list, compact){
+  if(!list||!list.length) return crmEmpty('لا توجد طلبات','','');
+  return '<div class="crm-table-wrap"><table class="crm-table"><thead><tr>'+
+    '<th>الطلب</th><th>المستفيد</th><th>نوع الخدمة</th><th>الحالة</th><th>الأولوية</th>'+
+    (compact?'':'<th>تاريخ الإنشاء</th>')+
+    '<th></th>'+
+  '</tr></thead><tbody>'+
+    list.map(function(r){
+      return '<tr>'+
+        '<td style="font-weight:700;color:var(--navy-deep)">'+esc(r.title||'—')+'</td>'+
+        '<td>'+esc(r.ben_name||'—')+'</td>'+
+        '<td>'+esc(CRM_SVC_LABEL[r.service_type]||r.service_type)+'</td>'+
+        '<td>'+crmBadge(CRM_STATUS_LABEL, r.status)+'</td>'+
+        '<td>'+crmBadge(CRM_PRI_LABEL, r.priority)+'</td>'+
+        (compact?'':'<td>'+crmFmtDate(r.created_at)+'</td>')+
+        '<td><button class="crm-table-action" onclick="crmOpenReqDetail(\''+r.id+'\',\''+r.beneficiary_id+'\')">تفاصيل</button></td>'+
+      '</tr>';
+    }).join('')+
+  '</tbody></table></div>';
+}
+
+/* ─── MODALS ─── */
+function crmModal(html){
+  var d = document.createElement('div');
+  d.className = 'crm-modal-overlay';
+  d.id = 'crm-modal-overlay';
+  d.innerHTML = '<div class="crm-modal">'+html+'</div>';
+  d.addEventListener('click', function(e){ if(e.target===d) crmCloseModal(); });
+  document.body.appendChild(d);
+}
+function crmCloseModal(){
+  var d = document.getElementById('crm-modal-overlay');
+  if(d) d.remove();
+}
+function crmSelectOptions(obj, selected){
+  return Object.entries(obj).map(function(e){ return '<option value="'+e[0]+'"'+(selected===e[0]?' selected':'')+'>'+e[1]+'</option>'; }).join('');
+}
+
+/* ── Add / Edit Beneficiary ── */
+function crmOpenAddBen(){
+  crmModal(
+    '<div class="crm-modal-title">إضافة مستفيد جديد <button class="crm-modal-x" onclick="crmCloseModal()">×</button></div>'+
+    crmBenForm({})+'<div class="crm-modal-foot">'+
+    '<button class="crm-btn crm-btn-outline" onclick="crmCloseModal()">إلغاء</button>'+
+    '<button class="crm-btn crm-btn-primary" onclick="crmSaveBen(null)">حفظ</button></div>'
+  );
+}
+function crmOpenEditBen(){
+  var b = crm.ben;
+  if(!b) return;
+  crmModal(
+    '<div class="crm-modal-title">تعديل بيانات المستفيد <button class="crm-modal-x" onclick="crmCloseModal()">×</button></div>'+
+    crmBenForm(b)+'<div class="crm-modal-foot">'+
+    '<button class="crm-btn crm-btn-danger" onclick="crmDeleteBen(\''+b.id+'\')">حذف المستفيد</button>'+
+    '<button class="crm-btn crm-btn-outline" onclick="crmCloseModal()">إلغاء</button>'+
+    '<button class="crm-btn crm-btn-primary" onclick="crmSaveBen(\''+b.id+'\')">حفظ</button></div>'
+  );
+}
+
+function crmBenForm(b){
+  return '<div class="crm-form-grid">'+
+    '<div class="crm-field crm-form-full"><label>الاسم الكامل *</label><input id="bf-name" value="'+esc(b.name||'')+'"></div>'+
+    '<div class="crm-field"><label>رقم الهوية</label><input id="bf-id_number" value="'+esc(b.id_number||'')+'" dir="ltr"></div>'+
+    '<div class="crm-field"><label>تاريخ الميلاد</label><input id="bf-dob" type="date" value="'+esc(b.dob||'')+'"></div>'+
+    '<div class="crm-field"><label>الجنس</label><select id="bf-gender"><option value="male"'+(b.gender==='male'?' selected':'')+'>ذكر</option><option value="female"'+(b.gender==='female'?' selected':'')+'>أنثى</option></select></div>'+
+    '<div class="crm-field"><label>الحالة الاجتماعية</label><select id="bf-marital_status">'+crmSelectOptions(CRM_MARITAL_LABEL, b.marital_status)+'</select></div>'+
+    '<div class="crm-field"><label>عدد المعالين</label><input id="bf-dependents" type="number" min="0" value="'+esc(b.dependents||0)+'"></div>'+
+    '<div class="crm-field"><label>الجوال *</label><input id="bf-phone" value="'+esc(b.phone||'')+'" dir="ltr"></div>'+
+    '<div class="crm-field"><label>جوال بديل</label><input id="bf-phone2" value="'+esc(b.phone2||'')+'" dir="ltr"></div>'+
+    '<div class="crm-field"><label>البريد الإلكتروني</label><input id="bf-email" type="email" value="'+esc(b.email||'')+'" dir="ltr"></div>'+
+    '<div class="crm-field"><label>المدينة</label><input id="bf-city" value="'+esc(b.city||'')+'"></div>'+
+    '<div class="crm-field"><label>الحي</label><input id="bf-district" value="'+esc(b.district||'')+'"></div>'+
+    '<div class="crm-field crm-form-full"><label>العنوان التفصيلي</label><input id="bf-address" value="'+esc(b.address||'')+'"></div>'+
+    '<div class="crm-field"><label>نوع السكن</label><select id="bf-housing_type">'+crmSelectOptions(CRM_HOUSING_LABEL, b.housing_type)+'</select></div>'+
+    '<div class="crm-field"><label>حالة العمل</label><select id="bf-employment_status">'+crmSelectOptions(CRM_EMP_LABEL, b.employment_status)+'</select></div>'+
+    '<div class="crm-field"><label>الدخل الشهري (ر.س)</label><input id="bf-income" type="number" min="0" value="'+esc(b.income||0)+'"></div>'+
+    '<div class="crm-field"><label>الفئة</label><select id="bf-category">'+crmSelectOptions(CRM_CAT_LABEL, b.category||'needy')+'</select></div>'+
+    '<div class="crm-field"><label>الحالة</label><select id="bf-status"><option value="active"'+(b.status==='active'?' selected':'')+'>نشط</option><option value="inactive"'+(b.status==='inactive'?' selected':'')+'>غير نشط</option></select></div>'+
+    '<div class="crm-field crm-form-full"><label>ملاحظات عامة</label><textarea id="bf-notes">'+esc(b.notes||'')+'</textarea></div>'+
+  '</div>';
+}
+
+function crmSaveBen(id){
+  function fv(i){ var el=document.getElementById(i); return el?el.value.trim():''; }
+  var body = {
+    name:fv('bf-name'), id_number:fv('bf-id_number'), dob:fv('bf-dob'),
+    gender:fv('bf-gender'), marital_status:fv('bf-marital_status'),
+    dependents:parseInt(fv('bf-dependents')||0),
+    phone:fv('bf-phone'), phone2:fv('bf-phone2'), email:fv('bf-email'),
+    city:fv('bf-city'), district:fv('bf-district'), address:fv('bf-address'),
+    housing_type:fv('bf-housing_type'), employment_status:fv('bf-employment_status'),
+    income:parseFloat(fv('bf-income')||0),
+    category:fv('bf-category'), status:fv('bf-status'), notes:fv('bf-notes')
+  };
+  if(!body.name){ toast('الاسم مطلوب'); return; }
+  var method = id ? 'PUT' : 'POST';
+  var path = id ? '/beneficiaries/'+id : '/beneficiaries';
+  crmFetch(path,{method:method,headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
+    .then(function(r){
+      crmCloseModal();
+      toast(id?'تم تحديث بيانات المستفيد':'تمت إضافة المستفيد');
+      if(id && crm.ben){ crm.ben=r; crmRenderBen(); }
+      else crmGo('bens');
+    }).catch(function(e){ toast('خطأ: '+e.message); });
+}
+
+function crmDeleteBen(id){
+  if(!confirm('هل أنت متأكد من حذف هذا المستفيد وجميع بياناته؟')) return;
+  crmFetch('/beneficiaries/'+id,{method:'DELETE'})
+    .then(function(){ crmCloseModal(); toast('تم حذف المستفيد'); crmGo('bens'); })
+    .catch(function(e){ toast('خطأ: '+e.message); });
+}
+
+/* ── Add Request ── */
+function crmOpenAddReq(benId){
+  crmModal(
+    '<div class="crm-modal-title">طلب خدمة جديد <button class="crm-modal-x" onclick="crmCloseModal()">×</button></div>'+
+    '<div class="crm-form-grid">'+
+      '<div class="crm-field crm-form-full"><label>عنوان الطلب *</label><input id="rq-title"></div>'+
+      '<div class="crm-field"><label>نوع الخدمة</label><select id="rq-service_type">'+crmSelectOptions(CRM_SVC_LABEL,'financial')+'</select></div>'+
+      '<div class="crm-field"><label>الأولوية</label><select id="rq-priority">'+crmSelectOptions(CRM_PRI_LABEL,'normal')+'</select></div>'+
+      '<div class="crm-field"><label>المبلغ المطلوب (ر.س)</label><input id="rq-amount" type="number" min="0" value="0"></div>'+
+      '<div class="crm-field"><label>تاريخ الاستحقاق</label><input id="rq-due_date" type="date"></div>'+
+      '<div class="crm-field crm-form-full"><label>وصف الطلب</label><textarea id="rq-description"></textarea></div>'+
+    '</div>'+
+    '<div class="crm-modal-foot">'+
+    '<button class="crm-btn crm-btn-outline" onclick="crmCloseModal()">إلغاء</button>'+
+    '<button class="crm-btn crm-btn-primary" onclick="crmSaveReq(\''+benId+'\')">حفظ الطلب</button></div>'
+  );
+}
+
+function crmSaveReq(benId){
+  function fv(i){ var el=document.getElementById(i); return el?el.value.trim():''; }
+  var body = {
+    beneficiary_id:benId, title:fv('rq-title'),
+    service_type:fv('rq-service_type'), priority:fv('rq-priority'),
+    amount:parseFloat(fv('rq-amount')||0), due_date:fv('rq-due_date'),
+    description:fv('rq-description')
+  };
+  if(!body.title){ toast('العنوان مطلوب'); return; }
+  crmFetch('/requests',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
+    .then(function(){
+      crmCloseModal(); toast('تمت إضافة الطلب');
+      if(crm.ben && crm.ben.id===benId) crmOpenBen(benId);
+    }).catch(function(e){ toast('خطأ: '+e.message); });
+}
+
+/* ── Request Detail ── */
+function crmOpenReqDetail(reqId, benId){
+  var req = (crm.ben&&crm.ben.requests||[]).find(function(r){ return r.id===reqId; });
+  if(!req){
+    crmFetch('/requests?ben_id='+benId).then(function(list){
+      var found = list.find(function(r){ return r.id===reqId; });
+      if(found){ crm._currentReq=found; crmShowReqModal(found, benId); }
+    }).catch(function(){});
+    return;
+  }
+  crm._currentReq = req;
+  crmShowReqModal(req, benId);
+}
+
+function crmShowReqModal(r, benId){
+  var statusOpts = ['pending','reviewing','approved','rejected','completed','closed'];
+  crmModal(
+    '<div class="crm-modal-title">'+esc(r.title||'طلب خدمة')+'<button class="crm-modal-x" onclick="crmCloseModal()">×</button></div>'+
+    '<div class="crm-form-grid">'+
+      '<div class="crm-field"><label>الحالة</label><select id="rd-status">'+
+        statusOpts.map(function(s){ return '<option value="'+s+'"'+(r.status===s?' selected':'')+'>'+CRM_STATUS_LABEL[s]+'</option>'; }).join('')+
+      '</select></div>'+
+      '<div class="crm-field"><label>الأولوية</label><select id="rd-priority">'+crmSelectOptions(CRM_PRI_LABEL,r.priority)+'</select></div>'+
+      '<div class="crm-field"><label>المُعيَّن إليه</label><input id="rd-assigned_to" value="'+esc(r.assigned_to||'')+'"></div>'+
+      '<div class="crm-field"><label>تاريخ الاستحقاق</label><input id="rd-due_date" type="date" value="'+esc(r.due_date||'')+'"></div>'+
+      '<div class="crm-field crm-form-full"><label>قرار / ملاحظات الإغلاق</label><textarea id="rd-resolution">'+esc(r.resolution||'')+'</textarea></div>'+
+    '</div>'+
+    (r.description?'<div style="background:var(--bg-tint);border-radius:8px;padding:12px;font-size:13px;color:var(--muted);margin-bottom:4px">'+esc(r.description)+'</div>':'')+
+    '<div class="crm-modal-foot">'+
+    '<button class="crm-btn crm-btn-outline" onclick="crmCloseModal()">إغلاق</button>'+
+    '<button class="crm-btn crm-btn-primary" onclick="crmUpdateReq(\''+r.id+'\',\''+benId+'\')">حفظ</button></div>'
+  );
+}
+
+function crmUpdateReq(reqId, benId){
+  function fv(i){ var el=document.getElementById(i); return el?el.value.trim():''; }
+  var body = { status:fv('rd-status'), priority:fv('rd-priority'), assigned_to:fv('rd-assigned_to'), due_date:fv('rd-due_date'), resolution:fv('rd-resolution') };
+  crmFetch('/requests/'+reqId,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
+    .then(function(){
+      crmCloseModal(); toast('تم تحديث الطلب');
+      if(crm.ben && crm.ben.id===benId) crmOpenBen(benId);
+    }).catch(function(e){ toast('خطأ: '+e.message); });
+}
+
+/* ── Add Aid ── */
+function crmOpenAddAid(benId){
+  crmModal(
+    '<div class="crm-modal-title">تسجيل مساعدة <button class="crm-modal-x" onclick="crmCloseModal()">×</button></div>'+
+    '<div class="crm-form-grid">'+
+      '<div class="crm-field"><label>نوع المساعدة</label><select id="ad-aid_type">'+crmSelectOptions(CRM_AID_LABEL,'financial')+'</select></div>'+
+      '<div class="crm-field"><label>المبلغ (ر.س) — 0 إذا عينية</label><input id="ad-amount" type="number" min="0" value="0"></div>'+
+      '<div class="crm-field"><label>تاريخ التقديم</label><input id="ad-provided_at" type="date" value="'+new Date().toISOString().split('T')[0]+'"></div>'+
+      '<div class="crm-field crm-form-full"><label>ملاحظات</label><textarea id="ad-notes"></textarea></div>'+
+    '</div>'+
+    '<div class="crm-modal-foot">'+
+    '<button class="crm-btn crm-btn-outline" onclick="crmCloseModal()">إلغاء</button>'+
+    '<button class="crm-btn crm-btn-primary" onclick="crmSaveAid(\''+benId+'\')">تسجيل</button></div>'
+  );
+}
+
+function crmSaveAid(benId){
+  function fv(i){ var el=document.getElementById(i); return el?el.value.trim():''; }
+  var body = { beneficiary_id:benId, aid_type:fv('ad-aid_type'), amount:parseFloat(fv('ad-amount')||0), provided_at:fv('ad-provided_at'), notes:fv('ad-notes') };
+  crmFetch('/aids',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
+    .then(function(){ crmCloseModal(); toast('تمت إضافة المساعدة'); crmOpenBen(benId); })
+    .catch(function(e){ toast('خطأ: '+e.message); });
+}
+
+function crmDeleteAid(aidId, benId){
+  if(!confirm('حذف هذه المساعدة؟')) return;
+  crmFetch('/aids/'+aidId,{method:'DELETE'})
+    .then(function(){ toast('تم الحذف'); crmOpenBen(benId); })
+    .catch(function(e){ toast('خطأ: '+e.message); });
+}
+
+/* ── Add Note ── */
+function crmOpenAddNote(benId){
+  crmModal(
+    '<div class="crm-modal-title">إضافة سجل نشاط <button class="crm-modal-x" onclick="crmCloseModal()">×</button></div>'+
+    '<div class="crm-form-grid">'+
+      '<div class="crm-field"><label>نوع السجل</label><select id="nt-type">'+crmSelectOptions(CRM_NOTE_LABEL,'note')+'</select></div>'+
+      '<div class="crm-field crm-form-full"><label>المحتوى *</label><textarea id="nt-content" style="min-height:100px"></textarea></div>'+
+    '</div>'+
+    '<div class="crm-modal-foot">'+
+    '<button class="crm-btn crm-btn-outline" onclick="crmCloseModal()">إلغاء</button>'+
+    '<button class="crm-btn crm-btn-primary" onclick="crmSaveNote(\''+benId+'\')">حفظ</button></div>'
+  );
+}
+
+function crmSaveNote(benId){
+  function fv(i){ var el=document.getElementById(i); return el?el.value.trim():''; }
+  var content = fv('nt-content');
+  if(!content){ toast('المحتوى مطلوب'); return; }
+  var body = { beneficiary_id:benId, type:fv('nt-type'), content:content };
+  crmFetch('/notes',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
+    .then(function(){ crmCloseModal(); toast('تمت الإضافة'); crmOpenBen(benId); })
+    .catch(function(e){ toast('خطأ: '+e.message); });
+}
+
+function crmDeleteNote(noteId, benId){
+  if(!confirm('حذف هذا السجل؟')) return;
+  crmFetch('/notes/'+noteId,{method:'DELETE'})
+    .then(function(){ toast('تم الحذف'); crmOpenBen(benId); })
+    .catch(function(e){ toast('خطأ: '+e.message); });
+}
+
+/* ── Shared empty state ── */
+function crmEmpty(title, sub, action){
+  return '<div class="crm-empty">'+
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="23" y1="11" x2="17" y2="11"/></svg>'+
+    '<p>'+esc(title)+'</p>'+
+    (sub?'<div style="font-size:12px;margin-bottom:12px">'+esc(sub)+'</div>':'')+
+    (action?'<button class="crm-btn crm-btn-primary" onclick="'+action+'">إضافة الآن</button>':'')+
+  '</div>';
+}
+
 /* ── Boot ── */
 (function init(){
   fetch(API+'/public/site').then(function(r){ return r.ok?r.json():null; }).then(function(d){ if(d&&d.whatsapp) WA=d.whatsapp; }).catch(function(){});
@@ -1855,12 +2629,14 @@ function wsSave(){
       .then(function(o){
         org=o; progress=o.progress||{};
         wsEnabled = !!(o.website_enabled);
+        crmEnabled = !!(o.crm_enabled);
         var wsNavBtn = document.getElementById('nav-website');
+        var crmNavBtn = document.getElementById('nav-crm');
         var wsGroup = document.getElementById('sb-group-enabled');
-        if(wsEnabled){
-          if(wsNavBtn) wsNavBtn.style.display = '';
-          if(wsGroup) wsGroup.style.display = '';
-        }
+        var hasEnabled = wsEnabled || crmEnabled;
+        if(wsEnabled && wsNavBtn) wsNavBtn.style.display = '';
+        if(crmEnabled && crmNavBtn) crmNavBtn.style.display = '';
+        if(hasEnabled && wsGroup) wsGroup.style.display = '';
         enterApp();
       })
       .catch(function(){ clearToken(); });
