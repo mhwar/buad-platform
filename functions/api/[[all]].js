@@ -227,6 +227,29 @@ export async function onRequest(context) {
     return json({ ok: true });
   }
 
+  /* ─── PUT /api/org/profile ─── association updates its own profile details */
+  if (path === '/org/profile' && method === 'PUT') {
+    if (!orgMe || orgMe.kind !== 'org') return json({ error: 'Unauthorized' }, 401);
+    let body;
+    try { body = await request.json(); } catch (e) { return json({ error: 'Bad request' }, 400); }
+    const name = (body.name || '').trim();
+    if (!name) return json({ error: 'missing_fields' }, 400);
+    await db.prepare(
+      'UPDATE orgs SET name = ?, contact_name = ?, phone = ?, city = ?, license_no = ?, last_active = unixepoch() WHERE id = ?'
+    ).bind(
+      name,
+      (body.contact_name || '').trim(),
+      (body.phone || '').trim(),
+      (body.city || '').trim(),
+      (body.license_no || '').trim(),
+      orgMe.id
+    ).run();
+    const org = await db.prepare('SELECT * FROM orgs WHERE id = ?').bind(orgMe.id).first();
+    return json({ ok: true, org: { id: org.id, name: org.name, email: org.email, plan_start: org.plan_start,
+      progress: JSON.parse(org.progress || '{}'), contact_name: org.contact_name,
+      phone: org.phone, city: org.city, license_no: org.license_no } });
+  }
+
   /* ─── POST /api/org/request ─── association requests a service (lands in admin requests) */
   if (path === '/org/request' && method === 'POST') {
     if (!orgMe || orgMe.kind !== 'org') return json({ error: 'Unauthorized' }, 401);
