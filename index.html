@@ -26,7 +26,7 @@
   --ease:cubic-bezier(.22,.61,.36,1);
 }
 *{margin:0;padding:0;box-sizing:border-box}
-html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%;scroll-padding-top:90px}
 body{
   font-family:"IBM Plex Sans Arabic",system-ui,sans-serif;
   color:var(--ink);background:var(--bg);line-height:1.75;
@@ -71,8 +71,29 @@ img,svg{display:block;max-width:100%}
 .nav-cta{display:flex;align-items:center;gap:12px}
 .nav-team{font-size:13.5px;font-weight:500;color:var(--muted);display:inline-flex;align-items:center;gap:5px}
 .nav-team:hover{color:var(--navy)}
-.nav-toggle{display:none;background:none;border:none;cursor:pointer;padding:6px;color:var(--navy-2)}
-.nav-toggle svg{width:26px;height:26px}
+.nav-toggle{display:none;background:none;border:none;cursor:pointer;padding:6px;color:var(--navy-2);border-radius:9px;transition:background .15s}
+.nav-toggle:hover{background:var(--bg-tint)}
+.nav-toggle svg{width:28px;height:28px}
+.nav-toggle .ic-close{display:none}
+.nav-toggle.active .ic-open{display:none}
+.nav-toggle.active .ic-close{display:block}
+
+/* ── Mobile menu ── */
+.mm-backdrop{position:fixed;inset:0;background:rgba(10,18,48,.45);z-index:98;opacity:0;pointer-events:none;transition:opacity .3s}
+.mm-backdrop.open{opacity:1;pointer-events:all}
+.mobile-menu{
+  position:fixed;top:0;right:0;left:0;z-index:99;background:#fff;
+  padding:84px 22px 26px;box-shadow:0 24px 60px rgba(16,24,64,.18);
+  transform:translateY(-105%);transition:transform .38s var(--ease);
+  display:flex;flex-direction:column;
+}
+.mobile-menu.open{transform:translateY(0)}
+.mobile-menu a.mm-link{font-size:17px;font-weight:600;color:var(--navy-2);padding:15px 6px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between}
+.mobile-menu a.mm-link svg{width:18px;height:18px;color:var(--accent);opacity:.7}
+.mm-actions{display:flex;flex-direction:column;gap:11px;margin-top:20px}
+.mm-actions .btn{width:100%;padding:15px}
+.mm-actions .nav-team{justify-content:center;font-size:15px;padding:14px;border:1.5px solid var(--line);border-radius:var(--radius-sm);color:var(--navy-2)}
+body.menu-open{overflow:hidden}
 
 /* ── Hero ── */
 .hero{
@@ -193,6 +214,25 @@ img,svg{display:block;max-width:100%}
 .pstep::after{content:"";position:absolute;top:34px;left:-12px;width:24px;height:2px;background:var(--line)}
 .pstep:last-child::after{display:none}
 
+/* ── 100-day plan banner ── */
+.plan100{padding:0 0 0}
+.plan100-card{position:relative;overflow:hidden;border-radius:var(--radius-lg);background:linear-gradient(135deg,var(--navy-deep),var(--navy));color:#fff;box-shadow:var(--shadow-lg);display:grid;grid-template-columns:1.1fr .9fr;gap:30px;align-items:center;padding:46px 48px}
+.plan100-card::before{content:"";position:absolute;width:420px;height:420px;border-radius:50%;background:radial-gradient(circle,rgba(39,194,172,.22),transparent 65%);top:-140px;left:-120px}
+.plan100-l{position:relative}
+.plan100 .tag{display:inline-flex;align-items:center;gap:8px;background:rgba(39,194,172,.16);color:var(--accent-2);font-size:13px;font-weight:700;padding:6px 14px;border-radius:30px;margin-bottom:16px}
+.plan100 h2{font-size:clamp(24px,3.2vw,34px);font-weight:700;line-height:1.3;margin-bottom:14px;letter-spacing:-.4px}
+.plan100 p{font-size:16px;color:rgba(255,255,255,.8);line-height:1.85;margin-bottom:24px;max-width:520px}
+.plan100-actions{display:flex;gap:13px;flex-wrap:wrap}
+.plan100 .btn-light{background:#fff;color:var(--navy)}
+.plan100 .btn-light:hover{transform:translateY(-2px)}
+.plan100 .btn-line{background:transparent;color:#fff;border-color:rgba(255,255,255,.35)}
+.plan100 .btn-line:hover{border-color:#fff;background:rgba(255,255,255,.08)}
+.plan100-steps{position:relative;display:flex;flex-direction:column;gap:12px}
+.p100-step{display:flex;align-items:center;gap:13px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:13px;padding:13px 16px}
+.p100-step .n{width:34px;height:34px;border-radius:10px;background:rgba(39,194,172,.2);color:var(--accent-2);display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;font-size:14px}
+.p100-step .t{font-size:14px;font-weight:600}
+.p100-step .d{font-size:12px;color:rgba(255,255,255,.6);margin-top:1px}
+
 /* ── CTA / Request form ── */
 .request{background:linear-gradient(160deg,var(--navy-deep),var(--navy));color:#fff;position:relative;overflow:hidden}
 .request::before{content:"";position:absolute;width:500px;height:500px;border-radius:50%;background:radial-gradient(circle,rgba(39,194,172,.18),transparent 65%);top:-160px;right:-120px}
@@ -243,6 +283,9 @@ img,svg{display:block;max-width:100%}
 .footer-social a:hover{background:var(--accent)}
 .footer-social svg{width:19px;height:19px;color:#fff}
 .footer-bottom{display:flex;align-items:center;justify-content:space-between;padding-top:24px;font-size:13px;flex-wrap:wrap;gap:12px}
+.team-access{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:8px;color:rgba(255,255,255,.25);transition:color .2s,background .2s}
+.team-access:hover{color:rgba(255,255,255,.85);background:rgba(255,255,255,.08)}
+.team-access svg{width:15px;height:15px}
 
 /* ── Reveal animation ── */
 .reveal{opacity:0;transform:translateY(26px);transition:opacity .7s var(--ease),transform .7s var(--ease)}
@@ -257,26 +300,63 @@ img,svg{display:block;max-width:100%}
 @keyframes wapulse{0%{box-shadow:0 10px 28px rgba(37,211,102,.45),0 0 0 0 rgba(37,211,102,.4)}70%{box-shadow:0 10px 28px rgba(37,211,102,.45),0 0 0 16px rgba(37,211,102,0)}100%{box-shadow:0 10px 28px rgba(37,211,102,.45),0 0 0 0 rgba(37,211,102,0)}}
 
 /* ── Responsive ── */
-@media(max-width:900px){
+@media(max-width:980px){
   .nav-links{display:none}
-  .nav-team{display:none}
+  .nav-cta .nav-team{display:none}
+  .nav-toggle{display:inline-flex}
   .hero-grid,.why-grid,.request-grid{grid-template-columns:1fr;gap:40px}
-  .hero-visual{order:-1;max-width:440px;margin:0 auto}
+  .plan100-card{grid-template-columns:1fr;gap:26px;padding:36px 30px}
+  /* Text first, visual card after — value proposition leads on mobile */
+  .hero-text{order:1}
+  .hero-visual{order:2;max-width:440px;margin:0 auto;width:100%}
   .services-grid{grid-template-columns:1fr 1fr}
-  .stats-grid{grid-template-columns:1fr 1fr;gap:34px 20px}
-  .process{grid-template-columns:1fr 1fr;gap:30px 20px}
+  .stats-grid{grid-template-columns:repeat(2,1fr);gap:38px 20px}
+  .process{grid-template-columns:1fr 1fr;gap:34px 22px}
   .pstep::after{display:none}
-  .footer-grid{grid-template-columns:1fr 1fr;gap:32px}
+  .footer-grid{grid-template-columns:1fr 1fr;gap:34px}
 }
-@media(max-width:560px){
-  .hero{padding:130px 0 70px}
-  .section{padding:64px 0}
-  .services-grid{grid-template-columns:1fr}
-  .stats-grid,.process,.footer-grid{grid-template-columns:1fr;gap:26px}
+@media(max-width:620px){
+  .container{padding:0 20px}
+  .nav{padding:13px 0}
+  .nav.scrolled{padding:9px 0}
+  .nav-logo img{height:34px}
+  .nav-cta .btn-primary{display:none}      /* CTA lives in the mobile menu */
+  /* Hero: centered, breathing room from the top, headline-first */
+  .hero{padding:132px 0 58px;text-align:center}
+  .hero-eyebrow{margin-bottom:20px}
+  .hero h1{font-size:clamp(29px,8.4vw,40px);line-height:1.28;margin-bottom:18px}
+  .hero h1 .hl{white-space:normal}
+  .hero h1 .hl::after{height:10px;bottom:4px}
+  .hero p.lead{font-size:16px;margin:0 auto 28px;max-width:520px}
+  .hero-actions{gap:11px;justify-content:center}
+  .hero-actions .btn{flex:1;min-width:0}
+  .hero-trust{margin-top:30px;justify-content:center;flex-wrap:wrap}
+  .hero-visual{margin-top:38px}
+  .hero-card{padding:20px;border-radius:20px}
+  .section{padding:58px 0}
+  .sec-head{margin-bottom:36px}
+  .sec-head p{font-size:15.5px}
+  .services-grid{grid-template-columns:1fr;gap:16px}
+  .svc{padding:26px 22px}
+  .stats-grid{padding:44px 0;gap:32px 18px}
+  .why-visual{padding:34px 26px}
+  .why-visual .q{font-size:18px}
+  .process{gap:26px 18px}
   .fgrid{grid-template-columns:1fr}
   .hero-float{display:none}
   .form-card{padding:24px 20px}
-  .hero-actions .btn{flex:1}
+  .plan100-card{padding:30px 22px}
+  .plan100-actions .btn{flex:1;min-width:0}
+  .footer-grid{grid-template-columns:1fr;gap:28px;text-align:right}
+  .footer-bottom{flex-direction:column;text-align:center;gap:8px}
+  .wa-float{bottom:20px;left:20px;width:54px;height:54px}
+}
+@media(max-width:380px){
+  .process{grid-template-columns:1fr}
+}
+@media(prefers-reduced-motion:reduce){
+  *{animation:none!important;scroll-behavior:auto!important}
+  .reveal{opacity:1!important;transform:none!important;transition:none!important}
 }
 </style>
 </head>
@@ -288,19 +368,33 @@ img,svg{display:block;max-width:100%}
     <a href="#top" class="nav-logo"><img src="assets/logo.svg" alt="بُعد"></a>
     <div class="nav-links">
       <a href="#services">خدماتنا</a>
+      <a href="#plan100">خطة المئة يوم</a>
       <a href="#why">لماذا بُعد</a>
       <a href="#process">منهجيتنا</a>
       <a href="#request">تواصل معنا</a>
     </div>
     <div class="nav-cta">
-      <a href="/app" class="nav-team" title="دخول فريق العمل">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-        دخول الفريق
-      </a>
       <a href="#request" class="btn btn-primary">اطلب خدمة</a>
+      <button class="nav-toggle" id="nav-toggle" aria-label="القائمة" aria-expanded="false" onclick="toggleMenu()">
+        <svg class="ic-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+        <svg class="ic-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
+      </button>
     </div>
   </div>
 </nav>
+
+<!-- ═══ MOBILE MENU ═══ -->
+<div class="mm-backdrop" id="mm-backdrop" onclick="toggleMenu(false)"></div>
+<div class="mobile-menu" id="mobile-menu">
+  <a class="mm-link" href="#services" onclick="toggleMenu(false)">خدماتنا <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m15 18-6-6 6-6"/></svg></a>
+  <a class="mm-link" href="#plan100" onclick="toggleMenu(false)">خطة المئة يوم <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m15 18-6-6 6-6"/></svg></a>
+  <a class="mm-link" href="#why" onclick="toggleMenu(false)">لماذا بُعد <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m15 18-6-6 6-6"/></svg></a>
+  <a class="mm-link" href="#process" onclick="toggleMenu(false)">منهجيتنا <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m15 18-6-6 6-6"/></svg></a>
+  <a class="mm-link" href="#request" onclick="toggleMenu(false)">تواصل معنا <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m15 18-6-6 6-6"/></svg></a>
+  <div class="mm-actions">
+    <a href="#request" class="btn btn-primary" onclick="toggleMenu(false)">اطلب خدمة الآن</a>
+  </div>
+</div>
 
 <span id="top"></span>
 
@@ -373,6 +467,28 @@ img,svg{display:block;max-width:100%}
       <p>نُصمّم حلولاً عمليةً تُعالج التحديات الحقيقية للقطاع غير الربحي، من التخطيط الاستراتيجي حتى التنفيذ وقياس الأثر.</p>
     </div>
     <div class="services-grid" id="services-grid"><!-- injected by JS --></div>
+  </div>
+</section>
+
+<!-- ═══ 100-DAY PLAN ═══ -->
+<section class="section" id="plan100">
+  <div class="container">
+    <div class="plan100-card reveal">
+      <div class="plan100-l">
+        <span class="tag"><span class="dot" style="width:7px;height:7px;border-radius:50%;background:var(--accent-2)"></span> أداة مجانية للجمعيات الناشئة</span>
+        <h2>تابِع تنفيذ خطة المئة يوم المعتمدة من المركز الوطني</h2>
+        <p>أنشئ حساب جمعيتك وتابِع إنجاز مهام خطة المئة يوم خطوةً بخطوة — مقرّك، حساباتك، حوكمتك، وخطتك التشغيلية — في لوحة واحدة واضحة، ونحن نرافقك متى احتجت.</p>
+        <div class="plan100-actions">
+          <a href="/plan" class="btn btn-light btn-lg">ابدأ متابعة خطتك مجاناً</a>
+          <a href="/plan" class="btn btn-line btn-lg">لدي حساب — دخول</a>
+        </div>
+      </div>
+      <div class="plan100-steps">
+        <div class="p100-step"><div class="n">١</div><div><div class="t">إنطلاقة الأعمال</div><div class="d">المقر · العنوان الوطني · الحساب البنكي · الهوية</div></div></div>
+        <div class="p100-step"><div class="n">٢</div><div><div class="t">التطوير المؤسسي</div><div class="d">الاستراتيجية · الموارد البشرية · الحوكمة · المبادرات</div></div></div>
+        <div class="p100-step"><div class="n">✓</div><div><div class="t">متابعة لحظية للإنجاز</div><div class="d">نسبة التقدّم والأيام المتبقية محفوظة في حسابك</div></div></div>
+      </div>
+    </div>
   </div>
 </section>
 
@@ -497,7 +613,6 @@ img,svg{display:block;max-width:100%}
         <a href="#why">لماذا بُعد</a>
         <a href="#process">منهجيتنا</a>
         <a href="#request">تواصل معنا</a>
-        <a href="/app">دخول الفريق</a>
       </div>
       <div class="footer-col">
         <h5>تواصل</h5>
@@ -508,7 +623,12 @@ img,svg{display:block;max-width:100%}
     </div>
     <div class="footer-bottom">
       <span>© <span id="year"></span> بُعد للتمكين. جميع الحقوق محفوظة.</span>
-      <span>صُنع بعنايةٍ لخدمة العمل الخيري</span>
+      <span style="display:inline-flex;align-items:center;gap:14px">
+        <span>صُنع بعنايةٍ لخدمة العمل الخيري</span>
+        <a href="/app" class="team-access" title="دخول فريق العمل" aria-label="دخول فريق العمل">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        </a>
+      </span>
     </div>
   </div>
 </footer>
@@ -532,7 +652,9 @@ var ICONS = {
   users:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/>',
   trending:'<path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/>',
   layers:'<path d="m12 2 10 5-10 5L2 7l10-5z"/><path d="m2 17 10 5 10-5M2 12l10 5 10-5"/>',
-  handshake:'<path d="m11 17 2 2a1 1 0 1 0 3-3"/><path d="m14 14 2.5 2.5a1 1 0 1 0 3-3l-3.88-3.88a3 3 0 0 0-4.24 0l-.88.88a1 1 0 1 1-3-3l2.81-2.81a5.79 5.79 0 0 1 7.06-.87l.47.28a2 2 0 0 0 1.42.25L21 4"/><path d="m21 3 1 11h-2M3 3 2 14l6.5 6.5a1 1 0 1 0 3-3M3 4h8"/>'
+  handshake:'<path d="m11 17 2 2a1 1 0 1 0 3-3"/><path d="m14 14 2.5 2.5a1 1 0 1 0 3-3l-3.88-3.88a3 3 0 0 0-4.24 0l-.88.88a1 1 0 1 1-3-3l2.81-2.81a5.79 5.79 0 0 1 7.06-.87l.47.28a2 2 0 0 0 1.42.25L21 4"/><path d="m21 3 1 11h-2M3 3 2 14l6.5 6.5a1 1 0 1 0 3-3M3 4h8"/>',
+  palette:'<circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/>',
+  globe:'<circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>'
 };
 function svg(name){ return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'+(ICONS[name]||ICONS.briefcase)+'</svg>'; }
 
@@ -543,7 +665,9 @@ var DEFAULT_SERVICES = [
   { id:'consult',icon:'compass',   title:'الاستشارات والتطوير المؤسسي', desc:'نُرافقكم في رحلة التطوير المؤسسي عبر التخطيط الاستراتيجي وإعادة هيكلة العمليات بما يرفع كفاءة أدائكم.', points:['التخطيط الاستراتيجي','تطوير الهياكل والعمليات','بناء النماذج التشغيلية'], enabled:true },
   { id:'digital',icon:'monitor',   title:'التحول الرقمي للجمعيات', desc:'نقود رقمنة عملياتكم واعتماد الأنظمة الذكية لإدارة المستفيدين والتبرعات والتقارير، لتمكينكم من العمل بكفاءةٍ أعلى.', points:['رقمنة العمليات والخدمات','أنظمة إدارة المستفيدين','حلول البيانات والتقارير'], enabled:true },
   { id:'capacity',icon:'graduation',title:'بناء القدرات والتدريب', desc:'نُطوّر قدرات فرقكم عبر برامج تدريبية متخصصة وورش عملٍ تطبيقية ترفع جاهزيتهم لإدارة العمل الخيري باحترافية.', points:['برامج تدريبية متخصصة','ورش عمل تطبيقية','تأهيل الكوادر القيادية'], enabled:true },
-  { id:'impact',icon:'target',     title:'قياس الأثر الاجتماعي', desc:'نُصمّم أطر قياس الأثر ونوثّق نتائج برامجكم بمنهجياتٍ معتمدة، لتُظهروا قيمتكم الحقيقية للمانحين والمجتمع.', points:['تصميم مؤشرات الأثر','جمع وتحليل البيانات','تقارير الأثر للمانحين'], enabled:true }
+  { id:'impact',icon:'target',     title:'قياس الأثر الاجتماعي', desc:'نُصمّم أطر قياس الأثر ونوثّق نتائج برامجكم بمنهجياتٍ معتمدة، لتُظهروا قيمتكم الحقيقية للمانحين والمجتمع.', points:['تصميم مؤشرات الأثر','جمع وتحليل البيانات','تقارير الأثر للمانحين'], enabled:true },
+  { id:'identity',icon:'palette',  title:'تصميم الهوية البصرية والشعار', desc:'نُصمّم هويةً بصريةً متكاملة لجمعيتكم — شعارٌ مميز، لوح ألوان، وخطوط — تترجم رسالتكم وقيمكم وتُرسّخ حضوركم.', points:['تصميم الشعار والهوية','دليل الهوية البصرية','قوالب ومواد تسويقية'], enabled:true },
+  { id:'web',    icon:'globe',     title:'تصميم وتطوير المواقع الإلكترونية', desc:'نبني موقعاً إلكترونياً احترافياً يُعرّف بجمعيتكم ويعرض برامجها ويستقبل التبرعات وطلبات التطوع بتجربةٍ سلسة.', points:['موقع احترافي متجاوب','بوابة تبرعات وتطوع','ربط مع أنظمتكم'], enabled:true }
 ];
 
 var CFG = {
@@ -632,7 +756,7 @@ document.getElementById('request-form').addEventListener('submit', function(e){
 
   fetch(API+'/public/request', {
     method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data)
-  }).then(function(r){ return r.json().catch(function(){return{};}); })
+  }).then(function(r){ if(!r.ok) throw new Error('bad_status'); return r.json().catch(function(){return{};}); })
     .then(function(res){
       showSuccess(data);
     })
@@ -660,6 +784,22 @@ var nav = document.getElementById('nav');
 window.addEventListener('scroll', function(){
   nav.classList.toggle('scrolled', window.scrollY > 30);
 }, {passive:true});
+
+/* ── Mobile menu ── */
+function toggleMenu(force){
+  var menu = document.getElementById('mobile-menu');
+  var bd   = document.getElementById('mm-backdrop');
+  var btn  = document.getElementById('nav-toggle');
+  var open = (typeof force === 'boolean') ? force : !menu.classList.contains('open');
+  menu.classList.toggle('open', open);
+  bd.classList.toggle('open', open);
+  btn.classList.toggle('active', open);
+  btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  document.body.classList.toggle('menu-open', open);
+}
+// Close menu on Escape or when resizing to desktop
+document.addEventListener('keydown', function(e){ if (e.key === 'Escape') toggleMenu(false); });
+window.addEventListener('resize', function(){ if (window.innerWidth > 980) toggleMenu(false); });
 
 /* ── Reveal on scroll ── */
 var io;

@@ -163,11 +163,119 @@ export async function onRequest(context) {
     return json({ ok: true, id }, 201);
   }
 
-  /* ── Auth required for all routes below ── */
+  /* ─── PUBLIC: POST /api/org/register ─── association self-registration */
+  if (path === '/org/register' && method === 'POST') {
+    let body;
+    try { body = await request.json(); } catch (e) { return json({ error: 'Bad request' }, 400); }
+    const email = (body.email || '').toLowerCase().trim();
+    const pass  = (body.password || '');
+    const name  = (body.name || '').trim();
+    if (!email || !pass || !name) return json({ error: 'missing_fields' }, 400);
+    if (pass.length < 6) return json({ error: 'weak_password' }, 400);
+    const existing = await db.prepare('SELECT id FROM orgs WHERE email = ?').bind(email).first();
+    if (existing) return json({ error: 'email_exists' }, 409);
+    const id = 'org_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    const today = new Date().toISOString().slice(0, 10);
+    await db.prepare(
+      'INSERT INTO orgs (id, name, email, password_hash, contact_name, phone, city, license_no, plan_start) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
+    ).bind(
+      id, name, email, djb2(pass), (body.contact_name || '').trim(),
+      (body.phone || '').trim(), (body.city || '').trim(), (body.license_no || '').trim(), today
+    ).run();
+    const token = await signJWT({ id, name, email, kind: 'org' }, jwtSecret);
+    return json({ token, org: { id, name, email, plan_start: today, progress: {} } }, 201);
+  }
+
+  /* ─── PUBLIC: POST /api/org/login ─── association login */
+  if (path === '/org/login' && method === 'POST') {
+    let body;
+    try { body = await request.json(); } catch (e) { return json({ error: 'Bad request' }, 400); }
+    const email = (body.email || '').toLowerCase().trim();
+    const pass  = (body.password || '');
+    const org = await db.prepare('SELECT * FROM orgs WHERE email = ?').bind(email).first();
+    if (!org || org.password_hash !== djb2(pass)) return json({ error: 'invalid_credentials' }, 401);
+    const token = await signJWT({ id: org.id, name: org.name, email: org.email, kind: 'org' }, jwtSecret);
+    return json({
+      token,
+      org: { id: org.id, name: org.name, email: org.email, plan_start: org.plan_start,
+             progress: JSON.parse(org.progress || '{}'), contact_name: org.contact_name,
+             phone: org.phone, city: org.city, license_no: org.license_no }
+    });
+  }
+
+  /* ── Org-authenticated routes (association portal) ── */
+  const orgAuth = request.headers.get('Authorization') || '';
+  const orgToken = orgAuth.replace('Bearer ', '');
+  const orgMe = await verifyJWT(orgToken, jwtSecret);
+
+  if (path === '/org/me' && method === 'GET') {
+    if (!orgMe || orgMe.kind !== 'org') return json({ error: 'Unauthorized' }, 401);
+    const org = await db.prepare('SELECT * FROM orgs WHERE id = ?').bind(orgMe.id).first();
+    if (!org) return json({ error: 'not_found' }, 404);
+    return json({ id: org.id, name: org.name, email: org.email, plan_start: org.plan_start,
+      progress: JSON.parse(org.progress || '{}'), contact_name: org.contact_name,
+      phone: org.phone, city: org.city, license_no: org.license_no });
+  }
+
+  if (path === '/org/progress' && method === 'PUT') {
+    if (!orgMe || orgMe.kind !== 'org') return json({ error: 'Unauthorized' }, 401);
+    let body;
+    try { body = await request.json(); } catch (e) { return json({ error: 'Bad request' }, 400); }
+    const progress = JSON.stringify(body.progress || {});
+    await db.prepare('UPDATE orgs SET progress = ?, last_active = unixepoch() WHERE id = ?')
+      .bind(progress, orgMe.id).run();
+    return json({ ok: true });
+  }
+
+  /* ─── POST /api/org/request ─── association requests a service (lands in admin requests) */
+  if (path === '/org/request' && method === 'POST') {
+    if (!orgMe || orgMe.kind !== 'org') return json({ error: 'Unauthorized' }, 401);
+    let body;
+    try { body = await request.json(); } catch (e) { return json({ error: 'Bad request' }, 400); }
+    const service = (body.service || '').trim();
+    if (!service) return json({ error: 'missing_fields' }, 400);
+    // pull the org's own contact details so the admin sees who's asking
+    const o = await db.prepare('SELECT name, email, contact_name, phone FROM orgs WHERE id = ?').bind(orgMe.id).first();
+    const id = 'req_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    await db.prepare(
+      'INSERT INTO service_requests (id, name, org, phone, email, service, budget, message, source) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
+    ).bind(
+      id,
+      (o && o.contact_name) || (o && o.name) || orgMe.name || '',
+      (o && o.name) || orgMe.name || '',
+      (o && o.phone) || '',
+      (o && o.email) || orgMe.email || '',
+      service,
+      '',
+      (body.message || '').trim(),
+      'portal'
+    ).run();
+    return json({ ok: true, id }, 201);
+  }
+
+  /* ── Auth required for all routes below (team/admin only) ── */
   const authHeader = request.headers.get('Authorization') || '';
   const rawToken = authHeader.replace('Bearer ', '');
   const me = await verifyJWT(rawToken, jwtSecret);
-  if (!me || me.action) return json({ error: 'Unauthorized' }, 401);
+  if (!me || me.action || me.kind === 'org') return json({ error: 'Unauthorized' }, 401);
+
+  /* ─── GET /api/orgs ─── list registered associations + progress (team) */
+  if (path === '/orgs' && method === 'GET') {
+    const { results } = await db.prepare(
+      'SELECT id, name, email, contact_name, phone, city, license_no, plan_start, progress, created_at, last_active FROM orgs ORDER BY last_active DESC'
+    ).all();
+    return json((results || []).map(function (o) {
+      return Object.assign({}, o, { progress: JSON.parse(o.progress || '{}') });
+    }));
+  }
+
+  /* ─── DELETE /api/orgs/:id ─── (admin) */
+  const orgDelMatch = path.match(/^\/orgs\/([^/]+)$/);
+  if (orgDelMatch && method === 'DELETE') {
+    if (me.role !== 'admin') return json({ error: 'Forbidden' }, 403);
+    await db.prepare('DELETE FROM orgs WHERE id = ?').bind(orgDelMatch[1]).run();
+    return json({ ok: true });
+  }
 
   /* ─── GET /api/site ─── full site content for editing */
   if (path === '/site' && method === 'GET') {
