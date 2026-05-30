@@ -1214,7 +1214,7 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
 /* ── Ctrl Drawer ── */
 .ctrl-drawer-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:900;opacity:0;pointer-events:none;transition:opacity .2s}
 .ctrl-drawer-overlay.active{opacity:1;pointer-events:all}
-.ctrl-drawer{position:fixed;top:0;right:0;height:100%;width:min(480px,96vw);background:var(--bg-elevated);z-index:901;transform:translateX(100%);transition:transform .3s ease;overflow-y:auto;box-shadow:var(--shadow-xl)}
+.ctrl-drawer{position:fixed;top:0;left:0;height:100%;width:min(620px,96vw);background:var(--bg-elevated);z-index:901;transform:translateX(-100%);transition:transform .3s ease;overflow-y:auto;box-shadow:var(--shadow-xl)}
 .ctrl-drawer.active{transform:translateX(0)}
 .ctrl-drawer-header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg-elevated);z-index:2}
 .ctrl-drawer-header h3{font-size:14px;font-weight:700;color:var(--text)}
@@ -3076,13 +3076,13 @@ var UI = {
    HELPERS
 ═══════════════════════════════════════════ */
 function statusBadge(s) {
-  var map = {active:'نشط', completed:'مكتمل', paused:'متوقف', cancelled:'ملغي'};
-  var cls = {active:'success', completed:'brand', paused:'warn', cancelled:'gray'};
+  var map = {draft:'مسودة', active:'جاري التنفيذ', completed:'مكتمل', paused:'متوقف', cancelled:'ملغي'};
+  var cls = {draft:'gray', active:'success', completed:'brand', paused:'warn', cancelled:'gray'};
   return '<span class="badge with-dot '+(cls[s]||'gray')+'">'+( map[s]||UI.escHtml(s))+'</span>';
 }
 
 function statusLabel(s) {
-  var map = {active:'نشط', completed:'مكتمل', paused:'متوقف', cancelled:'ملغي'};
+  var map = {draft:'مسودة', active:'جاري التنفيذ', completed:'مكتمل', paused:'متوقف', cancelled:'ملغي'};
   return map[s]||UI.escHtml(s||'—');
 }
 
@@ -3497,7 +3497,7 @@ Pages.render_dash = function() {
       '<div class="dash-greeting-grid"></div>' +
       '<div class="dash-greeting-text">' +
         '<h2>مرحباً بك في بُعد</h2>' +
-        '<p>'+dateStr+' &nbsp;·&nbsp; '+projects.length+' مشروع، '+activeProj.length+' نشط حالياً</p>' +
+        '<p>'+dateStr+' &nbsp;·&nbsp; '+projects.length+' مشروع، '+activeProj.length+' جاري التنفيذ</p>' +
       '</div>' +
       '<div class="dash-greeting-actions">' +
         '<button class="btn-white" onclick="Nav.go(\'projects\')"><i data-lucide="folder-open" style="font-size:14px"></i>المشاريع</button>' +
@@ -3675,7 +3675,7 @@ Pages.render_clients = function() {
           '</div>' +
           '<div style="display:flex;gap:var(--space-2);flex-wrap:wrap;margin-bottom:var(--space-3)">' +
             '<span class="badge brand sm"><i data-lucide="briefcase"></i>'+pCount+' مشروع</span>' +
-            (activeCount>0 ? '<span class="badge success sm with-dot">'+activeCount+' نشط</span>' : '') +
+            (activeCount>0 ? '<span class="badge success sm with-dot">'+activeCount+' جاري التنفيذ</span>' : '') +
             (completedCount>0 ? '<span class="badge neutral sm">'+completedCount+' مكتمل</span>' : '') +
           '</div>' +
           '<div style="flex:1;display:flex;flex-direction:column;gap:5px;margin-bottom:var(--space-4)">' +
@@ -4126,7 +4126,8 @@ Pages.render_projects = function() {
 
   var filterOpts = [
     {v:'all',l:'الكل'},
-    {v:'active',l:'نشط'},
+    {v:'draft',l:'مسودة'},
+    {v:'active',l:'جاري التنفيذ'},
     {v:'completed',l:'مكتمل'},
     {v:'paused',l:'متوقف'},
     {v:'cancelled',l:'ملغي'}
@@ -4177,7 +4178,8 @@ Pages.addProjectModal = function(clientId) {
           '</select></div>' +
         '<div class="form-group"><label class="field-label">الحالة</label>' +
           '<select id="proj-status" class="field-input">' +
-            '<option value="active">نشط</option>' +
+            '<option value="draft">مسودة</option>' +
+            '<option value="active">جاري التنفيذ</option>' +
             '<option value="completed">مكتمل</option>' +
             '<option value="paused">متوقف</option>' +
             '<option value="cancelled">ملغي</option>' +
@@ -4242,7 +4244,7 @@ Pages.render_fin = function(params) {
   var tab = (Pages._finTab==='ctrl'||!Pages._finTab) ? 'overview' : Pages._finTab;
   var contracts = DB.getContracts(projId);
 
-  var stMap = {active:['st-active','نشط'],completed:['st-completed','مكتمل'],paused:['st-paused','متوقف'],cancelled:['','ملغي']};
+  var stMap = {draft:['','مسودة'],active:['st-active','جاري التنفيذ'],completed:['st-completed','مكتمل'],paused:['st-paused','متوقف'],cancelled:['','ملغي']};
   var stInfo = stMap[proj.status]||['',''];
 
   var profitPct = r.grossTotal > 0 ? (r.profit / r.grossTotal * 100).toFixed(1) : '0';
@@ -4751,7 +4753,7 @@ Pages.renderFinCtrl = function(projId) {
                 '</select></div>' +
               '<div class="var-field"><div class="var-field-lbl">الحالة</div>' +
                 '<select class="var-field-inp" id="cp-status">' +
-                  stOpt('active','نشط')+stOpt('completed','مكتمل')+stOpt('paused','متوقف')+stOpt('cancelled','ملغي') +
+                  stOpt('draft','مسودة')+stOpt('active','جاري التنفيذ')+stOpt('completed','مكتمل')+stOpt('paused','متوقف')+stOpt('cancelled','ملغي') +
                 '</select></div>' +
             '</div>' +
             '<div style="display:flex;gap:8px">' +
@@ -5085,6 +5087,11 @@ Pages.addEntryModal = function(projId) {
       ? '<span class="badge-registered">✓ مسجّل</span>'
       : '<button class="btn btn-sm btn-primary" onclick="Pages.registerContractItem(\''+projId+'\',\''+cat+'\','+amount+',\''+UI.escHtml(name||'')+'\')">تسجيل</button>';
   }
+  var budgetEntries = (fin.budget||[]).map(function(b,i){ return {b:b,i:i}; }).filter(function(x){ return x.b.name && (Number(x.b.amount)||0)>0; });
+  var budgetRows = budgetEntries.length
+    ? '<tr><td colspan="4" style="color:var(--fg-3);font-size:11.5px;padding:6px 10px;font-weight:600;background:var(--bg-soft)">بنود الميزانية المخططة</td></tr>' +
+      budgetEntries.map(function(x){ return '<tr><td>'+UI.escHtml(x.b.name)+'</td><td class="mono">'+UI.fmt(Number(x.b.amount))+' ر.س</td><td><span class="badge warn">مصروف</span></td><td>'+agrBtn('bdg_'+x.i,Number(x.b.amount),x.b.name)+'</td></tr>'; }).join('')
+    : '';
   var contractItems =
     '<div class="form-group"><div class="section-title" style="margin-bottom:10px">بنود الاتفاقية المتاحة</div>' +
     '<table class="data-table"><thead><tr><th>البند</th><th>المبلغ</th><th>النوع</th><th></th></tr></thead><tbody>' +
@@ -5092,6 +5099,7 @@ Pages.addEntryModal = function(projId) {
     (r.cfAmt>0?'<tr><td>ضريبة القيمة المضافة</td><td class="mono">'+UI.fmt(r.cfAmt)+' ر.س</td><td><span class="badge danger">مصروف</span></td><td>'+agrBtn('cf',r.cfAmt,'ضريبة القيمة المضافة')+'</td></tr>':'') +
     (r.mkt>0?'<tr><td>التسويق</td><td class="mono">'+UI.fmt(r.mkt)+' ر.س</td><td><span class="badge warn">مصروف</span></td><td>'+agrBtn('mkt',r.mkt,'التسويق')+'</td></tr>':'') +
     (r.cb>0?'<tr><td>كاش باك</td><td class="mono">'+UI.fmt(r.cb)+' ر.س</td><td><span class="badge warn">مصروف</span></td><td>'+agrBtn('cashback',r.cb,'كاش باك')+'</td></tr>':'') +
+    budgetRows +
     '</tbody></table></div>';
 
   UI.openModal(
@@ -5506,8 +5514,8 @@ Pages._rptHead = function(titleAr, logoUrl, s) {
 };
 
 Pages._rptProjBox = function(proj, cl, c) {
-  var stMap = {active:'نشط',completed:'مكتمل',paused:'متوقف',cancelled:'ملغي'};
-  var stCls = {active:'st-active',completed:'st-completed',paused:'st-paused',cancelled:'st-cancelled'};
+  var stMap = {draft:'مسودة',active:'جاري التنفيذ',completed:'مكتمل',paused:'متوقف',cancelled:'ملغي'};
+  var stCls = {draft:'',active:'st-active',completed:'st-completed',paused:'st-paused',cancelled:'st-cancelled'};
   var st = (proj||{}).status || 'active';
   return '<div class="proj-box">' +
     '<div class="pb-row"><div class="pb-lbl">اسم المشروع</div><div class="pb-val">'+UI.escHtml((proj||{}).name||'—')+'</div></div>' +
@@ -5848,7 +5856,8 @@ Pages.editProjectStatusModal = function(projId) {
           '</select></div>' +
         '<div class="form-group"><label class="field-label">الحالة</label>' +
           '<select id="ep-status" class="field-input">' +
-            '<option value="active"'+(proj.status==='active'?' selected':'')+'>نشط</option>' +
+            '<option value="draft"'+(proj.status==='draft'?' selected':'')+'>مسودة</option>' +
+            '<option value="active"'+(proj.status==='active'?' selected':'')+'>جاري التنفيذ</option>' +
             '<option value="completed"'+(proj.status==='completed'?' selected':'')+'>مكتمل</option>' +
             '<option value="paused"'+(proj.status==='paused'?' selected':'')+'>متوقف</option>' +
             '<option value="cancelled"'+(proj.status==='cancelled'?' selected':'')+'>ملغي</option>' +
@@ -5983,11 +5992,15 @@ Pages.saveProjectInCtrl = function(projId) {
   var projects = DB.getProjects();
   var idx = projects.findIndex(function(p){ return p.id===projId; });
   if (idx<0) return;
+  var oldStatus = projects[idx].status;
   var n = (document.getElementById('cp-name').value||'').trim();
   if (n) projects[idx].name = n;
   projects[idx].type   = document.getElementById('cp-type').value;
   projects[idx].status = document.getElementById('cp-status').value;
   DB.saveProjects(projects);
+  if (projects[idx].status === 'active' && oldStatus !== 'active') {
+    Pages._pfSyncProjectFee(projId, projects[idx].name);
+  }
   UI.toast('تم حفظ بيانات المشروع','success');
   Pages.closeCtrlDrawer();
   Pages.render_fin({projId: projId, tab: Pages._finTab});
@@ -6009,10 +6022,11 @@ Pages._projKebabHtml = function(proj) {
     '<div class="proj-kebab-menu" id="pkm-'+pid+'" style="display:none">'+
       '<div class="pkm-section">'+
         '<div class="pkm-lbl">حالة التنفيذ</div>'+
-        si('active',    'نشط',         'play-circle')+
-        si('completed', 'مكتمل',       'check-circle-2')+
-        si('paused',    'متوقف مؤقتاً','pause-circle')+
-        si('cancelled', 'ملغي',        'x-circle')+
+        si('draft',     'مسودة',         'file-pen-line')+
+        si('active',    'جاري التنفيذ', 'play-circle')+
+        si('completed', 'مكتمل',        'check-circle-2')+
+        si('paused',    'متوقف مؤقتاً', 'pause-circle')+
+        si('cancelled', 'ملغي',         'x-circle')+
       '</div>'+
       '<div class="pkm-sep"></div>'+
       '<div class="pkm-section">'+
@@ -6067,12 +6081,36 @@ Pages.setProjStatus = function(projId, status) {
   var projects = DB.getProjects();
   var idx = projects.findIndex(function(p){ return p.id===projId; });
   if (idx < 0) return;
+  var oldStatus = projects[idx].status;
   projects[idx].status = status;
   DB.saveProjects(projects);
+  if (status === 'active' && oldStatus !== 'active') {
+    Pages._pfSyncProjectFee(projId, projects[idx].name);
+  }
   Pages.closeProjKebab();
   Pages.render_fin({projId:projId, tab:Pages._finTab});
-  var labels = {active:'نشط',completed:'مكتمل',paused:'متوقف مؤقتاً',cancelled:'ملغي'};
+  var labels = {draft:'مسودة',active:'جاري التنفيذ',completed:'مكتمل',paused:'متوقف مؤقتاً',cancelled:'ملغي'};
   UI.toast('الحالة: '+labels[status], 'success');
+};
+
+Pages._pfSyncProjectFee = function(projId, projName) {
+  var r = FinCalc.calc(projId);
+  if (!r || !r.execAmt || r.execAmt <= 0) return;
+  var pf = DB.getPf();
+  var alreadySynced = (pf.income||[]).some(function(e){ return e.project_id === projId; });
+  if (alreadySynced) return;
+  if (!pf.income) pf.income = [];
+  pf.income.push({
+    id: DB.uid(),
+    project_id: projId,
+    date: new Date().toISOString().slice(0,10),
+    desc: 'أتعاب تنفيذ: ' + (projName || projId),
+    category: 'project_fee',
+    amount: r.execAmt,
+    note: 'تم الإضافة تلقائياً عند تفعيل المشروع'
+  });
+  DB.savePf(pf);
+  UI.toast('تم عكس أتعاب المنصة في مالية المنصة', 'success');
 };
 
 Pages.setProjVisibility = function(projId, vis) {
@@ -10602,7 +10640,7 @@ Pages.saveSiteData = function(){
    ══════════════════════════════════════════════════════════════ */
 
 Pages._pfCats = {
-  income:   {subscription:'رسوم اشتراك', setup:'رسوم إعداد وتشغيل', consulting:'خدمات استشارية', commission:'عمولات', other:'أخرى'},
+  income:   {project_fee:'أتعاب مشروع', subscription:'رسوم اشتراك', setup:'رسوم إعداد وتشغيل', consulting:'خدمات استشارية', commission:'عمولات', other:'أخرى'},
   expenses: {hosting:'استضافة وبنية تحتية', marketing:'تسويق وإعلان', payroll:'رواتب وأجور', tools:'خدمات وأدوات', legal:'قانونية وإدارية', other:'أخرى'}
 };
 
