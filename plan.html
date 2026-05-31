@@ -505,6 +505,36 @@ img,svg{display:block;max-width:100%}
 .ws-up-prev.logo img{height:84px;object-fit:contain;padding:10px;background:#fff}
 .ws-up-del{position:absolute;top:7px;left:7px;width:27px;height:27px;border-radius:50%;border:none;background:rgba(15,23,42,.72);color:#fff;cursor:pointer;font-size:13px;line-height:1;display:flex;align-items:center;justify-content:center;transition:.15s}
 .ws-up-del:hover{background:#dc2626}
+.ws-palette-grid{display:flex;gap:9px;flex-wrap:wrap;margin-top:6px}
+.ws-palette{display:flex;flex-direction:column;align-items:center;gap:0;border:1.5px solid var(--line);border-radius:10px;padding:8px 10px 6px;background:#fff;cursor:pointer;transition:.15s}
+.ws-palette:hover{border-color:var(--accent,#1d9b8a);transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,.08)}
+.ws-palette span{width:36px;height:9px;display:block;border-radius:3px}
+.ws-palette span:first-of-type{border-bottom-left-radius:0;border-bottom-right-radius:0}
+.ws-palette span:nth-of-type(2){border-top-left-radius:0;border-top-right-radius:0}
+.ws-palette b{font-size:11px;font-weight:700;color:var(--navy-2);margin-top:5px}
+.ws-mini-btn{padding:7px 11px;border:1px solid var(--line);border-radius:7px;background:var(--bg-tint);font-size:11.5px;font-weight:700;color:var(--navy-2);cursor:pointer;white-space:nowrap}
+.ws-mini-btn:hover{border-color:var(--accent,#1d9b8a)}
+.ws-btn-prev-wrap{padding:18px;background:repeating-linear-gradient(45deg,#f1f5f9,#f1f5f9 9px,#e7edf3 9px,#e7edf3 18px);border-radius:10px;display:flex;justify-content:center}
+.ws-btn-prev{display:inline-flex;align-items:center;padding:13px 28px;border-radius:11px;font-size:14px;font-weight:800;box-shadow:0 6px 18px rgba(0,0,0,.14)}
+.ws-reset-btn{width:100%;padding:11px;border:1.5px dashed var(--line);border-radius:10px;background:#fff;color:#dc2626;font-size:13px;font-weight:700;cursor:pointer;transition:.15s;margin-top:4px}
+.ws-reset-btn:hover{border-color:#dc2626;background:#fef2f2}
+.ws-rt{border:1.5px solid var(--line);border-radius:10px;overflow:hidden;background:#fff}
+.ws-rt-bar{display:flex;flex-wrap:wrap;align-items:center;gap:4px;padding:8px;background:var(--bg-tint);border-bottom:1px solid var(--line)}
+.ws-rt-sep{width:1px;height:20px;background:var(--line);margin:0 3px}
+.ws-rt-btn{padding:6px 9px;border:1px solid var(--line);border-radius:7px;background:#fff;font-size:12px;font-weight:700;color:var(--navy-2);cursor:pointer;font-family:inherit;transition:.12s;line-height:1}
+.ws-rt-btn:hover{border-color:var(--accent,#1d9b8a);color:var(--accent,#1d9b8a)}
+.ws-rt-area{min-height:220px;max-height:520px;overflow-y:auto;padding:16px 18px;font-size:14px;line-height:1.95;color:var(--navy);outline:none}
+.ws-rt-area:focus{box-shadow:inset 0 0 0 2px rgba(29,155,138,.14)}
+.ws-rt-area:empty::before{content:attr(data-ph);color:var(--muted,#94a3b8)}
+.ws-rt-area h2{font-size:21px;font-weight:800;margin:14px 0 8px}
+.ws-rt-area h3{font-size:17px;font-weight:700;margin:12px 0 6px}
+.ws-rt-area p{margin:0 0 10px}
+.ws-rt-area ul,.ws-rt-area ol{margin:0 0 10px;padding-right:22px}
+.ws-rt-area li{margin-bottom:4px}
+.ws-rt-area blockquote{border-right:3px solid var(--accent,#1d9b8a);margin:10px 0;padding:8px 14px;color:var(--navy-2);background:var(--bg-tint);border-radius:0 8px 8px 0}
+.ws-rt-area img{max-width:100%;border-radius:8px;margin:8px 0;display:block}
+.ws-rt-area a{color:var(--accent,#1d9b8a);text-decoration:underline}
+.ws-rt-area hr{border:none;border-top:1px solid var(--line);margin:16px 0}
 .ws-actions{display:flex;justify-content:flex-end;gap:10px;padding:14px 0 4px;position:sticky;bottom:0;background:linear-gradient(transparent,var(--bg) 30%);margin-top:8px}
 .ws-img-preview{width:100%;height:120px;object-fit:cover;border-radius:8px;margin-top:8px;border:1.5px solid var(--line);background:var(--bg-tint)}
 .ws-logo-preview{width:56px;height:56px;object-fit:contain;border-radius:10px;border:1.5px solid var(--line);background:var(--bg-tint);padding:4px}
@@ -551,7 +581,10 @@ img,svg{display:block;max-width:100%}
 .ws-lt-national{background:linear-gradient(180deg,#073540 28px,#fff 28px);position:relative}
 .ws-lt-national::before{content:'';position:absolute;top:0;left:0;right:0;height:6px;background:#0A4D5C}
 .ws-lt-national::after{content:'';position:absolute;top:8px;right:10px;width:36px;height:14px;border-radius:3px;background:#D4AF37;opacity:.9}
-.ws-layout-grid{grid-template-columns:1fr 1fr 1fr 1fr}
+.ws-lt-minimal{background:#fff;border:1px solid #e7ebf0;position:relative}
+.ws-lt-minimal::before{content:'';position:absolute;top:12px;right:12px;width:26px;height:5px;border-radius:3px;background:#0f172a}
+.ws-lt-minimal::after{content:'';position:absolute;top:23px;right:12px;width:40px;height:4px;border-radius:3px;background:#cbd5e1}
+.ws-layout-grid{grid-template-columns:repeat(auto-fit,minmax(118px,1fr))}
 .ws-layout-opt span{display:block;font-size:13.5px;font-weight:700;color:var(--navy-deep);margin-bottom:3px}
 .ws-layout-opt small{font-size:11.5px;color:var(--muted)}
 .ws-layout-opt.active span{color:var(--accent)}
@@ -2643,6 +2676,54 @@ function wsRepHead(name,singular){
   return '<div class="ws-item-head"><span class="ws-item-badge">{B}</span><button class="ws-item-del" onclick="wsDel(\''+name+'\',{I})" title="حذف">'+ICDEL+'</button></div>';
 }
 
+/* ── rich content editor for custom pages ── */
+function wsRichSave(id){ var ed=document.getElementById(id); if(!ed) return; wsField(ed.getAttribute('data-path'), ed.innerHTML); }
+function wsRichCmd(id,cmd,val){ var ed=document.getElementById(id); if(ed) ed.focus(); try{ document.execCommand('styleWithCSS',false,false); }catch(e){} document.execCommand(cmd,false,val||null); wsRichSave(id); }
+function wsRichLink(id){ var ed=document.getElementById(id); if(ed) ed.focus(); var url=prompt('أدخل الرابط (URL):','https://'); if(!url) return; document.execCommand('createLink',false,url); wsRichSave(id); }
+function wsRichHr(id){ wsRichCmd(id,'insertHorizontalRule'); }
+function wsRichImg(id){ var inp=document.createElement('input'); inp.type='file'; inp.accept='image/*'; inp.onchange=function(){ var f=inp.files&&inp.files[0]; if(!f) return; wsReadImage(f,1200,0.82,false,function(d){ var ed=document.getElementById(id); if(ed) ed.focus(); document.execCommand('insertImage',false,d); wsRichSave(id); }); }; inp.click(); }
+function wsRich(label,path,opts){
+  opts=opts||{};
+  var v=wsGet(path)||'';
+  var html=/<[a-z][\s\S]*>/i.test(v)?v:(v?('<p>'+esc(v).replace(/\n/g,'<br>')+'</p>'):'');
+  var id='rich_'+path.replace(/[^a-z0-9]/gi,'_');
+  function b(lbl,title,oc){ return '<button type="button" class="ws-rt-btn" title="'+title+'" onmousedown="event.preventDefault()" onclick="'+oc+'">'+lbl+'</button>'; }
+  var bar='<div class="ws-rt-bar">'+
+    b('عنوان','عنوان رئيسي','wsRichCmd(\''+id+'\',\'formatBlock\',\'h2\')')+
+    b('فرعي','عنوان فرعي','wsRichCmd(\''+id+'\',\'formatBlock\',\'h3\')')+
+    b('فقرة','فقرة عادية','wsRichCmd(\''+id+'\',\'formatBlock\',\'p\')')+
+    '<span class="ws-rt-sep"></span>'+
+    b('<b>B</b>','عريض','wsRichCmd(\''+id+'\',\'bold\')')+
+    b('<i>I</i>','مائل','wsRichCmd(\''+id+'\',\'italic\')')+
+    b('<u>U</u>','تحته خط','wsRichCmd(\''+id+'\',\'underline\')')+
+    '<span class="ws-rt-sep"></span>'+
+    b('• قائمة','قائمة نقطية','wsRichCmd(\''+id+'\',\'insertUnorderedList\')')+
+    b('1. ترقيم','قائمة مرقّمة','wsRichCmd(\''+id+'\',\'insertOrderedList\')')+
+    b('❝ اقتباس','اقتباس','wsRichCmd(\''+id+'\',\'formatBlock\',\'blockquote\')')+
+    '<span class="ws-rt-sep"></span>'+
+    b('🔗 رابط','إضافة رابط','wsRichLink(\''+id+'\')')+
+    b('🖼 صورة','إدراج صورة','wsRichImg(\''+id+'\')')+
+    b('— فاصل','خط فاصل','wsRichHr(\''+id+'\')')+
+    '<span class="ws-rt-sep"></span>'+
+    b('مسح التنسيق','إزالة التنسيق','wsRichCmd(\''+id+'\',\'removeFormat\')')+
+  '</div>';
+  return '<div class="ws-field"><label>'+label+'</label>'+
+    '<div class="ws-rt">'+bar+
+      '<div class="ws-rt-area" id="'+id+'" data-path="'+path+'" data-ph="'+esc(opts.ph||'اكتب محتوى الصفحة هنا… استخدم شريط الأدوات للتنسيق.')+'" contenteditable="true" oninput="wsRichSave(\''+id+'\')" onblur="wsRichSave(\''+id+'\')">'+html+'</div>'+
+    '</div></div>'; }
+var WS_PALETTES=[
+  {n:'وطني',a:'#0A4D5C',b:'#D4AF37'},
+  {n:'زمردي',a:'#047857',b:'#F59E0B'},
+  {n:'ملكي',a:'#1D4ED8',b:'#F59E0B'},
+  {n:'عنابي',a:'#9F1239',b:'#D4AF37'},
+  {n:'بنفسجي',a:'#6D28D9',b:'#F59E0B'}
+];
+function wsLum(hex){ hex=String(hex||'').replace('#',''); if(hex.length===3) hex=hex.split('').map(function(c){return c+c;}).join(''); if(!/^[0-9a-fA-F]{6}$/.test(hex)) return 1; var r=parseInt(hex.slice(0,2),16)/255,g=parseInt(hex.slice(2,4),16)/255,b=parseInt(hex.slice(4,6),16)/255; return 0.2126*r+0.7152*g+0.0722*b; }
+function wsBtnBg(){ return wsGet('brand.accent2')||((wsGet('layout_theme')==='national')?'#D4AF37':'#1d9b8a'); }
+function wsBtnTx(){ var t=wsGet('brand.button_text'); if(t) return t; return wsLum(wsBtnBg())>0.62?'#16202e':'#ffffff'; }
+function wsPrevBtn(){ var el=document.getElementById('ws-btn-prev'); if(!el) return; el.style.background=wsBtnBg(); el.style.color=wsBtnTx(); }
+function wsApplyPalette(a,b){ wsField('brand.accent',a); wsField('brand.accent2',b); wsField('brand.button_text',''); wsRerenderSec('brand'); }
+function wsResetColors(){ if(!confirm('استعادة الألوان الافتراضية للمنصة؟ سيُحذف اللون الأساسي ولون الأزرار ولون النص المخصص.')) return; var c=wsC(); if(c.brand){ delete c.brand.accent; delete c.brand.accent2; delete c.brand.button_text; } wsRerenderSec('brand'); }
 function wsSecInner(id){
   var c = wsC();
   if(id==='brand'){
@@ -2660,13 +2741,19 @@ function wsSecInner(id){
       '</div>'+
       '<div class="ws-card"><h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="13.5" cy="6.5" r=".5"/><circle cx="17.5" cy="10.5" r=".5"/><circle cx="8.5" cy="7.5" r=".5"/><circle cx="6.5" cy="12.5" r=".5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.555C21.965 6.012 17.461 2 12 2z"/></svg>لون الهوية</h4>'+
         '<div class="ws-field"><label>اختر لوناً جاهزاً</label><div class="ws-theme-grid">'+swatches+'</div></div>'+
-        '<div class="ws-field"><label>'+(isNat?'اللون الأساسي (العناوين والروابط والخلفيات الداكنة)':'أو لون مخصص دقيق (اختياري)')+'</label><div class="ws-color-input"><input type="color" value="'+esc(wsGet('brand.accent')||(isNat?'#0A4D5C':'#1d9b8a'))+'" oninput="wsField(\'brand.accent\',this.value)"><span class="hint">'+(isNat?'ينعكس مباشرة على موقعك':'يُستخدم للأزرار والروابط المميّزة')+'</span></div></div>'+
-        (isNat?'<div class="ws-field"><label>لون الأزرار والإبرازات (مثل زر «تبرّع الآن»)</label><div class="ws-color-input"><input type="color" value="'+esc(wsGet('brand.accent2')||'#D4AF37')+'" oninput="wsField(\'brand.accent2\',this.value)"><span class="hint">يُحسب لون النص داخل الزر تلقائياً ليبقى واضحاً</span></div></div>':'')+
+        '<div class="ws-field"><label>لوحات ألوان جاهزة</label><div class="ws-palette-grid">'+
+          WS_PALETTES.map(function(pl){ return '<button type="button" class="ws-palette" onclick="wsApplyPalette(\''+pl.a+'\',\''+pl.b+'\')"><span style="background:'+pl.a+'"></span><span style="background:'+pl.b+'"></span><b>'+pl.n+'</b></button>'; }).join('')+
+        '</div></div>'+
+        '<div class="ws-field"><label>اللون الأساسي</label><div class="ws-color-input"><input type="color" value="'+esc(wsGet('brand.accent')||(isNat?'#0A4D5C':'#1d9b8a'))+'" oninput="wsField(\'brand.accent\',this.value); wsPrevBtn()"><span class="hint">العناوين والروابط والخلفيات — ينعكس مباشرة على الموقع</span></div></div>'+
+        '<div class="ws-field"><label>لون الأزرار والإبرازات</label><div class="ws-color-input"><input type="color" value="'+esc(wsGet('brand.accent2')||(isNat?'#D4AF37':'#1d9b8a'))+'" oninput="wsField(\'brand.accent2\',this.value); wsPrevBtn()"><span class="hint">مثل زر «تبرّع الآن»</span></div></div>'+
+        '<div class="ws-field"><label>لون نص الأزرار</label><div class="ws-color-input"><input type="color" value="'+esc(wsGet('brand.button_text')||'#ffffff')+'" oninput="wsField(\'brand.button_text\',this.value); wsPrevBtn()"><button type="button" class="ws-mini-btn" onclick="wsField(\'brand.button_text\',\'\'); wsRerenderSec(\'brand\')">تلقائي</button><span class="hint">اتركه «تلقائي» ليُحسب حسب لون الزر</span></div></div>'+
+        '<div class="ws-field"><label>معاينة الزر</label><div class="ws-btn-prev-wrap"><span class="ws-btn-prev" id="ws-btn-prev" style="background:'+wsBtnBg()+';color:'+wsBtnTx()+'">تبرّع الآن</span></div></div>'+
+        '<button type="button" class="ws-reset-btn" onclick="wsResetColors()">استعادة الألوان الافتراضية</button>'+
       '</div>'+
-      (isNat?('<div class="ws-card"><h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="6"/><path d="M8.21 13.89 7 22l5-3 5 3-1.21-8.12"/></svg>شارة المنظمة الموثوقة</h4>'+
+      '<div class="ws-card"><h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="6"/><path d="M8.21 13.89 7 22l5-3 5 3-1.21-8.12"/></svg>شارة المنظمة الموثوقة</h4>'+
         '<label class="ws-check-row"><input type="checkbox" '+(wsGet('brand.trusted')?'checked':'')+' onchange="wsField(\'brand.trusted\',this.checked); wsRerenderSec(\'brand\')"><span>عرض شارة «منظمة موثوقة» في الواجهة والتذييل</span></label>'+
         (wsGet('brand.trusted')?wsTxt('نص الشارة','brand.trusted_label','منظمة موثوقة',{hint:'مثال: منظمة موثوقة — جائزة التميّز 2025'}):'')+
-      '</div>'):'')+
+      '</div>'+
       wsLayoutThemePicker();
   }
   if(id==='hero'){
@@ -2814,7 +2901,7 @@ function wsSecInner(id){
       return '<div class="ws-item">'+wsRepHead('pages').replace('{B}','صفحة '+(i+1)).replace('{I}',i)+
         wsItemTxt('عنوان الصفحة','pages',i,'title','سياسة الخصوصية')+
         wsItemTxt('المعرّف بالرابط (slug)','pages',i,'slug','privacy', {dir:'ltr'})+
-        wsItemArea('محتوى الصفحة','pages',i,'body','اكتب محتوى الصفحة هنا...',{h:140})+
+        wsRich('محتوى الصفحة','pages.'+i+'.body')+
         (slug?'<div class="hint" style="direction:ltr;text-align:left">/org-site?org='+esc((org&&org.id)||'')+'#/page/'+esc(slug)+'</div>':'')+'</div>';
     }).join('') : '<div class="ws-empty">أنشئ صفحات إضافية مثل: سياسة الخصوصية، شروط الاستخدام، تطوّع معنا.</div>';
     return wsSecHead('pages','صفحات مخصصة','أنشئ صفحات إضافية بمحتوى حر تظهر في تذييل الموقع')+
@@ -2889,6 +2976,11 @@ function wsLayoutThemePicker(){
         '<div class="ws-layout-thumb ws-lt-national"></div>'+
         '<span>وطني</span>'+
         '<small>ثيم مؤسسي احترافي مع حاسبة الأثر</small>'+
+      '</div>'+
+      '<div class="ws-layout-opt'+(cur==='minimal'?' active':'')+'" data-lt="minimal" onclick="wsPickLayout(\'minimal\')">'+
+        '<div class="ws-layout-thumb ws-lt-minimal"></div>'+
+        '<span>ميني‑مال</span>'+
+        '<small>أبيض وبسيط — مساحات واسعة ولون واحد</small>'+
       '</div>'+
     '</div>'+
     '<div class="hint" style="margin-top:8px">احفظ التغييرات بعد الاختيار لتطبيق النمط على موقعك</div>'+
