@@ -250,7 +250,19 @@ footer{background:var(--brand-2);color:rgba(255,255,255,.65);padding:56px 0 0}
 .article-date{font-size:13.5px;color:var(--accent);font-weight:700;margin-bottom:12px}
 .article h1{font-size:clamp(26px,4vw,40px);font-weight:800;color:var(--brand);line-height:1.3;margin-bottom:24px;letter-spacing:-.3px}
 .article-hero{width:100%;border-radius:var(--radius);margin-bottom:30px;max-height:420px;object-fit:cover}
-.article-body{font-size:16.5px;color:var(--fg-2);line-height:2;white-space:pre-line}
+.article-body{font-size:16.5px;color:var(--fg-2);line-height:2}
+.article-body p{margin:0 0 16px}
+.article-body h2{font-size:26px;font-weight:800;color:var(--fg);margin:28px 0 12px;line-height:1.3}
+.article-body h3{font-size:20px;font-weight:700;color:var(--fg);margin:22px 0 10px;line-height:1.35}
+.article-body ul,.article-body ol{margin:0 0 16px;padding-right:24px}
+.article-body li{margin-bottom:7px}
+.article-body blockquote{border-right:4px solid var(--accent);margin:18px 0;padding:10px 20px;background:var(--bg-2,#f6f8fb);border-radius:0 10px 10px 0;color:var(--fg)}
+.article-body img{max-width:100%;height:auto;border-radius:12px;margin:16px 0;display:block}
+.article-body a{color:var(--accent);text-decoration:underline}
+.article-body hr{border:none;border-top:1px solid var(--line);margin:26px 0}
+body.theme-national .article-body blockquote{border-right-color:var(--n-teal)}
+body.theme-national .article-body h2,body.theme-national .article-body h3{color:var(--n-teal)}
+body.theme-national .article-body a{color:var(--n-teal)}
 
 /* ── States ── */
 .state-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;text-align:center;gap:16px;padding:40px}
@@ -1144,6 +1156,12 @@ function brandName(){ var b=CFG.brand||{}; return b.name||CFG.name||'جمعيت�
 function theme(){ return CFG.theme || (CFG.brand&&CFG.brand.theme) || 'navy'; }
 function visible(key){ var s=CFG.sections||{}; if(s[key]===undefined) return key!=='donation'; return !!s[key]; }
 function arr(k){ return Array.isArray(CFG[k])?CFG[k]:[]; }
+/* page body: render rich HTML as-is (org's own content); plain text → paragraphs */
+function pageBodyHtml(body){
+  body=body||'';
+  if(/<[a-z][\s\S]*>/i.test(body)) return body;
+  return body ? '<p>'+esc(body).replace(/\n{2,}/g,'</p><p>').replace(/\n/g,'<br>')+'</p>' : '';
+}
 
 /* ── brand colors → national theme CSS variables ── */
 function nHexToHsl(hex){
@@ -2599,7 +2617,7 @@ function renderNatPage(slug){
     '<div class="wrap"><article class="article">'+
       '<a class="article-back" onclick="location.hash=\'\'">'+nIc('arrow')+'الرئيسية</a>'+
       '<h1>'+esc(p.title)+'</h1>'+
-      '<div class="article-body">'+esc(p.body||'')+'</div>'+
+      '<div class="article-body">'+pageBodyHtml(p.body)+'</div>'+
     '</article></div>'+nFooter();
   nAfterRender();
 }
@@ -2708,7 +2726,7 @@ function renderPage(slug){
     '<div class="wrap"><article class="article">'+
       '<a class="article-back" onclick="location.hash=\'\'"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="m9 18 6-6-6-6"/></svg>الرئيسية</a>'+
       '<h1>'+esc(p.title)+'</h1>'+
-      '<div class="article-body">'+esc(p.body||'')+'</div>'+
+      '<div class="article-body">'+pageBodyHtml(p.body)+'</div>'+
     '</article></div>'+footHtml();
 }
 

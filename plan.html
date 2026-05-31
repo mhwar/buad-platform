@@ -518,6 +518,23 @@ img,svg{display:block;max-width:100%}
 .ws-btn-prev{display:inline-flex;align-items:center;padding:13px 28px;border-radius:11px;font-size:14px;font-weight:800;box-shadow:0 6px 18px rgba(0,0,0,.14)}
 .ws-reset-btn{width:100%;padding:11px;border:1.5px dashed var(--line);border-radius:10px;background:#fff;color:#dc2626;font-size:13px;font-weight:700;cursor:pointer;transition:.15s;margin-top:4px}
 .ws-reset-btn:hover{border-color:#dc2626;background:#fef2f2}
+.ws-rt{border:1.5px solid var(--line);border-radius:10px;overflow:hidden;background:#fff}
+.ws-rt-bar{display:flex;flex-wrap:wrap;align-items:center;gap:4px;padding:8px;background:var(--bg-tint);border-bottom:1px solid var(--line)}
+.ws-rt-sep{width:1px;height:20px;background:var(--line);margin:0 3px}
+.ws-rt-btn{padding:6px 9px;border:1px solid var(--line);border-radius:7px;background:#fff;font-size:12px;font-weight:700;color:var(--navy-2);cursor:pointer;font-family:inherit;transition:.12s;line-height:1}
+.ws-rt-btn:hover{border-color:var(--accent,#1d9b8a);color:var(--accent,#1d9b8a)}
+.ws-rt-area{min-height:220px;max-height:520px;overflow-y:auto;padding:16px 18px;font-size:14px;line-height:1.95;color:var(--navy);outline:none}
+.ws-rt-area:focus{box-shadow:inset 0 0 0 2px rgba(29,155,138,.14)}
+.ws-rt-area:empty::before{content:attr(data-ph);color:var(--muted,#94a3b8)}
+.ws-rt-area h2{font-size:21px;font-weight:800;margin:14px 0 8px}
+.ws-rt-area h3{font-size:17px;font-weight:700;margin:12px 0 6px}
+.ws-rt-area p{margin:0 0 10px}
+.ws-rt-area ul,.ws-rt-area ol{margin:0 0 10px;padding-right:22px}
+.ws-rt-area li{margin-bottom:4px}
+.ws-rt-area blockquote{border-right:3px solid var(--accent,#1d9b8a);margin:10px 0;padding:8px 14px;color:var(--navy-2);background:var(--bg-tint);border-radius:0 8px 8px 0}
+.ws-rt-area img{max-width:100%;border-radius:8px;margin:8px 0;display:block}
+.ws-rt-area a{color:var(--accent,#1d9b8a);text-decoration:underline}
+.ws-rt-area hr{border:none;border-top:1px solid var(--line);margin:16px 0}
 .ws-actions{display:flex;justify-content:flex-end;gap:10px;padding:14px 0 4px;position:sticky;bottom:0;background:linear-gradient(transparent,var(--bg) 30%);margin-top:8px}
 .ws-img-preview{width:100%;height:120px;object-fit:cover;border-radius:8px;margin-top:8px;border:1.5px solid var(--line);background:var(--bg-tint)}
 .ws-logo-preview{width:56px;height:56px;object-fit:contain;border-radius:10px;border:1.5px solid var(--line);background:var(--bg-tint);padding:4px}
@@ -2659,6 +2676,41 @@ function wsRepHead(name,singular){
   return '<div class="ws-item-head"><span class="ws-item-badge">{B}</span><button class="ws-item-del" onclick="wsDel(\''+name+'\',{I})" title="حذف">'+ICDEL+'</button></div>';
 }
 
+/* ── rich content editor for custom pages ── */
+function wsRichSave(id){ var ed=document.getElementById(id); if(!ed) return; wsField(ed.getAttribute('data-path'), ed.innerHTML); }
+function wsRichCmd(id,cmd,val){ var ed=document.getElementById(id); if(ed) ed.focus(); try{ document.execCommand('styleWithCSS',false,false); }catch(e){} document.execCommand(cmd,false,val||null); wsRichSave(id); }
+function wsRichLink(id){ var ed=document.getElementById(id); if(ed) ed.focus(); var url=prompt('أدخل الرابط (URL):','https://'); if(!url) return; document.execCommand('createLink',false,url); wsRichSave(id); }
+function wsRichHr(id){ wsRichCmd(id,'insertHorizontalRule'); }
+function wsRichImg(id){ var inp=document.createElement('input'); inp.type='file'; inp.accept='image/*'; inp.onchange=function(){ var f=inp.files&&inp.files[0]; if(!f) return; wsReadImage(f,1200,0.82,false,function(d){ var ed=document.getElementById(id); if(ed) ed.focus(); document.execCommand('insertImage',false,d); wsRichSave(id); }); }; inp.click(); }
+function wsRich(label,path,opts){
+  opts=opts||{};
+  var v=wsGet(path)||'';
+  var html=/<[a-z][\s\S]*>/i.test(v)?v:(v?('<p>'+esc(v).replace(/\n/g,'<br>')+'</p>'):'');
+  var id='rich_'+path.replace(/[^a-z0-9]/gi,'_');
+  function b(lbl,title,oc){ return '<button type="button" class="ws-rt-btn" title="'+title+'" onmousedown="event.preventDefault()" onclick="'+oc+'">'+lbl+'</button>'; }
+  var bar='<div class="ws-rt-bar">'+
+    b('عنوان','عنوان رئيسي','wsRichCmd(\''+id+'\',\'formatBlock\',\'h2\')')+
+    b('فرعي','عنوان فرعي','wsRichCmd(\''+id+'\',\'formatBlock\',\'h3\')')+
+    b('فقرة','فقرة عادية','wsRichCmd(\''+id+'\',\'formatBlock\',\'p\')')+
+    '<span class="ws-rt-sep"></span>'+
+    b('<b>B</b>','عريض','wsRichCmd(\''+id+'\',\'bold\')')+
+    b('<i>I</i>','مائل','wsRichCmd(\''+id+'\',\'italic\')')+
+    b('<u>U</u>','تحته خط','wsRichCmd(\''+id+'\',\'underline\')')+
+    '<span class="ws-rt-sep"></span>'+
+    b('• قائمة','قائمة نقطية','wsRichCmd(\''+id+'\',\'insertUnorderedList\')')+
+    b('1. ترقيم','قائمة مرقّمة','wsRichCmd(\''+id+'\',\'insertOrderedList\')')+
+    b('❝ اقتباس','اقتباس','wsRichCmd(\''+id+'\',\'formatBlock\',\'blockquote\')')+
+    '<span class="ws-rt-sep"></span>'+
+    b('🔗 رابط','إضافة رابط','wsRichLink(\''+id+'\')')+
+    b('🖼 صورة','إدراج صورة','wsRichImg(\''+id+'\')')+
+    b('— فاصل','خط فاصل','wsRichHr(\''+id+'\')')+
+    '<span class="ws-rt-sep"></span>'+
+    b('مسح التنسيق','إزالة التنسيق','wsRichCmd(\''+id+'\',\'removeFormat\')')+
+  '</div>';
+  return '<div class="ws-field"><label>'+label+'</label>'+
+    '<div class="ws-rt">'+bar+
+      '<div class="ws-rt-area" id="'+id+'" data-path="'+path+'" data-ph="'+esc(opts.ph||'اكتب محتوى الصفحة هنا… استخدم شريط الأدوات للتنسيق.')+'" contenteditable="true" oninput="wsRichSave(\''+id+'\')" onblur="wsRichSave(\''+id+'\')">'+html+'</div>'+
+    '</div></div>'; }
 var WS_PALETTES=[
   {n:'وطني',a:'#0A4D5C',b:'#D4AF37'},
   {n:'زمردي',a:'#047857',b:'#F59E0B'},
@@ -2849,7 +2901,7 @@ function wsSecInner(id){
       return '<div class="ws-item">'+wsRepHead('pages').replace('{B}','صفحة '+(i+1)).replace('{I}',i)+
         wsItemTxt('عنوان الصفحة','pages',i,'title','سياسة الخصوصية')+
         wsItemTxt('المعرّف بالرابط (slug)','pages',i,'slug','privacy', {dir:'ltr'})+
-        wsItemArea('محتوى الصفحة','pages',i,'body','اكتب محتوى الصفحة هنا...',{h:140})+
+        wsRich('محتوى الصفحة','pages.'+i+'.body')+
         (slug?'<div class="hint" style="direction:ltr;text-align:left">/org-site?org='+esc((org&&org.id)||'')+'#/page/'+esc(slug)+'</div>':'')+'</div>';
     }).join('') : '<div class="ws-empty">أنشئ صفحات إضافية مثل: سياسة الخصوصية، شروط الاستخدام، تطوّع معنا.</div>';
     return wsSecHead('pages','صفحات مخصصة','أنشئ صفحات إضافية بمحتوى حر تظهر في تذييل الموقع')+
