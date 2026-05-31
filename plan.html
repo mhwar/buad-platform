@@ -2831,8 +2831,9 @@ function wsSeedDefaults(){
   var orgName = (org && org.name) || 'جمعية بُعد للتنمية الاجتماعية';
   if(!c.sections) c.sections = {};
 
-  if(!c.brand){ c.brand = { name:c.name||orgName, tagline:c.tagline||'معاً نحو مجتمع مُمكَّن ومستدام', logo_url:c.logo_url||'', theme:c.theme||'navy', accent:'' }; }
+  if(!c.brand){ c.brand = { name:c.name||orgName, tagline:c.tagline||'معاً نحو مجتمع مُمكَّن ومستدام', logo_url:c.logo_url||'', theme:c.theme||'navy', accent:'', license_no:'4500' }; }
   if(!c.brand.tagline) c.brand.tagline = 'معاً نحو مجتمع مُمكَّن ومستدام';
+  if(!c.brand.license_no) c.brand.license_no = (org&&org.license_no)||'4500';
 
   if(!c.hero){
     c.hero = {
@@ -2898,12 +2899,12 @@ function wsSeedDefaults(){
 
   if(!c.programs || !c.programs.length){
     c.programs = [
-      {title:'كفالة الأسر المحتاجة',desc:'دعم شهري متكامل للأسر محدودة الدخل يشمل المساعدات المالية والعينية لتغطية الاحتياجات الأساسية.',image_url:'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&w=900&q=80'},
-      {title:'كسوة وكفالة الأيتام',desc:'برنامج يرعى الأيتام تعليمياً وصحياً ونفسياً ويوفّر بيئة داعمة لنموهم.',image_url:'https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?auto=format&fit=crop&w=900&q=80'},
-      {title:'تمكين الشباب والتوظيف',desc:'مسارات تدريبية ومهنية ترفع جاهزية الشباب لسوق العمل وتربطهم بفرص حقيقية.',image_url:'https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&w=900&q=80'},
-      {title:'الرعاية الصحية',desc:'تغطية تكاليف العلاج والأجهزة الطبية والأدوية للفئات غير القادرة بالتعاون مع المستشفيات.',image_url:'https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&w=900&q=80'},
-      {title:'سلة الخير الغذائية',desc:'توزيع سلال غذائية شهرية ومشاريع إفطار صائم وأضاحٍ على المستفيدين في المواسم.',image_url:'https://images.unsplash.com/photo-1593113630400-ea4288922497?auto=format&fit=crop&w=900&q=80'},
-      {title:'ترميم وتأثيث المساكن',desc:'إعادة تأهيل مساكن الأسر المتعففة وتوفير الأثاث الأساسي لتوفير بيئة سكنية كريمة.',image_url:'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=900&q=80'}
+      {title:'تأهيل الأسر المنتجة',desc:'حقائب تدريبية ودعم تشغيلي ينقل الأسر من الاحتياج إلى الإنتاج المستدام.',pillar:'التمكين الاقتصادي',image_url:'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&w=900&q=80'},
+      {title:'تمكين الشباب والتوظيف',desc:'مسارات تدريبية ومهنية ترفع جاهزية الشباب لسوق العمل وتربطهم بفرص حقيقية.',pillar:'التمكين الاقتصادي',image_url:'https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&w=900&q=80'},
+      {title:'الاستشارات الأسرية الآمنة',desc:'خدمات استشارية متخصصة تعزّز استقرار الأسرة وتماسكها بسرّية تامة.',pillar:'التأهيل الأسري',image_url:'https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?auto=format&fit=crop&w=900&q=80'},
+      {title:'أكاديمية المقبلين على الزواج',desc:'برامج تأهيلية تُعدّ المقبلين على الزواج لحياة أسرية مستقرة وواعية.',pillar:'التأهيل الأسري',image_url:'https://images.unsplash.com/photo-1511895426328-dc8714191300?auto=format&fit=crop&w=900&q=80'},
+      {title:'أوقاف بُعد الاستثمارية',desc:'بناء موارد مستدامة عبر أوقاف استثمارية تضمن ديمومة أثر الجمعية وبرامجها.',pillar:'أوقاف بُعد',image_url:'https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&w=900&q=80'},
+      {title:'صندوق الاستدامة الوقفي',desc:'استثمار التبرعات الوقفية في مشاريع مدرّة تموّل برامج الجمعية على المدى الطويل.',pillar:'أوقاف بُعد',image_url:'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=900&q=80'}
     ];
     if(c.sections.programs===undefined) c.sections.programs = true;
   }
@@ -2932,12 +2933,15 @@ function wsSeedDefaults(){
 
   if(!c.governance || !c.governance.length){
     c.governance = [
-      {title:'النظام الأساسي للجمعية',category:'النظام الأساسي',url:''},
-      {title:'لائحة الحوكمة',category:'لائحة الحوكمة',url:''},
-      {title:'سياسة تعارض المصالح',category:'السياسات',url:''},
-      {title:'سياسة حفظ الوثائق وإتلافها',category:'السياسات',url:''},
-      {title:'التقرير السنوي 2024',category:'التقارير السنوية',url:''},
-      {title:'القوائم المالية المدققة 2024',category:'القوائم المالية',url:''}
+      {title:'النظام الأساسي للجمعية',category:'اللوائح والسياسات',url:''},
+      {title:'لائحة الحوكمة',category:'اللوائح والسياسات',url:''},
+      {title:'سياسة تعارض المصالح',category:'اللوائح والسياسات',url:''},
+      {title:'سياسة خصوصية البيانات',category:'اللوائح والسياسات',url:''},
+      {title:'سياسة الإبلاغ عن المخالفات',category:'اللوائح والسياسات',url:''},
+      {title:'القوائم المالية المدققة 2024',category:'التقارير المالية',url:''},
+      {title:'الميزانية التقديرية السنوية',category:'التقارير المالية',url:''},
+      {title:'تقرير الالتزام والامتثال السنوي',category:'تقارير الحوكمة',url:''},
+      {title:'التقرير السنوي للأداء والأثر',category:'تقارير الحوكمة',url:''}
     ];
     if(c.sections.governance===undefined) c.sections.governance = true;
   }
@@ -2945,11 +2949,11 @@ function wsSeedDefaults(){
   if(!c.partners || !c.partners.length){
     c.partners = [
       {name:'المركز الوطني لتنمية القطاع غير الربحي',logo_url:''},
-      {name:'وزارة الموارد البشرية والتنمية الاجتماعية',logo_url:''},
       {name:'منصة إحسان',logo_url:''},
-      {name:'الهيئة العامة للأوقاف',logo_url:''},
-      {name:'بنك التنمية الاجتماعية',logo_url:''},
-      {name:'جمعية الملك عبدالعزيز الخيرية',logo_url:''}
+      {name:'صندوق دعم الجمعيات',logo_url:''},
+      {name:'منصة تبرّع',logo_url:''},
+      {name:'وزارة الموارد البشرية والتنمية الاجتماعية',logo_url:''},
+      {name:'الهيئة العامة للأوقاف',logo_url:''}
     ];
     if(c.sections.partners===undefined) c.sections.partners = true;
   }
@@ -2971,7 +2975,9 @@ function wsSeedDefaults(){
       title:'تبرّعك اليوم يصنع أثراً يمتد',
       desc:'كل مساهمة، مهما كانت، تُحدث فرقاً حقيقياً في حياة أسرة محتاجة. شاركنا في صناعة الأمل وكن جزءاً من قصة عطاء مستدامة.',
       url:'https://ehsan.sa',
-      account:'SA00 0000 0000 0000 0000 0000'
+      account:'SA00 0000 0000 0000 0000 0000',
+      unit_cost:250,
+      unit_label:'حقيبة تدريبية لأسرة منتجة'
     };
     if(c.sections.donation===undefined) c.sections.donation = true;
   }
