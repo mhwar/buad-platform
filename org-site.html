@@ -726,9 +726,14 @@ body.theme-national .sec-sub{color:var(--n-ink-3)}
 /* ── Stats strip (light cards, gold numbers) ── */
 .n-stats{background:var(--n-ice);padding:56px 0!important}
 .n-stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:18px}
-.n-stat{background:#fff;border:1px solid var(--n-line);border-radius:18px;padding:28px 22px;text-align:center;transition:.2s}
-.n-stat:hover{box-shadow:var(--shadow);transform:translateY(-3px)}
-.n-stat .n{font-size:clamp(30px,4vw,42px);font-weight:800;line-height:1;letter-spacing:-1px;color:var(--n-gold)}
+.n-stat{background:#fff;border:1px solid var(--n-line);border-radius:18px;padding:30px 22px 26px;text-align:center;transition:.22s;position:relative;overflow:hidden}
+.n-stat::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--n-teal),var(--n-gold));opacity:0;transition:.22s}
+.n-stat:hover{box-shadow:var(--shadow);transform:translateY(-4px);border-color:transparent}
+.n-stat:hover::before{opacity:1}
+.n-stat-ic{width:50px;height:50px;border-radius:15px;background:var(--n-teal-soft);color:var(--n-teal);display:inline-flex;align-items:center;justify-content:center;margin-bottom:16px;transition:.22s}
+.n-stat-ic svg{width:25px;height:25px}
+.n-stat:hover .n-stat-ic{background:var(--n-teal);color:#fff;transform:scale(1.08)}
+.n-stat .n{font-size:clamp(30px,4vw,42px);font-weight:800;line-height:1;letter-spacing:-1px;color:var(--n-gold);font-variant-numeric:tabular-nums}
 .n-stat .l{font-size:14px;color:var(--n-ink-2);margin-top:10px;font-weight:600}
 
 /* ── Page header (light, for sub-pages) ── */
@@ -1911,7 +1916,7 @@ function nPartnersBand(){
       '<div class="sub">بدعمٍ من شركائنا في القطاعين الحكومي وغير الربحي نُحقّق أثراً أوسع وأكثر استدامة.</div></div>'+
     '<div class="n-partners-grid">'+p.map(function(x){
       return '<div class="n-partner">'+(x.logo_url
-        ? '<img src="'+attr(x.logo_url)+'" alt="'+attr(x.name||'')+'" onerror="this.outerHTML=&quot;<span class=\\&quot;n-partner-ph&quot;>'+esc(x.name||'')+'</span>&quot;">'
+        ? '<img src="'+attr(x.logo_url)+'" alt="'+attr(x.name||'')+'" loading="lazy" decoding="async" onerror="this.outerHTML=&quot;<span class=\\&quot;n-partner-ph&quot;>'+esc(x.name||'')+'</span>&quot;">'
         : '<span class="n-partner-mark">'+nIc('handshake')+'</span><span class="n-partner-nm">'+esc(x.name)+'</span>')+'</div>';
     }).join('')+'</div>'+
   '</div></section>';
@@ -1974,7 +1979,7 @@ function nHeroSlides(){
 function nHero(){
   var b=CFG.brand||{}; var slides=nHeroSlides(); _nHeroN=slides.length; _nHeroIdx=0;
   var slidesHtml=slides.map(function(s,i){
-    var img=s.image_url?'<div class="n-hero-bg" style="background-image:url('+attr(s.image_url)+')"></div><div class="n-hero-imgov"></div>':'';
+    var img=s.image_url?('<div class="n-hero-bg"'+(i===0?' style="background-image:url('+attr(s.image_url)+')"':' data-bg="'+attr(s.image_url)+'"')+'></div><div class="n-hero-imgov"></div>'):'';
     var p1=s.primary_label||'تبرّع الآن',p1l=s.primary_link||'#/donate';
     var p2=s.secondary_label||'تعرّف علينا',p2l=s.secondary_link||'#/about';
     var ext1=/^https?:/.test(p1l)?' target="_blank" rel="noopener"':'';
@@ -2012,18 +2017,68 @@ function nHeroGo(i){
   var slides=document.querySelectorAll('.n-hero .n-slide'); if(!slides.length) return;
   _nHeroN=slides.length; i=((i%_nHeroN)+_nHeroN)%_nHeroN; _nHeroIdx=i;
   slides.forEach(function(s,idx){ s.classList.toggle('on', idx===i); });
+  /* lazy-load the active slide's background only when shown */
+  var bg=slides[i].querySelector('.n-hero-bg[data-bg]');
+  if(bg){ bg.style.backgroundImage='url('+bg.getAttribute('data-bg')+')'; bg.removeAttribute('data-bg'); }
   document.querySelectorAll('.n-hero-dot').forEach(function(d,idx){ d.classList.toggle('on', idx===i); });
 }
 function nHeroStep(d){ nHeroGo(_nHeroIdx+d); nHeroStart(); }
 function nHeroStart(){ nHeroStop(); if(_nHeroN>1) _nHeroTimer=setInterval(function(){ nHeroGo(_nHeroIdx+1); },6500); }
 function nHeroStop(){ if(_nHeroTimer){ clearInterval(_nHeroTimer); _nHeroTimer=null; } }
 
+function nStatIcon(x,i){
+  if(x.icon) return x.icon;
+  var l=x.label||'';
+  if(/مستفيد|أفراد|فرد|أسر/.test(l)) return 'users';
+  if(/برنامج|مبادرة|مشروع|خدمة|خدمات/.test(l)) return 'briefcase';
+  if(/متطوّع|متطوع/.test(l)) return 'hand';
+  if(/سنة|عام|سنوات|أعوام/.test(l)) return 'cal';
+  if(/شراك|شريك|جهة|داعم/.test(l)) return 'handshake';
+  if(/تبرّع|تبرع|ريال|مبلغ/.test(l)) return 'heart';
+  return ['users','briefcase','hand','cal'][i%4];
+}
 function nStatsStrip(){
   var s=arr('stats').filter(function(x){return x.number||x.label;});
   if(!s.length) s=[{number:'12,500+',label:'مستفيد ومستفيدة'},{number:'35+',label:'برنامجاً ومبادرة'},{number:'480+',label:'متطوّع ومتطوّعة'},{number:'12',label:'سنة من العطاء'}];
   return '<section class="n-stats"><div class="wrap"><div class="n-stats-grid">'+
-    s.map(function(x){return '<div class="n-stat"><div class="n">'+esc(x.number)+'</div><div class="l">'+esc(x.label)+'</div></div>';}).join('')+
+    s.map(function(x,i){
+      return '<div class="n-stat">'+
+        '<span class="n-stat-ic">'+nIc(nStatIcon(x,i))+'</span>'+
+        '<div class="n" dir="ltr" data-count="'+attr(x.number||'')+'">'+esc(x.number||'')+'</div>'+
+        '<div class="l">'+esc(x.label||'')+'</div>'+
+      '</div>';
+    }).join('')+
   '</div></div></section>';
+}
+/* animated count-up for stats (RTL-safe; preserves prefix/suffix like "+") */
+function nCountUp(el){
+  if(el._counted) return; el._counted=true;
+  var raw=el.getAttribute('data-count')||el.textContent||'';
+  if(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches){ el.textContent=raw; return; }
+  var m=raw.match(/[0-9٠-٩][0-9٠-٩.,٫٬]*/);
+  if(!m){ return; }
+  var numStr=m[0], pre=raw.slice(0,m.index), suf=raw.slice(m.index+numStr.length);
+  var western=numStr.replace(/[٠-٩]/g,function(d){return String(d.charCodeAt(0)-0x0660);}).replace(/[,٬٫\s]/g,'');
+  var target=parseFloat(western);
+  if(!isFinite(target)){ return; }
+  var hasSep=/[,٬]/.test(numStr), dur=1500, t0=null;
+  function fmt(v){ var t=String(Math.round(v)); if(hasSep) t=t.replace(/\B(?=(\d{3})+(?!\d))/g,','); return t; }
+  function tick(ts){
+    if(t0===null) t0=ts;
+    var p=Math.min((ts-t0)/dur,1), e=1-Math.pow(1-p,3);
+    el.textContent=pre+fmt(target*e)+suf;
+    if(p<1) requestAnimationFrame(tick); else el.textContent=raw;
+  }
+  requestAnimationFrame(tick);
+}
+function nStatsObserve(){
+  var els=document.querySelectorAll('.n-stats .n[data-count]');
+  if(!els.length) return;
+  if(!('IntersectionObserver' in window)){ els.forEach(nCountUp); return; }
+  var io=new IntersectionObserver(function(ents){
+    ents.forEach(function(en){ if(en.isIntersecting){ nCountUp(en.target); io.unobserve(en.target); } });
+  },{threshold:.45});
+  els.forEach(function(el){ io.observe(el); });
 }
 
 function nAboutTeaser(){
@@ -2050,7 +2105,7 @@ function nAboutTeaser(){
 }
 
 function nProgCard(x,i){
-  var img=x.image_url?'<div class="n-prog-img"><img src="'+attr(x.image_url)+'" alt="" onerror="this.parentElement.style.display=\'none\'"></div>':'';
+  var img=x.image_url?'<div class="n-prog-img"><img src="'+attr(x.image_url)+'" alt="" loading="lazy" decoding="async" onerror="this.parentElement.style.display=\'none\'"></div>':'';
   var pillar=x.pillar?'<div class="n-pillar">'+esc(x.pillar)+'</div>':'';
   var ico=x.image_url?'':'<div class="n-prog-ico">'+nIc(['briefcase','home','building','heart','book'][i%5])+'</div>';
   return '<div class="n-prog-card">'+img+'<div class="n-prog-body">'+ico+pillar+'<h4>'+esc(x.title)+'</h4><p>'+esc(x.desc||'')+'</p></div></div>';
@@ -2121,7 +2176,7 @@ function nNewsTeaser(){
   '</div></section>';
 }
 function nNewsCard(x){
-  var img=x.image_url?'<img src="'+attr(x.image_url)+'" alt="" onerror="this.style.display=\'none\'">':'<span class="n-news-ph">'+nIc('image')+'</span>';
+  var img=x.image_url?'<img src="'+attr(x.image_url)+'" alt="" loading="lazy" decoding="async" onerror="this.style.display=\'none\'">':'<span class="n-news-ph">'+nIc('image')+'</span>';
   return '<div class="n-news-card" onclick="location.hash=\'#/news/'+attr(x.id)+'\'">'+
     '<div class="n-news-img">'+img+'</div>'+
     '<div class="n-news-body"><div class="n-news-date">'+nIc('cal')+fmtDate(x.date)+'</div>'+
@@ -2185,7 +2240,7 @@ function nBoardGrid(){
   var b=arr('board').filter(function(x){return x.name;});
   if(!b.length) return nEmpty('مجلس الإدارة','سيتم نشر أعضاء مجلس الإدارة قريباً.','users');
   return '<div class="n-board-grid">'+b.map(function(x){
-    var ava=x.image_url?'<img class="n-board-ava" src="'+attr(x.image_url)+'" alt="" data-letter="'+attr((x.name||'؟').charAt(0))+'" onerror="imgToAbbr(this,\'n-board-ava ph\')">':'<div class="n-board-ava ph">'+esc((x.name||'؟').charAt(0))+'</div>';
+    var ava=x.image_url?'<img class="n-board-ava" src="'+attr(x.image_url)+'" alt="" loading="lazy" decoding="async" data-letter="'+attr((x.name||'؟').charAt(0))+'" onerror="imgToAbbr(this,\'n-board-ava ph\')">':'<div class="n-board-ava ph">'+esc((x.name||'؟').charAt(0))+'</div>';
     return '<div class="n-board-card">'+ava+'<h4>'+esc(x.name)+'</h4>'+(x.role?'<span class="n-board-role">'+esc(x.role)+'</span>':'')+'</div>';
   }).join('')+'</div>';
 }
@@ -2423,6 +2478,7 @@ function nAfterRender(){
   nAdaptInit();
   if(document.getElementById('n-gift-card')) nGiftUpdate();
   _nHeroIdx=0; nHeroStart();
+  nStatsObserve();
 }
 /* close dropdowns/megas on outside click (national) */
 document.addEventListener('click', function(e){
