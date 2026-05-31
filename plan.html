@@ -2609,6 +2609,25 @@ function wsSecInner(id){
       wsLayoutThemePicker();
   }
   if(id==='hero'){
+    var slidesCard='';
+    if((wsGet('layout_theme')||'')==='national'){
+      var sl=wsArr('hero.slides');
+      var slItems = sl.length ? sl.map(function(it,i){
+        return '<div class="ws-item">'+wsRepHead('hero.slides').replace('{B}','شريحة '+(i+1)).replace('{I}',i)+
+          wsItemTxt('عنوان الشريحة','hero.slides',i,'title','عنوان جذّاب')+
+          wsItemArea('الوصف','hero.slides',i,'subtitle','جملة تشرح الشريحة وتشجّع على التفاعل.',{h:60})+
+          wsItemTxt('رابط صورة الشريحة (اختياري)','hero.slides',i,'image_url','https://...',{type:'url',dir:'ltr',hint:'اتركه فارغاً لشريحة بخلفية لونية فقط'})+
+          (wsGet('hero.slides.'+i+'.image_url')?'<img src="'+esc(wsGet('hero.slides.'+i+'.image_url'))+'" class="ws-img-preview" onerror="this.style.display=\'none\'">':'')+
+          '<div class="ws-row">'+wsItemTxt('نص الزر الأساسي','hero.slides',i,'primary_label','تبرّع الآن')+wsItemTxt('رابط الزر الأساسي','hero.slides',i,'primary_link','#/donate',{dir:'ltr'})+'</div>'+
+          '<div class="ws-row">'+wsItemTxt('نص الزر الثانوي','hero.slides',i,'secondary_label','تعرّف علينا')+wsItemTxt('رابط الزر الثانوي','hero.slides',i,'secondary_link','#/about',{dir:'ltr'})+'</div>'+
+        '</div>';
+      }).join('') : '<div class="ws-empty">لا توجد شرائح بعد — سيُعرض المحتوى المفرد أعلاه. أضف شريحتين أو أكثر لتفعيل السلايدر المتحرّك.</div>';
+      slidesCard='<div class="ws-card"><h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 12h20"/></svg>شرائح الواجهة (سلايدر الثيم الوطني)</h4>'+
+        '<div class="hint" style="margin-bottom:10px">كل شريحة لها عنوان ووصف وأزرار، ويمكن إضافة صورة لها. تتبدّل الشرائح تلقائياً مع أزرار ونقاط تنقّل.</div>'+
+        slItems+
+        '<button class="ws-add-btn" onclick="wsAddItem(\'hero.slides\',{eyebrow:\'\',title:\'\',subtitle:\'\',image_url:\'\',primary_label:\'تبرّع الآن\',primary_link:\'#/donate\',secondary_label:\'تعرّف علينا\',secondary_link:\'#/about\'})">+ إضافة شريحة</button>'+
+      '</div>';
+    }
     return wsSecHead('hero','الواجهة الرئيسية','أول ما يراه الزائر — العنوان والصورة وأزرار الإجراء')+
       '<div class="ws-card"><h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7V5a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v2M9 20h6M12 4v16"/></svg>العنوان والوصف</h4>'+
         wsTxt('العنوان الرئيسي','hero.title','نبني مستقبلاً أفضل لمجتمعنا')+
@@ -2619,7 +2638,8 @@ function wsSecInner(id){
       '<div class="ws-card"><h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="8" width="18" height="8" rx="2"/></svg>أزرار الإجراء</h4>'+
         '<div class="ws-row">'+wsTxt('نص الزر الأساسي','hero.primary_label','تبرّع الآن')+wsTxt('رابط الزر الأساسي','hero.primary_link','#donate', {dir:'ltr'})+'</div>'+
         '<div class="ws-row">'+wsTxt('نص الزر الثانوي','hero.secondary_label','تعرّف علينا')+wsTxt('رابط الزر الثانوي','hero.secondary_link','#about', {dir:'ltr'})+'</div>'+
-      '</div>';
+      '</div>'+
+      slidesCard;
   }
   if(id==='about'){
     return wsSecHead('about','من نحن','نبذة تعريفية + الرؤية والرسالة')+
@@ -2843,6 +2863,13 @@ function wsSeedDefaults(){
       primary_label:'تبرّع الآن', primary_link:'#donate',
       secondary_label:'تعرّف علينا', secondary_link:'#about'
     };
+  }
+  if(!c.hero.slides){
+    c.hero.slides = [
+      {eyebrow:'جمعية أهلية مرخّصة — ترخيص رقم 4500', title:c.hero.title||'نصنع أثراً يمتد، ونبني مستقبلاً أكثر إشراقاً', subtitle:c.hero.subtitle||'نُمكّن الأسر والأفراد عبر برامج نوعية تحقق تنمية مستدامة.', image_url:c.hero.image_url||'', primary_label:'تبرّع الآن', primary_link:'#/donate', secondary_label:'تعرّف علينا', secondary_link:'#/about'},
+      {eyebrow:'التمكين الاقتصادي', title:'من الاحتياج إلى الإنتاج المستدام', subtitle:'برامج تأهيل الأسر المنتجة تنقلها نحو الاستقلال المالي وكرامة العيش.', image_url:'https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&w=1600&q=80', primary_label:'استعرض برامجنا', primary_link:'#/programs', secondary_label:'تبرّع الآن', secondary_link:'#/donate'},
+      {eyebrow:'شفافية وحوكمة', title:'نلتزم بأعلى معايير الإفصاح والشفافية', subtitle:'اطّلع على لوائحنا وتقاريرنا المالية ووثائق الحوكمة بكل وضوح ومسؤولية.', image_url:'', primary_label:'الحوكمة والشفافية', primary_link:'#/governance', secondary_label:'عن الجمعية', secondary_link:'#/about'}
+    ];
   }
 
   if(!c.about || typeof c.about==='string'){

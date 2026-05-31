@@ -683,6 +683,46 @@ body.theme-national .sec-sub{color:var(--n-ink-3)}
 .n-hero-wave{position:absolute;bottom:-1px;left:0;right:0;z-index:3;line-height:0}
 .n-hero-wave svg{width:100%;height:64px;display:block}
 
+/* ── brand logomark ── */
+.n-brandmark,.n-brandmark-sm{border-radius:13px;flex-shrink:0;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.n-brandmark{width:50px;height:50px}
+.n-brandmark-sm{width:48px;height:48px}
+.n-brandmark img,.n-brandmark-sm img{width:100%;height:100%;object-fit:contain;background:var(--n-teal-soft);padding:4px}
+.n-brandmark .n-logo-svg,.n-brandmark-sm .n-logo-svg{width:100%;height:100%;display:block}
+.n-logo-chip{background:#fff;border:1px solid var(--n-line);box-shadow:0 1px 4px rgba(10,77,92,.08)}
+.n-logo-chip img{background:#fff!important;padding:6px!important}
+
+/* ── hero slider ── */
+.n-hero-track{display:grid;position:relative;z-index:2}
+.n-slide{grid-area:1/1;position:relative;opacity:0;visibility:hidden;transition:opacity .6s ease;pointer-events:none}
+.n-slide.on{opacity:1;visibility:visible;pointer-events:auto}
+.n-slide .n-hero-bg{opacity:.25}
+.n-slide.has-img .n-hero-imgov{position:absolute;inset:0;z-index:1;background:linear-gradient(105deg,rgba(7,53,64,.94) 0%,rgba(10,77,92,.8) 48%,rgba(10,77,92,.45) 100%)}
+.n-slide>.wrap{position:relative;z-index:2}
+.n-hero-inner{position:relative;z-index:2;padding:80px 0 34px;max-width:820px}
+.n-hero-btns{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:0}
+.n-hero-trustwrap{position:relative;z-index:2;padding-bottom:52px}
+.n-hero-trust{display:flex;gap:28px;flex-wrap:wrap;border-top:1px solid rgba(255,255,255,.16);padding-top:24px}
+.n-hero-arrow{position:absolute;top:40%;z-index:4;width:46px;height:46px;border-radius:50%;border:1.5px solid rgba(255,255,255,.3);background:rgba(255,255,255,.08);backdrop-filter:blur(6px);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.18s}
+.n-hero-arrow:hover{background:rgba(255,255,255,.2);border-color:rgba(255,255,255,.65)}
+.n-hero-arrow svg{width:22px;height:22px}
+.n-hero-arrow.prev{left:24px}.n-hero-arrow.prev svg{transform:rotate(90deg)}
+.n-hero-arrow.next{right:24px}.n-hero-arrow.next svg{transform:rotate(-90deg)}
+.n-hero-dots{display:flex;gap:9px;justify-content:center;margin-bottom:22px}
+.n-hero-dot{width:9px;height:9px;border-radius:50%;border:none;background:rgba(255,255,255,.32);cursor:pointer;transition:.22s;padding:0}
+.n-hero-dot.on{background:var(--n-gold);width:26px;border-radius:5px}
+
+/* ── partners band (above footer) ── */
+.n-partners-band{background:#fff;border-top:1px solid var(--n-line)}
+.n-partners-band .n-partner{background:var(--n-ice);border:1px solid var(--n-line);border-radius:16px;padding:20px 22px;min-width:180px;min-height:108px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;transition:.18s;text-align:center}
+.n-partners-band .n-partner:hover{box-shadow:var(--shadow);border-color:var(--n-teal);transform:translateY(-3px)}
+.n-partner-mark{width:46px;height:46px;border-radius:12px;background:var(--n-teal-soft);color:var(--n-teal);display:flex;align-items:center;justify-content:center;filter:grayscale(.2);transition:.18s}
+.n-partners-band .n-partner:hover .n-partner-mark{background:var(--n-teal);color:#fff;filter:none}
+.n-partner-mark svg{width:22px;height:22px}
+.n-partner-nm{font-size:13px;font-weight:700;color:var(--n-ink-2);line-height:1.4}
+.n-partners-band .n-partner img{max-height:50px;max-width:140px;object-fit:contain;filter:grayscale(1);opacity:.7;transition:.2s}
+.n-partners-band .n-partner:hover img{filter:none;opacity:1}
+
 /* ── Stats strip (light cards, gold numbers) ── */
 .n-stats{background:var(--n-ice);padding:56px 0!important}
 .n-stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:18px}
@@ -943,7 +983,8 @@ body.theme-national .sec-sub{color:var(--n-ink-3)}
   .n-menu,.n-mega{display:none}
   .n-burger{display:flex}
   .n-util-r .n-util-lic{display:none}
-  .n-hero-inner{padding:64px 0 84px}
+  .n-hero-inner{padding:56px 0 28px}
+  .n-hero-arrow{display:none}
   .n-stats-grid{grid-template-columns:1fr 1fr}
   .n-tpl-grid{grid-template-columns:1fr}
   .n-foot-grid{grid-template-columns:1fr;gap:26px}
@@ -1819,9 +1860,24 @@ function nUtilBar(){
   '</div></div>';
 }
 
+function nLogoSvg(){
+  return '<svg class="n-logo-svg" viewBox="0 0 48 48" fill="none" aria-label="'+attr(brandName())+'">'+
+    '<rect width="48" height="48" rx="13" fill="#0A4D5C"/>'+
+    '<rect width="48" height="48" rx="13" fill="url(#nlg)"/>'+
+    '<defs><linearGradient id="nlg" x1="0" y1="0" x2="48" y2="48" gradientUnits="userSpaceOnUse"><stop stop-color="#0A4D5C"/><stop offset="1" stop-color="#073540"/></linearGradient></defs>'+
+    '<path d="M13 31.5c0-6.6 4.9-11.5 11-11.5s11 4.9 11 11.5" stroke="#D4AF37" stroke-width="2.6" stroke-linecap="round"/>'+
+    '<path d="M17.5 32c0-3.9 2.9-7 6.5-7s6.5 3.1 6.5 7" stroke="#ffffff" stroke-width="2.3" stroke-linecap="round" opacity=".92"/>'+
+    '<circle cx="24" cy="14.8" r="3.1" fill="#D4AF37"/>'+
+  '</svg>';
+}
+function nBrandMark(cls){
+  var b=CFG.brand||{};
+  var src=b.logo_url||'/assets/logo-icon.svg';
+  return '<span class="'+cls+' n-logo-chip"><img src="'+attr(src)+'" alt="'+attr(brandName())+'" onerror="this.parentNode.classList.remove(\'n-logo-chip\');this.parentNode.innerHTML=nLogoSvg()"></span>';
+}
+
 function nNav(){
-  var b=CFG.brand||{}; var name=brandName();
-  var logo=b.logo_url?'<img src="'+attr(b.logo_url)+'" class="n-brand-logo" data-letter="'+attr(name.charAt(0))+'" onerror="imgToAbbr(this,\'n-brand-abbr\')">':'<div class="n-brand-abbr">'+esc(name.charAt(0))+'</div>';
+  var name=brandName();
   var mega=NAT_NAV.map(function(g){
     var items=g.items.map(function(it){
       return '<a href="'+attr(it.href)+'"><span class="ic">'+nIc(it.ic)+'</span><span><b>'+esc(it.t)+'</b><span>'+esc(it.d)+'</span></span></a>';
@@ -1830,7 +1886,7 @@ function nNav(){
       '<div class="n-mega"><div class="n-mega-head">'+esc(g.label)+'</div>'+items+'</div></div>';
   }).join('');
   return '<nav class="n-nav"><div class="wrap n-nav-inner">'+
-    '<div class="n-brand" onclick="location.hash=\'\'">'+logo+'<div class="n-brand-tx"><b>'+esc(name)+'</b><span>ترخيص رقم '+esc(nLic())+'</span></div></div>'+
+    '<div class="n-brand" onclick="location.hash=\'\'">'+nBrandMark('n-brandmark')+'<div class="n-brand-tx"><b>'+esc(name)+'</b><span>ترخيص رقم '+esc(nLic())+'</span></div></div>'+
     '<div class="n-menu">'+mega+'</div>'+
     '<a class="n-donate-btn" href="#/donate">'+nIc('heart')+'تبرّع الآن</a>'+
     '<button class="n-burger" onclick="openNatMenu()" aria-label="القائمة"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>'+
@@ -1847,22 +1903,31 @@ function nPageHead(eyebrow,title,sub,crumb){
   '</div></div>';
 }
 
+function nPartnersBand(){
+  var p=arr('partners').filter(function(x){return x.name||x.logo_url;});
+  if(!p.length) p=[{name:'المركز الوطني لتنمية القطاع غير الربحي'},{name:'منصة إحسان'},{name:'صندوق دعم الجمعيات'},{name:'منصة تبرّع'}];
+  return '<section class="n-partners-band"><div class="wrap">'+
+    '<div class="n-sec-center"><div class="eyebrow"><span class="ln"></span>معاً نصنع الأثر</div><h2>شركاء النجاح والمنصات الوطنية</h2>'+
+      '<div class="sub">بدعمٍ من شركائنا في القطاعين الحكومي وغير الربحي نُحقّق أثراً أوسع وأكثر استدامة.</div></div>'+
+    '<div class="n-partners-grid">'+p.map(function(x){
+      return '<div class="n-partner">'+(x.logo_url
+        ? '<img src="'+attr(x.logo_url)+'" alt="'+attr(x.name||'')+'" onerror="this.outerHTML=&quot;<span class=\\&quot;n-partner-ph&quot;>'+esc(x.name||'')+'</span>&quot;">'
+        : '<span class="n-partner-mark">'+nIc('handshake')+'</span><span class="n-partner-nm">'+esc(x.name)+'</span>')+'</div>';
+    }).join('')+'</div>'+
+  '</div></section>';
+}
+
 function nFooter(){
-  var name=brandName(); var c=CFG.contact||{}; var b=CFG.brand||{};
+  var name=brandName(); var c=CFG.contact||{};
   var lic=nLic();
-  var logo=b.logo_url?'<div class="abbr"><img src="'+attr(b.logo_url)+'" alt="" onerror="this.parentElement.textContent=\''+esc(name.charAt(0))+'\'"></div>':'<div class="abbr">'+esc(name.charAt(0))+'</div>';
   var gov=arr('governance');
   function govUrl(catKey){ var d=gov.filter(function(x){return (x.category||'').indexOf(catKey)>=0;})[0]; return d&&d.url?attr(d.url):'#/governance'; }
-  var partners=arr('partners').filter(function(x){return x.name||x.logo_url;});
-  if(!partners.length) partners=[{name:'المركز الوطني لتنمية القطاع غير الربحي'},{name:'منصة إحسان'},{name:'صندوق دعم الجمعيات'},{name:'منصة تبرّع'}];
-  var pHtml=partners.map(function(x){
-    return x.logo_url?'<div class="n-foot-partner"><img src="'+attr(x.logo_url)+'" alt="'+attr(x.name||'')+'" onerror="this.outerHTML=&quot;'+esc(x.name||'')+'&quot;"></div>':'<div class="n-foot-partner">'+esc(x.name)+'</div>';
-  }).join('');
-  return '<footer class="n-footer">'+
+  return nPartnersBand()+
+    '<footer class="n-footer">'+
     '<div class="n-foot-main"><div class="wrap"><div class="n-foot-grid">'+
       /* 1) disclosure + license */
       '<div class="n-foot-brand">'+
-        '<div class="lg">'+logo+'<b>'+esc(name)+'</b></div>'+
+        '<div class="lg">'+nBrandMark('n-brandmark-sm')+'<b>'+esc(name)+'</b></div>'+
         '<div class="n-foot-lic-tag">'+nIc('license')+'ترخيص رقم '+esc(lic)+'</div>'+
         '<p class="n-foot-disclosure">جمعية أهلية مسجّلة ومرخّصة من المركز الوطني لتنمية القطاع غير الربحي بموجب ترخيص رقم ('+esc(lic)+'). تعمل تحت إشراف مركز التنمية الاجتماعية بمكة المكرمة.</p>'+
         '<a class="n-foot-cert" href="#">'+nIc('download')+'تحميل شهادة الترخيص</a>'+
@@ -1874,7 +1939,7 @@ function nFooter(){
         '<a href="'+govUrl('خصوصية')+'">'+nIc('doc')+'سياسة خصوصية البيانات</a>'+
         '<a href="'+govUrl('الإبلاغ')+'">'+nIc('doc')+'الإبلاغ عن المخالفات</a>'+
       '</div>'+
-      /* 3) admin + partners links */
+      /* 3) admin links */
       '<div class="n-foot-col"><h5>روابط إدارية</h5>'+
         '<a href="#">'+nIc('userplus')+'التوظيف والتدريب التعاوني</a>'+
         '<a href="#">'+nIc('handshake')+'الموردون والمشتريات</a>'+
@@ -1889,10 +1954,6 @@ function nFooter(){
         (c.phone?'<a href="tel:'+attr(c.phone)+'" style="direction:ltr">'+nIc('phone')+esc(c.phone)+'</a>':'')+
       '</div>'+
     '</div></div></div>'+
-    /* 5) national partners strip */
-    '<div class="n-foot-partners"><div class="wrap"><div class="lbl">شركاء النجاح والمنصات الوطنية</div>'+
-      '<div class="n-foot-partners-row">'+pHtml+'</div>'+
-    '</div></div>'+
     '<div class="n-foot-bottom"><div class="wrap n-foot-bottom-inner">'+
       '<span>© '+new Date().getFullYear()+' '+esc(name)+' — جميع الحقوق محفوظة</span>'+
       '<a class="n-foot-buad" href="https://buad.sa" target="_blank" rel="noopener">صُمّم عبر <b>بُعد</b></a>'+
@@ -1901,29 +1962,61 @@ function nFooter(){
 }
 
 /* ── home sections ── */
-function nHero(){
+var _nHeroTimer=null,_nHeroIdx=0,_nHeroN=1;
+function nHeroSlides(){
   var h=CFG.hero||{}; var b=CFG.brand||{};
-  var title=h.title||b.tagline||brandName();
-  var bg=h.image_url?'<div class="n-hero-bg" style="background-image:url('+attr(h.image_url)+')"></div>':'';
-  var sub=h.subtitle||'نعمل على تمكين الأسر والأفراد وتحقيق أثر تنموي مستدام وفق أعلى معايير الحوكمة والشفافية.';
-  return '<header class="n-hero">'+bg+'<div class="n-hero-pattern"></div><div class="n-hero-deco"></div>'+
-    '<div class="wrap"><div class="n-hero-inner">'+
-      '<div class="n-hero-eyebrow"><span class="ln"></span><span>'+esc(b.tagline||'جمعية أهلية مرخّصة — ترخيص رقم '+nLic())+'</span></div>'+
-      '<h1>'+esc(title)+'</h1>'+
-      '<p>'+esc(sub)+'</p>'+
-      '<div class="n-hero-btns">'+
-        '<a class="n-btn-gold" href="#/donate">'+nIc('heart')+'تبرّع الآن</a>'+
-        '<a class="n-btn-outline-w" href="#/about">تعرّف علينا</a>'+
-      '</div>'+
-      '<div class="n-hero-trust">'+
-        '<div class="it">'+nIc('shield')+'إشراف المركز الوطني لتنمية القطاع غير الربحي</div>'+
-        '<div class="it">'+nIc('check')+'حوكمة وشفافية بمعايير 1447هـ</div>'+
-        '<div class="it">'+nIc('license')+'ترخيص رقم '+esc(nLic())+'</div>'+
-      '</div>'+
+  var slides=(Array.isArray(h.slides)&&h.slides.length)?h.slides.filter(function(s){return s&&(s.title||s.subtitle||s.image_url);}):[];
+  if(!slides.length){
+    slides=[{eyebrow:b.tagline,title:h.title||b.tagline||brandName(),subtitle:h.subtitle||'نعمل على تمكين الأسر والأفراد وتحقيق أثر تنموي مستدام وفق أعلى معايير الحوكمة والشفافية.',image_url:h.image_url||'',primary_label:h.primary_label,primary_link:h.primary_link,secondary_label:h.secondary_label,secondary_link:h.secondary_link}];
+  }
+  return slides;
+}
+function nHero(){
+  var b=CFG.brand||{}; var slides=nHeroSlides(); _nHeroN=slides.length; _nHeroIdx=0;
+  var slidesHtml=slides.map(function(s,i){
+    var img=s.image_url?'<div class="n-hero-bg" style="background-image:url('+attr(s.image_url)+')"></div><div class="n-hero-imgov"></div>':'';
+    var p1=s.primary_label||'تبرّع الآن',p1l=s.primary_link||'#/donate';
+    var p2=s.secondary_label||'تعرّف علينا',p2l=s.secondary_link||'#/about';
+    var ext1=/^https?:/.test(p1l)?' target="_blank" rel="noopener"':'';
+    var ext2=/^https?:/.test(p2l)?' target="_blank" rel="noopener"':'';
+    return '<div class="n-slide'+(i===0?' on':'')+(s.image_url?' has-img':'')+'">'+img+
+      '<div class="wrap"><div class="n-hero-inner">'+
+        '<div class="n-hero-eyebrow"><span class="ln"></span><span>'+esc(s.eyebrow||b.tagline||('جمعية أهلية مرخّصة — ترخيص رقم '+nLic()))+'</span></div>'+
+        '<h1>'+esc(s.title||brandName())+'</h1>'+
+        (s.subtitle?'<p>'+esc(s.subtitle)+'</p>':'')+
+        '<div class="n-hero-btns">'+
+          (p1?'<a class="n-btn-gold" href="'+attr(p1l)+'"'+ext1+'>'+nIc('heart')+esc(p1)+'</a>':'')+
+          (p2?'<a class="n-btn-outline-w" href="'+attr(p2l)+'"'+ext2+'>'+esc(p2)+'</a>':'')+
+        '</div>'+
+      '</div></div>'+
+    '</div>';
+  }).join('');
+  var arrows=slides.length>1?(
+    '<button class="n-hero-arrow prev" onclick="nHeroStep(-1)" aria-label="السابق">'+nIc('chevron')+'</button>'+
+    '<button class="n-hero-arrow next" onclick="nHeroStep(1)" aria-label="التالي">'+nIc('chevron')+'</button>'
+  ):'';
+  var dots=slides.length>1?('<div class="n-hero-dots">'+slides.map(function(s,i){return '<button class="n-hero-dot'+(i===0?' on':'')+'" onclick="nHeroGo('+i+')" aria-label="شريحة '+(i+1)+'"></button>';}).join('')+'</div>'):'';
+  return '<header class="n-hero" onmouseenter="nHeroStop()" onmouseleave="nHeroStart()">'+
+    '<div class="n-hero-pattern"></div><div class="n-hero-deco"></div>'+
+    '<div class="n-hero-track">'+slidesHtml+'</div>'+
+    arrows+
+    '<div class="wrap n-hero-trustwrap">'+dots+'<div class="n-hero-trust">'+
+      '<div class="it">'+nIc('shield')+'إشراف المركز الوطني لتنمية القطاع غير الربحي</div>'+
+      '<div class="it">'+nIc('check')+'حوكمة وشفافية بمعايير 1447هـ</div>'+
+      '<div class="it">'+nIc('license')+'ترخيص رقم '+esc(nLic())+'</div>'+
     '</div></div>'+
     '<div class="n-hero-wave"><svg viewBox="0 0 1440 60" preserveAspectRatio="none"><path fill="#F8FAFC" d="M0,40 C240,60 480,10 720,20 C960,30 1200,60 1440,35 L1440,60 L0,60 Z"/></svg></div>'+
   '</header>';
 }
+function nHeroGo(i){
+  var slides=document.querySelectorAll('.n-hero .n-slide'); if(!slides.length) return;
+  _nHeroN=slides.length; i=((i%_nHeroN)+_nHeroN)%_nHeroN; _nHeroIdx=i;
+  slides.forEach(function(s,idx){ s.classList.toggle('on', idx===i); });
+  document.querySelectorAll('.n-hero-dot').forEach(function(d,idx){ d.classList.toggle('on', idx===i); });
+}
+function nHeroStep(d){ nHeroGo(_nHeroIdx+d); nHeroStart(); }
+function nHeroStart(){ nHeroStop(); if(_nHeroN>1) _nHeroTimer=setInterval(function(){ nHeroGo(_nHeroIdx+1); },6500); }
+function nHeroStop(){ if(_nHeroTimer){ clearInterval(_nHeroTimer); _nHeroTimer=null; } }
 
 function nStatsStrip(){
   var s=arr('stats').filter(function(x){return x.number||x.label;});
@@ -2060,7 +2153,7 @@ function nDonateCTA(){
 
 /* ── PAGE: home ── */
 function renderNatHome(){
-  document.getElementById('root').innerHTML = nChrome()+nHero()+nStatsStrip()+nAboutTeaser()+nProgramsTeaser()+nImpactCalc()+nAdaptShowcase()+nNewsTeaser()+nPartnersStrip()+nDonateCTA()+nFooter();
+  document.getElementById('root').innerHTML = nChrome()+nHero()+nStatsStrip()+nAboutTeaser()+nProgramsTeaser()+nImpactCalc()+nAdaptShowcase()+nNewsTeaser()+nDonateCTA()+nFooter();
   nAfterRender();
 }
 
@@ -2340,6 +2433,7 @@ function nAfterRender(){
   if(document.getElementById('nc-slider')) ncUpdate(document.getElementById('nc-slider').value);
   nAdaptInit();
   if(document.getElementById('n-gift-card')) nGiftUpdate();
+  _nHeroIdx=0; nHeroStart();
 }
 /* close dropdowns/megas on outside click (national) */
 document.addEventListener('click', function(e){
