@@ -76,6 +76,27 @@ img{max-width:100%;display:block}
 .hero-btns{display:flex;gap:14px;flex-wrap:wrap}
 .hero-wave{position:absolute;bottom:-1px;left:0;right:0;z-index:2;line-height:0}
 .hero-wave svg{width:100%;height:60px;display:block}
+/* ── generic hero slider (classic/modern/premium/minimal) ── */
+.hero-slider{display:grid;position:relative;z-index:2;width:100%}
+.hero-slide{grid-area:1/1;position:relative;opacity:0;visibility:hidden;transition:opacity .55s ease;pointer-events:none}
+.hero-slide.on{opacity:1;visibility:visible;pointer-events:auto}
+.hero-slide-bg{position:absolute;inset:0;z-index:0;background-size:cover;background-position:center}
+.hero-slide-bg::after{content:'';position:absolute;inset:0;background:linear-gradient(to right,rgba(8,12,24,.34),rgba(8,12,24,.66))}
+.hero-slide>.wrap{position:relative;z-index:2}
+.hero-arrow{position:absolute;top:42%;z-index:6;width:44px;height:44px;border-radius:50%;border:1.5px solid rgba(255,255,255,.3);background:rgba(255,255,255,.1);backdrop-filter:blur(6px);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.18s}
+.hero-arrow:hover{background:rgba(255,255,255,.22);border-color:rgba(255,255,255,.6)}
+.hero-arrow.prev{left:22px}.hero-arrow.next{right:22px}
+.hero-arrow svg{width:20px;height:20px}
+.hero-dots{position:absolute;bottom:30px;left:0;right:0;z-index:6;display:flex;gap:8px;justify-content:center}
+.hero-dot{width:9px;height:9px;border-radius:50%;border:none;background:rgba(255,255,255,.4);cursor:pointer;transition:.2s;padding:0}
+.hero-dot.on{background:#fff;width:26px;border-radius:5px}
+.hero .hero-dots{bottom:86px}
+.p-hero .hero-dots{bottom:58px}
+.m-hero .hero-slider{flex:1}
+@media(max-width:640px){.hero-arrow{display:none}}
+/* trusted-organization pill (classic/modern/premium heroes) */
+.trust-pill{display:inline-flex;align-items:center;gap:8px;margin-bottom:22px;padding:8px 16px;border-radius:999px;background:linear-gradient(135deg,#D4AF37,#B8961D);color:#1a0e00;font-size:13px;font-weight:800;box-shadow:0 6px 18px rgba(212,175,55,.3)}
+.trust-pill svg{width:17px;height:17px}
 
 /* ── Sections ── */
 section{padding:80px 0}
@@ -1247,6 +1268,33 @@ function slStep(id,d){ var sl=document.querySelector('.hero-slider[data-sl="'+id
 function slDot(id,i){ slGo(id,i); slStart(id); }
 function slStart(id){ slStop(id); var sl=document.querySelector('.hero-slider[data-sl="'+id+'"]'); if(!sl||sl.querySelectorAll('.hero-slide').length<2) return; _slTimers[id]=setInterval(function(){ var i=+sl.getAttribute('data-i')||0; slGo(id,i+1); },6500); }
 function slStop(id){ if(_slTimers[id]){ clearInterval(_slTimers[id]); _slTimers[id]=null; } }
+function slideBtns(s,c1,c2){
+  var don=CFG.donation||{};
+  var p1=s.primary_label, p1l=s.primary_link||'#about';
+  var p2=s.secondary_label, p2l=s.secondary_link||'#about';
+  if(!p1 && visible('donation') && (don.url||don.title)){ p1='تبرّع الآن'; p1l=don.url||'#donate'; }
+  if(!p2){ p2='تعرّف علينا'; p2l='#about'; }
+  var e1=/^https?:/.test(p1l)?' target="_blank" rel="noopener"':'';
+  var e2=/^https?:/.test(p2l)?' target="_blank" rel="noopener"':'';
+  return (p1?'<a class="'+c1+'" href="'+attr(p1l)+'"'+e1+'>'+esc(p1)+'</a>':'')+(p2?'<a class="'+c2+'" href="'+attr(p2l)+'"'+e2+'>'+esc(p2)+'</a>':'');
+}
+function trustedBadgeHtml(){
+  if(!nIsTrusted()) return '';
+  return '<div class="trust-pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M8.21 13.89 7 22l5-3 5 3-1.21-8.12"/></svg><span>'+esc(nTrustLabel())+'</span></div>';
+}
+function heroSlider(id, innerFn, noBg){
+  var slides=heroSlides(), n=slides.length;
+  var html=slides.map(function(s,i){
+    var bg=(!noBg&&s.image_url)?'<div class="hero-slide-bg"'+(i===0?' style="background-image:url('+attr(s.image_url)+')"':' data-bg="'+attr(s.image_url)+'"')+'></div>':'';
+    return '<div class="hero-slide'+(i===0?' on':'')+'">'+bg+'<div class="wrap">'+innerFn(s,i)+'</div></div>';
+  }).join('');
+  var ctrl = n>1 ? (
+    '<button class="hero-arrow prev" onclick="slStep(\''+id+'\',-1)" aria-label="السابق"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></button>'+
+    '<button class="hero-arrow next" onclick="slStep(\''+id+'\',1)" aria-label="التالي"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>'+
+    '<div class="hero-dots">'+slides.map(function(s,i){return '<button class="hero-dot'+(i===0?' on':'')+'" onclick="slDot(\''+id+'\','+i+')" aria-label="شريحة '+(i+1)+'"></button>';}).join('')+'</div>'
+  ):'';
+  return '<div class="hero-slider" data-sl="'+id+'" data-i="0">'+html+'</div>'+ctrl;
+}
 
 function svgFor(name){
   var m={
@@ -1278,25 +1326,17 @@ function renderHome(){
 }
 
 function heroHtml(){
-  var h=CFG.hero||{}; var b=CFG.brand||{};
-  var title=h.title||b.tagline||brandName();
-  var bg=h.image_url?'<div class="hero-bg" style="background-image:url('+attr(h.image_url)+')"></div>':'';
-  var p1=h.primary_label, p1l=h.primary_link||'#about';
-  var p2=h.secondary_label, p2l=h.secondary_link||'#about';
-  var don=CFG.donation||{};
-  if(!p1 && visible('donation') && (don.url||don.title)){ p1='تبرّع الآن'; p1l=don.url||'#donate'; }
-  if(!p2){ p2='تعرّف علينا'; p2l='#about'; }
-  var ext1=/^https?:/.test(p1l)?' target="_blank" rel="noopener"':'';
-  return '<header class="hero">'+bg+'<div class="hero-ov"></div><div class="hero-deco a"></div><div class="hero-deco b"></div>'+
-    '<div class="wrap"><div class="hero-inner">'+
-      '<div class="hero-badge"><span class="pulse"></span>'+esc(b.tagline||'الموقع الرسمي للجمعية')+'</div>'+
-      '<h1>'+esc(title)+'</h1>'+
-      (h.subtitle?'<p>'+esc(h.subtitle)+'</p>':'')+
-      '<div class="hero-btns">'+
-        (p1?'<a class="btn btn-accent" href="'+attr(p1l)+'"'+ext1+'>'+esc(p1)+'</a>':'')+
-        (p2?'<a class="btn btn-ghost" href="'+attr(p2l)+'">'+esc(p2)+'</a>':'')+
-      '</div>'+
-    '</div></div>'+
+  var b=CFG.brand||{};
+  return '<header class="hero"><div class="hero-deco a"></div><div class="hero-deco b"></div>'+
+    heroSlider('hero', function(s,i){
+      return '<div class="hero-inner">'+
+        '<div class="hero-badge"><span class="pulse"></span>'+esc(s.eyebrow||b.tagline||'الموقع الرسمي للجمعية')+'</div>'+
+        '<h1>'+esc(s.title||brandName())+'</h1>'+
+        (s.subtitle?'<p>'+esc(s.subtitle)+'</p>':'')+
+        trustedBadgeHtml()+
+        '<div class="hero-btns">'+slideBtns(s,'btn btn-accent','btn btn-ghost')+'</div>'+
+      '</div>';
+    })+
     '<div class="hero-wave"><svg viewBox="0 0 1440 60" preserveAspectRatio="none"><path fill="#ffffff" d="M0,40 C240,60 480,10 720,20 C960,30 1200,60 1440,35 L1440,60 L0,60 Z"/></svg></div>'+
   '</header>';
 }
@@ -1457,21 +1497,21 @@ function mHeroHtml(){
     '<div class="m-hero-card">'+
       '<div style="font-size:13px;font-weight:700;color:rgba(255,255,255,.7);margin-bottom:4px">أثرنا بالأرقام</div>'+
       '<div style="font-size:17px;font-weight:800;color:#fff;margin-bottom:16px">'+esc(brandName())+'</div>'+
-      '<div class="m-hero-stat-row">'+s.map(function(x){ return '<div class="m-hero-stat"><div class="n">'+esc(x.number)+'</div><div class="l">'+esc(x.label)+'</div></div>'; }).join('')+'</div>'+
+      '<div class="m-hero-stat-row">'+s.map(function(x){ return '<div class="m-hero-stat"><div class="n" dir="ltr">'+esc(x.number)+'</div><div class="l">'+esc(x.label)+'</div></div>'; }).join('')+'</div>'+
     '</div>' : '';
-  return '<header class="m-hero">'+bg+'<div class="m-hero-shape"></div><div class="m-hero-deco-a"></div><div class="m-hero-deco-b"></div>'+
-    '<div class="wrap"><div class="m-hero-inner">'+
-      '<div class="m-hero-tx">'+
-        '<div class="m-hero-pill"><span class="dot"></span>'+esc(b.tagline||'الموقع الرسمي للجمعية')+'</div>'+
-        '<h1>'+esc(title)+'</h1>'+
-        (h.subtitle?'<p>'+esc(h.subtitle)+'</p>':'')+
-        '<div class="m-hero-btns">'+
-          (p1?'<a class="btn btn-accent" href="'+attr(p1l)+'"'+ext1+'>'+esc(p1)+'</a>':'')+
-          (p2?'<a class="btn btn-ghost" href="'+attr(p2l)+'">'+esc(p2)+'</a>':'')+
+  return '<header class="m-hero"><div class="m-hero-shape"></div><div class="m-hero-deco-a"></div><div class="m-hero-deco-b"></div>'+
+    heroSlider('mhero', function(sl,i){
+      return '<div class="m-hero-inner">'+
+        '<div class="m-hero-tx">'+
+          '<div class="m-hero-pill"><span class="dot"></span>'+esc(sl.eyebrow||b.tagline||'الموقع الرسمي للجمعية')+'</div>'+
+          '<h1>'+esc(sl.title||brandName())+'</h1>'+
+          (sl.subtitle?'<p>'+esc(sl.subtitle)+'</p>':'')+
+          trustedBadgeHtml()+
+          '<div class="m-hero-btns">'+slideBtns(sl,'btn btn-accent','btn btn-ghost')+'</div>'+
         '</div>'+
-      '</div>'+
-      '<div class="m-hero-vis">'+statsCard+'</div>'+
-    '</div></div>'+
+        '<div class="m-hero-vis">'+statsCard+'</div>'+
+      '</div>';
+    })+
   '</header>';
 }
 
@@ -1612,24 +1652,24 @@ function pHeroHtml(){
   if(!p1){p1='تعرّف علينا';p1l='#about';p2='';}
   var ext1=/^https?:/.test(p1l)?' target="_blank" rel="noopener"':'';
   var stats=arr('stats').filter(function(x){return x.number;}); var fs=stats[0];
-  var imgFrame=h.image_url?
-    '<div class="p-hero-vis"><div class="p-hero-img-frame">'+
-      '<div class="p-hero-img-main"><img src="'+attr(h.image_url)+'" alt="" onerror="this.parentElement.style.opacity=\'.4\'"></div>'+
-      (fs?'<div class="p-hero-img-badge"><div class="n">'+esc(fs.number)+'</div><div class="l">'+esc(fs.label)+'</div></div>':'')+
-    '</div></div>':'';
-  return '<header class="p-hero">'+bg+
+  return '<header class="p-hero">'+
     '<div class="p-hero-deco-a"></div><div class="p-hero-deco-b"></div>'+
-    '<div class="wrap"><div class="p-hero-inner">'+
-      '<div class="p-hero-tx">'+
-        '<div class="p-eyebrow p-hero-eyebrow"><span class="line"></span>'+esc(b.tagline||'الموقع الرسمي للجمعية')+'</div>'+
-        '<h1>'+esc(title)+'</h1>'+
-        (h.subtitle?'<p>'+esc(h.subtitle)+'</p>':'')+
-        '<div class="p-hero-btns">'+
-          (p1?'<a class="p-btn-primary" href="'+attr(p1l)+'"'+ext1+'>'+esc(p1)+'</a>':'')+
-          (p2?'<a class="p-btn-ghost" href="'+attr(p2l)+'">'+esc(p2)+'</a>':'')+
-        '</div>'+
-      '</div>'+imgFrame+
-    '</div></div>'+
+    heroSlider('phero', function(s,i){
+      var imgFrame=s.image_url?
+        '<div class="p-hero-vis"><div class="p-hero-img-frame">'+
+          '<div class="p-hero-img-main"><img src="'+attr(s.image_url)+'" alt="" loading="lazy" onerror="this.parentElement.style.opacity=\'.4\'"></div>'+
+          (fs?'<div class="p-hero-img-badge"><div class="n" dir="ltr">'+esc(fs.number)+'</div><div class="l">'+esc(fs.label)+'</div></div>':'')+
+        '</div></div>':'';
+      return '<div class="p-hero-inner">'+
+        '<div class="p-hero-tx">'+
+          '<div class="p-eyebrow p-hero-eyebrow"><span class="line"></span>'+esc(s.eyebrow||b.tagline||'الموقع الرسمي للجمعية')+'</div>'+
+          '<h1>'+esc(s.title||brandName())+'</h1>'+
+          (s.subtitle?'<p>'+esc(s.subtitle)+'</p>':'')+
+          trustedBadgeHtml()+
+          '<div class="p-hero-btns">'+slideBtns(s,'p-btn-primary','p-btn-ghost')+'</div>'+
+        '</div>'+imgFrame+
+      '</div>';
+    }, true)+
     '<div class="p-hero-scroll"><div class="p-scroll-pip"></div></div>'+
   '</header>';
 }
