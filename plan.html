@@ -564,7 +564,10 @@ img,svg{display:block;max-width:100%}
 .ws-lt-national{background:linear-gradient(180deg,#073540 28px,#fff 28px);position:relative}
 .ws-lt-national::before{content:'';position:absolute;top:0;left:0;right:0;height:6px;background:#0A4D5C}
 .ws-lt-national::after{content:'';position:absolute;top:8px;right:10px;width:36px;height:14px;border-radius:3px;background:#D4AF37;opacity:.9}
-.ws-layout-grid{grid-template-columns:1fr 1fr 1fr 1fr}
+.ws-lt-minimal{background:#fff;border:1px solid #e7ebf0;position:relative}
+.ws-lt-minimal::before{content:'';position:absolute;top:12px;right:12px;width:26px;height:5px;border-radius:3px;background:#0f172a}
+.ws-lt-minimal::after{content:'';position:absolute;top:23px;right:12px;width:40px;height:4px;border-radius:3px;background:#cbd5e1}
+.ws-layout-grid{grid-template-columns:repeat(auto-fit,minmax(118px,1fr))}
 .ws-layout-opt span{display:block;font-size:13.5px;font-weight:700;color:var(--navy-deep);margin-bottom:3px}
 .ws-layout-opt small{font-size:11.5px;color:var(--muted)}
 .ws-layout-opt.active span{color:var(--accent)}
@@ -2921,6 +2924,11 @@ function wsLayoutThemePicker(){
         '<div class="ws-layout-thumb ws-lt-national"></div>'+
         '<span>وطني</span>'+
         '<small>ثيم مؤسسي احترافي مع حاسبة الأثر</small>'+
+      '</div>'+
+      '<div class="ws-layout-opt'+(cur==='minimal'?' active':'')+'" data-lt="minimal" onclick="wsPickLayout(\'minimal\')">'+
+        '<div class="ws-layout-thumb ws-lt-minimal"></div>'+
+        '<span>ميني‑مال</span>'+
+        '<small>أبيض وبسيط — مساحات واسعة ولون واحد</small>'+
       '</div>'+
     '</div>'+
     '<div class="hint" style="margin-top:8px">احفظ التغييرات بعد الاختيار لتطبيق النمط على موقعك</div>'+

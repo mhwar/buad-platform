@@ -608,6 +608,58 @@ body.theme-premium .brand-abbr{width:50px;height:50px;border-radius:14px;font-si
 }
 
 /* ═══════════════════════════════════════════════
+   MINIMAL THEME — layout_theme: 'minimal'
+   White · spacious · single accent · thin line icons
+   ═══════════════════════════════════════════════ */
+body.theme-minimal{--radius:14px;--shadow:none;--shadow-lg:none;--fg:#0f172a;--fg-2:#475569;--fg-3:#94a3b8;--fg-4:#b4bdca;--line:#edf0f4;--bg:#fff;--bg-2:#fafbfc;background:#fff}
+body.theme-minimal .nav{background:rgba(255,255,255,.88);backdrop-filter:saturate(180%) blur(10px);border-bottom:1px solid var(--line);box-shadow:none}
+body.theme-minimal .brand-abbr{background:var(--accent);border-radius:10px}
+body.theme-minimal .brand-tx b{color:var(--fg)}
+body.theme-minimal .nav-links a:hover{background:transparent;color:var(--accent)}
+body.theme-minimal .nav-burger{border-color:var(--line);color:var(--fg)}
+body.theme-minimal .btn{border-radius:10px;font-weight:700}
+body.theme-minimal .btn-accent{box-shadow:none}
+body.theme-minimal .btn-accent:hover{transform:none;box-shadow:none;filter:brightness(.94)}
+body.theme-minimal .btn-ghost{background:transparent;border:1.5px solid var(--line);color:var(--fg)}
+body.theme-minimal .btn-ghost:hover{border-color:var(--accent);color:var(--accent)}
+/* hero: light & airy with dark text */
+body.theme-minimal .hero{background:#fff;color:var(--fg)}
+body.theme-minimal .hero-deco{display:none}
+body.theme-minimal .hero-inner{padding:118px 0 128px;max-width:840px}
+body.theme-minimal .hero h1{color:var(--fg);font-size:clamp(34px,5.4vw,60px);letter-spacing:-1.2px;font-weight:800}
+body.theme-minimal .hero p{color:var(--fg-2)}
+body.theme-minimal .hero-badge{background:var(--brand-soft);border:1px solid var(--line);color:var(--accent)}
+body.theme-minimal .hero-badge .pulse{background:var(--accent)}
+body.theme-minimal .hero-wave{display:none}
+body.theme-minimal .hero-slide-bg::after{background:linear-gradient(to right,rgba(255,255,255,.80),rgba(255,255,255,.93))}
+body.theme-minimal .hero-arrow{border-color:var(--line);background:#fff;color:var(--fg)}
+body.theme-minimal .hero-arrow:hover{border-color:var(--accent);color:var(--accent)}
+body.theme-minimal .hero-dot{background:var(--line)}
+body.theme-minimal .hero-dot.on{background:var(--accent)}
+body.theme-minimal .hero .hero-dots{bottom:44px}
+body.theme-minimal .trust-pill{background:var(--brand-soft);color:var(--accent);border:1px solid var(--line);box-shadow:none}
+/* spacious sections */
+body.theme-minimal section{padding:100px 0}
+body.theme-minimal .alt{background:var(--bg-2)}
+body.theme-minimal .sec-title{color:var(--fg)}
+body.theme-minimal .sec-eyebrow{color:var(--accent)}
+/* cards: hairline border, no shadow */
+body.theme-minimal .prog-card,body.theme-minimal .news-card,body.theme-minimal .board-card,body.theme-minimal .vm-card,body.theme-minimal .gov-doc,body.theme-minimal .gov-cat,body.theme-minimal .faq-item,body.theme-minimal .partner,body.theme-minimal .contact-card{box-shadow:none;border:1px solid var(--line);border-radius:var(--radius);background:#fff}
+body.theme-minimal .prog-card:hover,body.theme-minimal .news-card:hover,body.theme-minimal .board-card:hover{box-shadow:none;border-color:var(--accent);transform:translateY(-3px)}
+/* stats: light surface, accent icons, dark numbers */
+body.theme-minimal .stats{background:var(--bg-2);border-top:1px solid var(--line);border-bottom:1px solid var(--line);color:var(--fg)}
+body.theme-minimal .stat-ic{background:var(--brand-soft);color:var(--accent)}
+body.theme-minimal .stat .n{background:none;-webkit-text-fill-color:currentColor;color:var(--fg)}
+body.theme-minimal .stat .l{color:var(--fg-3)}
+/* footer: light */
+body.theme-minimal footer{background:#fff;border-top:1px solid var(--line);color:var(--fg-2)}
+body.theme-minimal footer .foot-brand b,body.theme-minimal footer .foot-col h5{color:var(--fg)}
+body.theme-minimal footer a{color:var(--fg-2)}
+body.theme-minimal footer a:hover{color:var(--accent)}
+body.theme-minimal .foot-bottom{border-top:1px solid var(--line)}
+@media(max-width:760px){body.theme-minimal .hero-inner{padding:80px 0 90px}body.theme-minimal section{padding:64px 0}}
+
+/* ═══════════════════════════════════════════════
    NATIONAL THEME — layout_theme: 'national'
    Light & airy · Deep Teal #0A4D5C (hero+footer+text only)
    Muted Gold #D4AF37 (CTA + impact only) · Ice White #F8FAFC
