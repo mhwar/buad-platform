@@ -493,6 +493,8 @@ img,svg{display:block;max-width:100%}
 .ws-theme-opt.active::after{content:'✓';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:15px;font-weight:800}
 .ws-color-input{display:flex;align-items:center;gap:10px}
 .ws-color-input input[type=color]{width:46px;height:38px;padding:2px;border-radius:8px;cursor:pointer}
+.ws-check-row{display:flex;align-items:center;gap:10px;font-size:13.5px;font-weight:600;color:var(--navy-2);cursor:pointer}
+.ws-check-row input[type=checkbox]{width:18px;height:18px;cursor:pointer;flex-shrink:0}
 .ws-actions{display:flex;justify-content:flex-end;gap:10px;padding:14px 0 4px;position:sticky;bottom:0;background:linear-gradient(transparent,var(--bg) 30%);margin-top:8px}
 .ws-img-preview{width:100%;height:120px;object-fit:cover;border-radius:8px;margin-top:8px;border:1.5px solid var(--line);background:var(--bg-tint)}
 .ws-logo-preview{width:56px;height:56px;object-fit:contain;border-radius:10px;border:1.5px solid var(--line);background:var(--bg-tint);padding:4px}
@@ -2598,6 +2600,7 @@ function wsSecInner(id){
   if(id==='brand'){
     var themes=[{id:'national',c:'#0A4D5C'},{id:'navy',c:'#1e2a4a'},{id:'teal',c:'#0d7e6e'},{id:'emerald',c:'#047857'},{id:'royal',c:'#1d4ed8'},{id:'violet',c:'#6d28d9'},{id:'maroon',c:'#9f1239'},{id:'amber',c:'#b45309'}];
     var cur=c.theme||'navy';
+    var isNat=(c.layout_theme||'')==='national';
     var swatches=themes.map(function(t){ return '<div class="ws-theme-opt'+(cur===t.id?' active':'')+'" title="'+t.id+'" style="background:'+t.c+'" onclick="wsPickTheme(\''+t.id+'\')"></div>'; }).join('');
     return wsSecHead('brand','الهوية والألوان','اسم جمعيتك وشعارها ولون هويتها الأساسي')+
       '<div class="ws-card"><h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7h18M3 12h18M3 17h12"/></svg>الاسم والشعار النصي</h4>'+
@@ -2610,8 +2613,13 @@ function wsSecInner(id){
       '</div>'+
       '<div class="ws-card"><h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="13.5" cy="6.5" r=".5"/><circle cx="17.5" cy="10.5" r=".5"/><circle cx="8.5" cy="7.5" r=".5"/><circle cx="6.5" cy="12.5" r=".5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.555C21.965 6.012 17.461 2 12 2z"/></svg>لون الهوية</h4>'+
         '<div class="ws-field"><label>اختر لوناً جاهزاً</label><div class="ws-theme-grid">'+swatches+'</div></div>'+
-        '<div class="ws-field"><label>أو لون مخصص دقيق (اختياري)</label><div class="ws-color-input"><input type="color" value="'+(esc(wsGet('brand.accent')||'#1d9b8a'))+'" oninput="wsField(\'brand.accent\',this.value)"><span class="hint">يُستخدم للأزرار والروابط المميّزة</span></div></div>'+
+        '<div class="ws-field"><label>'+(isNat?'اللون الأساسي (العناوين والروابط والخلفيات الداكنة)':'أو لون مخصص دقيق (اختياري)')+'</label><div class="ws-color-input"><input type="color" value="'+esc(wsGet('brand.accent')||(isNat?'#0A4D5C':'#1d9b8a'))+'" oninput="wsField(\'brand.accent\',this.value)"><span class="hint">'+(isNat?'ينعكس مباشرة على موقعك':'يُستخدم للأزرار والروابط المميّزة')+'</span></div></div>'+
+        (isNat?'<div class="ws-field"><label>لون الأزرار والإبرازات (مثل زر «تبرّع الآن»)</label><div class="ws-color-input"><input type="color" value="'+esc(wsGet('brand.accent2')||'#D4AF37')+'" oninput="wsField(\'brand.accent2\',this.value)"><span class="hint">يُحسب لون النص داخل الزر تلقائياً ليبقى واضحاً</span></div></div>':'')+
       '</div>'+
+      (isNat?('<div class="ws-card"><h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="6"/><path d="M8.21 13.89 7 22l5-3 5 3-1.21-8.12"/></svg>شارة المنظمة الموثوقة</h4>'+
+        '<label class="ws-check-row"><input type="checkbox" '+(wsGet('brand.trusted')?'checked':'')+' onchange="wsField(\'brand.trusted\',this.checked); wsRerenderSec(\'brand\')"><span>عرض شارة «منظمة موثوقة» في الواجهة والتذييل</span></label>'+
+        (wsGet('brand.trusted')?wsTxt('نص الشارة','brand.trusted_label','منظمة موثوقة',{hint:'مثال: منظمة موثوقة — جائزة التميّز 2025'}):'')+
+      '</div>'):'')+
       wsLayoutThemePicker();
   }
   if(id==='hero'){

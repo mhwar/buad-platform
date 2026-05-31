@@ -599,6 +599,10 @@ body.theme-national.n-hc{--n-ink:#0b1220;--n-ink-2:#1E293B;--n-ink-3:#334155;--n
 body.theme-national section{background:var(--n-ice);color:var(--n-ink);padding:72px 0}
 body.theme-national section.n-alt{background:#fff}
 body.theme-national h1,body.theme-national h2,body.theme-national h3,body.theme-national h4{color:var(--n-teal)}
+/* headings on dark surfaces must stay light — override the teal default (higher specificity) */
+body.theme-national .n-hero h1,body.theme-national .n-hero h2,
+body.theme-national .n-cta-box h2,body.theme-national .n-cta-box h3,
+body.theme-national .n-footer h1,body.theme-national .n-footer h2,body.theme-national .n-footer h3,body.theme-national .n-footer h4{color:#fff}
 body.theme-national .sec-title{color:var(--n-teal)}
 body.theme-national .sec-eyebrow{color:var(--n-gold)}
 body.theme-national .sec-eyebrow::before,body.theme-national .sec-eyebrow::after{background:var(--n-gold)}
@@ -653,7 +657,7 @@ body.theme-national .sec-sub{color:var(--n-ink-3)}
 .n-burger svg{width:22px;height:22px}
 
 /* ── Buttons ── */
-.n-btn-gold{display:inline-flex;align-items:center;gap:8px;padding:14px 28px;background:var(--n-gold);color:#1a0e00;border-radius:11px;font-size:15px;font-weight:800;font-family:inherit;border:none;cursor:pointer;transition:.18s;text-decoration:none;box-shadow:0 6px 20px rgba(212,175,55,.3)}
+.n-btn-gold{display:inline-flex;align-items:center;gap:8px;padding:14px 28px;background:var(--n-gold);color:var(--n-gold-tx,#1a0e00);border-radius:11px;font-size:15px;font-weight:800;font-family:inherit;border:none;cursor:pointer;transition:.18s;text-decoration:none;box-shadow:0 6px 20px rgba(212,175,55,.3)}
 .n-btn-gold:hover{background:var(--n-gold-2);transform:translateY(-2px);box-shadow:0 12px 28px rgba(212,175,55,.4)}
 .n-btn-teal{display:inline-flex;align-items:center;gap:8px;padding:13px 26px;background:var(--n-teal);color:#fff;border-radius:11px;font-size:15px;font-weight:700;font-family:inherit;border:none;cursor:pointer;transition:.18s;text-decoration:none}
 .n-btn-teal:hover{background:var(--n-teal-2);transform:translateY(-2px);box-shadow:var(--shadow-lg)}
@@ -680,6 +684,10 @@ body.theme-national .sec-sub{color:var(--n-ink-3)}
 .n-hero-trust{display:flex;gap:28px;flex-wrap:wrap;border-top:1px solid rgba(255,255,255,.14);padding-top:26px}
 .n-hero-trust .it{display:flex;align-items:center;gap:10px;color:rgba(255,255,255,.82);font-size:13.5px;font-weight:600}
 .n-hero-trust .it svg{width:20px;height:20px;color:var(--n-gold);flex-shrink:0}
+.n-hero-trust .it.n-it-trust{background:linear-gradient(135deg,var(--n-gold),var(--n-gold-2));color:var(--n-gold-tx,#1a0e00);padding:7px 15px;border-radius:999px;font-weight:800;box-shadow:0 4px 16px rgba(212,175,55,.32)}
+.n-hero-trust .it.n-it-trust svg{color:inherit;width:18px;height:18px}
+.n-foot-trust{display:inline-flex;align-items:center;gap:8px;margin:4px 0 12px;padding:7px 14px;border-radius:999px;background:linear-gradient(135deg,var(--n-gold),var(--n-gold-2));color:var(--n-gold-tx,#1a0e00);font-size:12.5px;font-weight:800}
+.n-foot-trust svg{width:17px;height:17px;flex-shrink:0}
 .n-hero-wave{position:absolute;bottom:-1px;left:0;right:0;z-index:3;line-height:0}
 .n-hero-wave svg{width:100%;height:64px;display:block}
 
@@ -697,7 +705,8 @@ body.theme-national .sec-sub{color:var(--n-ink-3)}
 .n-slide{grid-area:1/1;position:relative;opacity:0;visibility:hidden;transition:opacity .6s ease;pointer-events:none}
 .n-slide.on{opacity:1;visibility:visible;pointer-events:auto}
 .n-slide .n-hero-bg{opacity:.25}
-.n-slide.has-img .n-hero-imgov{position:absolute;inset:0;z-index:1;background:linear-gradient(105deg,rgba(7,53,64,.94) 0%,rgba(10,77,92,.8) 48%,rgba(10,77,92,.45) 100%)}
+.n-slide.has-img .n-hero-imgov{position:absolute;inset:0;z-index:1;background:linear-gradient(to right,rgba(10,77,92,.5) 0%,rgba(10,77,92,.82) 52%,rgba(7,53,64,.95) 100%)}
+.n-slide.has-img h1,.n-slide.has-img p{text-shadow:0 2px 16px rgba(4,28,34,.55)}
 .n-slide>.wrap{position:relative;z-index:2}
 .n-hero-inner{position:relative;z-index:2;padding:80px 0 34px;max-width:820px}
 .n-hero-btns{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:0}
@@ -1057,6 +1066,34 @@ function theme(){ return CFG.theme || (CFG.brand&&CFG.brand.theme) || 'navy'; }
 function visible(key){ var s=CFG.sections||{}; if(s[key]===undefined) return key!=='donation'; return !!s[key]; }
 function arr(k){ return Array.isArray(CFG[k])?CFG[k]:[]; }
 
+/* ── brand colors → national theme CSS variables ── */
+function nHexToHsl(hex){
+  hex=String(hex||'').replace('#','').trim();
+  if(hex.length===3) hex=hex.split('').map(function(c){return c+c;}).join('');
+  if(!/^[0-9a-fA-F]{6}$/.test(hex)) return null;
+  var r=parseInt(hex.slice(0,2),16)/255,g=parseInt(hex.slice(2,4),16)/255,bl=parseInt(hex.slice(4,6),16)/255;
+  var mx=Math.max(r,g,bl),mn=Math.min(r,g,bl),d=mx-mn,h=0,s=0,l=(mx+mn)/2;
+  if(d){ s=l>.5?d/(2-mx-mn):d/(mx+mn);
+    h=mx===r?(g-bl)/d+(g<bl?6:0):mx===g?(bl-r)/d+2:(r-g)/d+4; h*=60; }
+  return {h:h,s:s*100,l:l*100,lum:0.2126*r+0.7152*g+0.0722*bl};
+}
+function nHsl(h,s,l){ return 'hsl('+Math.round(h)+','+Math.round(Math.max(0,Math.min(100,s)))+'%,'+Math.round(Math.max(0,Math.min(100,l)))+'%)'; }
+function nApplyBrandColors(){
+  var b=CFG.brand||{}, st=document.body.style;
+  var prim=nHexToHsl(b.accent||b.primary_color);
+  if(prim){
+    var L=Math.max(20,Math.min(45,prim.l)); /* readable on white + white text on it */
+    st.setProperty('--n-teal', nHsl(prim.h,prim.s,L));
+    st.setProperty('--n-teal-2', nHsl(prim.h,Math.min(prim.s+6,92),Math.max(10,L-16)));
+    st.setProperty('--n-teal-soft', nHsl(prim.h,Math.min(prim.s,55),94));
+  }
+  var sec=nHexToHsl(b.accent2||b.button_color);
+  if(sec){
+    st.setProperty('--n-gold', nHsl(sec.h,sec.s,sec.l));
+    st.setProperty('--n-gold-2', nHsl(sec.h,sec.s,Math.max(10,sec.l-14)));
+    st.setProperty('--n-gold-tx', sec.lum>0.55?'#1a0e00':'#fff'); /* contrast-safe button text */
+  }
+}
 function applyMeta(){
   var seo=CFG.seo||{}; var name=brandName();
   var title=seo.title||(name+' | الموقع الرسمي');
@@ -1071,6 +1108,7 @@ function applyMeta(){
   if(layoutTheme()==='premium') document.body.classList.add('theme-premium');
   if(layoutTheme()==='national'){
     document.body.classList.add('theme-national');
+    nApplyBrandColors();
     try{
       if(localStorage.getItem('buad_a11y_hc')==='1') document.body.classList.add('n-hc');
       var fz=localStorage.getItem('buad_a11y_fz'); if(fz) document.body.style.setProperty('--n-fz',fz);
@@ -1843,6 +1881,8 @@ function nIc(n){
 
 function nU(){ var d=CFG.donation||{}; return parseInt(d.unit_cost,10)||250; }
 function nLic(){ var b=CFG.brand||{}; return b.license_no||CFG.license_no||'4500'; }
+function nIsTrusted(){ var b=CFG.brand||{}; return !!(b.trusted||b.trusted_org); }
+function nTrustLabel(){ var b=CFG.brand||{}; return b.trusted_label||'منظمة موثوقة'; }
 
 /* ── shared chrome ── */
 function nUtilBar(){
@@ -1933,6 +1973,7 @@ function nFooter(){
       /* 1) disclosure + license */
       '<div class="n-foot-brand">'+
         '<div class="lg">'+nBrandMark('n-brandmark-sm')+'<b>'+esc(name)+'</b></div>'+
+        (nIsTrusted()?'<div class="n-foot-trust">'+nIc('award')+'<span>'+esc(nTrustLabel())+'</span></div>':'')+
         '<div class="n-foot-lic-tag">'+nIc('license')+'ترخيص رقم '+esc(lic)+'</div>'+
         '<p class="n-foot-disclosure">جمعية أهلية مسجّلة ومرخّصة من المركز الوطني لتنمية القطاع غير الربحي بموجب ترخيص رقم ('+esc(lic)+'). تعمل تحت إشراف مركز التنمية الاجتماعية بمكة المكرمة.</p>'+
         '<a class="n-foot-cert" href="#">'+nIc('download')+'تحميل شهادة الترخيص</a>'+
@@ -2006,6 +2047,7 @@ function nHero(){
     '<div class="n-hero-track">'+slidesHtml+'</div>'+
     arrows+
     '<div class="wrap n-hero-trustwrap">'+dots+'<div class="n-hero-trust">'+
+      (nIsTrusted()?'<div class="it n-it-trust">'+nIc('award')+esc(nTrustLabel())+'</div>':'')+
       '<div class="it">'+nIc('shield')+'إشراف المركز الوطني لتنمية القطاع غير الربحي</div>'+
       '<div class="it">'+nIc('check')+'حوكمة وشفافية بمعايير 1447هـ</div>'+
       '<div class="it">'+nIc('license')+'ترخيص رقم '+esc(nLic())+'</div>'+
