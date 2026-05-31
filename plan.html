@@ -505,6 +505,19 @@ img,svg{display:block;max-width:100%}
 .ws-up-prev.logo img{height:84px;object-fit:contain;padding:10px;background:#fff}
 .ws-up-del{position:absolute;top:7px;left:7px;width:27px;height:27px;border-radius:50%;border:none;background:rgba(15,23,42,.72);color:#fff;cursor:pointer;font-size:13px;line-height:1;display:flex;align-items:center;justify-content:center;transition:.15s}
 .ws-up-del:hover{background:#dc2626}
+.ws-palette-grid{display:flex;gap:9px;flex-wrap:wrap;margin-top:6px}
+.ws-palette{display:flex;flex-direction:column;align-items:center;gap:0;border:1.5px solid var(--line);border-radius:10px;padding:8px 10px 6px;background:#fff;cursor:pointer;transition:.15s}
+.ws-palette:hover{border-color:var(--accent,#1d9b8a);transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,.08)}
+.ws-palette span{width:36px;height:9px;display:block;border-radius:3px}
+.ws-palette span:first-of-type{border-bottom-left-radius:0;border-bottom-right-radius:0}
+.ws-palette span:nth-of-type(2){border-top-left-radius:0;border-top-right-radius:0}
+.ws-palette b{font-size:11px;font-weight:700;color:var(--navy-2);margin-top:5px}
+.ws-mini-btn{padding:7px 11px;border:1px solid var(--line);border-radius:7px;background:var(--bg-tint);font-size:11.5px;font-weight:700;color:var(--navy-2);cursor:pointer;white-space:nowrap}
+.ws-mini-btn:hover{border-color:var(--accent,#1d9b8a)}
+.ws-btn-prev-wrap{padding:18px;background:repeating-linear-gradient(45deg,#f1f5f9,#f1f5f9 9px,#e7edf3 9px,#e7edf3 18px);border-radius:10px;display:flex;justify-content:center}
+.ws-btn-prev{display:inline-flex;align-items:center;padding:13px 28px;border-radius:11px;font-size:14px;font-weight:800;box-shadow:0 6px 18px rgba(0,0,0,.14)}
+.ws-reset-btn{width:100%;padding:11px;border:1.5px dashed var(--line);border-radius:10px;background:#fff;color:#dc2626;font-size:13px;font-weight:700;cursor:pointer;transition:.15s;margin-top:4px}
+.ws-reset-btn:hover{border-color:#dc2626;background:#fef2f2}
 .ws-actions{display:flex;justify-content:flex-end;gap:10px;padding:14px 0 4px;position:sticky;bottom:0;background:linear-gradient(transparent,var(--bg) 30%);margin-top:8px}
 .ws-img-preview{width:100%;height:120px;object-fit:cover;border-radius:8px;margin-top:8px;border:1.5px solid var(--line);background:var(--bg-tint)}
 .ws-logo-preview{width:56px;height:56px;object-fit:contain;border-radius:10px;border:1.5px solid var(--line);background:var(--bg-tint);padding:4px}
@@ -2643,6 +2656,19 @@ function wsRepHead(name,singular){
   return '<div class="ws-item-head"><span class="ws-item-badge">{B}</span><button class="ws-item-del" onclick="wsDel(\''+name+'\',{I})" title="حذف">'+ICDEL+'</button></div>';
 }
 
+var WS_PALETTES=[
+  {n:'وطني',a:'#0A4D5C',b:'#D4AF37'},
+  {n:'زمردي',a:'#047857',b:'#F59E0B'},
+  {n:'ملكي',a:'#1D4ED8',b:'#F59E0B'},
+  {n:'عنابي',a:'#9F1239',b:'#D4AF37'},
+  {n:'بنفسجي',a:'#6D28D9',b:'#F59E0B'}
+];
+function wsLum(hex){ hex=String(hex||'').replace('#',''); if(hex.length===3) hex=hex.split('').map(function(c){return c+c;}).join(''); if(!/^[0-9a-fA-F]{6}$/.test(hex)) return 1; var r=parseInt(hex.slice(0,2),16)/255,g=parseInt(hex.slice(2,4),16)/255,b=parseInt(hex.slice(4,6),16)/255; return 0.2126*r+0.7152*g+0.0722*b; }
+function wsBtnBg(){ return wsGet('brand.accent2')||((wsGet('layout_theme')==='national')?'#D4AF37':'#1d9b8a'); }
+function wsBtnTx(){ var t=wsGet('brand.button_text'); if(t) return t; return wsLum(wsBtnBg())>0.62?'#16202e':'#ffffff'; }
+function wsPrevBtn(){ var el=document.getElementById('ws-btn-prev'); if(!el) return; el.style.background=wsBtnBg(); el.style.color=wsBtnTx(); }
+function wsApplyPalette(a,b){ wsField('brand.accent',a); wsField('brand.accent2',b); wsField('brand.button_text',''); wsRerenderSec('brand'); }
+function wsResetColors(){ if(!confirm('استعادة الألوان الافتراضية للمنصة؟ سيُحذف اللون الأساسي ولون الأزرار ولون النص المخصص.')) return; var c=wsC(); if(c.brand){ delete c.brand.accent; delete c.brand.accent2; delete c.brand.button_text; } wsRerenderSec('brand'); }
 function wsSecInner(id){
   var c = wsC();
   if(id==='brand'){
@@ -2660,13 +2686,19 @@ function wsSecInner(id){
       '</div>'+
       '<div class="ws-card"><h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="13.5" cy="6.5" r=".5"/><circle cx="17.5" cy="10.5" r=".5"/><circle cx="8.5" cy="7.5" r=".5"/><circle cx="6.5" cy="12.5" r=".5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.555C21.965 6.012 17.461 2 12 2z"/></svg>لون الهوية</h4>'+
         '<div class="ws-field"><label>اختر لوناً جاهزاً</label><div class="ws-theme-grid">'+swatches+'</div></div>'+
-        '<div class="ws-field"><label>'+(isNat?'اللون الأساسي (العناوين والروابط والخلفيات الداكنة)':'أو لون مخصص دقيق (اختياري)')+'</label><div class="ws-color-input"><input type="color" value="'+esc(wsGet('brand.accent')||(isNat?'#0A4D5C':'#1d9b8a'))+'" oninput="wsField(\'brand.accent\',this.value)"><span class="hint">'+(isNat?'ينعكس مباشرة على موقعك':'يُستخدم للأزرار والروابط المميّزة')+'</span></div></div>'+
-        (isNat?'<div class="ws-field"><label>لون الأزرار والإبرازات (مثل زر «تبرّع الآن»)</label><div class="ws-color-input"><input type="color" value="'+esc(wsGet('brand.accent2')||'#D4AF37')+'" oninput="wsField(\'brand.accent2\',this.value)"><span class="hint">يُحسب لون النص داخل الزر تلقائياً ليبقى واضحاً</span></div></div>':'')+
+        '<div class="ws-field"><label>لوحات ألوان جاهزة</label><div class="ws-palette-grid">'+
+          WS_PALETTES.map(function(pl){ return '<button type="button" class="ws-palette" onclick="wsApplyPalette(\''+pl.a+'\',\''+pl.b+'\')"><span style="background:'+pl.a+'"></span><span style="background:'+pl.b+'"></span><b>'+pl.n+'</b></button>'; }).join('')+
+        '</div></div>'+
+        '<div class="ws-field"><label>اللون الأساسي</label><div class="ws-color-input"><input type="color" value="'+esc(wsGet('brand.accent')||(isNat?'#0A4D5C':'#1d9b8a'))+'" oninput="wsField(\'brand.accent\',this.value); wsPrevBtn()"><span class="hint">العناوين والروابط والخلفيات — ينعكس مباشرة على الموقع</span></div></div>'+
+        '<div class="ws-field"><label>لون الأزرار والإبرازات</label><div class="ws-color-input"><input type="color" value="'+esc(wsGet('brand.accent2')||(isNat?'#D4AF37':'#1d9b8a'))+'" oninput="wsField(\'brand.accent2\',this.value); wsPrevBtn()"><span class="hint">مثل زر «تبرّع الآن»</span></div></div>'+
+        '<div class="ws-field"><label>لون نص الأزرار</label><div class="ws-color-input"><input type="color" value="'+esc(wsGet('brand.button_text')||'#ffffff')+'" oninput="wsField(\'brand.button_text\',this.value); wsPrevBtn()"><button type="button" class="ws-mini-btn" onclick="wsField(\'brand.button_text\',\'\'); wsRerenderSec(\'brand\')">تلقائي</button><span class="hint">اتركه «تلقائي» ليُحسب حسب لون الزر</span></div></div>'+
+        '<div class="ws-field"><label>معاينة الزر</label><div class="ws-btn-prev-wrap"><span class="ws-btn-prev" id="ws-btn-prev" style="background:'+wsBtnBg()+';color:'+wsBtnTx()+'">تبرّع الآن</span></div></div>'+
+        '<button type="button" class="ws-reset-btn" onclick="wsResetColors()">استعادة الألوان الافتراضية</button>'+
       '</div>'+
-      (isNat?('<div class="ws-card"><h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="6"/><path d="M8.21 13.89 7 22l5-3 5 3-1.21-8.12"/></svg>شارة المنظمة الموثوقة</h4>'+
+      '<div class="ws-card"><h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="6"/><path d="M8.21 13.89 7 22l5-3 5 3-1.21-8.12"/></svg>شارة المنظمة الموثوقة</h4>'+
         '<label class="ws-check-row"><input type="checkbox" '+(wsGet('brand.trusted')?'checked':'')+' onchange="wsField(\'brand.trusted\',this.checked); wsRerenderSec(\'brand\')"><span>عرض شارة «منظمة موثوقة» في الواجهة والتذييل</span></label>'+
         (wsGet('brand.trusted')?wsTxt('نص الشارة','brand.trusted_label','منظمة موثوقة',{hint:'مثال: منظمة موثوقة — جائزة التميّز 2025'}):'')+
-      '</div>'):'')+
+      '</div>'+
       wsLayoutThemePicker();
   }
   if(id==='hero'){
