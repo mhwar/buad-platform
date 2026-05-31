@@ -2130,17 +2130,6 @@ function nNewsCard(x){
     '</div></div>';
 }
 
-function nPartnersStrip(){
-  var p=arr('partners').filter(function(x){return x.name||x.logo_url;});
-  if(!p.length) p=[{name:'المركز الوطني لتنمية القطاع غير الربحي'},{name:'منصة إحسان'},{name:'صندوق دعم الجمعيات'},{name:'منصة تبرّع'}];
-  return '<section class="n-partners"><div class="wrap">'+
-    '<div class="n-sec-center"><div class="eyebrow"><span class="ln"></span>معاً نصنع الأثر</div><h2>شركاؤنا وداعمونا</h2></div>'+
-    '<div class="n-partners-grid">'+p.map(function(x){
-      return '<div class="n-partner">'+(x.logo_url?'<img src="'+attr(x.logo_url)+'" alt="'+attr(x.name||'')+'" onerror="this.outerHTML=&quot;<span>'+esc(x.name||'')+'</span>&quot;">':'<span>'+esc(x.name)+'</span>')+'</div>';
-    }).join('')+'</div>'+
-  '</div></section>';
-}
-
 function nDonateCTA(){
   var d=CFG.donation||{};
   return '<section class="n-cta"><div class="wrap"><div class="n-cta-box">'+
