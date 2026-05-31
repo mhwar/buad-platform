@@ -536,7 +536,10 @@ img,svg{display:block;max-width:100%}
 .ws-lt-modern{background:linear-gradient(135deg,#1e2a4a 45%,#1d9b8a 45%,#1d9b8a 55%,#f3f5f9 55%)}
 .ws-lt-premium{background:linear-gradient(180deg,#0d1628 55%,#1d9b8a 55%);position:relative}
 .ws-lt-premium::after{content:'';position:absolute;top:10px;left:50%;transform:translateX(-50%);width:28px;height:38px;border-radius:4px;border:2px solid rgba(255,255,255,.45);background:rgba(255,255,255,.1)}
-.ws-layout-grid{grid-template-columns:1fr 1fr 1fr}
+.ws-lt-national{background:linear-gradient(180deg,#073540 28px,#fff 28px);position:relative}
+.ws-lt-national::before{content:'';position:absolute;top:0;left:0;right:0;height:6px;background:#0A4D5C}
+.ws-lt-national::after{content:'';position:absolute;top:8px;right:10px;width:36px;height:14px;border-radius:3px;background:#D4AF37;opacity:.9}
+.ws-layout-grid{grid-template-columns:1fr 1fr 1fr 1fr}
 .ws-layout-opt span{display:block;font-size:13.5px;font-weight:700;color:var(--navy-deep);margin-bottom:3px}
 .ws-layout-opt small{font-size:11.5px;color:var(--muted)}
 .ws-layout-opt.active span{color:var(--accent)}
@@ -2587,7 +2590,7 @@ function wsRepHead(name,singular){
 function wsSecInner(id){
   var c = wsC();
   if(id==='brand'){
-    var themes=[{id:'navy',c:'#1e2a4a'},{id:'teal',c:'#0d7e6e'},{id:'emerald',c:'#047857'},{id:'royal',c:'#1d4ed8'},{id:'violet',c:'#6d28d9'},{id:'maroon',c:'#9f1239'},{id:'amber',c:'#b45309'}];
+    var themes=[{id:'national',c:'#0A4D5C'},{id:'navy',c:'#1e2a4a'},{id:'teal',c:'#0d7e6e'},{id:'emerald',c:'#047857'},{id:'royal',c:'#1d4ed8'},{id:'violet',c:'#6d28d9'},{id:'maroon',c:'#9f1239'},{id:'amber',c:'#b45309'}];
     var cur=c.theme||'navy';
     var swatches=themes.map(function(t){ return '<div class="ws-theme-opt'+(cur===t.id?' active':'')+'" title="'+t.id+'" style="background:'+t.c+'" onclick="wsPickTheme(\''+t.id+'\')"></div>'; }).join('');
     return wsSecHead('brand','الهوية والألوان','اسم جمعيتك وشعارها ولون هويتها الأساسي')+
@@ -2800,6 +2803,11 @@ function wsLayoutThemePicker(){
         '<div class="ws-layout-thumb ws-lt-premium"></div>'+
         '<span>راقي</span>'+
         '<small>تجربة احترافية عالية الجمالية</small>'+
+      '</div>'+
+      '<div class="ws-layout-opt'+(cur==='national'?' active':'')+'" data-lt="national" onclick="wsPickLayout(\'national\')">'+
+        '<div class="ws-layout-thumb ws-lt-national"></div>'+
+        '<span>وطني</span>'+
+        '<small>ثيم مؤسسي احترافي مع حاسبة الأثر</small>'+
       '</div>'+
     '</div>'+
     '<div class="hint" style="margin-top:8px">احفظ التغييرات بعد الاختيار لتطبيق النمط على موقعك</div>'+
