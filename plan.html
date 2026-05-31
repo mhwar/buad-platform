@@ -2179,7 +2179,12 @@ var ICADD = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-w
 
 function wsUid(){ return 'i'+Date.now().toString(36)+Math.random().toString(36).slice(2,5); }
 function wsC(){ if(!wsData.config||typeof wsData.config!=='object') wsData.config={}; return wsData.config; }
-function wsArr(name){ var c=wsC(); if(!Array.isArray(c[name])) c[name]=[]; return c[name]; }
+function wsArr(name){ var c=wsC();
+  if(name.indexOf('.')<0){ if(!Array.isArray(c[name])) c[name]=[]; return c[name]; }
+  var ks=name.split('.'), t=c;
+  for(var i=0;i<ks.length-1;i++){ if(typeof t[ks[i]]!=='object'||t[ks[i]]==null) t[ks[i]]={}; t=t[ks[i]]; }
+  var last=ks[ks.length-1]; if(!Array.isArray(t[last])) t[last]=[]; return t[last];
+}
 function wsField(path,val){ var o=wsC(); var ks=path.split('.'); var t=o; for(var i=0;i<ks.length-1;i++){ if(typeof t[ks[i]]!=='object'||t[ks[i]]==null) t[ks[i]]={}; t=t[ks[i]]; } t[ks[ks.length-1]]=val; }
 function wsGet(path){ var t=wsC(); var ks=path.split('.'); for(var i=0;i<ks.length;i++){ if(t==null) return ''; t=t[ks[i]]; } return t==null?'':t; }
 function wsItem(name,idx,field,val){ var a=wsArr(name); if(a[idx]) a[idx][field]=val; }
@@ -2198,7 +2203,8 @@ var WS_TEMPLATES = {
   pages: function(){ return {id:wsUid(),slug:'',title:'',body:''}; }
 };
 function wsAdd(name){ var a=wsArr(name); a.push(WS_TEMPLATES[name]()); wsRerenderSec(name); }
-function wsDel(name,idx){ var a=wsArr(name); a.splice(idx,1); wsRerenderSec(name); }
+function wsAddItem(name,template){ var a=wsArr(name); a.push(template||{}); wsRerenderSec(name.split('.')[0]); }
+function wsDel(name,idx){ var a=wsArr(name); a.splice(idx,1); wsRerenderSec(name.split('.')[0]); }
 
 function renderWebsite(){
   var el = document.getElementById('page-website');
