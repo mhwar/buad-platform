@@ -1081,7 +1081,7 @@ function route(){
   if(layoutTheme()==='national'){
     var seg=h.split(/[#?\/]/)[0];
     if(h.indexOf('news/')===0){ return renderNatArticle(h.slice(5)); }
-    if(NAT_PAGES[seg]){ return NAT_PAGES[seg](); }
+    if(NAT_PAGES[seg]){ NAT_PAGES[seg](); var anc=h.split('#')[1]; if(anc){ var ta=document.getElementById(anc); if(ta) setTimeout(function(){ ta.scrollIntoView({behavior:'smooth'}); },90); } return; }
     if(h.indexOf('page/')===0){ return renderNatPage(h.slice(5)); }
     renderNatHome();
     if(h){ var tn=document.getElementById(h); if(tn) setTimeout(function(){ tn.scrollIntoView({behavior:'smooth'}); },60); }
@@ -1738,16 +1738,16 @@ var NAT_PAGES = {
 /* mega-menu structure (hardcoded per spec) */
 var NAT_NAV = [
   {label:'عن بُعد', page:'#/about', items:[
-    {t:'الرسالة والرؤية', d:'قيمنا ومبادئنا', href:'#/about', ic:'eye'},
-    {t:'مجلس الإدارة', d:'قيادة الجمعية', href:'#/about', ic:'users'},
-    {t:'الهيكل التنظيمي', d:'إداراتنا ولجاننا', href:'#/about', ic:'sitemap'},
-    {t:'الجوائز والتميز', d:'إنجازاتنا ومعاييرنا', href:'#/about', ic:'award'}
+    {t:'الرسالة والرؤية', d:'قيمنا ومبادئنا', href:'#/about#vision', ic:'eye'},
+    {t:'مجلس الإدارة', d:'قيادة الجمعية', href:'#/about#board', ic:'users'},
+    {t:'الهيكل التنظيمي', d:'إداراتنا ولجاننا', href:'#/about#structure', ic:'sitemap'},
+    {t:'الجوائز والتميز', d:'إنجازاتنا ومعاييرنا', href:'#/about#awards', ic:'award'}
   ]},
   {label:'الشفافية والحوكمة', page:'#/governance', items:[
     {t:'اللوائح والسياسات', d:'وثائقنا النظامية', href:'#/governance', ic:'doc'},
     {t:'التقارير المالية', d:'قوائمنا المدققة', href:'#/governance', ic:'chart'},
     {t:'تقارير الحوكمة', d:'الالتزام والامتثال', href:'#/governance', ic:'shield'},
-    {t:'المستفيد الحقيقي', d:'الإفصاح والشفافية', href:'#/governance', ic:'usercheck'}
+    {t:'المستفيد الحقيقي', d:'الإفصاح والشفافية', href:'#/governance#beneficiary', ic:'usercheck'}
   ]},
   {label:'برامجنا وأثرنا', page:'#/programs', items:[
     {t:'التمكين الاقتصادي', d:'الأسر المنتجة', href:'#/programs', ic:'briefcase'},
@@ -1760,9 +1760,9 @@ var NAT_NAV = [
     {t:'تسجيل المتطوعين', d:'انضم لفريقنا', href:'#/services', ic:'userplus'}
   ]},
   {label:'المركز الإعلامي', page:'#/media', items:[
-    {t:'الأخبار والفعاليات', d:'آخر المستجدّات', href:'#/media', ic:'news'},
-    {t:'مكتبة الأثر المرئية', d:'قصص نجاح', href:'#/media', ic:'image'},
-    {t:'بودكاست بُعد', d:'حلقات صوتية', href:'#/media', ic:'mic'}
+    {t:'الأخبار والفعاليات', d:'آخر المستجدّات', href:'#/media#news', ic:'news'},
+    {t:'مكتبة الأثر المرئية', d:'قصص نجاح', href:'#/media#library', ic:'image'},
+    {t:'بودكاست بُعد', d:'حلقات صوتية', href:'#/media#podcast', ic:'mic'}
   ]}
 ];
 
