@@ -934,7 +934,10 @@ img,svg{display:block;max-width:100%}
 .gr-card{background:#fff;border:1px solid var(--line);border-radius:var(--radius-lg);padding:18px 20px;display:flex;flex-direction:column;gap:10px;box-shadow:var(--shadow-sm);transition:box-shadow .15s}
 .gr-card:hover{box-shadow:var(--shadow-md)}
 .gr-card-head{display:flex;align-items:center;gap:12px}
-.gr-ava{width:40px;height:40px;border-radius:11px;background:linear-gradient(135deg,var(--navy),var(--accent));color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex-shrink:0}
+.gr-ava{width:40px;height:40px;border-radius:11px;background:linear-gradient(135deg,var(--navy),var(--accent));color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex-shrink:0;overflow:hidden;position:relative}
+.gr-ava-img{padding:4px;background:#fff;border:1px solid var(--line)}
+.gr-logo-img{width:100%;height:100%;object-fit:contain;border-radius:7px}
+.gr-ava-fb{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px}
 .gr-info{flex:1;min-width:0}
 .gr-name{font-size:14px;font-weight:700;color:var(--navy-deep);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .gr-subname{font-size:12px;color:var(--muted);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -2064,6 +2067,7 @@ function _renderGrantsData(grants) {
     var st = grantStatus(g);
     var ftLbl = _GRANT_FT[g.funder_type] || g.funder_type || '';
     var initials = (g.funder_name||'م').split(' ').slice(0,2).map(function(w){ return w[0]||''; }).join('');
+    var bgStyle = g.brand_color ? 'background:'+g.brand_color+';color:#fff' : '';
     var domainArr = Array.isArray(g.domains) ? g.domains : [];
     var domainsHtml = domainArr.slice(0,4).map(function(d){
       return '<span class="gr-domain-tag">'+escHtml(d)+'</span>';
@@ -2072,9 +2076,16 @@ function _renderGrantsData(grants) {
       (g.amount_max ? '<span dir="ltr">'+((g.amount_min||0).toLocaleString())+(g.amount_max!==g.amount_min?' – '+g.amount_max.toLocaleString():'')+' ر.س</span>' : '');
     var datesHtml = (g.submission_start || g.submission_end) ?
       '<span dir="ltr">'+escHtml(g.submission_start||'—')+'</span> → <span dir="ltr">'+escHtml(g.submission_end||'—')+'</span>' : 'فتح دائم';
+    var logoHtml = g.logo_url
+      ? '<div class="gr-ava gr-ava-img" '+(bgStyle?'style="'+bgStyle+'"':'')+'>'+
+          '<img src="'+escHtml(g.logo_url)+'" alt="'+escHtml(g.funder_name)+'" class="gr-logo-img" '+
+            'onerror="this.style.display=\'none\';this.parentNode.querySelector(\'.gr-ava-fb\').style.display=\'flex\'">'+
+          '<span class="gr-ava-fb" style="display:none">'+escHtml(initials)+'</span>'+
+        '</div>'
+      : '<div class="gr-ava" '+(bgStyle?'style="'+bgStyle+'"':'')+'>'+escHtml(initials)+'</div>';
     return '<div class="gr-card">'+
       '<div class="gr-card-head">'+
-        '<div class="gr-ava">'+escHtml(initials)+'</div>'+
+        logoHtml+
         '<div class="gr-info">'+
           '<div class="gr-name">'+escHtml(g.funder_name)+'</div>'+
           (g.grant_type?'<div class="gr-subname">'+escHtml(g.grant_type)+'</div>':'')+

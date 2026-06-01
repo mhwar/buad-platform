@@ -11062,9 +11062,15 @@ Pages.render_grants = function(opts) {
     var initials = (g.funder_name||'م').split(' ').slice(0,2).map(function(w){ return w[0]||''; }).join('');
     var amountTxt = g.amount_note || (g.amount_max ? (g.amount_min||0).toLocaleString()+(g.amount_max !== g.amount_min ? ' – '+g.amount_max.toLocaleString() : '')+' ر.س' : '—');
     var domainTags = (Array.isArray(g.domains) ? g.domains : []).slice(0,3).map(function(d){ return '<span style="font-size:10px;padding:1px 7px;border-radius:10px;background:var(--neutral-100);color:var(--fg-2)">'+UI.escHtml(d)+'</span>'; }).join('');
+    var avatarBg = g.brand_color ? 'background:'+g.brand_color+';color:#fff' : 'background:'+ft.bg+';color:'+ft.color;
+    var avatarHtml = g.logo_url
+      ? '<div style="width:36px;height:36px;border-radius:9px;background:#fff;border:1px solid var(--border-1);display:flex;align-items:center;justify-content:center;flex-shrink:0;padding:3px;overflow:hidden">'+
+          '<img src="'+UI.escHtml(g.logo_url)+'" alt="" style="width:100%;height:100%;object-fit:contain" onerror="this.style.display=\'none\'">'+
+        '</div>'
+      : '<div style="width:36px;height:36px;border-radius:9px;'+avatarBg+';display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0">'+UI.escHtml(initials)+'</div>';
     return '<tr>'+
       '<td><div style="display:flex;align-items:center;gap:10px">'+
-        '<div style="width:36px;height:36px;border-radius:9px;background:'+ft.bg+';color:'+ft.color+';display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0">'+UI.escHtml(initials)+'</div>'+
+        avatarHtml+
         '<div><div style="font-weight:600;font-size:13.5px;color:var(--fg-1)">'+UI.escHtml(g.funder_name)+'</div>'+
         (g.grant_type?'<div style="font-size:11.5px;color:var(--fg-3)">'+UI.escHtml(g.grant_type)+'</div>':'')+
         '</div></div></td>'+
@@ -11081,10 +11087,15 @@ Pages.render_grants = function(opts) {
     '</tr>';
   }).join('') : '<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--fg-3)">لا توجد فرص منح مضافة بعد</td></tr>';
 
+  var hasASF = (Pages._grants||[]).some(function(g){ return g.funder_name && g.funder_name.indexOf('صندوق دعم')>=0 && g.funder_name.indexOf('2026')>=0; });
+
   pg.innerHTML =
     '<div class="page-header">'+
       '<div><h1>فرص المنح</h1><div class="page-header-sub">إدارة فرص التمويل والمنح المتاحة للجمعيات</div></div>'+
-      '<button class="btn btn-primary" onclick="Pages.addGrant()"><i data-lucide="plus"></i>إضافة فرصة</button>'+
+      '<div style="display:flex;gap:8px">'+
+        (!hasASF?'<button class="btn btn-ghost" onclick="Pages.importASFGrants()" title="استيراد تقويم المنح 2026 لصندوق دعم الجمعيات"><i data-lucide="download"></i>استيراد تقويم صندوق دعم الجمعيات 2026</button>':'')+
+        '<button class="btn btn-primary" onclick="Pages.addGrant()"><i data-lucide="plus"></i>إضافة فرصة</button>'+
+      '</div>'+
     '</div>'+
     '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:20px">'+typeCountsHtml+'</div>'+
     '<div class="card" style="padding:0;overflow:hidden">'+
@@ -11111,6 +11122,43 @@ Pages.runGrantsMigration = function() {
     .then(function(r){ return r.json(); })
     .then(function(){ UI.toast('تم تهيئة قاعدة البيانات بنجاح', 'success'); Pages._grants = []; Pages.render_grants({_loaded:true}); })
     .catch(function(){ UI.toast('تعذّر التهيئة', 'danger'); });
+};
+
+/* صندوق دعم الجمعيات — تقويم المنح 2026م */
+Pages._ASF_GRANTS_2026 = [
+  { funder_name:'صندوق دعم الجمعيات — تقديم مصادر الإيراد 2026', funder_type:'government', grant_type:'تو ليد مصادر الإيراد',       description:'دعم الجمعيات في بناء مصادر إيراد ذاتية مستدامة.',                        submission_start:'2026-09-01', submission_end:'2026-09-30', domains:['التنمية المؤسسية','الاستدامة المالية'], amount_min:0,amount_max:0,amount_note:'يُحدد حسب الطلب', url:'https://asf.gov.sa', logo_url:'https://asf.gov.sa/favicon.ico', brand_color:'#5C2082', is_active:true },
+  { funder_name:'صندوق دعم الجمعيات — الدعم التأسيسي 2026',       funder_type:'government', grant_type:'الدعم التأسيسي',             description:'دعم تأسيس الجمعيات والمنظمات الخيرية الجديدة وتمكينها.',               submission_start:'2026-05-01', submission_end:'2026-11-30', domains:['التأسيس المؤسسي','الحوكمة'], amount_min:0,amount_max:0,amount_note:'يُحدد حسب الطلب', url:'https://asf.gov.sa', logo_url:'https://asf.gov.sa/favicon.ico', brand_color:'#5C2082', is_active:true },
+  { funder_name:'صندوق دعم الجمعيات — المصروفات التشغيلية 2026',   funder_type:'government', grant_type:'المصروفات التشغيلية',       description:'دعم تغطية التكاليف التشغيلية الأساسية للجمعيات العاملة.',              submission_start:'2026-05-01', submission_end:'2026-09-30', domains:['التشغيل المؤسسي'], amount_min:0,amount_max:0,amount_note:'يُحدد حسب الطلب', url:'https://asf.gov.sa', logo_url:'https://asf.gov.sa/favicon.ico', brand_color:'#5C2082', is_active:true },
+  { funder_name:'صندوق دعم الجمعيات — رأس المال البشري 2026',      funder_type:'government', grant_type:'رأس المال البشري',          description:'دعم تطوير الكوادر البشرية وبناء قدرات منسوبي الجمعيات.',              submission_start:'2026-08-01', submission_end:'2026-10-31', domains:['بناء القدرات','التدريب'], amount_min:0,amount_max:0,amount_note:'يُحدد حسب الطلب', url:'https://asf.gov.sa', logo_url:'https://asf.gov.sa/favicon.ico', brand_color:'#5C2082', is_active:true },
+  { funder_name:'صندوق دعم الجمعيات — البرامج والمشاريع 2026',     funder_type:'government', grant_type:'البرامج والمشاريع',         description:'دعم تنفيذ البرامج والمشاريع الخيرية والتنموية.',                       submission_start:'2026-08-01', submission_end:'2026-10-31', domains:['البرامج الاجتماعية','التنمية المجتمعية'], amount_min:0,amount_max:0,amount_note:'يُحدد حسب المشروع', url:'https://asf.gov.sa', logo_url:'https://asf.gov.sa/favicon.ico', brand_color:'#5C2082', is_active:true },
+  { funder_name:'صندوق دعم الجمعيات — الطارئ التشغيلي 2026',       funder_type:'government', grant_type:'الطارئ التشغيلي',           description:'دعم طارئ للجمعيات التي تواجه ضائقة تشغيلية مفاجئة.',                 submission_start:'2026-05-01', submission_end:'2026-09-30', domains:['الطوارئ التشغيلية'], amount_min:0,amount_max:0,amount_note:'يُحدد حسب الحالة', url:'https://asf.gov.sa', logo_url:'https://asf.gov.sa/favicon.ico', brand_color:'#5C2082', is_active:true },
+  { funder_name:'صندوق دعم الجمعيات — تكاليف تنمية الموارد 2026',  funder_type:'government', grant_type:'تكاليف تنمية الموارد المالية', description:'دعم أنشطة جمع التبرعات وتطوير قاعدة التمويل.',                      submission_start:'2026-07-01', submission_end:'2026-09-30', domains:['التمويل','جمع التبرعات'], amount_min:0,amount_max:0,amount_note:'يُحدد حسب الطلب', url:'https://asf.gov.sa', logo_url:'https://asf.gov.sa/favicon.ico', brand_color:'#5C2082', is_active:true },
+  { funder_name:'صندوق دعم الجمعيات — التكاليف التشغيلية الإغاثية 2026', funder_type:'government', grant_type:'التكاليف التشغيلية للبرامج الإغاثية', description:'دعم التكاليف التشغيلية للبرامج ذات الطابع الإغاثي.', submission_start:'2026-07-01', submission_end:'2026-08-31', domains:['الإغاثة','البرامج الإنسانية'], amount_min:0,amount_max:0,amount_note:'يُحدد حسب الطلب', url:'https://asf.gov.sa', logo_url:'https://asf.gov.sa/favicon.ico', brand_color:'#5C2082', is_active:true },
+  { funder_name:'صندوق دعم الجمعيات — الطارئ الإغاثي 2026',        funder_type:'government', grant_type:'الطارئ الإغاثي',            description:'دعم طارئ للجمعيات المنخرطة في عمليات الإغاثة الإنسانية.',            submission_start:'2026-05-01', submission_end:'2026-10-31', domains:['الإغاثة','الطوارئ الإنسانية'], amount_min:0,amount_max:0,amount_note:'يُحدد حسب الحالة', url:'https://asf.gov.sa', logo_url:'https://asf.gov.sa/favicon.ico', brand_color:'#5C2082', is_active:true },
+  { funder_name:'صندوق دعم الجمعيات — المنح الموجهة 2026',          funder_type:'government', grant_type:'المنح الموجهة',             description:'منح موجهة لقطاعات أو مناطق محددة وفق أولويات الصندوق.',              submission_start:'2026-07-01', submission_end:'2026-09-30', domains:['التنمية الاجتماعية','القطاعات المستهدفة'], amount_min:0,amount_max:0,amount_note:'يُحدد حسب التوجيه', url:'https://asf.gov.sa', logo_url:'https://asf.gov.sa/favicon.ico', brand_color:'#5C2082', is_active:true }
+];
+
+Pages.importASFGrants = function() {
+  if (!confirm('سيتم إضافة 10 فرص منح لصندوق دعم الجمعيات (تقويم 2026م). هل تريد المتابعة؟')) return;
+  var grants = Pages._ASF_GRANTS_2026;
+  var done = 0, failed = 0;
+  var h = DB._apiHeaders();
+  function next(i) {
+    if (i >= grants.length) {
+      Pages._grants = null;
+      Pages.render_grants();
+      UI.toast('تمت الإضافة: '+done+' فرصة'+(failed?' ('+failed+' أخطاء)':''), done>0?'success':'danger');
+      return;
+    }
+    fetch('/api/admin/grants', {
+      method: 'POST',
+      headers: Object.assign({'Content-Type':'application/json'}, h),
+      body: JSON.stringify(grants[i])
+    }).then(function(r){ return r.json(); })
+    .then(function(d){ if(d.ok) done++; else failed++; next(i+1); })
+    .catch(function(){ failed++; next(i+1); });
+  }
+  next(0);
 };
 
 Pages._grantFormHtml = function(g) {
@@ -11146,8 +11194,14 @@ Pages._grantFormHtml = function(g) {
     '</div>'+
     '<div class="form-group"><label style="font-size:12px;font-weight:600;display:block;margin-bottom:5px">المجالات (مفصولة بفاصلة)</label>'+
     '<input id="gr-domains" class="form-input" value="'+UI.escHtml(domains)+'" placeholder="التعليم، الصحة، التنمية الاجتماعية"></div>'+
-    '<div class="form-group"><label style="font-size:12px;font-weight:600;display:block;margin-bottom:5px">رابط التقديم أو الموقع</label>'+
-    '<input id="gr-url" class="form-input" value="'+UI.escHtml(g.url||'')+'" placeholder="https://..." dir="ltr"></div>'+
+    '<div style="display:grid;grid-template-columns:1fr auto;gap:12px;align-items:end">'+
+      '<div class="form-group"><label style="font-size:12px;font-weight:600;display:block;margin-bottom:5px">رابط التقديم أو الموقع</label>'+
+      '<input id="gr-url" class="form-input" value="'+UI.escHtml(g.url||'')+'" placeholder="https://..." dir="ltr"></div>'+
+      '<div class="form-group"><label style="font-size:12px;font-weight:600;display:block;margin-bottom:5px">لون الهوية</label>'+
+      '<input id="gr-color" type="color" value="'+(g.brand_color||'#00197d')+'" style="width:56px;height:38px;border:1px solid var(--border-1);border-radius:8px;cursor:pointer;padding:2px"></div>'+
+    '</div>'+
+    '<div class="form-group"><label style="font-size:12px;font-weight:600;display:block;margin-bottom:5px">رابط شعار المانح (URL)</label>'+
+    '<input id="gr-logo" class="form-input" value="'+UI.escHtml(g.logo_url||'')+'" placeholder="https://example.com/logo.png" dir="ltr"></div>'+
     '<div style="display:flex;align-items:center;gap:10px">'+
       '<input type="checkbox" id="gr-active"'+(g.is_active!==0?' checked':'')+' style="width:16px;height:16px;cursor:pointer">'+
       '<label for="gr-active" style="font-size:13px;font-weight:500;cursor:pointer">فرصة نشطة (ظاهرة للجمعيات)</label>'+
@@ -11169,6 +11223,8 @@ Pages._grantFormValues = function() {
     amount_note: (document.getElementById('gr-anote').value||'').trim(),
     domains: raw,
     url: (document.getElementById('gr-url').value||'').trim(),
+    logo_url: (document.getElementById('gr-logo').value||'').trim(),
+    brand_color: document.getElementById('gr-color').value || '',
     is_active: document.getElementById('gr-active').checked
   };
 };
