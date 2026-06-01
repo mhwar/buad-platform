@@ -475,6 +475,9 @@ export async function onRequest(context) {
     if (!me || me.role !== 'admin') return json({ error: 'Forbidden' }, 403);
     const stmts = [
       'ALTER TABLE orgs ADD COLUMN crm_enabled INTEGER NOT NULL DEFAULT 0',
+      'CREATE TABLE IF NOT EXISTS grant_opportunities (id TEXT PRIMARY KEY, funder_name TEXT NOT NULL, funder_type TEXT NOT NULL DEFAULT \'government\', grant_type TEXT NOT NULL DEFAULT \'\', description TEXT NOT NULL DEFAULT \'\', submission_start TEXT NOT NULL DEFAULT \'\', submission_end TEXT NOT NULL DEFAULT \'\', domains TEXT NOT NULL DEFAULT \'[]\', amount_min INTEGER NOT NULL DEFAULT 0, amount_max INTEGER NOT NULL DEFAULT 0, amount_note TEXT NOT NULL DEFAULT \'\', url TEXT NOT NULL DEFAULT \'\', is_active INTEGER NOT NULL DEFAULT 1, created_at INTEGER NOT NULL DEFAULT (unixepoch()), updated_at INTEGER NOT NULL DEFAULT (unixepoch()))',
+      'CREATE INDEX IF NOT EXISTS idx_grants_active ON grant_opportunities(is_active)',
+      'CREATE INDEX IF NOT EXISTS idx_grants_dates ON grant_opportunities(submission_start, submission_end)',
       'CREATE TABLE IF NOT EXISTS beneficiaries (id TEXT PRIMARY KEY, org_id TEXT NOT NULL, name TEXT NOT NULL, id_number TEXT NOT NULL DEFAULT "", dob TEXT NOT NULL DEFAULT "", gender TEXT NOT NULL DEFAULT "male", phone TEXT NOT NULL DEFAULT "", phone2 TEXT NOT NULL DEFAULT "", email TEXT NOT NULL DEFAULT "", city TEXT NOT NULL DEFAULT "", district TEXT NOT NULL DEFAULT "", address TEXT NOT NULL DEFAULT "", marital_status TEXT NOT NULL DEFAULT "", dependents INTEGER NOT NULL DEFAULT 0, housing_type TEXT NOT NULL DEFAULT "", income REAL NOT NULL DEFAULT 0, employment_status TEXT NOT NULL DEFAULT "", category TEXT NOT NULL DEFAULT "needy", status TEXT NOT NULL DEFAULT "active", notes TEXT NOT NULL DEFAULT "", created_at INTEGER NOT NULL DEFAULT (unixepoch()), updated_at INTEGER NOT NULL DEFAULT (unixepoch()))',
       'CREATE INDEX IF NOT EXISTS idx_ben_org ON beneficiaries(org_id)',
       'CREATE INDEX IF NOT EXISTS idx_ben_status ON beneficiaries(org_id, status)',
@@ -872,6 +875,20 @@ export async function onRequest(context) {
     return json({ ok: true });
   }
 
+  /* ─── PUBLIC: GET /api/public/grants ─── active grant opportunities (no auth) */
+  if (path === '/public/grants' && method === 'GET') {
+    try {
+      const { results } = await db.prepare(
+        'SELECT * FROM grant_opportunities WHERE is_active=1 ORDER BY submission_start ASC'
+      ).all();
+      return json((results || []).map(function(g) {
+        return Object.assign({}, g, { domains: JSON.parse(g.domains || '[]') });
+      }));
+    } catch (e) {
+      return json([]);
+    }
+  }
+
   /* ── Auth required for all routes below (team/admin only) ── */
   const authHeader = request.headers.get('Authorization') || '';
   const rawToken = authHeader.replace('Bearer ', '');
@@ -983,6 +1000,63 @@ export async function onRequest(context) {
     await db.prepare('INSERT OR REPLACE INTO site_content (id, data, updated_at) VALUES (?, ?, unixepoch())')
       .bind('main', JSON.stringify(body)).run();
     return json({ ok: true });
+  }
+
+  /* ─── GET /api/admin/grants ─── admin: list all grant opportunities */
+  if (path === '/admin/grants' && method === 'GET') {
+    if (me.role !== 'admin') return json({ error: 'Forbidden' }, 403);
+    try {
+      const { results } = await db.prepare('SELECT * FROM grant_opportunities ORDER BY created_at DESC').all();
+      return json((results || []).map(function(g) {
+        return Object.assign({}, g, { domains: JSON.parse(g.domains || '[]') });
+      }));
+    } catch (e) { return json([]); }
+  }
+
+  /* ─── POST /api/admin/grants ─── admin: create grant opportunity */
+  if (path === '/admin/grants' && method === 'POST') {
+    if (me.role !== 'admin') return json({ error: 'Forbidden' }, 403);
+    let body; try { body = await request.json(); } catch(e) { return json({ error: 'Bad request' }, 400); }
+    if (!(body.funder_name||'').trim()) return json({ error: 'funder_name required' }, 400);
+    const id = 'gr_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    try {
+      await db.prepare(
+        'INSERT INTO grant_opportunities (id,funder_name,funder_type,grant_type,description,submission_start,submission_end,domains,amount_min,amount_max,amount_note,url,is_active) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)'
+      ).bind(id, (body.funder_name||'').trim(), body.funder_type||'government', body.grant_type||'',
+        body.description||'', body.submission_start||'', body.submission_end||'',
+        JSON.stringify(Array.isArray(body.domains)?body.domains:[]),
+        body.amount_min||0, body.amount_max||0, body.amount_note||'', body.url||'',
+        body.is_active===false ? 0 : 1).run();
+      return json({ ok: true, id }, 201);
+    } catch(e) { return json({ error: 'db_error', detail: e.message }, 500); }
+  }
+
+  /* ─── PUT /api/admin/grants/:id ─── admin: update grant opportunity */
+  const grantUpdateMatch = path.match(/^\/admin\/grants\/([^/]+)$/);
+  if (grantUpdateMatch && method === 'PUT') {
+    if (me.role !== 'admin') return json({ error: 'Forbidden' }, 403);
+    let body; try { body = await request.json(); } catch(e) { return json({ error: 'Bad request' }, 400); }
+    if (!(body.funder_name||'').trim()) return json({ error: 'funder_name required' }, 400);
+    try {
+      await db.prepare(
+        'UPDATE grant_opportunities SET funder_name=?,funder_type=?,grant_type=?,description=?,submission_start=?,submission_end=?,domains=?,amount_min=?,amount_max=?,amount_note=?,url=?,is_active=?,updated_at=unixepoch() WHERE id=?'
+      ).bind((body.funder_name||'').trim(), body.funder_type||'government', body.grant_type||'',
+        body.description||'', body.submission_start||'', body.submission_end||'',
+        JSON.stringify(Array.isArray(body.domains)?body.domains:[]),
+        body.amount_min||0, body.amount_max||0, body.amount_note||'', body.url||'',
+        body.is_active===false ? 0 : 1, grantUpdateMatch[1]).run();
+      return json({ ok: true });
+    } catch(e) { return json({ error: 'db_error', detail: e.message }, 500); }
+  }
+
+  /* ─── DELETE /api/admin/grants/:id ─── admin: delete grant opportunity */
+  const grantDeleteMatch = path.match(/^\/admin\/grants\/([^/]+)$/);
+  if (grantDeleteMatch && method === 'DELETE') {
+    if (me.role !== 'admin') return json({ error: 'Forbidden' }, 403);
+    try {
+      await db.prepare('DELETE FROM grant_opportunities WHERE id=?').bind(grantDeleteMatch[1]).run();
+      return json({ ok: true });
+    } catch(e) { return json({ error: 'db_error', detail: e.message }, 500); }
   }
 
   /* ─── GET /api/resources ─── admin: get portal resources */

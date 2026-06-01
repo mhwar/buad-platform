@@ -929,6 +929,38 @@ img,svg{display:block;max-width:100%}
   .crm-stat-grid{grid-template-columns:1fr 1fr}
   .crm-step-lbl{display:none}
 }
+/* ─── Grant Opportunities ─── */
+.gr-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;margin-bottom:24px}
+.gr-card{background:#fff;border:1px solid var(--line);border-radius:var(--radius-lg);padding:18px 20px;display:flex;flex-direction:column;gap:10px;box-shadow:var(--shadow-sm);transition:box-shadow .15s}
+.gr-card:hover{box-shadow:var(--shadow-md)}
+.gr-card-head{display:flex;align-items:center;gap:12px}
+.gr-ava{width:40px;height:40px;border-radius:11px;background:linear-gradient(135deg,var(--navy),var(--accent));color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex-shrink:0}
+.gr-info{flex:1;min-width:0}
+.gr-name{font-size:14px;font-weight:700;color:var(--navy-deep);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gr-subname{font-size:12px;color:var(--muted);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gr-ft-badge{font-size:10.5px;font-weight:700;padding:2px 9px;border-radius:20px;background:var(--bg-tint);color:var(--navy);white-space:nowrap;flex-shrink:0}
+.gr-desc{font-size:12.5px;color:var(--navy-2);line-height:1.6;margin:0}
+.gr-meta-row{display:flex;flex-direction:column;gap:4px}
+.gr-meta-item{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
+.gr-domains{display:flex;flex-wrap:wrap;gap:5px}
+.gr-domain-tag{font-size:11px;padding:2px 8px;border-radius:12px;background:var(--bg-tint);color:var(--navy-2);font-weight:500}
+.gr-card-foot{display:flex;align-items:center;justify-content:space-between;margin-top:4px}
+.gr-status{font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px}
+.gr-st-now{color:#059669;background:rgba(5,150,105,.1)}
+.gr-st-open{color:#059669;background:rgba(5,150,105,.1)}
+.gr-st-soon{color:#d97706;background:rgba(217,119,6,.1)}
+.gr-st-closed{color:#6b7280;background:#f3f4f6}
+.gr-apply-btn{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;font-weight:600;color:var(--navy);background:var(--bg-tint);border-radius:8px;padding:5px 12px;text-decoration:none;transition:.14s}
+.gr-apply-btn:hover{background:var(--accent-soft);color:var(--accent)}
+/* Timeline */
+.gr-timeline{min-width:700px;font-size:11.5px}
+.gr-tl-row{display:grid;grid-template-columns:160px repeat(12,1fr);align-items:center}
+.gr-tl-hdr .gr-tl-cell{font-size:10.5px;font-weight:700;color:var(--muted);text-align:center;padding:8px 2px;background:var(--bg-soft)}
+.gr-tl-label{padding:7px 10px;font-weight:600;color:var(--navy-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;border-bottom:1px solid var(--line)}
+.gr-tl-cell{padding:4px 2px;border-bottom:1px solid var(--line);text-align:center;min-height:32px;display:flex;align-items:center;justify-content:center}
+.gr-tl-bar{width:90%;height:12px;border-radius:6px;background:rgba(0,25,125,.18)}
+.gr-tl-bar.gr-tl-active{background:linear-gradient(90deg,var(--navy),var(--accent))}
+@media(max-width:700px){ .gr-grid{grid-template-columns:1fr} }
 </style>
 </head>
 <body>
@@ -1001,6 +1033,11 @@ img,svg{display:block;max-width:100%}
       <button class="sb-item" id="nav-resources" onclick="go('resources')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
         الموارد والأدلة
+      </button>
+      <button class="sb-item" id="nav-grants" onclick="go('grants')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        فرص المنح
+        <span class="sb-tag" id="grants-open-badge" style="display:none">مفتوحة</span>
       </button>
       <button class="sb-item" id="nav-store" onclick="go('store')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
@@ -1162,6 +1199,15 @@ img,svg{display:block;max-width:100%}
           <span>الروابط أدناه تنقلك إلى المصادر الرسمية للجهات الحكومية. تأكد دائماً من اعتماد أحدث نسخة من الأدلة واللوائح مباشرةً من موقع الجهة قبل العمل بها.</span>
         </div>
         <div id="resources-list"></div>
+      </section>
+
+      <!-- ─── Grants (فرص المنح) ─── -->
+      <section class="page" id="page-grants">
+        <div class="page-head">
+          <h1>فرص المنح والتمويل</h1>
+          <p>تعرّف على الجهات المانحة وأوقات فتح نوافذ التقديم لفرص التمويل المتاحة للجمعيات.</p>
+        </div>
+        <div id="grants-content"></div>
       </section>
 
       <!-- ─── Profile (ملف الجمعية) ─── -->
@@ -1551,7 +1597,7 @@ function openSidebar(){ document.getElementById('sidebar').classList.add('open')
 function closeSidebar(){ document.getElementById('sidebar').classList.remove('open'); document.getElementById('sb-overlay').classList.remove('show'); }
 
 /* ── Navigation ── */
-var PAGES = ['overview','plan','services','resources','profile','website','projects','governance','store','crm','settings'];
+var PAGES = ['overview','plan','services','resources','grants','profile','website','projects','governance','store','crm','settings'];
 function go(id){
   PAGES.forEach(function(p){
     var pg = document.getElementById('page-'+p);
@@ -1571,6 +1617,7 @@ function go(id){
   if(id==='store') renderStore();
   if(id==='crm') crmGo(crm.view);
   if(id==='settings') renderSettingsUsers();
+  if(id==='grants') renderGrants();
 }
 
 /* ── Requested-services state (per org, persisted locally for instant UI) ── */
@@ -1964,6 +2011,140 @@ function renderResourcesData(data){
     '</div>';
   }).join('');
   document.getElementById('resources-list').innerHTML = html;
+}
+
+/* ── Render grants ── */
+var _grantsData = null;
+var _grantsView = 'list';
+
+function grantStatus(g) {
+  if (!g.submission_start && !g.submission_end) return { lbl:'دائمة', cls:'gr-st-open' };
+  var now = new Date().toISOString().slice(0,10);
+  if (g.submission_end && now > g.submission_end) return { lbl:'منتهية', cls:'gr-st-closed' };
+  if (g.submission_start && now < g.submission_start) return { lbl:'قادمة', cls:'gr-st-soon' };
+  return { lbl:'مفتوحة الآن', cls:'gr-st-now' };
+}
+
+var _GRANT_FT = { government:'حكومية', private:'خاصة', endowment:'وقف', ngo:'منظمة' };
+
+function renderGrants() {
+  var cont = document.getElementById('grants-content');
+  if (!cont) return;
+  if (_grantsData !== null) { _renderGrantsData(_grantsData); return; }
+  cont.innerHTML = '<div style="text-align:center;padding:60px;color:var(--muted)">جارٍ التحميل...</div>';
+  fetch(API+'/public/grants')
+    .then(function(r){ return r.ok ? r.json() : []; })
+    .then(function(d){ _grantsData = Array.isArray(d) ? d : []; _renderGrantsData(_grantsData); })
+    .catch(function(){ _grantsData = []; _renderGrantsData([]); });
+}
+
+function _renderGrantsData(grants) {
+  var cont = document.getElementById('grants-content');
+  if (!cont) return;
+  var now = new Date().toISOString().slice(0,10);
+  var open = grants.filter(function(g){ var s=grantStatus(g); return s.cls==='gr-st-now'||s.cls==='gr-st-open'; });
+  var soon = grants.filter(function(g){ return grantStatus(g).cls==='gr-st-soon'; });
+  var closed = grants.filter(function(g){ return grantStatus(g).cls==='gr-st-closed'; });
+
+  // Update badge
+  var badge = document.getElementById('grants-open-badge');
+  if (badge) { badge.textContent = open.length > 0 ? open.length+' مفتوحة' : ''; badge.style.display = open.length > 0 ? '' : 'none'; }
+
+  if (!grants.length) {
+    cont.innerHTML =
+      '<div style="text-align:center;padding:60px;background:#fff;border-radius:var(--radius);border:1px solid var(--line)">'+
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:48px;height:48px;color:var(--muted);margin-bottom:16px"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>'+
+        '<p style="font-size:15px;font-weight:600;color:var(--navy-2);margin-bottom:6px">لا توجد فرص منح متاحة حالياً</p>'+
+        '<p style="font-size:13px;color:var(--muted)">تابع هذا القسم للاطلاع على الفرص الجديدة أولاً بأول.</p>'+
+      '</div>';
+    return;
+  }
+
+  function grantCard(g) {
+    var st = grantStatus(g);
+    var ftLbl = _GRANT_FT[g.funder_type] || g.funder_type || '';
+    var initials = (g.funder_name||'م').split(' ').slice(0,2).map(function(w){ return w[0]||''; }).join('');
+    var domainArr = Array.isArray(g.domains) ? g.domains : [];
+    var domainsHtml = domainArr.slice(0,4).map(function(d){
+      return '<span class="gr-domain-tag">'+escHtml(d)+'</span>';
+    }).join('');
+    var amountHtml = g.amount_note ? escHtml(g.amount_note) :
+      (g.amount_max ? '<span dir="ltr">'+((g.amount_min||0).toLocaleString())+(g.amount_max!==g.amount_min?' – '+g.amount_max.toLocaleString():'')+' ر.س</span>' : '');
+    var datesHtml = (g.submission_start || g.submission_end) ?
+      '<span dir="ltr">'+escHtml(g.submission_start||'—')+'</span> → <span dir="ltr">'+escHtml(g.submission_end||'—')+'</span>' : 'فتح دائم';
+    return '<div class="gr-card">'+
+      '<div class="gr-card-head">'+
+        '<div class="gr-ava">'+escHtml(initials)+'</div>'+
+        '<div class="gr-info">'+
+          '<div class="gr-name">'+escHtml(g.funder_name)+'</div>'+
+          (g.grant_type?'<div class="gr-subname">'+escHtml(g.grant_type)+'</div>':'')+
+        '</div>'+
+        '<span class="gr-ft-badge">'+escHtml(ftLbl)+'</span>'+
+      '</div>'+
+      (g.description?'<p class="gr-desc">'+escHtml(g.description)+'</p>':'')+
+      '<div class="gr-meta-row">'+
+        '<span class="gr-meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>'+datesHtml+'</span>'+
+        (amountHtml?'<span class="gr-meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>'+amountHtml+'</span>':'')+
+      '</div>'+
+      (domainArr.length?'<div class="gr-domains">'+domainsHtml+'</div>':'')+
+      '<div class="gr-card-foot">'+
+        '<span class="gr-status '+st.cls+'">'+st.lbl+'</span>'+
+        (g.url?'<a href="'+escHtml(g.url)+'" target="_blank" rel="noopener" class="gr-apply-btn">تقديم <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;display:inline"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg></a>':'')+'</div>'+
+    '</div>';
+  }
+
+  var sections = [];
+  if (open.length) {
+    sections.push(
+      '<div class="section-h"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;color:#059669"><circle cx="12" cy="12" r="10"/><polyline points="16 12 12 8 8 12"/><line x1="12" y1="16" x2="12" y2="8"/></svg>مفتوحة الآن ('+open.length+')</div>'+
+      '<div class="gr-grid">'+open.map(grantCard).join('')+'</div>'
+    );
+  }
+  if (soon.length) {
+    sections.push(
+      '<div class="section-h"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;color:#d97706"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>قادمة قريباً ('+soon.length+')</div>'+
+      '<div class="gr-grid">'+soon.map(grantCard).join('')+'</div>'
+    );
+  }
+  if (closed.length) {
+    sections.push(
+      '<div class="section-h" style="cursor:pointer" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display===\'none\'?\'grid\':\'none\'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;color:var(--muted)"><circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="16" y2="12"/></svg>منتهية ('+closed.length+') <span style="font-size:11px;color:var(--muted);font-weight:500">— اضغط للإظهار</span></div>'+
+      '<div class="gr-grid" style="display:none">'+closed.map(grantCard).join('')+'</div>'
+    );
+  }
+
+  // Timeline: build month-based gantt for non-closed grants with dates
+  var timed = grants.filter(function(g){ return g.submission_start && g.submission_end && grantStatus(g).cls !== 'gr-st-closed'; });
+  var timelineHtml = '';
+  if (timed.length >= 2) {
+    var months = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+    var curYear = new Date().getFullYear();
+    var cols = months.map(function(m,i){ return {m:m,mo:i+1}; });
+    var hdr = '<div class="gr-tl-row gr-tl-hdr"><div class="gr-tl-label"></div>'+
+      cols.map(function(c){ return '<div class="gr-tl-cell"'+((c.mo===new Date().getMonth()+1)?' style="background:rgba(0,25,125,.06)"':'')+'>'+c.m+'</div>'; }).join('')+'</div>';
+    var rows = timed.map(function(g){
+      var s = new Date(g.submission_start), e = new Date(g.submission_end);
+      var cells = cols.map(function(c){
+        var cs = new Date(curYear+'-'+String(c.mo).padStart(2,'0')+'-01');
+        var ce = new Date(curYear+'-'+String(c.mo).padStart(2,'0')+'-28');
+        var overlap = s <= ce && e >= cs;
+        var isActive = grantStatus(g).cls==='gr-st-now';
+        return '<div class="gr-tl-cell">'+
+          (overlap?'<div class="gr-tl-bar'+(isActive?' gr-tl-active':'')+'" title="'+escHtml(g.funder_name)+'"></div>':'')+
+        '</div>';
+      }).join('');
+      return '<div class="gr-tl-row"><div class="gr-tl-label" title="'+escHtml(g.funder_name)+'">'+escHtml(g.funder_name.length>20?g.funder_name.slice(0,18)+'…':g.funder_name)+'</div>'+cells+'</div>';
+    }).join('');
+    timelineHtml =
+      '<div class="section-h"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>جدول نوافذ التقديم '+curYear+'</div>'+
+      '<div class="card" style="padding:0;overflow-x:auto;margin-bottom:24px"><div class="gr-timeline">'+hdr+rows+'</div></div>';
+  }
+
+  cont.innerHTML = timelineHtml + sections.join('');
+}
+
+function escHtml(s) {
+  return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
 /* ── Render profile ── */

@@ -2294,6 +2294,10 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
         <span class="sb-icon"><i data-lucide="book-open"></i></span>
         <span class="sb-label">الموارد والأدلة</span>
       </a>
+      <a class="sb-item" id="nav-grants" onclick="Nav.go('grants')">
+        <span class="sb-icon"><i data-lucide="hand-coins"></i></span>
+        <span class="sb-label">فرص المنح</span>
+      </a>
       <div class="sb-section-label">الحساب</div>
       <a class="sb-item" id="nav-pf" onclick="Nav.go('pf')">
         <span class="sb-icon"><i data-lucide="banknote"></i></span>
@@ -2354,6 +2358,7 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
     <div id="pg-website"  class="page"></div>
     <div id="pg-orgs"     class="page"></div>
     <div id="pg-resources" class="page"></div>
+    <div id="pg-grants"   class="page"></div>
     <div id="pg-settings" class="page"></div>
   </main>
 </div>
@@ -2940,8 +2945,8 @@ var Nav = {
   updateBreadcrumb: function(page, params) {
     var bc = document.getElementById('breadcrumb');
     if (!bc) return;
-    var icons = {dash:'layout-dashboard', clients:'users', projects:'briefcase', settings:'settings-2'};
-    var labels = {dash:'الرئيسية', clients:'العملاء', projects:'المشاريع', settings:'الإعدادات'};
+    var icons = {dash:'layout-dashboard', clients:'users', projects:'briefcase', settings:'settings-2', resources:'book-open', grants:'hand-coins', orgs:'calendar-check', website:'inbox', pf:'banknote'};
+    var labels = {dash:'الرئيسية', clients:'العملاء', projects:'المشاريع', settings:'الإعدادات', resources:'الموارد والأدلة', grants:'فرص المنح', orgs:'خطة المئة يوم', website:'الطلبات الواردة', pf:'مالية المنصة'};
     function iconHtml(n){ return n ? '<i data-lucide="'+n+'" style="width:14px;height:14px;opacity:.6;flex-shrink:0"></i>' : ''; }
     if (labels[page]) {
       bc.innerHTML = iconHtml(icons[page])+'<span class="bc-page">'+labels[page]+'</span>';
@@ -10978,6 +10983,250 @@ Pages.addResLink = function(ci) {
     UI.closeModalForce();
     Pages.render_resources({_loaded:true});
   });
+};
+
+/* ═══════════════════════════════════════════
+   GRANT OPPORTUNITIES MANAGEMENT
+═══════════════════════════════════════════ */
+Pages._grants = null;
+Pages._grantsFilter = 'all';
+
+Pages._grantFunderTypes = [
+  { k:'government', lbl:'حكومية', color:'#00197d', bg:'rgba(0,25,125,.08)' },
+  { k:'private',    lbl:'خاصة',   color:'#0d7e6e', bg:'rgba(13,126,110,.08)' },
+  { k:'endowment',  lbl:'وقف',    color:'#92400e', bg:'rgba(146,64,14,.08)' },
+  { k:'ngo',        lbl:'منظمة',  color:'#6d28d9', bg:'rgba(109,40,217,.08)' }
+];
+Pages._grantFunderMeta = function(k) {
+  for (var i=0;i<Pages._grantFunderTypes.length;i++) if (Pages._grantFunderTypes[i].k===k) return Pages._grantFunderTypes[i];
+  return Pages._grantFunderTypes[0];
+};
+Pages._grantStatus = function(g) {
+  if (!g.submission_start && !g.submission_end) return { lbl:'دائمة', color:'#0d7e6e', bg:'rgba(13,126,110,.1)' };
+  var now = new Date().toISOString().slice(0,10);
+  if (g.submission_end && now > g.submission_end) return { lbl:'منتهية', color:'#6b7280', bg:'#f3f4f6' };
+  if (g.submission_start && now < g.submission_start) return { lbl:'قادمة', color:'#d97706', bg:'rgba(217,119,6,.1)' };
+  return { lbl:'مفتوحة', color:'#059669', bg:'rgba(5,150,105,.1)' };
+};
+
+Pages.render_grants = function(opts) {
+  var pg = document.getElementById('pg-grants');
+  if (!DB._token) {
+    pg.innerHTML = '<div class="page-header"><div><h1>فرص المنح</h1></div></div><div class="card" style="text-align:center;padding:40px;color:var(--fg-3)">تتطلب الاتصال بالخادم.</div>';
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+    return;
+  }
+  if (!(opts && opts._loaded)) {
+    pg.innerHTML = '<div class="page-header"><div><h1>فرص المنح</h1><div class="page-header-sub">جارٍ التحميل...</div></div></div>';
+    fetch('/api/admin/grants', { headers: DB._apiHeaders() })
+      .then(function(r){ return r.ok ? r.json() : []; })
+      .then(function(d){
+        Pages._grants = Array.isArray(d) ? d : [];
+        if (Nav._cur==='grants') Pages.render_grants({_loaded:true});
+      })
+      .catch(function(e){
+        if (e && e.message && e.message.indexOf('no such table')>=0) {
+          Pages._grants = null;
+        } else { Pages._grants = Pages._grants || []; }
+        if (Nav._cur==='grants') Pages.render_grants({_loaded:true});
+      });
+    return;
+  }
+
+  if (Pages._grants === null) {
+    pg.innerHTML =
+      '<div class="page-header"><div><h1>فرص المنح</h1></div>'+
+      '<button class="btn btn-primary" onclick="Pages.runGrantsMigration()"><i data-lucide="database"></i>تفعيل الميزة (تهيئة قاعدة البيانات)</button></div>'+
+      '<div class="card" style="text-align:center;padding:50px">'+
+        '<i data-lucide="database" style="width:48px;height:48px;color:var(--fg-3);margin-bottom:16px"></i>'+
+        '<p style="color:var(--fg-2);margin-bottom:4px;font-weight:600">الجدول غير موجود بعد</p>'+
+        '<p style="color:var(--fg-3);font-size:13px">اضغط على "تفعيل الميزة" لتهيئة قاعدة البيانات ثم أعد تحميل الصفحة.</p>'+
+      '</div>';
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+    return;
+  }
+
+  var filter = Pages._grantsFilter || 'all';
+  var grants = Pages._grants || [];
+  var filtered = filter === 'all' ? grants : grants.filter(function(g){ return g.funder_type === filter; });
+
+  var typeCountsHtml = '<button class="sec-pill'+(filter==='all'?' active':'')+'" onclick="Pages._grantsFilter=\'all\';Pages.render_grants({_loaded:true})">الكل<span class="sec-pill-count"> '+grants.length+'</span></button>';
+  Pages._grantFunderTypes.forEach(function(t){
+    var cnt = grants.filter(function(g){ return g.funder_type===t.k; }).length;
+    if (cnt > 0) typeCountsHtml += '<button class="sec-pill'+(filter===t.k?' active':'')+'" onclick="Pages._grantsFilter=\''+t.k+'\';Pages.render_grants({_loaded:true})">'+t.lbl+'<span class="sec-pill-count"> '+cnt+'</span></button>';
+  });
+
+  var rowsHtml = filtered.length ? filtered.map(function(g) {
+    var ft = Pages._grantFunderMeta(g.funder_type);
+    var st = Pages._grantStatus(g);
+    var initials = (g.funder_name||'م').split(' ').slice(0,2).map(function(w){ return w[0]||''; }).join('');
+    var amountTxt = g.amount_note || (g.amount_max ? (g.amount_min||0).toLocaleString()+(g.amount_max !== g.amount_min ? ' – '+g.amount_max.toLocaleString() : '')+' ر.س' : '—');
+    var domainTags = (Array.isArray(g.domains) ? g.domains : []).slice(0,3).map(function(d){ return '<span style="font-size:10px;padding:1px 7px;border-radius:10px;background:var(--neutral-100);color:var(--fg-2)">'+UI.escHtml(d)+'</span>'; }).join('');
+    return '<tr>'+
+      '<td><div style="display:flex;align-items:center;gap:10px">'+
+        '<div style="width:36px;height:36px;border-radius:9px;background:'+ft.bg+';color:'+ft.color+';display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0">'+UI.escHtml(initials)+'</div>'+
+        '<div><div style="font-weight:600;font-size:13.5px;color:var(--fg-1)">'+UI.escHtml(g.funder_name)+'</div>'+
+        (g.grant_type?'<div style="font-size:11.5px;color:var(--fg-3)">'+UI.escHtml(g.grant_type)+'</div>':'')+
+        '</div></div></td>'+
+      '<td><span style="font-size:11px;font-weight:700;padding:2px 9px;border-radius:20px;background:'+ft.bg+';color:'+ft.color+'">'+ft.lbl+'</span></td>'+
+      '<td style="font-size:12.5px;color:var(--fg-2)">'+(g.submission_start||g.submission_end ? (g.submission_start||'—')+' → '+(g.submission_end||'—') : '—')+'</td>'+
+      '<td><span style="font-size:11px;font-weight:700;padding:2px 9px;border-radius:20px;background:'+st.bg+';color:'+st.color+'">'+st.lbl+'</span></td>'+
+      '<td style="font-size:12.5px;direction:ltr">'+UI.escHtml(amountTxt)+'</td>'+
+      '<td><div style="display:flex;gap:4px;flex-wrap:wrap">'+domainTags+'</div></td>'+
+      '<td style="white-space:nowrap">'+
+        (g.url ? '<a href="'+UI.escHtml(g.url)+'" target="_blank" class="btn btn-sm btn-ghost" style="padding:4px 8px"><i data-lucide="external-link" style="width:12px;height:12px"></i></a>' : '')+
+        '<button class="btn btn-sm btn-ghost" style="padding:4px 8px" onclick="Pages.editGrant(\''+g.id+'\')"><i data-lucide="pencil" style="width:12px;height:12px"></i></button>'+
+        '<button class="btn btn-sm btn-ghost" style="padding:4px 8px;color:var(--danger-600)" onclick="Pages.deleteGrant(\''+g.id+'\',\''+UI.escHtml(g.funder_name)+'\')"><i data-lucide="trash-2" style="width:12px;height:12px"></i></button>'+
+      '</td>'+
+    '</tr>';
+  }).join('') : '<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--fg-3)">لا توجد فرص منح مضافة بعد</td></tr>';
+
+  pg.innerHTML =
+    '<div class="page-header">'+
+      '<div><h1>فرص المنح</h1><div class="page-header-sub">إدارة فرص التمويل والمنح المتاحة للجمعيات</div></div>'+
+      '<button class="btn btn-primary" onclick="Pages.addGrant()"><i data-lucide="plus"></i>إضافة فرصة</button>'+
+    '</div>'+
+    '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:20px">'+typeCountsHtml+'</div>'+
+    '<div class="card" style="padding:0;overflow:hidden">'+
+      '<div style="overflow-x:auto">'+
+        '<table style="width:100%;border-collapse:collapse">'+
+          '<thead><tr style="font-size:11px;font-weight:600;color:var(--fg-3);background:var(--neutral-50);text-align:right">'+
+            '<th style="padding:10px 14px">المانح</th>'+
+            '<th style="padding:10px 14px">النوع</th>'+
+            '<th style="padding:10px 14px">فترة التقديم</th>'+
+            '<th style="padding:10px 14px">الحالة</th>'+
+            '<th style="padding:10px 14px">المبلغ</th>'+
+            '<th style="padding:10px 14px">المجالات</th>'+
+            '<th style="padding:10px 14px">إجراء</th>'+
+          '</tr></thead>'+
+          '<tbody>'+rowsHtml+'</tbody>'+
+        '</table>'+
+      '</div>'+
+    '</div>';
+  if (typeof lucide !== 'undefined') lucide.createIcons();
+};
+
+Pages.runGrantsMigration = function() {
+  fetch('/api/admin/run-migrations', { method:'POST', headers: DB._apiHeaders() })
+    .then(function(r){ return r.json(); })
+    .then(function(){ UI.toast('تم تهيئة قاعدة البيانات بنجاح', 'success'); Pages._grants = []; Pages.render_grants({_loaded:true}); })
+    .catch(function(){ UI.toast('تعذّر التهيئة', 'danger'); });
+};
+
+Pages._grantFormHtml = function(g) {
+  g = g || {};
+  var ftOpts = Pages._grantFunderTypes.map(function(t){
+    return '<option value="'+t.k+'"'+(g.funder_type===t.k?' selected':'')+'>'+t.lbl+'</option>';
+  }).join('');
+  var domains = Array.isArray(g.domains) ? g.domains.join('، ') : '';
+  return '<div style="padding:18px 20px;display:grid;gap:12px">'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">'+
+      '<div class="form-group"><label style="font-size:12px;font-weight:600;display:block;margin-bottom:5px">اسم المانح <span style="color:red">*</span></label>'+
+      '<input id="gr-name" class="form-input" value="'+UI.escHtml(g.funder_name||'')+'" placeholder="صندوق دعم الجمعيات"></div>'+
+      '<div class="form-group"><label style="font-size:12px;font-weight:600;display:block;margin-bottom:5px">نوع المانح</label>'+
+      '<select id="gr-type" class="form-input">'+ftOpts+'</select></div>'+
+    '</div>'+
+    '<div class="form-group"><label style="font-size:12px;font-weight:600;display:block;margin-bottom:5px">نوع المنحة / اسم البرنامج</label>'+
+    '<input id="gr-grant-type" class="form-input" value="'+UI.escHtml(g.grant_type||'')+'" placeholder="منحة تطوير المؤسسات الخيرية"></div>'+
+    '<div class="form-group"><label style="font-size:12px;font-weight:600;display:block;margin-bottom:5px">الوصف</label>'+
+    '<textarea id="gr-desc" class="form-input" rows="2" placeholder="معلومات إضافية عن الفرصة والشروط">'+UI.escHtml(g.description||'')+'</textarea></div>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">'+
+      '<div class="form-group"><label style="font-size:12px;font-weight:600;display:block;margin-bottom:5px">بداية التقديم</label>'+
+      '<input id="gr-start" class="form-input" type="date" value="'+UI.escHtml(g.submission_start||'')+'"></div>'+
+      '<div class="form-group"><label style="font-size:12px;font-weight:600;display:block;margin-bottom:5px">نهاية التقديم</label>'+
+      '<input id="gr-end" class="form-input" type="date" value="'+UI.escHtml(g.submission_end||'')+'"></div>'+
+    '</div>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">'+
+      '<div class="form-group"><label style="font-size:12px;font-weight:600;display:block;margin-bottom:5px">المبلغ الأدنى (ر.س)</label>'+
+      '<input id="gr-amin" class="form-input" type="number" min="0" value="'+(g.amount_min||0)+'" placeholder="0"></div>'+
+      '<div class="form-group"><label style="font-size:12px;font-weight:600;display:block;margin-bottom:5px">المبلغ الأقصى (ر.س)</label>'+
+      '<input id="gr-amax" class="form-input" type="number" min="0" value="'+(g.amount_max||0)+'" placeholder="0"></div>'+
+      '<div class="form-group"><label style="font-size:12px;font-weight:600;display:block;margin-bottom:5px">ملاحظة المبلغ</label>'+
+      '<input id="gr-anote" class="form-input" value="'+UI.escHtml(g.amount_note||'')+'" placeholder="يُحدد حسب المشروع"></div>'+
+    '</div>'+
+    '<div class="form-group"><label style="font-size:12px;font-weight:600;display:block;margin-bottom:5px">المجالات (مفصولة بفاصلة)</label>'+
+    '<input id="gr-domains" class="form-input" value="'+UI.escHtml(domains)+'" placeholder="التعليم، الصحة، التنمية الاجتماعية"></div>'+
+    '<div class="form-group"><label style="font-size:12px;font-weight:600;display:block;margin-bottom:5px">رابط التقديم أو الموقع</label>'+
+    '<input id="gr-url" class="form-input" value="'+UI.escHtml(g.url||'')+'" placeholder="https://..." dir="ltr"></div>'+
+    '<div style="display:flex;align-items:center;gap:10px">'+
+      '<input type="checkbox" id="gr-active"'+(g.is_active!==0?' checked':'')+' style="width:16px;height:16px;cursor:pointer">'+
+      '<label for="gr-active" style="font-size:13px;font-weight:500;cursor:pointer">فرصة نشطة (ظاهرة للجمعيات)</label>'+
+    '</div>'+
+  '</div>';
+};
+
+Pages._grantFormValues = function() {
+  var raw = (document.getElementById('gr-domains').value||'').split(/[,،]/).map(function(d){ return d.trim(); }).filter(Boolean);
+  return {
+    funder_name: (document.getElementById('gr-name').value||'').trim(),
+    funder_type: document.getElementById('gr-type').value,
+    grant_type: (document.getElementById('gr-grant-type').value||'').trim(),
+    description: (document.getElementById('gr-desc').value||'').trim(),
+    submission_start: document.getElementById('gr-start').value,
+    submission_end: document.getElementById('gr-end').value,
+    amount_min: parseInt(document.getElementById('gr-amin').value)||0,
+    amount_max: parseInt(document.getElementById('gr-amax').value)||0,
+    amount_note: (document.getElementById('gr-anote').value||'').trim(),
+    domains: raw,
+    url: (document.getElementById('gr-url').value||'').trim(),
+    is_active: document.getElementById('gr-active').checked
+  };
+};
+
+Pages.addGrant = function() {
+  UI.openModal(
+    '<div class="modal-header"><h3>إضافة فرصة منحة جديدة</h3><button class="modal-close" onclick="UI.closeModalForce()">×</button></div>'+
+    Pages._grantFormHtml()+
+    '<div class="modal-footer"><button class="btn btn-ghost" onclick="UI.closeModalForce()">إلغاء</button>'+
+    '<button class="btn btn-primary" onclick="Pages.doAddGrant()">إضافة</button></div>'
+  );
+};
+Pages.doAddGrant = function() {
+  var data = Pages._grantFormValues();
+  if (!data.funder_name) { UI.toast('أدخل اسم المانح', 'danger'); return; }
+  fetch('/api/admin/grants', {
+    method: 'POST',
+    headers: Object.assign({'Content-Type':'application/json'}, DB._apiHeaders()),
+    body: JSON.stringify(data)
+  }).then(function(r){ return r.json(); })
+  .then(function(d){
+    if (d.ok) { UI.closeModalForce(); UI.toast('تمت الإضافة بنجاح', 'success'); Pages._grants = null; Pages.render_grants(); }
+    else { UI.toast('تعذّر الإضافة: '+(d.error||''), 'danger'); }
+  }).catch(function(){ UI.toast('خطأ في الاتصال', 'danger'); });
+};
+
+Pages.editGrant = function(id) {
+  var g = (Pages._grants||[]).find(function(x){ return x.id===id; });
+  if (!g) return;
+  UI.openModal(
+    '<div class="modal-header"><h3>تعديل فرصة المنحة</h3><button class="modal-close" onclick="UI.closeModalForce()">×</button></div>'+
+    Pages._grantFormHtml(g)+
+    '<div class="modal-footer"><button class="btn btn-ghost" onclick="UI.closeModalForce()">إلغاء</button>'+
+    '<button class="btn btn-primary" onclick="Pages.doEditGrant(\''+id+'\')">حفظ التعديلات</button></div>'
+  );
+};
+Pages.doEditGrant = function(id) {
+  var data = Pages._grantFormValues();
+  if (!data.funder_name) { UI.toast('أدخل اسم المانح', 'danger'); return; }
+  fetch('/api/admin/grants/'+id, {
+    method: 'PUT',
+    headers: Object.assign({'Content-Type':'application/json'}, DB._apiHeaders()),
+    body: JSON.stringify(data)
+  }).then(function(r){ return r.json(); })
+  .then(function(d){
+    if (d.ok) { UI.closeModalForce(); UI.toast('تم الحفظ', 'success'); Pages._grants = null; Pages.render_grants(); }
+    else { UI.toast('تعذّر الحفظ: '+(d.error||''), 'danger'); }
+  }).catch(function(){ UI.toast('خطأ في الاتصال', 'danger'); });
+};
+
+Pages.deleteGrant = function(id, name) {
+  if (!confirm('حذف "'+name+'"؟')) return;
+  fetch('/api/admin/grants/'+id, { method:'DELETE', headers: DB._apiHeaders() })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if (d.ok) { UI.toast('تم الحذف', 'success'); Pages._grants = (Pages._grants||[]).filter(function(g){ return g.id!==id; }); Pages.render_grants({_loaded:true}); }
+      else { UI.toast('تعذّر الحذف', 'danger'); }
+    }).catch(function(){ UI.toast('خطأ في الاتصال', 'danger'); });
 };
 
 /* ═══════════════════════════════════════════
