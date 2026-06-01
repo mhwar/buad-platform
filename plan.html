@@ -930,6 +930,10 @@ img,svg{display:block;max-width:100%}
   .crm-step-lbl{display:none}
 }
 /* ─── Grant Opportunities ─── */
+.gr-view-tabs{display:flex;gap:3px;background:var(--bg-soft);border:1px solid var(--line);border-radius:10px;padding:3px;margin-bottom:20px;width:fit-content}
+.gr-view-btn{display:flex;align-items:center;gap:5px;padding:6px 14px;border:none;border-radius:7px;font-size:12.5px;font-weight:600;color:var(--muted);background:transparent;cursor:pointer;transition:.14s;font-family:inherit;white-space:nowrap}
+.gr-view-btn.active{background:#fff;color:var(--navy);box-shadow:0 1px 4px rgba(0,0,0,.12)}
+.gr-view-btn:hover:not(.active){color:var(--navy-2)}
 .gr-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;margin-bottom:24px}
 .gr-card{background:#fff;border:1px solid var(--line);border-radius:var(--radius-lg);padding:18px 20px;display:flex;flex-direction:column;gap:10px;box-shadow:var(--shadow-sm);transition:box-shadow .15s}
 .gr-card:hover{box-shadow:var(--shadow-md)}
@@ -955,15 +959,35 @@ img,svg{display:block;max-width:100%}
 .gr-st-closed{color:#6b7280;background:#f3f4f6}
 .gr-apply-btn{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;font-weight:600;color:var(--navy);background:var(--bg-tint);border-radius:8px;padding:5px 12px;text-decoration:none;transition:.14s}
 .gr-apply-btn:hover{background:var(--accent-soft);color:var(--accent)}
-/* Timeline */
+/* List view */
+.gr-list{display:flex;flex-direction:column;gap:6px;margin-bottom:20px}
+.gr-list-row{background:#fff;border:1px solid var(--line);border-radius:11px;padding:11px 16px;display:grid;grid-template-columns:38px 1fr auto auto;align-items:center;gap:12px;transition:.14s}
+.gr-list-row:hover{box-shadow:var(--shadow-sm);border-color:var(--accent-soft)}
+.gr-list-info{min-width:0}
+.gr-list-name{font-size:13.5px;font-weight:700;color:var(--navy-deep);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gr-list-sub{font-size:11.5px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gr-list-dates{font-size:11.5px;color:var(--navy-2);white-space:nowrap}
+.gr-list-act{display:flex;align-items:center;gap:8px;flex-shrink:0}
+/* Calendar view */
+.gr-cal-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:24px}
+.gr-cal-month{background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px 12px;min-height:72px}
+.gr-cal-month.gr-cal-cur{border-color:var(--accent);box-shadow:0 0 0 2px rgba(0,25,125,.08)}
+.gr-cal-mhdr{font-size:12px;font-weight:700;color:var(--navy-2);margin-bottom:6px;display:flex;align-items:center;gap:5px}
+.gr-cal-pills{display:flex;flex-direction:column;gap:3px}
+.gr-cal-pill{font-size:10px;font-weight:600;padding:2px 7px;border-radius:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gr-cal-pill-now{background:rgba(5,150,105,.13);color:#059669}
+.gr-cal-pill-soon{background:rgba(217,119,6,.13);color:#b45309}
+.gr-cal-empty{font-size:11px;color:var(--muted);padding:2px 0;font-style:italic}
+/* Gantt / Timeline */
 .gr-timeline{min-width:700px;font-size:11.5px}
-.gr-tl-row{display:grid;grid-template-columns:160px repeat(12,1fr);align-items:center}
+.gr-tl-row{display:grid;grid-template-columns:180px repeat(12,1fr);align-items:center}
 .gr-tl-hdr .gr-tl-cell{font-size:10.5px;font-weight:700;color:var(--muted);text-align:center;padding:8px 2px;background:var(--bg-soft)}
-.gr-tl-label{padding:7px 10px;font-weight:600;color:var(--navy-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;border-bottom:1px solid var(--line)}
+.gr-tl-label{padding:7px 10px;font-weight:600;color:var(--navy-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:6px}
 .gr-tl-cell{padding:4px 2px;border-bottom:1px solid var(--line);text-align:center;min-height:32px;display:flex;align-items:center;justify-content:center}
-.gr-tl-bar{width:90%;height:12px;border-radius:6px;background:rgba(0,25,125,.18)}
-.gr-tl-bar.gr-tl-active{background:linear-gradient(90deg,var(--navy),var(--accent))}
-@media(max-width:700px){ .gr-grid{grid-template-columns:1fr} }
+.gr-tl-bar{width:90%;height:12px;border-radius:6px;background:rgba(107,114,128,.2)}
+.gr-tl-bar-open{width:90%;height:12px;border-radius:6px;background:linear-gradient(90deg,var(--navy),var(--accent))}
+.gr-tl-bar-soon{width:90%;height:12px;border-radius:6px;background:rgba(217,119,6,.4)}
+@media(max-width:700px){ .gr-grid{grid-template-columns:1fr} .gr-cal-grid{grid-template-columns:repeat(2,1fr)} .gr-list-row{grid-template-columns:38px 1fr auto} .gr-list-dates{display:none} }
 </style>
 </head>
 <body>
@@ -2018,7 +2042,12 @@ function renderResourcesData(data){
 
 /* ── Render grants ── */
 var _grantsData = null;
-var _grantsView = 'list';
+var _grantsView = 'cards';
+
+function setGrantView(v) {
+  _grantsView = v;
+  if (_grantsData !== null) _renderGrantsData(_grantsData);
+}
 
 function grantStatus(g) {
   if (!g.submission_start && !g.submission_end) return { lbl:'دائمة', cls:'gr-st-open' };
@@ -2041,15 +2070,156 @@ function renderGrants() {
     .catch(function(){ _grantsData = []; _renderGrantsData([]); });
 }
 
+function _grAvaHtml(g, size) {
+  size = size || 40;
+  var initials = (g.funder_name||'م').split(' ').slice(0,2).map(function(w){ return w[0]||''; }).join('');
+  var bgStyle = g.brand_color ? 'background:'+g.brand_color+';color:#fff' : '';
+  var sz = 'width:'+size+'px;height:'+size+'px';
+  if (g.logo_url) {
+    return '<div class="gr-ava gr-ava-img" style="'+sz+(bgStyle?';'+bgStyle:'')+'">' +
+      '<img src="'+escHtml(g.logo_url)+'" alt="'+escHtml(g.funder_name)+'" class="gr-logo-img" ' +
+        'onerror="this.style.display=\'none\';this.parentNode.querySelector(\'.gr-ava-fb\').style.display=\'flex\'">' +
+      '<span class="gr-ava-fb" style="display:none;font-size:'+(size*0.35|0)+'px">'+escHtml(initials)+'</span>' +
+    '</div>';
+  }
+  return '<div class="gr-ava" style="'+sz+';font-size:'+(size*0.35|0)+'px'+(bgStyle?';'+bgStyle:'')+'">' + escHtml(initials) + '</div>';
+}
+
+function _grCardHtml(g) {
+  var st = grantStatus(g);
+  var ftLbl = _GRANT_FT[g.funder_type] || g.funder_type || '';
+  var domainArr = Array.isArray(g.domains) ? g.domains : [];
+  var domainsHtml = domainArr.slice(0,4).map(function(d){ return '<span class="gr-domain-tag">'+escHtml(d)+'</span>'; }).join('');
+  var amountHtml = g.amount_note ? escHtml(g.amount_note) :
+    (g.amount_max ? '<span dir="ltr">'+((g.amount_min||0).toLocaleString())+(g.amount_max!==g.amount_min?' – '+g.amount_max.toLocaleString():'')+' ر.س</span>' : '');
+  var datesHtml = (g.submission_start || g.submission_end) ?
+    '<span dir="ltr">'+escHtml(g.submission_start||'—')+'</span> → <span dir="ltr">'+escHtml(g.submission_end||'—')+'</span>' : 'فتح دائم';
+  return '<div class="gr-card">'+
+    '<div class="gr-card-head">'+_grAvaHtml(g,40)+
+      '<div class="gr-info">'+
+        '<div class="gr-name">'+escHtml(g.funder_name)+'</div>'+
+        (g.grant_type?'<div class="gr-subname">'+escHtml(g.grant_type)+'</div>':'')+
+      '</div>'+
+      '<span class="gr-ft-badge">'+escHtml(ftLbl)+'</span>'+
+    '</div>'+
+    (g.description?'<p class="gr-desc">'+escHtml(g.description)+'</p>':'')+
+    '<div class="gr-meta-row">'+
+      '<span class="gr-meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>'+datesHtml+'</span>'+
+      (amountHtml?'<span class="gr-meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>'+amountHtml+'</span>':'')+
+    '</div>'+
+    (domainArr.length?'<div class="gr-domains">'+domainsHtml+'</div>':'')+
+    '<div class="gr-card-foot">'+
+      '<span class="gr-status '+st.cls+'">'+st.lbl+'</span>'+
+      (g.url?'<a href="'+escHtml(g.url)+'" target="_blank" rel="noopener" class="gr-apply-btn">تقديم <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;display:inline"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg></a>':'')+'</div>'+
+  '</div>';
+}
+
+function _grCardsHtml(grants, open, soon, closed) {
+  var IC_OPEN   = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;color:#059669"><circle cx="12" cy="12" r="10"/><polyline points="16 12 12 8 8 12"/><line x1="12" y1="16" x2="12" y2="8"/></svg>';
+  var IC_SOON   = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;color:#d97706"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>';
+  var IC_CLOSED = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;color:var(--muted)"><circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="16" y2="12"/></svg>';
+  var s = [];
+  if (open.length)   s.push('<div class="section-h">'+IC_OPEN+'مفتوحة الآن ('+open.length+')</div><div class="gr-grid">'+open.map(_grCardHtml).join('')+'</div>');
+  if (soon.length)   s.push('<div class="section-h">'+IC_SOON+'قادمة قريباً ('+soon.length+')</div><div class="gr-grid">'+soon.map(_grCardHtml).join('')+'</div>');
+  if (closed.length) s.push(
+    '<div class="section-h" style="cursor:pointer" onclick="var n=this.nextElementSibling;n.style.display=n.style.display===\'none\'?\'grid\':\'none\'">'+IC_CLOSED+'منتهية ('+closed.length+') <span style="font-size:11px;color:var(--muted);font-weight:500">— اضغط للإظهار</span></div>'+
+    '<div class="gr-grid" style="display:none">'+closed.map(_grCardHtml).join('')+'</div>');
+  return s.join('');
+}
+
+function _grListHtml(grants, open, soon, closed) {
+  var IC_CAL    = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:11px;height:11px;flex-shrink:0"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>';
+  var IC_OPEN   = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;color:#059669"><circle cx="12" cy="12" r="10"/><polyline points="16 12 12 8 8 12"/><line x1="12" y1="16" x2="12" y2="8"/></svg>';
+  var IC_SOON   = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;color:#d97706"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>';
+  var IC_CLOSED = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;color:var(--muted)"><circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="16" y2="12"/></svg>';
+  function row(g) {
+    var st = grantStatus(g);
+    var ftLbl = _GRANT_FT[g.funder_type] || g.funder_type || '';
+    var amtTxt = g.amount_note || (g.amount_max ? (g.amount_min||0).toLocaleString()+(g.amount_max!==g.amount_min?' – '+g.amount_max.toLocaleString():'')+' ر.س' : '');
+    var datesTxt = (g.submission_start || g.submission_end) ? escHtml(g.submission_start||'—')+' → '+escHtml(g.submission_end||'—') : 'فتح دائم';
+    return '<div class="gr-list-row">'+
+      _grAvaHtml(g,38)+
+      '<div class="gr-list-info">'+
+        '<div class="gr-list-name">'+escHtml(g.funder_name)+(g.grant_type?' <span style="font-weight:400;color:var(--muted)">· '+escHtml(g.grant_type)+'</span>':'')+'</div>'+
+        '<div class="gr-list-sub">'+escHtml(ftLbl)+(amtTxt?' · '+escHtml(amtTxt):'')+'</div>'+
+      '</div>'+
+      '<div class="gr-list-dates" dir="ltr">'+IC_CAL+' '+datesTxt+'</div>'+
+      '<div class="gr-list-act">'+
+        '<span class="gr-status '+st.cls+'">'+st.lbl+'</span>'+
+        (g.url?'<a href="'+escHtml(g.url)+'" target="_blank" rel="noopener" class="gr-apply-btn" style="padding:4px 10px">تقديم</a>':'')+
+      '</div>'+
+    '</div>';
+  }
+  var s = [];
+  if (open.length)   s.push('<div class="section-h">'+IC_OPEN+'مفتوحة الآن ('+open.length+')</div><div class="gr-list">'+open.map(row).join('')+'</div>');
+  if (soon.length)   s.push('<div class="section-h">'+IC_SOON+'قادمة قريباً ('+soon.length+')</div><div class="gr-list">'+soon.map(row).join('')+'</div>');
+  if (closed.length) s.push(
+    '<div class="section-h" style="cursor:pointer" onclick="var n=this.nextElementSibling;n.style.display=n.style.display===\'none\'?\'flex\':\'none\'">'+IC_CLOSED+'منتهية ('+closed.length+') <span style="font-size:11px;color:var(--muted);font-weight:500">— اضغط للإظهار</span></div>'+
+    '<div class="gr-list" style="display:none">'+closed.map(row).join('')+'</div>');
+  return s.join('');
+}
+
+function _grGanttHtml(grants) {
+  var months = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+  var curYear = new Date().getFullYear();
+  var curMo = new Date().getMonth() + 1;
+  var cols = months.map(function(m,i){ return {m:m,mo:i+1}; });
+  var timed = grants.filter(function(g){ return g.submission_start && g.submission_end; });
+  if (!timed.length) return '<div style="text-align:center;padding:40px;color:var(--muted);font-size:13px">لا توجد فرص ذات نوافذ زمنية محددة.</div>';
+  var hdr = '<div class="gr-tl-row gr-tl-hdr"><div class="gr-tl-label" style="border-bottom:1px solid var(--line)"></div>'+
+    cols.map(function(c){ return '<div class="gr-tl-cell"'+(c.mo===curMo?' style="background:rgba(0,25,125,.08);font-weight:800;color:var(--navy)"':'')+'>'+c.m+'</div>'; }).join('')+'</div>';
+  var rows = timed.map(function(g){
+    var st = grantStatus(g);
+    var s = new Date(g.submission_start), e = new Date(g.submission_end);
+    var cells = cols.map(function(c){
+      var cs = new Date(curYear+'-'+String(c.mo).padStart(2,'0')+'-01');
+      var ce = new Date(curYear+'-'+String(c.mo).padStart(2,'0')+'-28');
+      var overlap = s <= ce && e >= cs;
+      var barCls = st.cls==='gr-st-now' ? 'gr-tl-bar-open' : (st.cls==='gr-st-soon' ? 'gr-tl-bar-soon' : 'gr-tl-bar');
+      var bg = c.mo===curMo ? ' style="background:rgba(0,25,125,.03)"' : '';
+      return '<div class="gr-tl-cell"'+bg+'>'+(overlap?'<div class="'+barCls+'" title="'+escHtml(g.funder_name)+(g.grant_type?' – '+g.grant_type:'')+'"></div>':'')+'</div>';
+    }).join('');
+    var badge = '<span class="gr-status '+st.cls+'" style="font-size:10px;padding:1px 6px;flex-shrink:0">'+st.lbl+'</span>';
+    var nm = g.funder_name.length > 14 ? g.funder_name.slice(0,13)+'…' : g.funder_name;
+    return '<div class="gr-tl-row"><div class="gr-tl-label" title="'+escHtml(g.funder_name)+'">'+badge+escHtml(nm)+'</div>'+cells+'</div>';
+  }).join('');
+  return '<div class="card" style="padding:0;overflow-x:auto;margin-bottom:24px"><div class="gr-timeline">'+hdr+rows+'</div></div>';
+}
+
+function _grCalHtml(grants) {
+  var months = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+  var curYear = new Date().getFullYear();
+  var curMo = new Date().getMonth() + 1;
+  var cells = months.map(function(m, i) {
+    var mo = i + 1;
+    var moStart = curYear+'-'+String(mo).padStart(2,'0')+'-01';
+    var moEnd   = curYear+'-'+String(mo).padStart(2,'0')+'-31';
+    var active = grants.filter(function(g){
+      if (!g.submission_start || !g.submission_end) return false;
+      return g.submission_start <= moEnd && g.submission_end >= moStart;
+    });
+    var pills = active.map(function(g){
+      var st = grantStatus(g);
+      var cls = st.cls==='gr-st-now' ? 'gr-cal-pill-now' : 'gr-cal-pill-soon';
+      var short = g.funder_name.length > 15 ? g.funder_name.slice(0,13)+'…' : g.funder_name;
+      return '<div class="gr-cal-pill '+cls+'" title="'+escHtml(g.funder_name)+(g.grant_type?' – '+g.grant_type:'')+' ('+escHtml(g.submission_start)+' → '+escHtml(g.submission_end)+')">'+escHtml(short)+'</div>';
+    }).join('');
+    var isCur = mo === curMo;
+    return '<div class="gr-cal-month'+(isCur?' gr-cal-cur':'')+'">' +
+      '<div class="gr-cal-mhdr">'+m+(isCur?' <span style="font-size:9.5px;background:var(--accent);color:#fff;border-radius:4px;padding:1px 5px">الآن</span>':'')+'</div>'+
+      '<div class="gr-cal-pills">'+(pills||'<div class="gr-cal-empty">لا يوجد</div>')+'</div>'+
+    '</div>';
+  }).join('');
+  return '<div class="gr-cal-grid">'+cells+'</div>';
+}
+
 function _renderGrantsData(grants) {
   var cont = document.getElementById('grants-content');
   if (!cont) return;
-  var now = new Date().toISOString().slice(0,10);
-  var open = grants.filter(function(g){ var s=grantStatus(g); return s.cls==='gr-st-now'||s.cls==='gr-st-open'; });
-  var soon = grants.filter(function(g){ return grantStatus(g).cls==='gr-st-soon'; });
+  var open   = grants.filter(function(g){ var s=grantStatus(g); return s.cls==='gr-st-now'||s.cls==='gr-st-open'; });
+  var soon   = grants.filter(function(g){ return grantStatus(g).cls==='gr-st-soon'; });
   var closed = grants.filter(function(g){ return grantStatus(g).cls==='gr-st-closed'; });
 
-  // Update badge
   var badge = document.getElementById('grants-open-badge');
   if (badge) { badge.textContent = open.length > 0 ? open.length+' مفتوحة' : ''; badge.style.display = open.length > 0 ? '' : 'none'; }
 
@@ -2063,95 +2233,20 @@ function _renderGrantsData(grants) {
     return;
   }
 
-  function grantCard(g) {
-    var st = grantStatus(g);
-    var ftLbl = _GRANT_FT[g.funder_type] || g.funder_type || '';
-    var initials = (g.funder_name||'م').split(' ').slice(0,2).map(function(w){ return w[0]||''; }).join('');
-    var bgStyle = g.brand_color ? 'background:'+g.brand_color+';color:#fff' : '';
-    var domainArr = Array.isArray(g.domains) ? g.domains : [];
-    var domainsHtml = domainArr.slice(0,4).map(function(d){
-      return '<span class="gr-domain-tag">'+escHtml(d)+'</span>';
-    }).join('');
-    var amountHtml = g.amount_note ? escHtml(g.amount_note) :
-      (g.amount_max ? '<span dir="ltr">'+((g.amount_min||0).toLocaleString())+(g.amount_max!==g.amount_min?' – '+g.amount_max.toLocaleString():'')+' ر.س</span>' : '');
-    var datesHtml = (g.submission_start || g.submission_end) ?
-      '<span dir="ltr">'+escHtml(g.submission_start||'—')+'</span> → <span dir="ltr">'+escHtml(g.submission_end||'—')+'</span>' : 'فتح دائم';
-    var logoHtml = g.logo_url
-      ? '<div class="gr-ava gr-ava-img" '+(bgStyle?'style="'+bgStyle+'"':'')+'>'+
-          '<img src="'+escHtml(g.logo_url)+'" alt="'+escHtml(g.funder_name)+'" class="gr-logo-img" '+
-            'onerror="this.style.display=\'none\';this.parentNode.querySelector(\'.gr-ava-fb\').style.display=\'flex\'">'+
-          '<span class="gr-ava-fb" style="display:none">'+escHtml(initials)+'</span>'+
-        '</div>'
-      : '<div class="gr-ava" '+(bgStyle?'style="'+bgStyle+'"':'')+'>'+escHtml(initials)+'</div>';
-    return '<div class="gr-card">'+
-      '<div class="gr-card-head">'+
-        logoHtml+
-        '<div class="gr-info">'+
-          '<div class="gr-name">'+escHtml(g.funder_name)+'</div>'+
-          (g.grant_type?'<div class="gr-subname">'+escHtml(g.grant_type)+'</div>':'')+
-        '</div>'+
-        '<span class="gr-ft-badge">'+escHtml(ftLbl)+'</span>'+
-      '</div>'+
-      (g.description?'<p class="gr-desc">'+escHtml(g.description)+'</p>':'')+
-      '<div class="gr-meta-row">'+
-        '<span class="gr-meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>'+datesHtml+'</span>'+
-        (amountHtml?'<span class="gr-meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>'+amountHtml+'</span>':'')+
-      '</div>'+
-      (domainArr.length?'<div class="gr-domains">'+domainsHtml+'</div>':'')+
-      '<div class="gr-card-foot">'+
-        '<span class="gr-status '+st.cls+'">'+st.lbl+'</span>'+
-        (g.url?'<a href="'+escHtml(g.url)+'" target="_blank" rel="noopener" class="gr-apply-btn">تقديم <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;display:inline"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg></a>':'')+'</div>'+
-    '</div>';
-  }
+  var IC_CARDS = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>';
+  var IC_LIST  = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>';
+  var IC_GANTT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="15" y2="12"/><line x1="3" y1="18" x2="18" y2="18"/></svg>';
+  var IC_CAL   = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>';
+  var views = [{k:'cards',ic:IC_CARDS,lbl:'بطاقات'},{k:'list',ic:IC_LIST,lbl:'قائمة'},{k:'gantt',ic:IC_GANTT,lbl:'جانت'},{k:'cal',ic:IC_CAL,lbl:'تقويم'}];
+  var switcher = '<div class="gr-view-tabs">'+
+    views.map(function(v){ return '<button class="gr-view-btn'+(_grantsView===v.k?' active':'')+'" onclick="setGrantView(\''+v.k+'\')">'+v.ic+v.lbl+'</button>'; }).join('')+
+  '</div>';
 
-  var sections = [];
-  if (open.length) {
-    sections.push(
-      '<div class="section-h"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;color:#059669"><circle cx="12" cy="12" r="10"/><polyline points="16 12 12 8 8 12"/><line x1="12" y1="16" x2="12" y2="8"/></svg>مفتوحة الآن ('+open.length+')</div>'+
-      '<div class="gr-grid">'+open.map(grantCard).join('')+'</div>'
-    );
-  }
-  if (soon.length) {
-    sections.push(
-      '<div class="section-h"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;color:#d97706"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>قادمة قريباً ('+soon.length+')</div>'+
-      '<div class="gr-grid">'+soon.map(grantCard).join('')+'</div>'
-    );
-  }
-  if (closed.length) {
-    sections.push(
-      '<div class="section-h" style="cursor:pointer" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display===\'none\'?\'grid\':\'none\'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;color:var(--muted)"><circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="16" y2="12"/></svg>منتهية ('+closed.length+') <span style="font-size:11px;color:var(--muted);font-weight:500">— اضغط للإظهار</span></div>'+
-      '<div class="gr-grid" style="display:none">'+closed.map(grantCard).join('')+'</div>'
-    );
-  }
-
-  // Timeline: build month-based gantt for non-closed grants with dates
-  var timed = grants.filter(function(g){ return g.submission_start && g.submission_end && grantStatus(g).cls !== 'gr-st-closed'; });
-  var timelineHtml = '';
-  if (timed.length >= 2) {
-    var months = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
-    var curYear = new Date().getFullYear();
-    var cols = months.map(function(m,i){ return {m:m,mo:i+1}; });
-    var hdr = '<div class="gr-tl-row gr-tl-hdr"><div class="gr-tl-label"></div>'+
-      cols.map(function(c){ return '<div class="gr-tl-cell"'+((c.mo===new Date().getMonth()+1)?' style="background:rgba(0,25,125,.06)"':'')+'>'+c.m+'</div>'; }).join('')+'</div>';
-    var rows = timed.map(function(g){
-      var s = new Date(g.submission_start), e = new Date(g.submission_end);
-      var cells = cols.map(function(c){
-        var cs = new Date(curYear+'-'+String(c.mo).padStart(2,'0')+'-01');
-        var ce = new Date(curYear+'-'+String(c.mo).padStart(2,'0')+'-28');
-        var overlap = s <= ce && e >= cs;
-        var isActive = grantStatus(g).cls==='gr-st-now';
-        return '<div class="gr-tl-cell">'+
-          (overlap?'<div class="gr-tl-bar'+(isActive?' gr-tl-active':'')+'" title="'+escHtml(g.funder_name)+'"></div>':'')+
-        '</div>';
-      }).join('');
-      return '<div class="gr-tl-row"><div class="gr-tl-label" title="'+escHtml(g.funder_name)+'">'+escHtml(g.funder_name.length>20?g.funder_name.slice(0,18)+'…':g.funder_name)+'</div>'+cells+'</div>';
-    }).join('');
-    timelineHtml =
-      '<div class="section-h"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>جدول نوافذ التقديم '+curYear+'</div>'+
-      '<div class="card" style="padding:0;overflow-x:auto;margin-bottom:24px"><div class="gr-timeline">'+hdr+rows+'</div></div>';
-  }
-
-  cont.innerHTML = timelineHtml + sections.join('');
+  var body = _grantsView==='list'  ? _grListHtml(grants,open,soon,closed) :
+             _grantsView==='gantt' ? _grGanttHtml(grants) :
+             _grantsView==='cal'   ? _grCalHtml(grants) :
+                                     _grCardsHtml(grants,open,soon,closed);
+  cont.innerHTML = switcher + body;
 }
 
 function escHtml(s) {
