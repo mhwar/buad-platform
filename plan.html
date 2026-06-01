@@ -110,6 +110,48 @@
 .sb-ts-opt:hover{color:rgba(255,255,255,.65)}
 .sb-ts-opt.active{background:rgba(39,194,172,.18);color:var(--accent-2)}
 .sidebar.sb-col .sb-theme-seg{display:none}
+
+/* ─── Light mode sidebar ─── */
+[data-theme="light"] .sidebar{background:#fff;border-left-color:var(--line)}
+[data-theme="light"] .sb-brand{border-bottom-color:var(--line)}
+[data-theme="light"] .sb-brand-logo{filter:none}
+[data-theme="light"] .sb-brand-icon{filter:none}
+[data-theme="light"] .sb-collapse{background:var(--bg-soft);color:var(--muted)}
+[data-theme="light"] .sb-collapse:hover{background:var(--line-2);color:var(--navy-2)}
+[data-theme="light"] .sb-close{background:var(--bg-soft);color:var(--muted)}
+[data-theme="light"] .sb-search-wrap{background:var(--bg-soft);border-color:var(--line)}
+[data-theme="light"] .sb-search-wrap:focus-within{background:#fff;border-color:var(--accent)}
+[data-theme="light"] .sb-search-inp{color:var(--ink)}
+[data-theme="light"] .sb-search-inp::placeholder{color:var(--muted-2)}
+[data-theme="light"] .sb-search-wrap svg{color:var(--muted-2)}
+[data-theme="light"] .sb-search-kbd{color:var(--muted-2);background:var(--bg-tint)}
+[data-theme="light"] .sb-nav::-webkit-scrollbar-thumb{background:var(--line-2)}
+[data-theme="light"] .sb-group{color:var(--muted-2)}
+[data-theme="light"] .sb-sep{background:var(--line)}
+[data-theme="light"] .sb-item{color:var(--navy-2)}
+[data-theme="light"] .sb-item:hover{background:var(--bg-tint);color:var(--navy-deep)}
+[data-theme="light"] .sb-item:hover svg{color:var(--navy)}
+[data-theme="light"] .sb-item.active{background:rgba(29,155,138,.1);color:var(--accent)}
+[data-theme="light"] .sb-item.active svg{color:var(--accent)}
+[data-theme="light"] .sb-item.active::before{background:var(--accent-2)}
+[data-theme="light"] .sb-item .soon-pill{color:var(--gold);background:rgba(224,168,60,.1)}
+[data-theme="light"] .sb-item .sb-tag{color:var(--accent);background:rgba(29,155,138,.1)}
+[data-theme="light"] .sb-enabled-dot{box-shadow:0 0 0 2px rgba(34,197,94,.15)}
+[data-theme="light"] .sb-foot{border-top-color:var(--line)}
+[data-theme="light"] .sb-user-card:hover{background:var(--bg-tint)}
+[data-theme="light"] .sb-user-nm{color:var(--ink)}
+[data-theme="light"] .sb-user-city{color:var(--muted)}
+[data-theme="light"] .sb-plan-bar{background:var(--bg-tint)}
+[data-theme="light"] .sb-plan-badge{color:var(--accent);background:rgba(29,155,138,.1)}
+[data-theme="light"] .sb-theme-seg{background:var(--bg-soft)}
+[data-theme="light"] .sb-ts-opt{color:var(--muted)}
+[data-theme="light"] .sb-ts-opt:hover{color:var(--navy-2)}
+[data-theme="light"] .sb-ts-opt.active{background:rgba(29,155,138,.12);color:var(--accent)}
+[data-theme="light"] .sb-foot-btn{color:var(--muted)}
+[data-theme="light"] .sb-foot-btn:hover{background:var(--bg-tint);color:var(--navy-2)}
+[data-theme="light"] .sb-foot-logout:hover{background:rgba(220,50,50,.07);color:#dc2626}
+/* overlay blur in light mode */
+[data-theme="light"] .sb-overlay{background:rgba(10,18,48,.3)}
 *{margin:0;padding:0;box-sizing:border-box}
 html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
 body{font-family:var(--font,"IBM Plex Sans Arabic",system-ui,sans-serif);color:var(--ink);background:var(--bg-soft);line-height:1.7;font-variant-numeric:lining-nums;-webkit-font-feature-settings:"lnum" 1;font-feature-settings:"lnum" 1}
@@ -265,16 +307,20 @@ img,svg{display:block;max-width:100%}
 .sb-overlay.show{display:block}
 
 /* ─── Main ─── */
-.mobile-bar-end{display:flex;align-items:center;gap:6px}
-.mobile-theme-btn{display:flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:10px;background:var(--bg-tint);border:none;color:var(--navy-2);cursor:pointer;transition:.14s}
+/* Mobile bar: grid layout keeps logo truly centered regardless of side widths */
+.mobile-bar{display:none;position:sticky;top:0;z-index:60;background:rgba(255,255,255,.96);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);padding:10px 14px;grid-template-columns:auto 1fr auto;align-items:center;gap:10px}
+.mobile-bar>img{justify-self:center;height:26px;max-width:130px;object-fit:contain}
+.mobile-bar-end{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.mobile-theme-btn{display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:9px;background:var(--bg-tint);border:none;color:var(--navy-2);cursor:pointer;transition:.14s;flex-shrink:0}
 .mobile-theme-btn:hover{background:var(--line)}
-.mobile-theme-btn svg{width:16px;height:16px}
+.mobile-theme-btn svg{width:15px;height:15px}
+.hamb{background:var(--bg-tint);border:none;width:38px;height:38px;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--navy);flex-shrink:0}
+.hamb svg{width:19px;height:19px}
+.mobile-bar .m-ava{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0}
+/* dark overrides for mobile bar elements */
 [data-theme="dark"] .mobile-theme-btn{background:rgba(255,255,255,.08);color:rgba(255,255,255,.7)}
 [data-theme="dark"] .mobile-theme-btn:hover{background:rgba(255,255,255,.14)}
-.hamb{background:var(--bg-tint);border:none;width:40px;height:40px;border-radius:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--navy)}
-.hamb svg{width:20px;height:20px}
-.mobile-bar img{height:26px}
-.mobile-bar .m-ava{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--navy),var(--accent));color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px}
+[data-theme="dark"] .hamb{background:rgba(255,255,255,.07);color:rgba(255,255,255,.75)}
 .content{flex:1;max-width:1080px;width:100%;margin:0 auto;padding:30px 30px 80px}
 .page{display:none}.page.active{display:block;animation:fade .3s var(--ease)}
 @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
@@ -539,7 +585,7 @@ img,svg{display:block;max-width:100%}
   .sidebar.open{transform:translateX(0)}
   .sb-close{display:flex}
   .main{margin-right:0}
-  .mobile-bar{display:flex}
+  .mobile-bar{display:grid}
   .content{padding:22px 16px 70px}
 }
 @media(max-width:620px){
