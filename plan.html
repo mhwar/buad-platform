@@ -8,25 +8,91 @@
 <link rel="icon" href="assets/logo-icon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
+  /* Brand */
   --navy:#00197d;--navy-2:#1e2a4a;--navy-deep:#0a1230;
-  --accent:#1d9b8a;--accent-2:#27c2ac;--gold:#e0a83c;
-  --ink:#13182b;--muted:#5b6478;--line:#e7eaf2;
+  --accent:#1d9b8a;--accent-2:#27c2ac;--accent-soft:rgba(29,155,138,.12);
+  --gold:#e0a83c;
+  /* Surfaces */
   --bg:#fff;--bg-soft:#f6f8fc;--bg-tint:#eef2fb;
+  /* Text */
+  --ink:#13182b;--muted:#5b6478;--muted-2:#8a93a8;
+  /* Borders */
+  --line:#e7eaf2;--line-2:#d0d5e8;
+  /* Semantic */
   --ok:#16a34a;--ok-soft:#e9f8ef;--ok-line:#bbf0ce;
-  --warn:#d97706;--warn-soft:#fef3c7;
-  --radius:14px;--radius-sm:10px;--radius-lg:22px;
+  --warn:#d97706;--warn-soft:#fef3c7;--warn-line:#fde68a;
+  --danger:#dc2626;--danger-soft:#fef2f2;
+  /* Radius scale */
+  --radius-xs:6px;--radius-sm:10px;--radius:14px;--radius-lg:20px;--radius-xl:28px;--radius-full:9999px;
+  /* Shadow scale */
+  --shadow-xs:0 1px 3px rgba(16,24,64,.04);
   --shadow-sm:0 2px 10px rgba(16,24,64,.05);
   --shadow:0 8px 28px rgba(16,24,64,.09);
+  --shadow-md:0 8px 28px rgba(16,24,64,.09);
   --shadow-lg:0 24px 60px rgba(16,24,64,.15);
+  --shadow-focus:0 0 0 3px rgba(29,155,138,.22);
+  /* Motion */
   --ease:cubic-bezier(.22,.61,.36,1);
-  --sb-w:262px;
+  --ease-out:cubic-bezier(0.2,0.8,0.2,1);
+  --dur-fast:120ms;--dur:200ms;--dur-slow:320ms;
+  /* Layout */
+  --sb-w:262px;--sb-w-col:64px;
+  /* Fonts */
+  --font:"IBM Plex Sans Arabic","Inter",system-ui,sans-serif;
+  --font-ui:"Inter","IBM Plex Sans Arabic",system-ui,sans-serif;
 }
+/* ─── Dark mode ─── */
+[data-theme="dark"]{
+  --bg:#0f1117;--bg-soft:#161b26;--bg-tint:#1c2235;
+  --line:#252e47;--line-2:#2e3a58;
+  --ink:#e8ecf4;--navy-2:#8fa3cc;--muted:#6b7899;--muted-2:#4a5578;
+  --shadow-xs:0 1px 3px rgba(0,0,0,.2);
+  --shadow-sm:0 2px 10px rgba(0,0,0,.28);
+  --shadow:0 8px 28px rgba(0,0,0,.35);
+  --shadow-md:0 8px 28px rgba(0,0,0,.35);
+  --shadow-lg:0 24px 60px rgba(0,0,0,.5);
+}
+[data-theme="dark"] body{background:var(--bg-soft)}
+[data-theme="dark"] .main{background:var(--bg-soft)}
+[data-theme="dark"] .mobile-bar{background:rgba(15,17,23,.96);border-color:var(--line)}
+[data-theme="dark"] .mobile-bar img{filter:brightness(0) invert(1) !important}
+/* White surfaces → dark */
+[data-theme="dark"] .card,
+[data-theme="dark"] .kpi-card,
+[data-theme="dark"] .ov-card,[data-theme="dark"] .ov-box,
+[data-theme="dark"] .task-row,[data-theme="dark"] .task-phase,
+[data-theme="dark"] .svc-card,[data-theme="dark"] .svc-item,
+[data-theme="dark"] .res-card,[data-theme="dark"] .res-cat,
+[data-theme="dark"] .settings-card,[data-theme="dark"] .auth-card,
+[data-theme="dark"] .gr-card,[data-theme="dark"] .gr-list-row,
+[data-theme="dark"] .gr-cal-month,[data-theme="dark"] .gr-timeline,
+[data-theme="dark"] .modal-box,[data-theme="dark"] .prof-stat-row,
+[data-theme="dark"] .crm-sbar,[data-theme="dark"] .crm-main{
+  background:var(--bg) !important;border-color:var(--line) !important}
+[data-theme="dark"] .btn-ghost{background:var(--bg-soft);border-color:var(--line);color:var(--ink)}
+[data-theme="dark"] .btn-ghost:hover{background:var(--bg-tint)}
+[data-theme="dark"] .field input,[data-theme="dark"] .field textarea,[data-theme="dark"] .field select,
+[data-theme="dark"] input:not([type=color]),[data-theme="dark"] textarea,[data-theme="dark"] select{
+  background:var(--bg-soft) !important;border-color:var(--line) !important;color:var(--ink) !important}
+[data-theme="dark"] .field input:focus,[data-theme="dark"] .field textarea:focus{
+  background:var(--bg) !important;border-color:var(--accent) !important}
+[data-theme="dark"] .page-head{border-color:var(--line)}
+[data-theme="dark"] .section-h{border-color:var(--line)}
+[data-theme="dark"] .stab-bar{background:rgba(255,255,255,.04);border-color:var(--line)}
+[data-theme="dark"] .stab.active{background:var(--bg-tint)}
+[data-theme="dark"] .perm-table th{background:var(--bg-soft)}
+[data-theme="dark"] .auth-wrap{
+  background:radial-gradient(1100px 700px at 90% -5%,rgba(29,155,138,.07),transparent 60%),
+             radial-gradient(900px 700px at -5% 110%,rgba(0,25,125,.05),transparent 55%),var(--bg-soft)}
+[data-theme="dark"] .ov-stat-bar-bg{background:var(--bg-tint)}
+[data-theme="dark"] .gr-ava-img{background:var(--bg-soft) !important;border-color:var(--line) !important}
+[data-theme="dark"] .gr-tl-hdr .gr-tl-cell{background:var(--bg-soft)}
 *{margin:0;padding:0;box-sizing:border-box}
 html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
-body{font-family:"IBM Plex Sans Arabic",system-ui,sans-serif;color:var(--ink);background:var(--bg-soft);line-height:1.7;font-variant-numeric:lining-nums;-webkit-font-feature-settings:"lnum" 1;font-feature-settings:"lnum" 1}
+body{font-family:var(--font,"IBM Plex Sans Arabic",system-ui,sans-serif);color:var(--ink);background:var(--bg-soft);line-height:1.7;font-variant-numeric:lining-nums;-webkit-font-feature-settings:"lnum" 1;font-feature-settings:"lnum" 1}
 a{color:inherit;text-decoration:none}
 img,svg{display:block;max-width:100%}
 
@@ -68,13 +134,30 @@ img,svg{display:block;max-width:100%}
 .app-shell{display:flex;min-height:100vh}
 
 /* ─── Sidebar ─── */
-.sidebar{width:var(--sb-w);flex-shrink:0;background:#0b1220;color:#fff;position:fixed;top:0;right:0;bottom:0;z-index:80;display:flex;flex-direction:column;transition:transform .3s var(--ease);border-left:1px solid rgba(255,255,255,.055)}
-.sb-brand{padding:17px 14px 15px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,.06)}
-.sb-brand img{height:27px;filter:brightness(0) invert(1)}
+.sidebar{width:var(--sb-w);flex-shrink:0;background:#0b1220;color:#fff;position:fixed;top:0;right:0;bottom:0;z-index:80;display:flex;flex-direction:column;transition:width .25s var(--ease),transform .3s var(--ease);border-left:1px solid rgba(255,255,255,.055)}
+.sb-brand{padding:15px 12px 13px;display:flex;align-items:center;gap:8px;border-bottom:1px solid rgba(255,255,255,.06)}
+.sb-brand-logo{height:26px;filter:brightness(0) invert(1);flex-shrink:0}
+.sb-brand-icon{height:26px;filter:brightness(0) invert(1);flex-shrink:0;display:none}
 .sb-close{display:none;background:rgba(255,255,255,.08);border:none;color:rgba(255,255,255,.6);width:32px;height:32px;border-radius:8px;cursor:pointer;align-items:center;justify-content:center;flex-shrink:0}
 .sb-close svg{width:17px;height:17px}
+.sb-collapse{margin-right:auto;display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:7px;background:rgba(255,255,255,.06);border:none;color:rgba(255,255,255,.38);cursor:pointer;transition:.15s;flex-shrink:0}
+.sb-collapse:hover{background:rgba(255,255,255,.12);color:rgba(255,255,255,.8)}
+.sb-collapse svg{width:15px;height:15px;transition:transform .25s var(--ease)}
+/* Search */
+.sb-search{padding:8px 8px 2px}
+.sb-search-wrap{display:flex;align-items:center;gap:7px;padding:7px 10px;background:rgba(255,255,255,.065);border-radius:9px;border:1px solid rgba(255,255,255,.07);transition:.14s}
+.sb-search-wrap:focus-within{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.15)}
+.sb-search-wrap svg{width:13px;height:13px;color:rgba(255,255,255,.28);flex-shrink:0}
+.sb-search-inp{background:none;border:none;color:rgba(255,255,255,.78);font-family:inherit;font-size:12.5px;flex:1;outline:none;min-width:0}
+.sb-search-inp::placeholder{color:rgba(255,255,255,.22)}
+.sb-search-kbd{font-size:10px;color:rgba(255,255,255,.2);background:rgba(255,255,255,.06);border-radius:5px;padding:1px 5px;white-space:nowrap;line-height:1.6}
 /* nav */
 .sb-nav{flex:1;overflow-y:auto;padding:6px 8px 10px;scrollbar-width:thin}
+.sb-nav::-webkit-scrollbar{width:4px}
+.sb-nav::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:4px}
+.sb-group{font-size:9.5px;font-weight:700;color:rgba(255,255,255,.25);letter-spacing:.1em;text-transform:uppercase;padding:14px 10px 5px;user-select:none;transition:opacity .2s}
+.sb-sep{height:1px;background:rgba(255,255,255,.06);margin:6px 10px}
+/* nav (dedup) */
 .sb-nav::-webkit-scrollbar{width:4px}
 .sb-nav::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:4px}
 .sb-group{font-size:9.5px;font-weight:700;color:rgba(255,255,255,.25);letter-spacing:.1em;text-transform:uppercase;padding:14px 10px 5px;user-select:none}
@@ -100,12 +183,34 @@ img,svg{display:block;max-width:100%}
 .sb-plan-badge{flex-shrink:0;font-size:10px;font-weight:700;color:var(--accent-2);background:rgba(39,194,172,.13);padding:2px 8px;border-radius:20px;line-height:1.6}
 .sb-plan-bar{height:3px;background:rgba(255,255,255,.08);border-radius:3px;margin:6px 10px 2px;overflow:hidden}
 .sb-plan-bar i{display:block;height:100%;border-radius:3px;background:linear-gradient(90deg,var(--accent-2),#7ee8d6);transition:width .6s var(--ease)}
-.sb-foot-row{display:flex;gap:2px}
+.sb-foot-row{display:flex;gap:2px;align-items:center}
 .sb-foot-btn{display:flex;align-items:center;justify-content:center;gap:7px;flex:1;padding:8px 10px;border-radius:8px;font-family:inherit;font-size:12.5px;font-weight:600;color:rgba(255,255,255,.45);background:none;border:none;cursor:pointer;transition:.14s;white-space:nowrap}
 .sb-foot-btn svg{width:15px;height:15px;flex-shrink:0;stroke-width:1.8}
 .sb-foot-btn:hover{background:rgba(255,255,255,.07);color:rgba(255,255,255,.8)}
 .sb-foot-btn.active{color:rgba(255,255,255,.85)}
 .sb-foot-logout:hover{background:rgba(220,50,50,.12);color:#ff8080}
+.sb-theme-btn{display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:9px;background:rgba(255,255,255,.06);border:none;color:rgba(255,255,255,.4);cursor:pointer;transition:.15s;flex-shrink:0}
+.sb-theme-btn:hover{background:rgba(255,255,255,.12);color:rgba(255,255,255,.8)}
+.sb-theme-btn svg{width:15px;height:15px}
+/* Collapsed sidebar */
+.sidebar.sb-col{width:var(--sb-w-col)}
+.sidebar.sb-col .sb-brand-logo,.sidebar.sb-col .sb-version,
+.sidebar.sb-col .sb-search,.sidebar.sb-col .sb-group,.sidebar.sb-col .sb-sep,
+.sidebar.sb-col .sb-item>span,.sidebar.sb-col .sb-item>.soon-pill,
+.sidebar.sb-col .sb-item>.sb-tag,.sidebar.sb-col .sb-item>.sb-enabled-dot,
+.sidebar.sb-col .sb-user-info,.sidebar.sb-col .sb-plan-badge,
+.sidebar.sb-col .sb-plan-bar,.sidebar.sb-col .sb-foot-btn>span{display:none!important}
+.sidebar.sb-col .sb-brand-icon{display:block!important}
+.sidebar.sb-col .sb-collapse{margin-right:0}
+.sidebar.sb-col .sb-collapse svg{transform:rotate(180deg)}
+.sidebar.sb-col .sb-item{padding:9px;justify-content:center;gap:0}
+.sidebar.sb-col .sb-item.active::before{display:none}
+.sidebar.sb-col .sb-user-card{padding:9px;justify-content:center}
+.sidebar.sb-col .sb-foot-btn{flex:0 0 auto;padding:8px 9px}
+.sidebar.sb-col .sb-foot-row{justify-content:center;gap:3px}
+.sidebar.sb-col+.sb-overlay{pointer-events:none!important;opacity:0!important}
+.main{flex:1;margin-right:var(--sb-w);min-width:0;display:flex;flex-direction:column;transition:margin-right .25s var(--ease)}
+.main.sb-col{margin-right:var(--sb-w-col)}
 /* Settings page */
 .stab-bar{display:flex;gap:4px;background:rgba(0,0,0,.04);border:1px solid var(--line);border-radius:12px;padding:4px;margin-bottom:24px;width:fit-content}
 .stab{font-family:inherit;font-size:13.5px;font-weight:600;color:var(--muted);background:none;border:none;border-radius:9px;padding:9px 20px;cursor:pointer;transition:.15s;display:flex;align-items:center;gap:7px;white-space:nowrap}
@@ -143,8 +248,10 @@ img,svg{display:block;max-width:100%}
 .sb-overlay.show{display:block}
 
 /* ─── Main ─── */
-.main{flex:1;margin-right:var(--sb-w);min-width:0;display:flex;flex-direction:column}
-.mobile-bar{display:none;position:sticky;top:0;z-index:60;background:rgba(255,255,255,.96);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);padding:11px 16px;align-items:center;justify-content:space-between;gap:12px}
+.mobile-bar-end{display:flex;align-items:center;gap:6px}
+.mobile-theme-btn{display:flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:10px;background:var(--bg-tint);border:none;color:var(--navy-2);cursor:pointer;transition:.14s}
+.mobile-theme-btn:hover{background:var(--line)}
+.mobile-theme-btn svg{width:16px;height:16px}
 .hamb{background:var(--bg-tint);border:none;width:40px;height:40px;border-radius:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--navy)}
 .hamb svg{width:20px;height:20px}
 .mobile-bar img{height:26px}
@@ -1037,13 +1144,25 @@ img,svg{display:block;max-width:100%}
   <!-- Sidebar -->
   <aside class="sidebar" id="sidebar">
     <div class="sb-brand">
-      <a href="/"><img src="assets/logo.svg" alt="بُعد"></a>
+      <a href="/"><img src="assets/logo.svg" alt="بُعد" class="sb-brand-logo"></a>
+      <a href="/"><img src="assets/logo-icon.svg" alt="بُعد" class="sb-brand-icon" onerror="this.style.display='none'"></a>
+      <button class="sb-collapse" id="sb-collapse-btn" onclick="toggleSidebarCollapse()" title="تصغير القائمة">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m15 18-6-6 6-6"/></svg>
+      </button>
       <button class="sb-close" onclick="closeSidebar()" aria-label="إغلاق القائمة">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
     </div>
 
-    <nav class="sb-nav">
+    <div class="sb-search" id="sb-search-area">
+      <div class="sb-search-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input class="sb-search-inp" id="sb-search-inp" type="text" placeholder="بحث في القائمة…" autocomplete="off" oninput="sbSearch(this.value)">
+        <kbd class="sb-search-kbd">⌘K</kbd>
+      </div>
+    </div>
+
+    <nav class="sb-nav" id="sb-nav">
       <div class="sb-group">الرئيسية</div>
       <button class="sb-item active" id="nav-overview" onclick="go('overview')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
@@ -1111,11 +1230,15 @@ img,svg{display:block;max-width:100%}
       <div class="sb-foot-row" style="margin-top:6px">
         <button class="sb-foot-btn" id="nav-settings" onclick="go('settings')">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-          الإعدادات
+          <span>الإعدادات</span>
         </button>
         <button class="sb-foot-btn sb-foot-logout" onclick="logout()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5M21 12H9"/></svg>
-          خروج
+          <span>خروج</span>
+        </button>
+        <button class="sb-theme-btn" id="sb-theme-btn" onclick="toggleDarkMode()" title="تبديل الوضع المظلم">
+          <svg id="sb-theme-icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          <svg id="sb-theme-icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="display:none"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
         </button>
       </div>
     </div>
@@ -1130,7 +1253,13 @@ img,svg{display:block;max-width:100%}
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
       </button>
       <img src="assets/logo.svg" alt="بُعد">
-      <div class="m-ava" id="m-ava" onclick="go('profile')" style="cursor:pointer">ج</div>
+      <div class="mobile-bar-end">
+        <button class="mobile-theme-btn" onclick="toggleDarkMode()" title="تبديل الوضع المظلم">
+          <svg id="mob-theme-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          <svg id="mob-theme-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="display:none"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        </button>
+        <div class="m-ava" id="m-ava" onclick="go('profile')" style="cursor:pointer">ج</div>
+      </div>
     </div>
 
     <div class="content">
@@ -1623,6 +1752,57 @@ function toast(msg){
 function openSidebar(){ document.getElementById('sidebar').classList.add('open'); document.getElementById('sb-overlay').classList.add('show'); }
 function closeSidebar(){ document.getElementById('sidebar').classList.remove('open'); document.getElementById('sb-overlay').classList.remove('show'); }
 
+/* ── Dark mode ── */
+function toggleDarkMode() {
+  var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  setDarkMode(!isDark);
+}
+function setDarkMode(dark) {
+  document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+  try { localStorage.setItem('buad_theme', dark ? 'dark' : 'light'); } catch(e){}
+  var moon1 = document.getElementById('sb-theme-icon-moon');
+  var sun1  = document.getElementById('sb-theme-icon-sun');
+  var moon2 = document.getElementById('mob-theme-moon');
+  var sun2  = document.getElementById('mob-theme-sun');
+  if (moon1) { moon1.style.display = dark ? 'none' : ''; sun1.style.display = dark ? '' : 'none'; }
+  if (moon2) { moon2.style.display = dark ? 'none' : ''; sun2.style.display = dark ? '' : 'none'; }
+}
+(function initTheme() {
+  var saved; try { saved = localStorage.getItem('buad_theme'); } catch(e){}
+  var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme:dark)').matches;
+  setDarkMode(saved ? saved === 'dark' : prefersDark);
+})();
+
+/* ── Sidebar collapse ── */
+function toggleSidebarCollapse() {
+  var sb = document.getElementById('sidebar');
+  var main = document.querySelector('.main');
+  var collapsed = sb.classList.toggle('sb-col');
+  if (main) main.classList.toggle('sb-col', collapsed);
+  try { localStorage.setItem('buad_sb_col', collapsed ? '1' : ''); } catch(e){}
+}
+(function initSidebarCollapse() {
+  var saved; try { saved = localStorage.getItem('buad_sb_col'); } catch(e){}
+  if (saved === '1') {
+    var sb = document.getElementById('sidebar');
+    var main = document.querySelector('.main');
+    if (sb) sb.classList.add('sb-col');
+    if (main) main.classList.add('sb-col');
+  }
+})();
+
+/* ── Sidebar search ── */
+function sbSearch(q) {
+  q = (q || '').trim().toLowerCase();
+  var items = document.querySelectorAll('#sb-nav .sb-item');
+  var groups = document.querySelectorAll('#sb-nav .sb-group, #sb-nav .sb-sep');
+  items.forEach(function(el) {
+    var text = el.textContent.toLowerCase();
+    el.style.display = (!q || text.indexOf(q) >= 0) ? '' : 'none';
+  });
+  groups.forEach(function(el) { el.style.display = q ? 'none' : ''; });
+}
+
 /* ── Navigation ── */
 var PAGES = ['overview','plan','services','resources','grants','profile','website','projects','governance','store','crm','settings'];
 function go(id){
@@ -1733,7 +1913,14 @@ function saveProfile(){
   });
 }
 document.getElementById('prof-modal').addEventListener('click', function(e){ if(e.target===this) closeProfileModal(); });
-document.addEventListener('keydown', function(e){ if(e.key==='Escape'){ closeServiceModal(); closeProfileModal(); } });
+document.addEventListener('keydown', function(e){
+  if(e.key==='Escape'){ closeServiceModal(); closeProfileModal(); }
+  if((e.metaKey||e.ctrlKey) && e.key==='k'){
+    e.preventDefault();
+    var inp = document.getElementById('sb-search-inp');
+    if(inp){ inp.focus(); inp.select(); }
+  }
+});
 
 /* ── Auth UI ── */
 function showAuth(which){
