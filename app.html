@@ -11140,25 +11140,31 @@ Pages._ASF_GRANTS_2026 = [
 
 Pages.importASFGrants = function() {
   if (!confirm('سيتم إضافة 10 فرص منح لصندوق دعم الجمعيات (تقويم 2026م). هل تريد المتابعة؟')) return;
-  var grants = Pages._ASF_GRANTS_2026;
-  var done = 0, failed = 0;
+  UI.toast('جارٍ التهيئة والاستيراد…');
   var h = DB._apiHeaders();
-  function next(i) {
-    if (i >= grants.length) {
-      Pages._grants = null;
-      Pages.render_grants();
-      UI.toast('تمت الإضافة: '+done+' فرصة'+(failed?' ('+failed+' أخطاء)':''), done>0?'success':'danger');
-      return;
-    }
-    fetch('/api/admin/grants', {
-      method: 'POST',
-      headers: Object.assign({'Content-Type':'application/json'}, h),
-      body: JSON.stringify(grants[i])
-    }).then(function(r){ return r.json(); })
-    .then(function(d){ if(d.ok) done++; else failed++; next(i+1); })
-    .catch(function(){ failed++; next(i+1); });
-  }
-  next(0);
+  // Run migrations first to ensure table + columns exist, then insert
+  fetch('/api/admin/run-migrations', { method:'POST', headers: h })
+    .catch(function(){})
+    .then(function() {
+      var grants = Pages._ASF_GRANTS_2026;
+      var done = 0, failed = 0;
+      function next(i) {
+        if (i >= grants.length) {
+          Pages._grants = null;
+          Pages.render_grants();
+          UI.toast('تمت الإضافة: '+done+' فرصة'+(failed?' ('+failed+' أخطاء)':''), done>0?'success':'danger');
+          return;
+        }
+        fetch('/api/admin/grants', {
+          method: 'POST',
+          headers: Object.assign({'Content-Type':'application/json'}, h),
+          body: JSON.stringify(grants[i])
+        }).then(function(r){ return r.json(); })
+        .then(function(d){ if(d.ok) done++; else failed++; next(i+1); })
+        .catch(function(){ failed++; next(i+1); });
+      }
+      next(0);
+    });
 };
 
 Pages._grantFormHtml = function(g) {
