@@ -1460,6 +1460,162 @@ img,svg{display:block;max-width:100%}
 .add-to-tasks-btn{font-size:11px;font-weight:600;padding:3px 9px;border-radius:6px;border:1px solid #c4b5fd;background:transparent;color:#7c3aed;cursor:pointer;font-family:inherit;transition:.15s;display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
 .add-to-tasks-btn:hover{background:#7c3aed;color:#fff}
 .add-to-tasks-btn.added{border-color:#059669;color:#059669;pointer-events:none}
+
+/* ─── Plan View Toggle ─── */
+.plan-view-toggle{display:flex;border:1px solid var(--line);border-radius:9px;overflow:hidden}
+.plan-view-toggle button{padding:6px 12px;border:none;background:transparent;cursor:pointer;font-size:12px;font-weight:600;color:var(--muted);transition:.15s;font-family:inherit;display:flex;align-items:center;gap:5px}
+.plan-view-toggle button svg{width:13px;height:13px}
+.plan-view-toggle button.active{background:var(--navy);color:#fff}
+
+/* ─── Plan Analytics Bar ─── */
+.plan-analytics{margin-bottom:20px}
+.pa-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
+@media(max-width:640px){.pa-stats{grid-template-columns:repeat(2,1fr)}}
+.pa-stat{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 16px;position:relative;overflow:hidden}
+[data-theme="dark"] .pa-stat{background:var(--bg) !important;border-color:var(--line) !important}
+.pa-stat::before{content:'';position:absolute;top:0;right:0;left:0;height:3px;border-radius:12px 12px 0 0;background:var(--pa-col,var(--accent))}
+.pa-stat-lbl{font-size:11.5px;color:var(--muted);font-weight:600;margin-bottom:6px}
+.pa-stat-val{font-size:24px;font-weight:800;color:var(--navy-deep);line-height:1}
+[data-theme="dark"] .pa-stat-val{color:var(--ink)}
+.pa-stat-sub{font-size:11px;color:var(--muted-2);margin-top:3px}
+
+/* ─── Progress Timeline Bar ─── */
+.pa-bar-wrap{background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px 18px}
+[data-theme="dark"] .pa-bar-wrap{background:var(--bg) !important;border-color:var(--line) !important}
+.pa-bar-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.pa-bar-title{font-size:12.5px;font-weight:700;color:var(--navy-deep)}
+[data-theme="dark"] .pa-bar-title{color:var(--ink)}
+.pa-track-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700}
+.pa-bar-track{position:relative;height:10px;background:var(--bg-soft);border-radius:20px;overflow:visible;margin-bottom:6px}
+.pa-bar-done{height:100%;border-radius:20px;background:linear-gradient(90deg,var(--ok) 0%,#22c55e 100%);transition:width .6s var(--ease)}
+.pa-bar-today{position:absolute;top:-5px;bottom:-5px;width:2px;background:var(--navy);border-radius:2px;transition:left .4s}
+.pa-bar-today::after{content:'اليوم';position:absolute;top:-18px;right:50%;transform:translateX(50%);font-size:9px;font-weight:700;color:var(--navy);white-space:nowrap;background:#fff;padding:1px 4px;border-radius:4px;border:1px solid var(--line)}
+[data-theme="dark"] .pa-bar-today::after{background:var(--bg);color:var(--ink)}
+.pa-bar-labels{display:flex;justify-content:space-between;font-size:10px;color:var(--muted-2)}
+
+/* ─── Milestone Badges ─── */
+.pa-badges{display:flex;gap:10px;flex-wrap:wrap;padding-top:14px}
+.pa-badge{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 14px;border-radius:12px;border:1px solid var(--line);background:#fff;transition:.2s;min-width:80px;position:relative}
+[data-theme="dark"] .pa-badge{background:var(--bg) !important;border-color:var(--line) !important}
+.pa-badge.unlocked{border-color:var(--gold);background:linear-gradient(135deg,#fffbeb,#fff7d1)}
+[data-theme="dark"] .pa-badge.unlocked{background:linear-gradient(135deg,#2a1e00,#1a1400) !important;border-color:var(--gold) !important}
+.pa-badge-emoji{font-size:22px;line-height:1}
+.pa-badge-lbl{font-size:10.5px;font-weight:700;color:var(--ink);text-align:center}
+.pa-badge.locked{opacity:.45;filter:grayscale(1)}
+.pa-badge-date{font-size:9.5px;color:var(--muted);text-align:center}
+.badge-pop{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:3000;pointer-events:none;opacity:0;transition:opacity .3s}
+.badge-pop.show{opacity:1}
+.badge-pop-box{background:#fff;border-radius:20px;padding:32px 40px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.25);transform:scale(.8);transition:transform .4s cubic-bezier(.34,1.56,.64,1);border:2px solid var(--gold)}
+.badge-pop.show .badge-pop-box{transform:scale(1)}
+.badge-pop-emoji{font-size:56px;display:block;margin-bottom:12px}
+.badge-pop-title{font-size:20px;font-weight:800;color:var(--navy-deep)}
+.badge-pop-sub{font-size:13px;color:var(--muted);margin-top:5px}
+
+/* ─── Sub-steps in task card ─── */
+.task-steps-bar{display:flex;align-items:center;gap:7px;margin-top:6px}
+.task-steps-mini{display:flex;gap:3px}
+.task-steps-mini span{width:18px;height:4px;border-radius:3px;background:var(--line);transition:background .2s}
+.task-steps-mini span.done{background:var(--ok)}
+.task-steps-lbl{font-size:10.5px;font-weight:600;color:var(--muted)}
+.task-open-btn{font-size:11px;font-weight:600;padding:3px 8px;border-radius:6px;border:1px solid var(--line);background:transparent;color:var(--muted);cursor:pointer;font-family:inherit;transition:.15s;display:inline-flex;align-items:center;gap:3px;margin-right:auto}
+.task-open-btn:hover{background:var(--navy);color:#fff;border-color:var(--navy)}
+.task-open-btn svg{width:11px;height:11px}
+
+/* ─── Plan Task Drawer ─── */
+.ptd-ov{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1200;opacity:0;pointer-events:none;transition:opacity .25s}
+.ptd-ov.active{opacity:1;pointer-events:all}
+.ptd{position:fixed;top:0;right:0;height:100%;width:min(500px,96vw);background:var(--bg);z-index:1201;transform:translateX(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);overflow:hidden;display:flex;flex-direction:column;box-shadow:-6px 0 40px rgba(0,0,0,.18)}
+[data-theme="dark"] .ptd{background:var(--bg) !important}
+.ptd.active{transform:translateX(0)}
+.ptd-hd{padding:16px 18px 14px;border-bottom:1px solid var(--line);flex-shrink:0;display:flex;align-items:center;gap:12px}
+.ptd-hd-ico{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:var(--bg-tint)}
+.ptd-hd-ico svg{width:20px;height:20px;color:var(--navy)}
+.ptd-hd-info{flex:1;min-width:0}
+.ptd-hd-title{font-size:15px;font-weight:800;color:var(--navy-deep);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block}
+[data-theme="dark"] .ptd-hd-title{color:var(--ink)}
+.ptd-hd-day{font-size:11px;font-weight:600;color:var(--muted);margin-top:2px}
+.ptd-close{width:34px;height:34px;border-radius:9px;border:1px solid var(--line);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--muted);transition:.15s;flex-shrink:0}
+.ptd-close:hover{background:var(--danger-soft);color:var(--danger);border-color:var(--danger)}
+.ptd-body{flex:1;overflow-y:auto;padding:18px}
+.ptd-sec{margin-bottom:20px}
+.ptd-sec-lbl{font-size:11.5px;font-weight:700;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.4px}
+.ptd-desc{font-size:13.5px;color:var(--ink);line-height:1.65;background:var(--bg-soft);border-radius:10px;padding:12px 14px}
+.ptd-steps{}
+.ptd-step{display:flex;align-items:flex-start;gap:10px;padding:9px 0;border-bottom:1px solid var(--line)}
+.ptd-step:last-child{border-bottom:none}
+.ptd-step-chk{width:20px;height:20px;border-radius:6px;border:2px solid var(--line);flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.15s;background:#fff;margin-top:1px}
+.ptd-step-chk.done{background:var(--ok);border-color:var(--ok)}
+.ptd-step-chk svg{width:11px;height:11px;color:#fff;opacity:0;transition:opacity .1s}
+.ptd-step-chk.done svg{opacity:1}
+.ptd-step-lbl{font-size:13px;color:var(--ink);line-height:1.5;flex:1;cursor:pointer}
+.ptd-step-lbl.done{color:var(--muted);text-decoration:line-through}
+.ptd-all-done-hint{display:none;padding:9px 12px;background:var(--ok-soft);border:1px solid var(--ok-line);border-radius:9px;font-size:12.5px;color:var(--ok);font-weight:600;text-align:center;margin-top:8px}
+.ptd-field{margin-bottom:14px}
+.ptd-field label{display:block;font-size:12px;font-weight:700;color:var(--muted);margin-bottom:5px}
+.ptd-field input,.ptd-field textarea,.ptd-field select{width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid var(--line);border-radius:9px;font-size:13.5px;font-family:inherit;color:var(--ink);background:var(--bg);transition:border .15s;resize:vertical}
+.ptd-field textarea{min-height:80px}
+.ptd-field input:focus,.ptd-field textarea:focus{outline:none;border-color:var(--accent);box-shadow:var(--shadow-focus)}
+.ptd-svc-btn{display:flex;align-items:center;gap:8px;width:100%;padding:11px 14px;border:1px solid var(--accent);border-radius:10px;background:var(--accent-soft);color:var(--accent);font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;transition:.15s;text-align:right}
+.ptd-svc-btn:hover{background:var(--accent);color:#fff}
+.ptd-svc-btn svg{width:16px;height:16px;flex-shrink:0}
+.ptd-status-pills{display:flex;gap:6px;flex-wrap:wrap}
+.ptd-status-pill{padding:5px 12px;border-radius:20px;border:1px solid var(--line);background:transparent;font-family:inherit;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;transition:.15s}
+.ptd-status-pill.active{background:var(--ok);border-color:var(--ok);color:#fff}
+.ptd-status-pill.blocked{background:var(--danger);border-color:var(--danger);color:#fff}
+.ptd-foot{padding:14px 18px;border-top:1px solid var(--line);display:flex;gap:8px;flex-shrink:0}
+
+/* ─── Timeline View ─── */
+.plan-tl{background:#fff;border:1px solid var(--line);border-radius:14px;padding:20px;overflow-x:auto}
+[data-theme="dark"] .plan-tl{background:var(--bg) !important;border-color:var(--line) !important}
+.plan-tl-title{font-size:14px;font-weight:700;color:var(--navy-deep);margin-bottom:16px;display:flex;align-items:center;gap:8px}
+[data-theme="dark"] .plan-tl-title{color:var(--ink)}
+.plan-tl-inner{min-width:600px}
+.plan-tl-axis{display:flex;padding-right:160px;margin-bottom:6px;border-bottom:2px solid var(--line);padding-bottom:6px;position:relative}
+.plan-tl-axis-label{flex:1;font-size:10px;font-weight:600;color:var(--muted-2);text-align:center}
+.plan-tl-today-line{position:absolute;bottom:-2px;top:0;width:2px;background:var(--navy);opacity:.7}
+.plan-tl-today-lbl{position:absolute;bottom:-20px;font-size:9.5px;font-weight:700;color:var(--navy);transform:translateX(50%);white-space:nowrap}
+.plan-tl-row{display:flex;align-items:center;padding:4px 0;gap:8px;border-bottom:1px solid var(--line)}
+.plan-tl-row:last-child{border-bottom:none}
+.plan-tl-name{width:150px;font-size:12px;font-weight:600;color:var(--ink);flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;padding:6px 4px}
+.plan-tl-name:hover{color:var(--accent)}
+.plan-tl-bar-wrap{flex:1;position:relative;height:24px;display:flex;align-items:center}
+.plan-tl-bar{height:18px;border-radius:9px;display:flex;align-items:center;justify-content:flex-end;padding:0 7px;font-size:10px;font-weight:700;color:#fff;overflow:hidden;white-space:nowrap;transition:width .5s var(--ease);cursor:pointer}
+.plan-tl-dot{position:absolute;width:9px;height:9px;border-radius:50%;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.2);top:50%;transform:translateY(-50%)}
+
+/* ─── Custom Task Modal ─── */
+.custom-task-modal-ov{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1300;display:none;align-items:center;justify-content:center;padding:20px}
+.custom-task-modal-ov.show{display:flex}
+.custom-task-modal-box{background:var(--bg);border-radius:var(--radius-lg);padding:28px;width:100%;max-width:460px;box-shadow:var(--shadow-lg)}
+.ctm-title{font-size:17px;font-weight:800;color:var(--navy-deep);margin-bottom:18px}
+[data-theme="dark"] .ctm-title{color:var(--ink)}
+.ctm-foot{display:flex;gap:8px;margin-top:20px}
+
+/* ─── Custom Task in track ─── */
+.task.custom-task{background:linear-gradient(135deg,rgba(29,155,138,.03),transparent)}
+.task.custom-task .chk{border-color:#1d9b8a50}
+.custom-task-del{width:24px;height:24px;border-radius:6px;border:1px solid var(--line);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--muted);transition:.15s;flex-shrink:0}
+.custom-task-del:hover{background:var(--danger-soft);color:var(--danger);border-color:var(--danger)}
+.custom-task-del svg{width:11px;height:11px}
+
+/* ─── Print styles ─── */
+@media print{
+  .sidebar,.top-nav,.mobile-bar,.sb-overlay,.plan-view-toggle,.btn.btn-ghost,
+  .add-to-tasks-btn,.btn-svc,.task-svc,.task-open-btn,.ptd-ov,.ptd,.badge-pop,
+  .task-drawer-ov,.task-drawer,.modal-ov,.modal,.custom-task-modal-ov{display:none!important}
+  body,html{background:#fff!important;margin:0;padding:0}
+  .main{margin:0!important;padding:0!important}
+  .page{display:block!important;padding:0!important}
+  .page-plan-print-header{display:block!important}
+  .page-head p{display:none}
+  .track{break-inside:avoid;box-shadow:none;border:1px solid #ccc;margin-bottom:10px}
+  .track-body{display:block!important}
+  .task:hover{background:none}
+  .plan-analytics{display:none}
+  .plan-print-table{display:table!important;width:100%;border-collapse:collapse;margin-top:16px;font-size:12px}
+  .plan-print-table th,.plan-print-table td{border:1px solid #ccc;padding:6px 8px;text-align:right}
+  .plan-print-table th{background:#f0f4ff;font-weight:700}
+  @page{size:A4 landscape;margin:16mm}
+}
 </style>
 </head>
 <body>
@@ -1692,10 +1848,20 @@ img,svg{display:block;max-width:100%}
 
       <!-- ─── Plan ─── -->
       <section class="page" id="page-plan">
-        <div class="page-head">
-          <h1>خطة المئة يوم</h1>
-          <p>خطة عمل متكاملة لتأسيس جمعيتك وانطلاقها خلال أول ١٠٠ يوم. أكمل كل مهمة وحدّث تقدّمك — يُحفظ تلقائياً.</p>
+        <div class="page-head" style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap">
+          <div>
+            <h1>خطة المئة يوم</h1>
+            <p>خطة عمل متكاملة لتأسيس جمعيتك وانطلاقها خلال أول ١٠٠ يوم. أكمل كل مهمة وحدّث تقدّمك — يُحفظ تلقائياً.</p>
+          </div>
+          <div style="display:flex;gap:8px;flex-shrink:0;padding-top:4px">
+            <div class="plan-view-toggle">
+              <button id="plan-view-cards" class="active" onclick="setPlanView('cards')" title="عرض البطاقات"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>البطاقات</button>
+              <button id="plan-view-timeline" onclick="setPlanView('timeline')" title="الجدول الزمني"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/><circle cx="7" cy="6" r="2" fill="currentColor" stroke="none"/><circle cx="14" cy="12" r="2" fill="currentColor" stroke="none"/><circle cx="10" cy="18" r="2" fill="currentColor" stroke="none"/></svg>الجدول</button>
+            </div>
+            <button class="btn btn-ghost btn-sm" onclick="printPlanReport()" style="gap:5px;display:flex;align-items:center"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:15px;height:15px"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>طباعة</button>
+          </div>
         </div>
+        <div id="plan-analytics"></div>
         <div id="tracks"></div>
       </section>
 
@@ -2039,32 +2205,49 @@ var WA = '966500000000';
 /* ── 100-day plan data ── */
 var PLAN = [
   { id:'t1', title:'المسار الأول — إنطلاقة الأعمال', desc:'تأسيس الدعائم الأساسية للمنظمة والانطلاق الرسمي المنظّم', tasks:[
-    { id:'a1', title:'تأمين مقر للمنظمة', day:'خلال ٢٠ يوماً', desc:'توفير مقر مناسب وآمن (استئجار أو احتضان أو مساهمات) لإدارة الأنشطة الإدارية والتشغيلية.' },
-    { id:'a2', title:'التواصل مع الجهة المشرفة فنياً', day:'الأيام الأولى', desc:'التنسيق مع الجهة الحكومية المختصة بالنشاط للحصول على الدعم الفني والإرشادات التشغيلية.' },
-    { id:'a3', title:'الحصول على العنوان الوطني', day:'٣–٥ أيام', desc:'تسجيل العنوان الوطني عبر البريد السعودي (سبل) لتوحيد عنوان المنشأة في المراسلات الرسمية.' },
-    { id:'a4', title:'فتح الحساب البنكي للمنظمة', day:'٧–١٤ يوماً', desc:'حساب بنكي رسمي باسم الجمعية منفصل تماماً عن الحسابات الشخصية لضمان الشفافية المالية.' },
-    { id:'a5', title:'فتح حساب التأمينات الاجتماعية', day:'٥–٧ أيام', desc:'تسجيل المنظمة في التأمينات الاجتماعية (GOSI) لتوفير الحماية الاجتماعية للعاملين.' },
+    { id:'a1', title:'تأمين مقر للمنظمة', day:'خلال ٢٠ يوماً', desc:'توفير مقر مناسب وآمن (استئجار أو احتضان أو مساهمات) لإدارة الأنشطة الإدارية والتشغيلية.',
+      steps:['تحديد الموقع المناسب وزيارته ميدانياً','التفاوض وتوقيع عقد الإيجار أو الاحتضان','الحصول على رخصة البلدية أو تصاريح التشغيل','تجهيز المقر (مكاتب وأجهزة وإنترنت)','الإعلان عن العنوان الرسمي الجديد'] },
+    { id:'a2', title:'التواصل مع الجهة المشرفة فنياً', day:'الأيام الأولى', desc:'التنسيق مع الجهة الحكومية المختصة بالنشاط للحصول على الدعم الفني والإرشادات التشغيلية.',
+      steps:['تحديد الجهة المشرفة المختصة بمجال الجمعية','التواصل الأوّلي وتقديم الجمعية ومجالها','حضور اللقاء التعريفي أو الاجتماع التنسيقي','التسجيل في قاعدة بيانات الجهة المشرفة','الحصول على الاشتراطات والإرشادات الخاصة بالمجال'] },
+    { id:'a3', title:'الحصول على العنوان الوطني', day:'٣–٥ أيام', desc:'تسجيل العنوان الوطني عبر البريد السعودي (سبل) لتوحيد عنوان المنشأة في المراسلات الرسمية.',
+      steps:['الدخول لمنصة سبل وإنشاء حساب المنشأة','ملء بيانات العنوان الوطني الكاملة','مراجعة العنوان وتأكيد الإحداثيات الجغرافية','استلام شهادة العنوان الوطني','تحديث المراسلات الرسمية بالعنوان الجديد'] },
+    { id:'a4', title:'فتح الحساب البنكي للمنظمة', day:'٧–١٤ يوماً', desc:'حساب بنكي رسمي باسم الجمعية منفصل تماماً عن الحسابات الشخصية لضمان الشفافية المالية.',
+      steps:['تجميع المستندات المطلوبة (وثيقة التأسيس، هوية الممثل القانوني)','اختيار البنك المناسب وتحديد موعد الزيارة','التقديم بطلب فتح حساب تجاري للجمعية','استيفاء أي متطلبات إضافية من البنك','تفعيل الحساب وخدمات الصيرفة الإلكترونية'] },
+    { id:'a5', title:'فتح حساب التأمينات الاجتماعية', day:'٥–٧ أيام', desc:'تسجيل المنظمة في التأمينات الاجتماعية (GOSI) لتوفير الحماية الاجتماعية للعاملين.',
+      steps:['تسجيل المنشأة في بوابة GOSI الإلكترونية','رفع وثائق التأسيس والسجل التجاري','إضافة الموظفين وتسجيلهم في التأمينات','استلام رقم الحساب ووثيقة التسجيل','تحديد دورية سداد الاشتراكات الشهرية'] },
     { id:'a6', title:'بناء الهوية البصرية', day:'٧–١٤ يوماً', desc:'تصميم الشعار والألوان والخطوط كترجمة مرئية لرؤية ورسالة المنظمة.',
-      svc:{ id:'identity', label:'اطلب خدمة تصميم الهوية والشعار', active:true } },
+      svc:{ id:'identity', label:'اطلب خدمة تصميم الهوية والشعار', active:true },
+      steps:['إجراء جلسة discovery لاستخلاص قيم المنظمة وشخصيتها','تصميم الشعار بصيغ متعددة (SVG, PNG, ملوّن وأبيض وأسود)','تحديد لوح الألوان والخطوط الرسمية','إعداد دليل الهوية البصرية (Brand Guide)','تطبيق الهوية على القرطاسية والقوالب الرسمية'] },
     { id:'a7', title:'إنشاء قنوات التواصل الاجتماعي', day:'٣–٥ أيام', desc:'قنوات رسمية تتيح مشاركة الرسالة والبرامج والتفاعل مع الجمهور والمستفيدين.',
-      svc:{ id:'social', label:'إدارة التواصل الرقمي', active:false, soon:true } }
+      svc:{ id:'social', label:'إدارة التواصل الرقمي', active:false, soon:true },
+      steps:['تحديد المنصات المناسبة لجمهور المنظمة','إنشاء الحسابات بأسماء موحدة ومميزة','رفع الهوية البصرية (صورة ملف وغلاف)','كتابة السيرة الذاتية الرسمية للحسابات','نشر أول محتوى تعريفي عن المنظمة'] }
   ]},
   { id:'t2', title:'المسار الثاني — التطوير المؤسسي والاستدامة', desc:'بناء القدرات التشغيلية وإرساء الحوكمة وتحقيق الاستدامة', tasks:[
     { id:'b1', title:'صياغة رسالة ورؤية المنظمة', day:'٥–١٠ أيام', desc:'تحديد سبب وجود المنظمة وما تقدمه ولمن — الأساس الذي تُبنى عليه الاستراتيجية.',
-      svc:{ id:'strategy', label:'اطلب خدمة الاستشارات الاستراتيجية', active:true } },
+      svc:{ id:'strategy', label:'اطلب خدمة الاستشارات الاستراتيجية', active:true },
+      steps:['إجراء جلسة تفاعلية مع الفريق لاستخلاص القيم الجوهرية','صياغة رؤية المنظمة (Vision): ما نطمح إليه','صياغة الرسالة (Mission): ما نفعله ولمن','مراجعة وتدقيق الصياغة مع مجلس الإدارة','توثيق الرسالة والرؤية في اللوائح والموقع الرسمي'] },
     { id:'b2', title:'إعداد الخطة الاستراتيجية', day:'١٠–١٥ يوماً', desc:'خارطة طريق توجّه الموارد والجهود وتؤطّر اتخاذ القرارات بما يوافق رسالة المنظمة.',
-      svc:{ id:'strategy', label:'اطلب خدمة الاستشارات الاستراتيجية', active:true } },
+      svc:{ id:'strategy', label:'اطلب خدمة الاستشارات الاستراتيجية', active:true },
+      steps:['تحليل البيئة الداخلية والخارجية (SWOT)','تحديد الأهداف الاستراتيجية للسنوات الثلاث القادمة','ربط الأهداف بمؤشرات أداء رئيسية (KPIs) قابلة للقياس','بناء مصفوفة الأولويات واختيار المبادرات الكبرى','اعتماد الخطة الاستراتيجية من مجلس الإدارة'] },
     { id:'b3', title:'بناء إدارة الموارد البشرية', day:'١٠–١٤ يوماً', desc:'تحديد الأدوار والمسؤوليات واستقطاب الموظفين والمتطوعين وتدريبهم وخلق بيئة عمل محفّزة.',
-      svc:{ id:'hr', label:'خدمة إدارة الموارد البشرية', active:false, soon:true } },
+      svc:{ id:'hr', label:'خدمة إدارة الموارد البشرية', active:false, soon:true },
+      steps:['إعداد الهيكل التنظيمي وتحديد الأدوار الوظيفية','وضع وصف وظيفي واضح لكل دور','إعداد سياسات التوظيف وإدارة المتطوعين','استقطاب الكفاءات ووضع برنامج تأهيل الجدد','إعداد نظام تقييم الأداء وتطوير الكفاءات'] },
     { id:'b4', title:'إعداد الخطة المالية', day:'٧–١٠ أيام', desc:'الميزانية التقديرية واستراتيجية جمع التبرعات وأنظمة الرقابة المالية.',
-      svc:{ id:'finance', label:'اطلب خدمة الاستشارات المالية', active:true } },
-    { id:'b5', title:'إعداد الخطة التشغيلية', day:'١٠–١٥ يوماً', desc:'تفصيل المبادرات إلى خطوات ومسؤوليات وجداول زمنية وموارد مطلوبة.' },
-    { id:'b6', title:'إعداد الخطة التنفيذية للمبادرات', day:'٧–١٤ يوماً', desc:'تحديد الموارد والمسؤوليات والجداول الزمنية لكل مبادرة لضمان تنفيذها بفعالية.' },
-    { id:'b7', title:'إعداد الموازنة التقديرية التفصيلية', day:'٥–٧ أيام', desc:'ضمان استخدام الأموال بفعالية ودعم المشاريع وتحقيق الاستدامة المالية.' },
-    { id:'b8', title:'اختيار وإدارة المبادرات', day:'٧–١٠ أيام', desc:'اختيار المبادرات ذات الأثر الأكبر وتوجيه الموارد ومتابعة التنفيذ والتقييم.' },
+      svc:{ id:'finance', label:'اطلب خدمة الاستشارات المالية', active:true },
+      steps:['رصد التكاليف الثابتة والمتغيرة المتوقعة','تحديد مصادر التمويل الرئيسية (تبرعات، منح، رسوم)','وضع ميزانية تقديرية مفصّلة بالإيرادات والمصروفات','تحديد استراتيجية جمع التبرعات والتواصل مع الجهات المانحة','تصميم آليات الرقابة المالية والتدقيق الداخلي'] },
+    { id:'b5', title:'إعداد الخطة التشغيلية', day:'١٠–١٥ يوماً', desc:'تفصيل المبادرات إلى خطوات ومسؤوليات وجداول زمنية وموارد مطلوبة.',
+      steps:['ترجمة الأهداف الاستراتيجية إلى خطوات تشغيلية مفصّلة','تحديد المسؤوليات لكل نشاط وجدوله الزمني','تحديد الموارد المطلوبة (مادية وبشرية) لكل نشاط','بناء نظام متابعة التقدم وتقارير الأداء الدورية','مراجعة الخطة التشغيلية ربع سنوياً وتحديثها'] },
+    { id:'b6', title:'إعداد الخطة التنفيذية للمبادرات', day:'٧–١٤ يوماً', desc:'تحديد الموارد والمسؤوليات والجداول الزمنية لكل مبادرة لضمان تنفيذها بفعالية.',
+      steps:['إعداد قائمة كاملة بمبادرات السنة الأولى وأولوياتها','تحويل كل مبادرة إلى مشروع بخطة تفصيلية','تحديد الجدول الزمني والمعالم الرئيسية لكل مبادرة','تخصيص الموارد وتعيين مدير مسؤول لكل مبادرة','إعداد آلية تقييم أثر المبادرات بعد التنفيذ'] },
+    { id:'b7', title:'إعداد الموازنة التقديرية التفصيلية', day:'٥–٧ أيام', desc:'ضمان استخدام الأموال بفعالية ودعم المشاريع وتحقيق الاستدامة المالية.',
+      steps:['جمع بيانات التكاليف المتوقعة من جميع الأقسام','إعداد الموازنة التفصيلية على مستوى كل بند ومشروع','مراجعة الموازنة مع المدير المالي أو المستشار','اعتماد الموازنة رسمياً من مجلس الإدارة','تحديد آليات المتابعة والتعديل خلال السنة'] },
+    { id:'b8', title:'اختيار وإدارة المبادرات', day:'٧–١٠ أيام', desc:'اختيار المبادرات ذات الأثر الأكبر وتوجيه الموارد ومتابعة التنفيذ والتقييم.',
+      steps:['تقييم المبادرات المقترحة وفق معايير الأثر والجدوى','إجراء جلسة اختيار المبادرات مع الفريق القيادي','إطلاق أول مبادرة من المبادرات المختارة','بناء لوحة متابعة لتتبع تقدم المبادرات','تقييم أثر المبادرات دورياً وإجراء تحسينات'] },
     { id:'b9', title:'إرساء نظام الحوكمة', day:'١٠–٢٠ يوماً', desc:'تعزيز الشفافية والمساءلة والالتزام بالقوانين والمعايير لتحقيق ثقة المانحين والمستفيدين.',
-      svc:{ id:'governance', label:'اطلب خدمة الحوكمة والامتثال', active:true } },
-    { id:'b10', title:'إعداد خطة التواصل والتسويق', day:'٥–٧ أيام', desc:'الرسائل والوسائط والقنوات المناسبة لإيصال المعلومات بوضوح وتعزيز التفاعل.' }
+      svc:{ id:'governance', label:'اطلب خدمة الحوكمة والامتثال', active:true },
+      steps:['صياغة اللائحة الداخلية وفق أفضل الممارسات','تشكيل لجان الرقابة والتدقيق وتحديد صلاحياتها','وضع سياسة الإفصاح والشفافية للتقارير السنوية','تأهيل أعضاء مجلس الإدارة على أسس الحوكمة الرشيدة','الالتزام بمتطلبات التقرير الدوري للجهات التنظيمية'] },
+    { id:'b10', title:'إعداد خطة التواصل والتسويق', day:'٥–٧ أيام', desc:'الرسائل والوسائط والقنوات المناسبة لإيصال المعلومات بوضوح وتعزيز التفاعل.',
+      steps:['تحديد الجمهور المستهدف وشرائحه المختلفة','صياغة الرسائل الرئيسية لكل شريحة جمهور','بناء خطة محتوى شهرية للمنصات الرقمية','تصميم المواد التسويقية الأساسية (بروشور، تعريف رسمي)','قياس أداء التواصل وتحسينه باستمرار'] }
   ]}
 ];
 
@@ -2269,6 +2452,14 @@ document.addEventListener('click', function(e) {
   if (pop && !pop.contains(e.target) && btn && !btn.contains(e.target)) closeUserPop();
 });
 
+/* Event delegation for plan task drawer openers (timeline + step rows) */
+document.addEventListener('click', function(e){
+  var opener = e.target.closest('.ptd-open-task');
+  if(opener && opener.dataset.taskId) openPlanTaskDrawer(opener.dataset.taskId);
+  var stepRow = e.target.closest('.ptd-step[data-tid]');
+  if(stepRow && stepRow.dataset.tid) toggleStep(stepRow.dataset.tid, parseInt(stepRow.dataset.idx||'0'));
+});
+
 function _applyTheme() {
   var dark;
   if (_themeMode === 'dark') dark = true;
@@ -2353,6 +2544,7 @@ function go(id){
   if(id==='settings') renderSettingsUsers();
   if(id==='grants') renderGrants();
   if(id==='tasks') renderTasks();
+  if(id==='plan'){ renderTracks(); renderPlanAnalytics(); }
 }
 
 /* ── Requested-services state (per org, persisted locally for instant UI) ── */
@@ -2589,6 +2781,7 @@ function enterApp(){
   renderServices();
   renderResources();
   updateOverview();
+  renderPlanAnalytics();
   loadOrgRequests();
   loadHomeCrmStats();
   _loadTasks(function(){ renderTracks(); }); // load tasks to show "added" state in plan
@@ -3670,46 +3863,72 @@ function renderMyRequests(){
 
 /* ── Render plan tracks ── */
 function renderTracks(){
-  var html = PLAN.map(function(track, ti){
-    var done = track.tasks.filter(function(t){ return progress[t.id] && progress[t.id].done; }).length;
-    var pct = Math.round(done/track.tasks.length*100);
-    var tasks = track.tasks.map(function(t){
-      var p = progress[t.id]||{};
-      var at = p.at ? ('أُنجزت في '+p.at) : '';
-      var svcHtml = '';
-      if(t.svc){
-        var svcTitle = (SERVICE_BY_ID[t.svc.id] && SERVICE_BY_ID[t.svc.id].title) || t.svc.label;
-        if(t.svc.active){
-          var reqDone = isRequested(svcTitle);
-          svcHtml = '<div class="task-svc">'+
-            '<span class="svc-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>'+esc(t.svc.label)+'</span>'+
-            (reqDone
-              ? '<span class="svc-done svc-done-sm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>تم الطلب</span>'
-              : '<button class="btn-svc" onclick="openServiceModal(\''+t.svc.id+'\',\''+esc(svcTitle)+'\')">اطلب الخدمة</button>')+
-          '</div>';
-        } else if(t.svc.soon){
-          svcHtml = '<div class="task-svc-soon">'+
-            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>'+
-            'خدمة «'+esc(t.svc.label)+'» — قريباً من بُعد'+
-          '</div>';
-        }
-      }
-      var hasTask = _tasks.some(function(tk){ return tk.plan_task_id===t.id; });
-      var addBtn = token() ? (
-        '<button class="add-to-tasks-btn'+(hasTask?' added':'')+'" data-plan-id="'+t.id+'"'+
-        (hasTask ? ' disabled' : ' onclick="openNewTaskModal(\''+t.id+'\',\''+t.title.replace(/'/g,'\'')+'\')"')+
-        '>'+(hasTask?'✓ أُضيفت للمهام':'⊕ إضافة كمهمة')+'</button>'
-      ) : '';
-      return '<div class="task'+(p.done?' done':'')+'" data-id="'+t.id+'">'+
-        '<div class="task-main">'+
-          '<div class="chk" onclick="toggleTask(\''+t.id+'\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>'+
-          '<div class="tx"><div class="h"><span class="name">'+esc(t.title)+'</span><span class="day">'+esc(t.day)+'</span>'+addBtn+'</div>'+
-          '<div class="desc">'+esc(t.desc)+'</div>'+
-          '<div class="done-at">✓ '+at+'</div></div>'+
-        '</div>'+
-        svcHtml+
+  if(_planView === 'timeline'){ document.getElementById('tracks').innerHTML = _renderTimelineView(); return; }
+
+  function _buildTaskHtml(t, p, isCustom){
+    var at = p.at ? ('أُنجزت في '+p.at) : '';
+    var sp = (t.steps && t.steps.length) ? _stepsProgress(t.id) : null;
+    var stepBarHtml = '';
+    if(sp){
+      var miniDots = Array.from({length:sp.total}, function(_, i){
+        return '<span class="'+(i < sp.done ? 'done':'')+'"></span>';
+      }).join('');
+      stepBarHtml = '<div class="task-steps-bar">'+
+        '<div class="task-steps-mini">'+miniDots+'</div>'+
+        '<span class="task-steps-lbl">'+sp.done+'/'+sp.total+' خطوات</span>'+
       '</div>';
-    }).join('');
+    }
+    var svcHtml = '';
+    if(t.svc){
+      var svcTitle = (SERVICE_BY_ID[t.svc.id] && SERVICE_BY_ID[t.svc.id].title) || t.svc.label;
+      if(t.svc.active){
+        var reqDone = isRequested(svcTitle);
+        svcHtml = '<div class="task-svc">'+
+          '<span class="svc-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>'+esc(t.svc.label)+'</span>'+
+          (reqDone
+            ? '<span class="svc-done svc-done-sm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>تم الطلب</span>'
+            : '<button class="btn-svc" onclick="openServiceModal(\''+t.svc.id+'\',\''+esc(svcTitle)+'\')">اطلب الخدمة</button>')+
+        '</div>';
+      } else if(t.svc.soon){
+        svcHtml = '<div class="task-svc-soon">'+
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>'+
+          'خدمة «'+esc(t.svc.label)+'» — قريباً من بُعد'+
+        '</div>';
+      }
+    }
+    var hasTask = _tasks.some(function(tk){ return tk.plan_task_id===t.id; });
+    var addBtn = token() && !isCustom ? (
+      '<button class="add-to-tasks-btn'+(hasTask?' added':'')+'" data-plan-id="'+t.id+'"'+
+      (hasTask ? ' disabled' : ' onclick="openNewTaskModal(\''+t.id+'\',\''+t.title.replace(/'/g,'\'')+'\')"')+
+      '>'+(hasTask?'✓ أُضيفت':'⊕ أضف كمهمة')+'</button>'
+    ) : '';
+    var openBtn = token() ? '<button class="task-open-btn" onclick="openPlanTaskDrawer(\''+t.id+'\')" title="فتح التفاصيل"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>تفاصيل</button>' : '';
+    var delBtn = isCustom && token() ? '<button class="custom-task-del" onclick="deleteCustomTask(\''+t.id+'\')" title="حذف المهمة"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>' : '';
+    var blockedBadge = (p.blocked && !p.done) ? '<span style="font-size:10px;font-weight:700;color:var(--danger);background:var(--danger-soft);padding:2px 7px;border-radius:6px;display:inline-flex;align-items:center;gap:3px">⚠ معاق</span>' : '';
+    return '<div class="task'+(p.done?' done':'')+(p.blocked&&!p.done?' task-blocked':'')+(isCustom?' custom-task':'')+'" data-id="'+t.id+'">'+
+      '<div class="task-main">'+
+        '<div class="chk" onclick="toggleTask(\''+t.id+'\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>'+
+        '<div class="tx">'+
+          '<div class="h"><span class="name">'+esc(t.title)+'</span><span class="day">'+esc(t.day||'مخصصة')+'</span>'+blockedBadge+addBtn+'</div>'+
+          '<div class="desc">'+esc(t.desc)+'</div>'+
+          stepBarHtml+
+          '<div class="done-at">✓ '+at+'</div>'+
+          (token() ? '<div class="h" style="margin-top:6px">'+openBtn+delBtn+'</div>' : '')+
+        '</div>'+
+      '</div>'+
+      svcHtml+
+    '</div>';
+  }
+
+  var html = PLAN.map(function(track, ti){
+    var stdTasks = track.tasks;
+    var customTasks = (progress._custom||[]).filter(function(c){ return c.track === track.id; });
+    var allTrackTasks = stdTasks.concat(customTasks);
+    var done = allTrackTasks.filter(function(t){ return progress[t.id] && progress[t.id].done; }).length;
+    var pct = allTrackTasks.length ? Math.round(done/allTrackTasks.length*100) : 0;
+    var tasksHtml = stdTasks.map(function(t){ return _buildTaskHtml(t, progress[t.id]||{}, false); }).join('');
+    tasksHtml += customTasks.map(function(t){ return _buildTaskHtml(t, progress[t.id]||{}, true); }).join('');
+    var addCustomBtn = token() ? '<button class="btn btn-ghost" style="width:100%;margin-top:10px;font-size:12.5px;gap:6px;display:flex;align-items:center;justify-content:center" onclick="openAddCustomTask(\''+track.id+'\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" style="width:14px;height:14px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>إضافة مهمة مخصصة</button>' : '';
     return '<div class="track'+(ti===0?' open':'')+'" id="track-'+track.id+'">'+
       '<div class="track-head" onclick="toggleTrack(\''+track.id+'\')">'+
         '<div class="tnum">'+(ti+1)+'</div>'+
@@ -3718,7 +3937,7 @@ function renderTracks(){
         '<span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m6 9 6 6 6-6"/></svg></span>'+
       '</div>'+
       '<div class="track-mini"><i id="mini-'+track.id+'" style="width:'+pct+'%"></i></div>'+
-      '<div class="track-body">'+tasks+'</div>'+
+      '<div class="track-body">'+tasksHtml+addCustomBtn+'</div>'+
     '</div>';
   }).join('');
   document.getElementById('tracks').innerHTML = html;
@@ -3727,24 +3946,44 @@ function renderTracks(){
 function toggleTrack(id){ document.getElementById('track-'+id).classList.toggle('open'); }
 
 function toggleTask(taskId){
+  var prevDone = Object.keys(progress).filter(function(k){ return k!=='_meta'&&k!=='_custom'&&progress[k]&&progress[k].done; }).length;
   var cur = progress[taskId] && progress[taskId].done;
-  if(cur){ delete progress[taskId]; }
-  else { progress[taskId] = { done:true, at: new Date().toLocaleDateString('ar-SA') }; }
+  if(cur){
+    // preserve enriched data, just unmark done
+    if(progress[taskId]) { progress[taskId].done = false; delete progress[taskId].at; }
+  } else {
+    if(!progress[taskId]) progress[taskId] = {};
+    progress[taskId].done = true;
+    progress[taskId].at = new Date().toLocaleDateString('ar-SA');
+    _ensurePlanStart();
+  }
   var el = document.querySelector('.task[data-id="'+taskId+'"]');
   if(el){
     el.classList.toggle('done', !cur);
     var p=progress[taskId];
-    if(p){ var da=el.querySelector('.done-at'); if(da) da.textContent='✓ أُنجزت في '+p.at; }
+    var da=el.querySelector('.done-at');
+    if(da){ da.textContent = (p&&p.done&&p.at) ? '✓ أُنجزت في '+p.at : ''; }
+    // Update drawer done pill if open
+    var pill = document.getElementById('ptd-done-pill');
+    if(pill && document.getElementById('ptd') && document.getElementById('ptd').dataset.taskId===taskId){
+      pill.classList.toggle('active', !cur);
+      pill.textContent = !cur ? '✓ مكتملة' : 'تحديد كمكتملة';
+    }
   }
+  var newDone = Object.keys(progress).filter(function(k){ return k!=='_meta'&&k!=='_custom'&&progress[k]&&progress[k].done; }).length;
+  if(newDone > prevDone) _checkAndShowBadgeAnimation(prevDone, newDone);
   refreshTrackBars();
   updateOverview();
+  renderPlanAnalytics();
   scheduleSave();
 }
 
 function refreshTrackBars(){
   PLAN.forEach(function(track){
-    var done = track.tasks.filter(function(t){ return progress[t.id] && progress[t.id].done; }).length;
-    var pct = Math.round(done/track.tasks.length*100);
+    var customTasks = (progress._custom||[]).filter(function(c){ return c.track===track.id; });
+    var allTasks = track.tasks.concat(customTasks);
+    var done = allTasks.filter(function(t){ return progress[t.id] && progress[t.id].done; }).length;
+    var pct = allTasks.length ? Math.round(done/allTasks.length*100) : 0;
     var p=document.getElementById('pct-'+track.id); if(p) p.textContent=pct+'%';
     var m=document.getElementById('mini-'+track.id); if(m) m.style.width=pct+'%';
   });
@@ -4014,6 +4253,500 @@ function openHomeCard(id){
   }
   body.innerHTML = html;
   document.getElementById('home-modal').classList.add('show');
+}
+
+/* ─────────────────────────────────────────
+   PLAN ENHANCEMENTS — Analytics, Drawer, Timeline, Badges, Custom Tasks
+───────────────────────────────────────── */
+
+var _planView = 'cards'; // 'cards' | 'timeline'
+
+/* ── Helper: all tasks including custom ── */
+function _planAllTasks(){
+  var a = [];
+  PLAN.forEach(function(tr){ tr.tasks.forEach(function(t){ a.push(t); }); });
+  var custom = (progress._custom||[]);
+  custom.forEach(function(c){ a.push(c); });
+  return a;
+}
+
+/* ── Plan start date (stored in progress._meta) ── */
+function _getPlanStart(){
+  if(progress._meta && progress._meta.start_date) return new Date(progress._meta.start_date);
+  return null;
+}
+function _setPlanStart(d){
+  if(!progress._meta) progress._meta = {};
+  progress._meta.start_date = d.toISOString().slice(0,10);
+  scheduleSave();
+}
+function _ensurePlanStart(){
+  if(!_getPlanStart()){
+    _setPlanStart(new Date());
+  }
+}
+
+/* ── Days elapsed ── */
+function _daysElapsed(){
+  var s = _getPlanStart();
+  if(!s) return 0;
+  return Math.max(0, Math.min(100, Math.floor((Date.now()-s.getTime())/86400000)+1));
+}
+
+/* ── Track status meta ── */
+function _trackStatus(doneCount, totalCount, daysElapsed){
+  if(daysElapsed === 0) return { label:'لم تبدأ', color:'var(--muted)', bg:'var(--bg-soft)', icon:'⏸' };
+  var expected = daysElapsed/100;
+  var actual = doneCount/totalCount;
+  var ratio = expected > 0 ? actual/expected : 1;
+  if(doneCount===totalCount) return { label:'مكتمل 🎉', color:'var(--ok)', bg:'var(--ok-soft)', icon:'✅' };
+  if(ratio >= 1.1) return { label:'متقدم', color:'#1d4ed8', bg:'#eff6ff', icon:'🚀' };
+  if(ratio >= 0.8) return { label:'على المسار', color:'var(--ok)', bg:'var(--ok-soft)', icon:'✅' };
+  if(ratio >= 0.6) return { label:'تأخر بسيط', color:'var(--warn)', bg:'var(--warn-soft)', icon:'⚠️' };
+  return { label:'تأخر ملحوظ', color:'var(--danger)', bg:'var(--danger-soft)', icon:'🔴' };
+}
+
+/* ── Estimated completion day ── */
+function _estCompletionDay(doneCount, daysElapsed){
+  if(doneCount === 0) return '—';
+  if(doneCount === TOTAL_TASKS) return daysElapsed;
+  var rate = doneCount / daysElapsed;
+  if(rate <= 0) return '—';
+  var est = Math.round(TOTAL_TASKS / rate);
+  return est > 200 ? '+٢٠٠' : est;
+}
+
+/* ── Steps progress for a task ── */
+function _stepsProgress(taskId){
+  var t = null;
+  PLAN.forEach(function(tr){ tr.tasks.forEach(function(tk){ if(tk.id===taskId) t=tk; }); });
+  if(!t || !t.steps || !t.steps.length) return null;
+  var p = progress[taskId] || {};
+  var stepsState = p.steps || {};
+  var done = t.steps.filter(function(_, i){ return !!stepsState[String(i)]; }).length;
+  return { done: done, total: t.steps.length };
+}
+
+/* ── Toggle a step ── */
+function toggleStep(taskId, stepIdx){
+  if(!progress[taskId]) progress[taskId] = {};
+  if(!progress[taskId].steps) progress[taskId].steps = {};
+  var key = String(stepIdx);
+  progress[taskId].steps[key] = !progress[taskId].steps[key];
+  // Refresh drawer if open
+  var ptd = document.getElementById('ptd');
+  if(ptd && ptd.dataset.taskId === taskId){
+    var t = null;
+    PLAN.forEach(function(tr){ tr.tasks.forEach(function(tk){ if(tk.id===taskId) t=tk; }); });
+    if(t) _ptdRefreshSteps(taskId, t);
+  }
+  // Refresh card step bar
+  var card = document.querySelector('.task[data-id="'+taskId+'"]');
+  if(card){
+    var sp = _stepsProgress(taskId);
+    var miniEl = card.querySelector('.task-steps-mini');
+    var lblEl = card.querySelector('.task-steps-lbl');
+    if(miniEl && sp){
+      miniEl.innerHTML = sp.total > 0 ? Array.from({length:sp.total}, function(_, i){
+        return '<span class="'+(i < sp.done ? 'done':'')+'"></span>';
+      }).join('') : '';
+    }
+    if(lblEl && sp) lblEl.textContent = sp.done+'/'+sp.total+' خطوات';
+    // Suggest marking done if all steps done
+    var hint = card.querySelector('.ptd-all-done-hint');
+    // (hint is in drawer, skip)
+  }
+  scheduleSave();
+}
+
+/* ── Refresh steps in open drawer ── */
+function _ptdRefreshSteps(taskId, task){
+  var stepsEl = document.getElementById('ptd-steps-list');
+  if(!stepsEl) return;
+  var p = progress[taskId] || {};
+  var stepsState = p.steps || {};
+  stepsEl.innerHTML = task.steps.map(function(s, i){
+    var done = !!stepsState[String(i)];
+    return '<div class="ptd-step" data-tid="'+taskId+'" data-idx="'+i+'" style="cursor:pointer">'+
+      '<div class="ptd-step-chk'+(done?' done':'')+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg></div>'+
+      '<span class="ptd-step-lbl'+(done?' done':'')+'">'+esc(s)+'</span>'+
+    '</div>';
+  }).join('');
+  stepsEl.querySelectorAll('.ptd-step').forEach(function(el){
+    el.addEventListener('click', function(){ toggleStep(el.dataset.tid, parseInt(el.dataset.idx)); });
+  });
+  var sp = _stepsProgress(taskId);
+  var hint = document.getElementById('ptd-all-done-hint');
+  if(hint) hint.style.display = (sp && sp.done===sp.total && sp.total>0) ? 'block' : 'none';
+}
+
+/* ── Badge definitions ── */
+function _badgeDefs(){
+  return [
+    { id:'b_launch', emoji:'🚀', label:'الانطلاق', req:1, msg:'أول مهمة مكتملة! الرحلة بدأت.' },
+    { id:'b_half',  emoji:'🌗', label:'نصف الطريق', req:Math.ceil(TOTAL_TASKS/2), msg:'أنجزت نصف الخطة! أنت على الطريق الصحيح.' },
+    { id:'b_final', emoji:'🏁', label:'المستقيم الأخير', req:Math.round(TOTAL_TASKS*0.82), msg:'أوشكت على الإتمام! المشوار آخره قريب.' },
+    { id:'b_done',  emoji:'🏆', label:'مئة يوم مبارك', req:TOTAL_TASKS, msg:'أتممت خطة المئة يوم! مبروك على هذا الإنجاز.' }
+  ];
+}
+
+/* ── Render badges ── */
+function _renderBadges(doneCount){
+  return _badgeDefs().map(function(b){
+    var unlocked = doneCount >= b.req;
+    var p = progress._meta && progress._meta['badge_'+b.id];
+    return '<div class="pa-badge'+(unlocked?' unlocked':'  locked')+'">'+
+      '<div class="pa-badge-emoji">'+b.emoji+'</div>'+
+      '<div class="pa-badge-lbl">'+esc(b.label)+'</div>'+
+      (unlocked && p ? '<div class="pa-badge-date">'+esc(p)+'</div>' : '')+
+    '</div>';
+  }).join('');
+}
+
+/* ── Check and show badge animation ── */
+function _checkAndShowBadgeAnimation(prevDone, newDone){
+  var badges = _badgeDefs();
+  for(var i=0; i<badges.length; i++){
+    var b = badges[i];
+    if(prevDone < b.req && newDone >= b.req){
+      // Record unlock date
+      if(!progress._meta) progress._meta = {};
+      if(!progress._meta['badge_'+b.id]){
+        progress._meta['badge_'+b.id] = new Date().toLocaleDateString('ar-SA');
+      }
+      _showBadgePop(b);
+      break; // show one at a time
+    }
+  }
+}
+
+function _showBadgePop(b){
+  var pop = document.getElementById('badge-pop');
+  if(!pop){
+    pop = document.createElement('div');
+    pop.id = 'badge-pop';
+    pop.className = 'badge-pop';
+    pop.innerHTML = '<div class="badge-pop-box"><span class="badge-pop-emoji" id="bpe"></span><div class="badge-pop-title" id="bpt"></div><div class="badge-pop-sub" id="bps"></div></div>';
+    pop.addEventListener('click', function(){ pop.classList.remove('show'); });
+    document.body.appendChild(pop);
+  }
+  document.getElementById('bpe').textContent = b.emoji;
+  document.getElementById('bpt').textContent = b.label;
+  document.getElementById('bps').textContent = b.msg;
+  pop.classList.add('show');
+  setTimeout(function(){ pop.classList.remove('show'); }, 4000);
+}
+
+/* ── Render analytics bar ── */
+function renderPlanAnalytics(){
+  var el = document.getElementById('plan-analytics');
+  if(!el) return;
+  if(!token()){ el.innerHTML=''; return; }
+  var doneCount = Object.keys(progress).filter(function(k){ return k!=='_meta'&&k!=='_custom'&&progress[k]&&progress[k].done; }).length;
+  var days = _daysElapsed();
+  var st = _trackStatus(doneCount, TOTAL_TASKS, days);
+  var est = _estCompletionDay(doneCount, days);
+  var todayPct = Math.min(100, days);
+
+  var html = '<div class="plan-analytics">'+
+    '<div class="pa-stats">'+
+      '<div class="pa-stat" style="--pa-col:var(--accent)">'+
+        '<div class="pa-stat-lbl">المهام المنجزة</div>'+
+        '<div class="pa-stat-val">'+doneCount+'<span style="font-size:14px;font-weight:500;color:var(--muted)"> / '+TOTAL_TASKS+'</span></div>'+
+        '<div class="pa-stat-sub">'+Math.round(doneCount/TOTAL_TASKS*100)+'% من الخطة</div>'+
+      '</div>'+
+      '<div class="pa-stat" style="--pa-col:var(--navy)">'+
+        '<div class="pa-stat-lbl">الأيام المنقضية</div>'+
+        '<div class="pa-stat-val">'+(days||'—')+'<span style="font-size:14px;font-weight:500;color:var(--muted)"> / ١٠٠</span></div>'+
+        '<div class="pa-stat-sub">'+Math.max(0,100-days)+' يوم متبقٍ</div>'+
+      '</div>'+
+      '<div class="pa-stat" style="--pa-col:'+st.color.replace('var(--ok)','#16a34a').replace('var(--warn)','#d97706').replace('var(--danger)','#dc2626')+'">'+
+        '<div class="pa-stat-lbl">حالة المسار</div>'+
+        '<div class="pa-stat-val" style="font-size:16px;font-weight:700;color:'+st.color+'">'+st.icon+' '+esc(st.label)+'</div>'+
+        '<div class="pa-stat-sub">وتيرة الإنجاز الحالية</div>'+
+      '</div>'+
+      '<div class="pa-stat" style="--pa-col:var(--gold)">'+
+        '<div class="pa-stat-lbl">التقدير المتوقع</div>'+
+        '<div class="pa-stat-val">'+(typeof est==='number'?'يوم '+est:est)+'</div>'+
+        '<div class="pa-stat-sub">يوم الإتمام المقدَّر</div>'+
+      '</div>'+
+    '</div>'+
+    '<div class="pa-bar-wrap">'+
+      '<div class="pa-bar-header">'+
+        '<span class="pa-bar-title">شريط التقدم على ١٠٠ يوم</span>'+
+        '<span class="pa-track-badge" style="background:'+st.color.replace('var(--ok)','#16a34a').replace('var(--warn)','#d97706').replace('var(--danger)','#dc2626')+';color:#fff">'+st.icon+' '+esc(st.label)+'</span>'+
+      '</div>'+
+      '<div class="pa-bar-track" id="pa-bar-track">'+
+        '<div class="pa-bar-done" id="pa-bar-done" style="width:'+Math.round(doneCount/TOTAL_TASKS*100)+'%"></div>'+
+        (days>0 && days<=100 ? '<div class="pa-bar-today" style="left:'+todayPct+'%"></div>' : '')+
+      '</div>'+
+      '<div class="pa-bar-labels"><span>يوم ١</span><span>يوم ٢٥</span><span>يوم ٥٠</span><span>يوم ٧٥</span><span>يوم ١٠٠</span></div>'+
+    '</div>'+
+    '<div class="pa-badges">'+_renderBadges(doneCount)+'</div>'+
+  '</div>';
+  el.innerHTML = html;
+}
+
+/* ── Set plan view ── */
+function setPlanView(v){
+  _planView = v;
+  var btnCards = document.getElementById('plan-view-cards');
+  var btnTl = document.getElementById('plan-view-timeline');
+  if(btnCards) btnCards.classList.toggle('active', v==='cards');
+  if(btnTl) btnTl.classList.toggle('active', v==='timeline');
+  var tracksEl = document.getElementById('tracks');
+  if(v==='timeline'){
+    tracksEl.innerHTML = _renderTimelineView();
+  } else {
+    renderTracks();
+  }
+}
+
+/* ── Timeline view ── */
+function _renderTimelineView(){
+  var days = _daysElapsed();
+  var allTasks = [];
+  PLAN.forEach(function(tr){ tr.tasks.forEach(function(t){ allTasks.push(t); }); });
+  (progress._custom||[]).forEach(function(c){ allTasks.push(c); });
+
+  function taskDayNum(t){
+    if(typeof t.day === 'number') return t.day;
+    var m = String(t.day).match(/(\d+)/);
+    return m ? parseInt(m[1]) : 50;
+  }
+
+  var rowsHtml = allTasks.map(function(t){
+    var p = progress[t.id]||{};
+    var dayNum = taskDayNum(t);
+    var barPct = Math.round(dayNum/100*100);
+    var isDone = !!p.done;
+    var isOverdue = !isDone && days > dayNum;
+    var barColor = isDone ? '#16a34a' : isOverdue ? '#dc2626' : 'var(--navy)';
+    var dotLeft = isDone && p.at ? barPct : null;
+    return '<div class="plan-tl-row">'+
+      '<div class="plan-tl-name ptd-open-task" data-task-id="'+t.id+'" title="'+esc(t.title)+'">'+esc(t.title)+'</div>'+
+      '<div class="plan-tl-bar-wrap">'+
+        '<div class="plan-tl-bar ptd-open-task" data-task-id="'+t.id+'" style="width:'+barPct+'%;background:'+barColor+';opacity:'+(isDone?'.9':'.55')+'">'+
+          (isDone ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" style="width:10px;height:10px"><polyline points="20 6 9 17 4 12"/></svg>' : '')+
+        '</div>'+
+        (dotLeft!==null ? '<div class="plan-tl-dot" style="left:'+dotLeft+'%;background:'+barColor+'"></div>' : '')+
+        (days>0 && days<=100 ? '<div style="position:absolute;top:0;bottom:0;left:'+days+'%;width:1.5px;background:var(--navy);opacity:.5;pointer-events:none"></div>' : '')+
+      '</div>'+
+    '</div>';
+  }).join('');
+
+  return '<div class="plan-tl">'+
+    '<div class="plan-tl-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:17px;height:17px"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>الجدول الزمني للمهام</div>'+
+    '<div class="plan-tl-inner">'+
+      '<div class="plan-tl-axis">'+
+        '<div class="plan-tl-axis-label" style="text-align:right">يوم ١</div>'+
+        '<div class="plan-tl-axis-label">يوم ٢٥</div>'+
+        '<div class="plan-tl-axis-label">يوم ٥٠</div>'+
+        '<div class="plan-tl-axis-label">يوم ٧٥</div>'+
+        '<div class="plan-tl-axis-label" style="text-align:left">يوم ١٠٠</div>'+
+      '</div>'+
+      rowsHtml+
+    '</div>'+
+    '<div style="font-size:11px;color:var(--muted-2);margin-top:12px;display:flex;gap:14px;flex-wrap:wrap">'+
+      '<span><span style="display:inline-block;width:10px;height:10px;background:#16a34a;border-radius:3px;margin-left:4px;vertical-align:middle"></span>مكتملة</span>'+
+      '<span><span style="display:inline-block;width:10px;height:10px;background:#dc2626;border-radius:3px;margin-left:4px;vertical-align:middle"></span>متأخرة</span>'+
+      '<span><span style="display:inline-block;width:10px;height:10px;background:var(--navy);border-radius:3px;margin-left:4px;vertical-align:middle;opacity:.55"></span>قادمة</span>'+
+      '<span><span style="display:inline-block;width:2px;height:12px;background:var(--navy);opacity:.5;margin-left:4px;vertical-align:middle"></span>اليوم الحالي</span>'+
+    '</div>'+
+  '</div>';
+}
+
+
+function _ensurePtd(){
+  if(document.getElementById('ptd')) return;
+  var ov = document.createElement('div');
+  ov.id = 'ptd-ov';
+  ov.className = 'ptd-ov';
+  ov.addEventListener('click', closePlanTaskDrawer);
+  var dr = document.createElement('div');
+  dr.id = 'ptd';
+  dr.className = 'ptd';
+  dr.innerHTML = '<div id="ptd-inner"></div>';
+  document.body.appendChild(ov);
+  document.body.appendChild(dr);
+}
+
+function openPlanTaskDrawer(taskId){
+  _ensurePlanStart();
+  _ensurePtd();
+  var task = null;
+  var trackId = null;
+  PLAN.forEach(function(tr){ tr.tasks.forEach(function(t){ if(t.id===taskId){ task=t; trackId=tr.id; } }); });
+  if(!task){
+    // check custom
+    (progress._custom||[]).forEach(function(c){ if(c.id===taskId){ task=c; trackId=c.track; } });
+  }
+  if(!task) return;
+  var dr = document.getElementById('ptd');
+  dr.dataset.taskId = taskId;
+  document.getElementById('ptd-inner').innerHTML = _planTaskDrawerHtml(task, progress[taskId]||{}, trackId);
+  document.getElementById('ptd-ov').classList.add('active');
+  dr.classList.add('active');
+}
+
+function closePlanTaskDrawer(){
+  var ov = document.getElementById('ptd-ov');
+  var dr = document.getElementById('ptd');
+  if(ov) ov.classList.remove('active');
+  if(dr){ dr.classList.remove('active'); dr.dataset.taskId = ''; }
+}
+
+function _planTaskDrawerHtml(task, prog, trackId){
+  var sp = (task.steps && task.steps.length) ? _stepsProgress(task.id) : null;
+  var stepsState = prog.steps || {};
+  var isCustom = !!(task._isCustom || (progress._custom||[]).find(function(c){ return c.id===task.id; }));
+
+  var stepsHtml = '';
+  if(task.steps && task.steps.length){
+    stepsHtml = '<div class="ptd-sec">'+
+      '<div class="ptd-sec-lbl">الخطوات التنفيذية ('+(sp?sp.done:0)+'/'+task.steps.length+')</div>'+
+      '<div id="ptd-steps-list">'+task.steps.map(function(s, i){
+        var done = !!stepsState[String(i)];
+        return '<div class="ptd-step" data-tid="'+task.id+'" data-idx="'+i+'" style="cursor:pointer">'+
+          '<div class="ptd-step-chk'+(done?' done':'')+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg></div>'+
+          '<span class="ptd-step-lbl'+(done?' done':'')+'">'+esc(s)+'</span>'+
+        '</div>';
+      }).join('')+'</div>'+
+      '<div class="ptd-all-done-hint" id="ptd-all-done-hint" style="display:'+(sp&&sp.done===sp.total&&sp.total>0?'block':'none')+'">✅ أكملت جميع الخطوات! يمكنك الآن تحديد المهمة كمنجزة</div>'+
+    '</div>';
+  }
+
+  var svcBtn = '';
+  if(task.svc && task.svc.active){
+    svcBtn = '<button class="ptd-svc-btn" onclick="closePlanTaskDrawer();go(this.dataset.page)" data-page="services">'+
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>'+
+      esc(task.svc.label)+
+    '</button>';
+  }
+
+  return '<div class="ptd-hd">'+
+    '<div class="ptd-hd-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></div>'+
+    '<div class="ptd-hd-info">'+
+      '<span class="ptd-hd-title">'+esc(task.title)+'</span>'+
+      '<div class="ptd-hd-day">'+esc(task.day||'')+(isCustom?' · مهمة مخصصة':'')+'</div>'+
+    '</div>'+
+    '<button class="ptd-close" onclick="closePlanTaskDrawer()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="width:15px;height:15px"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>'+
+  '</div>'+
+  '<div class="ptd-body">'+
+    '<div class="ptd-sec">'+
+      '<div class="ptd-sec-lbl">الوصف</div>'+
+      '<div class="ptd-desc">'+esc(task.desc||'')+'</div>'+
+    '</div>'+
+    stepsHtml+
+    '<div class="ptd-sec">'+
+      '<div class="ptd-sec-lbl">تفاصيل التنفيذ</div>'+
+      '<div class="ptd-field"><label>المسؤول عن التنفيذ</label><input type="text" id="ptd-assignee" placeholder="اسم المسؤول أو الجهة" value="'+esc(prog.assignee||'')+'"></div>'+
+      '<div class="ptd-field"><label>رابط الدليل أو الإثبات</label><input type="url" id="ptd-evidence" dir="ltr" style="text-align:right" placeholder="https://..." value="'+esc(prog.evidence_url||'')+'"></div>'+
+      '<div class="ptd-field"><label>ملاحظات</label><textarea id="ptd-notes" placeholder="تحديات، قرارات، تفاصيل مهمة...">'+esc(prog.notes||'')+'</textarea></div>'+
+    '</div>'+
+    '<div class="ptd-sec">'+
+      '<div class="ptd-sec-lbl">الحالة</div>'+
+      '<div class="ptd-status-pills">'+
+        '<button class="ptd-status-pill'+(prog.done?' active':'')+'" onclick="toggleTask(this.dataset.tid);savePlanTaskDraft(this.dataset.tid)" data-tid="'+task.id+'" id="ptd-done-pill">'+(prog.done?'✓ مكتملة':'تحديد كمكتملة')+'</button>'+
+        '<button class="ptd-status-pill'+(prog.blocked?' blocked':'')+'" onclick="_togglePtdBlocked(this.dataset.tid)" data-tid="'+task.id+'" id="ptd-blocked-pill">'+(prog.blocked?'⚠ معاق':'تحديد كمعاق')+'</button>'+
+      '</div>'+
+      (prog.done && prog.at ? '<div style="font-size:11.5px;color:var(--ok);margin-top:8px">✓ أُنجزت في '+esc(prog.at)+'</div>' : '')+
+    '</div>'+
+    (svcBtn ? '<div class="ptd-sec">'+svcBtn+'</div>' : '')+
+  '</div>'+
+  '<div class="ptd-foot">'+
+    '<button class="btn btn-primary" style="flex:1" onclick="savePlanTaskDraft(this.dataset.tid)" data-tid="'+task.id+'">حفظ</button>'+
+    '<button class="btn btn-ghost" onclick="closePlanTaskDrawer()">إغلاق</button>'+
+  '</div>';
+}
+
+function _togglePtdBlocked(taskId){
+  if(!progress[taskId]) progress[taskId] = {};
+  progress[taskId].blocked = !progress[taskId].blocked;
+  var pill = document.getElementById('ptd-blocked-pill');
+  if(pill){ pill.classList.toggle('blocked', !!progress[taskId].blocked); pill.textContent = progress[taskId].blocked ? '⚠ معاق' : 'تحديد كمعاق'; }
+  scheduleSave();
+}
+
+function savePlanTaskDraft(taskId){
+  if(!progress[taskId]) progress[taskId] = {};
+  var a = document.getElementById('ptd-assignee');
+  var e = document.getElementById('ptd-evidence');
+  var n = document.getElementById('ptd-notes');
+  if(a) progress[taskId].assignee = a.value.trim();
+  if(e) progress[taskId].evidence_url = e.value.trim();
+  if(n) progress[taskId].notes = n.value.trim();
+  scheduleSave();
+  toast('تم حفظ التفاصيل ✓');
+  closePlanTaskDrawer();
+  renderPlanAnalytics();
+}
+
+/* ── Custom Tasks ── */
+function openAddCustomTask(trackId){
+  var ov = document.getElementById('custom-task-modal-ov');
+  if(!ov){
+    ov = document.createElement('div');
+    ov.id = 'custom-task-modal-ov';
+    ov.className = 'custom-task-modal-ov';
+    ov.innerHTML = '<div class="custom-task-modal-box" onclick="event.stopPropagation()">'+
+      '<div class="ctm-title">إضافة مهمة مخصصة</div>'+
+      '<div class="ptd-field"><label>عنوان المهمة <span class="req">*</span></label><input type="text" id="ctm-title-inp" placeholder="عنوان المهمة" maxlength="120"></div>'+
+      '<div class="ptd-field"><label>الوصف</label><textarea id="ctm-desc-inp" placeholder="وصف المهمة وأهميتها..." style="min-height:70px"></textarea></div>'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'+
+        '<div class="ptd-field"><label>اليوم المستهدف</label><input type="number" id="ctm-day-inp" min="1" max="100" placeholder="مثال: 45"></div>'+
+        '<div class="ptd-field"><label>المسار</label><select id="ctm-track-inp"><option value="t1">المسار الأول</option><option value="t2">المسار الثاني</option></select></div>'+
+      '</div>'+
+      '<div class="ctm-foot">'+
+        '<button class="btn btn-primary" style="flex:1" onclick="saveCustomTask()">إضافة المهمة</button>'+
+        '<button class="btn btn-ghost" onclick="closeCustomTaskModal()">إلغاء</button>'+
+      '</div>'+
+    '</div>';
+    ov.addEventListener('click', closeCustomTaskModal);
+    document.body.appendChild(ov);
+  }
+  var ti = document.getElementById('ctm-track-inp');
+  if(ti && trackId) ti.value = trackId;
+  document.getElementById('ctm-title-inp').value = '';
+  document.getElementById('ctm-desc-inp').value = '';
+  document.getElementById('ctm-day-inp').value = '';
+  ov.classList.add('show');
+  setTimeout(function(){ document.getElementById('ctm-title-inp').focus(); }, 100);
+}
+
+function closeCustomTaskModal(){
+  var ov = document.getElementById('custom-task-modal-ov');
+  if(ov) ov.classList.remove('show');
+}
+
+function saveCustomTask(){
+  var title = (document.getElementById('ctm-title-inp').value||'').trim();
+  if(!title){ toast('يرجى إدخال عنوان المهمة'); return; }
+  var desc = (document.getElementById('ctm-desc-inp').value||'').trim();
+  var day = parseInt(document.getElementById('ctm-day-inp').value)||50;
+  var track = (document.getElementById('ctm-track-inp').value)||'t1';
+  var id = 'c_'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
+  if(!progress._custom) progress._custom = [];
+  progress._custom.push({ id:id, title:title, desc:desc, day:day, track:track, _isCustom:true });
+  closeCustomTaskModal();
+  scheduleSave();
+  renderTracks();
+  renderPlanAnalytics();
+  toast('تم إضافة المهمة ✓');
+}
+
+function deleteCustomTask(id){
+  if(!confirm('هل تريد حذف هذه المهمة؟')) return;
+  progress._custom = (progress._custom||[]).filter(function(c){ return c.id!==id; });
+  delete progress[id];
+  scheduleSave();
+  renderTracks();
+  renderPlanAnalytics();
+}
+
+/* ── Print plan report ── */
+function printPlanReport(){
+  window.print();
 }
 
 function scheduleSave(){
