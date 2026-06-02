@@ -1640,6 +1640,10 @@ img,svg{display:block;max-width:100%}
 .gd-link{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:700;color:var(--navy);background:transparent;border:none;padding:0;text-decoration:none;transition:.15s}
 .gd-link:hover{color:var(--accent);gap:7px}
 .gd-link svg{width:13px;height:13px}
+.gd-contacts{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.gd-contact{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:8px;background:var(--bg-soft);color:var(--muted);text-decoration:none;transition:.15s;flex-shrink:0}
+.gd-contact:hover{background:var(--navy);color:#fff}
+.gd-contact svg{width:14px;height:14px}
 </style>
 </head>
 <body>
@@ -3172,7 +3176,7 @@ var GRANTORS = [
     domains:['تطوير الشباب','القيادة','ريادة الأعمال','الابتكار','الفنون','التعليم'],
     region:'وطني', regionNote:'تركيز على الشباب دون 35 سنة',
     note:'مدفوعة بتمكين الشباب السعودي — مناسبة جداً للجمعيات التي يخدم نشاطها الشباب',
-    url:'https://misk.org.sa'
+    url:'https://misk.org.sa/', email:'contact@misk.org.sa', phone:'0114444490', twitter:'https://twitter.com/MiskKSA'
   },
   {
     id:'kkf', abbr:'خالد', color:'#b45309', type:'royal', typeLbl:'مؤسسة خيرية',
@@ -3181,7 +3185,7 @@ var GRANTORS = [
     domains:['التمكين الاقتصادي','التعليم','البيئة','الصحة','ريادة الأعمال الاجتماعية','الثقافة'],
     region:'وطني', regionNote:'جميع مناطق المملكة',
     note:'تمنح جائزة مسؤولية اجتماعية سنوياً — التقديم مفتوح للجمعيات والمبادرات المجتمعية',
-    url:'https://kingkhalid.org.sa'
+    url:'https://kkf.org.sa/', email:'info@kkf.org.sa', phone:'0112020202', twitter:'https://twitter.com/kkfoundation'
   },
   {
     id:'alwaleed', abbr:'الولي', color:'#0a4f6e', type:'royal', typeLbl:'مؤسسة خيرية',
@@ -3198,8 +3202,8 @@ var GRANTORS = [
     desc:'تعنى بالتعليم والثقافة والعلوم، وتمنح جائزة الملك فيصل العالمية وجائزة خدمة الإسلام وتدعم مشاريع التنمية الإنسانية.',
     domains:['التعليم','الثقافة','اللغة العربية','خدمة الإسلام','العلوم والطب'],
     region:'وطني وعالمي', regionNote:'مع اهتمام خاص بالمملكة والعالم الإسلامي',
-    note:'متخصصة في الجوائز الأكاديمية الكبرى — أقل تركيزاً على المنح التشغيلية للجمعيات',
-    url:'https://alffoundation.org'
+    note:'متخصصة في الجوائز الأكاديمية الكبرى — أقل تركيزاً على المنح التشغيلية للجمعيات — تدعم المؤسسات التابعة للشؤون الاجتماعية فقط',
+    url:'https://kff.org.sa/', email:'info@kff.com', phone:'0114652255', twitter:'https://twitter.com/_kff_'
   },
   {
     id:'tayebah', abbr:'طيبة', color:'#2e7d32', type:'royal', typeLbl:'مؤسسة خيرية',
@@ -3226,7 +3230,7 @@ var GRANTORS = [
     domains:['التعليم','الصحة','المشاريع الدينية','التنمية الاجتماعية','دعم الأسر'],
     region:'وطني', regionNote:'جميع مناطق المملكة',
     note:'من أكثر المؤسسات الخيرية السعودية منحاً — يُنصح بالتقديم عبر موقعها الرسمي',
-    url:'https://slr.org.sa'
+    url:'https://www.rf.org.sa/', email:'info@rf.org.sa', phone:'0112411600', twitter:'https://twitter.com/rajhicf'
   },
   {
     id:'sabiei_fd', abbr:'السبيع', color:'#7e22ce', type:'royal', typeLbl:'مؤسسة خيرية',
@@ -3391,7 +3395,102 @@ var GRANTORS = [
     region:'وطني', regionNote:'جميع مناطق المملكة',
     note:'شريك استراتيجي في مجالات التمويل الاجتماعي — التقديم عبر وحدة الاستدامة في البنك',
     url:'https://sabb.com/ar'
-  }
+  },
+
+  /* ════════ دفعة الملف (1) — مؤسسات خيرية عائلية ════════ */
+  { id:'awqaf_alrajhi', abbr:'الراجحي', type:'royal',
+    name:'أوقاف الشيخ محمد بن عبدالعزيز الراجحي',
+    domains:['المجال الاجتماعي','المجال التعليمي','تنمية الموارد المالية'],
+    url:'https://www.alrajhiawqaf.sa/', email:'info@rajhi.org', phone:'0114458484', twitter:'https://twitter.com/awqaf_alrajhi' },
+  { id:'alsanie', abbr:'الصانع', type:'royal',
+    name:'مؤسسة محمد العلي الصانع الخيرية',
+    domains:['البرامج الاجتماعية','البرامج الموسمية','مساعدات السكن'],
+    url:'https://www.alsanie-charity.sa/', email:'info@alsaniecharity.sa', phone:'0112500426', twitter:'https://twitter.com/alsaniecharity' },
+  { id:'aic', abbr:'العيسى', type:'royal',
+    name:'مؤسسة عبداللطيف العيسى الخيرية',
+    domains:['الأيتام','طلاب العلم','المجال الصحي','تعليم القرآن','الأسرة والشباب'],
+    url:'https://aic.org.sa/', email:'info@aic.org.sa', phone:'0112107472', twitter:'https://twitter.com/aicorgsa' },
+  { id:'altayyar', abbr:'الطيار', type:'royal',
+    name:'مؤسسة الطيار الخيرية',
+    domains:['كفالة الأيتام','المرضى والمحتاجين','السلال الغذائية','الإسكان الخيري'],
+    url:'https://altayyar.info/', email:'info@altayyar.info', phone:'0114761016' },
+  { id:'alanood', abbr:'العنود', type:'royal',
+    name:'مؤسسة الأميرة العنود الخيرية',
+    domains:['الأضحية','السقيا','عمارة المساجد','الصدقة على الفقراء','الإغاثة'],
+    url:'http://alanood.org.sa/', email:'info@alanood.org.sa', phone:'0114818877', twitter:'https://twitter.com/alanoodorg' },
+  { id:'masic', abbr:'ماسك', type:'csr',
+    name:'شركة محمد إبراهيم السبيعي وأولاده للاستثمار (ماسك)',
+    domains:['برامج خيرية','تنمية الإنسان','الوعي المجتمعي','إدارة أعمال البر'],
+    url:'https://masic.com.sa/ar', email:'info@masic.com.sa', phone:'96614886262' },
+  { id:'binbaz', abbr:'ابن باز', type:'royal',
+    name:'مؤسسة عبدالعزيز بن باز الخيرية',
+    domains:['الدراسات والبرامج العلمية','القوافل الدعوية','خدمة العلم الشرعي','الوسطية والاعتدال'],
+    url:'https://binbazfoundation.sa/', email:'info@binbazfoundation.sa', phone:'920000602', twitter:'https://twitter.com/binbaz1420' },
+  { id:'althinayyan', abbr:'الثنيان', type:'royal',
+    name:'مؤسسة علي الثنيان وإخوانه الخيرية',
+    domains:['مكاتب الدعوة والإرشاد','تحفيظ القرآن','البر الخيري','المستودعات الخيرية'],
+    email:'info@althinayyancharity.org', phone:'0126396262' },
+  { id:'jch', abbr:'الجميح', type:'royal',
+    name:'مؤسسة آل الجميح الخيرية',
+    domains:['المجال الصحي','المجال الاجتماعي','المجال التعليمي','المجال الثقافي'],
+    url:'https://jch.org.sa/', email:'info@jch.org.sa', phone:'0114792122', twitter:'https://twitter.com/jch_org' },
+  { id:'sbaf', abbr:'سلطان', type:'royal',
+    name:'مؤسسة سلطان بن عبدالعزيز آل سعود الخيرية',
+    domains:['مساندة العمل الخيري','التنمية الاجتماعية','الأنشطة الصحية','المنح الدراسية'],
+    url:'https://sbaf.org.sa/', email:'info@sbaf.org.sa', phone:'0114822617', twitter:'https://twitter.com/_sbaf_' },
+  { id:'hasfound', abbr:'شربتلي', type:'royal',
+    name:'مؤسسة حسن عباس شربتلي الخيرية لخدمة المجتمع',
+    domains:['عمارة المساجد','المنح الدراسية','الرعاية الطبية','رعاية الأيتام','إفطار صائم'],
+    url:'https://hasfound.org/', email:'info@hasfound.org', phone:'0126642777', twitter:'https://twitter.com/hasfdn' },
+  { id:'rajhiawqaf_saleh', abbr:'الراجحي', type:'royal',
+    name:'أوقاف صالح عبدالعزيز الراجحي الخيرية',
+    domains:['الإنفاق على طلاب العلم','التيسير على المعسرين','نشر القرآن','بناء المساجد'],
+    url:'http://rajhiawqaf.org/', twitter:'https://twitter.com/rajhiendowment' },
+  { id:'msalshawi', abbr:'الشاوي', type:'royal',
+    name:'مؤسسة الشيخ محمد بن صالح الشاوي الخيرية',
+    domains:['البرامج الموسمية','دعم الجمعيات الخيرية','الدعم المالي'],
+    url:'https://msalshawi.com/ar', email:'info@msalshawi.com', phone:'0114913115', twitter:'https://twitter.com/alshawicharity' },
+  { id:'alhuda', abbr:'الهدى', type:'royal',
+    name:'مؤسسة الهدى الخيرية',
+    domains:['الدعم المالي','البرامج الموسمية','الملتقيات'],
+    url:'https://alhudacharity.org.sa/', email:'info@alhudacharity.org.sa', phone:'0114533900', twitter:'https://twitter.com/alhudacharity' },
+  { id:'alibrahim', abbr:'آل إبراهيم', type:'royal',
+    name:'مؤسسة إبراهيم بن عبدالعزيز آل إبراهيم الخيرية',
+    domains:['برامج رمضان والحج','تفطير الصائمين','الزواج الجماعي','تنمية المجتمع','التفريج عن السجناء'],
+    url:'https://alibrahimfoundation.com/', phone:'114629900', twitter:'https://twitter.com/ibactr_academy' },
+  { id:'saedan', abbr:'سعيدان', type:'royal',
+    name:'مؤسسة محمد بن عبدالله بن سعيدان وأولاده الخيرية',
+    domains:['الجمعيات الاجتماعية','الدعوية','التحفيظية','أعمال البر'],
+    url:'https://saedan-charity.org/', email:'saedan@saedan-charity.org', phone:'114944351', twitter:'https://twitter.com/saedancharity' },
+  { id:'alothaim_ch', abbr:'العثيم', type:'royal',
+    name:'مؤسسة عبدالله صالح العثيم وأولاده الخيرية',
+    domains:['الجمعيات الاجتماعية','الدعوية','التحفيظية','أعمال البر'],
+    url:'http://www.alothaimcharity.com/', email:'info@alothaimcharity.com', phone:'0112540000', twitter:'https://twitter.com/AlothaimCharity' },
+  { id:'alowaidah', abbr:'العويضة', type:'royal',
+    name:'مؤسسة الشيخ فهد بن عبدالله العويضة الخيرية',
+    domains:['الخدمات الاجتماعية','الصحية والإغاثية','التعليمية والثقافية','وجوه البر'],
+    url:'https://alowaidah.org.sa/homepage', email:'info@alowaidah.org.sa', phone:'0114794064', twitter:'https://twitter.com/fahad_alowaidah' },
+  { id:'walmosa', abbr:'الموسى', type:'royal',
+    name:'وقف سعد وعبدالعزيز الموسى',
+    domains:['تعزيز الهوية والقيم','البناء التربوي للشباب','تنمية الفقير والمحتاج','تطوير القطاع الخيري'],
+    url:'https://walmosa.org/', email:'waqf@walmosa.org', phone:'0114192604', twitter:'https://twitter.com/waqf_almosa' },
+  { id:'jeraisy', abbr:'الجريسي', type:'csr',
+    name:'شركة مجموعة الجريسي',
+    domains:['البرامج الإغاثية','البرامج الاجتماعية','مكاتب الدعوة','تحفيظ القرآن'],
+    url:'https://ar.jeraisy.com.sa/', email:'jrsygrop@jeraisy.com.sa', phone:'0114198000', twitter:'https://twitter.com/jeraisygroup' },
+  { id:'hhch', abbr:'الحصيني', type:'royal',
+    name:'مؤسسة حمد بن محمد الحصيني الخيرية',
+    domains:['البرامج الثقافية','البر','المشاريع الموسمية','التأهيل والتدريب','الخدمات الطبية'],
+    url:'https://hhch.sa/', email:'info@hhch.sa', phone:'0138329797', twitter:'https://twitter.com/CharityHussaini' },
+  { id:'rajhifoundation', abbr:'الراجحي', type:'royal',
+    name:'مؤسسة عبدالله بن عبدالعزيز الراجحي الخيرية',
+    domains:['البرامج التعليمية','العلمية والدعوية','الصحية','الأسرة والشباب'],
+    note:'فئات التركيز: الطفل، الشباب، الأسرة، السجناء، المرضى',
+    url:'https://rajhifoundation.org/', email:'info@rajhifoundation.org', phone:'0112220053', twitter:'https://twitter.com/InfoRajhi' },
+  { id:'bulaihedest', abbr:'البليهد', type:'royal',
+    name:'مؤسسة عمر بن سعود البليهد الخيرية',
+    domains:['البرامج الاجتماعية'],
+    phone:'0116221993', twitter:'https://twitter.com/bulaihedest' },
 ];
 var _gdFilter = 'all'; // 'all' | 'gov' | 'royal' | 'csr' | 'ngo'
 
@@ -3414,10 +3513,12 @@ function _renderGrantorsDir(){
     ngo:   { lbl:'مؤسسة اجتماعية' }
   };
 
-  var IC_GLOBE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>';
   var IC_MAP  = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>';
   var IC_NOTE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>';
   var IC_LINK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>';
+  var IC_PHONE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg>';
+  var IC_MAIL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/></svg>';
+  var IC_X = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24h-6.66l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25h6.83l4.713 6.231 5.447-6.231Zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77Z"/></svg>';
 
   var filters = [
     {f:'all', lbl:'الكل ('+GRANTORS.length+')'},
@@ -3435,8 +3536,14 @@ function _renderGrantorsDir(){
 
   var cards = GRANTORS.map(function(g){
     var tm = GD_TYPE_META[g.type] || {lbl:g.type};
-    var domainsHtml = g.domains.map(function(d){ return '<span class="gd-domain">'+esc(d)+'</span>'; }).join('');
-    var abbr = g.abbr.length > 5 ? g.abbr.slice(0,5) : g.abbr;
+    var domains = g.domains || [];
+    var domainsHtml = domains.map(function(d){ return '<span class="gd-domain">'+esc(d)+'</span>'; }).join('');
+    var abbr = (g.abbr || (g.name||'').replace(/^(مؤسسة|أوقاف|وقف|شركة|مجموعة|بنك|مصرف|صندوق)\s+/,'').trim().slice(0,4)) || '—';
+    if(abbr.length > 5) abbr = abbr.slice(0,5);
+    var contacts = '';
+    if(g.phone)  contacts += '<a href="tel:'+esc(String(g.phone).replace(/[^0-9+]/g,''))+'" class="gd-contact" title="'+esc(g.phone)+'">'+IC_PHONE+'</a>';
+    if(g.email)  contacts += '<a href="mailto:'+esc(g.email)+'" class="gd-contact" title="'+esc(g.email)+'">'+IC_MAIL+'</a>';
+    if(g.twitter)contacts += '<a href="'+esc(g.twitter)+'" target="_blank" rel="noopener" class="gd-contact" title="X / تويتر">'+IC_X+'</a>';
     return '<div class="gd-card-wrap" data-type="'+esc(g.type)+'" style="display:'+((_gdFilter==='all'||_gdFilter===g.type)?'':'none')+'">'+
       '<div class="gd-card">'+
         '<div class="gd-card-head">'+
@@ -3446,13 +3553,14 @@ function _renderGrantorsDir(){
             '<span class="gd-type">'+esc(tm.lbl)+'</span>'+
           '</div>'+
         '</div>'+
-        '<p class="gd-desc">'+esc(g.desc)+'</p>'+
-        (g.domains.length?'<div class="gd-domains">'+domainsHtml+'</div>':'')+
+        (g.desc?'<p class="gd-desc">'+esc(g.desc)+'</p>':'')+
+        (domains.length?'<div class="gd-domains">'+domainsHtml+'</div>':'')+
         (g.note?'<div class="gd-note">'+IC_NOTE+'<span>'+esc(g.note)+'</span></div>':'')+
-        '<div class="gd-footer">'+
-          '<span class="gd-region">'+IC_MAP+esc(g.region)+(g.regionNote?' — '+esc(g.regionNote):'')+'</span>'+
+        (g.region?'<span class="gd-region">'+IC_MAP+esc(g.region)+(g.regionNote?' — '+esc(g.regionNote):'')+'</span>':'')+
+        ((contacts||g.url)?'<div class="gd-footer">'+
+          '<div class="gd-contacts">'+contacts+'</div>'+
           (g.url?'<a href="'+esc(g.url)+'" target="_blank" rel="noopener" class="gd-link">الموقع الرسمي '+IC_LINK+'</a>':'')+
-        '</div>'+
+        '</div>':'')+
       '</div>'+
     '</div>';
   }).join('');
