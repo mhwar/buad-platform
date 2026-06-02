@@ -1460,6 +1460,193 @@ img,svg{display:block;max-width:100%}
 .add-to-tasks-btn{font-size:11px;font-weight:600;padding:3px 9px;border-radius:6px;border:1px solid #c4b5fd;background:transparent;color:#7c3aed;cursor:pointer;font-family:inherit;transition:.15s;display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
 .add-to-tasks-btn:hover{background:#7c3aed;color:#fff}
 .add-to-tasks-btn.added{border-color:#059669;color:#059669;pointer-events:none}
+
+/* ─── Plan View Toggle ─── */
+.plan-view-toggle{display:flex;border:1px solid var(--line);border-radius:9px;overflow:hidden}
+.plan-view-toggle button{padding:6px 12px;border:none;background:transparent;cursor:pointer;font-size:12px;font-weight:600;color:var(--muted);transition:.15s;font-family:inherit;display:flex;align-items:center;gap:5px}
+.plan-view-toggle button svg{width:13px;height:13px}
+.plan-view-toggle button.active{background:var(--navy);color:#fff}
+
+/* ─── Plan Analytics Bar ─── */
+.plan-analytics{margin-bottom:20px}
+.pa-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
+@media(max-width:640px){.pa-stats{grid-template-columns:repeat(2,1fr)}}
+.pa-stat{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 16px;position:relative;overflow:hidden}
+[data-theme="dark"] .pa-stat{background:var(--bg) !important;border-color:var(--line) !important}
+.pa-stat::before{content:'';position:absolute;top:0;right:0;left:0;height:3px;border-radius:12px 12px 0 0;background:var(--pa-col,var(--accent))}
+.pa-stat-lbl{font-size:11.5px;color:var(--muted);font-weight:600;margin-bottom:6px}
+.pa-stat-val{font-size:24px;font-weight:800;color:var(--navy-deep);line-height:1}
+[data-theme="dark"] .pa-stat-val{color:var(--ink)}
+.pa-stat-sub{font-size:11px;color:var(--muted-2);margin-top:3px}
+
+/* ─── Progress Timeline Bar ─── */
+.pa-bar-wrap{background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px 18px}
+[data-theme="dark"] .pa-bar-wrap{background:var(--bg) !important;border-color:var(--line) !important}
+.pa-bar-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.pa-bar-title{font-size:12.5px;font-weight:700;color:var(--navy-deep)}
+[data-theme="dark"] .pa-bar-title{color:var(--ink)}
+.pa-track-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700}
+.pa-bar-track{position:relative;height:10px;background:var(--bg-soft);border-radius:20px;overflow:visible;margin-bottom:6px}
+.pa-bar-done{height:100%;border-radius:20px;background:linear-gradient(90deg,var(--ok) 0%,#22c55e 100%);transition:width .6s var(--ease)}
+.pa-bar-today{position:absolute;top:-5px;bottom:-5px;width:2px;background:var(--navy);border-radius:2px;transition:left .4s}
+.pa-bar-today::after{content:'اليوم';position:absolute;top:-18px;right:50%;transform:translateX(50%);font-size:9px;font-weight:700;color:var(--navy);white-space:nowrap;background:#fff;padding:1px 4px;border-radius:4px;border:1px solid var(--line)}
+[data-theme="dark"] .pa-bar-today::after{background:var(--bg);color:var(--ink)}
+.pa-bar-labels{display:flex;justify-content:space-between;font-size:10px;color:var(--muted-2)}
+
+/* ─── Milestone Badges ─── */
+.pa-badges{display:flex;gap:10px;flex-wrap:wrap;padding-top:14px}
+.pa-badge{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 14px;border-radius:12px;border:1px solid var(--line);background:#fff;transition:.2s;min-width:80px;position:relative}
+[data-theme="dark"] .pa-badge{background:var(--bg) !important;border-color:var(--line) !important}
+.pa-badge.unlocked{border-color:var(--gold);background:linear-gradient(135deg,#fffbeb,#fff7d1)}
+[data-theme="dark"] .pa-badge.unlocked{background:linear-gradient(135deg,#2a1e00,#1a1400) !important;border-color:var(--gold) !important}
+.pa-badge-emoji{font-size:22px;line-height:1}
+.pa-badge-lbl{font-size:10.5px;font-weight:700;color:var(--ink);text-align:center}
+.pa-badge.locked{opacity:.45;filter:grayscale(1)}
+.pa-badge-date{font-size:9.5px;color:var(--muted);text-align:center}
+.badge-pop{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:3000;pointer-events:none;opacity:0;transition:opacity .3s}
+.badge-pop.show{opacity:1}
+.badge-pop-box{background:#fff;border-radius:20px;padding:32px 40px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.25);transform:scale(.8);transition:transform .4s cubic-bezier(.34,1.56,.64,1);border:2px solid var(--gold)}
+.badge-pop.show .badge-pop-box{transform:scale(1)}
+.badge-pop-emoji{font-size:56px;display:block;margin-bottom:12px}
+.badge-pop-title{font-size:20px;font-weight:800;color:var(--navy-deep)}
+.badge-pop-sub{font-size:13px;color:var(--muted);margin-top:5px}
+
+/* ─── Sub-steps in task card ─── */
+.task-steps-bar{display:flex;align-items:center;gap:7px;margin-top:6px}
+.task-steps-mini{display:flex;gap:3px}
+.task-steps-mini span{width:18px;height:4px;border-radius:3px;background:var(--line);transition:background .2s}
+.task-steps-mini span.done{background:var(--ok)}
+.task-steps-lbl{font-size:10.5px;font-weight:600;color:var(--muted)}
+.task-open-btn{font-size:11px;font-weight:600;padding:3px 8px;border-radius:6px;border:1px solid var(--line);background:transparent;color:var(--muted);cursor:pointer;font-family:inherit;transition:.15s;display:inline-flex;align-items:center;gap:3px;margin-right:auto}
+.task-open-btn:hover{background:var(--navy);color:#fff;border-color:var(--navy)}
+.task-open-btn svg{width:11px;height:11px}
+
+/* ─── Plan Task Drawer ─── */
+.ptd-ov{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1200;opacity:0;pointer-events:none;transition:opacity .25s}
+.ptd-ov.active{opacity:1;pointer-events:all}
+.ptd{position:fixed;top:0;right:0;height:100%;width:min(500px,96vw);background:var(--bg);z-index:1201;transform:translateX(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);overflow:hidden;display:flex;flex-direction:column;box-shadow:-6px 0 40px rgba(0,0,0,.18)}
+[data-theme="dark"] .ptd{background:var(--bg) !important}
+.ptd.active{transform:translateX(0)}
+.ptd-hd{padding:16px 18px 14px;border-bottom:1px solid var(--line);flex-shrink:0;display:flex;align-items:center;gap:12px}
+.ptd-hd-ico{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:var(--bg-tint)}
+.ptd-hd-ico svg{width:20px;height:20px;color:var(--navy)}
+.ptd-hd-info{flex:1;min-width:0}
+.ptd-hd-title{font-size:15px;font-weight:800;color:var(--navy-deep);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block}
+[data-theme="dark"] .ptd-hd-title{color:var(--ink)}
+.ptd-hd-day{font-size:11px;font-weight:600;color:var(--muted);margin-top:2px}
+.ptd-close{width:34px;height:34px;border-radius:9px;border:1px solid var(--line);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--muted);transition:.15s;flex-shrink:0}
+.ptd-close:hover{background:var(--danger-soft);color:var(--danger);border-color:var(--danger)}
+.ptd-body{flex:1;overflow-y:auto;padding:18px}
+.ptd-sec{margin-bottom:20px}
+.ptd-sec-lbl{font-size:11.5px;font-weight:700;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.4px}
+.ptd-desc{font-size:13.5px;color:var(--ink);line-height:1.65;background:var(--bg-soft);border-radius:10px;padding:12px 14px}
+.ptd-steps{}
+.ptd-step{display:flex;align-items:flex-start;gap:10px;padding:9px 0;border-bottom:1px solid var(--line)}
+.ptd-step:last-child{border-bottom:none}
+.ptd-step-chk{width:20px;height:20px;border-radius:6px;border:2px solid var(--line);flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.15s;background:#fff;margin-top:1px}
+.ptd-step-chk.done{background:var(--ok);border-color:var(--ok)}
+.ptd-step-chk svg{width:11px;height:11px;color:#fff;opacity:0;transition:opacity .1s}
+.ptd-step-chk.done svg{opacity:1}
+.ptd-step-lbl{font-size:13px;color:var(--ink);line-height:1.5;flex:1;cursor:pointer}
+.ptd-step-lbl.done{color:var(--muted);text-decoration:line-through}
+.ptd-all-done-hint{display:none;padding:9px 12px;background:var(--ok-soft);border:1px solid var(--ok-line);border-radius:9px;font-size:12.5px;color:var(--ok);font-weight:600;text-align:center;margin-top:8px}
+.ptd-field{margin-bottom:14px}
+.ptd-field label{display:block;font-size:12px;font-weight:700;color:var(--muted);margin-bottom:5px}
+.ptd-field input,.ptd-field textarea,.ptd-field select{width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid var(--line);border-radius:9px;font-size:13.5px;font-family:inherit;color:var(--ink);background:var(--bg);transition:border .15s;resize:vertical}
+.ptd-field textarea{min-height:80px}
+.ptd-field input:focus,.ptd-field textarea:focus{outline:none;border-color:var(--accent);box-shadow:var(--shadow-focus)}
+.ptd-svc-btn{display:flex;align-items:center;gap:8px;width:100%;padding:11px 14px;border:1px solid var(--accent);border-radius:10px;background:var(--accent-soft);color:var(--accent);font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;transition:.15s;text-align:right}
+.ptd-svc-btn:hover{background:var(--accent);color:#fff}
+.ptd-svc-btn svg{width:16px;height:16px;flex-shrink:0}
+.ptd-status-pills{display:flex;gap:6px;flex-wrap:wrap}
+.ptd-status-pill{padding:5px 12px;border-radius:20px;border:1px solid var(--line);background:transparent;font-family:inherit;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;transition:.15s}
+.ptd-status-pill.active{background:var(--ok);border-color:var(--ok);color:#fff}
+.ptd-status-pill.blocked{background:var(--danger);border-color:var(--danger);color:#fff}
+.ptd-foot{padding:14px 18px;border-top:1px solid var(--line);display:flex;gap:8px;flex-shrink:0}
+
+/* ─── Timeline View ─── */
+.plan-tl{background:#fff;border:1px solid var(--line);border-radius:14px;padding:20px;overflow-x:auto}
+[data-theme="dark"] .plan-tl{background:var(--bg) !important;border-color:var(--line) !important}
+.plan-tl-title{font-size:14px;font-weight:700;color:var(--navy-deep);margin-bottom:16px;display:flex;align-items:center;gap:8px}
+[data-theme="dark"] .plan-tl-title{color:var(--ink)}
+.plan-tl-inner{min-width:600px}
+.plan-tl-axis{display:flex;padding-right:160px;margin-bottom:6px;border-bottom:2px solid var(--line);padding-bottom:6px;position:relative}
+.plan-tl-axis-label{flex:1;font-size:10px;font-weight:600;color:var(--muted-2);text-align:center}
+.plan-tl-today-line{position:absolute;bottom:-2px;top:0;width:2px;background:var(--navy);opacity:.7}
+.plan-tl-today-lbl{position:absolute;bottom:-20px;font-size:9.5px;font-weight:700;color:var(--navy);transform:translateX(50%);white-space:nowrap}
+.plan-tl-row{display:flex;align-items:center;padding:4px 0;gap:8px;border-bottom:1px solid var(--line)}
+.plan-tl-row:last-child{border-bottom:none}
+.plan-tl-name{width:150px;font-size:12px;font-weight:600;color:var(--ink);flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;padding:6px 4px}
+.plan-tl-name:hover{color:var(--accent)}
+.plan-tl-bar-wrap{flex:1;position:relative;height:24px;display:flex;align-items:center}
+.plan-tl-bar{height:18px;border-radius:9px;display:flex;align-items:center;justify-content:flex-end;padding:0 7px;font-size:10px;font-weight:700;color:#fff;overflow:hidden;white-space:nowrap;transition:width .5s var(--ease);cursor:pointer}
+.plan-tl-dot{position:absolute;width:9px;height:9px;border-radius:50%;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.2);top:50%;transform:translateY(-50%)}
+
+/* ─── Custom Task Modal ─── */
+.custom-task-modal-ov{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1300;display:none;align-items:center;justify-content:center;padding:20px}
+.custom-task-modal-ov.show{display:flex}
+.custom-task-modal-box{background:var(--bg);border-radius:var(--radius-lg);padding:28px;width:100%;max-width:460px;box-shadow:var(--shadow-lg)}
+.ctm-title{font-size:17px;font-weight:800;color:var(--navy-deep);margin-bottom:18px}
+[data-theme="dark"] .ctm-title{color:var(--ink)}
+.ctm-foot{display:flex;gap:8px;margin-top:20px}
+
+/* ─── Custom Task in track ─── */
+.task.custom-task{background:linear-gradient(135deg,rgba(29,155,138,.03),transparent)}
+.task.custom-task .chk{border-color:#1d9b8a50}
+.custom-task-del{width:24px;height:24px;border-radius:6px;border:1px solid var(--line);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--muted);transition:.15s;flex-shrink:0}
+.custom-task-del:hover{background:var(--danger-soft);color:var(--danger);border-color:var(--danger)}
+.custom-task-del svg{width:11px;height:11px}
+
+/* ─── Print styles ─── */
+@media print{
+  .sidebar,.top-nav,.mobile-bar,.sb-overlay,.plan-view-toggle,.btn.btn-ghost,
+  .add-to-tasks-btn,.btn-svc,.task-svc,.task-open-btn,.ptd-ov,.ptd,.badge-pop,
+  .task-drawer-ov,.task-drawer,.modal-ov,.modal,.custom-task-modal-ov{display:none!important}
+  body,html{background:#fff!important;margin:0;padding:0}
+  .main{margin:0!important;padding:0!important}
+  .page{display:block!important;padding:0!important}
+  .page-plan-print-header{display:block!important}
+  .page-head p{display:none}
+  .track{break-inside:avoid;box-shadow:none;border:1px solid #ccc;margin-bottom:10px}
+  .track-body{display:block!important}
+  .task:hover{background:none}
+  .plan-analytics{display:none}
+  .plan-print-table{display:table!important;width:100%;border-collapse:collapse;margin-top:16px;font-size:12px}
+  .plan-print-table th,.plan-print-table td{border:1px solid #ccc;padding:6px 8px;text-align:right}
+  .plan-print-table th{background:#f0f4ff;font-weight:700}
+  @page{size:A4 landscape;margin:16mm}
+}
+/* ─── Grantors Directory ─── */
+.gd-filter-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+.gd-pill{padding:5px 13px;border-radius:20px;border:1px solid var(--line);background:transparent;color:var(--muted);font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer;transition:.15s}
+.gd-pill.active{border-color:var(--navy);background:var(--navy);color:#fff}
+.gd-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;margin-bottom:24px}
+.gd-card{background:#fff;border:1px solid var(--line);border-radius:var(--radius-lg);padding:16px 18px;display:flex;flex-direction:column;gap:10px;box-shadow:var(--shadow-sm);transition:box-shadow .15s,transform .15s;border-right:3px solid var(--gd-col,var(--navy))}
+[data-theme="dark"] .gd-card{background:var(--bg) !important;border-color:var(--line) !important}
+.gd-card:hover{box-shadow:var(--shadow);transform:translateY(-2px)}
+.gd-card-head{display:flex;align-items:flex-start;gap:12px}
+.gd-ava{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;color:#fff;flex-shrink:0;background:var(--gd-col,var(--navy))}
+.gd-info{flex:1;min-width:0}
+.gd-name{font-size:13.5px;font-weight:800;color:var(--navy-deep);line-height:1.3}
+[data-theme="dark"] .gd-name{color:var(--ink)}
+.gd-name-en{font-size:10.5px;font-weight:500;color:var(--muted);margin-top:2px;font-family:var(--font-ui)}
+.gd-type{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;white-space:nowrap;flex-shrink:0;display:inline-flex;align-items:center}
+.gd-type-gov{background:rgba(0,25,125,.1);color:#00197d}
+.gd-type-royal{background:rgba(224,168,60,.15);color:#92600a}
+.gd-type-csr{background:rgba(29,155,138,.12);color:#1d9b8a}
+.gd-type-intl{background:rgba(99,102,241,.1);color:#4f46e5}
+.gd-type-ngo{background:rgba(236,72,153,.1);color:#be185d}
+.gd-desc{font-size:12.5px;color:var(--muted);line-height:1.65}
+.gd-domains{display:flex;flex-wrap:wrap;gap:5px}
+.gd-domain{font-size:11px;font-weight:600;padding:2px 9px;border-radius:20px;background:var(--bg-tint);color:var(--navy-2)}
+.gd-footer{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;margin-top:auto;padding-top:6px;border-top:1px solid var(--line)}
+.gd-region{display:flex;align-items:center;gap:4px;font-size:11px;font-weight:600;color:var(--muted)}
+.gd-region svg{width:11px;height:11px;flex-shrink:0}
+.gd-note{font-size:11.5px;color:var(--warn);background:var(--warn-soft);border:1px solid var(--warn-line);border-radius:8px;padding:7px 10px;display:flex;align-items:flex-start;gap:5px;line-height:1.5}
+.gd-note svg{width:13px;height:13px;flex-shrink:0;margin-top:1px}
+.gd-link{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;color:var(--navy);background:var(--bg-tint);border:1px solid var(--line);border-radius:8px;padding:5px 11px;text-decoration:none;transition:.14s}
+.gd-link:hover{background:var(--navy);color:#fff}
+.gd-link svg{width:12px;height:12px}
 </style>
 </head>
 <body>
@@ -1692,10 +1879,20 @@ img,svg{display:block;max-width:100%}
 
       <!-- ─── Plan ─── -->
       <section class="page" id="page-plan">
-        <div class="page-head">
-          <h1>خطة المئة يوم</h1>
-          <p>خطة عمل متكاملة لتأسيس جمعيتك وانطلاقها خلال أول ١٠٠ يوم. أكمل كل مهمة وحدّث تقدّمك — يُحفظ تلقائياً.</p>
+        <div class="page-head" style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap">
+          <div>
+            <h1>خطة المئة يوم</h1>
+            <p>خطة عمل متكاملة لتأسيس جمعيتك وانطلاقها خلال أول ١٠٠ يوم. أكمل كل مهمة وحدّث تقدّمك — يُحفظ تلقائياً.</p>
+          </div>
+          <div style="display:flex;gap:8px;flex-shrink:0;padding-top:4px">
+            <div class="plan-view-toggle">
+              <button id="plan-view-cards" class="active" onclick="setPlanView('cards')" title="عرض البطاقات"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>البطاقات</button>
+              <button id="plan-view-timeline" onclick="setPlanView('timeline')" title="الجدول الزمني"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/><circle cx="7" cy="6" r="2" fill="currentColor" stroke="none"/><circle cx="14" cy="12" r="2" fill="currentColor" stroke="none"/><circle cx="10" cy="18" r="2" fill="currentColor" stroke="none"/></svg>الجدول</button>
+            </div>
+            <button class="btn btn-ghost btn-sm" onclick="printPlanReport()" style="gap:5px;display:flex;align-items:center"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:15px;height:15px"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>طباعة</button>
+          </div>
         </div>
+        <div id="plan-analytics"></div>
         <div id="tracks"></div>
       </section>
 
@@ -2039,32 +2236,49 @@ var WA = '966500000000';
 /* ── 100-day plan data ── */
 var PLAN = [
   { id:'t1', title:'المسار الأول — إنطلاقة الأعمال', desc:'تأسيس الدعائم الأساسية للمنظمة والانطلاق الرسمي المنظّم', tasks:[
-    { id:'a1', title:'تأمين مقر للمنظمة', day:'خلال ٢٠ يوماً', desc:'توفير مقر مناسب وآمن (استئجار أو احتضان أو مساهمات) لإدارة الأنشطة الإدارية والتشغيلية.' },
-    { id:'a2', title:'التواصل مع الجهة المشرفة فنياً', day:'الأيام الأولى', desc:'التنسيق مع الجهة الحكومية المختصة بالنشاط للحصول على الدعم الفني والإرشادات التشغيلية.' },
-    { id:'a3', title:'الحصول على العنوان الوطني', day:'٣–٥ أيام', desc:'تسجيل العنوان الوطني عبر البريد السعودي (سبل) لتوحيد عنوان المنشأة في المراسلات الرسمية.' },
-    { id:'a4', title:'فتح الحساب البنكي للمنظمة', day:'٧–١٤ يوماً', desc:'حساب بنكي رسمي باسم الجمعية منفصل تماماً عن الحسابات الشخصية لضمان الشفافية المالية.' },
-    { id:'a5', title:'فتح حساب التأمينات الاجتماعية', day:'٥–٧ أيام', desc:'تسجيل المنظمة في التأمينات الاجتماعية (GOSI) لتوفير الحماية الاجتماعية للعاملين.' },
+    { id:'a1', title:'تأمين مقر للمنظمة', day:'خلال ٢٠ يوماً', desc:'توفير مقر مناسب وآمن (استئجار أو احتضان أو مساهمات) لإدارة الأنشطة الإدارية والتشغيلية.',
+      steps:['تحديد الموقع المناسب وزيارته ميدانياً','التفاوض وتوقيع عقد الإيجار أو الاحتضان','الحصول على رخصة البلدية أو تصاريح التشغيل','تجهيز المقر (مكاتب وأجهزة وإنترنت)','الإعلان عن العنوان الرسمي الجديد'] },
+    { id:'a2', title:'التواصل مع الجهة المشرفة فنياً', day:'الأيام الأولى', desc:'التنسيق مع الجهة الحكومية المختصة بالنشاط للحصول على الدعم الفني والإرشادات التشغيلية.',
+      steps:['تحديد الجهة المشرفة المختصة بمجال الجمعية','التواصل الأوّلي وتقديم الجمعية ومجالها','حضور اللقاء التعريفي أو الاجتماع التنسيقي','التسجيل في قاعدة بيانات الجهة المشرفة','الحصول على الاشتراطات والإرشادات الخاصة بالمجال'] },
+    { id:'a3', title:'الحصول على العنوان الوطني', day:'٣–٥ أيام', desc:'تسجيل العنوان الوطني عبر البريد السعودي (سبل) لتوحيد عنوان المنشأة في المراسلات الرسمية.',
+      steps:['الدخول لمنصة سبل وإنشاء حساب المنشأة','ملء بيانات العنوان الوطني الكاملة','مراجعة العنوان وتأكيد الإحداثيات الجغرافية','استلام شهادة العنوان الوطني','تحديث المراسلات الرسمية بالعنوان الجديد'] },
+    { id:'a4', title:'فتح الحساب البنكي للمنظمة', day:'٧–١٤ يوماً', desc:'حساب بنكي رسمي باسم الجمعية منفصل تماماً عن الحسابات الشخصية لضمان الشفافية المالية.',
+      steps:['تجميع المستندات المطلوبة (وثيقة التأسيس، هوية الممثل القانوني)','اختيار البنك المناسب وتحديد موعد الزيارة','التقديم بطلب فتح حساب تجاري للجمعية','استيفاء أي متطلبات إضافية من البنك','تفعيل الحساب وخدمات الصيرفة الإلكترونية'] },
+    { id:'a5', title:'فتح حساب التأمينات الاجتماعية', day:'٥–٧ أيام', desc:'تسجيل المنظمة في التأمينات الاجتماعية (GOSI) لتوفير الحماية الاجتماعية للعاملين.',
+      steps:['تسجيل المنشأة في بوابة GOSI الإلكترونية','رفع وثائق التأسيس والسجل التجاري','إضافة الموظفين وتسجيلهم في التأمينات','استلام رقم الحساب ووثيقة التسجيل','تحديد دورية سداد الاشتراكات الشهرية'] },
     { id:'a6', title:'بناء الهوية البصرية', day:'٧–١٤ يوماً', desc:'تصميم الشعار والألوان والخطوط كترجمة مرئية لرؤية ورسالة المنظمة.',
-      svc:{ id:'identity', label:'اطلب خدمة تصميم الهوية والشعار', active:true } },
+      svc:{ id:'identity', label:'اطلب خدمة تصميم الهوية والشعار', active:true },
+      steps:['إجراء جلسة discovery لاستخلاص قيم المنظمة وشخصيتها','تصميم الشعار بصيغ متعددة (SVG, PNG, ملوّن وأبيض وأسود)','تحديد لوح الألوان والخطوط الرسمية','إعداد دليل الهوية البصرية (Brand Guide)','تطبيق الهوية على القرطاسية والقوالب الرسمية'] },
     { id:'a7', title:'إنشاء قنوات التواصل الاجتماعي', day:'٣–٥ أيام', desc:'قنوات رسمية تتيح مشاركة الرسالة والبرامج والتفاعل مع الجمهور والمستفيدين.',
-      svc:{ id:'social', label:'إدارة التواصل الرقمي', active:false, soon:true } }
+      svc:{ id:'social', label:'إدارة التواصل الرقمي', active:false, soon:true },
+      steps:['تحديد المنصات المناسبة لجمهور المنظمة','إنشاء الحسابات بأسماء موحدة ومميزة','رفع الهوية البصرية (صورة ملف وغلاف)','كتابة السيرة الذاتية الرسمية للحسابات','نشر أول محتوى تعريفي عن المنظمة'] }
   ]},
   { id:'t2', title:'المسار الثاني — التطوير المؤسسي والاستدامة', desc:'بناء القدرات التشغيلية وإرساء الحوكمة وتحقيق الاستدامة', tasks:[
     { id:'b1', title:'صياغة رسالة ورؤية المنظمة', day:'٥–١٠ أيام', desc:'تحديد سبب وجود المنظمة وما تقدمه ولمن — الأساس الذي تُبنى عليه الاستراتيجية.',
-      svc:{ id:'strategy', label:'اطلب خدمة الاستشارات الاستراتيجية', active:true } },
+      svc:{ id:'strategy', label:'اطلب خدمة الاستشارات الاستراتيجية', active:true },
+      steps:['إجراء جلسة تفاعلية مع الفريق لاستخلاص القيم الجوهرية','صياغة رؤية المنظمة (Vision): ما نطمح إليه','صياغة الرسالة (Mission): ما نفعله ولمن','مراجعة وتدقيق الصياغة مع مجلس الإدارة','توثيق الرسالة والرؤية في اللوائح والموقع الرسمي'] },
     { id:'b2', title:'إعداد الخطة الاستراتيجية', day:'١٠–١٥ يوماً', desc:'خارطة طريق توجّه الموارد والجهود وتؤطّر اتخاذ القرارات بما يوافق رسالة المنظمة.',
-      svc:{ id:'strategy', label:'اطلب خدمة الاستشارات الاستراتيجية', active:true } },
+      svc:{ id:'strategy', label:'اطلب خدمة الاستشارات الاستراتيجية', active:true },
+      steps:['تحليل البيئة الداخلية والخارجية (SWOT)','تحديد الأهداف الاستراتيجية للسنوات الثلاث القادمة','ربط الأهداف بمؤشرات أداء رئيسية (KPIs) قابلة للقياس','بناء مصفوفة الأولويات واختيار المبادرات الكبرى','اعتماد الخطة الاستراتيجية من مجلس الإدارة'] },
     { id:'b3', title:'بناء إدارة الموارد البشرية', day:'١٠–١٤ يوماً', desc:'تحديد الأدوار والمسؤوليات واستقطاب الموظفين والمتطوعين وتدريبهم وخلق بيئة عمل محفّزة.',
-      svc:{ id:'hr', label:'خدمة إدارة الموارد البشرية', active:false, soon:true } },
+      svc:{ id:'hr', label:'خدمة إدارة الموارد البشرية', active:false, soon:true },
+      steps:['إعداد الهيكل التنظيمي وتحديد الأدوار الوظيفية','وضع وصف وظيفي واضح لكل دور','إعداد سياسات التوظيف وإدارة المتطوعين','استقطاب الكفاءات ووضع برنامج تأهيل الجدد','إعداد نظام تقييم الأداء وتطوير الكفاءات'] },
     { id:'b4', title:'إعداد الخطة المالية', day:'٧–١٠ أيام', desc:'الميزانية التقديرية واستراتيجية جمع التبرعات وأنظمة الرقابة المالية.',
-      svc:{ id:'finance', label:'اطلب خدمة الاستشارات المالية', active:true } },
-    { id:'b5', title:'إعداد الخطة التشغيلية', day:'١٠–١٥ يوماً', desc:'تفصيل المبادرات إلى خطوات ومسؤوليات وجداول زمنية وموارد مطلوبة.' },
-    { id:'b6', title:'إعداد الخطة التنفيذية للمبادرات', day:'٧–١٤ يوماً', desc:'تحديد الموارد والمسؤوليات والجداول الزمنية لكل مبادرة لضمان تنفيذها بفعالية.' },
-    { id:'b7', title:'إعداد الموازنة التقديرية التفصيلية', day:'٥–٧ أيام', desc:'ضمان استخدام الأموال بفعالية ودعم المشاريع وتحقيق الاستدامة المالية.' },
-    { id:'b8', title:'اختيار وإدارة المبادرات', day:'٧–١٠ أيام', desc:'اختيار المبادرات ذات الأثر الأكبر وتوجيه الموارد ومتابعة التنفيذ والتقييم.' },
+      svc:{ id:'finance', label:'اطلب خدمة الاستشارات المالية', active:true },
+      steps:['رصد التكاليف الثابتة والمتغيرة المتوقعة','تحديد مصادر التمويل الرئيسية (تبرعات، منح، رسوم)','وضع ميزانية تقديرية مفصّلة بالإيرادات والمصروفات','تحديد استراتيجية جمع التبرعات والتواصل مع الجهات المانحة','تصميم آليات الرقابة المالية والتدقيق الداخلي'] },
+    { id:'b5', title:'إعداد الخطة التشغيلية', day:'١٠–١٥ يوماً', desc:'تفصيل المبادرات إلى خطوات ومسؤوليات وجداول زمنية وموارد مطلوبة.',
+      steps:['ترجمة الأهداف الاستراتيجية إلى خطوات تشغيلية مفصّلة','تحديد المسؤوليات لكل نشاط وجدوله الزمني','تحديد الموارد المطلوبة (مادية وبشرية) لكل نشاط','بناء نظام متابعة التقدم وتقارير الأداء الدورية','مراجعة الخطة التشغيلية ربع سنوياً وتحديثها'] },
+    { id:'b6', title:'إعداد الخطة التنفيذية للمبادرات', day:'٧–١٤ يوماً', desc:'تحديد الموارد والمسؤوليات والجداول الزمنية لكل مبادرة لضمان تنفيذها بفعالية.',
+      steps:['إعداد قائمة كاملة بمبادرات السنة الأولى وأولوياتها','تحويل كل مبادرة إلى مشروع بخطة تفصيلية','تحديد الجدول الزمني والمعالم الرئيسية لكل مبادرة','تخصيص الموارد وتعيين مدير مسؤول لكل مبادرة','إعداد آلية تقييم أثر المبادرات بعد التنفيذ'] },
+    { id:'b7', title:'إعداد الموازنة التقديرية التفصيلية', day:'٥–٧ أيام', desc:'ضمان استخدام الأموال بفعالية ودعم المشاريع وتحقيق الاستدامة المالية.',
+      steps:['جمع بيانات التكاليف المتوقعة من جميع الأقسام','إعداد الموازنة التفصيلية على مستوى كل بند ومشروع','مراجعة الموازنة مع المدير المالي أو المستشار','اعتماد الموازنة رسمياً من مجلس الإدارة','تحديد آليات المتابعة والتعديل خلال السنة'] },
+    { id:'b8', title:'اختيار وإدارة المبادرات', day:'٧–١٠ أيام', desc:'اختيار المبادرات ذات الأثر الأكبر وتوجيه الموارد ومتابعة التنفيذ والتقييم.',
+      steps:['تقييم المبادرات المقترحة وفق معايير الأثر والجدوى','إجراء جلسة اختيار المبادرات مع الفريق القيادي','إطلاق أول مبادرة من المبادرات المختارة','بناء لوحة متابعة لتتبع تقدم المبادرات','تقييم أثر المبادرات دورياً وإجراء تحسينات'] },
     { id:'b9', title:'إرساء نظام الحوكمة', day:'١٠–٢٠ يوماً', desc:'تعزيز الشفافية والمساءلة والالتزام بالقوانين والمعايير لتحقيق ثقة المانحين والمستفيدين.',
-      svc:{ id:'governance', label:'اطلب خدمة الحوكمة والامتثال', active:true } },
-    { id:'b10', title:'إعداد خطة التواصل والتسويق', day:'٥–٧ أيام', desc:'الرسائل والوسائط والقنوات المناسبة لإيصال المعلومات بوضوح وتعزيز التفاعل.' }
+      svc:{ id:'governance', label:'اطلب خدمة الحوكمة والامتثال', active:true },
+      steps:['صياغة اللائحة الداخلية وفق أفضل الممارسات','تشكيل لجان الرقابة والتدقيق وتحديد صلاحياتها','وضع سياسة الإفصاح والشفافية للتقارير السنوية','تأهيل أعضاء مجلس الإدارة على أسس الحوكمة الرشيدة','الالتزام بمتطلبات التقرير الدوري للجهات التنظيمية'] },
+    { id:'b10', title:'إعداد خطة التواصل والتسويق', day:'٥–٧ أيام', desc:'الرسائل والوسائط والقنوات المناسبة لإيصال المعلومات بوضوح وتعزيز التفاعل.',
+      steps:['تحديد الجمهور المستهدف وشرائحه المختلفة','صياغة الرسائل الرئيسية لكل شريحة جمهور','بناء خطة محتوى شهرية للمنصات الرقمية','تصميم المواد التسويقية الأساسية (بروشور، تعريف رسمي)','قياس أداء التواصل وتحسينه باستمرار'] }
   ]}
 ];
 
@@ -2269,6 +2483,14 @@ document.addEventListener('click', function(e) {
   if (pop && !pop.contains(e.target) && btn && !btn.contains(e.target)) closeUserPop();
 });
 
+/* Event delegation for plan task drawer openers (timeline + step rows) */
+document.addEventListener('click', function(e){
+  var opener = e.target.closest('.ptd-open-task');
+  if(opener && opener.dataset.taskId) openPlanTaskDrawer(opener.dataset.taskId);
+  var stepRow = e.target.closest('.ptd-step[data-tid]');
+  if(stepRow && stepRow.dataset.tid) toggleStep(stepRow.dataset.tid, parseInt(stepRow.dataset.idx||'0'));
+});
+
 function _applyTheme() {
   var dark;
   if (_themeMode === 'dark') dark = true;
@@ -2353,6 +2575,7 @@ function go(id){
   if(id==='settings') renderSettingsUsers();
   if(id==='grants') renderGrants();
   if(id==='tasks') renderTasks();
+  if(id==='plan'){ renderTracks(); renderPlanAnalytics(); }
 }
 
 /* ── Requested-services state (per org, persisted locally for instant UI) ── */
@@ -2589,6 +2812,7 @@ function enterApp(){
   renderServices();
   renderResources();
   updateOverview();
+  renderPlanAnalytics();
   loadOrgRequests();
   loadHomeCrmStats();
   _loadTasks(function(){ renderTracks(); }); // load tasks to show "added" state in plan
@@ -2826,6 +3050,415 @@ function renderResourcesData(data){
   document.getElementById('resources-list').innerHTML = html;
 }
 
+/* ── Grantors Directory (Static Catalog) ── */
+var GRANTORS = [
+  /* ════════ حكومية ════════ */
+  {
+    id:'ncnp', abbr:'المرك', color:'#00197d', type:'gov', typeLbl:'حكومية',
+    name:'المركز الوطني للقطاع غير الربحي',
+    desc:'الجهة الحكومية المعنية بتنظيم ودعم وتطوير القطاع غير الربحي في المملكة. تقدم منح تطوير القدرات المؤسسية وبرامج الاعتماد والدعم الفني للجمعيات.',
+    domains:['تطوير القدرات','الحوكمة المؤسسية','الاعتماد','التدريب','الشراكات'],
+    region:'وطني', regionNote:'جميع مناطق المملكة',
+    note:'نقطة البداية لكل جمعية — تسجيل، اعتماد، وطلب الدعم المؤسسي',
+    url:'https://ncnp.gov.sa'
+  },
+  {
+    id:'hrdf', abbr:'هدف', color:'#0a6e5e', type:'gov', typeLbl:'حكومية',
+    name:'صندوق تنمية الموارد البشرية — هدف',
+    desc:'يدعم منشآت القطاع غير الربحي في تدريب الكوادر الوطنية وتوطين الوظائف، بما يشمل برامج التدريب المشترك والتوظيف المدعوم.',
+    domains:['التدريب وتطوير الكفاءات','توطين الوظائف','برامج التشغيل','التدريب المشترك'],
+    region:'وطني', regionNote:'جميع مناطق المملكة',
+    note:'يشترط تسجيل المنشأة في منصة هدف — مناسب للجمعيات التي لديها موظفون',
+    url:'https://hrdf.gov.sa'
+  },
+  {
+    id:'hrsd', abbr:'موارد', color:'#1e3a5f', type:'gov', typeLbl:'حكومية',
+    name:'وزارة الموارد البشرية والتنمية الاجتماعية',
+    desc:'تموّل مشاريع الجمعيات العاملة في مجالات الرعاية الاجتماعية والتنمية المجتمعية وتأهيل الأسرة ودعم ذوي الإعاقة وكبار السن.',
+    domains:['الرعاية الاجتماعية','تمكين ذوي الإعاقة','كبار السن','الأسرة والطفولة','التنمية المجتمعية'],
+    region:'وطني', regionNote:'جميع مناطق المملكة',
+    note:'تمويل مشروط بارتباط نشاط الجمعية بأهداف الوزارة — تقديم عبر الإدارات الإقليمية',
+    url:'https://hrsd.gov.sa'
+  },
+  {
+    id:'awqaf', abbr:'أوقاف', color:'#4a2c0a', type:'gov', typeLbl:'حكومية',
+    name:'الهيئة العامة للأوقاف',
+    desc:'تدير الأوقاف الخيرية في المملكة وتتيح للجمعيات الاستفادة من الدعم الوقفي المتجدد في مجالات التعليم والصحة والتنمية الاجتماعية.',
+    domains:['التعليم','الصحة','الرعاية الاجتماعية','الدعم الوقفي','المشاريع الخيرية'],
+    region:'وطني', regionNote:'جميع مناطق المملكة',
+    note:'تمويل وقفي مستدام — ابحث في منصتها عن الأوقاف المناسبة لمجال جمعيتك',
+    url:'https://awqaf.gov.sa'
+  },
+  {
+    id:'sdb', abbr:'البنك', color:'#1a6b3c', type:'gov', typeLbl:'حكومية',
+    name:'بنك التنمية الاجتماعي',
+    desc:'يقدم تمويلاً تنموياً للمنظمات غير الربحية والمشاريع الاجتماعية بقروض ميسّرة وبرامج دعم لتمكين ذوي الدخل المحدود والمرأة ورائدات الأعمال.',
+    domains:['ريادة الأعمال الاجتماعية','تمكين المرأة','ذوو الدخل المحدود','التمويل الأصغر'],
+    region:'وطني', regionNote:'جميع مناطق المملكة',
+    note:'تمويل بقروض وليس منح مباشرة — مناسب لمشاريع الجمعيات ذات البُعد الاقتصادي',
+    url:'https://sdb.gov.sa'
+  },
+  {
+    id:'sfcda', abbr:'ثقافي', color:'#2d4a7a', type:'gov', typeLbl:'حكومية',
+    name:'الصندوق السعودي للتنمية الثقافية',
+    desc:'يموّل المشاريع والمبادرات الثقافية والإبداعية والفنون في إطار رؤية 2030، بما يشمل دعم الجمعيات العاملة في مجالات الهوية الثقافية والتراث.',
+    domains:['الثقافة والفنون','التراث الوطني','الإبداع','الهوية الوطنية','السينما والترفيه'],
+    region:'وطني', regionNote:'جميع مناطق المملكة',
+    note:'مجاله محدد بالثقافة والفنون — لا يناسب الجمعيات ذات الطابع الاجتماعي البحت',
+    url:'https://scdf.gov.sa'
+  },
+  {
+    id:'aman_fam', abbr:'أمان', color:'#7c3aed', type:'gov', typeLbl:'حكومية',
+    name:'برنامج الأمان الأسري الوطني',
+    desc:'برنامج حكومي يتبع وزارة الموارد البشرية يدعم الجمعيات العاملة في الحماية الأسرية والوقاية من العنف وتعزيز الترابط الأسري والإرشاد.',
+    domains:['الحماية الأسرية','الوقاية من العنف','التماسك الاجتماعي','الإرشاد الأسري','الطفل والمرأة'],
+    region:'وطني', regionNote:'جميع مناطق المملكة',
+    note:'الأولوية للجمعيات ذات التخصص في الشؤون الأسرية والوقاية الاجتماعية',
+    url:'https://hrsd.gov.sa'
+  },
+  {
+    id:'ncd', abbr:'إعاقة', color:'#d97706', type:'gov', typeLbl:'حكومية',
+    name:'هيئة رعاية الأشخاص ذوي الإعاقة',
+    desc:'الجهة الحكومية المعنية بدعم منظومة خدمات ذوي الإعاقة، تموّل الجمعيات العاملة في التأهيل والدمج الاجتماعي والتوظيف وبناء القدرات.',
+    domains:['تأهيل ذوي الإعاقة','الدمج الاجتماعي','التوظيف','تطوير الخدمات','بناء القدرات'],
+    region:'وطني', regionNote:'جميع مناطق المملكة',
+    note:'مخصصة لجمعيات ذوي الإعاقة — تشترط الترخيص في هذا المجال',
+    url:'https://ncd.gov.sa'
+  },
+  {
+    id:'moe_svc', abbr:'تعليم', color:'#047857', type:'gov', typeLbl:'حكومية',
+    name:'وزارة التعليم — برامج خدمة المجتمع',
+    desc:'تتيح وزارة التعليم برامج شراكة مع الجمعيات في التعليم غير النظامي والتطوع ومحو الأمية وتنمية مهارات الطلاب والمجتمع.',
+    domains:['التعليم غير النظامي','محو الأمية','مهارات الشباب','التطوع','الشراكات المدرسية'],
+    region:'وطني', regionNote:'عبر مديريات التعليم في جميع المناطق',
+    note:'الشراكة تتم عبر مديريات التعليم الإقليمية — راجع مديرية منطقتك مباشرة',
+    url:'https://moe.gov.sa'
+  },
+  {
+    id:'kacd', abbr:'حوار', color:'#1d4ed8', type:'gov', typeLbl:'حكومية',
+    name:'مركز الملك عبدالعزيز للحوار الوطني',
+    desc:'يدعم المبادرات الهادفة لتعزيز قيم الحوار والتسامح والانتماء الوطني والمشاركة المدنية، ويموّل الجمعيات في برامج التوعية والتثقيف المجتمعي.',
+    domains:['الحوار الوطني','التسامح والتعايش','المواطنة','التربية الوطنية','المشاركة المجتمعية'],
+    region:'وطني', regionNote:'جميع مناطق المملكة',
+    note:'يركز على البرامج التوعوية والحوارية — مناسب للجمعيات ذات الطابع التوعوي',
+    url:'https://kacnd.org'
+  },
+  {
+    id:'hilal', abbr:'هلال', color:'#dc2626', type:'gov', typeLbl:'حكومية',
+    name:'الهيئة السعودية للهلال الأحمر',
+    desc:'تتعاون مع الجمعيات في برامج الإسعاف التطوعي والتوعية بالإسعافات الأولية وإدارة الأزمات والتدريب على المهارات الطارئة.',
+    domains:['الإسعاف التطوعي','الإسعافات الأولية','إدارة الكوارث','التدريب الصحي','التطوع'],
+    region:'وطني', regionNote:'جميع مناطق المملكة',
+    note:'الشراكة غالباً في التدريب والتطوع — تواصل مع الفروع الإقليمية للهيئة',
+    url:'https://srca.org.sa'
+  },
+  {
+    id:'century_fund', abbr:'مئوية', color:'#6d28d9', type:'gov', typeLbl:'حكومية',
+    name:'صندوق المئوية',
+    desc:'صندوق استراتيجي يموّل المشاريع والمبادرات التحولية الكبرى لبناء مستقبل المملكة وتحقيق أهداف رؤية 2030 على المستوى الوطني.',
+    domains:['التحول الوطني','رؤية 2030','الابتكار','ريادة الأعمال','المشاريع الكبرى'],
+    region:'وطني', regionNote:'جميع مناطق المملكة',
+    note:'يركز على المشاريع ذات الأثر الكبير والقابلية للتوسع — أقل ملاءمة للمشاريع المحلية الصغيرة',
+    url:'https://vision2030.gov.sa'
+  },
+
+  /* ════════ مؤسسات ملكية وخيرية ════════ */
+  {
+    id:'misk', abbr:'مسك', color:'#8b5cf6', type:'royal', typeLbl:'مؤسسة خيرية',
+    name:'مؤسسة محمد بن سلمان — مسك',
+    desc:'تركز على تمكين الشباب السعودي وتطوير قياداتهم وتنمية مهاراتهم وتشجيعهم على ريادة الأعمال والابتكار والمشاركة المجتمعية الفاعلة.',
+    domains:['تطوير الشباب','القيادة','ريادة الأعمال','الابتكار','الفنون','التعليم'],
+    region:'وطني', regionNote:'تركيز على الشباب دون 35 سنة',
+    note:'مدفوعة بتمكين الشباب السعودي — مناسبة جداً للجمعيات التي يخدم نشاطها الشباب',
+    url:'https://misk.org.sa'
+  },
+  {
+    id:'kkf', abbr:'خالد', color:'#b45309', type:'royal', typeLbl:'مؤسسة خيرية',
+    name:'مؤسسة الملك خالد',
+    desc:'تدعم مبادرات التنمية المستدامة والتمكين الاقتصادي والبيئة والتعليم والصحة. تقدم جوائز سنوية للمبادرات المتميزة في خدمة المجتمع.',
+    domains:['التمكين الاقتصادي','التعليم','البيئة','الصحة','ريادة الأعمال الاجتماعية','الثقافة'],
+    region:'وطني', regionNote:'جميع مناطق المملكة',
+    note:'تمنح جائزة مسؤولية اجتماعية سنوياً — التقديم مفتوح للجمعيات والمبادرات المجتمعية',
+    url:'https://kingkhalid.org.sa'
+  },
+  {
+    id:'alwaleed', abbr:'الولي', color:'#0a4f6e', type:'royal', typeLbl:'مؤسسة خيرية',
+    name:'مؤسسة الوليد للإنسانية',
+    desc:'إحدى أكبر المؤسسات الخيرية عالمياً، تموّل برامج في التعليم والصحة والتنمية الاجتماعية وتمكين المرأة والحوار الحضاري بنطاق محلي ودولي.',
+    domains:['التعليم','الصحة','تمكين المرأة','الحوار الحضاري','الشباب','الإسكان الاجتماعي'],
+    region:'وطني وعالمي', regionNote:'تركيز خاص على المملكة والمنطقة العربية',
+    note:'تشترط شراكات استراتيجية — التواصل المباشر مع المؤسسة قبل التقديم الرسمي',
+    url:'https://alwaleedphilanthropies.org'
+  },
+  {
+    id:'alfaisal', abbr:'فيصل', color:'#1c3f6e', type:'royal', typeLbl:'مؤسسة خيرية',
+    name:'مؤسسة الفيصل الخيرية',
+    desc:'تعنى بالتعليم والثقافة والعلوم، وتمنح جائزة الملك فيصل العالمية وجائزة خدمة الإسلام وتدعم مشاريع التنمية الإنسانية.',
+    domains:['التعليم','الثقافة','اللغة العربية','خدمة الإسلام','العلوم والطب'],
+    region:'وطني وعالمي', regionNote:'مع اهتمام خاص بالمملكة والعالم الإسلامي',
+    note:'متخصصة في الجوائز الأكاديمية الكبرى — أقل تركيزاً على المنح التشغيلية للجمعيات',
+    url:'https://alffoundation.org'
+  },
+  {
+    id:'tayebah', abbr:'طيبة', color:'#2e7d32', type:'royal', typeLbl:'مؤسسة خيرية',
+    name:'مؤسسة طيبة',
+    desc:'مؤسسة خيرية متخصصة في تنمية المنطقة المدينة المنورة، تدعم المبادرات المجتمعية والتعليمية والصحية في المنطقة.',
+    domains:['التعليم','الصحة','التنمية المجتمعية','البنية التحتية الاجتماعية'],
+    region:'إقليمي', regionNote:'تركيز جغرافي على المنطقة المدينة المنورة',
+    note:'مخصصة جغرافياً للمدينة المنورة — الأولوية للجمعيات العاملة في هذه المنطقة',
+    url:'https://tayebah.org'
+  },
+  {
+    id:'ithraa', abbr:'إثراء', color:'#c2410c', type:'royal', typeLbl:'مؤسسة خيرية',
+    name:'مركز الملك عبدالعزيز الثقافي العالمي — إثراء',
+    desc:'مبادرة أرامكو الثقافية الكبرى، تموّل برامج الإبداع والفنون والتصميم والأدب وتمكين المبدعين السعوديين ضمن مسابقات ومنح وطنية.',
+    domains:['الفنون الإبداعية','الأدب','التصميم','الثقافة','تمكين المبدعين','الشباب المبدع'],
+    region:'وطني', regionNote:'مقره الظهران — يخدم كامل المملكة',
+    note:'الأولوية للمشاريع الإبداعية والثقافية — مناسب للجمعيات ذات الطابع الثقافي والفني',
+    url:'https://ithra.com'
+  },
+  {
+    id:'slr_fd', abbr:'الراجح', color:'#166534', type:'royal', typeLbl:'مؤسسة خيرية',
+    name:'مؤسسة سليمان الراجحي الخيرية',
+    desc:'من أبرز المؤسسات الخيرية الخاصة في المملكة، تموّل التعليم والصحة والمشاريع التنموية والمساجد والخدمات الاجتماعية بميزانية ضخمة ومتجددة.',
+    domains:['التعليم','الصحة','المشاريع الدينية','التنمية الاجتماعية','دعم الأسر'],
+    region:'وطني', regionNote:'جميع مناطق المملكة',
+    note:'من أكثر المؤسسات الخيرية السعودية منحاً — يُنصح بالتقديم عبر موقعها الرسمي',
+    url:'https://slr.org.sa'
+  },
+  {
+    id:'sabiei_fd', abbr:'السبيع', color:'#7e22ce', type:'royal', typeLbl:'مؤسسة خيرية',
+    name:'مؤسسة محمد وعبدالله إبراهيم السبيعي الخيرية',
+    desc:'تموّل مشاريع التعليم والرعاية الاجتماعية ودعم ذوي الإعاقة والأيتام وكبار السن بمنح سنوية للمنظمات غير الربحية.',
+    domains:['التعليم','رعاية الأيتام','ذوو الإعاقة','كبار السن','الرعاية الاجتماعية'],
+    region:'وطني', regionNote:'جميع مناطق المملكة',
+    note:'تموّل الجمعيات العاملة في رعاية الفئات الأكثر احتياجاً — التقديم سنوي في فترات محددة',
+    url:'https://maisf.org.sa'
+  },
+  {
+    id:'ihsan', abbr:'إحسان', color:'#0e7490', type:'royal', typeLbl:'مؤسسة خيرية',
+    name:'منصة إحسان الخيرية',
+    desc:'المنصة الوطنية الرسمية للعمل الخيري في المملكة تحت إشراف المركز الوطني للقطاع غير الربحي، تتيح للجمعيات جمع التبرعات والحصول على دعم المانحين.',
+    domains:['جمع التبرعات','الشفافية المالية','الوقف','التبرع العيني','الكفالة'],
+    region:'وطني', regionNote:'جميع مناطق المملكة',
+    note:'تسجيل الجمعية في إحسان ضروري لتفعيل التبرعات — يزيد المصداقية أمام المانحين',
+    url:'https://ihsan.org.sa'
+  },
+  {
+    id:'mbf_fd', abbr:'ابن فهد', color:'#9f1239', type:'royal', typeLbl:'مؤسسة خيرية',
+    name:'مؤسسة محمد بن فهد للتنمية الإنسانية',
+    desc:'تدعم برامج التنمية البشرية وتطوير الشباب وتمكين المرأة ورعاية ذوي الإعاقة والمشاريع الخيرية في المنطقة الشرقية وعلى المستوى الوطني.',
+    domains:['التنمية البشرية','تطوير الشباب','تمكين المرأة','ذوو الإعاقة','الخدمات الخيرية'],
+    region:'وطني', regionNote:'مع تركيز على المنطقة الشرقية',
+    note:'نشاط واسع في المنطقة الشرقية — مناسبة للجمعيات في الدمام والأحساء والقطيف',
+    url:'https://mbf.org.sa'
+  },
+  {
+    id:'tuwairqi', abbr:'التوير', color:'#374151', type:'royal', typeLbl:'مؤسسة خيرية',
+    name:'مؤسسة صالح التويجري الخيرية',
+    desc:'تدعم المشاريع الخيرية والتعليمية والاجتماعية وتمويل البنية التحتية الخيرية من مراكز اجتماعية ودور رعاية في مناطق المملكة.',
+    domains:['التعليم','البنية التحتية الخيرية','الرعاية الاجتماعية','الوقف'],
+    region:'وطني', regionNote:'جميع مناطق المملكة',
+    note:'تموّل المشاريع ذات الطابع الخيري والتعليمي — تواصل مع المؤسسة مباشرة للتقديم',
+    url:'https://tuwairqi.org.sa'
+  },
+  {
+    id:'majal', abbr:'مجال', color:'#0d9488', type:'ngo', typeLbl:'مؤسسة اجتماعية',
+    name:'مؤسسة مجال للمشاريع الاجتماعية',
+    desc:'تدعم رواد الأعمال الاجتماعيين والمنظمات غير الربحية في تطوير نماذج عمل مستدامة مالياً تحقق أثراً اجتماعياً حقيقياً وقابلاً للقياس.',
+    domains:['ريادة الأعمال الاجتماعية','الاستدامة المالية','قياس الأثر','التدريب المؤسسي'],
+    region:'وطني', regionNote:'مع تركيز على الرياض وجدة',
+    note:'تقدم دعماً غير نقدي (تدريب، استشارة، شبكة علاقات) بجانب المنح المالية',
+    url:'https://majal.org'
+  },
+
+  /* ════════ المسؤولية الاجتماعية للشركات ════════ */
+  {
+    id:'aramco', abbr:'أرامك', color:'#00539f', type:'csr', typeLbl:'مسؤولية اجتماعية',
+    name:'أرامكو السعودية — التنمية المجتمعية',
+    desc:'تموّل مبادرات التنمية المجتمعية في مجالات التعليم والصحة والبيئة وتطوير المجتمعات المحلية المجاورة لمواقع عمليات أرامكو بالمنطقة الشرقية.',
+    domains:['التعليم والتدريب','الصحة المجتمعية','البيئة','ريادة الأعمال','الفنون والثقافة'],
+    region:'إقليمي', regionNote:'الأولوية للمنطقة الشرقية — الظهران وأبقيق والجبيل',
+    note:'التركيز الجغرافي على المنطقة الشرقية — فرص متاحة عبر برنامج خوارزمي للشباب',
+    url:'https://saudiaramco.com/ar/making-an-impact'
+  },
+  {
+    id:'stc', abbr:'STC', color:'#6d28d9', type:'csr', typeLbl:'مسؤولية اجتماعية',
+    name:'شركة الاتصالات السعودية — المسؤولية الاجتماعية',
+    desc:'تدعم مشاريع التحول الرقمي والتعليم التقني وتمكين الشباب وذوي الإعاقة والمبادرات البيئية ضمن إطار رؤية 2030.',
+    domains:['التحول الرقمي','التعليم التقني','تمكين ذوي الإعاقة','البيئة','الشباب'],
+    region:'وطني', regionNote:'جميع مناطق المملكة',
+    note:'التقديم عبر منصة المسؤولية الاجتماعية لـ STC — التركيز على القطاعات المرتبطة بالتقنية',
+    url:'https://stc.com.sa/ar/CSR'
+  },
+  {
+    id:'sabic', abbr:'سابك', color:'#006b3c', type:'csr', typeLbl:'مسؤولية اجتماعية',
+    name:'شركة سابك — المسؤولية الاجتماعية',
+    desc:'تموّل مشاريع التعليم والتدريب المهني والتنمية المجتمعية والبيئة في المجتمعات المحيطة بمواقعها الصناعية في الجبيل وينبع والرياض.',
+    domains:['التعليم والتدريب المهني','البيئة','التنمية المجتمعية','الصحة','الابتكار'],
+    region:'إقليمي', regionNote:'الأولوية للجبيل وينبع والرياض',
+    note:'التركيز على المجتمعات المجاورة للمواقع الصناعية — التقديم عبر إدارة الشؤون الاجتماعية',
+    url:'https://sabic.com/en/sustainability'
+  },
+  {
+    id:'sec', abbr:'كهرب', color:'#b45309', type:'csr', typeLbl:'مسؤولية اجتماعية',
+    name:'شركة الكهرباء السعودية — المسؤولية الاجتماعية',
+    desc:'تدعم مشاريع الاستدامة البيئية وتوعية المجتمع بالطاقة والبيئة وتنمية المجتمعات المحلية القريبة من محطاتها.',
+    domains:['الاستدامة البيئية','الطاقة المتجددة','التوعية المجتمعية','التنمية المحلية'],
+    region:'وطني', regionNote:'جميع مناطق المملكة',
+    note:'اهتمام خاص بالمشاريع المرتبطة بالطاقة والبيئة والاستدامة',
+    url:'https://se.com.sa/ar-sa/Pages/Sustainability.aspx'
+  },
+  {
+    id:'alrajhi_bank', abbr:'الراجح', color:'#2d6a4f', type:'csr', typeLbl:'مسؤولية اجتماعية',
+    name:'مصرف الراجحي — البرامج الاجتماعية',
+    desc:'يموّل برامج تمكين المرأة والأسر ذات الدخل المحدود والطلاب والمشاريع الصغيرة عبر برنامج الراجحي الوقفي وذراعه الخيري.',
+    domains:['تمكين المرأة','الإسكان الاجتماعي','دعم الطلاب','التمويل الأصغر','الوقف'],
+    region:'وطني', regionNote:'جميع مناطق المملكة',
+    note:'التطبيق عبر ذراعه الوقفي ووحدة المسؤولية الاجتماعية — تركيز على الجانب الاجتماعي الإسلامي',
+    url:'https://alrajhibank.com.sa'
+  },
+  {
+    id:'riyad_bank', abbr:'الريا', color:'#9b1c1c', type:'csr', typeLbl:'مسؤولية اجتماعية',
+    name:'بنك الرياض — المسؤولية الاجتماعية',
+    desc:'يدعم مبادرات التعليم المالي وتمكين المرأة وتشغيل الشباب والتبرعات الخيرية وبرامج رعاية المجتمع ضمن استراتيجية مسؤوليته الاجتماعية.',
+    domains:['التعليم المالي','تمكين المرأة','تشغيل الشباب','الرعاية الاجتماعية','البيئة'],
+    region:'وطني', regionNote:'جميع مناطق المملكة',
+    note:'التقديم عبر إدارة المسؤولية الاجتماعية في البنك — فرص شراكة في الفعاليات المجتمعية',
+    url:'https://riyadbank.com/ar'
+  },
+  {
+    id:'anb', abbr:'أهلي', color:'#1e3a5f', type:'csr', typeLbl:'مسؤولية اجتماعية',
+    name:'البنك الأهلي التجاري — المسؤولية الاجتماعية',
+    desc:'يدعم برامج ريادة الأعمال والشباب والتعليم المالي ومشاريع الاستدامة والتنمية المجتمعية في إطار رؤية 2030.',
+    domains:['ريادة الأعمال','التعليم المالي','الشباب','الاستدامة','التنمية المجتمعية'],
+    region:'وطني', regionNote:'جميع مناطق المملكة',
+    note:'شريك فاعل مع جمعيات ريادة الأعمال — التواصل عبر وحدة المسؤولية الاجتماعية',
+    url:'https://alahli.com/ar'
+  },
+  {
+    id:'inma_bank', abbr:'إنماء', color:'#065f46', type:'csr', typeLbl:'مسؤولية اجتماعية',
+    name:'مصرف الإنماء — المسؤولية الاجتماعية',
+    desc:'يركز على دعم التعليم وريادة الأعمال الاجتماعية وتمكين المرأة وتشغيل الشباب وبرامج تنمية المجتمع وفق مبادئ الصيرفة الإسلامية.',
+    domains:['ريادة الأعمال الاجتماعية','تمكين المرأة','تشغيل الشباب','التعليم','التنمية المجتمعية'],
+    region:'وطني', regionNote:'جميع مناطق المملكة',
+    note:'مدفوع بالقيم الاجتماعية الإسلامية — يفضّل الشراكات ذات الأثر الاجتماعي الواضح',
+    url:'https://alinma.com.sa'
+  },
+  {
+    id:'zain_sa', abbr:'زين', color:'#be185d', type:'csr', typeLbl:'مسؤولية اجتماعية',
+    name:'زين السعودية — المسؤولية الاجتماعية',
+    desc:'تدعم مبادرات التحول الرقمي وتمكين الشباب والتعليم التقني والإبداع الرقمي والمبادرات البيئية والمجتمعية.',
+    domains:['التحول الرقمي','تمكين الشباب','التعليم التقني','الإبداع الرقمي','البيئة'],
+    region:'وطني', regionNote:'جميع مناطق المملكة',
+    note:'الأولوية للمشاريع ذات الطابع الرقمي والتقني — تواصل عبر قسم المسؤولية الاجتماعية',
+    url:'https://sa.zain.com/ar'
+  },
+  {
+    id:'maraei', abbr:'المراع', color:'#15803d', type:'csr', typeLbl:'مسؤولية اجتماعية',
+    name:'شركة المراعي — المسؤولية الاجتماعية',
+    desc:'تموّل مبادرات الأمن الغذائي والتوعية الصحية والتغذية والتنمية الريفية والمجتمعات الزراعية ضمن التزاماتها بالاستدامة.',
+    domains:['الأمن الغذائي','التوعية الصحية','التغذية','التنمية الريفية','الاستدامة'],
+    region:'وطني', regionNote:'جميع مناطق المملكة',
+    note:'ملائم للجمعيات العاملة في الصحة والتغذية والبيئة والمجتمعات الريفية',
+    url:'https://almarai.com/ar'
+  },
+  {
+    id:'mobily', abbr:'موبيل', color:'#ea580c', type:'csr', typeLbl:'مسؤولية اجتماعية',
+    name:'موبايلي — المسؤولية الاجتماعية',
+    desc:'تدعم برامج تطوير المهارات الرقمية وريادة الأعمال وتمكين ذوي الإعاقة والمبادرات البيئية والتوعية المجتمعية.',
+    domains:['المهارات الرقمية','ريادة الأعمال','تمكين ذوي الإعاقة','البيئة','التوعية المجتمعية'],
+    region:'وطني', regionNote:'جميع مناطق المملكة',
+    note:'تركز على برامج التمكين الرقمي والمجتمعي — مناسبة للجمعيات ذات التوجه التقني',
+    url:'https://mobily.com.sa/ar'
+  },
+  {
+    id:'acwa', abbr:'أكوا', color:'#0369a1', type:'csr', typeLbl:'مسؤولية اجتماعية',
+    name:'شركة أكوا باور — المسؤولية الاجتماعية',
+    desc:'تموّل مشاريع الاستدامة البيئية والطاقة المتجددة والمياه والتنمية المجتمعية في المناطق التي تعمل فيها.',
+    domains:['الاستدامة البيئية','الطاقة المتجددة','المياه','التنمية المجتمعية','التوعية البيئية'],
+    region:'إقليمي', regionNote:'المناطق المجاورة لمشاريعها في المملكة',
+    note:'تركز على مجتمعات مشاريعها — الأولوية للجمعيات في المناطق ذات مشاريع أكوا',
+    url:'https://acwapower.com/ar'
+  },
+  {
+    id:'sabb_bank', abbr:'ساب', color:'#7c3aed', type:'csr', typeLbl:'مسؤولية اجتماعية',
+    name:'بنك ساب — المسؤولية الاجتماعية',
+    desc:'يدعم التعليم المالي وريادة الأعمال وتمكين المرأة والشراكات المجتمعية والبرامج البيئية وفق استراتيجيته في التنمية المستدامة.',
+    domains:['التعليم المالي','ريادة الأعمال','تمكين المرأة','البيئة','التنمية المستدامة'],
+    region:'وطني', regionNote:'جميع مناطق المملكة',
+    note:'شريك استراتيجي في مجالات التمويل الاجتماعي — التقديم عبر وحدة الاستدامة في البنك',
+    url:'https://sabb.com/ar'
+  }
+];
+var _gdFilter = 'all'; // 'all' | 'gov' | 'royal' | 'csr' | 'ngo'
+
+function setGdFilter(f){
+  _gdFilter = f;
+  document.querySelectorAll('.gd-pill').forEach(function(el){
+    el.classList.toggle('active', el.dataset.f === f);
+  });
+  var cards = document.querySelectorAll('.gd-card-wrap');
+  cards.forEach(function(card){
+    card.style.display = (f==='all' || card.dataset.type===f) ? '' : 'none';
+  });
+}
+
+function _renderGrantorsDir(){
+  var GD_TYPE_META = {
+    gov:   { lbl:'حكومية', cls:'gd-type-gov' },
+    royal: { lbl:'مؤسسة خيرية', cls:'gd-type-royal' },
+    csr:   { lbl:'مسؤولية اجتماعية', cls:'gd-type-csr' },
+    ngo:   { lbl:'مؤسسة اجتماعية', cls:'gd-type-ngo' }
+  };
+
+  var IC_GLOBE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>';
+  var IC_MAP  = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>';
+  var IC_NOTE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>';
+  var IC_LINK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>';
+
+  var filters = [
+    {f:'all', lbl:'الكل ('+GRANTORS.length+')'},
+    {f:'gov', lbl:'حكومية'},
+    {f:'royal', lbl:'مؤسسات خيرية'},
+    {f:'csr', lbl:'مسؤولية اجتماعية'},
+    {f:'ngo', lbl:'مؤسسات اجتماعية'}
+  ];
+
+  var filterBar = '<div class="gd-filter-bar">'+
+    filters.map(function(f){
+      return '<button class="gd-pill'+(_gdFilter===f.f?' active':'')+'" data-f="'+esc(f.f)+'" onclick="setGdFilter(this.dataset.f)">'+esc(f.lbl)+'</button>';
+    }).join('')+
+  '</div>';
+
+  var cards = GRANTORS.map(function(g){
+    var tm = GD_TYPE_META[g.type] || {lbl:g.type, cls:'gd-type-gov'};
+    var domainsHtml = g.domains.map(function(d){ return '<span class="gd-domain">'+esc(d)+'</span>'; }).join('');
+    var abbr = g.abbr.length > 5 ? g.abbr.slice(0,5) : g.abbr;
+    return '<div class="gd-card-wrap" data-type="'+esc(g.type)+'" style="display:'+((_gdFilter==='all'||_gdFilter===g.type)?'':'none')+'">'+
+      '<div class="gd-card" style="--gd-col:'+esc(g.color)+'">'+
+        '<div class="gd-card-head">'+
+          '<div class="gd-ava">'+esc(abbr)+'</div>'+
+          '<div class="gd-info">'+
+            '<div class="gd-name">'+esc(g.name)+'</div>'+
+          '</div>'+
+          '<span class="gd-type '+esc(tm.cls)+'">'+esc(tm.lbl)+'</span>'+
+        '</div>'+
+        '<p class="gd-desc">'+esc(g.desc)+'</p>'+
+        (g.domains.length?'<div class="gd-domains">'+domainsHtml+'</div>':'')+
+        (g.note?'<div class="gd-note">'+IC_NOTE+'<span>'+esc(g.note)+'</span></div>':'')+
+        '<div class="gd-footer">'+
+          '<span class="gd-region">'+IC_MAP+esc(g.region)+(g.regionNote?' — '+esc(g.regionNote):'')+'</span>'+
+          (g.url?'<a href="'+esc(g.url)+'" target="_blank" rel="noopener" class="gd-link">الموقع الرسمي '+IC_LINK+'</a>':'')+
+        '</div>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+
+  return '<div class="gd-filter-bar-wrap">'+filterBar+'</div>'+
+    '<div class="gd-grid">'+cards+'</div>';
+}
+
 /* ── Render grants ── */
 var _grantsData = null;
 var _grantsView = 'cards';
@@ -3009,30 +3642,38 @@ function _renderGrantsData(grants) {
   var badge = document.getElementById('grants-open-badge');
   if (badge) { badge.textContent = open.length > 0 ? open.length+' مفتوحة' : ''; badge.style.display = open.length > 0 ? '' : 'none'; }
 
+  var IC_STAR = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>';
+
+  var dynamicSection = '';
   if (!grants.length) {
-    cont.innerHTML =
-      '<div style="text-align:center;padding:60px;background:#fff;border-radius:var(--radius);border:1px solid var(--line)">'+
-        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:48px;height:48px;color:var(--muted);margin-bottom:16px"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>'+
-        '<p style="font-size:15px;font-weight:600;color:var(--navy-2);margin-bottom:6px">لا توجد فرص منح متاحة حالياً</p>'+
-        '<p style="font-size:13px;color:var(--muted)">تابع هذا القسم للاطلاع على الفرص الجديدة أولاً بأول.</p>'+
+    dynamicSection =
+      '<div style="text-align:center;padding:40px 30px;background:#fff;border-radius:var(--radius);border:1px solid var(--line);margin-bottom:28px">'+
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:40px;height:40px;color:var(--muted);margin-bottom:12px"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>'+
+        '<p style="font-size:14px;font-weight:600;color:var(--navy-2);margin-bottom:4px">لا توجد فرص منح ذات جداول زمنية متاحة حالياً</p>'+
+        '<p style="font-size:12.5px;color:var(--muted)">تابع هذا القسم للاطلاع على الفرص الجديدة. في الأثناء يمكنك استعراض دليل الجهات المانحة أدناه.</p>'+
       '</div>';
-    return;
+  } else {
+    var IC_CARDS = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>';
+    var IC_LIST  = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>';
+    var IC_GANTT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="15" y2="12"/><line x1="3" y1="18" x2="18" y2="18"/></svg>';
+    var IC_CAL   = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>';
+    var views = [{k:'cards',ic:IC_CARDS,lbl:'بطاقات'},{k:'list',ic:IC_LIST,lbl:'قائمة'},{k:'gantt',ic:IC_GANTT,lbl:'جانت'},{k:'cal',ic:IC_CAL,lbl:'تقويم'}];
+    var switcher = '<div class="gr-view-tabs">'+
+      views.map(function(v){ return '<button class="gr-view-btn'+(_grantsView===v.k?' active':'')+'" onclick="setGrantView(\''+v.k+'\')">'+v.ic+v.lbl+'</button>'; }).join('')+
+    '</div>';
+    var body = _grantsView==='list'  ? _grListHtml(grants,open,soon,closed) :
+               _grantsView==='gantt' ? _grGanttHtml(grants) :
+               _grantsView==='cal'   ? _grCalHtml(grants) :
+                                       _grCardsHtml(grants,open,soon,closed);
+    dynamicSection = '<div class="section-h">'+IC_STAR+'فرص التمويل الزمنية</div>' + switcher + body;
   }
 
-  var IC_CARDS = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>';
-  var IC_LIST  = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>';
-  var IC_GANTT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="15" y2="12"/><line x1="3" y1="18" x2="18" y2="18"/></svg>';
-  var IC_CAL   = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>';
-  var views = [{k:'cards',ic:IC_CARDS,lbl:'بطاقات'},{k:'list',ic:IC_LIST,lbl:'قائمة'},{k:'gantt',ic:IC_GANTT,lbl:'جانت'},{k:'cal',ic:IC_CAL,lbl:'تقويم'}];
-  var switcher = '<div class="gr-view-tabs">'+
-    views.map(function(v){ return '<button class="gr-view-btn'+(_grantsView===v.k?' active':'')+'" onclick="setGrantView(\''+v.k+'\')">'+v.ic+v.lbl+'</button>'; }).join('')+
-  '</div>';
+  var IC_BOOK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>';
+  var grantorsSection = '<div class="section-h">'+IC_BOOK+'دليل الجهات المانحة ('+GRANTORS.length+' جهة)</div>'+
+    '<p style="font-size:13px;color:var(--muted);margin:-10px 0 16px;line-height:1.6">مرجع شامل للجهات الحكومية والمؤسسات الخيرية وبرامج المسؤولية الاجتماعية للشركات التي تموّل مبادرات الجمعيات في المملكة.</p>'+
+    _renderGrantorsDir();
 
-  var body = _grantsView==='list'  ? _grListHtml(grants,open,soon,closed) :
-             _grantsView==='gantt' ? _grGanttHtml(grants) :
-             _grantsView==='cal'   ? _grCalHtml(grants) :
-                                     _grCardsHtml(grants,open,soon,closed);
-  cont.innerHTML = switcher + body;
+  cont.innerHTML = dynamicSection + grantorsSection;
 }
 
 function escHtml(s) {
@@ -3670,46 +4311,72 @@ function renderMyRequests(){
 
 /* ── Render plan tracks ── */
 function renderTracks(){
-  var html = PLAN.map(function(track, ti){
-    var done = track.tasks.filter(function(t){ return progress[t.id] && progress[t.id].done; }).length;
-    var pct = Math.round(done/track.tasks.length*100);
-    var tasks = track.tasks.map(function(t){
-      var p = progress[t.id]||{};
-      var at = p.at ? ('أُنجزت في '+p.at) : '';
-      var svcHtml = '';
-      if(t.svc){
-        var svcTitle = (SERVICE_BY_ID[t.svc.id] && SERVICE_BY_ID[t.svc.id].title) || t.svc.label;
-        if(t.svc.active){
-          var reqDone = isRequested(svcTitle);
-          svcHtml = '<div class="task-svc">'+
-            '<span class="svc-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>'+esc(t.svc.label)+'</span>'+
-            (reqDone
-              ? '<span class="svc-done svc-done-sm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>تم الطلب</span>'
-              : '<button class="btn-svc" onclick="openServiceModal(\''+t.svc.id+'\',\''+esc(svcTitle)+'\')">اطلب الخدمة</button>')+
-          '</div>';
-        } else if(t.svc.soon){
-          svcHtml = '<div class="task-svc-soon">'+
-            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>'+
-            'خدمة «'+esc(t.svc.label)+'» — قريباً من بُعد'+
-          '</div>';
-        }
-      }
-      var hasTask = _tasks.some(function(tk){ return tk.plan_task_id===t.id; });
-      var addBtn = token() ? (
-        '<button class="add-to-tasks-btn'+(hasTask?' added':'')+'" data-plan-id="'+t.id+'"'+
-        (hasTask ? ' disabled' : ' onclick="openNewTaskModal(\''+t.id+'\',\''+t.title.replace(/'/g,'\'')+'\')"')+
-        '>'+(hasTask?'✓ أُضيفت للمهام':'⊕ إضافة كمهمة')+'</button>'
-      ) : '';
-      return '<div class="task'+(p.done?' done':'')+'" data-id="'+t.id+'">'+
-        '<div class="task-main">'+
-          '<div class="chk" onclick="toggleTask(\''+t.id+'\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>'+
-          '<div class="tx"><div class="h"><span class="name">'+esc(t.title)+'</span><span class="day">'+esc(t.day)+'</span>'+addBtn+'</div>'+
-          '<div class="desc">'+esc(t.desc)+'</div>'+
-          '<div class="done-at">✓ '+at+'</div></div>'+
-        '</div>'+
-        svcHtml+
+  if(_planView === 'timeline'){ document.getElementById('tracks').innerHTML = _renderTimelineView(); return; }
+
+  function _buildTaskHtml(t, p, isCustom){
+    var at = p.at ? ('أُنجزت في '+p.at) : '';
+    var sp = (t.steps && t.steps.length) ? _stepsProgress(t.id) : null;
+    var stepBarHtml = '';
+    if(sp){
+      var miniDots = Array.from({length:sp.total}, function(_, i){
+        return '<span class="'+(i < sp.done ? 'done':'')+'"></span>';
+      }).join('');
+      stepBarHtml = '<div class="task-steps-bar">'+
+        '<div class="task-steps-mini">'+miniDots+'</div>'+
+        '<span class="task-steps-lbl">'+sp.done+'/'+sp.total+' خطوات</span>'+
       '</div>';
-    }).join('');
+    }
+    var svcHtml = '';
+    if(t.svc){
+      var svcTitle = (SERVICE_BY_ID[t.svc.id] && SERVICE_BY_ID[t.svc.id].title) || t.svc.label;
+      if(t.svc.active){
+        var reqDone = isRequested(svcTitle);
+        svcHtml = '<div class="task-svc">'+
+          '<span class="svc-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>'+esc(t.svc.label)+'</span>'+
+          (reqDone
+            ? '<span class="svc-done svc-done-sm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>تم الطلب</span>'
+            : '<button class="btn-svc" onclick="openServiceModal(\''+t.svc.id+'\',\''+esc(svcTitle)+'\')">اطلب الخدمة</button>')+
+        '</div>';
+      } else if(t.svc.soon){
+        svcHtml = '<div class="task-svc-soon">'+
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>'+
+          'خدمة «'+esc(t.svc.label)+'» — قريباً من بُعد'+
+        '</div>';
+      }
+    }
+    var hasTask = _tasks.some(function(tk){ return tk.plan_task_id===t.id; });
+    var addBtn = token() && !isCustom ? (
+      '<button class="add-to-tasks-btn'+(hasTask?' added':'')+'" data-plan-id="'+t.id+'"'+
+      (hasTask ? ' disabled' : ' onclick="openNewTaskModal(\''+t.id+'\',\''+t.title.replace(/'/g,'\'')+'\')"')+
+      '>'+(hasTask?'✓ أُضيفت':'⊕ أضف كمهمة')+'</button>'
+    ) : '';
+    var openBtn = token() ? '<button class="task-open-btn" onclick="openPlanTaskDrawer(\''+t.id+'\')" title="فتح التفاصيل"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>تفاصيل</button>' : '';
+    var delBtn = isCustom && token() ? '<button class="custom-task-del" onclick="deleteCustomTask(\''+t.id+'\')" title="حذف المهمة"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>' : '';
+    var blockedBadge = (p.blocked && !p.done) ? '<span style="font-size:10px;font-weight:700;color:var(--danger);background:var(--danger-soft);padding:2px 7px;border-radius:6px;display:inline-flex;align-items:center;gap:3px">⚠ معاق</span>' : '';
+    return '<div class="task'+(p.done?' done':'')+(p.blocked&&!p.done?' task-blocked':'')+(isCustom?' custom-task':'')+'" data-id="'+t.id+'">'+
+      '<div class="task-main">'+
+        '<div class="chk" onclick="toggleTask(\''+t.id+'\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>'+
+        '<div class="tx">'+
+          '<div class="h"><span class="name">'+esc(t.title)+'</span><span class="day">'+esc(t.day||'مخصصة')+'</span>'+blockedBadge+addBtn+'</div>'+
+          '<div class="desc">'+esc(t.desc)+'</div>'+
+          stepBarHtml+
+          '<div class="done-at">✓ '+at+'</div>'+
+          (token() ? '<div class="h" style="margin-top:6px">'+openBtn+delBtn+'</div>' : '')+
+        '</div>'+
+      '</div>'+
+      svcHtml+
+    '</div>';
+  }
+
+  var html = PLAN.map(function(track, ti){
+    var stdTasks = track.tasks;
+    var customTasks = (progress._custom||[]).filter(function(c){ return c.track === track.id; });
+    var allTrackTasks = stdTasks.concat(customTasks);
+    var done = allTrackTasks.filter(function(t){ return progress[t.id] && progress[t.id].done; }).length;
+    var pct = allTrackTasks.length ? Math.round(done/allTrackTasks.length*100) : 0;
+    var tasksHtml = stdTasks.map(function(t){ return _buildTaskHtml(t, progress[t.id]||{}, false); }).join('');
+    tasksHtml += customTasks.map(function(t){ return _buildTaskHtml(t, progress[t.id]||{}, true); }).join('');
+    var addCustomBtn = token() ? '<button class="btn btn-ghost" style="width:100%;margin-top:10px;font-size:12.5px;gap:6px;display:flex;align-items:center;justify-content:center" onclick="openAddCustomTask(\''+track.id+'\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" style="width:14px;height:14px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>إضافة مهمة مخصصة</button>' : '';
     return '<div class="track'+(ti===0?' open':'')+'" id="track-'+track.id+'">'+
       '<div class="track-head" onclick="toggleTrack(\''+track.id+'\')">'+
         '<div class="tnum">'+(ti+1)+'</div>'+
@@ -3718,7 +4385,7 @@ function renderTracks(){
         '<span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m6 9 6 6 6-6"/></svg></span>'+
       '</div>'+
       '<div class="track-mini"><i id="mini-'+track.id+'" style="width:'+pct+'%"></i></div>'+
-      '<div class="track-body">'+tasks+'</div>'+
+      '<div class="track-body">'+tasksHtml+addCustomBtn+'</div>'+
     '</div>';
   }).join('');
   document.getElementById('tracks').innerHTML = html;
@@ -3727,24 +4394,44 @@ function renderTracks(){
 function toggleTrack(id){ document.getElementById('track-'+id).classList.toggle('open'); }
 
 function toggleTask(taskId){
+  var prevDone = Object.keys(progress).filter(function(k){ return k!=='_meta'&&k!=='_custom'&&progress[k]&&progress[k].done; }).length;
   var cur = progress[taskId] && progress[taskId].done;
-  if(cur){ delete progress[taskId]; }
-  else { progress[taskId] = { done:true, at: new Date().toLocaleDateString('ar-SA') }; }
+  if(cur){
+    // preserve enriched data, just unmark done
+    if(progress[taskId]) { progress[taskId].done = false; delete progress[taskId].at; }
+  } else {
+    if(!progress[taskId]) progress[taskId] = {};
+    progress[taskId].done = true;
+    progress[taskId].at = new Date().toLocaleDateString('ar-SA');
+    _ensurePlanStart();
+  }
   var el = document.querySelector('.task[data-id="'+taskId+'"]');
   if(el){
     el.classList.toggle('done', !cur);
     var p=progress[taskId];
-    if(p){ var da=el.querySelector('.done-at'); if(da) da.textContent='✓ أُنجزت في '+p.at; }
+    var da=el.querySelector('.done-at');
+    if(da){ da.textContent = (p&&p.done&&p.at) ? '✓ أُنجزت في '+p.at : ''; }
+    // Update drawer done pill if open
+    var pill = document.getElementById('ptd-done-pill');
+    if(pill && document.getElementById('ptd') && document.getElementById('ptd').dataset.taskId===taskId){
+      pill.classList.toggle('active', !cur);
+      pill.textContent = !cur ? '✓ مكتملة' : 'تحديد كمكتملة';
+    }
   }
+  var newDone = Object.keys(progress).filter(function(k){ return k!=='_meta'&&k!=='_custom'&&progress[k]&&progress[k].done; }).length;
+  if(newDone > prevDone) _checkAndShowBadgeAnimation(prevDone, newDone);
   refreshTrackBars();
   updateOverview();
+  renderPlanAnalytics();
   scheduleSave();
 }
 
 function refreshTrackBars(){
   PLAN.forEach(function(track){
-    var done = track.tasks.filter(function(t){ return progress[t.id] && progress[t.id].done; }).length;
-    var pct = Math.round(done/track.tasks.length*100);
+    var customTasks = (progress._custom||[]).filter(function(c){ return c.track===track.id; });
+    var allTasks = track.tasks.concat(customTasks);
+    var done = allTasks.filter(function(t){ return progress[t.id] && progress[t.id].done; }).length;
+    var pct = allTasks.length ? Math.round(done/allTasks.length*100) : 0;
     var p=document.getElementById('pct-'+track.id); if(p) p.textContent=pct+'%';
     var m=document.getElementById('mini-'+track.id); if(m) m.style.width=pct+'%';
   });
@@ -4014,6 +4701,500 @@ function openHomeCard(id){
   }
   body.innerHTML = html;
   document.getElementById('home-modal').classList.add('show');
+}
+
+/* ─────────────────────────────────────────
+   PLAN ENHANCEMENTS — Analytics, Drawer, Timeline, Badges, Custom Tasks
+───────────────────────────────────────── */
+
+var _planView = 'cards'; // 'cards' | 'timeline'
+
+/* ── Helper: all tasks including custom ── */
+function _planAllTasks(){
+  var a = [];
+  PLAN.forEach(function(tr){ tr.tasks.forEach(function(t){ a.push(t); }); });
+  var custom = (progress._custom||[]);
+  custom.forEach(function(c){ a.push(c); });
+  return a;
+}
+
+/* ── Plan start date (stored in progress._meta) ── */
+function _getPlanStart(){
+  if(progress._meta && progress._meta.start_date) return new Date(progress._meta.start_date);
+  return null;
+}
+function _setPlanStart(d){
+  if(!progress._meta) progress._meta = {};
+  progress._meta.start_date = d.toISOString().slice(0,10);
+  scheduleSave();
+}
+function _ensurePlanStart(){
+  if(!_getPlanStart()){
+    _setPlanStart(new Date());
+  }
+}
+
+/* ── Days elapsed ── */
+function _daysElapsed(){
+  var s = _getPlanStart();
+  if(!s) return 0;
+  return Math.max(0, Math.min(100, Math.floor((Date.now()-s.getTime())/86400000)+1));
+}
+
+/* ── Track status meta ── */
+function _trackStatus(doneCount, totalCount, daysElapsed){
+  if(daysElapsed === 0) return { label:'لم تبدأ', color:'var(--muted)', bg:'var(--bg-soft)', icon:'⏸' };
+  var expected = daysElapsed/100;
+  var actual = doneCount/totalCount;
+  var ratio = expected > 0 ? actual/expected : 1;
+  if(doneCount===totalCount) return { label:'مكتمل 🎉', color:'var(--ok)', bg:'var(--ok-soft)', icon:'✅' };
+  if(ratio >= 1.1) return { label:'متقدم', color:'#1d4ed8', bg:'#eff6ff', icon:'🚀' };
+  if(ratio >= 0.8) return { label:'على المسار', color:'var(--ok)', bg:'var(--ok-soft)', icon:'✅' };
+  if(ratio >= 0.6) return { label:'تأخر بسيط', color:'var(--warn)', bg:'var(--warn-soft)', icon:'⚠️' };
+  return { label:'تأخر ملحوظ', color:'var(--danger)', bg:'var(--danger-soft)', icon:'🔴' };
+}
+
+/* ── Estimated completion day ── */
+function _estCompletionDay(doneCount, daysElapsed){
+  if(doneCount === 0) return '—';
+  if(doneCount === TOTAL_TASKS) return daysElapsed;
+  var rate = doneCount / daysElapsed;
+  if(rate <= 0) return '—';
+  var est = Math.round(TOTAL_TASKS / rate);
+  return est > 200 ? '+٢٠٠' : est;
+}
+
+/* ── Steps progress for a task ── */
+function _stepsProgress(taskId){
+  var t = null;
+  PLAN.forEach(function(tr){ tr.tasks.forEach(function(tk){ if(tk.id===taskId) t=tk; }); });
+  if(!t || !t.steps || !t.steps.length) return null;
+  var p = progress[taskId] || {};
+  var stepsState = p.steps || {};
+  var done = t.steps.filter(function(_, i){ return !!stepsState[String(i)]; }).length;
+  return { done: done, total: t.steps.length };
+}
+
+/* ── Toggle a step ── */
+function toggleStep(taskId, stepIdx){
+  if(!progress[taskId]) progress[taskId] = {};
+  if(!progress[taskId].steps) progress[taskId].steps = {};
+  var key = String(stepIdx);
+  progress[taskId].steps[key] = !progress[taskId].steps[key];
+  // Refresh drawer if open
+  var ptd = document.getElementById('ptd');
+  if(ptd && ptd.dataset.taskId === taskId){
+    var t = null;
+    PLAN.forEach(function(tr){ tr.tasks.forEach(function(tk){ if(tk.id===taskId) t=tk; }); });
+    if(t) _ptdRefreshSteps(taskId, t);
+  }
+  // Refresh card step bar
+  var card = document.querySelector('.task[data-id="'+taskId+'"]');
+  if(card){
+    var sp = _stepsProgress(taskId);
+    var miniEl = card.querySelector('.task-steps-mini');
+    var lblEl = card.querySelector('.task-steps-lbl');
+    if(miniEl && sp){
+      miniEl.innerHTML = sp.total > 0 ? Array.from({length:sp.total}, function(_, i){
+        return '<span class="'+(i < sp.done ? 'done':'')+'"></span>';
+      }).join('') : '';
+    }
+    if(lblEl && sp) lblEl.textContent = sp.done+'/'+sp.total+' خطوات';
+    // Suggest marking done if all steps done
+    var hint = card.querySelector('.ptd-all-done-hint');
+    // (hint is in drawer, skip)
+  }
+  scheduleSave();
+}
+
+/* ── Refresh steps in open drawer ── */
+function _ptdRefreshSteps(taskId, task){
+  var stepsEl = document.getElementById('ptd-steps-list');
+  if(!stepsEl) return;
+  var p = progress[taskId] || {};
+  var stepsState = p.steps || {};
+  stepsEl.innerHTML = task.steps.map(function(s, i){
+    var done = !!stepsState[String(i)];
+    return '<div class="ptd-step" data-tid="'+taskId+'" data-idx="'+i+'" style="cursor:pointer">'+
+      '<div class="ptd-step-chk'+(done?' done':'')+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg></div>'+
+      '<span class="ptd-step-lbl'+(done?' done':'')+'">'+esc(s)+'</span>'+
+    '</div>';
+  }).join('');
+  stepsEl.querySelectorAll('.ptd-step').forEach(function(el){
+    el.addEventListener('click', function(){ toggleStep(el.dataset.tid, parseInt(el.dataset.idx)); });
+  });
+  var sp = _stepsProgress(taskId);
+  var hint = document.getElementById('ptd-all-done-hint');
+  if(hint) hint.style.display = (sp && sp.done===sp.total && sp.total>0) ? 'block' : 'none';
+}
+
+/* ── Badge definitions ── */
+function _badgeDefs(){
+  return [
+    { id:'b_launch', emoji:'🚀', label:'الانطلاق', req:1, msg:'أول مهمة مكتملة! الرحلة بدأت.' },
+    { id:'b_half',  emoji:'🌗', label:'نصف الطريق', req:Math.ceil(TOTAL_TASKS/2), msg:'أنجزت نصف الخطة! أنت على الطريق الصحيح.' },
+    { id:'b_final', emoji:'🏁', label:'المستقيم الأخير', req:Math.round(TOTAL_TASKS*0.82), msg:'أوشكت على الإتمام! المشوار آخره قريب.' },
+    { id:'b_done',  emoji:'🏆', label:'مئة يوم مبارك', req:TOTAL_TASKS, msg:'أتممت خطة المئة يوم! مبروك على هذا الإنجاز.' }
+  ];
+}
+
+/* ── Render badges ── */
+function _renderBadges(doneCount){
+  return _badgeDefs().map(function(b){
+    var unlocked = doneCount >= b.req;
+    var p = progress._meta && progress._meta['badge_'+b.id];
+    return '<div class="pa-badge'+(unlocked?' unlocked':'  locked')+'">'+
+      '<div class="pa-badge-emoji">'+b.emoji+'</div>'+
+      '<div class="pa-badge-lbl">'+esc(b.label)+'</div>'+
+      (unlocked && p ? '<div class="pa-badge-date">'+esc(p)+'</div>' : '')+
+    '</div>';
+  }).join('');
+}
+
+/* ── Check and show badge animation ── */
+function _checkAndShowBadgeAnimation(prevDone, newDone){
+  var badges = _badgeDefs();
+  for(var i=0; i<badges.length; i++){
+    var b = badges[i];
+    if(prevDone < b.req && newDone >= b.req){
+      // Record unlock date
+      if(!progress._meta) progress._meta = {};
+      if(!progress._meta['badge_'+b.id]){
+        progress._meta['badge_'+b.id] = new Date().toLocaleDateString('ar-SA');
+      }
+      _showBadgePop(b);
+      break; // show one at a time
+    }
+  }
+}
+
+function _showBadgePop(b){
+  var pop = document.getElementById('badge-pop');
+  if(!pop){
+    pop = document.createElement('div');
+    pop.id = 'badge-pop';
+    pop.className = 'badge-pop';
+    pop.innerHTML = '<div class="badge-pop-box"><span class="badge-pop-emoji" id="bpe"></span><div class="badge-pop-title" id="bpt"></div><div class="badge-pop-sub" id="bps"></div></div>';
+    pop.addEventListener('click', function(){ pop.classList.remove('show'); });
+    document.body.appendChild(pop);
+  }
+  document.getElementById('bpe').textContent = b.emoji;
+  document.getElementById('bpt').textContent = b.label;
+  document.getElementById('bps').textContent = b.msg;
+  pop.classList.add('show');
+  setTimeout(function(){ pop.classList.remove('show'); }, 4000);
+}
+
+/* ── Render analytics bar ── */
+function renderPlanAnalytics(){
+  var el = document.getElementById('plan-analytics');
+  if(!el) return;
+  if(!token()){ el.innerHTML=''; return; }
+  var doneCount = Object.keys(progress).filter(function(k){ return k!=='_meta'&&k!=='_custom'&&progress[k]&&progress[k].done; }).length;
+  var days = _daysElapsed();
+  var st = _trackStatus(doneCount, TOTAL_TASKS, days);
+  var est = _estCompletionDay(doneCount, days);
+  var todayPct = Math.min(100, days);
+
+  var html = '<div class="plan-analytics">'+
+    '<div class="pa-stats">'+
+      '<div class="pa-stat" style="--pa-col:var(--accent)">'+
+        '<div class="pa-stat-lbl">المهام المنجزة</div>'+
+        '<div class="pa-stat-val">'+doneCount+'<span style="font-size:14px;font-weight:500;color:var(--muted)"> / '+TOTAL_TASKS+'</span></div>'+
+        '<div class="pa-stat-sub">'+Math.round(doneCount/TOTAL_TASKS*100)+'% من الخطة</div>'+
+      '</div>'+
+      '<div class="pa-stat" style="--pa-col:var(--navy)">'+
+        '<div class="pa-stat-lbl">الأيام المنقضية</div>'+
+        '<div class="pa-stat-val">'+(days||'—')+'<span style="font-size:14px;font-weight:500;color:var(--muted)"> / ١٠٠</span></div>'+
+        '<div class="pa-stat-sub">'+Math.max(0,100-days)+' يوم متبقٍ</div>'+
+      '</div>'+
+      '<div class="pa-stat" style="--pa-col:'+st.color.replace('var(--ok)','#16a34a').replace('var(--warn)','#d97706').replace('var(--danger)','#dc2626')+'">'+
+        '<div class="pa-stat-lbl">حالة المسار</div>'+
+        '<div class="pa-stat-val" style="font-size:16px;font-weight:700;color:'+st.color+'">'+st.icon+' '+esc(st.label)+'</div>'+
+        '<div class="pa-stat-sub">وتيرة الإنجاز الحالية</div>'+
+      '</div>'+
+      '<div class="pa-stat" style="--pa-col:var(--gold)">'+
+        '<div class="pa-stat-lbl">التقدير المتوقع</div>'+
+        '<div class="pa-stat-val">'+(typeof est==='number'?'يوم '+est:est)+'</div>'+
+        '<div class="pa-stat-sub">يوم الإتمام المقدَّر</div>'+
+      '</div>'+
+    '</div>'+
+    '<div class="pa-bar-wrap">'+
+      '<div class="pa-bar-header">'+
+        '<span class="pa-bar-title">شريط التقدم على ١٠٠ يوم</span>'+
+        '<span class="pa-track-badge" style="background:'+st.color.replace('var(--ok)','#16a34a').replace('var(--warn)','#d97706').replace('var(--danger)','#dc2626')+';color:#fff">'+st.icon+' '+esc(st.label)+'</span>'+
+      '</div>'+
+      '<div class="pa-bar-track" id="pa-bar-track">'+
+        '<div class="pa-bar-done" id="pa-bar-done" style="width:'+Math.round(doneCount/TOTAL_TASKS*100)+'%"></div>'+
+        (days>0 && days<=100 ? '<div class="pa-bar-today" style="left:'+todayPct+'%"></div>' : '')+
+      '</div>'+
+      '<div class="pa-bar-labels"><span>يوم ١</span><span>يوم ٢٥</span><span>يوم ٥٠</span><span>يوم ٧٥</span><span>يوم ١٠٠</span></div>'+
+    '</div>'+
+    '<div class="pa-badges">'+_renderBadges(doneCount)+'</div>'+
+  '</div>';
+  el.innerHTML = html;
+}
+
+/* ── Set plan view ── */
+function setPlanView(v){
+  _planView = v;
+  var btnCards = document.getElementById('plan-view-cards');
+  var btnTl = document.getElementById('plan-view-timeline');
+  if(btnCards) btnCards.classList.toggle('active', v==='cards');
+  if(btnTl) btnTl.classList.toggle('active', v==='timeline');
+  var tracksEl = document.getElementById('tracks');
+  if(v==='timeline'){
+    tracksEl.innerHTML = _renderTimelineView();
+  } else {
+    renderTracks();
+  }
+}
+
+/* ── Timeline view ── */
+function _renderTimelineView(){
+  var days = _daysElapsed();
+  var allTasks = [];
+  PLAN.forEach(function(tr){ tr.tasks.forEach(function(t){ allTasks.push(t); }); });
+  (progress._custom||[]).forEach(function(c){ allTasks.push(c); });
+
+  function taskDayNum(t){
+    if(typeof t.day === 'number') return t.day;
+    var m = String(t.day).match(/(\d+)/);
+    return m ? parseInt(m[1]) : 50;
+  }
+
+  var rowsHtml = allTasks.map(function(t){
+    var p = progress[t.id]||{};
+    var dayNum = taskDayNum(t);
+    var barPct = Math.round(dayNum/100*100);
+    var isDone = !!p.done;
+    var isOverdue = !isDone && days > dayNum;
+    var barColor = isDone ? '#16a34a' : isOverdue ? '#dc2626' : 'var(--navy)';
+    var dotLeft = isDone && p.at ? barPct : null;
+    return '<div class="plan-tl-row">'+
+      '<div class="plan-tl-name ptd-open-task" data-task-id="'+t.id+'" title="'+esc(t.title)+'">'+esc(t.title)+'</div>'+
+      '<div class="plan-tl-bar-wrap">'+
+        '<div class="plan-tl-bar ptd-open-task" data-task-id="'+t.id+'" style="width:'+barPct+'%;background:'+barColor+';opacity:'+(isDone?'.9':'.55')+'">'+
+          (isDone ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" style="width:10px;height:10px"><polyline points="20 6 9 17 4 12"/></svg>' : '')+
+        '</div>'+
+        (dotLeft!==null ? '<div class="plan-tl-dot" style="left:'+dotLeft+'%;background:'+barColor+'"></div>' : '')+
+        (days>0 && days<=100 ? '<div style="position:absolute;top:0;bottom:0;left:'+days+'%;width:1.5px;background:var(--navy);opacity:.5;pointer-events:none"></div>' : '')+
+      '</div>'+
+    '</div>';
+  }).join('');
+
+  return '<div class="plan-tl">'+
+    '<div class="plan-tl-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:17px;height:17px"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>الجدول الزمني للمهام</div>'+
+    '<div class="plan-tl-inner">'+
+      '<div class="plan-tl-axis">'+
+        '<div class="plan-tl-axis-label" style="text-align:right">يوم ١</div>'+
+        '<div class="plan-tl-axis-label">يوم ٢٥</div>'+
+        '<div class="plan-tl-axis-label">يوم ٥٠</div>'+
+        '<div class="plan-tl-axis-label">يوم ٧٥</div>'+
+        '<div class="plan-tl-axis-label" style="text-align:left">يوم ١٠٠</div>'+
+      '</div>'+
+      rowsHtml+
+    '</div>'+
+    '<div style="font-size:11px;color:var(--muted-2);margin-top:12px;display:flex;gap:14px;flex-wrap:wrap">'+
+      '<span><span style="display:inline-block;width:10px;height:10px;background:#16a34a;border-radius:3px;margin-left:4px;vertical-align:middle"></span>مكتملة</span>'+
+      '<span><span style="display:inline-block;width:10px;height:10px;background:#dc2626;border-radius:3px;margin-left:4px;vertical-align:middle"></span>متأخرة</span>'+
+      '<span><span style="display:inline-block;width:10px;height:10px;background:var(--navy);border-radius:3px;margin-left:4px;vertical-align:middle;opacity:.55"></span>قادمة</span>'+
+      '<span><span style="display:inline-block;width:2px;height:12px;background:var(--navy);opacity:.5;margin-left:4px;vertical-align:middle"></span>اليوم الحالي</span>'+
+    '</div>'+
+  '</div>';
+}
+
+
+function _ensurePtd(){
+  if(document.getElementById('ptd')) return;
+  var ov = document.createElement('div');
+  ov.id = 'ptd-ov';
+  ov.className = 'ptd-ov';
+  ov.addEventListener('click', closePlanTaskDrawer);
+  var dr = document.createElement('div');
+  dr.id = 'ptd';
+  dr.className = 'ptd';
+  dr.innerHTML = '<div id="ptd-inner"></div>';
+  document.body.appendChild(ov);
+  document.body.appendChild(dr);
+}
+
+function openPlanTaskDrawer(taskId){
+  _ensurePlanStart();
+  _ensurePtd();
+  var task = null;
+  var trackId = null;
+  PLAN.forEach(function(tr){ tr.tasks.forEach(function(t){ if(t.id===taskId){ task=t; trackId=tr.id; } }); });
+  if(!task){
+    // check custom
+    (progress._custom||[]).forEach(function(c){ if(c.id===taskId){ task=c; trackId=c.track; } });
+  }
+  if(!task) return;
+  var dr = document.getElementById('ptd');
+  dr.dataset.taskId = taskId;
+  document.getElementById('ptd-inner').innerHTML = _planTaskDrawerHtml(task, progress[taskId]||{}, trackId);
+  document.getElementById('ptd-ov').classList.add('active');
+  dr.classList.add('active');
+}
+
+function closePlanTaskDrawer(){
+  var ov = document.getElementById('ptd-ov');
+  var dr = document.getElementById('ptd');
+  if(ov) ov.classList.remove('active');
+  if(dr){ dr.classList.remove('active'); dr.dataset.taskId = ''; }
+}
+
+function _planTaskDrawerHtml(task, prog, trackId){
+  var sp = (task.steps && task.steps.length) ? _stepsProgress(task.id) : null;
+  var stepsState = prog.steps || {};
+  var isCustom = !!(task._isCustom || (progress._custom||[]).find(function(c){ return c.id===task.id; }));
+
+  var stepsHtml = '';
+  if(task.steps && task.steps.length){
+    stepsHtml = '<div class="ptd-sec">'+
+      '<div class="ptd-sec-lbl">الخطوات التنفيذية ('+(sp?sp.done:0)+'/'+task.steps.length+')</div>'+
+      '<div id="ptd-steps-list">'+task.steps.map(function(s, i){
+        var done = !!stepsState[String(i)];
+        return '<div class="ptd-step" data-tid="'+task.id+'" data-idx="'+i+'" style="cursor:pointer">'+
+          '<div class="ptd-step-chk'+(done?' done':'')+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg></div>'+
+          '<span class="ptd-step-lbl'+(done?' done':'')+'">'+esc(s)+'</span>'+
+        '</div>';
+      }).join('')+'</div>'+
+      '<div class="ptd-all-done-hint" id="ptd-all-done-hint" style="display:'+(sp&&sp.done===sp.total&&sp.total>0?'block':'none')+'">✅ أكملت جميع الخطوات! يمكنك الآن تحديد المهمة كمنجزة</div>'+
+    '</div>';
+  }
+
+  var svcBtn = '';
+  if(task.svc && task.svc.active){
+    svcBtn = '<button class="ptd-svc-btn" onclick="closePlanTaskDrawer();go(this.dataset.page)" data-page="services">'+
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>'+
+      esc(task.svc.label)+
+    '</button>';
+  }
+
+  return '<div class="ptd-hd">'+
+    '<div class="ptd-hd-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></div>'+
+    '<div class="ptd-hd-info">'+
+      '<span class="ptd-hd-title">'+esc(task.title)+'</span>'+
+      '<div class="ptd-hd-day">'+esc(task.day||'')+(isCustom?' · مهمة مخصصة':'')+'</div>'+
+    '</div>'+
+    '<button class="ptd-close" onclick="closePlanTaskDrawer()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="width:15px;height:15px"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>'+
+  '</div>'+
+  '<div class="ptd-body">'+
+    '<div class="ptd-sec">'+
+      '<div class="ptd-sec-lbl">الوصف</div>'+
+      '<div class="ptd-desc">'+esc(task.desc||'')+'</div>'+
+    '</div>'+
+    stepsHtml+
+    '<div class="ptd-sec">'+
+      '<div class="ptd-sec-lbl">تفاصيل التنفيذ</div>'+
+      '<div class="ptd-field"><label>المسؤول عن التنفيذ</label><input type="text" id="ptd-assignee" placeholder="اسم المسؤول أو الجهة" value="'+esc(prog.assignee||'')+'"></div>'+
+      '<div class="ptd-field"><label>رابط الدليل أو الإثبات</label><input type="url" id="ptd-evidence" dir="ltr" style="text-align:right" placeholder="https://..." value="'+esc(prog.evidence_url||'')+'"></div>'+
+      '<div class="ptd-field"><label>ملاحظات</label><textarea id="ptd-notes" placeholder="تحديات، قرارات، تفاصيل مهمة...">'+esc(prog.notes||'')+'</textarea></div>'+
+    '</div>'+
+    '<div class="ptd-sec">'+
+      '<div class="ptd-sec-lbl">الحالة</div>'+
+      '<div class="ptd-status-pills">'+
+        '<button class="ptd-status-pill'+(prog.done?' active':'')+'" onclick="toggleTask(this.dataset.tid);savePlanTaskDraft(this.dataset.tid)" data-tid="'+task.id+'" id="ptd-done-pill">'+(prog.done?'✓ مكتملة':'تحديد كمكتملة')+'</button>'+
+        '<button class="ptd-status-pill'+(prog.blocked?' blocked':'')+'" onclick="_togglePtdBlocked(this.dataset.tid)" data-tid="'+task.id+'" id="ptd-blocked-pill">'+(prog.blocked?'⚠ معاق':'تحديد كمعاق')+'</button>'+
+      '</div>'+
+      (prog.done && prog.at ? '<div style="font-size:11.5px;color:var(--ok);margin-top:8px">✓ أُنجزت في '+esc(prog.at)+'</div>' : '')+
+    '</div>'+
+    (svcBtn ? '<div class="ptd-sec">'+svcBtn+'</div>' : '')+
+  '</div>'+
+  '<div class="ptd-foot">'+
+    '<button class="btn btn-primary" style="flex:1" onclick="savePlanTaskDraft(this.dataset.tid)" data-tid="'+task.id+'">حفظ</button>'+
+    '<button class="btn btn-ghost" onclick="closePlanTaskDrawer()">إغلاق</button>'+
+  '</div>';
+}
+
+function _togglePtdBlocked(taskId){
+  if(!progress[taskId]) progress[taskId] = {};
+  progress[taskId].blocked = !progress[taskId].blocked;
+  var pill = document.getElementById('ptd-blocked-pill');
+  if(pill){ pill.classList.toggle('blocked', !!progress[taskId].blocked); pill.textContent = progress[taskId].blocked ? '⚠ معاق' : 'تحديد كمعاق'; }
+  scheduleSave();
+}
+
+function savePlanTaskDraft(taskId){
+  if(!progress[taskId]) progress[taskId] = {};
+  var a = document.getElementById('ptd-assignee');
+  var e = document.getElementById('ptd-evidence');
+  var n = document.getElementById('ptd-notes');
+  if(a) progress[taskId].assignee = a.value.trim();
+  if(e) progress[taskId].evidence_url = e.value.trim();
+  if(n) progress[taskId].notes = n.value.trim();
+  scheduleSave();
+  toast('تم حفظ التفاصيل ✓');
+  closePlanTaskDrawer();
+  renderPlanAnalytics();
+}
+
+/* ── Custom Tasks ── */
+function openAddCustomTask(trackId){
+  var ov = document.getElementById('custom-task-modal-ov');
+  if(!ov){
+    ov = document.createElement('div');
+    ov.id = 'custom-task-modal-ov';
+    ov.className = 'custom-task-modal-ov';
+    ov.innerHTML = '<div class="custom-task-modal-box" onclick="event.stopPropagation()">'+
+      '<div class="ctm-title">إضافة مهمة مخصصة</div>'+
+      '<div class="ptd-field"><label>عنوان المهمة <span class="req">*</span></label><input type="text" id="ctm-title-inp" placeholder="عنوان المهمة" maxlength="120"></div>'+
+      '<div class="ptd-field"><label>الوصف</label><textarea id="ctm-desc-inp" placeholder="وصف المهمة وأهميتها..." style="min-height:70px"></textarea></div>'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'+
+        '<div class="ptd-field"><label>اليوم المستهدف</label><input type="number" id="ctm-day-inp" min="1" max="100" placeholder="مثال: 45"></div>'+
+        '<div class="ptd-field"><label>المسار</label><select id="ctm-track-inp"><option value="t1">المسار الأول</option><option value="t2">المسار الثاني</option></select></div>'+
+      '</div>'+
+      '<div class="ctm-foot">'+
+        '<button class="btn btn-primary" style="flex:1" onclick="saveCustomTask()">إضافة المهمة</button>'+
+        '<button class="btn btn-ghost" onclick="closeCustomTaskModal()">إلغاء</button>'+
+      '</div>'+
+    '</div>';
+    ov.addEventListener('click', closeCustomTaskModal);
+    document.body.appendChild(ov);
+  }
+  var ti = document.getElementById('ctm-track-inp');
+  if(ti && trackId) ti.value = trackId;
+  document.getElementById('ctm-title-inp').value = '';
+  document.getElementById('ctm-desc-inp').value = '';
+  document.getElementById('ctm-day-inp').value = '';
+  ov.classList.add('show');
+  setTimeout(function(){ document.getElementById('ctm-title-inp').focus(); }, 100);
+}
+
+function closeCustomTaskModal(){
+  var ov = document.getElementById('custom-task-modal-ov');
+  if(ov) ov.classList.remove('show');
+}
+
+function saveCustomTask(){
+  var title = (document.getElementById('ctm-title-inp').value||'').trim();
+  if(!title){ toast('يرجى إدخال عنوان المهمة'); return; }
+  var desc = (document.getElementById('ctm-desc-inp').value||'').trim();
+  var day = parseInt(document.getElementById('ctm-day-inp').value)||50;
+  var track = (document.getElementById('ctm-track-inp').value)||'t1';
+  var id = 'c_'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
+  if(!progress._custom) progress._custom = [];
+  progress._custom.push({ id:id, title:title, desc:desc, day:day, track:track, _isCustom:true });
+  closeCustomTaskModal();
+  scheduleSave();
+  renderTracks();
+  renderPlanAnalytics();
+  toast('تم إضافة المهمة ✓');
+}
+
+function deleteCustomTask(id){
+  if(!confirm('هل تريد حذف هذه المهمة؟')) return;
+  progress._custom = (progress._custom||[]).filter(function(c){ return c.id!==id; });
+  delete progress[id];
+  scheduleSave();
+  renderTracks();
+  renderPlanAnalytics();
+}
+
+/* ── Print plan report ── */
+function printPlanReport(){
+  window.print();
 }
 
 function scheduleSave(){
