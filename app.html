@@ -2286,6 +2286,14 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
         <span class="sb-label">الطلبات الواردة</span>
         <span class="sb-badge" id="sb-badge-requests" style="display:none">0</span>
       </a>
+      <a class="sb-item" id="nav-services" onclick="Nav.go('services')">
+        <span class="sb-icon"><i data-lucide="layout-grid"></i></span>
+        <span class="sb-label">الخدمات والأدوات</span>
+      </a>
+      <a class="sb-item" id="nav-site" onclick="Nav.go('site')">
+        <span class="sb-icon"><i data-lucide="globe"></i></span>
+        <span class="sb-label">إدارة الموقع</span>
+      </a>
       <a class="sb-item" id="nav-orgs" onclick="Nav.go('orgs')">
         <span class="sb-icon"><i data-lucide="calendar-check"></i></span>
         <span class="sb-label">خطة المئة يوم</span>
@@ -2357,6 +2365,8 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
     <div id="pg-template-editor" class="page contract-editor-page"></div>
     <div id="pg-pf"       class="page"></div>
     <div id="pg-website"  class="page"></div>
+    <div id="pg-services" class="page"></div>
+    <div id="pg-site"     class="page"></div>
     <div id="pg-orgs"     class="page"></div>
     <div id="pg-resources" class="page"></div>
     <div id="pg-grants"   class="page"></div>
@@ -2946,8 +2956,8 @@ var Nav = {
   updateBreadcrumb: function(page, params) {
     var bc = document.getElementById('breadcrumb');
     if (!bc) return;
-    var icons = {dash:'layout-dashboard', clients:'users', projects:'briefcase', settings:'settings-2', resources:'book-open', grants:'hand-coins', orgs:'calendar-check', website:'inbox', pf:'banknote'};
-    var labels = {dash:'الرئيسية', clients:'العملاء', projects:'المشاريع', settings:'الإعدادات', resources:'الموارد والأدلة', grants:'فرص المنح', orgs:'خطة المئة يوم', website:'الطلبات الواردة', pf:'مالية المنصة'};
+    var icons = {dash:'layout-dashboard', clients:'users', projects:'briefcase', settings:'settings-2', resources:'book-open', grants:'hand-coins', orgs:'calendar-check', website:'inbox', services:'layout-grid', site:'globe', pf:'banknote'};
+    var labels = {dash:'الرئيسية', clients:'العملاء', projects:'المشاريع', settings:'الإعدادات', resources:'الموارد والأدلة', grants:'فرص المنح', orgs:'خطة المئة يوم', website:'الطلبات الواردة', services:'الخدمات والأدوات', site:'إدارة الموقع', pf:'مالية المنصة'};
     function iconHtml(n){ return n ? '<i data-lucide="'+n+'" style="width:14px;height:14px;opacity:.6;flex-shrink:0"></i>' : ''; }
     if (labels[page]) {
       bc.innerHTML = iconHtml(icons[page])+'<span class="bc-page">'+labels[page]+'</span>';
@@ -11333,11 +11343,25 @@ Pages._siteData = function(){
   };
 };
 
+/* ════════════════ INCOMING REQUESTS (الطلبات الواردة) — dedicated page ════════════════ */
+Pages._reqFilter = { status:'', type:'', q:'' };
+
+/* classify a request: tool-activation vs professional service */
+Pages._reqType = function(r){
+  if (r.source==='portal' && Pages._detectTool(r.service)) return 'tool';
+  return 'service';
+};
+Pages._reqTypeMeta = function(t){
+  return t==='tool'
+    ? { lbl:'طلب أداة',  color:'var(--iris-600)', bg:'var(--iris-50)',    icon:'toy-brick' }
+    : { lbl:'طلب خدمة',  color:'var(--success-700)', bg:'var(--success-50)', icon:'sparkles' };
+};
+
 Pages.render_website = function(opts) {
   if (!DB._token) {
     document.getElementById('pg-website').innerHTML =
       '<div class="page-header"><div><h1>الطلبات الواردة</h1>'+
-      '<div class="page-header-sub">إدارة اللاندنق بيج والخدمات وطلبات العملاء</div></div></div>'+
+      '<div class="page-header-sub">متابعة وإدارة طلبات الجمعيات والعملاء</div></div></div>'+
       '<div class="card" style="text-align:center;padding:40px"><i data-lucide="cloud-off" style="width:40px;height:40px;color:var(--fg-3)"></i>'+
       '<p style="margin-top:14px;color:var(--fg-2)">هذه الميزة تتطلب الاتصال بالخادم. سجّل الدخول بحساب متصل بالخادم.</p></div>';
     if (typeof lucide!=='undefined') lucide.createIcons();
@@ -11350,49 +11374,83 @@ Pages.render_website = function(opts) {
       '<div class="page-header"><div><h1>الطلبات الواردة</h1>'+
       '<div class="page-header-sub">جارٍ تحميل البيانات...</div></div></div>'+
       '<div class="card" style="text-align:center;padding:50px;color:var(--fg-3)">جارٍ التحميل…</div>';
-    Promise.all([DB._getSite(), DB._getRequests()]).then(function(res){
-      Pages._site = res[0] || {};
-      Pages._requests = res[1] || [];
+    DB._getRequests().then(function(res){
+      Pages._requests = res || [];
       Pages._updateRequestsBadge();
       if (Nav._cur === 'website') Pages.render_website({ _loaded:true });
     });
     return;
   }
 
-  var tab = Pages._webTab;
-  var reqs = Pages._requests || [];
-  var newCount = reqs.filter(function(r){ return r.status==='new'; }).length;
-
-  var tabBtn = function(k, lbl, count){
-    var active = tab===k;
-    return '<button onclick="Pages.webTab(\''+k+'\')" style="display:inline-flex;align-items:center;gap:7px;padding:9px 18px;border:none;background:none;font-family:inherit;font-size:14px;font-weight:'+(active?'700':'500')+';color:'+(active?'var(--iris-600)':'var(--fg-3)')+';border-bottom:2.5px solid '+(active?'var(--iris-500)':'transparent')+';cursor:pointer;transition:.15s">'+
-      lbl+(count?' <span style="background:'+(active?'var(--iris-500)':'var(--neutral-200)')+';color:'+(active?'#fff':'var(--fg-3)')+';font-size:11px;padding:1px 7px;border-radius:20px">'+count+'</span>':'')+'</button>';
-  };
-
   var body =
     '<div class="page-header"><div>'+
       '<h1>الطلبات الواردة</h1>'+
-      '<div class="page-header-sub">إدارة جميع الطلبات الواردة · الخدمات المعروضة · إعدادات الموقع</div>'+
+      '<div class="page-header-sub">تتبّع طلبات الجمعيات والعملاء — أدوات وخدمات — وأدر حالتها حتى الإغلاق</div>'+
     '</div>'+
-    '<div style="display:flex;gap:10px">'+
-      '<a href="/" target="_blank" class="btn btn-ghost btn-sm" style="display:inline-flex;align-items:center;gap:6px"><i data-lucide="external-link"></i>معاينة الموقع</a>'+
+    '<div style="display:flex;gap:8px">'+
+      '<button onclick="Pages.render_website({_loaded:false})" class="btn btn-ghost btn-sm" style="display:inline-flex;align-items:center;gap:6px"><i data-lucide="refresh-cw"></i>تحديث</button>'+
     '</div></div>'+
-    '<div style="display:flex;gap:4px;border-bottom:1px solid var(--border-subtle);margin-bottom:22px">'+
-      tabBtn('requests','الطلبات الواردة', newCount)+
-      tabBtn('services','الخدمات')+
-      tabBtn('settings','إعدادات الموقع')+
-    '</div>'+
-    '<div id="web-tab-body">'+
-      (tab==='requests' ? Pages._renderRequestsTab() :
-       tab==='services' ? Pages._renderServicesTab() :
-                          Pages._renderSiteSettingsTab())+
-    '</div>';
+    Pages._renderRequestsTab();
 
   document.getElementById('pg-website').innerHTML = body;
   if (typeof lucide!=='undefined') lucide.createIcons();
 };
 
-Pages.webTab = function(t){ Pages._webTab = t; Pages.render_website({ _loaded:true }); };
+/* ════════════════ SERVICES & TOOLS (الخدمات والأدوات) — dedicated page ════════════════ */
+Pages.render_services = function(opts) {
+  if (!DB._token) {
+    document.getElementById('pg-services').innerHTML =
+      '<div class="page-header"><div><h1>الخدمات والأدوات</h1></div></div>'+
+      '<div class="card" style="text-align:center;padding:40px;color:var(--fg-2)">تتطلب هذه الصفحة الاتصال بالخادم.</div>';
+    if (typeof lucide!=='undefined') lucide.createIcons();
+    return;
+  }
+  if (Pages._site === null) {
+    document.getElementById('pg-services').innerHTML =
+      '<div class="page-header"><div><h1>الخدمات والأدوات</h1></div></div>'+
+      '<div class="card" style="text-align:center;padding:50px;color:var(--fg-3)">جارٍ التحميل…</div>';
+    DB._getSite().then(function(s){ Pages._site = s || {}; if (Nav._cur==='services') Pages.render_services({_loaded:true}); });
+    return;
+  }
+  document.getElementById('pg-services').innerHTML =
+    '<div class="page-header"><div>'+
+      '<h1>الخدمات والأدوات</h1>'+
+      '<div class="page-header-sub">تحكّم بالخدمات الاحترافية والأدوات المعروضة على الجمعيات وحدّد إتاحتها</div>'+
+    '</div>'+
+    '<div style="display:flex;gap:8px">'+
+      '<a href="/" target="_blank" class="btn btn-ghost btn-sm" style="display:inline-flex;align-items:center;gap:6px"><i data-lucide="external-link"></i>معاينة الموقع</a>'+
+    '</div></div>'+
+    Pages._renderServicesTab();
+  if (typeof lucide!=='undefined') lucide.createIcons();
+};
+
+/* ════════════════ SITE MANAGEMENT (إدارة الموقع) — dedicated page ════════════════ */
+Pages.render_site = function(opts) {
+  if (!DB._token) {
+    document.getElementById('pg-site').innerHTML =
+      '<div class="page-header"><div><h1>إدارة الموقع</h1></div></div>'+
+      '<div class="card" style="text-align:center;padding:40px;color:var(--fg-2)">تتطلب هذه الصفحة الاتصال بالخادم.</div>';
+    if (typeof lucide!=='undefined') lucide.createIcons();
+    return;
+  }
+  if (Pages._site === null) {
+    document.getElementById('pg-site').innerHTML =
+      '<div class="page-header"><div><h1>إدارة الموقع</h1></div></div>'+
+      '<div class="card" style="text-align:center;padding:50px;color:var(--fg-3)">جارٍ التحميل…</div>';
+    DB._getSite().then(function(s){ Pages._site = s || {}; if (Nav._cur==='site') Pages.render_site({_loaded:true}); });
+    return;
+  }
+  document.getElementById('pg-site').innerHTML =
+    '<div class="page-header"><div>'+
+      '<h1>إدارة الموقع</h1>'+
+      '<div class="page-header-sub">إعدادات الموقع العام وبيانات التواصل والنشر</div>'+
+    '</div>'+
+    '<div style="display:flex;gap:8px">'+
+      '<a href="/" target="_blank" class="btn btn-ghost btn-sm" style="display:inline-flex;align-items:center;gap:6px"><i data-lucide="external-link"></i>معاينة الموقع</a>'+
+    '</div></div>'+
+    Pages._renderSiteSettingsTab();
+  if (typeof lucide!=='undefined') lucide.createIcons();
+};
 
 Pages._updateRequestsBadge = function(){
   var b = document.getElementById('sb-badge-requests');
@@ -11402,48 +11460,93 @@ Pages._updateRequestsBadge = function(){
   b.style.display = n>0 ? '' : 'none';
 };
 
-/* ── Requests tab ── */
+/* ── Requests page body (KPIs + filters + list) ── */
 Pages._renderRequestsTab = function(){
   var reqs = (Pages._requests||[]).slice();
-  // KPI counts
+  var f = Pages._reqFilter;
+  // KPI counts (over ALL requests)
   var counts = {};
   Pages._reqStatuses.forEach(function(s){ counts[s.k]=0; });
   reqs.forEach(function(r){ counts[r.status]=(counts[r.status]||0)+1; });
+  var toolCount = reqs.filter(function(r){ return Pages._reqType(r)==='tool'; }).length;
+  var svcCount  = reqs.length - toolCount;
 
-  var kpis = '<div class="kpi-grid" style="margin-bottom:var(--space-5)">'+
+  // KPI cards double as status filters
+  var allActive = !f.status;
+  var kpis = '<div class="kpi-grid" style="margin-bottom:14px">'+
+    '<div class="kpi-card" style="cursor:pointer;'+(allActive?'outline:2px solid var(--iris-400);outline-offset:-1px':'')+'" onclick="Pages.reqSetFilter(\'status\',\'\')">'+
+      '<div class="kpi-card-accent" style="background:var(--fg-3)"></div>'+
+      '<div class="kpi-card-label">جميع الطلبات</div>'+
+      '<div class="kpi-card-value">'+reqs.length+'</div>'+
+      '<div class="kpi-card-sub">طلب</div></div>'+
     Pages._reqStatuses.map(function(s){
-      return '<div class="kpi-card"><div class="kpi-card-accent" style="background:'+s.color+'"></div>'+
+      var act = f.status===s.k;
+      return '<div class="kpi-card" style="cursor:pointer;'+(act?'outline:2px solid '+s.color+';outline-offset:-1px':'')+'" onclick="Pages.reqSetFilter(\'status\',\''+s.k+'\')">'+
+        '<div class="kpi-card-accent" style="background:'+s.color+'"></div>'+
         '<div class="kpi-card-label">'+s.lbl+'</div>'+
         '<div class="kpi-card-value" style="color:'+s.color+'">'+(counts[s.k]||0)+'</div>'+
         '<div class="kpi-card-sub">طلب</div></div>';
     }).join('')+'</div>';
 
-  if (!reqs.length) {
-    return kpis + '<div class="card" style="text-align:center;padding:48px">'+
-      '<i data-lucide="inbox" style="width:44px;height:44px;color:var(--fg-3)"></i>'+
-      '<p style="margin-top:14px;color:var(--fg-2);font-weight:600">لا توجد طلبات بعد</p>'+
-      '<p style="color:var(--fg-3);font-size:13px;margin-top:4px">ستظهر هنا الطلبات الواردة من نموذج الموقع تلقائياً</p></div>';
-  }
+  // Type + search toolbar
+  var typePill = function(val,lbl,n){
+    var act = f.type===val;
+    return '<button onclick="Pages.reqSetFilter(\'type\',\''+val+'\')" style="display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:20px;border:1px solid '+(act?'var(--iris-500)':'var(--border)')+';background:'+(act?'var(--iris-500)':'transparent')+';color:'+(act?'#fff':'var(--fg-2)')+';font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer;transition:.15s">'+lbl+' <span style="font-size:11px;opacity:.8">'+n+'</span></button>';
+  };
+  var toolbar = '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:18px">'+
+    typePill('','الكل',reqs.length)+
+    typePill('tool','أدوات',toolCount)+
+    typePill('service','خدمات',svcCount)+
+    '<div style="flex:1"></div>'+
+    '<div style="position:relative;min-width:200px">'+
+      '<i data-lucide="search" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);width:15px;height:15px;color:var(--fg-4)"></i>'+
+      '<input id="req-search" class="field-input" style="padding-right:32px;height:38px" placeholder="بحث بالاسم أو الجمعية أو الخدمة…" value="'+UI.escHtml(f.q||'')+'" oninput="Pages.reqSearch(this.value)">'+
+    '</div>'+
+  '</div>';
 
-  var rows = reqs.map(function(r){
+  return kpis + toolbar + '<div id="req-list">'+Pages._reqListHtml()+'</div>';
+};
+
+/* filtered list html (re-rendered alone on search to keep input focus) */
+Pages._reqListHtml = function(){
+  var f = Pages._reqFilter;
+  var reqs = (Pages._requests||[]).filter(function(r){
+    if (f.status && r.status!==f.status) return false;
+    if (f.type && Pages._reqType(r)!==f.type) return false;
+    if (f.q){ var q=f.q.toLowerCase(); var hay=((r.name||'')+' '+(r.org||'')+' '+(r.service||'')+' '+(r.email||'')+' '+(r.phone||'')).toLowerCase(); if(hay.indexOf(q)<0) return false; }
+    return true;
+  });
+  if (!reqs.length) {
+    var anyReq = (Pages._requests||[]).length;
+    return '<div class="card" style="text-align:center;padding:46px">'+
+      '<i data-lucide="inbox" style="width:42px;height:42px;color:var(--fg-3)"></i>'+
+      '<p style="margin-top:14px;color:var(--fg-2);font-weight:600">'+(anyReq?'لا توجد طلبات مطابقة للتصفية':'لا توجد طلبات بعد')+'</p>'+
+      (anyReq?'<button onclick="Pages.reqClearFilters()" class="btn btn-ghost btn-sm" style="margin-top:10px">إزالة التصفية</button>'
+            :'<p style="color:var(--fg-3);font-size:13px;margin-top:4px">ستظهر هنا الطلبات الواردة من الموقع وبوابة الجمعيات تلقائياً</p>')+
+    '</div>';
+  }
+  return reqs.map(function(r){
     var m = Pages._reqStatusMeta(r.status);
+    var type = Pages._reqType(r);
+    var tm = Pages._reqTypeMeta(type);
     var d = new Date((r.created_at||0)*1000);
     var dateStr = isNaN(d) ? '' : d.toLocaleDateString('ar-SA')+' · '+d.toLocaleTimeString('ar-SA',{hour:'2-digit',minute:'2-digit'});
     var phone = (r.phone||'').replace(/[^0-9]/g,'');
     var wa = 'https://wa.me/'+(phone.indexOf('966')===0?phone:(phone.replace(/^0/,'966')))+'?text='+encodeURIComponent('مرحباً '+(r.name||'')+'، بخصوص طلبك على موقع بُعد...');
-    return '<div class="card" style="margin-bottom:12px;padding:16px 18px">'+
+    return '<div class="card" style="margin-bottom:12px;padding:16px 18px;border-right:3px solid '+m.color+'">'+
       '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap">'+
         '<div style="flex:1;min-width:200px">'+
-          '<div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">'+
+          '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap">'+
             '<span style="font-weight:700;font-size:15px;color:var(--fg-1)">'+UI.escHtml(r.name||'—')+'</span>'+
+            '<span style="font-size:11px;font-weight:600;padding:2px 10px;border-radius:20px;color:'+tm.color+';background:'+tm.bg+'"><i data-lucide="'+tm.icon+'" style="width:12px;height:12px;display:inline;vertical-align:-2px"></i> '+tm.lbl+'</span>'+
             '<span style="font-size:11px;font-weight:600;padding:2px 10px;border-radius:20px;color:'+m.color+';background:'+m.bg+'">'+m.lbl+'</span>'+
             (r.source==='portal'?'<span style="font-size:11px;font-weight:600;padding:2px 10px;border-radius:20px;color:var(--iris-600);background:var(--iris-50)"><i data-lucide="landmark" style="width:12px;height:12px;display:inline;vertical-align:-2px"></i> بوابة الجمعيات</span>':'')+
           '</div>'+
           (r.org?'<div style="font-size:13px;color:var(--fg-2);margin-bottom:2px"><i data-lucide="building-2" style="width:13px;height:13px;display:inline;vertical-align:-2px"></i> '+UI.escHtml(r.org)+'</div>':'')+
           (r.service?'<div style="font-size:13px;color:var(--iris-600);margin-bottom:2px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">'+
-            '<span>الخدمة: '+UI.escHtml(r.service)+(r.budget?' · '+UI.escHtml(r.budget):'')+'</span>'+
-            (r.source==='portal' && Pages._detectTool(r.service)
-              ? '<button onclick="Pages.enableToolFromRequest(\''+r.id+'\',\''+UI.escHtml(r.service)+'\',\''+UI.escHtml(r.email||'')+'\',\''+UI.escHtml(r.org||r.name||'')+'\')"\n              style="font-size:11px;font-weight:700;padding:3px 10px;background:var(--iris-500);color:#fff;border:none;border-radius:6px;cursor:pointer;font-family:inherit">⚡ تفعيل الأداة</button>'
+            '<span>'+(type==='tool'?'الأداة: ':'الخدمة: ')+UI.escHtml(r.service)+(r.budget?' · '+UI.escHtml(r.budget):'')+'</span>'+
+            (type==='tool'
+              ? '<button onclick="Pages.enableToolFromRequest(\''+r.id+'\',\''+UI.escHtml(r.service)+'\',\''+UI.escHtml(r.email||'')+'\',\''+UI.escHtml(r.org||r.name||'')+'\')" style="font-size:11px;font-weight:700;padding:3px 10px;background:var(--iris-500);color:#fff;border:none;border-radius:6px;cursor:pointer;font-family:inherit">⚡ تفعيل الأداة</button>'
               : '') +
           '</div>':'')+
           (r.message?'<div style="font-size:13px;color:var(--fg-2);margin-top:6px;background:var(--bg-2);padding:8px 11px;border-radius:8px;border-right:3px solid var(--border)">'+UI.escHtml(r.message)+'</div>':'')+
@@ -11470,8 +11573,20 @@ Pages._renderRequestsTab = function(){
       '</div>'+
     '</div>';
   }).join('');
+};
 
-  return kpis + rows;
+Pages.reqSetFilter = function(key, val){
+  if (Pages._reqFilter[key]===val) Pages._reqFilter[key]=''; else Pages._reqFilter[key]=val;
+  Pages.render_website({_loaded:true});
+};
+Pages.reqClearFilters = function(){
+  Pages._reqFilter = { status:'', type:'', q:'' };
+  Pages.render_website({_loaded:true});
+};
+Pages.reqSearch = function(v){
+  Pages._reqFilter.q = v;
+  var el = document.getElementById('req-list');
+  if (el){ el.innerHTML = Pages._reqListHtml(); if (typeof lucide!=='undefined') lucide.createIcons({rootElement:el}); }
 };
 
 Pages.setRequestStatus = function(id, status){
@@ -11610,7 +11725,7 @@ Pages.toggleService = function(i){
   var sd = Pages._siteData();
   sd.services[i].enabled = !(sd.services[i].enabled !== false);
   Pages._site = sd;
-  Pages.render_website({_loaded:true});
+  Pages.render_services({_loaded:true});
 };
 Pages.moveService = function(i, dir){
   var sd = Pages._siteData();
@@ -11618,7 +11733,7 @@ Pages.moveService = function(i, dir){
   if (j<0 || j>=sd.services.length) return;
   var t = sd.services[i]; sd.services[i]=sd.services[j]; sd.services[j]=t;
   Pages._site = sd;
-  Pages.render_website({_loaded:true});
+  Pages.render_services({_loaded:true});
 };
 Pages.deleteServiceConfirm = function(i){
   var sd = Pages._siteData();
@@ -11634,7 +11749,7 @@ Pages.doDeleteService = function(i){
   sd.services.splice(i,1);
   Pages._site = sd;
   UI.closeModalForce();
-  Pages.render_website({_loaded:true});
+  Pages.render_services({_loaded:true});
 };
 
 Pages.addService = function(){ Pages._svcModal(-1); };
@@ -11670,7 +11785,7 @@ Pages.saveService = function(i){
   if (i>=0) sd.services[i] = s; else sd.services.push(s);
   Pages._site = sd;
   UI.closeModalForce();
-  Pages.render_website({_loaded:true});
+  Pages.render_services({_loaded:true});
   UI.toast('احفظ التغييرات لنشرها على الموقع','info');
 };
 
@@ -11702,7 +11817,8 @@ Pages.saveSiteData = function(){
   Pages._site = sd;
   DB._saveSite(sd).then(function(ok){
     UI.toast(ok?'تم النشر على الموقع بنجاح ✓':'تعذّر الحفظ — تأكد من صلاحياتك', ok?'success':'danger');
-    if (Nav._cur==='website') Pages.render_website({_loaded:true});
+    if (Nav._cur==='services') Pages.render_services({_loaded:true});
+    else if (Nav._cur==='site') Pages.render_site({_loaded:true});
   });
 };
 
