@@ -1099,7 +1099,8 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
 .client-card:hover{box-shadow:var(--shadow-md);border-color:var(--neutral-300);transform:translateY(-1px)}
 .client-card-header{padding:14px 16px 12px;display:flex;align-items:flex-start;gap:12px}
 .client-card-avatar{width:52px;height:52px;border-radius:12px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800;color:#fff;overflow:hidden;box-shadow:0 2px 6px rgba(0,0,0,.12);background:var(--neutral-200)}
-.client-card-avatar img{width:100%;height:100%;object-fit:contain;padding:4px}
+.client-card-avatar.has-logo{background:var(--neutral-50);border:1px solid var(--border-subtle);box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.client-card-avatar img{width:100%;height:100%;object-fit:contain;padding:5px;box-sizing:border-box}
 .client-card-info{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
 .client-card-name{font-size:var(--font-md);font-weight:700;color:var(--fg-1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3}
 .client-card-type{font-size:11px;font-weight:600;color:var(--fg-3);background:var(--neutral-100);padding:2px 8px;border-radius:20px;display:inline-block;margin-top:2px}
@@ -3784,7 +3785,7 @@ Pages.render_clients = function(opts) {
         }, 0);
         var color = avatarColor(cl.name);
         var avatarHtml = cl.logo ?
-          '<div class="client-card-avatar"><img src="'+cl.logo+'" alt=""></div>' :
+          '<div class="client-card-avatar has-logo"><img src="'+cl.logo+'" alt=""></div>' :
           '<div class="client-card-avatar" style="background:'+color+'">'+UI.escHtml((cl.name||'?')[0])+'</div>';
         var valStr = totalVal>0 ? UI.fmt(totalVal) : '—';
         return '<div class="client-card" onclick="Nav.go(\'client\',{clientId:\''+cl.id+'\'})">'+
@@ -3835,8 +3836,8 @@ Pages.render_clients = function(opts) {
             'onmouseover="this.style.background=\'var(--neutral-50)\'" onmouseout="this.style.background=\'\'" '+
             'onclick="Nav.go(\'client\',{clientId:\''+cl.id+'\'})" >'+
             '<div style="display:flex;align-items:center;gap:10px;min-width:0">'+
-              '<div style="width:34px;height:34px;border-radius:8px;flex-shrink:0;display:flex;align-items:center;justify-content:center;overflow:hidden;background:'+color+'">'+
-                (cl.logo ? '<img src="'+cl.logo+'" style="width:100%;height:100%;object-fit:contain">' : '<span style="font-size:13px;font-weight:800;color:#fff">'+UI.escHtml((cl.name||'?')[0])+'</span>')+
+              '<div style="width:34px;height:34px;border-radius:8px;flex-shrink:0;display:flex;align-items:center;justify-content:center;overflow:hidden;'+(cl.logo?'background:var(--neutral-50);border:1px solid var(--border-subtle)':'background:'+color)+'">'+
+                (cl.logo ? '<img src="'+cl.logo+'" style="width:100%;height:100%;object-fit:contain;padding:3px;box-sizing:border-box">' : '<span style="font-size:13px;font-weight:800;color:#fff">'+UI.escHtml((cl.name||'?')[0])+'</span>')+
               '</div>'+
               '<span style="font-size:13px;font-weight:600;color:var(--fg-1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+UI.escHtml(cl.name)+'</span>'+
             '</div>'+

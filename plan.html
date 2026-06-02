@@ -524,6 +524,54 @@ img,svg{display:block;max-width:100%}
 .prof-stat .l{font-size:12px;color:var(--muted);margin-top:6px}
 .prof-stat.accent .n{color:var(--accent)}
 
+/* ── Org logo avatars (shared) ── */
+.sb-user-ava.has-logo,.m-ava.has-logo,.sup-ava.has-logo{background:#fff;border:1px solid var(--line);overflow:hidden}
+.prof-ava.has-logo{background:#fff;overflow:hidden}
+.sb-user-ava.has-logo img,.m-ava.has-logo img,.sup-ava.has-logo img,.prof-ava.has-logo img{width:100%;height:100%;object-fit:contain;border-radius:inherit;box-sizing:border-box}
+.sb-user-ava.has-logo img,.m-ava.has-logo img,.sup-ava.has-logo img{padding:2px}
+.prof-ava.has-logo img{padding:9px;border-radius:18px}
+
+/* ── 100-day plan progress card (profile) ── */
+.plan-prog-card{display:flex;align-items:center;gap:22px;background:linear-gradient(135deg,var(--navy-deep),var(--navy) 75%,#0c3a8a);color:#fff;border-radius:var(--radius-lg);padding:22px 26px;margin-bottom:22px;cursor:pointer;position:relative;overflow:hidden;box-shadow:var(--shadow);transition:transform .15s,box-shadow .15s}
+.plan-prog-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg)}
+.plan-prog-card::after{content:"";position:absolute;width:220px;height:220px;border-radius:50%;background:radial-gradient(circle,rgba(39,194,172,.22),transparent 65%);top:-110px;left:-50px;pointer-events:none}
+.ppc-ring{--p:0;width:84px;height:84px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:conic-gradient(var(--accent-2) calc(var(--p)*1%),rgba(255,255,255,.14) 0);position:relative}
+.ppc-ring::before{content:"";position:absolute;inset:7px;border-radius:50%;background:var(--navy-deep)}
+.ppc-ring span{position:relative;font-size:20px;font-weight:800}
+.ppc-tx{flex:1;min-width:0;position:relative}
+.ppc-tx h3{font-size:18px;font-weight:700;margin-bottom:4px}
+.ppc-tx p{font-size:13px;color:rgba(255,255,255,.72);line-height:1.6}
+.ppc-meta{display:flex;gap:22px;margin-top:12px;flex-wrap:wrap}
+.ppc-meta div{font-size:11.5px;color:rgba(255,255,255,.55)}
+.ppc-meta b{display:block;font-size:17px;font-weight:700;color:#fff;margin-bottom:1px}
+.ppc-go{flex-shrink:0;display:flex;align-items:center;gap:6px;font-size:13.5px;font-weight:700;color:var(--accent-2);position:relative}
+.ppc-go svg{width:18px;height:18px}
+@media(max-width:600px){.plan-prog-card{flex-wrap:wrap;gap:16px}.ppc-go{width:100%;justify-content:flex-end}}
+
+/* ── Profile banner/avatar quick-edit ── */
+.prof-banner{background-size:cover;background-position:center}
+.prof-banner-edit{position:absolute;top:12px;left:12px;z-index:2;display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.16);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.32);color:#fff;font-family:inherit;font-size:12px;font-weight:600;padding:6px 12px;border-radius:20px;cursor:pointer;transition:.14s}
+.prof-banner-edit:hover{background:rgba(255,255,255,.3)}
+.prof-banner-edit svg{width:14px;height:14px}
+.prof-ava-wrap{position:relative;flex-shrink:0}
+.prof-ava-cam{position:absolute;bottom:0;left:0;width:28px;height:28px;border-radius:50%;background:var(--accent);color:#fff;border:2.5px solid #fff;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:var(--shadow-sm);transition:.14s}
+.prof-ava-cam:hover{background:var(--accent-2)}
+.prof-ava-cam svg{width:13px;height:13px}
+
+/* ── Profile modal: logo + banner upload ── */
+.pf-up-row{display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap}
+.pf-up-lbl{font-size:12px;font-weight:600;color:var(--navy-2);margin-bottom:7px;display:block}
+.pf-up-zone{border:1.5px dashed var(--line-2);background:var(--bg-soft);display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;position:relative;transition:.14s;background-size:cover;background-position:center}
+.pf-up-zone:hover{border-color:var(--accent);background:var(--accent-soft)}
+.pf-logo-zone{width:88px;height:88px;border-radius:18px}
+.pf-banner-zone{flex:1;min-width:170px;height:88px;border-radius:14px}
+.pf-up-zone img{width:100%;height:100%;object-fit:contain;padding:8px;box-sizing:border-box}
+.pf-up-ph{font-size:12px;color:var(--muted);font-weight:600;display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center;padding:6px}
+.pf-up-ph svg{width:20px;height:20px;color:var(--accent)}
+.pf-up-clear{position:absolute;top:5px;left:5px;width:22px;height:22px;border-radius:50%;background:rgba(10,18,48,.6);color:#fff;border:none;cursor:pointer;display:none;align-items:center;justify-content:center;font-size:15px;line-height:1;z-index:3;padding:0}
+.pf-up-zone.has .pf-up-clear{display:flex}
+.pf-up-zone.has .pf-up-ph{display:none}
+
 /* ─── Placeholder (soon) pages ─── */
 .coming-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:440px;text-align:center;padding:40px 20px}
 .coming-icon{width:80px;height:80px;border-radius:22px;background:var(--bg-tint);color:var(--navy);display:flex;align-items:center;justify-content:center;margin:0 auto 24px;box-shadow:var(--shadow-sm)}
@@ -1537,12 +1585,24 @@ img,svg{display:block;max-width:100%}
           <p>بيانات جمعيتك المسجّلة في بوابة بُعد وملخّص نشاطك.</p>
         </div>
 
+        <div id="prof-plan-card"></div>
+
         <div class="prof-stat-row" id="prof-stats"></div>
 
         <div class="prof-card">
-          <div class="prof-banner"></div>
+          <div class="prof-banner" id="prof-banner">
+            <button type="button" class="prof-banner-edit" onclick="openProfileModal()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+              تغيير الغلاف
+            </button>
+          </div>
           <div class="prof-id">
-            <div class="prof-ava" id="prof-ava">ج</div>
+            <div class="prof-ava-wrap">
+              <div class="prof-ava" id="prof-ava">ج</div>
+              <button type="button" class="prof-ava-cam" onclick="openProfileModal()" title="تغيير الشعار">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+              </button>
+            </div>
             <div class="prof-id-tx">
               <h2 id="prof-name">—</h2>
               <div class="ml"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg><span id="prof-city-line">—</span></div>
@@ -1758,7 +1818,29 @@ img,svg{display:block;max-width:100%}
   <div class="modal-box" style="text-align:right">
     <button class="modal-x" onclick="closeProfileModal()" aria-label="إغلاق">×</button>
     <h3 style="text-align:center">تعديل بيانات الجمعية</h3>
-    <p style="text-align:center">حدّث بيانات جمعيتك ليتمكن فريق بُعد من التواصل معك بدقة.</p>
+    <p style="text-align:center">حدّث بيانات جمعيتك وهويتها البصرية ليتمكن فريق بُعد من التواصل معك بدقة.</p>
+    <div class="field">
+      <label>الهوية البصرية</label>
+      <div class="pf-up-row">
+        <div style="flex:0 0 auto">
+          <span class="pf-up-lbl">شعار الجمعية</span>
+          <div class="pf-up-zone pf-logo-zone" id="pf-logo-zone" onclick="document.getElementById('pf-logo-inp').click()">
+            <button type="button" class="pf-up-clear" id="pf-logo-clear" onclick="event.stopPropagation();clearPfLogo()" aria-label="حذف الشعار">×</button>
+            <img id="pf-logo-img" alt="" style="display:none">
+            <span class="pf-up-ph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>شعار</span>
+          </div>
+          <input type="file" id="pf-logo-inp" accept="image/*" hidden onchange="onPfLogoPick(event)">
+        </div>
+        <div style="flex:1;min-width:170px">
+          <span class="pf-up-lbl">صورة الغلاف (البنر)</span>
+          <div class="pf-up-zone pf-banner-zone" id="pf-banner-zone" onclick="document.getElementById('pf-banner-inp').click()">
+            <button type="button" class="pf-up-clear" id="pf-banner-clear" onclick="event.stopPropagation();clearPfBanner()" aria-label="حذف الغلاف">×</button>
+            <span class="pf-up-ph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>أضف صورة غلاف للملف</span>
+          </div>
+          <input type="file" id="pf-banner-inp" accept="image/*" hidden onchange="onPfBannerPick(event)">
+        </div>
+      </div>
+    </div>
     <div class="field"><label>اسم الجمعية</label><input id="pf-name" type="text" placeholder="اسم الجمعية"></div>
     <div class="field"><div class="row2">
       <div><label>اسم المسؤول</label><input id="pf-contact" type="text" placeholder="الاسم الكامل"></div>
@@ -1976,12 +2058,12 @@ function _hexToCss(hex) {
 function syncUserPop() {
   var nm = document.getElementById('sb-org-nm');
   var city = document.getElementById('sb-org-city');
-  var ava = document.getElementById('sb-org-ava');
   var pct = document.getElementById('sb-org-pct');
   var fill = document.getElementById('sb-org-fill');
   if (nm) document.getElementById('sup-nm').textContent = nm.textContent;
   if (city) document.getElementById('sup-meta').textContent = city.textContent;
-  if (ava) document.getElementById('sup-ava').textContent = ava.textContent;
+  var nmTxt = (org && org.name) || (nm ? nm.textContent : 'ج');
+  setAvatar(document.getElementById('sup-ava'), (org && org.logo_url) || '', nmTxt.charAt(0));
   var pctTxt = pct ? pct.textContent : '0%';
   document.getElementById('sup-pct').textContent = pctTxt;
   var pctVal = parseInt(pctTxt)||0;
@@ -2144,13 +2226,76 @@ function submitServiceRequest(){
 }
 document.getElementById('svc-modal').addEventListener('click', function(e){ if(e.target===this) closeServiceModal(); });
 
+/* ── Avatar helper: render org logo image or fall back to initial ── */
+function setAvatar(el, logoUrl, initial){
+  if(!el) return;
+  if(logoUrl){
+    el.classList.add('has-logo');
+    el.innerHTML = '<img src="'+esc(logoUrl)+'" alt="">';
+  } else {
+    el.classList.remove('has-logo');
+    el.textContent = initial;
+  }
+}
+
+/* ── Client-side image compression (keeps payloads small) ── */
+function compressImage(file, maxW, mime, quality){
+  return new Promise(function(resolve, reject){
+    var fr = new FileReader();
+    fr.onload = function(e){
+      var img = new Image();
+      img.onload = function(){
+        var w = img.width, h = img.height;
+        if(w > maxW){ h = Math.round(h * maxW / w); w = maxW; }
+        var c = document.createElement('canvas'); c.width = w; c.height = h;
+        var ctx = c.getContext('2d');
+        if(mime === 'image/jpeg'){ ctx.fillStyle = '#fff'; ctx.fillRect(0,0,w,h); }
+        ctx.drawImage(img, 0, 0, w, h);
+        try{ resolve(c.toDataURL(mime, quality || 0.85)); }catch(err){ reject(err); }
+      };
+      img.onerror = reject;
+      img.src = e.target.result;
+    };
+    fr.onerror = reject;
+    fr.readAsDataURL(file);
+  });
+}
+
 /* ── Profile edit modal ── */
+var _pfLogo = '', _pfBanner = '';
+function _pfApplyPreviews(){
+  var lz = document.getElementById('pf-logo-zone');
+  var li = document.getElementById('pf-logo-img');
+  if(_pfLogo){ li.src = _pfLogo; li.style.display = 'block'; lz.classList.add('has'); }
+  else { li.removeAttribute('src'); li.style.display = 'none'; lz.classList.remove('has'); }
+  var bz = document.getElementById('pf-banner-zone');
+  if(_pfBanner){ bz.style.backgroundImage = "url('"+_pfBanner+"')"; bz.classList.add('has'); }
+  else { bz.style.backgroundImage = ''; bz.classList.remove('has'); }
+}
+function onPfLogoPick(e){
+  var f = e.target.files && e.target.files[0]; if(!f) return;
+  compressImage(f, 400, 'image/png', 0.92).then(function(d){ _pfLogo = d; _pfApplyPreviews(); })
+    .catch(function(){ toast('تعذّر قراءة الصورة'); });
+  e.target.value = '';
+}
+function onPfBannerPick(e){
+  var f = e.target.files && e.target.files[0]; if(!f) return;
+  compressImage(f, 1600, 'image/jpeg', 0.82).then(function(d){ _pfBanner = d; _pfApplyPreviews(); })
+    .catch(function(){ toast('تعذّر قراءة الصورة'); });
+  e.target.value = '';
+}
+function clearPfLogo(){ _pfLogo = ''; _pfApplyPreviews(); }
+function clearPfBanner(){ _pfBanner = ''; _pfApplyPreviews(); }
+
 function openProfileModal(){
   document.getElementById('pf-name').value    = (org && org.name) || '';
   document.getElementById('pf-contact').value = (org && org.contact_name) || '';
   document.getElementById('pf-phone').value   = (org && org.phone) || '';
   document.getElementById('pf-city').value    = (org && org.city) || '';
   document.getElementById('pf-license').value = (org && org.license_no) || '';
+  _pfLogo   = (org && org.logo_url) || '';
+  _pfBanner = (org && org.banner_url) || '';
+  _pfApplyPreviews();
   document.getElementById('prof-modal').classList.add('show');
 }
 function closeProfileModal(){ document.getElementById('prof-modal').classList.remove('show'); }
@@ -2161,7 +2306,9 @@ function saveProfile(){
     contact_name: document.getElementById('pf-contact').value.trim(),
     phone: document.getElementById('pf-phone').value.trim(),
     city: document.getElementById('pf-city').value.trim(),
-    license_no: document.getElementById('pf-license').value.trim()
+    license_no: document.getElementById('pf-license').value.trim(),
+    logo_url: _pfLogo || '',
+    banner_url: _pfBanner || ''
   };
   if(!data.name){ toast('اسم الجمعية مطلوب'); return; }
   btn.disabled = true; btn.textContent = 'جارٍ الحفظ...';
@@ -2174,7 +2321,7 @@ function saveProfile(){
   .then(function(res){
     btn.disabled=false; btn.textContent='حفظ التغييرات';
     if(!res.ok) throw new Error('x');
-    if(org){ org.name=data.name; org.contact_name=data.contact_name; org.phone=data.phone; org.city=data.city; org.license_no=data.license_no; }
+    if(org){ org.name=data.name; org.contact_name=data.contact_name; org.phone=data.phone; org.city=data.city; org.license_no=data.license_no; org.logo_url=data.logo_url; org.banner_url=data.banner_url; }
     closeProfileModal();
     applyOrgIdentity();
     renderProfile();
@@ -2249,9 +2396,10 @@ function logout(){ clearToken(); location.reload(); }
 function applyOrgIdentity(){
   var nm = (org && org.name) || 'جمعيتي';
   var initial = nm.charAt(0);
+  var logo = (org && org.logo_url) || '';
   document.getElementById('sb-org-nm').textContent = nm;
-  document.getElementById('sb-org-ava').textContent = initial;
-  document.getElementById('m-ava').textContent = initial;
+  setAvatar(document.getElementById('sb-org-ava'), logo, initial);
+  setAvatar(document.getElementById('m-ava'), logo, initial);
   document.getElementById('sb-org-city').textContent = (org && org.city) || 'جمعية ناشئة';
   document.getElementById('hero-org').textContent = nm;
 }
@@ -2717,15 +2865,34 @@ function escHtml(s) {
 function renderProfile(){
   if(!org) return;
   var nm = org.name || 'جمعيتي';
-  document.getElementById('prof-ava').textContent = nm.charAt(0);
+  setAvatar(document.getElementById('prof-ava'), org.logo_url || '', nm.charAt(0));
   document.getElementById('prof-name').textContent = nm;
   document.getElementById('prof-city-line').textContent = (org.city || 'لم تُحدّد المدينة') + (org.license_no? ' · ترخيص '+org.license_no : '');
+
+  var banner = document.getElementById('prof-banner');
+  if(banner){ banner.style.backgroundImage = org.banner_url ? "url('"+org.banner_url+"')" : ''; }
 
   var done = Object.keys(progress).filter(function(k){ return progress[k] && progress[k].done; }).length;
   var pct = TOTAL_TASKS ? Math.round(done/TOTAL_TASKS*100) : 0;
   var reqCount = Object.keys(requested).length;
   var start = org.plan_start ? new Date(org.plan_start) : null;
   var elapsed = start ? Math.max(1, Math.min(100, Math.floor((Date.now()-start.getTime())/86400000)+1)) : 0;
+  var left = Math.max(0, 100 - elapsed);
+
+  document.getElementById('prof-plan-card').innerHTML =
+    '<div class="plan-prog-card" onclick="go(\'plan\')" role="button" tabindex="0">'+
+      '<div class="ppc-ring" style="--p:'+pct+'"><span>'+pct+'%</span></div>'+
+      '<div class="ppc-tx">'+
+        '<h3>خطة المئة يوم</h3>'+
+        '<p>تابع مهام تأسيس جمعيتك وحدّث تقدّمك خطوة بخطوة.</p>'+
+        '<div class="ppc-meta">'+
+          '<div><b>'+done+'/'+TOTAL_TASKS+'</b>مهمة مكتملة</div>'+
+          '<div><b>'+elapsed+'</b>اليوم من 100</div>'+
+          '<div><b>'+left+'</b>يوم متبقٍ</div>'+
+        '</div>'+
+      '</div>'+
+      '<span class="ppc-go">متابعة الخطة <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="m15 18-6-6 6-6"/></svg></span>'+
+    '</div>';
 
   document.getElementById('prof-stats').innerHTML =
     '<div class="prof-stat accent"><div class="n">'+pct+'%</div><div class="l">إنجاز خطة المئة يوم</div></div>'+
