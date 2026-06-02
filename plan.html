@@ -593,6 +593,82 @@ img,svg{display:block;max-width:100%}
 .mr-st-won{color:var(--ok);background:var(--ok-soft)}
 .mr-st-lost{color:var(--muted);background:var(--bg-tint)}
 
+/* ── Home dashboard (الرئيسية) ── */
+.home-hero{position:relative;border-radius:var(--radius-lg);overflow:hidden;margin-bottom:6px;box-shadow:var(--shadow);background:#fff;border:1px solid var(--line)}
+[data-theme="dark"] .home-hero{background:#192338;border-color:rgba(255,255,255,.1)}
+.hh-banner{height:120px;background:linear-gradient(120deg,var(--navy-deep),var(--navy) 70%,#0c3a8a);background-size:cover;background-position:center;position:relative}
+.hh-banner::after{content:"";position:absolute;width:260px;height:260px;border-radius:50%;background:radial-gradient(circle,rgba(39,194,172,.22),transparent 65%);top:-130px;left:-60px;pointer-events:none}
+.hh-body{padding:0 26px 22px;margin-top:-40px;position:relative;display:flex;align-items:flex-end;gap:18px;flex-wrap:wrap}
+.hh-ava{width:80px;height:80px;border-radius:20px;background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:32px;border:4px solid #fff;box-shadow:var(--shadow);flex-shrink:0;overflow:hidden}
+[data-theme="dark"] .hh-ava{border-color:#192338}
+.hh-ava.has-logo{background:#fff}
+.hh-ava.has-logo img{width:100%;height:100%;object-fit:contain;padding:8px;box-sizing:border-box}
+.hh-id{flex:1;min-width:160px;padding-bottom:2px}
+.hh-greet{font-size:12.5px;color:var(--muted)}
+.hh-id h1{font-size:21px;font-weight:700;color:var(--navy-deep);line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+[data-theme="dark"] .hh-id h1{color:var(--ink)}
+.hh-city{font-size:12.5px;color:var(--muted);margin-top:3px;display:flex;align-items:center;gap:6px}
+.hh-city svg{width:13px;height:13px;color:var(--accent)}
+.hh-prog{flex:1 1 230px;min-width:200px;padding-bottom:4px}
+.hh-prog-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
+.hh-prog-top b{font-size:12.5px;color:var(--navy-2);font-weight:600}
+.hh-prog-top span{font-size:18px;font-weight:800;color:var(--accent)}
+.hh-bar{height:8px;border-radius:8px;background:var(--bg-tint);overflow:hidden}
+.hh-bar i{display:block;height:100%;border-radius:8px;background:linear-gradient(90deg,var(--accent-2),var(--accent));transition:width .7s var(--ease)}
+.hh-mini{display:flex;gap:20px;margin-top:9px}
+.hh-mini div{font-size:11px;color:var(--muted)}
+.hh-mini b{font-size:14px;font-weight:700;color:var(--navy-deep)}
+[data-theme="dark"] .hh-mini b{color:var(--ink)}
+
+.home-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(225px,1fr));gap:14px}
+.home-card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow-sm);cursor:pointer;transition:.18s;text-align:right;font-family:inherit;display:flex;flex-direction:column;gap:9px;position:relative}
+[data-theme="dark"] .home-card{background:#192338;border-color:rgba(255,255,255,.1)}
+.home-card:hover{box-shadow:var(--shadow);transform:translateY(-2px)}
+.hc-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.hc-ico{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:var(--bg-tint);color:var(--navy)}
+.hc-ico svg{width:22px;height:22px}
+.hc-ico.accent{background:var(--accent-soft);color:var(--accent)}
+.hc-ico.gold{background:rgba(224,168,60,.13);color:var(--gold)}
+.hc-state{font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;white-space:nowrap}
+.hc-state.on{color:var(--ok);background:var(--ok-soft)}
+.hc-state.soon{color:var(--muted);background:var(--bg-tint)}
+.hc-state.up{color:var(--gold);background:rgba(224,168,60,.13)}
+.home-card h4{font-size:15px;font-weight:700;color:var(--navy-deep)}
+[data-theme="dark"] .home-card h4{color:var(--ink)}
+.hc-sub{font-size:12.5px;color:var(--muted);line-height:1.55}
+.home-card.locked .hc-ico{background:var(--bg-tint);color:var(--muted-2)}
+.hc-more{font-size:12px;color:var(--accent);font-weight:600;display:flex;align-items:center;gap:5px;margin-top:auto}
+.hc-more svg{width:13px;height:13px}
+
+/* home card popup */
+.modal-box.hm-box{text-align:right;max-width:430px}
+.hm-head{display:flex;align-items:center;gap:13px;margin-bottom:14px;text-align:right}
+.hm-head .hc-ico{width:48px;height:48px}
+.hm-head h3{margin:0;font-size:18px}
+.hm-head .hm-sub{font-size:12px;color:var(--muted);margin-top:2px}
+.hm-desc{font-size:13.5px;color:var(--navy-2);line-height:1.75;margin-bottom:14px;text-align:right}
+[data-theme="dark"] .hm-desc{color:var(--ink)}
+.hm-ring{--p:0;width:96px;height:96px;border-radius:50%;margin:2px auto 12px;display:flex;align-items:center;justify-content:center;background:conic-gradient(var(--accent) calc(var(--p)*1%),var(--bg-tint) 0);position:relative}
+.hm-ring::before{content:"";position:absolute;inset:9px;border-radius:50%;background:#fff}
+[data-theme="dark"] .hm-ring::before{background:#1b2740}
+.hm-ring span{position:relative;font-size:23px;font-weight:800;color:var(--navy-deep)}
+[data-theme="dark"] .hm-ring span{color:var(--ink)}
+.hm-stat-row{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.hm-stat{flex:1;min-width:84px;background:var(--bg-soft);border:1px solid var(--line);border-radius:12px;padding:11px 12px;text-align:center}
+[data-theme="dark"] .hm-stat{background:rgba(255,255,255,.04)}
+.hm-stat b{display:block;font-size:21px;font-weight:800;color:var(--navy-deep);line-height:1}
+[data-theme="dark"] .hm-stat b{color:var(--ink)}
+.hm-stat span{font-size:11px;color:var(--muted);margin-top:5px;display:block}
+.hm-list{display:flex;flex-direction:column;gap:7px;margin-bottom:6px}
+.hm-li{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--ink);background:var(--bg-soft);border-radius:9px;padding:9px 12px}
+[data-theme="dark"] .hm-li{background:rgba(255,255,255,.04)}
+.hm-li .d{width:7px;height:7px;border-radius:50%;background:var(--accent);flex-shrink:0}
+.hm-li .nm{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hm-li .day{font-size:10px;color:var(--navy);background:var(--bg-tint);padding:2px 8px;border-radius:20px;flex-shrink:0}
+.hm-empty{font-size:13px;color:var(--muted);text-align:center;padding:14px 0}
+.hm-actions{display:flex;flex-direction:column;gap:9px;margin-top:18px}
+.hm-actions .btn{width:100%;justify-content:center}
+
 /* ─── Placeholder (soon) pages ─── */
 .coming-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:440px;text-align:center;padding:40px 20px}
 .coming-icon{width:80px;height:80px;border-radius:22px;background:var(--bg-tint);color:var(--navy);display:flex;align-items:center;justify-content:center;margin:0 auto 24px;box-shadow:var(--shadow-sm)}
@@ -1349,8 +1425,8 @@ img,svg{display:block;max-width:100%}
     <nav class="sb-nav" id="sb-nav">
       <div class="sb-group">الرئيسية</div>
       <button class="sb-item active" id="nav-overview" onclick="go('overview')">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
-        لوحة التحكم
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round"><path d="M3 9.5 12 3l9 6.5"/><path d="M5 8.5V21h14V8.5"/><path d="M9 21v-6h6v6"/></svg>
+        الرئيسية
       </button>
       <button class="sb-item" id="nav-plan" onclick="go('plan')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round"><path d="M9 11l3 3 8-8"/><path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z"/></svg>
@@ -1499,57 +1575,9 @@ img,svg{display:block;max-width:100%}
 
       <!-- ─── Overview ─── -->
       <section class="page active" id="page-overview">
-        <div class="hero-card">
-          <div class="hero-row">
-            <div class="hero-left">
-              <div class="ttl">رحلتك نحو منظمة راسخة ومستدامة</div>
-              <h2 id="hero-org">أهلاً بك في بوابة بُعد</h2>
-            </div>
-            <div class="hero-right">
-              <div class="hero-pct" id="big-pct">0<span>%</span></div>
-              <div class="hero-pct-lbl">إنجاز الخطة</div>
-            </div>
-          </div>
-          <div class="ov-stats">
-            <div class="ov-stat"><div class="n"><span id="st-done">0</span>/<span id="st-total">0</span></div><div class="l">مهمة مكتملة</div></div>
-            <div class="ov-stat"><div class="n"><span id="st-day">1</span> <span style="font-size:12px;font-weight:400;opacity:.75">من 100</span></div><div class="l">اليوم في خطتك</div></div>
-            <div class="ov-stat"><div class="n"><span id="st-left">99</span></div><div class="l">يوماً متبقياً</div></div>
-          </div>
-          <div class="bigbar"><i id="big-fill" style="width:0%"></i></div>
-        </div>
-
-        <div class="section-h">اختصارات سريعة</div>
-        <div class="quick-grid" id="ov-quick-grid">
-          <button class="quick-card" onclick="go('plan')">
-            <div class="quick-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 11l3 3 8-8"/><path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z"/></svg></div>
-            <h4>خطة المئة يوم</h4>
-            <p>تابع مهام تأسيس جمعيتك وحدّث تقدّمك خطوة بخطوة.</p>
-            <span class="go">انتقل للخطة <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="m15 18-6-6 6-6"/></svg></span>
-          </button>
-          <button class="quick-card" onclick="go('services')">
-            <div class="quick-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></div>
-            <h4>خدمات بُعد</h4>
-            <p>اطلب خدمات الهوية والاستراتيجية والمالية والحوكمة لجمعيتك.</p>
-            <span class="go">تصفّح الخدمات <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="m15 18-6-6 6-6"/></svg></span>
-          </button>
-          <button class="quick-card" onclick="go('resources')">
-            <div class="quick-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></div>
-            <h4>الموارد والأدلة</h4>
-            <p>الأدلة والسياسات الرسمية من الجهات المعنية بالقطاع غير الربحي.</p>
-            <span class="go">افتح الموارد <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="m15 18-6-6 6-6"/></svg></span>
-          </button>
-        </div>
-
-        <div class="ov-two">
-          <div class="ov-panel">
-            <div class="ov-panel-hd"><h3>المهام التالية</h3><a onclick="go('plan')">عرض الكل</a></div>
-            <div id="ov-next-tasks"><p class="ov-empty">جارٍ التحميل…</p></div>
-          </div>
-          <div class="ov-panel">
-            <div class="ov-panel-hd"><h3>آخر الإنجازات</h3><a onclick="go('plan')">الخطة كاملة</a></div>
-            <div id="ov-recent-done"><p class="ov-empty">لا توجد مهام مكتملة بعد.</p></div>
-          </div>
-        </div>
+        <div id="home-hero"></div>
+        <div class="section-h">أدوات ومساحات جمعيتك</div>
+        <div class="home-cards" id="home-cards"></div>
       </section>
 
       <!-- ─── Plan ─── -->
@@ -1875,6 +1903,14 @@ img,svg{display:block;max-width:100%}
       <button class="btn btn-ghost" onclick="closeProfileModal()">إلغاء</button>
       <button class="btn btn-primary" id="pf-save" onclick="saveProfile()">حفظ التغييرات</button>
     </div>
+  </div>
+</div>
+
+<!-- Home card popup -->
+<div class="modal-overlay" id="home-modal">
+  <div class="modal-box hm-box">
+    <button class="modal-x" onclick="closeHomeModal()" aria-label="إغلاق">×</button>
+    <div id="home-modal-body"></div>
   </div>
 </div>
 
@@ -2356,8 +2392,9 @@ function saveProfile(){
   });
 }
 document.getElementById('prof-modal').addEventListener('click', function(e){ if(e.target===this) closeProfileModal(); });
+document.getElementById('home-modal').addEventListener('click', function(e){ if(e.target===this) closeHomeModal(); });
 document.addEventListener('keydown', function(e){
-  if(e.key==='Escape'){ closeServiceModal(); closeProfileModal(); }
+  if(e.key==='Escape'){ closeServiceModal(); closeProfileModal(); closeHomeModal(); }
   if((e.metaKey||e.ctrlKey) && e.key==='k'){
     e.preventDefault();
     var inp = document.getElementById('sb-search-inp');
@@ -2424,7 +2461,6 @@ function applyOrgIdentity(){
   setAvatar(document.getElementById('sb-org-ava'), logo, initial);
   setAvatar(document.getElementById('m-ava'), logo, initial);
   document.getElementById('sb-org-city').textContent = (org && org.city) || 'جمعية ناشئة';
-  document.getElementById('hero-org').textContent = nm;
 }
 
 /* ── App enter ── */
@@ -2438,6 +2474,7 @@ function enterApp(){
   renderResources();
   updateOverview();
   loadOrgRequests();
+  loadHomeCrmStats();
   go('overview');
 }
 
@@ -2990,7 +3027,7 @@ function loadOrgRequests(cb){
   if(!org) return;
   fetch(API+'/org/requests', { headers:{'Authorization':'Bearer '+token()} })
     .then(function(r){ return r.ok ? r.json() : []; })
-    .then(function(data){ _orgRequests = data; if(cb) cb(); })
+    .then(function(data){ _orgRequests = data; if(currentPage==='overview') renderHome(); if(cb) cb(); })
     .catch(function(){ _orgRequests = []; if(cb) cb(); });
 }
 
@@ -3125,67 +3162,234 @@ function refreshTrackBars(){
   });
 }
 
-function updateOverview(){
+/* ── Home dashboard plan metrics ── */
+function _homeMetrics(){
   var done = Object.keys(progress).filter(function(k){ return progress[k] && progress[k].done; }).length;
   var pct = TOTAL_TASKS ? Math.round(done/TOTAL_TASKS*100) : 0;
-  document.getElementById('st-done').textContent = done;
-  document.getElementById('st-total').textContent = TOTAL_TASKS;
-  document.getElementById('big-fill').style.width = pct+'%';
-  document.getElementById('big-pct').innerHTML = pct+'<span>%</span>';
-  document.getElementById('sb-org-pct').textContent = pct+'%';
-  document.getElementById('sb-org-fill').style.width = pct+'%';
   var start = org && org.plan_start ? new Date(org.plan_start) : new Date();
   var elapsed = Math.max(1, Math.min(100, Math.floor((Date.now()-start.getTime())/86400000)+1));
-  document.getElementById('st-day').textContent = elapsed;
-  document.getElementById('st-left').textContent = Math.max(0,100-elapsed);
-  renderOvTasks();
+  return { done:done, pct:pct, elapsed:elapsed, left:Math.max(0,100-elapsed) };
+}
+function _allTasks(){ var a=[]; PLAN.forEach(function(t){ t.tasks.forEach(function(x){ a.push(x); }); }); return a; }
+function _pendingTasks(){ return _allTasks().filter(function(t){ return !(progress[t.id]&&progress[t.id].done); }); }
+
+function updateOverview(){
+  var m = _homeMetrics();
+  document.getElementById('sb-org-pct').textContent = m.pct+'%';
+  document.getElementById('sb-org-fill').style.width = m.pct+'%';
+  renderHome();
 }
 
-function renderOvTasks(){
-  var nextEl = document.getElementById('ov-next-tasks');
-  var doneEl = document.getElementById('ov-recent-done');
-  if(!nextEl || !doneEl || !PLAN.length) return;
-  var allTasks = [];
-  PLAN.forEach(function(track){ track.tasks.forEach(function(t){ allTasks.push(t); }); });
-  var pending = allTasks.filter(function(t){ return !(progress[t.id]&&progress[t.id].done); }).slice(0,5);
-  var recent = allTasks.filter(function(t){ return progress[t.id]&&progress[t.id].done; })
-    .sort(function(a,b){ var da=progress[a.id].at||'';var db=progress[b.id].at||'';return db>da?1:db<da?-1:0; })
-    .slice(0,5);
-  if(!pending.length){
-    nextEl.innerHTML = '<p class="ov-empty">أحسنت — أكملت جميع المهام!</p>';
-  } else {
-    nextEl.innerHTML = pending.map(function(t){
-      return '<div class="ov-task-row" onclick="go(\'plan\')">'+
-        '<div class="ot-chk"></div>'+
-        '<div class="ot-tx"><div class="ot-nm">'+esc(t.title)+'</div></div>'+
-        '<span class="ot-day">'+esc(t.day)+'</span>'+
+/* ── CRM stats for home cards (lazy) ── */
+var _homeCrmStats = null;
+function loadHomeCrmStats(){
+  if(!crmEnabled) return;
+  crmFetch('/dashboard').then(function(d){ _homeCrmStats = d.stats || {}; if(currentPage==='overview') renderHome(); }).catch(function(){});
+}
+
+/* ── Activation requests (for non-enabled tools) ── */
+function _activKey(tool){ return 'buad_activation_'+(org&&org.id?org.id:'x')+'_'+tool; }
+function isActivationRequested(tool){ try{ return !!localStorage.getItem(_activKey(tool)); }catch(e){ return false; } }
+function requestActivation(tool, serviceTitle){
+  fetch(API+'/org/request',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+token()},
+    body:JSON.stringify({ service: serviceTitle, message:'طلب تفعيل من الرئيسية' })
+  })
+  .then(function(r){ return r.json().then(function(j){ return {ok:r.ok,j:j}; }); })
+  .then(function(res){
+    if(!res.ok) throw new Error('x');
+    try{ localStorage.setItem(_activKey(tool),'1'); }catch(e){}
+    toast('تم إرسال طلب التفعيل ✓ سيتواصل معك فريق بُعد');
+    _orgRequests = null; loadOrgRequests();
+    openHomeCard(tool);
+  })
+  .catch(function(){ toast('تعذّر إرسال الطلب — حاول مجدداً'); });
+}
+
+/* ── Render the home (الرئيسية) page ── */
+function renderHome(){
+  var hero = document.getElementById('home-hero');
+  if(!hero) return;
+  var m = _homeMetrics();
+  var nm = (org&&org.name)||'جمعيتي';
+  var logo = (org&&org.logo_url)||'';
+  var banner = (org&&org.banner_url)||'';
+  var city = (org&&org.city)||'جمعية ناشئة';
+  hero.innerHTML =
+    '<div class="hh-banner"'+(banner?' style="background-image:url(\''+esc(banner)+'\')"':'')+'></div>'+
+    '<div class="hh-body">'+
+      '<div class="hh-ava'+(logo?' has-logo':'')+'">'+(logo?'<img src="'+esc(logo)+'" alt="">':esc(nm.charAt(0)))+'</div>'+
+      '<div class="hh-id">'+
+        '<div class="hh-greet">أهلاً بك من جديد 👋</div>'+
+        '<h1>'+esc(nm)+'</h1>'+
+        '<div class="hh-city"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>'+esc(city)+'</div>'+
+      '</div>'+
+      '<div class="hh-prog">'+
+        '<div class="hh-prog-top"><b>إنجاز خطة المئة يوم</b><span>'+m.pct+'%</span></div>'+
+        '<div class="hh-bar"><i style="width:'+m.pct+'%"></i></div>'+
+        '<div class="hh-mini">'+
+          '<div><b>'+m.done+'</b> من '+TOTAL_TASKS+' مهمة</div>'+
+          '<div><b>'+m.elapsed+'</b> اليوم من 100</div>'+
+          '<div><b>'+m.left+'</b> يوم متبقٍ</div>'+
+        '</div>'+
+      '</div>'+
+    '</div>';
+  renderHomeCards(m);
+}
+
+function _homeCardDefs(m){
+  var pending = _pendingTasks().length;
+  var reqs = _orgRequests || [];
+  var openReqs = reqs.filter(function(r){ return r.status!=='won' && r.status!=='lost'; }).length;
+  var cards = [];
+  // 1) Plan
+  cards.push({ id:'plan', title:'خطة المئة يوم', tone:'accent', state:'on', stateLbl:'نشطة',
+    sub:m.pct+'% مكتمل · '+m.done+'/'+TOTAL_TASKS+' مهمة',
+    icon:'<path d="M9 11l3 3 8-8"/><path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z"/>' });
+  // 2) Tasks
+  cards.push({ id:'tasks', title:'المهام القادمة', tone:'', state:'on', stateLbl:pending?(''+pending+' مهمة'):'مكتملة',
+    sub: pending? ('لديك '+pending+' مهمة بانتظار الإنجاز') : 'أنجزت كل المهام — أحسنت!',
+    icon:'<path d="M11 12H3M16 6H3M21 18H3"/><circle cx="18" cy="9" r="3"/>' });
+  // 3) Website
+  cards.push({ id:'website', title:'موقعي الإلكتروني', tone: wsEnabled?'accent':'', state: wsEnabled?'on':'up', stateLbl: wsEnabled?'مفعّل':'غير مفعّل', locked:!wsEnabled,
+    sub: wsEnabled? 'انشر وأدر موقع جمعيتك الرسمي' : 'موقع رسمي يعرض برامجك ويستقبل التبرعات',
+    icon:'<circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>' });
+  // 4) CRM / beneficiary requests
+  var crmSub = 'سجّل المستفيدين وتابع طلباتهم ومساعداتهم';
+  if(crmEnabled && _homeCrmStats){ crmSub = (_homeCrmStats.total_bens||0)+' مستفيد · '+((_homeCrmStats.pending_reqs||0)+(_homeCrmStats.reviewing_reqs||0))+' طلب قيد المتابعة'; }
+  cards.push({ id:'crm', title:'طلبات المستفيدين', tone: crmEnabled?'accent':'', state: crmEnabled?'on':'up', stateLbl: crmEnabled?'مفعّل':'غير مفعّل', locked:!crmEnabled,
+    sub: crmSub,
+    icon:'<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>' });
+  // 5) My requests to بُعد
+  cards.push({ id:'reqs', title:'طلباتي لدى بُعد', tone:'', state:'on', stateLbl: reqs.length?(''+reqs.length):'—',
+    sub: reqs.length? (openReqs+' قيد التنفيذ من أصل '+reqs.length+' طلب') : 'لم ترسل أي طلب خدمة بعد',
+    icon:'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/>' });
+  // 6) Grants
+  cards.push({ id:'grants', title:'فرص المنح والتمويل', tone:'gold', state:'on', stateLbl:'متاح',
+    sub:'تعرّف على الجهات المانحة ونوافذ التقديم',
+    icon:'<path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>' });
+  // 7) Projects (soon)
+  cards.push({ id:'projects', title:'إدارة المشاريع', tone:'', state:'soon', stateLbl:'قريباً', locked:true,
+    sub:'خطّط مشاريعك وتابع مهامك وميزانياتها',
+    icon:'<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>' });
+  // 8) Governance (soon)
+  cards.push({ id:'governance', title:'الحوكمة والامتثال', tone:'', state:'soon', stateLbl:'قريباً', locked:true,
+    sub:'أدلة ولوائح وأدوات الامتثال المؤسسي',
+    icon:'<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/>' });
+  return cards;
+}
+
+function renderHomeCards(m){
+  var wrap = document.getElementById('home-cards');
+  if(!wrap) return;
+  var cards = _homeCardDefs(m);
+  wrap.innerHTML = cards.map(function(c){
+    return '<button class="home-card'+(c.locked?' locked':'')+'" onclick="openHomeCard(\''+c.id+'\')">'+
+      '<div class="hc-top">'+
+        '<div class="hc-ico'+(c.tone?' '+c.tone:'')+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">'+c.icon+'</svg></div>'+
+        '<span class="hc-state '+c.state+'">'+esc(c.stateLbl)+'</span>'+
+      '</div>'+
+      '<h4>'+esc(c.title)+'</h4>'+
+      '<div class="hc-sub">'+esc(c.sub)+'</div>'+
+      '<span class="hc-more">عرض التفاصيل <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="m15 18-6-6 6-6"/></svg></span>'+
+    '</button>';
+  }).join('');
+}
+
+/* ── Home card popup ── */
+function closeHomeModal(){ document.getElementById('home-modal').classList.remove('show'); }
+function _hmHead(icoTone, icoPath, title, sub){
+  return '<div class="hm-head">'+
+    '<div class="hc-ico'+(icoTone?' '+icoTone:'')+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">'+icoPath+'</svg></div>'+
+    '<div><h3>'+esc(title)+'</h3>'+(sub?'<div class="hm-sub">'+esc(sub)+'</div>':'')+'</div>'+
+  '</div>';
+}
+function openHomeCard(id){
+  var m = _homeMetrics();
+  var body = document.getElementById('home-modal-body');
+  var html = '';
+  if(id==='plan'){
+    var nextThree = _pendingTasks().slice(0,3);
+    html = _hmHead('accent','<path d="M9 11l3 3 8-8"/><path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z"/>','خطة المئة يوم','اليوم '+m.elapsed+' من 100')+
+      '<div class="hm-ring" style="--p:'+m.pct+'"><span>'+m.pct+'%</span></div>'+
+      '<div class="hm-stat-row"><div class="hm-stat"><b>'+m.done+'</b><span>مكتملة</span></div>'+
+        '<div class="hm-stat"><b>'+(TOTAL_TASKS-m.done)+'</b><span>متبقية</span></div>'+
+        '<div class="hm-stat"><b>'+m.left+'</b><span>يوم متبقٍ</span></div></div>'+
+      (nextThree.length?'<div class="hm-list">'+nextThree.map(function(t){ return '<div class="hm-li"><span class="d"></span><span class="nm">'+esc(t.title)+'</span><span class="day">'+esc(t.day)+'</span></div>'; }).join('')+'</div>':'')+
+      '<div class="hm-actions"><button class="btn btn-primary" onclick="closeHomeModal();go(\'plan\')">فتح خطة المئة يوم</button></div>';
+  } else if(id==='tasks'){
+    var pend = _pendingTasks().slice(0,6);
+    html = _hmHead('','<path d="M11 12H3M16 6H3M21 18H3"/><circle cx="18" cy="9" r="3"/>','المهام القادمة', pend.length? (pend.length+' مهمة بانتظارك') : 'كل المهام مكتملة')+
+      (pend.length?'<div class="hm-list">'+pend.map(function(t){ return '<div class="hm-li"><span class="d"></span><span class="nm">'+esc(t.title)+'</span><span class="day">'+esc(t.day)+'</span></div>'; }).join('')+'</div>'
+        :'<div class="hm-empty">🎉 أنجزت جميع مهام الخطة!</div>')+
+      '<div class="hm-actions"><button class="btn btn-primary" onclick="closeHomeModal();go(\'plan\')">إدارة المهام</button></div>';
+  } else if(id==='website'){
+    if(wsEnabled){
+      var liveUrl = window.location.origin + '/org-site?org=' + ((org&&org.id)||'');
+      html = _hmHead('accent','<circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>','موقعي الإلكتروني','موقع جمعيتك الرسمي')+
+        '<p class="hm-desc">أدِر محتوى موقعك وانشره للعامة، أو افتح الصفحة العامة لمشاركتها مع جمهورك.</p>'+
+        '<div class="hm-actions">'+
+          '<button class="btn btn-primary" onclick="closeHomeModal();go(\'website\')">إدارة الموقع والنشر</button>'+
+          '<a class="btn btn-ghost" href="'+esc(liveUrl)+'" target="_blank" rel="noopener">فتح الموقع في نافذة جديدة</a>'+
+        '</div>';
+    } else {
+      var wReq = isActivationRequested('website');
+      html = _hmHead('','<circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>','موقعي الإلكتروني','غير مفعّل بعد')+
+        '<p class="hm-desc">موقع إلكتروني احترافي يعرض برامج جمعيتك ويستقبل التبرعات والمتطوعين، مع دومين خاص ونشر فوري. فعّله عبر فريق بُعد.</p>'+
+        '<div class="hm-actions">'+
+          (wReq? '<button class="btn btn-ghost" disabled>تم إرسال طلب التفعيل ✓</button>'
+               : '<button class="btn btn-primary" onclick="requestActivation(\'website\',\'تفعيل الموقع الإلكتروني للجمعية\')">اطلب التفعيل</button>')+
+          '<button class="btn btn-ghost" onclick="closeHomeModal();go(\'store\')">تصفّح الأدوات والباقات</button>'+
+        '</div>';
+    }
+  } else if(id==='crm'){
+    if(crmEnabled){
+      var s = _homeCrmStats || {};
+      html = _hmHead('accent','<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>','إدارة المستفيدين','المستفيدون وطلباتهم')+
+        '<div class="hm-stat-row"><div class="hm-stat"><b>'+(s.total_bens||0)+'</b><span>مستفيد</span></div>'+
+          '<div class="hm-stat"><b>'+(s.pending_reqs||0)+'</b><span>طلب معلّق</span></div>'+
+          '<div class="hm-stat"><b>'+(s.pending_bens||0)+'</b><span>بانتظار الاعتماد</span></div></div>'+
+        '<div class="hm-actions">'+
+          '<button class="btn btn-primary" onclick="closeHomeModal();crm.view=\'reqs\';go(\'crm\')">عرض طلبات المستفيدين</button>'+
+          '<button class="btn btn-ghost" onclick="closeHomeModal();crm.view=\'bens\';go(\'crm\')">سجل المستفيدين</button>'+
+        '</div>';
+    } else {
+      var cReq = isActivationRequested('crm');
+      html = _hmHead('','<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>','إدارة المستفيدين','غير مفعّل بعد')+
+        '<p class="hm-desc">نظام متكامل لتسجيل المستفيدين، استقبال طلباتهم، إدارة المساعدات، واعتماد الحالات بسير عمل واضح. فعّله عبر فريق بُعد.</p>'+
+        '<div class="hm-actions">'+
+          (cReq? '<button class="btn btn-ghost" disabled>تم إرسال طلب التفعيل ✓</button>'
+               : '<button class="btn btn-primary" onclick="requestActivation(\'crm\',\'تفعيل نظام إدارة المستفيدين\')">اطلب التفعيل</button>')+
+          '<button class="btn btn-ghost" onclick="closeHomeModal();go(\'store\')">تصفّح الأدوات والباقات</button>'+
+        '</div>';
+    }
+  } else if(id==='reqs'){
+    var reqs = _orgRequests || [];
+    var statusLbl = { new:'في الانتظار', contacted:'تم التواصل', in_progress:'قيد التنفيذ', won:'مكتمل', lost:'مغلق' };
+    html = _hmHead('','<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>','طلباتي لدى بُعد','متابعة طلبات الخدمات')+
+      (reqs.length? '<div class="hm-list">'+reqs.slice(0,6).map(function(r){ return '<div class="hm-li"><span class="d"></span><span class="nm">'+esc(r.service)+'</span><span class="day">'+esc(statusLbl[r.status]||r.status)+'</span></div>'; }).join('')+'</div>'
+        : '<div class="hm-empty">لم ترسل أي طلب خدمة بعد.</div>')+
+      '<div class="hm-actions">'+
+        '<button class="btn btn-primary" onclick="closeHomeModal();go(\'profile\')">متابعة طلباتي</button>'+
+        '<button class="btn btn-ghost" onclick="closeHomeModal();go(\'services\')">طلب خدمة جديدة</button>'+
       '</div>';
-    }).join('');
-  }
-  if(!recent.length){
-    doneEl.innerHTML = '<p class="ov-empty">لا توجد مهام مكتملة بعد.</p>';
-  } else {
-    doneEl.innerHTML = recent.map(function(t){
-      return '<div class="ov-act-row">'+
-        '<div class="ov-act-dot"></div>'+
-        '<div class="ov-act-nm">'+esc(t.title)+'</div>'+
-        '<span class="ov-act-at">'+esc(progress[t.id].at||'')+'</span>'+
+  } else if(id==='grants'){
+    html = _hmHead('gold','<path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>','فرص المنح والتمويل','جهات مانحة ونوافذ تقديم')+
+      '<p class="hm-desc">استعرض الجهات المانحة الحكومية والأهلية، وتعرّف على مواعيد فتح نوافذ التقديم لفرص التمويل المناسبة لجمعيتك.</p>'+
+      '<div class="hm-actions"><button class="btn btn-primary" onclick="closeHomeModal();go(\'grants\')">تصفّح فرص المنح</button></div>';
+  } else if(id==='projects' || id==='governance'){
+    var isProj = id==='projects';
+    var tReq = isActivationRequested(id);
+    html = _hmHead('', isProj?'<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>':'<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/>', isProj?'إدارة المشاريع':'الحوكمة والامتثال','قيد التطوير — قريباً')+
+      '<p class="hm-desc">'+(isProj?'أداة لتخطيط مشاريع جمعيتك وتتبع مهامها وميزانياتها ومؤشرات أدائها في مكان واحد.':'أدوات ولوائح تساعد جمعيتك على تطبيق معايير الحوكمة والامتثال المؤسسي بثقة.')+' أبلغنا برغبتك لنُعلمك فور إطلاقها.</p>'+
+      '<div class="hm-actions">'+
+        (tReq? '<button class="btn btn-ghost" disabled>سنُعلمك عند الإطلاق ✓</button>'
+             : '<button class="btn btn-primary" onclick="requestActivation(\''+id+'\',\''+(isProj?'الاهتمام بأداة إدارة المشاريع':'الاهتمام بأداة الحوكمة والامتثال')+'\')">أبلغني عند الإطلاق</button>')+
       '</div>';
-    }).join('');
   }
-  // Add website quick card dynamically if enabled
-  var qg = document.getElementById('ov-quick-grid');
-  if(qg && wsEnabled && !document.getElementById('ov-qc-website')){
-    var wc = document.createElement('button');
-    wc.className = 'quick-card';
-    wc.id = 'ov-qc-website';
-    wc.onclick = function(){ go('website'); };
-    wc.innerHTML = '<div class="quick-ico" style="background:linear-gradient(135deg,rgba(29,155,138,.12),rgba(0,25,125,.06));color:var(--accent)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></div>'+
-      '<h4>موقعي الإلكتروني</h4>'+
-      '<p>أنشئ وأدر موقع جمعيتك الإلكتروني باحترافية عالية.</p>'+
-      '<span class="go">إدارة الموقع <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="m15 18-6-6 6-6"/></svg></span>';
-    qg.appendChild(wc);
-  }
+  body.innerHTML = html;
+  document.getElementById('home-modal').classList.add('show');
 }
 
 function scheduleSave(){
