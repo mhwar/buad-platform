@@ -1921,20 +1921,21 @@ img,svg{display:block;max-width:100%}
       <section class="page" id="page-resources">
         <div class="page-head">
           <h1>الموارد والأدلة</h1>
-          <p>مرجع موحّد لأهم الأدلة والسياسات واللوائح الرسمية المنشورة من الجهات المعنية بالقطاع غير الربحي في المملكة، إضافة إلى نماذج جاهزة تساعد جمعيتك.</p>
+          <p>مرجع موحّد للأدلة والسياسات واللوائح الرسمية، ودليل الجهات المانحة للجمعيات في المملكة.</p>
         </div>
         <div class="res-note">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
           <span>الروابط أدناه تنقلك إلى المصادر الرسمية للجهات الحكومية. تأكد دائماً من اعتماد أحدث نسخة من الأدلة واللوائح مباشرةً من موقع الجهة قبل العمل بها.</span>
         </div>
         <div id="resources-list"></div>
+        <div id="grantors-dir"></div>
       </section>
 
       <!-- ─── Grants (فرص المنح) ─── -->
       <section class="page" id="page-grants">
         <div class="page-head">
           <h1>فرص المنح والتمويل</h1>
-          <p>تعرّف على الجهات المانحة وأوقات فتح نوافذ التقديم لفرص التمويل المتاحة للجمعيات.</p>
+          <p>تابع أوقات فتح نوافذ التقديم لفرص التمويل المتاحة للجمعيات.</p>
         </div>
         <div id="grants-content"></div>
       </section>
@@ -3048,6 +3049,14 @@ function renderResourcesData(data){
     '</div>';
   }).join('');
   document.getElementById('resources-list').innerHTML = html;
+  var gdCont = document.getElementById('grantors-dir');
+  if (gdCont) {
+    var IC_BOOK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>';
+    gdCont.innerHTML =
+      '<div class="section-h">'+IC_BOOK+'دليل الجهات المانحة ('+GRANTORS.length+' جهة)</div>'+
+      '<p style="font-size:13px;color:var(--muted);margin:-10px 0 16px;line-height:1.6">مرجع شامل للجهات الحكومية والمؤسسات الخيرية وبرامج المسؤولية الاجتماعية للشركات التي تموّل مبادرات الجمعيات في المملكة.</p>'+
+      _renderGrantorsDir();
+  }
 }
 
 /* ── Grantors Directory (Static Catalog) ── */
@@ -3650,7 +3659,7 @@ function _renderGrantsData(grants) {
       '<div style="text-align:center;padding:40px 30px;background:#fff;border-radius:var(--radius);border:1px solid var(--line);margin-bottom:28px">'+
         '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:40px;height:40px;color:var(--muted);margin-bottom:12px"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>'+
         '<p style="font-size:14px;font-weight:600;color:var(--navy-2);margin-bottom:4px">لا توجد فرص منح ذات جداول زمنية متاحة حالياً</p>'+
-        '<p style="font-size:12.5px;color:var(--muted)">تابع هذا القسم للاطلاع على الفرص الجديدة. في الأثناء يمكنك استعراض دليل الجهات المانحة أدناه.</p>'+
+        '<p style="font-size:12.5px;color:var(--muted)">تابع هذا القسم للاطلاع على الفرص الجديدة. يمكنك في الأثناء مراجعة دليل الجهات المانحة في قسم الموارد والأدلة.</p>'+
       '</div>';
   } else {
     var IC_CARDS = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>';
@@ -3668,12 +3677,7 @@ function _renderGrantsData(grants) {
     dynamicSection = '<div class="section-h">'+IC_STAR+'فرص التمويل الزمنية</div>' + switcher + body;
   }
 
-  var IC_BOOK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>';
-  var grantorsSection = '<div class="section-h">'+IC_BOOK+'دليل الجهات المانحة ('+GRANTORS.length+' جهة)</div>'+
-    '<p style="font-size:13px;color:var(--muted);margin:-10px 0 16px;line-height:1.6">مرجع شامل للجهات الحكومية والمؤسسات الخيرية وبرامج المسؤولية الاجتماعية للشركات التي تموّل مبادرات الجمعيات في المملكة.</p>'+
-    _renderGrantorsDir();
-
-  cont.innerHTML = dynamicSection + grantorsSection;
+  cont.innerHTML = dynamicSection;
 }
 
 function escHtml(s) {
