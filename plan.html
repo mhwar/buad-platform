@@ -572,6 +572,27 @@ img,svg{display:block;max-width:100%}
 .pf-up-zone.has .pf-up-clear{display:flex}
 .pf-up-zone.has .pf-up-ph{display:none}
 
+/* ── My Requests tracker ── */
+.my-reqs-list{display:flex;flex-direction:column;gap:10px;margin-top:4px}
+.my-req-card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:14px 18px;display:flex;align-items:flex-start;gap:14px;box-shadow:var(--shadow-xs)}
+[data-theme="dark"] .my-req-card{background:#192338;border-color:rgba(255,255,255,.1)}
+.mr-ico{width:38px;height:38px;border-radius:10px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.mr-ico svg{width:18px;height:18px}
+.mr-tx{flex:1;min-width:0}
+.mr-svc{font-size:14px;font-weight:700;color:var(--navy-deep);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+[data-theme="dark"] .mr-svc{color:var(--ink)}
+.mr-date{font-size:11.5px;color:var(--muted);margin-top:2px}
+.mr-msg{font-size:12.5px;color:var(--navy-2);margin-top:6px;line-height:1.6;background:var(--bg-soft);padding:7px 10px;border-radius:8px;border-right:3px solid var(--line-2)}
+.mr-note{font-size:12.5px;color:var(--ok);margin-top:7px;background:var(--ok-soft);border:1px solid var(--ok-line);padding:8px 11px;border-radius:8px;line-height:1.6}
+.mr-note-hd{font-size:11px;font-weight:700;color:var(--ok);margin-bottom:3px}
+.mr-st{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;padding:3px 10px;border-radius:20px;flex-shrink:0;margin-top:2px}
+.mr-st svg{width:12px;height:12px}
+.mr-st-new{color:var(--navy);background:var(--bg-tint)}
+.mr-st-contacted{color:#0369a1;background:#e0f2fe}
+.mr-st-in_progress{color:var(--warn);background:var(--warn-soft)}
+.mr-st-won{color:var(--ok);background:var(--ok-soft)}
+.mr-st-lost{color:var(--muted);background:var(--bg-tint)}
+
 /* ─── Placeholder (soon) pages ─── */
 .coming-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:440px;text-align:center;padding:40px 20px}
 .coming-icon{width:80px;height:80px;border-radius:22px;background:var(--bg-tint);color:var(--navy);display:flex;align-items:center;justify-content:center;margin:0 auto 24px;box-shadow:var(--shadow-sm)}
@@ -2218,6 +2239,8 @@ function submitServiceRequest(){
     toast('تم إرسال طلبك ✓ سيتواصل معك فريق بُعد');
     renderServices();
     renderTracks();
+    _orgRequests = null;
+    loadOrgRequests();
   })
   .catch(function(){
     btn.disabled=false; btn.textContent='إرسال الطلب';
@@ -2414,6 +2437,7 @@ function enterApp(){
   renderServices();
   renderResources();
   updateOverview();
+  loadOrgRequests();
   go('overview');
 }
 
@@ -2919,7 +2943,6 @@ function renderProfile(){
     cf('<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>','رقم الترخيص', org.license_no)+
     cf('<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>','تاريخ بدء الخطة', startTxt);
 
-  var profCard = document.querySelector('#page-profile .prof-card');
   var toolsId = 'prof-tools-section';
   var existing = document.getElementById(toolsId);
   if(existing) existing.remove();
@@ -2943,6 +2966,7 @@ function renderProfile(){
     '</div>';
   var profCardParent = document.getElementById('page-profile');
   profCardParent.appendChild(toolsDiv);
+  renderMyRequests();
 }
 
 function profToolCard(iconPath, label, on, clickFn){
@@ -2957,6 +2981,72 @@ function profToolCard(iconPath, label, on, clickFn){
     if(el && clickFn) el.onclick = clickFn;
   }, 0);
   return html;
+}
+
+/* ── My Requests tracker ── */
+var _orgRequests = null;
+
+function loadOrgRequests(cb){
+  if(!org) return;
+  fetch(API+'/org/requests', { headers:{'Authorization':'Bearer '+token()} })
+    .then(function(r){ return r.ok ? r.json() : []; })
+    .then(function(data){ _orgRequests = data; if(cb) cb(); })
+    .catch(function(){ _orgRequests = []; if(cb) cb(); });
+}
+
+function renderMyRequests(){
+  var profilePage = document.getElementById('page-profile');
+  if(!profilePage) return;
+  var secId = 'prof-my-reqs';
+  var old = document.getElementById(secId);
+  if(old) old.remove();
+  var sec = document.createElement('div');
+  sec.id = secId;
+  sec.innerHTML = '<div class="section-h" style="margin:24px 0 14px">متابعة طلباتي</div>'+
+    '<div id="my-reqs-inner"><div class="ov-empty">جارٍ تحميل الطلبات…</div></div>';
+  profilePage.appendChild(sec);
+
+  function _doRender(){
+    var reqs = _orgRequests || [];
+    var inner = document.getElementById('my-reqs-inner');
+    if(!inner) return;
+    if(!reqs.length){
+      inner.innerHTML = '<div class="ov-empty" style="padding:20px 0">لم تُرسَل أي طلبات خدمة بعد.</div>';
+      return;
+    }
+    var statusMeta = {
+      new:         { lbl:'في الانتظار',  cls:'mr-st-new',         icon:'<path d="M22 12h-4l-3 9L9 3l-3 9H2"/>' },
+      contacted:   { lbl:'تم التواصل',  cls:'mr-st-contacted',    icon:'<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/>' },
+      in_progress: { lbl:'قيد التنفيذ', cls:'mr-st-in_progress',  icon:'<path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>' },
+      won:         { lbl:'مكتمل ✓',     cls:'mr-st-won',          icon:'<polyline points="20 6 9 17 4 12"/>' },
+      lost:        { lbl:'مغلق',        cls:'mr-st-lost',          icon:'<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>' }
+    };
+    inner.innerHTML = '<div class="my-reqs-list">'+reqs.map(function(r){
+      var sm = statusMeta[r.status] || statusMeta.new;
+      var d = new Date((r.created_at||0)*1000);
+      var ds = isNaN(d) ? '' : d.toLocaleDateString('ar-u-nu-latn');
+      var icoColor = r.status==='won'?'var(--ok-soft)':r.status==='in_progress'?'var(--warn-soft)':r.status==='contacted'?'rgba(3,105,161,.1)':'var(--bg-tint)';
+      var icoTxtColor = r.status==='won'?'var(--ok)':r.status==='in_progress'?'var(--warn)':r.status==='contacted'?'#0369a1':'var(--navy)';
+      return '<div class="my-req-card">'+
+        '<div class="mr-ico" style="background:'+icoColor+';color:'+icoTxtColor+'">'+
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">'+sm.icon+'</svg>'+
+        '</div>'+
+        '<div class="mr-tx">'+
+          '<div class="mr-svc">'+esc(r.service)+'</div>'+
+          '<div class="mr-date">أُرسل في '+ds+'</div>'+
+          (r.message ? '<div class="mr-msg">'+esc(r.message)+'</div>' : '')+
+          (r.client_note ? '<div class="mr-note"><div class="mr-note-hd">تحديث من فريق بُعد</div>'+esc(r.client_note)+'</div>' : '')+
+        '</div>'+
+        '<div><span class="mr-st '+sm.cls+'">'+
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" style="width:12px;height:12px">'+sm.icon+'</svg>'+
+          sm.lbl+
+        '</span></div>'+
+      '</div>';
+    }).join('')+'</div>';
+  }
+
+  if(_orgRequests !== null){ _doRender(); }
+  else { loadOrgRequests(_doRender); }
 }
 
 /* ── Render plan tracks ── */

@@ -391,11 +391,14 @@ export async function onRequest(context) {
     try { body = await request.json(); } catch (e) { return json({ error: 'Bad request' }, 400); }
     const service = (body.service || '').trim();
     if (!service) return json({ error: 'missing_fields' }, 400);
+    // ensure org_id + client_note columns exist (defensive for older DBs)
+    try { await db.prepare('ALTER TABLE service_requests ADD COLUMN org_id TEXT NOT NULL DEFAULT \'\'').run(); } catch (e) {}
+    try { await db.prepare('ALTER TABLE service_requests ADD COLUMN client_note TEXT NOT NULL DEFAULT \'\'').run(); } catch (e) {}
     // pull the org's own contact details so the admin sees who's asking
     const o = await db.prepare('SELECT name, email, contact_name, phone FROM orgs WHERE id = ?').bind(orgMe.id).first();
     const id = 'req_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
     await db.prepare(
-      'INSERT INTO service_requests (id, name, org, phone, email, service, budget, message, source) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
+      'INSERT INTO service_requests (id, name, org, phone, email, service, budget, message, source, org_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
     ).bind(
       id,
       (o && o.contact_name) || (o && o.name) || orgMe.name || '',
@@ -405,9 +408,21 @@ export async function onRequest(context) {
       service,
       '',
       (body.message || '').trim(),
-      'portal'
+      'portal',
+      orgMe.id
     ).run();
     return json({ ok: true, id }, 201);
+  }
+
+  /* ─── GET /api/org/requests ─── association views its own submitted requests */
+  if (path === '/org/requests' && method === 'GET') {
+    if (!orgMe || orgMe.kind !== 'org') return json({ error: 'Unauthorized' }, 401);
+    try { await db.prepare('ALTER TABLE service_requests ADD COLUMN org_id TEXT NOT NULL DEFAULT \'\'').run(); } catch (e) {}
+    try { await db.prepare('ALTER TABLE service_requests ADD COLUMN client_note TEXT NOT NULL DEFAULT \'\'').run(); } catch (e) {}
+    const { results } = await db.prepare(
+      'SELECT id, service, message, status, client_note, created_at FROM service_requests WHERE org_id = ? ORDER BY created_at DESC'
+    ).bind(orgMe.id).all();
+    return json(results);
   }
 
   /* ─── CRM helper: verify org has CRM enabled + ensure tables exist ─── */
@@ -881,6 +896,9 @@ export async function onRequest(context) {
       'ALTER TABLE orgs ADD COLUMN crm_enabled INTEGER NOT NULL DEFAULT 0',
       'ALTER TABLE orgs ADD COLUMN logo_url TEXT NOT NULL DEFAULT \'\'',
       'ALTER TABLE orgs ADD COLUMN banner_url TEXT NOT NULL DEFAULT \'\'',
+      'ALTER TABLE service_requests ADD COLUMN org_id TEXT NOT NULL DEFAULT \'\'',
+      'ALTER TABLE service_requests ADD COLUMN client_note TEXT NOT NULL DEFAULT \'\'',
+      'CREATE INDEX IF NOT EXISTS idx_req_org ON service_requests(org_id)',
       'CREATE TABLE IF NOT EXISTS grant_opportunities (id TEXT PRIMARY KEY, funder_name TEXT NOT NULL, funder_type TEXT NOT NULL DEFAULT \'government\', grant_type TEXT NOT NULL DEFAULT \'\', description TEXT NOT NULL DEFAULT \'\', submission_start TEXT NOT NULL DEFAULT \'\', submission_end TEXT NOT NULL DEFAULT \'\', domains TEXT NOT NULL DEFAULT \'[]\', amount_min INTEGER NOT NULL DEFAULT 0, amount_max INTEGER NOT NULL DEFAULT 0, amount_note TEXT NOT NULL DEFAULT \'\', url TEXT NOT NULL DEFAULT \'\', logo_url TEXT NOT NULL DEFAULT \'\', brand_color TEXT NOT NULL DEFAULT \'\', is_active INTEGER NOT NULL DEFAULT 1, created_at INTEGER NOT NULL DEFAULT (unixepoch()), updated_at INTEGER NOT NULL DEFAULT (unixepoch()))',
       'CREATE INDEX IF NOT EXISTS idx_grants_active ON grant_opportunities(is_active)',
       'CREATE INDEX IF NOT EXISTS idx_grants_dates ON grant_opportunities(submission_start, submission_end)',
@@ -1105,7 +1123,7 @@ export async function onRequest(context) {
     let body;
     try { body = await request.json(); } catch (e) { return json({ error: 'Bad request' }, 400); }
     const fields = [], vals = [];
-    ['status', 'notes', 'assignee'].forEach(function (k) {
+    ['status', 'notes', 'assignee', 'client_note'].forEach(function (k) {
       if (body[k] !== undefined) { fields.push(k + ' = ?'); vals.push(body[k]); }
     });
     if (!fields.length) return json({ error: 'nothing to update' }, 400);
