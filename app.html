@@ -11312,11 +11312,11 @@ Pages._defaultServices = [
 ];
 
 Pages._reqStatuses = [
-  { k:'new',         lbl:'جديد',        color:'var(--iris-600)',    bg:'var(--iris-50)' },
-  { k:'contacted',   lbl:'تم التواصل',  color:'var(--info-600)',    bg:'var(--info-50)' },
-  { k:'in_progress', lbl:'قيد العمل',   color:'var(--warning-600)',    bg:'var(--warning-50)' },
-  { k:'won',         lbl:'تم الاتفاق',  color:'var(--success-600)', bg:'var(--success-50)' },
-  { k:'lost',        lbl:'مغلق',        color:'var(--fg-3)',        bg:'var(--neutral-100)' }
+  { k:'new',         lbl:'جديد',         icon:'inbox',        color:'var(--iris-600)',     bg:'var(--iris-50)' },
+  { k:'contacted',   lbl:'تم التواصل',   icon:'phone-call',   color:'var(--info-600)',     bg:'var(--info-50)' },
+  { k:'in_progress', lbl:'قيد التنفيذ',  icon:'loader-circle',color:'var(--warning-600)',  bg:'var(--warning-50)' },
+  { k:'won',         lbl:'مكتمل',        icon:'circle-check-big', color:'var(--success-600)', bg:'var(--success-50)' },
+  { k:'lost',        lbl:'مغلق',         icon:'x-circle',     color:'var(--fg-3)',         bg:'var(--neutral-100)' }
 ];
 Pages._reqStatusMeta = function(k){
   for (var i=0;i<Pages._reqStatuses.length;i++) if (Pages._reqStatuses[i].k===k) return Pages._reqStatuses[i];
@@ -11446,9 +11446,10 @@ Pages._renderRequestsTab = function(){
               ? '<button onclick="Pages.enableToolFromRequest(\''+r.id+'\',\''+UI.escHtml(r.service)+'\',\''+UI.escHtml(r.email||'')+'\',\''+UI.escHtml(r.org||r.name||'')+'\')"\n              style="font-size:11px;font-weight:700;padding:3px 10px;background:var(--iris-500);color:#fff;border:none;border-radius:6px;cursor:pointer;font-family:inherit">⚡ تفعيل الأداة</button>'
               : '') +
           '</div>':'')+
-          (r.message?'<div style="font-size:13px;color:var(--fg-2);margin-top:6px;background:var(--bg-2);padding:8px 11px;border-radius:8px">'+UI.escHtml(r.message)+'</div>':'')+
-          (r.notes?'<div style="font-size:12.5px;color:var(--warning-700);margin-top:6px"><i data-lucide="sticky-note" style="width:13px;height:13px;display:inline;vertical-align:-2px"></i> '+UI.escHtml(r.notes)+'</div>':'')+
-          '<div style="font-size:11.5px;color:var(--fg-4);margin-top:8px">'+dateStr+'</div>'+
+          (r.message?'<div style="font-size:13px;color:var(--fg-2);margin-top:6px;background:var(--bg-2);padding:8px 11px;border-radius:8px;border-right:3px solid var(--border)">'+UI.escHtml(r.message)+'</div>':'')+
+          (r.notes?'<div style="font-size:12.5px;color:var(--warning-700);margin-top:6px;background:var(--warning-50);padding:7px 11px;border-radius:8px"><i data-lucide="sticky-note" style="width:13px;height:13px;display:inline;vertical-align:-2px"></i> <strong>ملاحظة داخلية:</strong> '+UI.escHtml(r.notes)+'</div>':'')+
+          (r.client_note?'<div style="font-size:12.5px;color:var(--success-700);margin-top:6px;background:var(--success-50);padding:7px 11px;border-radius:8px;border:1px solid var(--success-200)"><i data-lucide="message-square" style="width:13px;height:13px;display:inline;vertical-align:-2px"></i> <strong>ملاحظة للعميل:</strong> '+UI.escHtml(r.client_note)+'</div>':'')+
+          '<div style="font-size:11.5px;color:var(--fg-4);margin-top:8px">'+dateStr+(r.assignee?'<span style="margin-right:10px;color:var(--iris-600)"><i data-lucide="user" style="width:11px;height:11px;display:inline;vertical-align:-1px"></i> '+UI.escHtml(r.assignee)+'</span>':'')+'</div>'+
         '</div>'+
         '<div style="display:flex;flex-direction:column;gap:7px;align-items:flex-start">'+
           '<div style="display:flex;gap:6px">'+
@@ -11457,11 +11458,12 @@ Pages._renderRequestsTab = function(){
             (r.email?'<a href="mailto:'+UI.escHtml(r.email)+'" class="btn btn-sm btn-ghost" style="padding:6px 12px" title="بريد"><i data-lucide="mail"></i></a>':'')+
           '</div>'+
           '<div style="font-size:12.5px;color:var(--fg-2);direction:ltr;text-align:left;width:100%">'+UI.escHtml(r.phone||'')+'</div>'+
-          '<div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap">'+
-            '<select onchange="Pages.setRequestStatus(\''+r.id+'\',this.value)" class="field-input" style="padding:5px 28px 5px 9px;font-size:12.5px;height:auto;min-width:110px">'+
+          '<div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap;margin-top:4px">'+
+            '<select onchange="Pages.setRequestStatus(\''+r.id+'\',this.value)" class="field-input" style="padding:5px 28px 5px 9px;font-size:12.5px;height:auto;min-width:130px">'+
               Pages._reqStatuses.map(function(s){ return '<option value="'+s.k+'"'+(r.status===s.k?' selected':'')+'>'+s.lbl+'</option>'; }).join('')+
             '</select>'+
-            '<button onclick="Pages.editRequestNotes(\''+r.id+'\')" class="btn btn-sm btn-ghost" style="padding:5px 10px" title="ملاحظة"><i data-lucide="pencil"></i></button>'+
+            '<button onclick="Pages.editRequestDetail(\''+r.id+'\')" class="btn btn-sm btn-ghost" style="padding:5px 10px" title="ملاحظات وتحديث"><i data-lucide="pencil"></i></button>'+
+            (r.status!=='won'&&r.status!=='lost'?'<button onclick="Pages.closeRequestFlow(\''+r.id+'\')" class="btn btn-sm" style="padding:5px 10px;background:var(--success-600);color:#fff;border:none" title="إغلاق كمكتمل"><i data-lucide="circle-check-big"></i></button>':'')+
             '<button onclick="Pages.deleteRequestConfirm(\''+r.id+'\')" class="btn btn-sm btn-ghost" style="padding:5px 10px;color:var(--danger-600)" title="حذف"><i data-lucide="trash-2"></i></button>'+
           '</div>'+
         '</div>'+
@@ -11482,25 +11484,68 @@ Pages.setRequestStatus = function(id, status){
   });
 };
 
-Pages.editRequestNotes = function(id){
+Pages.editRequestDetail = function(id){
   var r = (Pages._requests||[]).find(function(x){ return x.id===id; });
   if (!r) return;
   UI.openModal(
-    '<div class="modal-header"><h3>ملاحظة المتابعة</h3><button class="modal-close" onclick="UI.closeModalForce()">×</button></div>'+
-    '<div style="padding:18px 20px">'+
-      '<textarea id="req-notes" class="field-input" style="min-height:110px" placeholder="اكتب ملاحظات المتابعة...">'+UI.escHtml(r.notes||'')+'</textarea>'+
+    '<div class="modal-header"><h3>تفاصيل الطلب</h3><button class="modal-close" onclick="UI.closeModalForce()">×</button></div>'+
+    '<div style="padding:18px 20px;display:flex;flex-direction:column;gap:14px">'+
+      '<div>'+
+        '<label style="font-size:12px;font-weight:700;color:var(--fg-3);display:block;margin-bottom:6px">المسؤول (assignee)</label>'+
+        '<input id="req-assignee" class="field-input" style="font-size:13px" placeholder="اسم المسؤول عن التنفيذ" value="'+UI.escHtml(r.assignee||'')+'">'+
+      '</div>'+
+      '<div>'+
+        '<label style="font-size:12px;font-weight:700;color:var(--warning-700);display:block;margin-bottom:6px"><i data-lucide="sticky-note" style="width:13px;height:13px;display:inline;vertical-align:-2px"></i> ملاحظة داخلية (لا يراها العميل)</label>'+
+        '<textarea id="req-notes" class="field-input" style="min-height:90px" placeholder="تفاصيل داخلية، التواصلات، الاتفاقات...">'+UI.escHtml(r.notes||'')+'</textarea>'+
+      '</div>'+
+      '<div>'+
+        '<label style="font-size:12px;font-weight:700;color:var(--success-700);display:block;margin-bottom:6px"><i data-lucide="message-square" style="width:13px;height:13px;display:inline;vertical-align:-2px"></i> ملاحظة للعميل (يراها في بوابته)</label>'+
+        '<textarea id="req-client-note" class="field-input" style="min-height:90px" placeholder="أخبر العميل بالتقدم الحالي في طلبه...">'+UI.escHtml(r.client_note||'')+'</textarea>'+
+      '</div>'+
     '</div>'+
     '<div class="modal-footer"><button class="btn btn-ghost" onclick="UI.closeModalForce()">إلغاء</button>'+
-    '<button class="btn btn-primary" onclick="Pages.saveRequestNotes(\''+id+'\')">حفظ</button></div>'
+    '<button class="btn btn-primary" onclick="Pages.saveRequestDetail(\''+id+'\')">حفظ التغييرات</button></div>'
   );
+  if (typeof lucide!=='undefined') setTimeout(function(){ lucide.createIcons(); }, 50);
 };
-Pages.saveRequestNotes = function(id){
-  var notes = document.getElementById('req-notes').value;
+Pages.saveRequestDetail = function(id){
+  var notes      = document.getElementById('req-notes').value;
+  var clientNote = document.getElementById('req-client-note').value;
+  var assignee   = document.getElementById('req-assignee').value.trim();
   var r = (Pages._requests||[]).find(function(x){ return x.id===id; });
-  if (r) r.notes = notes;
+  if (r) { r.notes = notes; r.client_note = clientNote; r.assignee = assignee; }
   UI.closeModalForce();
-  DB._updateRequest(id, { notes:notes }).then(function(ok){
-    UI.toast(ok?'تم حفظ الملاحظة':'تعذّر الحفظ', ok?'success':'danger');
+  DB._updateRequest(id, { notes:notes, client_note:clientNote, assignee:assignee }).then(function(ok){
+    UI.toast(ok?'تم حفظ التفاصيل':'تعذّر الحفظ', ok?'success':'danger');
+    if (Nav._cur==='website') Pages.render_website({_loaded:true});
+  });
+};
+
+Pages.closeRequestFlow = function(id){
+  var r = (Pages._requests||[]).find(function(x){ return x.id===id; });
+  if (!r) return;
+  UI.openModal(
+    '<div class="modal-header"><h3>إغلاق الطلب كمكتمل</h3><button class="modal-close" onclick="UI.closeModalForce()">×</button></div>'+
+    '<div style="padding:18px 20px;display:flex;flex-direction:column;gap:12px">'+
+      '<p style="font-size:13px;color:var(--fg-2);margin:0">ستتغير حالة الطلب إلى <strong style="color:var(--success-700)">مكتمل</strong> وسيرى العميل ملاحظة الإغلاق في بوابته.</p>'+
+      '<div>'+
+        '<label style="font-size:12px;font-weight:700;color:var(--success-700);display:block;margin-bottom:6px"><i data-lucide="message-square" style="width:13px;height:13px;display:inline;vertical-align:-2px"></i> رسالة الإغلاق للعميل</label>'+
+        '<textarea id="req-close-note" class="field-input" style="min-height:90px" placeholder="مثال: تم تسليم الشعار الاحترافي وملف الهوية البصرية الكاملة...">'+UI.escHtml(r.client_note||'')+'</textarea>'+
+      '</div>'+
+    '</div>'+
+    '<div class="modal-footer"><button class="btn btn-ghost" onclick="UI.closeModalForce()">إلغاء</button>'+
+    '<button class="btn" style="background:var(--success-600);color:#fff" onclick="Pages.doCloseRequest(\''+id+'\')"><i data-lucide="circle-check-big"></i> إغلاق كمكتمل</button></div>'
+  );
+  if (typeof lucide!=='undefined') setTimeout(function(){ lucide.createIcons(); }, 50);
+};
+Pages.doCloseRequest = function(id){
+  var clientNote = document.getElementById('req-close-note').value;
+  var r = (Pages._requests||[]).find(function(x){ return x.id===id; });
+  if (r) { r.status = 'won'; r.client_note = clientNote; }
+  Pages._updateRequestsBadge();
+  UI.closeModalForce();
+  DB._updateRequest(id, { status:'won', client_note:clientNote }).then(function(ok){
+    UI.toast(ok?'تم إغلاق الطلب كمكتمل ✓':'تعذّر الإغلاق', ok?'success':'danger');
     if (Nav._cur==='website') Pages.render_website({_loaded:true});
   });
 };
