@@ -217,19 +217,21 @@ export async function onRequest(context) {
         token,
         org: { id: org.id, name: org.name, email: org.email, plan_start: org.plan_start,
                progress: JSON.parse(org.progress || '{}'), contact_name: org.contact_name,
-               phone: org.phone, city: org.city, license_no: org.license_no }
+               phone: org.phone, city: org.city, license_no: org.license_no,
+               logo_url: org.logo_url || '', banner_url: org.banner_url || '' }
       });
     }
     // Check team members
     try {
-      const mem = await db.prepare('SELECT m.*, o.id AS org_id, o.name AS org_name, o.plan_start, o.progress, o.contact_name, o.phone, o.city, o.license_no FROM org_members m JOIN orgs o ON m.org_id=o.id WHERE m.email=?').bind(email).first();
+      const mem = await db.prepare('SELECT m.*, o.id AS org_id, o.name AS org_name, o.plan_start, o.progress, o.contact_name, o.phone, o.city, o.license_no, o.logo_url, o.banner_url FROM org_members m JOIN orgs o ON m.org_id=o.id WHERE m.email=?').bind(email).first();
       if (mem && mem.password_hash === djb2(pass)) {
         const token = await signJWT({ id: mem.org_id, name: mem.name, email: mem.email, kind: 'org', role: mem.role, member_id: mem.id }, jwtSecret);
         return json({
           token,
           org: { id: mem.org_id, name: mem.org_name, email: mem.email, plan_start: mem.plan_start,
                  progress: JSON.parse(mem.progress || '{}'), contact_name: mem.contact_name,
-                 phone: mem.phone, city: mem.city, license_no: mem.license_no }
+                 phone: mem.phone, city: mem.city, license_no: mem.license_no,
+                 logo_url: mem.logo_url || '', banner_url: mem.banner_url || '' }
         });
       }
     } catch (_) {}
@@ -248,6 +250,7 @@ export async function onRequest(context) {
     return json({ id: org.id, name: org.name, email: org.email, plan_start: org.plan_start,
       progress: JSON.parse(org.progress || '{}'), contact_name: org.contact_name,
       phone: org.phone, city: org.city, license_no: org.license_no,
+      logo_url: org.logo_url || '', banner_url: org.banner_url || '',
       website_enabled: org.website_enabled ? 1 : 0,
       crm_enabled: org.crm_enabled ? 1 : 0 });
   }
@@ -269,20 +272,26 @@ export async function onRequest(context) {
     try { body = await request.json(); } catch (e) { return json({ error: 'Bad request' }, 400); }
     const name = (body.name || '').trim();
     if (!name) return json({ error: 'missing_fields' }, 400);
+    // Ensure logo/banner columns exist (defensive — older DBs may predate them)
+    try { await db.prepare('ALTER TABLE orgs ADD COLUMN logo_url TEXT NOT NULL DEFAULT \'\'').run(); } catch (e) {}
+    try { await db.prepare('ALTER TABLE orgs ADD COLUMN banner_url TEXT NOT NULL DEFAULT \'\'').run(); } catch (e) {}
     await db.prepare(
-      'UPDATE orgs SET name = ?, contact_name = ?, phone = ?, city = ?, license_no = ?, last_active = unixepoch() WHERE id = ?'
+      'UPDATE orgs SET name = ?, contact_name = ?, phone = ?, city = ?, license_no = ?, logo_url = ?, banner_url = ?, last_active = unixepoch() WHERE id = ?'
     ).bind(
       name,
       (body.contact_name || '').trim(),
       (body.phone || '').trim(),
       (body.city || '').trim(),
       (body.license_no || '').trim(),
+      (body.logo_url || '').trim(),
+      (body.banner_url || '').trim(),
       orgMe.id
     ).run();
     const org = await db.prepare('SELECT * FROM orgs WHERE id = ?').bind(orgMe.id).first();
     return json({ ok: true, org: { id: org.id, name: org.name, email: org.email, plan_start: org.plan_start,
       progress: JSON.parse(org.progress || '{}'), contact_name: org.contact_name,
-      phone: org.phone, city: org.city, license_no: org.license_no } });
+      phone: org.phone, city: org.city, license_no: org.license_no,
+      logo_url: org.logo_url || '', banner_url: org.banner_url || '' } });
   }
 
   /* ─── GET /api/org/members ─── list team members */
@@ -870,6 +879,8 @@ export async function onRequest(context) {
     if (me.role !== 'admin') return json({ error: 'Forbidden' }, 403);
     const stmts = [
       'ALTER TABLE orgs ADD COLUMN crm_enabled INTEGER NOT NULL DEFAULT 0',
+      'ALTER TABLE orgs ADD COLUMN logo_url TEXT NOT NULL DEFAULT \'\'',
+      'ALTER TABLE orgs ADD COLUMN banner_url TEXT NOT NULL DEFAULT \'\'',
       'CREATE TABLE IF NOT EXISTS grant_opportunities (id TEXT PRIMARY KEY, funder_name TEXT NOT NULL, funder_type TEXT NOT NULL DEFAULT \'government\', grant_type TEXT NOT NULL DEFAULT \'\', description TEXT NOT NULL DEFAULT \'\', submission_start TEXT NOT NULL DEFAULT \'\', submission_end TEXT NOT NULL DEFAULT \'\', domains TEXT NOT NULL DEFAULT \'[]\', amount_min INTEGER NOT NULL DEFAULT 0, amount_max INTEGER NOT NULL DEFAULT 0, amount_note TEXT NOT NULL DEFAULT \'\', url TEXT NOT NULL DEFAULT \'\', logo_url TEXT NOT NULL DEFAULT \'\', brand_color TEXT NOT NULL DEFAULT \'\', is_active INTEGER NOT NULL DEFAULT 1, created_at INTEGER NOT NULL DEFAULT (unixepoch()), updated_at INTEGER NOT NULL DEFAULT (unixepoch()))',
       'CREATE INDEX IF NOT EXISTS idx_grants_active ON grant_opportunities(is_active)',
       'CREATE INDEX IF NOT EXISTS idx_grants_dates ON grant_opportunities(submission_start, submission_end)',
