@@ -265,6 +265,78 @@ export async function onRequest(context) {
     return json({ ok: true });
   }
 
+  /* ─── TASKS CRUD ─── /api/org/tasks ─── */
+  const taskSetup = async () => {
+    try {
+      await db.prepare(
+        'CREATE TABLE IF NOT EXISTS tasks (id TEXT PRIMARY KEY, org_id TEXT NOT NULL, title TEXT NOT NULL DEFAULT \'\', desc TEXT NOT NULL DEFAULT \'\', status TEXT NOT NULL DEFAULT \'todo\', priority TEXT NOT NULL DEFAULT \'normal\', assignee TEXT NOT NULL DEFAULT \'\', due_date TEXT NOT NULL DEFAULT \'\', plan_task_id TEXT NOT NULL DEFAULT \'\', created_at INTEGER NOT NULL DEFAULT (unixepoch()), updated_at INTEGER NOT NULL DEFAULT (unixepoch()))'
+      ).run();
+    } catch (_) {}
+  };
+
+  if (path === '/org/tasks' && method === 'GET') {
+    if (!orgMe || orgMe.kind !== 'org') return json({ error: 'Unauthorized' }, 401);
+    await taskSetup();
+    const { results } = await db.prepare(
+      'SELECT * FROM tasks WHERE org_id = ? ORDER BY created_at DESC'
+    ).bind(orgMe.id).all();
+    return json(results || []);
+  }
+
+  if (path === '/org/tasks' && method === 'POST') {
+    if (!orgMe || orgMe.kind !== 'org') return json({ error: 'Unauthorized' }, 401);
+    let body;
+    try { body = await request.json(); } catch (e) { return json({ error: 'Bad request' }, 400); }
+    if (!(body.title || '').trim()) return json({ error: 'missing title' }, 400);
+    await taskSetup();
+    const id = 'tk_' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+    await db.prepare(
+      'INSERT INTO tasks (id, org_id, title, desc, status, priority, assignee, due_date, plan_task_id) VALUES (?,?,?,?,?,?,?,?,?)'
+    ).bind(
+      id, orgMe.id,
+      (body.title || '').trim(),
+      (body.desc || '').trim(),
+      body.status || 'todo',
+      body.priority || 'normal',
+      (body.assignee || '').trim(),
+      (body.due_date || '').trim(),
+      (body.plan_task_id || '').trim()
+    ).run();
+    const row = await db.prepare('SELECT * FROM tasks WHERE id = ?').bind(id).first();
+    return json(row);
+  }
+
+  const taskMatch = path.match(/^\/org\/tasks\/([^/]+)$/);
+  if (taskMatch) {
+    if (!orgMe || orgMe.kind !== 'org') return json({ error: 'Unauthorized' }, 401);
+    const taskId = taskMatch[1];
+    await taskSetup();
+    if (method === 'PUT') {
+      let body;
+      try { body = await request.json(); } catch (e) { return json({ error: 'Bad request' }, 400); }
+      const existing = await db.prepare('SELECT id FROM tasks WHERE id = ? AND org_id = ?').bind(taskId, orgMe.id).first();
+      if (!existing) return json({ error: 'Not found' }, 404);
+      await db.prepare(
+        'UPDATE tasks SET title=?, desc=?, status=?, priority=?, assignee=?, due_date=?, plan_task_id=?, updated_at=unixepoch() WHERE id=? AND org_id=?'
+      ).bind(
+        (body.title || '').trim(),
+        (body.desc || '').trim(),
+        body.status || 'todo',
+        body.priority || 'normal',
+        (body.assignee || '').trim(),
+        (body.due_date || '').trim(),
+        (body.plan_task_id || '').trim(),
+        taskId, orgMe.id
+      ).run();
+      const row = await db.prepare('SELECT * FROM tasks WHERE id = ?').bind(taskId).first();
+      return json(row);
+    }
+    if (method === 'DELETE') {
+      await db.prepare('DELETE FROM tasks WHERE id = ? AND org_id = ?').bind(taskId, orgMe.id).run();
+      return json({ ok: true });
+    }
+  }
+
   /* ─── PUT /api/org/profile ─── association updates its own profile details */
   if (path === '/org/profile' && method === 'PUT') {
     if (!orgMe || orgMe.kind !== 'org') return json({ error: 'Unauthorized' }, 401);
