@@ -931,15 +931,21 @@ export async function onRequest(context) {
     let results;
     try {
       const r = await db.prepare(
-        'SELECT id, name, email, contact_name, phone, city, license_no, plan_start, progress, created_at, last_active, website_enabled, crm_enabled FROM orgs ORDER BY last_active DESC'
+        'SELECT id, name, email, contact_name, phone, city, license_no, plan_start, progress, created_at, last_active, website_enabled, crm_enabled, website_expires_at, crm_expires_at FROM orgs ORDER BY last_active DESC'
       ).all();
       results = r.results;
     } catch (e) {
-      // crm_enabled column may not exist yet (migration pending) — fallback without it
-      const r = await db.prepare(
-        'SELECT id, name, email, contact_name, phone, city, license_no, plan_start, progress, created_at, last_active, website_enabled, 0 as crm_enabled FROM orgs ORDER BY last_active DESC'
-      ).all();
-      results = r.results;
+      try {
+        const r = await db.prepare(
+          'SELECT id, name, email, contact_name, phone, city, license_no, plan_start, progress, created_at, last_active, website_enabled, crm_enabled, NULL as website_expires_at, NULL as crm_expires_at FROM orgs ORDER BY last_active DESC'
+        ).all();
+        results = r.results;
+      } catch (_) {
+        const r = await db.prepare(
+          'SELECT id, name, email, contact_name, phone, city, license_no, plan_start, progress, created_at, last_active, website_enabled, 0 as crm_enabled, NULL as website_expires_at, NULL as crm_expires_at FROM orgs ORDER BY last_active DESC'
+        ).all();
+        results = r.results;
+      }
     }
     return json((results || []).map(function (o) {
       return Object.assign({}, o, { progress: JSON.parse(o.progress || '{}') });
@@ -979,17 +985,29 @@ export async function onRequest(context) {
     return json({ ok: true, crm_enabled: enabled });
   }
 
-  /* ─── POST /api/admin/enable-tool ─── enable/disable a tool for an org by email (from request flow) */
+  /* ─── POST /api/admin/enable-tool ─── enable/disable a tool for an org, supports expires_at */
   if (path === '/admin/enable-tool' && method === 'POST') {
     if (me.role !== 'admin') return json({ error: 'Forbidden' }, 403);
     let body;
     try { body = await request.json(); } catch (e) { return json({ error: 'Bad request' }, 400); }
-    const { org_email, org_id, tool, enabled } = body;
+    const { org_email, org_id, tool, enabled, expires_at } = body;
     if ((!org_email && !org_id) || !tool) return json({ error: 'missing fields' }, 400);
     const val = enabled ? 1 : 0;
+    const expVal = expires_at || null;
+    // ensure expiry columns exist (safe ALTER TABLE)
+    const expiryMigrations = [
+      'ALTER TABLE orgs ADD COLUMN website_expires_at TEXT',
+      'ALTER TABLE orgs ADD COLUMN crm_expires_at TEXT'
+    ];
+    for (const sql of expiryMigrations) { try { await db.prepare(sql).run(); } catch (_) {} }
+    const whereClause = org_id ? 'WHERE id = ?' : 'WHERE email = ?';
+    const whereVal = org_id || org_email;
     if (tool === 'website') {
-      const clause = org_id ? 'WHERE id = ?' : 'WHERE email = ?';
-      await db.prepare('UPDATE orgs SET website_enabled = ? ' + clause).bind(val, org_id || org_email).run();
+      if (expVal) {
+        await db.prepare('UPDATE orgs SET website_enabled = ?, website_expires_at = ? ' + whereClause).bind(val, expVal, whereVal).run();
+      } else {
+        await db.prepare('UPDATE orgs SET website_enabled = ? ' + whereClause).bind(val, whereVal).run();
+      }
     } else if (tool === 'crm') {
       const crmSetup = [
         'ALTER TABLE orgs ADD COLUMN crm_enabled INTEGER NOT NULL DEFAULT 0',
@@ -999,13 +1017,15 @@ export async function onRequest(context) {
         'CREATE TABLE IF NOT EXISTS crm_notes (id TEXT PRIMARY KEY, org_id TEXT NOT NULL, beneficiary_id TEXT NOT NULL, request_id TEXT NOT NULL DEFAULT "", type TEXT NOT NULL DEFAULT "note", content TEXT NOT NULL DEFAULT "", created_by TEXT NOT NULL DEFAULT "", created_at INTEGER NOT NULL DEFAULT (unixepoch()))'
       ];
       for (const sql of crmSetup) { try { await db.prepare(sql).run(); } catch (_) {} }
-      const clause = org_id ? 'WHERE id = ?' : 'WHERE email = ?';
-      await db.prepare('UPDATE orgs SET crm_enabled = ? ' + clause).bind(val, org_id || org_email).run();
+      if (expVal) {
+        await db.prepare('UPDATE orgs SET crm_enabled = ?, crm_expires_at = ? ' + whereClause).bind(val, expVal, whereVal).run();
+      } else {
+        await db.prepare('UPDATE orgs SET crm_enabled = ? ' + whereClause).bind(val, whereVal).run();
+      }
     } else {
       return json({ error: 'unknown tool' }, 400);
     }
-    const findClause = org_id ? 'WHERE id = ?' : 'WHERE email = ?';
-    const org = await db.prepare('SELECT id, name FROM orgs ' + findClause).bind(org_id || org_email).first();
+    const org = await db.prepare('SELECT id, name FROM orgs ' + whereClause).bind(whereVal).first();
     return json({ ok: true, org_id: org && org.id, org_name: org && org.name });
   }
 

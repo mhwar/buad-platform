@@ -1267,6 +1267,66 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
 .ctrl-drawer-overlay.active{opacity:1;pointer-events:all}
 .ctrl-drawer{position:fixed;top:0;left:0;height:100%;width:min(620px,96vw);background:var(--bg-elevated);z-index:901;transform:translateX(-100%);transition:transform .3s ease;overflow-y:auto;box-shadow:var(--shadow-xl)}
 .ctrl-drawer.active{transform:translateX(0)}
+/* ── Requests Kanban Board ── */
+.req-kb{display:flex;gap:10px;overflow-x:auto;padding-bottom:10px;align-items:flex-start}
+.req-kb::-webkit-scrollbar{height:5px}
+.req-kb::-webkit-scrollbar-thumb{background:var(--neutral-300);border-radius:4px}
+.req-kb-col{flex:0 0 230px;background:var(--bg-2);border-radius:12px;padding:8px 8px 10px}
+.req-kb-hd{display:flex;align-items:center;gap:6px;padding:5px 4px 9px;border-bottom:1px solid var(--border);margin-bottom:4px}
+.req-kb-hd-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.req-kb-hd-title{font-size:12.5px;font-weight:700;color:var(--fg-1);flex:1}
+.req-kb-hd-cnt{font-size:11px;font-weight:700;min-width:20px;height:20px;padding:0 6px;border-radius:20px;background:var(--neutral-100);color:var(--fg-3);display:inline-flex;align-items:center;justify-content:center}
+.req-kb-empty{padding:22px 8px;text-align:center;font-size:11.5px;color:var(--fg-4)}
+.req-kb-card{background:var(--bg-elevated);border:1px solid var(--border);border-radius:9px;padding:11px 11px 9px;margin-top:7px;cursor:pointer;transition:all .15s;position:relative;overflow:hidden}
+.req-kb-card::before{content:'';position:absolute;top:0;right:0;left:0;height:3px;border-radius:9px 9px 0 0;background:var(--rk-col,var(--iris-400))}
+.req-kb-card:hover{border-color:var(--iris-300);box-shadow:0 4px 14px rgba(82,59,220,.09);transform:translateY(-2px)}
+.rk-type{font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;display:inline-flex;align-items:center;gap:3px;margin-bottom:5px}
+.rk-name{font-size:13px;font-weight:700;color:var(--fg-1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rk-org{font-size:11px;color:var(--fg-3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin:1px 0 5px}
+.rk-service{font-size:11px;color:var(--iris-600);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:8px}
+.rk-foot{display:flex;align-items:center;justify-content:space-between;padding-top:7px;border-top:1px solid var(--border)}
+.rk-date{font-size:10px;color:var(--fg-4)}
+.rk-wa{width:24px;height:24px;border-radius:6px;background:#25d36620;color:#25d366;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.15s;flex-shrink:0}
+.rk-wa:hover{background:#25d366;color:#fff}
+.rk-wa [data-lucide]{width:13px;height:13px;pointer-events:none}
+/* ── Request Detail Drawer ── */
+.req-drawer-ov{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1100;opacity:0;pointer-events:none;transition:opacity .25s}
+.req-drawer-ov.active{opacity:1;pointer-events:all}
+.req-drawer{position:fixed;top:0;right:0;height:100%;width:min(480px,96vw);background:var(--bg-elevated);z-index:1101;transform:translateX(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);overflow:hidden;display:flex;flex-direction:column;box-shadow:-6px 0 40px rgba(0,0,0,.18)}
+.req-drawer.active{transform:translateX(0)}
+.rd-hd{padding:16px 18px 12px;border-bottom:1px solid var(--border);flex-shrink:0}
+.rd-hd-top{display:flex;align-items:flex-start;gap:10px;margin-bottom:10px}
+.rd-hd-icon{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.rd-hd-icon [data-lucide]{width:20px;height:20px}
+.rd-hd-meta{flex:1;min-width:0}
+.rd-hd-name{font-size:15px;font-weight:800;color:var(--fg-1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rd-hd-org{font-size:12px;color:var(--fg-3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px}
+.rd-close{width:30px;height:30px;border-radius:8px;border:1px solid var(--border);background:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--fg-3);flex-shrink:0;font-size:18px;line-height:1;transition:.15s;font-family:inherit}
+.rd-close:hover{background:var(--bg-2);color:var(--fg-1)}
+.rd-hd-pills{display:flex;gap:5px;flex-wrap:wrap;align-items:center}
+.rd-pill{font-size:10.5px;font-weight:600;padding:2px 9px;border-radius:20px;display:inline-flex;align-items:center;gap:4px}
+.rd-pill [data-lucide]{width:11px;height:11px}
+.rd-body{flex:1;overflow-y:auto;padding:16px 18px}
+.rd-sec{margin-bottom:16px}
+.rd-sec-hd{font-size:10px;font-weight:700;color:var(--fg-4);text-transform:uppercase;letter-spacing:.7px;margin-bottom:8px;display:flex;align-items:center;gap:5px}
+.rd-sec-hd [data-lucide]{width:12px;height:12px}
+.rd-field{display:flex;align-items:flex-start;gap:10px;padding:8px 12px;background:var(--bg-2);border-radius:8px;margin-bottom:5px}
+.rd-field-lbl{font-size:11px;color:var(--fg-4);min-width:62px;flex-shrink:0;padding-top:2px;font-weight:600}
+.rd-field-val{font-size:13px;color:var(--fg-1);flex:1;word-break:break-word}
+.rd-msg{font-size:13px;color:var(--fg-2);background:var(--bg-2);padding:11px 13px;border-radius:9px;border-right:3px solid var(--border);line-height:1.65}
+.rd-foot{padding:12px 18px;border-top:1px solid var(--border);flex-shrink:0;display:flex;flex-direction:column;gap:8px}
+.rd-act-row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.req-tool-box{background:var(--iris-50);border:1px solid var(--iris-200);border-radius:10px;padding:13px 14px;margin-top:5px}
+.req-tool-box-hd{font-size:12.5px;font-weight:700;color:var(--iris-700);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.req-tool-box-hd [data-lucide]{width:14px;height:14px}
+.req-tool-dur{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px}
+.req-tool-dur button{padding:5px 11px;border-radius:7px;border:1px solid var(--iris-300);background:transparent;color:var(--iris-600);font-size:12px;font-weight:600;cursor:pointer;transition:.15s;font-family:inherit}
+.req-tool-dur button.active{background:var(--iris-500);color:#fff;border-color:var(--iris-500)}
+[data-theme="dark"] .req-kb-col{background:var(--neutral-800)}
+[data-theme="dark"] .req-kb-card{background:var(--neutral-900)}
+[data-theme="dark"] .req-kb-hd-cnt{background:var(--neutral-700);color:var(--fg-2)}
+[data-theme="dark"] .req-tool-box{background:rgba(82,59,220,.1);border-color:rgba(82,59,220,.25)}
+[data-theme="dark"] .req-drawer{background:var(--neutral-900)}
 .ctrl-drawer-header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg-elevated);z-index:2}
 .ctrl-drawer-header h3{font-size:14px;font-weight:700;color:var(--text)}
 .ctrl-drawer-body{padding:16px}
@@ -10721,43 +10781,9 @@ Pages._detectTool = function(service) {
   if (Pages._TOOL_KEYWORDS.website.some(function(k){ return service.includes(k)||s.includes(k.toLowerCase()); })) return 'website';
   return null;
 };
-Pages.enableToolFromRequest = function(reqId, service, orgEmail, orgName) {
-  var tool = Pages._detectTool(service);
-  if (!tool) { UI.toast('لا يمكن تحديد الأداة تلقائياً', 'danger'); return; }
-  var toolLabel = tool === 'crm' ? 'إدارة المستفيدين (CRM)' : 'الموقع الإلكتروني';
-  UI.openModal(
-    '<div class="modal-header"><h3>تفعيل الأداة</h3><button class="modal-close" onclick="UI.closeModalForce()">×</button></div>'+
-    '<div style="padding:18px 20px">'+
-      '<p style="margin-bottom:12px">تفعيل <strong>'+UI.escHtml(toolLabel)+'</strong> لـ «'+UI.escHtml(orgName||orgEmail)+'»؟</p>'+
-      '<div style="font-size:13px;color:var(--fg-3);background:var(--bg-2);padding:10px 12px;border-radius:8px">'+
-        'الخدمة المطلوبة: '+UI.escHtml(service)+'</div>'+
-    '</div>'+
-    '<div class="modal-footer">'+
-      '<button class="btn btn-ghost" onclick="UI.closeModalForce()">إلغاء</button>'+
-      '<button class="btn btn-primary" onclick="Pages.doEnableToolFromReq(\''+reqId+'\',\''+tool+'\',\''+UI.escHtml(orgEmail)+'\')">تفعيل الآن</button>'+
-    '</div>'
-  );
-};
-Pages.doEnableToolFromReq = function(reqId, tool, orgEmail) {
-  UI.closeModalForce();
-  fetch('/api/admin/enable-tool', {
-    method: 'POST',
-    headers: DB._apiHeaders(),
-    body: JSON.stringify({ org_email: orgEmail, tool: tool, enabled: true })
-  }).then(function(r){ return r.json(); }).then(function(d){
-    if (d.ok) {
-      UI.toast('تم تفعيل الأداة لـ «'+(d.org_name||orgEmail)+'»', 'success');
-      // Mark request as done
-      DB._updateRequest(reqId, { status: 'done' }).then(function(){
-        if (Nav._cur === 'website') Pages.render_website({ _loaded: true });
-      });
-      // Refresh orgs list if loaded
-      Pages._orgs = null;
-    } else {
-      UI.toast('تعذّر التفعيل', 'danger');
-    }
-  }).catch(function(){ UI.toast('تعذّر الاتصال', 'danger'); });
-};
+/* enableToolFromRequest → opens drawer; full activation handled via doActivateTool */
+Pages.enableToolFromRequest = function(reqId){ Pages.openReqDrawer(reqId); };
+Pages.doEnableToolFromReq = function(reqId, tool, orgEmail){ Pages.openReqDrawer(reqId); };
 
 /* ═══════════════════════════════════════════
    RESOURCES MANAGEMENT (الموارد والأدلة)
@@ -11322,11 +11348,11 @@ Pages._defaultServices = [
 ];
 
 Pages._reqStatuses = [
-  { k:'new',         lbl:'جديد',         icon:'inbox',        color:'var(--iris-600)',     bg:'var(--iris-50)' },
-  { k:'contacted',   lbl:'تم التواصل',   icon:'phone-call',   color:'var(--info-600)',     bg:'var(--info-50)' },
-  { k:'in_progress', lbl:'قيد التنفيذ',  icon:'loader-circle',color:'var(--warning-600)',  bg:'var(--warning-50)' },
-  { k:'won',         lbl:'مكتمل',        icon:'circle-check-big', color:'var(--success-600)', bg:'var(--success-50)' },
-  { k:'lost',        lbl:'مغلق',         icon:'x-circle',     color:'var(--fg-3)',         bg:'var(--neutral-100)' }
+  { k:'new',         lbl:'جديد',         icon:'inbox',             color:'#7c3aed', bg:'#ede9fe' },
+  { k:'contacted',   lbl:'تم التواصل',   icon:'phone-call',        color:'#0284c7', bg:'#e0f2fe' },
+  { k:'in_progress', lbl:'قيد التنفيذ',  icon:'loader-circle',     color:'#d97706', bg:'#fef3c7' },
+  { k:'won',         lbl:'مكتمل',        icon:'circle-check-big',  color:'#059669', bg:'#d1fae5' },
+  { k:'lost',        lbl:'مغلق',         icon:'x-circle',          color:'#6b7280', bg:'#f3f4f6' }
 ];
 Pages._reqStatusMeta = function(k){
   for (var i=0;i<Pages._reqStatuses.length;i++) if (Pages._reqStatuses[i].k===k) return Pages._reqStatuses[i];
@@ -11343,8 +11369,9 @@ Pages._siteData = function(){
   };
 };
 
-/* ════════════════ INCOMING REQUESTS (الطلبات الواردة) — dedicated page ════════════════ */
-Pages._reqFilter = { status:'', type:'', q:'' };
+/* ════════════════ INCOMING REQUESTS (الطلبات الواردة) — Kanban Board ════════════════ */
+Pages._reqFilter = { type:'', q:'' };
+Pages._reqView   = 'kanban'; // 'kanban' | 'list'
 
 /* classify a request: tool-activation vs professional service */
 Pages._reqType = function(r){
@@ -11353,8 +11380,8 @@ Pages._reqType = function(r){
 };
 Pages._reqTypeMeta = function(t){
   return t==='tool'
-    ? { lbl:'طلب أداة',  color:'var(--iris-600)', bg:'var(--iris-50)',    icon:'toy-brick' }
-    : { lbl:'طلب خدمة',  color:'var(--success-700)', bg:'var(--success-50)', icon:'sparkles' };
+    ? { lbl:'طلب أداة',  color:'#7c3aed', bg:'#ede9fe', icon:'toy-brick' }
+    : { lbl:'طلب خدمة',  color:'#059669', bg:'#d1fae5', icon:'sparkles' };
 };
 
 Pages.render_website = function(opts) {
@@ -11367,32 +11394,35 @@ Pages.render_website = function(opts) {
     if (typeof lucide!=='undefined') lucide.createIcons();
     return;
   }
-
-  // Load data once per visit, then re-render
   if (!(opts && opts._loaded)) {
     document.getElementById('pg-website').innerHTML =
-      '<div class="page-header"><div><h1>الطلبات الواردة</h1>'+
-      '<div class="page-header-sub">جارٍ تحميل البيانات...</div></div></div>'+
+      '<div class="page-header"><div><h1>الطلبات الواردة</h1></div></div>'+
       '<div class="card" style="text-align:center;padding:50px;color:var(--fg-3)">جارٍ التحميل…</div>';
     DB._getRequests().then(function(res){
       Pages._requests = res || [];
       Pages._updateRequestsBadge();
-      if (Nav._cur === 'website') Pages.render_website({ _loaded:true });
+      if (Nav._cur==='website') Pages.render_website({_loaded:true});
     });
     return;
   }
-
+  var reqs = Pages._requests || [];
+  var total = reqs.length;
+  var newCount = reqs.filter(function(r){ return r.status==='new'; }).length;
   var body =
     '<div class="page-header"><div>'+
       '<h1>الطلبات الواردة</h1>'+
-      '<div class="page-header-sub">تتبّع طلبات الجمعيات والعملاء — أدوات وخدمات — وأدر حالتها حتى الإغلاق</div>'+
+      '<div class="page-header-sub">'+total+' طلب · '+newCount+' جديد</div>'+
     '</div>'+
-    '<div style="display:flex;gap:8px">'+
-      '<button onclick="Pages.render_website({_loaded:false})" class="btn btn-ghost btn-sm" style="display:inline-flex;align-items:center;gap:6px"><i data-lucide="refresh-cw"></i>تحديث</button>'+
+    '<div style="display:flex;gap:7px;align-items:center">'+
+      '<div style="display:flex;border:1px solid var(--border);border-radius:9px;overflow:hidden">'+
+        '<button onclick="Pages.reqToggleView(\'kanban\')" class="btn btn-sm'+(Pages._reqView==='kanban'?' btn-primary':' btn-ghost')+'" style="border-radius:0;padding:6px 12px;border:none;gap:5px;display:inline-flex;align-items:center"><i data-lucide="layout-dashboard"></i>كانبان</button>'+
+        '<button onclick="Pages.reqToggleView(\'list\')" class="btn btn-sm'+(Pages._reqView==='list'?' btn-primary':' btn-ghost')+'" style="border-radius:0;padding:6px 12px;border:none;gap:5px;display:inline-flex;align-items:center"><i data-lucide="list"></i>قائمة</button>'+
+      '</div>'+
+      '<button onclick="Pages.render_website({_loaded:false})" class="btn btn-ghost btn-sm" style="display:inline-flex;align-items:center;gap:5px"><i data-lucide="refresh-cw"></i>تحديث</button>'+
     '</div></div>'+
     Pages._renderRequestsTab();
-
   document.getElementById('pg-website').innerHTML = body;
+  Pages._ensureReqDrawer();
   if (typeof lucide!=='undefined') lucide.createIcons();
 };
 
@@ -11460,226 +11490,419 @@ Pages._updateRequestsBadge = function(){
   b.style.display = n>0 ? '' : 'none';
 };
 
-/* ── Requests page body (KPIs + filters + list) ── */
-Pages._renderRequestsTab = function(){
-  var reqs = (Pages._requests||[]).slice();
-  var f = Pages._reqFilter;
-  // KPI counts (over ALL requests)
-  var counts = {};
-  Pages._reqStatuses.forEach(function(s){ counts[s.k]=0; });
-  reqs.forEach(function(r){ counts[r.status]=(counts[r.status]||0)+1; });
-  var toolCount = reqs.filter(function(r){ return Pages._reqType(r)==='tool'; }).length;
-  var svcCount  = reqs.length - toolCount;
+/* ════════════════════ REQUESTS — KANBAN + DRAWER SYSTEM ════════════════════ */
 
-  // KPI cards double as status filters
-  var allActive = !f.status;
-  var kpis = '<div class="kpi-grid" style="margin-bottom:14px">'+
-    '<div class="kpi-card" style="cursor:pointer;'+(allActive?'outline:2px solid var(--iris-400);outline-offset:-1px':'')+'" onclick="Pages.reqSetFilter(\'status\',\'\')">'+
-      '<div class="kpi-card-accent" style="background:var(--fg-3)"></div>'+
-      '<div class="kpi-card-label">جميع الطلبات</div>'+
-      '<div class="kpi-card-value">'+reqs.length+'</div>'+
-      '<div class="kpi-card-sub">طلب</div></div>'+
-    Pages._reqStatuses.map(function(s){
-      var act = f.status===s.k;
-      return '<div class="kpi-card" style="cursor:pointer;'+(act?'outline:2px solid '+s.color+';outline-offset:-1px':'')+'" onclick="Pages.reqSetFilter(\'status\',\''+s.k+'\')">'+
-        '<div class="kpi-card-accent" style="background:'+s.color+'"></div>'+
-        '<div class="kpi-card-label">'+s.lbl+'</div>'+
-        '<div class="kpi-card-value" style="color:'+s.color+'">'+(counts[s.k]||0)+'</div>'+
-        '<div class="kpi-card-sub">طلب</div></div>';
-    }).join('')+'</div>';
-
-  // Type + search toolbar
-  var typePill = function(val,lbl,n){
-    var act = f.type===val;
-    return '<button onclick="Pages.reqSetFilter(\'type\',\''+val+'\')" style="display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:20px;border:1px solid '+(act?'var(--iris-500)':'var(--border)')+';background:'+(act?'var(--iris-500)':'transparent')+';color:'+(act?'#fff':'var(--fg-2)')+';font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer;transition:.15s">'+lbl+' <span style="font-size:11px;opacity:.8">'+n+'</span></button>';
-  };
-  var toolbar = '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:18px">'+
-    typePill('','الكل',reqs.length)+
-    typePill('tool','أدوات',toolCount)+
-    typePill('service','خدمات',svcCount)+
-    '<div style="flex:1"></div>'+
-    '<div style="position:relative;min-width:200px">'+
-      '<i data-lucide="search" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);width:15px;height:15px;color:var(--fg-4)"></i>'+
-      '<input id="req-search" class="field-input" style="padding-right:32px;height:38px" placeholder="بحث بالاسم أو الجمعية أو الخدمة…" value="'+UI.escHtml(f.q||'')+'" oninput="Pages.reqSearch(this.value)">'+
-    '</div>'+
-  '</div>';
-
-  return kpis + toolbar + '<div id="req-list">'+Pages._reqListHtml()+'</div>';
+Pages.reqToggleView = function(v){
+  Pages._reqView = v;
+  Pages.render_website({_loaded:true});
 };
 
-/* filtered list html (re-rendered alone on search to keep input focus) */
-Pages._reqListHtml = function(){
+/* filtered request list based on current filter state */
+Pages._filteredReqs = function(){
   var f = Pages._reqFilter;
-  var reqs = (Pages._requests||[]).filter(function(r){
-    if (f.status && r.status!==f.status) return false;
+  return (Pages._requests||[]).filter(function(r){
     if (f.type && Pages._reqType(r)!==f.type) return false;
-    if (f.q){ var q=f.q.toLowerCase(); var hay=((r.name||'')+' '+(r.org||'')+' '+(r.service||'')+' '+(r.email||'')+' '+(r.phone||'')).toLowerCase(); if(hay.indexOf(q)<0) return false; }
+    if (f.q){
+      var q=f.q.toLowerCase();
+      var hay=((r.name||'')+' '+(r.org||'')+' '+(r.service||'')+' '+(r.email||'')+' '+(r.phone||'')).toLowerCase();
+      if(hay.indexOf(q)<0) return false;
+    }
     return true;
   });
+};
+
+/* ── Toolbar ── */
+Pages._renderRequestsTab = function(){
+  var f = Pages._reqFilter;
+  var allReqs = Pages._requests || [];
+  var toolCount = allReqs.filter(function(r){ return Pages._reqType(r)==='tool'; }).length;
+  var svcCount  = allReqs.length - toolCount;
+
+  var pill = function(val, lbl, n){
+    var act = f.type===val;
+    return '<button onclick="Pages.reqSetFilter(\'type\',\''+val+'\')" style="padding:5px 13px;border-radius:20px;border:1px solid '+(act?'#7c3aed':'var(--border)')+';background:'+(act?'#7c3aed':'transparent')+';color:'+(act?'#fff':'var(--fg-2)')+';font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:5px;transition:.15s">'+lbl+(n!==null?'<span style="font-size:11px;opacity:.75">'+n+'</span>':'')+'</button>';
+  };
+
+  var toolbar =
+    '<div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:16px">'+
+      pill('','الكل',null)+
+      pill('tool','أدوات',toolCount)+
+      pill('service','خدمات',svcCount)+
+      '<div style="flex:1;min-width:10px"></div>'+
+      '<div style="position:relative;min-width:220px">'+
+        '<i data-lucide="search" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);width:14px;height:14px;color:var(--fg-4);pointer-events:none"></i>'+
+        '<input id="req-search-inp" class="field-input" style="padding-right:32px;height:36px;font-size:13px" placeholder="بحث بالاسم أو الجمعية…" value="'+UI.escHtml(f.q||'')+'" oninput="Pages.reqSearch(this.value)">'+
+      '</div>'+
+    '</div>';
+
+  var reqs = Pages._filteredReqs();
+  var content = (Pages._reqView==='list')
+    ? '<div id="req-list">'+Pages._renderReqList(reqs)+'</div>'
+    : Pages._renderKanban(reqs);
+  return toolbar + content;
+};
+
+/* ── Kanban Board ── */
+Pages._renderKanban = function(reqs){
+  var cols = Pages._reqStatuses.map(function(s){
+    var colReqs = reqs.filter(function(r){ return (r.status||'new')===s.k; });
+    var cards = colReqs.length
+      ? colReqs.map(function(r){ return Pages._kanbanCard(r,s); }).join('')
+      : '<div class="req-kb-empty">لا طلبات</div>';
+    return '<div class="req-kb-col">'+
+      '<div class="req-kb-hd">'+
+        '<span class="req-kb-hd-dot" style="background:'+s.color+'"></span>'+
+        '<span class="req-kb-hd-title">'+s.lbl+'</span>'+
+        '<span class="req-kb-hd-cnt">'+colReqs.length+'</span>'+
+      '</div>'+
+      cards+
+    '</div>';
+  });
+  return '<div class="req-kb">'+cols.join('')+'</div>';
+};
+
+Pages._kanbanCard = function(r, sm){
+  var type = Pages._reqType(r);
+  var tm = Pages._reqTypeMeta(type);
+  var s = sm || Pages._reqStatusMeta(r.status||'new');
+  var d = new Date((r.created_at||0)*1000);
+  var dateStr = isNaN(d.getTime()) ? '' : d.toLocaleDateString('ar-SA',{month:'short',day:'numeric'});
+  var phone = (r.phone||'').replace(/[^0-9]/g,'');
+  var pNum = phone.startsWith('966')?phone:phone.replace(/^0/,'966');
+  var wa = 'https://wa.me/'+pNum+'?text='+encodeURIComponent('مرحباً '+(r.name||'')+'، بخصوص طلبك');
+  return '<div class="req-kb-card" style="--rk-col:'+s.color+'" onclick="Pages.openReqDrawer(\''+r.id+'\')">'+
+    '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">'+
+      '<span class="rk-type" style="color:'+tm.color+';background:'+tm.bg+'">'+
+        '<i data-lucide="'+tm.icon+'" style="width:10px;height:10px;display:inline;vertical-align:middle"></i> '+tm.lbl+
+      '</span>'+
+      (r.source==='portal'?'<span style="font-size:9.5px;color:#7c3aed;background:#ede9fe;padding:1px 6px;border-radius:20px;font-weight:700">بوابة</span>':'')+
+    '</div>'+
+    '<div class="rk-name">'+UI.escHtml(r.name||'—')+'</div>'+
+    (r.org?'<div class="rk-org">'+UI.escHtml(r.org)+'</div>':'')+
+    (r.service?'<div class="rk-service">'+UI.escHtml(r.service.length>38?r.service.slice(0,38)+'…':r.service)+'</div>':'')+
+    '<div class="rk-foot">'+
+      '<span class="rk-date">'+dateStr+'</span>'+
+      '<button class="rk-wa" onclick="event.stopPropagation();window.open(\''+wa+'\',\'_blank\')" title="واتساب">'+
+        '<i data-lucide="message-circle"></i>'+
+      '</button>'+
+    '</div>'+
+  '</div>';
+};
+
+/* ── List View ── */
+Pages._renderReqList = function(reqs){
   if (!reqs.length) {
     var anyReq = (Pages._requests||[]).length;
-    return '<div class="card" style="text-align:center;padding:46px">'+
-      '<i data-lucide="inbox" style="width:42px;height:42px;color:var(--fg-3)"></i>'+
-      '<p style="margin-top:14px;color:var(--fg-2);font-weight:600">'+(anyReq?'لا توجد طلبات مطابقة للتصفية':'لا توجد طلبات بعد')+'</p>'+
-      (anyReq?'<button onclick="Pages.reqClearFilters()" class="btn btn-ghost btn-sm" style="margin-top:10px">إزالة التصفية</button>'
-            :'<p style="color:var(--fg-3);font-size:13px;margin-top:4px">ستظهر هنا الطلبات الواردة من الموقع وبوابة الجمعيات تلقائياً</p>')+
+    return '<div class="card" style="text-align:center;padding:44px">'+
+      '<i data-lucide="inbox" style="width:40px;height:40px;color:var(--fg-3)"></i>'+
+      '<p style="margin-top:12px;color:var(--fg-2);font-weight:600">'+(anyReq?'لا توجد طلبات مطابقة للتصفية':'لا توجد طلبات بعد')+'</p>'+
+      (anyReq?'<button onclick="Pages.reqClearFilters()" class="btn btn-ghost btn-sm" style="margin-top:8px">إزالة التصفية</button>':'<p style="color:var(--fg-3);font-size:13px;margin-top:4px">ستظهر هنا الطلبات الواردة من الموقع وبوابة الجمعيات</p>')+
     '</div>';
   }
   return reqs.map(function(r){
-    var m = Pages._reqStatusMeta(r.status);
+    var m = Pages._reqStatusMeta(r.status||'new');
     var type = Pages._reqType(r);
     var tm = Pages._reqTypeMeta(type);
     var d = new Date((r.created_at||0)*1000);
-    var dateStr = isNaN(d) ? '' : d.toLocaleDateString('ar-SA')+' · '+d.toLocaleTimeString('ar-SA',{hour:'2-digit',minute:'2-digit'});
-    var phone = (r.phone||'').replace(/[^0-9]/g,'');
-    var wa = 'https://wa.me/'+(phone.indexOf('966')===0?phone:(phone.replace(/^0/,'966')))+'?text='+encodeURIComponent('مرحباً '+(r.name||'')+'، بخصوص طلبك على موقع بُعد...');
-    return '<div class="card" style="margin-bottom:12px;padding:16px 18px;border-right:3px solid '+m.color+'">'+
-      '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap">'+
-        '<div style="flex:1;min-width:200px">'+
-          '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap">'+
-            '<span style="font-weight:700;font-size:15px;color:var(--fg-1)">'+UI.escHtml(r.name||'—')+'</span>'+
-            '<span style="font-size:11px;font-weight:600;padding:2px 10px;border-radius:20px;color:'+tm.color+';background:'+tm.bg+'"><i data-lucide="'+tm.icon+'" style="width:12px;height:12px;display:inline;vertical-align:-2px"></i> '+tm.lbl+'</span>'+
-            '<span style="font-size:11px;font-weight:600;padding:2px 10px;border-radius:20px;color:'+m.color+';background:'+m.bg+'">'+m.lbl+'</span>'+
-            (r.source==='portal'?'<span style="font-size:11px;font-weight:600;padding:2px 10px;border-radius:20px;color:var(--iris-600);background:var(--iris-50)"><i data-lucide="landmark" style="width:12px;height:12px;display:inline;vertical-align:-2px"></i> بوابة الجمعيات</span>':'')+
-          '</div>'+
-          (r.org?'<div style="font-size:13px;color:var(--fg-2);margin-bottom:2px"><i data-lucide="building-2" style="width:13px;height:13px;display:inline;vertical-align:-2px"></i> '+UI.escHtml(r.org)+'</div>':'')+
-          (r.service?'<div style="font-size:13px;color:var(--iris-600);margin-bottom:2px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">'+
-            '<span>'+(type==='tool'?'الأداة: ':'الخدمة: ')+UI.escHtml(r.service)+(r.budget?' · '+UI.escHtml(r.budget):'')+'</span>'+
-            (type==='tool'
-              ? '<button onclick="Pages.enableToolFromRequest(\''+r.id+'\',\''+UI.escHtml(r.service)+'\',\''+UI.escHtml(r.email||'')+'\',\''+UI.escHtml(r.org||r.name||'')+'\')" style="font-size:11px;font-weight:700;padding:3px 10px;background:var(--iris-500);color:#fff;border:none;border-radius:6px;cursor:pointer;font-family:inherit">⚡ تفعيل الأداة</button>'
-              : '') +
-          '</div>':'')+
-          (r.message?'<div style="font-size:13px;color:var(--fg-2);margin-top:6px;background:var(--bg-2);padding:8px 11px;border-radius:8px;border-right:3px solid var(--border)">'+UI.escHtml(r.message)+'</div>':'')+
-          (r.notes?'<div style="font-size:12.5px;color:var(--warning-700);margin-top:6px;background:var(--warning-50);padding:7px 11px;border-radius:8px"><i data-lucide="sticky-note" style="width:13px;height:13px;display:inline;vertical-align:-2px"></i> <strong>ملاحظة داخلية:</strong> '+UI.escHtml(r.notes)+'</div>':'')+
-          (r.client_note?'<div style="font-size:12.5px;color:var(--success-700);margin-top:6px;background:var(--success-50);padding:7px 11px;border-radius:8px;border:1px solid var(--success-200)"><i data-lucide="message-square" style="width:13px;height:13px;display:inline;vertical-align:-2px"></i> <strong>ملاحظة للعميل:</strong> '+UI.escHtml(r.client_note)+'</div>':'')+
-          '<div style="font-size:11.5px;color:var(--fg-4);margin-top:8px">'+dateStr+(r.assignee?'<span style="margin-right:10px;color:var(--iris-600)"><i data-lucide="user" style="width:11px;height:11px;display:inline;vertical-align:-1px"></i> '+UI.escHtml(r.assignee)+'</span>':'')+'</div>'+
+    var dateStr = isNaN(d.getTime()) ? '' : d.toLocaleDateString('ar-SA');
+    return '<div class="card" style="margin-bottom:9px;padding:13px 15px;border-right:3px solid '+m.color+';cursor:pointer;transition:.14s" onclick="Pages.openReqDrawer(\''+r.id+'\')" onmouseenter="this.style.boxShadow=\'0 3px 12px rgba(0,0,0,.07)\'" onmouseleave="this.style.boxShadow=\'\'">'+
+      '<div style="display:flex;align-items:flex-start;gap:10px">'+
+        '<div style="width:38px;height:38px;border-radius:10px;background:'+tm.bg+';color:'+tm.color+';display:flex;align-items:center;justify-content:center;flex-shrink:0">'+
+          '<i data-lucide="'+tm.icon+'" style="width:17px;height:17px"></i>'+
         '</div>'+
-        '<div style="display:flex;flex-direction:column;gap:7px;align-items:flex-start">'+
-          '<div style="display:flex;gap:6px">'+
-            '<a href="'+wa+'" target="_blank" class="btn btn-sm" style="background:#25d366;color:#fff;border:none;padding:6px 12px" title="واتساب"><i data-lucide="message-circle"></i></a>'+
-            '<a href="tel:'+UI.escHtml(r.phone||'')+'" class="btn btn-sm btn-ghost" style="padding:6px 12px" title="اتصال"><i data-lucide="phone"></i></a>'+
-            (r.email?'<a href="mailto:'+UI.escHtml(r.email)+'" class="btn btn-sm btn-ghost" style="padding:6px 12px" title="بريد"><i data-lucide="mail"></i></a>':'')+
+        '<div style="flex:1;min-width:0">'+
+          '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:2px">'+
+            '<span style="font-weight:700;font-size:14px;color:var(--fg-1)">'+UI.escHtml(r.name||'—')+'</span>'+
+            '<span style="font-size:10.5px;font-weight:600;padding:2px 7px;border-radius:20px;color:'+m.color+';background:'+m.bg+'">'+m.lbl+'</span>'+
+            '<span style="font-size:10.5px;font-weight:600;padding:2px 7px;border-radius:20px;color:'+tm.color+';background:'+tm.bg+'">'+tm.lbl+'</span>'+
           '</div>'+
-          '<div style="font-size:12.5px;color:var(--fg-2);direction:ltr;text-align:left;width:100%">'+UI.escHtml(r.phone||'')+'</div>'+
-          '<div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap;margin-top:4px">'+
-            '<select onchange="Pages.setRequestStatus(\''+r.id+'\',this.value)" class="field-input" style="padding:5px 28px 5px 9px;font-size:12.5px;height:auto;min-width:130px">'+
-              Pages._reqStatuses.map(function(s){ return '<option value="'+s.k+'"'+(r.status===s.k?' selected':'')+'>'+s.lbl+'</option>'; }).join('')+
-            '</select>'+
-            '<button onclick="Pages.editRequestDetail(\''+r.id+'\')" class="btn btn-sm btn-ghost" style="padding:5px 10px" title="ملاحظات وتحديث"><i data-lucide="pencil"></i></button>'+
-            (r.status!=='won'&&r.status!=='lost'?'<button onclick="Pages.closeRequestFlow(\''+r.id+'\')" class="btn btn-sm" style="padding:5px 10px;background:var(--success-600);color:#fff;border:none" title="إغلاق كمكتمل"><i data-lucide="circle-check-big"></i></button>':'')+
-            '<button onclick="Pages.deleteRequestConfirm(\''+r.id+'\')" class="btn btn-sm btn-ghost" style="padding:5px 10px;color:var(--danger-600)" title="حذف"><i data-lucide="trash-2"></i></button>'+
-          '</div>'+
+          (r.org?'<div style="font-size:12px;color:var(--fg-3)">'+UI.escHtml(r.org)+'</div>':'')+
+          (r.service?'<div style="font-size:12.5px;color:#7c3aed;margin-top:2px">'+UI.escHtml(r.service)+'</div>':'')+
+          '<div style="font-size:11px;color:var(--fg-4);margin-top:4px">'+dateStr+(r.assignee?'  ·  '+UI.escHtml(r.assignee):'')+'</div>'+
         '</div>'+
+        '<div style="font-size:12px;color:var(--fg-3);direction:ltr;flex-shrink:0">'+UI.escHtml(r.phone||'')+'</div>'+
       '</div>'+
     '</div>';
   }).join('');
 };
 
+/* ── Request Detail Drawer ── */
+Pages._ensureReqDrawer = function(){
+  if (document.getElementById('req-drawer-ov')) return;
+  var ov = document.createElement('div');
+  ov.id = 'req-drawer-ov';
+  ov.className = 'req-drawer-ov';
+  ov.onclick = function(e){ if(e.target===ov) Pages.closeReqDrawer(); };
+  var dr = document.createElement('div');
+  dr.id = 'req-drawer';
+  dr.className = 'req-drawer';
+  ov.appendChild(dr);
+  document.body.appendChild(ov);
+};
+
+Pages.openReqDrawer = function(id){
+  var r = (Pages._requests||[]).find(function(x){ return x.id===id; });
+  if (!r) return;
+  Pages._ensureReqDrawer();
+  var dr = document.getElementById('req-drawer');
+  if (!dr) return;
+  dr.innerHTML = Pages._reqDrawerHtml(r);
+  document.getElementById('req-drawer-ov').classList.add('active');
+  dr.classList.add('active');
+  document.body.style.overflow = 'hidden';
+  if (typeof lucide!=='undefined') setTimeout(function(){ lucide.createIcons({rootElement:dr}); }, 20);
+};
+
+Pages.closeReqDrawer = function(){
+  var ov = document.getElementById('req-drawer-ov');
+  var dr = document.getElementById('req-drawer');
+  if (ov) ov.classList.remove('active');
+  if (dr) dr.classList.remove('active');
+  document.body.style.overflow = '';
+};
+
+Pages._reqDrawerHtml = function(r){
+  var type = Pages._reqType(r);
+  var tm = Pages._reqTypeMeta(type);
+  var sm = Pages._reqStatusMeta(r.status||'new');
+  var d = new Date((r.created_at||0)*1000);
+  var dateStr = isNaN(d.getTime()) ? '—' : d.toLocaleDateString('ar-SA',{year:'numeric',month:'long',day:'numeric'});
+  var phone = (r.phone||'').replace(/[^0-9]/g,'');
+  var pNum = phone.startsWith('966')?phone:phone.replace(/^0/,'966');
+  var wa = 'https://wa.me/'+pNum+'?text='+encodeURIComponent('مرحباً '+(r.name||'')+'، بخصوص طلبك على موقع بُعد...');
+
+  var tool = type==='tool' ? Pages._detectTool(r.service) : null;
+  var toolLabel = tool==='crm' ? 'إدارة المستفيدين (CRM)' : (tool==='website' ? 'الموقع الإلكتروني' : '');
+  var orgId = r.org_id || '';
+
+  var toolSection = tool ? (
+    '<div class="rd-sec">'+
+      '<div class="rd-sec-hd"><i data-lucide="zap"></i> تفعيل الأداة</div>'+
+      '<div class="req-tool-box">'+
+        '<div class="req-tool-box-hd"><i data-lucide="toy-brick"></i> '+UI.escHtml(toolLabel)+'</div>'+
+        '<p style="font-size:12px;color:#6d28d9;margin:0 0 10px">اختر مدة الصلاحية ثم انقر تفعيل</p>'+
+        '<div class="req-tool-dur" id="rd-dur-btns">'+
+          '<button style="padding:5px 11px;border-radius:7px;border:1px solid #c4b5fd;background:transparent;color:#7c3aed;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit" onclick="Pages._setToolDur(1,this)">شهر</button>'+
+          '<button style="padding:5px 11px;border-radius:7px;border:1px solid #c4b5fd;background:transparent;color:#7c3aed;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit" onclick="Pages._setToolDur(3,this)">٣ أشهر</button>'+
+          '<button style="padding:5px 11px;border-radius:7px;border:1px solid #c4b5fd;background:transparent;color:#7c3aed;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit" onclick="Pages._setToolDur(6,this)">٦ أشهر</button>'+
+          '<button style="padding:5px 11px;border-radius:7px;border:1px solid #c4b5fd;background:transparent;color:#7c3aed;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit" onclick="Pages._setToolDur(12,this)">سنة</button>'+
+        '</div>'+
+        '<div style="display:flex;align-items:center;gap:7px;margin-top:9px">'+
+          '<input type="date" id="rd-exp-date" class="field-input" style="height:34px;font-size:12.5px;flex:1" placeholder="أو حدد تاريخاً">'+
+          '<button class="btn btn-primary" style="height:34px;padding:0 14px;font-size:13px;gap:5px;display:inline-flex;align-items:center" onclick="Pages.doActivateTool(\''+r.id+'\',\''+UI.escHtml(tool)+'\',\''+UI.escHtml(r.email||'')+'\',\''+UI.escHtml(orgId)+'\')">'+
+            '<i data-lucide="zap" style="width:14px;height:14px"></i> تفعيل'+
+          '</button>'+
+        '</div>'+
+      '</div>'+
+    '</div>'
+  ) : '';
+
+  return (
+    '<div class="rd-hd">'+
+      '<div class="rd-hd-top">'+
+        '<div class="rd-hd-icon" style="background:'+tm.bg+';color:'+tm.color+'">'+
+          '<i data-lucide="'+tm.icon+'"></i>'+
+        '</div>'+
+        '<div class="rd-hd-meta">'+
+          '<div class="rd-hd-name">'+UI.escHtml(r.name||'—')+'</div>'+
+          '<div class="rd-hd-org">'+(r.org?UI.escHtml(r.org):dateStr)+'</div>'+
+        '</div>'+
+        '<button class="rd-close" onclick="Pages.closeReqDrawer()">&#x2715;</button>'+
+      '</div>'+
+      '<div class="rd-hd-pills">'+
+        '<span class="rd-pill" style="color:'+tm.color+';background:'+tm.bg+'"><i data-lucide="'+tm.icon+'"></i> '+tm.lbl+'</span>'+
+        '<span class="rd-pill" style="color:'+sm.color+';background:'+sm.bg+'"><i data-lucide="'+sm.icon+'"></i> '+sm.lbl+'</span>'+
+        (r.source==='portal'?'<span class="rd-pill" style="color:#7c3aed;background:#ede9fe"><i data-lucide="landmark"></i> بوابة الجمعيات</span>':'')+
+        '<span style="font-size:11px;color:var(--fg-4);margin-right:auto">'+dateStr+'</span>'+
+      '</div>'+
+    '</div>'+
+    '<div class="rd-body">'+
+      '<div class="rd-sec">'+
+        '<div class="rd-sec-hd"><i data-lucide="contact"></i> بيانات التواصل</div>'+
+        '<div class="rd-field">'+
+          '<span class="rd-field-lbl">الهاتف</span>'+
+          '<div class="rd-field-val" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'+
+            '<span style="direction:ltr;font-size:13px">'+UI.escHtml(r.phone||'—')+'</span>'+
+            '<a href="'+wa+'" target="_blank" class="btn btn-sm" style="background:#25d366;color:#fff;border:none;padding:4px 10px;font-size:11.5px;gap:4px;display:inline-flex;align-items:center"><i data-lucide="message-circle" style="width:12px;height:12px"></i> واتساب</a>'+
+            '<a href="tel:'+UI.escHtml(r.phone||'')+'" class="btn btn-sm btn-ghost" style="padding:4px 10px;font-size:11.5px;gap:4px;display:inline-flex;align-items:center"><i data-lucide="phone" style="width:12px;height:12px"></i> اتصال</a>'+
+          '</div>'+
+        '</div>'+
+        (r.email?'<div class="rd-field"><span class="rd-field-lbl">البريد</span><div class="rd-field-val" style="display:flex;align-items:center;gap:8px"><span style="direction:ltr">'+UI.escHtml(r.email)+'</span><a href="mailto:'+UI.escHtml(r.email)+'" class="btn btn-sm btn-ghost" style="padding:4px 10px;font-size:11.5px;gap:4px;display:inline-flex;align-items:center"><i data-lucide="mail" style="width:12px;height:12px"></i> مراسلة</a></div></div>':'')+
+      '</div>'+
+      '<div class="rd-sec">'+
+        '<div class="rd-sec-hd"><i data-lucide="file-text"></i> تفاصيل الطلب</div>'+
+        (r.service?'<div class="rd-field"><span class="rd-field-lbl">'+(type==='tool'?'الأداة':'الخدمة')+'</span><span class="rd-field-val" style="color:#7c3aed;font-weight:600">'+UI.escHtml(r.service)+'</span></div>':'')+
+        (r.budget?'<div class="rd-field"><span class="rd-field-lbl">الميزانية</span><span class="rd-field-val">'+UI.escHtml(r.budget)+'</span></div>':'')+
+        (r.message?'<div class="rd-msg" style="margin-top:6px">'+UI.escHtml(r.message)+'</div>':'')+
+      '</div>'+
+      toolSection+
+      '<div class="rd-sec">'+
+        '<div class="rd-sec-hd"><i data-lucide="pencil-line"></i> ملاحظات وتتبع</div>'+
+        '<div style="margin-bottom:9px">'+
+          '<label style="font-size:11.5px;font-weight:700;color:#92400e;display:block;margin-bottom:5px"><i data-lucide="sticky-note" style="width:11px;height:11px;display:inline;vertical-align:middle"></i> ملاحظة داخلية (لا يراها العميل)</label>'+
+          '<textarea id="rd-notes" class="field-input" style="min-height:72px;font-size:13px;resize:vertical" placeholder="تفاصيل التواصلات والاتفاقات الداخلية...">'+UI.escHtml(r.notes||'')+'</textarea>'+
+        '</div>'+
+        '<div style="margin-bottom:9px">'+
+          '<label style="font-size:11.5px;font-weight:700;color:#065f46;display:block;margin-bottom:5px"><i data-lucide="message-square" style="width:11px;height:11px;display:inline;vertical-align:middle"></i> ملاحظة للعميل (تظهر في بوابته)</label>'+
+          '<textarea id="rd-client-note" class="field-input" style="min-height:72px;font-size:13px;resize:vertical;border-color:#6ee7b7" placeholder="أخبر العميل بآخر تطورات طلبه...">'+UI.escHtml(r.client_note||'')+'</textarea>'+
+        '</div>'+
+        '<div>'+
+          '<label style="font-size:11.5px;font-weight:700;color:var(--fg-3);display:block;margin-bottom:5px"><i data-lucide="user" style="width:11px;height:11px;display:inline;vertical-align:middle"></i> المسؤول عن التنفيذ</label>'+
+          '<input id="rd-assignee" class="field-input" style="font-size:13px" placeholder="اسم المسؤول" value="'+UI.escHtml(r.assignee||'')+'">'+
+        '</div>'+
+      '</div>'+
+    '</div>'+
+    '<div class="rd-foot">'+
+      '<div class="rd-act-row">'+
+        '<select onchange="Pages.setRequestStatusDrawer(\''+r.id+'\',this.value)" class="field-input" style="flex:1;height:36px;font-size:13px;padding:6px 28px 6px 9px">'+
+          Pages._reqStatuses.map(function(s){ return '<option value="'+s.k+'"'+((r.status||'new')===s.k?' selected':'')+'>'+s.lbl+'</option>'; }).join('')+
+        '</select>'+
+        '<button class="btn btn-ghost btn-sm" style="gap:5px;display:inline-flex;align-items:center;height:36px" onclick="Pages.saveReqDraft(\''+r.id+'\')"><i data-lucide="save" style="width:14px;height:14px"></i> حفظ</button>'+
+      '</div>'+
+      '<div class="rd-act-row">'+
+        (r.status!=='won'&&r.status!=='lost'
+          ? '<button class="btn btn-sm" style="background:#059669;color:#fff;border:none;gap:5px;display:inline-flex;align-items:center;flex:1;justify-content:center;height:34px" onclick="Pages.closeRequestDrawerFlow(\''+r.id+'\')"><i data-lucide="circle-check-big" style="width:13px;height:13px"></i> إغلاق كمكتمل</button>'
+          : '')+
+        '<button class="btn btn-sm btn-ghost" style="color:#dc2626;gap:5px;display:inline-flex;align-items:center;height:34px" onclick="Pages.deleteRequestConfirm(\''+r.id+'\')"><i data-lucide="trash-2" style="width:13px;height:13px"></i> حذف</button>'+
+      '</div>'+
+    '</div>'
+  );
+};
+
+/* ── Filter & search ── */
 Pages.reqSetFilter = function(key, val){
   if (Pages._reqFilter[key]===val) Pages._reqFilter[key]=''; else Pages._reqFilter[key]=val;
   Pages.render_website({_loaded:true});
 };
 Pages.reqClearFilters = function(){
-  Pages._reqFilter = { status:'', type:'', q:'' };
+  Pages._reqFilter = { type:'', q:'' };
   Pages.render_website({_loaded:true});
 };
 Pages.reqSearch = function(v){
   Pages._reqFilter.q = v;
-  var el = document.getElementById('req-list');
-  if (el){ el.innerHTML = Pages._reqListHtml(); if (typeof lucide!=='undefined') lucide.createIcons({rootElement:el}); }
+  if (Pages._reqView==='list') {
+    var reqs = Pages._filteredReqs();
+    var el = document.getElementById('req-list');
+    if (el){ el.innerHTML = Pages._renderReqList(reqs); if(typeof lucide!=='undefined') lucide.createIcons({rootElement:el}); }
+  } else {
+    Pages.render_website({_loaded:true});
+  }
 };
 
+/* ── Status changes ── */
 Pages.setRequestStatus = function(id, status){
   var r = (Pages._requests||[]).find(function(x){ return x.id===id; });
   if (r) r.status = status;
   Pages._updateRequestsBadge();
-  DB._updateRequest(id, { status:status }).then(function(ok){
-    if (ok) UI.toast('تم تحديث الحالة','success'); else UI.toast('تعذّر التحديث','danger');
+  DB._updateRequest(id, {status:status}).then(function(ok){
+    UI.toast(ok?'تم تحديث الحالة':'تعذّر التحديث', ok?'success':'danger');
     if (Nav._cur==='website') Pages.render_website({_loaded:true});
   });
 };
-
-Pages.editRequestDetail = function(id){
+Pages.setRequestStatusDrawer = function(id, status){
   var r = (Pages._requests||[]).find(function(x){ return x.id===id; });
-  if (!r) return;
-  UI.openModal(
-    '<div class="modal-header"><h3>تفاصيل الطلب</h3><button class="modal-close" onclick="UI.closeModalForce()">×</button></div>'+
-    '<div style="padding:18px 20px;display:flex;flex-direction:column;gap:14px">'+
-      '<div>'+
-        '<label style="font-size:12px;font-weight:700;color:var(--fg-3);display:block;margin-bottom:6px">المسؤول (assignee)</label>'+
-        '<input id="req-assignee" class="field-input" style="font-size:13px" placeholder="اسم المسؤول عن التنفيذ" value="'+UI.escHtml(r.assignee||'')+'">'+
-      '</div>'+
-      '<div>'+
-        '<label style="font-size:12px;font-weight:700;color:var(--warning-700);display:block;margin-bottom:6px"><i data-lucide="sticky-note" style="width:13px;height:13px;display:inline;vertical-align:-2px"></i> ملاحظة داخلية (لا يراها العميل)</label>'+
-        '<textarea id="req-notes" class="field-input" style="min-height:90px" placeholder="تفاصيل داخلية، التواصلات، الاتفاقات...">'+UI.escHtml(r.notes||'')+'</textarea>'+
-      '</div>'+
-      '<div>'+
-        '<label style="font-size:12px;font-weight:700;color:var(--success-700);display:block;margin-bottom:6px"><i data-lucide="message-square" style="width:13px;height:13px;display:inline;vertical-align:-2px"></i> ملاحظة للعميل (يراها في بوابته)</label>'+
-        '<textarea id="req-client-note" class="field-input" style="min-height:90px" placeholder="أخبر العميل بالتقدم الحالي في طلبه...">'+UI.escHtml(r.client_note||'')+'</textarea>'+
-      '</div>'+
-    '</div>'+
-    '<div class="modal-footer"><button class="btn btn-ghost" onclick="UI.closeModalForce()">إلغاء</button>'+
-    '<button class="btn btn-primary" onclick="Pages.saveRequestDetail(\''+id+'\')">حفظ التغييرات</button></div>'
-  );
-  if (typeof lucide!=='undefined') setTimeout(function(){ lucide.createIcons(); }, 50);
-};
-Pages.saveRequestDetail = function(id){
-  var notes      = document.getElementById('req-notes').value;
-  var clientNote = document.getElementById('req-client-note').value;
-  var assignee   = document.getElementById('req-assignee').value.trim();
-  var r = (Pages._requests||[]).find(function(x){ return x.id===id; });
-  if (r) { r.notes = notes; r.client_note = clientNote; r.assignee = assignee; }
-  UI.closeModalForce();
-  DB._updateRequest(id, { notes:notes, client_note:clientNote, assignee:assignee }).then(function(ok){
-    UI.toast(ok?'تم حفظ التفاصيل':'تعذّر الحفظ', ok?'success':'danger');
-    if (Nav._cur==='website') Pages.render_website({_loaded:true});
-  });
-};
-
-Pages.closeRequestFlow = function(id){
-  var r = (Pages._requests||[]).find(function(x){ return x.id===id; });
-  if (!r) return;
-  UI.openModal(
-    '<div class="modal-header"><h3>إغلاق الطلب كمكتمل</h3><button class="modal-close" onclick="UI.closeModalForce()">×</button></div>'+
-    '<div style="padding:18px 20px;display:flex;flex-direction:column;gap:12px">'+
-      '<p style="font-size:13px;color:var(--fg-2);margin:0">ستتغير حالة الطلب إلى <strong style="color:var(--success-700)">مكتمل</strong> وسيرى العميل ملاحظة الإغلاق في بوابته.</p>'+
-      '<div>'+
-        '<label style="font-size:12px;font-weight:700;color:var(--success-700);display:block;margin-bottom:6px"><i data-lucide="message-square" style="width:13px;height:13px;display:inline;vertical-align:-2px"></i> رسالة الإغلاق للعميل</label>'+
-        '<textarea id="req-close-note" class="field-input" style="min-height:90px" placeholder="مثال: تم تسليم الشعار الاحترافي وملف الهوية البصرية الكاملة...">'+UI.escHtml(r.client_note||'')+'</textarea>'+
-      '</div>'+
-    '</div>'+
-    '<div class="modal-footer"><button class="btn btn-ghost" onclick="UI.closeModalForce()">إلغاء</button>'+
-    '<button class="btn" style="background:var(--success-600);color:#fff" onclick="Pages.doCloseRequest(\''+id+'\')"><i data-lucide="circle-check-big"></i> إغلاق كمكتمل</button></div>'
-  );
-  if (typeof lucide!=='undefined') setTimeout(function(){ lucide.createIcons(); }, 50);
-};
-Pages.doCloseRequest = function(id){
-  var clientNote = document.getElementById('req-close-note').value;
-  var r = (Pages._requests||[]).find(function(x){ return x.id===id; });
-  if (r) { r.status = 'won'; r.client_note = clientNote; }
+  if (r) r.status = status;
   Pages._updateRequestsBadge();
-  UI.closeModalForce();
-  DB._updateRequest(id, { status:'won', client_note:clientNote }).then(function(ok){
-    UI.toast(ok?'تم إغلاق الطلب كمكتمل ✓':'تعذّر الإغلاق', ok?'success':'danger');
+  DB._updateRequest(id, {status:status}).then(function(ok){
+    UI.toast(ok?'تم تحديث الحالة':'تعذّر التحديث', ok?'success':'danger');
     if (Nav._cur==='website') Pages.render_website({_loaded:true});
   });
 };
+
+/* ── Save draft (notes + assignee) ── */
+Pages.saveReqDraft = function(id){
+  var notes      = (document.getElementById('rd-notes')      || {}).value || '';
+  var clientNote = (document.getElementById('rd-client-note') || {}).value || '';
+  var assignee   = ((document.getElementById('rd-assignee')   || {}).value || '').trim();
+  var r = (Pages._requests||[]).find(function(x){ return x.id===id; });
+  if (r){ r.notes = notes; r.client_note = clientNote; r.assignee = assignee; }
+  DB._updateRequest(id, {notes:notes, client_note:clientNote, assignee:assignee}).then(function(ok){
+    UI.toast(ok?'تم الحفظ':'تعذّر الحفظ', ok?'success':'danger');
+  });
+};
+
+/* ── Close as complete ── */
+Pages.closeRequestDrawerFlow = function(id){
+  var note = ((document.getElementById('rd-client-note')||{}).value || '');
+  var r = (Pages._requests||[]).find(function(x){ return x.id===id; });
+  if (r){ r.status='won'; if(note) r.client_note=note; }
+  Pages._updateRequestsBadge();
+  DB._updateRequest(id, {status:'won', client_note:note||(r&&r.client_note)||''}).then(function(ok){
+    UI.toast(ok?'تم إغلاق الطلب كمكتمل ✓':'تعذّر الإغلاق', ok?'success':'danger');
+    Pages.closeReqDrawer();
+    if (Nav._cur==='website') Pages.render_website({_loaded:true});
+  });
+};
+
+/* ── Delete ── */
 Pages.deleteRequestConfirm = function(id){
   UI.openModal(
     '<div class="modal-header"><h3>حذف الطلب</h3><button class="modal-close" onclick="UI.closeModalForce()">×</button></div>'+
-    '<div style="padding:18px 20px;color:var(--fg-2)">هل تريد حذف هذا الطلب نهائياً؟</div>'+
-    '<div class="modal-footer"><button class="btn btn-ghost" onclick="UI.closeModalForce()">إلغاء</button>'+
-    '<button class="btn btn-danger" onclick="Pages.doDeleteRequest(\''+id+'\')">حذف</button></div>'
+    '<div style="padding:18px 20px;color:var(--fg-2)">هل تريد حذف هذا الطلب نهائياً؟ لا يمكن التراجع.</div>'+
+    '<div class="modal-footer">'+
+      '<button class="btn btn-ghost" onclick="UI.closeModalForce()">إلغاء</button>'+
+      '<button class="btn btn-danger" onclick="Pages.doDeleteRequest(\''+id+'\')">حذف</button>'+
+    '</div>'
   );
 };
 Pages.doDeleteRequest = function(id){
   UI.closeModalForce();
+  Pages.closeReqDrawer();
   Pages._requests = (Pages._requests||[]).filter(function(x){ return x.id!==id; });
   Pages._updateRequestsBadge();
   DB._deleteRequest(id).then(function(ok){
     UI.toast(ok?'تم حذف الطلب':'تعذّر الحذف', ok?'success':'danger');
     if (Nav._cur==='website') Pages.render_website({_loaded:true});
   });
+};
+
+/* ── Tool duration shortcut buttons ── */
+Pages._setToolDur = function(months, btn){
+  var parent = btn.closest('#rd-dur-btns') || btn.parentElement;
+  if (parent) parent.querySelectorAll('button').forEach(function(b){
+    b.style.background='transparent'; b.style.color='#7c3aed';
+  });
+  btn.style.background='#7c3aed'; btn.style.color='#fff';
+  var exp = new Date();
+  exp.setMonth(exp.getMonth() + months);
+  var el = document.getElementById('rd-exp-date');
+  if (el) el.value = exp.toISOString().split('T')[0];
+};
+
+/* ── Tool activation with expiry ── */
+Pages.doActivateTool = function(reqId, tool, orgEmail, orgId){
+  if (!tool){ UI.toast('لا يمكن تحديد الأداة','danger'); return; }
+  var dateEl = document.getElementById('rd-exp-date');
+  var expiresAt = dateEl ? dateEl.value : '';
+  if (!expiresAt){
+    UI.toast('يرجى تحديد تاريخ انتهاء الصلاحية أولاً','warning');
+    if (dateEl) dateEl.focus();
+    return;
+  }
+  var toolLabel = tool==='crm' ? 'إدارة المستفيدين (CRM)' : 'الموقع الإلكتروني';
+  fetch('/api/admin/enable-tool', {
+    method:'POST',
+    headers: DB._apiHeaders(),
+    body: JSON.stringify({ org_email:orgEmail, org_id:orgId, tool:tool, enabled:true, expires_at:expiresAt })
+  }).then(function(res){ return res.json(); }).then(function(d){
+    if (d.ok) {
+      var r = (Pages._requests||[]).find(function(x){ return x.id===reqId; });
+      if (r){ r.status='won'; r.client_note='تم تفعيل أداة '+toolLabel+' حتى '+expiresAt; }
+      Pages._updateRequestsBadge();
+      DB._updateRequest(reqId, {status:'won', client_note:'تم تفعيل أداة '+toolLabel+' حتى '+expiresAt});
+      Pages._orgs = null;
+      Pages.closeReqDrawer();
+      UI.toast('تم تفعيل '+toolLabel+' حتى '+expiresAt+' ✓','success');
+      if (Nav._cur==='website') Pages.render_website({_loaded:true});
+    } else {
+      UI.toast('تعذّر التفعيل: '+(d.error||''),'danger');
+    }
+  }).catch(function(){ UI.toast('تعذّر الاتصال','danger'); });
+};
+
+/* backward compat alias */
+Pages.enableToolFromRequest = function(reqId, service, orgEmail, orgName){
+  Pages.openReqDrawer(reqId);
 };
 
 /* ── Services tab ── */
