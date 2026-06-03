@@ -517,6 +517,8 @@ export async function onRequest(context) {
       'ALTER TABLE crm_notes ADD COLUMN stage TEXT NOT NULL DEFAULT ""',
       // ── Request multi-stage assignment ──
       'ALTER TABLE crm_requests ADD COLUMN stage TEXT NOT NULL DEFAULT ""',
+      // ── Request extensible data (followers, tasks, custom fields) ──
+      'ALTER TABLE crm_requests ADD COLUMN custom_data TEXT NOT NULL DEFAULT "{}"',
       // ── Document checklist ──
       'CREATE TABLE IF NOT EXISTS crm_documents (id TEXT PRIMARY KEY, org_id TEXT NOT NULL, beneficiary_id TEXT NOT NULL DEFAULT "", request_id TEXT NOT NULL DEFAULT "", doc_type TEXT NOT NULL DEFAULT "", label TEXT NOT NULL DEFAULT "", status TEXT NOT NULL DEFAULT "required", note TEXT NOT NULL DEFAULT "", file_url TEXT NOT NULL DEFAULT "", created_at INTEGER NOT NULL DEFAULT (unixepoch()), verified_at INTEGER NOT NULL DEFAULT 0, verified_by TEXT NOT NULL DEFAULT "")',
       'CREATE INDEX IF NOT EXISTS idx_cdoc_ben ON crm_documents(beneficiary_id)',
@@ -886,12 +888,27 @@ export async function onRequest(context) {
     try {
       let body; try { body = await request.json(); } catch (e) { return json({ error: 'Bad request' }, 400); }
       const fields = [], vals = [];
-      ['status','priority','assigned_to','due_date','resolution','title','description','amount'].forEach(function(k) {
+      ['status','priority','assigned_to','due_date','resolution','title','description','amount','custom_data'].forEach(function(k) {
         if (body[k] !== undefined) { fields.push(k+'=?'); vals.push(body[k]); }
       });
       if (!fields.length) return json({ error: 'nothing' }, 400);
       fields.push('updated_at=unixepoch()'); vals.push(crmReqMatch[1], orgMe.id);
       await db.prepare('UPDATE crm_requests SET '+fields.join(',')+' WHERE id=? AND org_id=?').bind(...vals).run();
+      return json({ ok: true });
+    } catch (e) { return json({ error: 'db_error', detail: e.message }, 500); }
+  }
+
+  /* ─── DELETE /api/crm/requests/:id ─── (cascades approvals/notes/docs) ─── */
+  if (crmReqMatch && method === 'DELETE') {
+    if (!await crmGuard()) return json({ error: 'crm_not_enabled' }, 403);
+    try {
+      const reqId = crmReqMatch[1];
+      await Promise.all([
+        db.prepare('DELETE FROM crm_approvals WHERE request_id=? AND org_id=?').bind(reqId, orgMe.id).run(),
+        db.prepare('DELETE FROM crm_notes WHERE request_id=? AND org_id=?').bind(reqId, orgMe.id).run(),
+        db.prepare('DELETE FROM crm_documents WHERE request_id=? AND org_id=?').bind(reqId, orgMe.id).run(),
+        db.prepare('DELETE FROM crm_requests WHERE id=? AND org_id=?').bind(reqId, orgMe.id).run()
+      ]);
       return json({ ok: true });
     } catch (e) { return json({ error: 'db_error', detail: e.message }, 500); }
   }
