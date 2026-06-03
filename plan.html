@@ -1314,6 +1314,75 @@ img,svg{display:block;max-width:100%}
 .crm-toggle-inline .cfg-switch::after{content:'';position:absolute;top:2px;right:2px;width:15px;height:15px;background:#fff;border-radius:50%;transition:.2s}
 .crm-toggle-inline .cfg-switch.on::after{right:17px}
 
+/* ── Request detail (full page) ── */
+.crm-req-head{background:var(--bg-card);border:1px solid var(--line);border-radius:var(--radius);padding:20px 22px;margin-bottom:14px}
+.crm-req-topbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.crm-req-title{font-size:20px;font-weight:800;color:var(--navy-deep);width:100%;border:1px solid transparent;border-radius:8px;padding:4px 8px;margin:-4px -8px 2px;background:transparent;font-family:inherit;transition:.15s}
+.crm-req-title:hover{border-color:var(--line)}
+.crm-req-title:focus{outline:none;border-color:var(--navy);background:var(--bg-soft)}
+.crm-req-desc{font-size:13px;color:var(--text);line-height:1.7;width:100%;border:1px solid transparent;border-radius:8px;padding:6px 8px;margin:0 -8px;background:transparent;font-family:inherit;resize:vertical;min-height:38px;transition:.15s}
+.crm-req-desc:hover{border-color:var(--line)}
+.crm-req-desc:focus{outline:none;border-color:var(--navy);background:var(--bg-soft)}
+.crm-req-benchip{display:inline-flex;align-items:center;gap:8px;background:var(--bg-soft);border:1px solid var(--line);border-radius:30px;padding:4px 12px 4px 4px;cursor:pointer;font-size:13px;font-weight:700;color:var(--navy-deep);transition:.15s;margin-top:12px}
+.crm-req-benchip:hover{border-color:var(--navy);background:var(--bg-tint)}
+.crm-req-benchip .crm-avatar{width:26px;height:26px;font-size:12px}
+.crm-req-fields{display:flex;align-items:flex-start;gap:0;flex-wrap:wrap;border-top:1px solid var(--line);margin-top:16px;padding-top:14px}
+.crm-req-field{display:flex;flex-direction:column;gap:5px;padding:0 18px;border-right:1px solid var(--line);min-width:120px}
+.crm-req-field:first-child{padding-right:0}
+.crm-req-field:last-child{border-right:none}
+.crm-req-field-lbl{font-size:11px;color:var(--muted);font-weight:600}
+.crm-req-field-val{font-size:13px;font-weight:700;color:var(--navy-deep)}
+.crm-req-field select,.crm-req-field input{border:1px solid var(--line);border-radius:7px;padding:5px 8px;font-family:inherit;font-size:12.5px;background:var(--bg-card);color:var(--text);font-weight:600}
+.crm-req-field select:focus,.crm-req-field input:focus{outline:none;border-color:var(--navy)}
+.crm-followers{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+.crm-foll-ava{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--navy),var(--accent));color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0;position:relative}
+.crm-foll-ava .crm-foll-x{position:absolute;top:-4px;left:-4px;width:15px;height:15px;background:#dc2626;color:#fff;border-radius:50%;font-size:10px;line-height:15px;text-align:center;cursor:pointer;display:none}
+.crm-foll-ava:hover .crm-foll-x{display:block}
+.crm-foll-add{width:28px;height:28px;border-radius:50%;border:1.5px dashed var(--line);background:transparent;color:var(--muted);cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;transition:.15s}
+.crm-foll-add:hover{border-color:var(--navy);color:var(--navy)}
+
+/* ── Request pipeline (chevron stages) ── */
+.crm-pipe{display:flex;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;margin-bottom:18px;background:var(--bg-card)}
+.crm-pipe-step{flex:1;position:relative;padding:13px 14px 13px 26px;font-size:12.5px;font-weight:700;color:var(--muted);background:var(--bg-card);cursor:pointer;transition:.15s;white-space:nowrap;text-align:center;border:none;font-family:inherit}
+.crm-pipe-step:not(:last-child)::after{content:'';position:absolute;top:50%;left:-11px;width:22px;height:22px;background:inherit;border-top:1px solid var(--line);border-right:1px solid var(--line);transform:translateY(-50%) rotate(135deg);z-index:2}
+.crm-pipe-step:hover:not(.current){background:var(--bg-tint);color:var(--navy)}
+.crm-pipe-step.done{background:#ecfdf5;color:#059669}
+.crm-pipe-step.current{background:var(--navy);color:#fff}
+.crm-pipe-step.current::after{background:var(--navy);border-color:var(--navy)}
+[data-theme="dark"] .crm-pipe-step.done{background:rgba(5,150,105,.18);color:#34d399}
+
+/* ── Requests pipeline board (kanban) ── */
+.crm-board{display:flex;gap:12px;overflow-x:auto;padding-bottom:10px;align-items:flex-start}
+.crm-board-col{flex:0 0 240px;background:var(--bg-soft);border:1px solid var(--line);border-radius:12px;padding:10px;min-height:80px}
+.crm-board-col.drag-over{border-color:var(--navy);background:var(--bg-tint)}
+.crm-board-colhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;padding:2px 4px}
+.crm-board-coltitle{font-size:12.5px;font-weight:800;color:var(--navy-deep)}
+.crm-board-count{font-size:11px;font-weight:800;color:var(--muted);background:var(--bg-card);border:1px solid var(--line);border-radius:20px;padding:1px 8px;font-variant-numeric:lining-nums}
+.crm-board-card{background:var(--bg-card);border:1px solid var(--line);border-radius:10px;padding:11px 12px;margin-bottom:9px;cursor:pointer;box-shadow:var(--shadow-sm);transition:box-shadow .15s,transform .15s,border-color .15s}
+.crm-board-card:hover{box-shadow:var(--shadow);transform:translateY(-1px);border-color:var(--line-2)}
+.crm-board-card.dragging{opacity:.5}
+.crm-board-card-title{font-size:13px;font-weight:700;color:var(--navy-deep);margin-bottom:6px;line-height:1.4}
+.crm-board-card-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:11.5px;color:var(--muted)}
+.crm-view-toggle{display:inline-flex;gap:3px;background:var(--bg-soft);border:1px solid var(--line);border-radius:9px;padding:3px}
+.crm-view-toggle button{border:none;background:transparent;padding:5px 13px;border-radius:6px;font-size:12.5px;font-weight:600;color:var(--muted);cursor:pointer;font-family:inherit;transition:.14s}
+.crm-view-toggle button.active{background:var(--bg-card);color:var(--navy);box-shadow:var(--shadow-sm)}
+
+/* ── Request tasks checklist ── */
+.crm-task-list{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
+.crm-task-row{display:flex;align-items:center;gap:10px;background:var(--bg-card);border:1px solid var(--line);border-radius:9px;padding:10px 12px}
+.crm-task-row.done .crm-task-text{text-decoration:line-through;color:var(--muted)}
+.crm-task-check{width:18px;height:18px;border-radius:5px;border:1.5px solid var(--line);cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:var(--bg-card);transition:.15s}
+.crm-task-check.on{background:var(--navy);border-color:var(--navy);color:#fff}
+.crm-task-check svg{width:12px;height:12px}
+.crm-task-text{flex:1;font-size:13px;color:var(--text)}
+.crm-task-del{background:none;border:none;color:var(--muted);cursor:pointer;font-size:17px;line-height:1;padding:0 4px}
+.crm-task-del:hover{color:#dc2626}
+.crm-task-add{display:flex;gap:8px}
+.crm-task-add input{flex:1;border:1px solid var(--line);border-radius:8px;padding:9px 12px;font-family:inherit;font-size:13px;background:var(--bg-card);color:var(--text)}
+.crm-task-add input:focus{outline:none;border-color:var(--navy)}
+.crm-task-prog{height:6px;background:var(--bg-tint);border-radius:4px;overflow:hidden;margin-bottom:14px}
+.crm-task-prog-fill{height:100%;background:linear-gradient(90deg,var(--navy),var(--accent));border-radius:4px;transition:width .3s}
+
 /* Responsive */
 @media(max-width:700px){
   .crm-form-grid{grid-template-columns:1fr}
@@ -1321,6 +1390,11 @@ img,svg{display:block;max-width:100%}
   .crm-profile-sub{justify-content:center}
   .crm-stat-grid{grid-template-columns:1fr 1fr}
   .crm-step-lbl{display:none}
+  .crm-req-field{border-right:none;padding:0;min-width:46%}
+  .crm-req-fields{gap:14px}
+  .crm-pipe{flex-direction:column}
+  .crm-pipe-step{text-align:right;padding:11px 14px}
+  .crm-pipe-step:not(:last-child)::after{display:none}
 }
 /* ─── Grant Opportunities ─── */
 .gr-view-tabs{display:flex;gap:3px;background:var(--bg-soft);border:1px solid var(--line);border-radius:10px;padding:3px;margin-bottom:20px;width:fit-content}
@@ -6663,7 +6737,8 @@ function crmTaxFor(type){
 }
 
 /* CRM state */
-var crm = { view:'dash', ben:null, subTab:'info', search:'', statusFilter:'', catFilter:'', stageFilter:'', selected:{}, _benList:[] };
+var crm = { view:'dash', ben:null, subTab:'info', search:'', statusFilter:'', catFilter:'', stageFilter:'', selected:{}, _benList:[],
+  req:null, reqBen:null, reqSubTab:'beneficiary', reqFrom:'reqs', reqView:'board' };
 /* current user's role (admin can do final approvals) */
 function crmRole(){ try{ var s=token().split('.')[1].replace(/-/g,'+').replace(/_/g,'/'); var p=JSON.parse(decodeURIComponent(escape(atob(s)))); return p.role||'admin'; }catch(e){ return 'admin'; } }
 function crmCanApprove(){ return crmRole()!=='viewer'; }
@@ -6722,6 +6797,7 @@ function crmGo(view){
   if(crmCfgLoading) return;
   crm.view = view;
   crm.ben = null;
+  crm.req = null; crm.reqBen = null;
   if(view==='dash')  crmLoadDash();
   else if(view==='bens') crmLoadBens();
   else if(view==='reqs') crmLoadReqs();
@@ -7074,7 +7150,10 @@ function crmSaveDoc(benId, reqId){
   var dt = fv('dc-type');
   var body = { beneficiary_id:benId, request_id:reqId||'', doc_type:dt, label:fv('dc-label')||CRM_DOC_LABEL[dt]||'', status:fv('dc-status'), note:fv('dc-note') };
   crmFetch('/documents',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
-    .then(function(){ crmCloseModal(); toast('تمت إضافة المستند'); if(reqId) crmOpenReqDetail(reqId, benId); else crmOpenBen(benId); })
+    .then(function(){ crmCloseModal(); toast('تمت إضافة المستند');
+      if(reqId && crm.view==='req' && crm.req && crm.req.id===reqId){ crm.reqSubTab='docs'; crmReloadReq(); }
+      else if(reqId) crmOpenReqDetail(reqId, benId);
+      else crmOpenBen(benId); })
     .catch(function(e){ toast('خطأ: '+e.message); });
 }
 function crmUpdateDoc(docId, benId, status){
@@ -7190,18 +7269,76 @@ function crmLoadReqs(){
   var el = document.getElementById('crm-content');
   el.innerHTML = '<div style="padding:40px;text-align:center;color:var(--muted)">جارٍ التحميل…</div>';
   crmRenderTopbar('');
-  var qs = crm.statusFilter ? '?status='+crm.statusFilter : '';
+  // board view ignores the status filter (it groups by status itself)
+  var qs = (crm.reqView!=='board' && crm.statusFilter) ? '?status='+crm.statusFilter : '';
   crmFetch('/requests'+qs).then(function(list){
+    crm._reqList = list;
     var statusOptions = [''].concat(Object.keys(CRM_STATUS_LABEL));
-    el.innerHTML =
-      '<div class="crm-toolbar">'+
-        '<select class="crm-filter" onchange="crm.statusFilter=this.value;crmLoadReqs()">'+
-          statusOptions.map(function(s){ return '<option value="'+s+'"'+(crm.statusFilter===s?' selected':'')+'>'+
-            (s?CRM_STATUS_LABEL[s]:'جميع الحالات')+'</option>'; }).join('')+
-        '</select>'+
-      '</div>'+
-      (list.length===0 ? crmEmpty('لا توجد طلبات','ستظهر هنا طلبات الخدمة بعد إضافتها من ملف المستفيد','') : crmReqTable(list, false));
+    var toggle = '<div class="crm-view-toggle">'+
+      '<button class="'+(crm.reqView==='board'?'active':'')+'" onclick="crm.reqView=\'board\';crmLoadReqs()">لوحة المراحل</button>'+
+      '<button class="'+(crm.reqView==='table'?'active':'')+'" onclick="crm.reqView=\'table\';crmLoadReqs()">جدول</button>'+
+    '</div>';
+    var body;
+    if(list.length===0){
+      body = crmEmpty('لا توجد طلبات','ستظهر هنا طلبات الخدمة بعد إضافتها من ملف المستفيد','');
+    } else if(crm.reqView==='board'){
+      body = crmReqBoard(list);
+    } else {
+      body = '<div class="crm-toolbar"><select class="crm-filter" onchange="crm.statusFilter=this.value;crmLoadReqs()">'+
+        statusOptions.map(function(s){ return '<option value="'+s+'"'+(crm.statusFilter===s?' selected':'')+'>'+
+          (s?CRM_STATUS_LABEL[s]:'جميع الحالات')+'</option>'; }).join('')+
+        '</select></div>'+crmReqTable(list, false);
+    }
+    el.innerHTML = '<div style="display:flex;justify-content:flex-end;margin-bottom:14px">'+toggle+'</div>'+body;
   }).catch(function(e){ el.innerHTML = '<p style="padding:20px;color:#dc2626">'+esc(e.message)+'</p>'; });
+}
+
+/* requests pipeline board — columns by status, cards drag/click */
+function crmReqBoard(list){
+  var cols = Object.keys(CRM_STATUS_LABEL);
+  var today = new Date().toISOString().slice(0,10);
+  var byStatus = {}; cols.forEach(function(s){ byStatus[s]=[]; });
+  list.forEach(function(r){ (byStatus[r.status]=byStatus[r.status]||[]).push(r); });
+  return '<div class="crm-board">'+cols.map(function(s){
+    var items = byStatus[s]||[];
+    var cards = items.map(function(r){
+      var overdue = r.due_date && r.due_date < today && ['approved','completed','closed','rejected'].indexOf(r.status)<0;
+      return '<div class="crm-board-card" draggable="true" data-id="'+r.id+'" data-ben="'+esc(r.beneficiary_id)+'"'+
+        ' ondragstart="crmBoardDragStart(event,\''+r.id+'\')" ondragend="crmBoardDragEnd(event)"'+
+        ' onclick="crmOpenReqDetail(\''+r.id+'\',\''+r.beneficiary_id+'\')">'+
+        '<div class="crm-board-card-title">'+(overdue?'<span class="crm-overdue-tag">متأخر</span>':'')+esc(r.title||'—')+'</div>'+
+        '<div class="crm-board-card-meta">'+esc(r.ben_name||'')+' · '+crmBadge(CRM_PRI_LABEL, r.priority)+
+          (+r.amount?' · '+crmFmtMoney(r.amount):'')+'</div>'+
+      '</div>';
+    }).join('');
+    return '<div class="crm-board-col" data-status="'+s+'" ondragover="crmBoardDragOver(event)" ondragleave="crmBoardDragLeave(event)" ondrop="crmBoardDrop(event,\''+s+'\')">'+
+      '<div class="crm-board-colhead"><span class="crm-board-coltitle">'+esc(CRM_STATUS_LABEL[s])+'</span><span class="crm-board-count">'+items.length+'</span></div>'+
+      cards+
+    '</div>';
+  }).join('')+'</div>';
+}
+
+/* board drag/drop → maps target column to a workflow action */
+var _crmDragReq = null;
+function crmBoardDragStart(e, id){ _crmDragReq = id; e.dataTransfer.effectAllowed='move'; if(e.target.classList) e.target.classList.add('dragging'); }
+function crmBoardDragEnd(e){ if(e.target.classList) e.target.classList.remove('dragging'); }
+function crmBoardDragOver(e){ e.preventDefault(); var c=e.currentTarget; if(c)c.classList.add('drag-over'); }
+function crmBoardDragLeave(e){ var c=e.currentTarget; if(c)c.classList.remove('drag-over'); }
+function crmBoardDrop(e, toStatus){
+  e.preventDefault();
+  var c=e.currentTarget; if(c)c.classList.remove('drag-over');
+  var id=_crmDragReq; _crmDragReq=null;
+  if(!id) return;
+  var r=(crm._reqList||[]).filter(function(x){return x.id===id;})[0];
+  if(!r || r.status===toStatus) return;
+  // map destination status to the appropriate approval action
+  var actionMap = { reviewing:'advance', approved:'approve', rejected:'reject', completed:'complete', pending:'return', closed:'return' };
+  var action = actionMap[toStatus];
+  if(!action){ toast('انتقال غير مدعوم'); return; }
+  if(action==='reject'){ toast('استخدم زر الرفض داخل الطلب لإضافة السبب'); return; }
+  crmFetch('/requests/'+id+'/action',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:action,to_status:toStatus,note:''})})
+    .then(function(){ toast('تم نقل الطلب'); crmLoadReqs(); })
+    .catch(function(err){ toast(err.message==='forbidden'?'هذه الصلاحية للمشرف':('خطأ: '+err.message)); });
 }
 
 function crmReqTable(list, compact){
@@ -7657,12 +7794,314 @@ function crmSaveReq(benId){
     }).catch(function(e){ toast('خطأ: '+e.message); });
 }
 
-/* ── Request Detail (with approval chain) ── */
+/* ── Request Detail (full page) ── */
 function crmOpenReqDetail(reqId, benId){
+  benId = benId || '';
+  // remember where we came from so "back" returns sensibly
+  crm.reqFrom = (crm.ben && crm.ben.id) ? 'ben' : 'reqs';
+  var el = document.getElementById('crm-content');
+  if(el) el.innerHTML = '<div style="padding:40px;text-align:center;color:var(--muted)">جارٍ التحميل…</div>';
   crmFetch('/requests/'+reqId+'/detail').then(function(r){
+    crm.req = r;
     crm._currentReq = r;
-    crmShowReqModal(r, benId||r.beneficiary_id);
+    var bid = benId || r.beneficiary_id;
+    return crmFetch('/beneficiaries/'+bid).then(function(b){
+      crm.reqBen = b;
+    }).catch(function(){ crm.reqBen = null; }).then(function(){
+      crm.view = 'req';
+      crmRenderReq();
+    });
   }).catch(function(e){ toast('خطأ: '+e.message); });
+}
+
+/* parse request.custom_data (may be a JSON string from the API) */
+function crmReqCD(r){
+  var cd = (r||crm.req||{}).custom_data || {};
+  if(typeof cd === 'string'){ try{ cd = JSON.parse(cd); }catch(e){ cd = {}; } }
+  if(!cd.followers) cd.followers = [];
+  if(!cd.tasks) cd.tasks = [];
+  if(!cd.fields) cd.fields = {};
+  return cd;
+}
+/* merge a patch into custom_data and persist via PATCH */
+function crmSaveReqCustom(cd, rerenderTab){
+  if(!crm.req) return;
+  crm.req.custom_data = cd; // keep local copy fresh
+  crmFetch('/requests/'+crm.req.id,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({custom_data:JSON.stringify(cd)})})
+    .then(function(){ if(rerenderTab) crmRenderReqTab(); })
+    .catch(function(e){ toast('خطأ: '+e.message); });
+}
+
+function crmRenderReq(){
+  var r = crm.req, b = crm.reqBen;
+  var el = document.getElementById('crm-content');
+  if(!r||!el) return;
+  crmRenderTopbar('');
+  var overdue = r.due_date && r.due_date < new Date().toISOString().slice(0,10) && ['approved','completed','closed','rejected'].indexOf(r.status)<0;
+  var backLbl = crm.reqFrom==='ben' && b ? 'العودة لملف المستفيد' : 'العودة للطلبات';
+  el.innerHTML =
+    '<div class="crm-back" onclick="crmReqBack()">'+
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>'+
+      esc(backLbl)+'</div>'+
+
+    '<div class="crm-req-head">'+
+      '<div class="crm-req-topbar">'+
+        crmReqActionBtns(r, r.beneficiary_id)+
+        '<div class="crm-wf-spacer"></div>'+
+        '<button class="crm-btn crm-btn-danger crm-btn-sm" onclick="crmDeleteReq(\''+r.id+'\')">حذف الطلب</button>'+
+      '</div>'+
+      '<input class="crm-req-title" id="rq-title" value="'+esc(r.title||'')+'" placeholder="عنوان الطلب" onchange="crmReqFieldSave(\'title\',this.value)">'+
+      '<textarea class="crm-req-desc" id="rq-desc" placeholder="أضف وصفاً للطلب…" onchange="crmReqFieldSave(\'description\',this.value)">'+esc(r.description||'')+'</textarea>'+
+      (b?'<div class="crm-req-benchip" onclick="crmOpenBen(\''+b.id+'\')">'+
+        '<div class="crm-avatar '+crmAvatarClass(b.gender)+'">'+esc(crmInitial(b.name))+'</div>'+
+        '<span>'+esc(b.name)+'</span>'+
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:14px;height:14px"><polyline points="15 18 9 12 15 6"/></svg>'+
+      '</div>':'')+
+
+      '<div class="crm-req-fields">'+
+        '<div class="crm-req-field"><span class="crm-req-field-lbl">الحالة</span><span class="crm-req-field-val">'+crmBadge(CRM_STATUS_LABEL, r.status)+(overdue?'<span class="crm-overdue-tag" style="margin-right:6px">متأخر</span>':'')+'</span></div>'+
+        '<div class="crm-req-field"><span class="crm-req-field-lbl">الأولوية</span><select onchange="crmReqFieldSave(\'priority\',this.value)">'+crmSelectOptions(CRM_PRI_LABEL,r.priority)+'</select></div>'+
+        '<div class="crm-req-field"><span class="crm-req-field-lbl">المسؤول</span><input value="'+esc(r.assigned_to||'')+'" placeholder="غير مُعيَّن" onchange="crmReqFieldSave(\'assigned_to\',this.value)"></div>'+
+        '<div class="crm-req-field"><span class="crm-req-field-lbl">تاريخ الاستحقاق</span><input type="date" value="'+esc(r.due_date||'')+'" onchange="crmReqFieldSave(\'due_date\',this.value)"></div>'+
+        (+r.amount?'<div class="crm-req-field"><span class="crm-req-field-lbl">المبلغ</span><span class="crm-req-field-val">'+crmFmtMoney(r.amount)+'</span></div>':'')+
+        '<div class="crm-req-field"><span class="crm-req-field-lbl">المتابعون</span>'+crmReqFollowers()+'</div>'+
+      '</div>'+
+    '</div>'+
+
+    crmReqPipe(r)+
+
+    '<div class="crm-subtabs" id="crm-req-subtabs"></div>'+
+    '<div id="crm-req-tab"></div>';
+
+  crmRenderReqSubtabs();
+  crmRenderReqTab();
+}
+
+function crmReqBack(){
+  if(crm.reqFrom==='ben' && crm.reqBen){ crmOpenBen(crm.reqBen.id); }
+  else { crmGo('reqs'); }
+}
+
+function crmRenderReqSubtabs(){
+  var r = crm.req;
+  var notesN = (r.notes||[]).filter(function(n){ return n.type!=='system'; }).length;
+  var docsN = (r.documents||[]).length;
+  var tasksN = crmReqCD(r).tasks.length;
+  var tabs = [
+    ['beneficiary','بيانات المستفيد'],
+    ['tasks','المهام'+(tasksN?' ('+tasksN+')':'')],
+    ['docs','المستندات'+(docsN?' ('+docsN+')':'')],
+    ['notes','الملاحظات'+(notesN?' ('+notesN+')':'')],
+    ['updates','التحديثات']
+  ];
+  var el = document.getElementById('crm-req-subtabs');
+  if(el) el.innerHTML = tabs.map(function(t){ return '<button class="crm-subtab'+(crm.reqSubTab===t[0]?' active':'')+'" onclick="crm.reqSubTab=\''+t[0]+'\';crmRenderReqSubtabs();crmRenderReqTab()">'+t[1]+'</button>'; }).join('');
+}
+
+function crmReqFollowers(){
+  var cd = crmReqCD();
+  var html = '<div class="crm-followers">';
+  cd.followers.forEach(function(f,i){
+    html += '<div class="crm-foll-ava" title="'+esc(f)+'">'+esc(crmInitial(f))+'<span class="crm-foll-x" onclick="event.stopPropagation();crmRemoveFollower('+i+')">×</span></div>';
+  });
+  html += '<button class="crm-foll-add" title="إضافة متابع" onclick="crmAddFollower()">+</button></div>';
+  return html;
+}
+function crmAddFollower(){
+  var name = prompt('اسم المتابع:');
+  if(!name) return;
+  name = name.trim(); if(!name) return;
+  var cd = crmReqCD();
+  cd.followers.push(name);
+  crmSaveReqCustom(cd);
+  crmRenderReq();
+}
+function crmRemoveFollower(i){
+  var cd = crmReqCD();
+  cd.followers.splice(i,1);
+  crmSaveReqCustom(cd);
+  crmRenderReq();
+}
+
+/* pipeline chevrons mapped to the request workflow */
+function crmReqPipe(r){
+  var steps = [
+    {k:'pending',  l:'قيد الانتظار', action:'return'},
+    {k:'reviewing',l:'قيد المراجعة', action:'advance'},
+    {k:'approved', l:'معتمد',        action:'approve'},
+    {k:'completed',l:'مكتمل',        action:'complete'}
+  ];
+  var order = ['pending','reviewing','approved','completed'];
+  var curIdx = order.indexOf(r.status);
+  // rejected/closed are off-pipeline terminal states
+  if(curIdx<0) curIdx = (r.status==='rejected'||r.status==='closed') ? -1 : 0;
+  return '<div class="crm-pipe">'+steps.map(function(s,i){
+    var cls = i===curIdx ? 'current' : (curIdx>=0 && i<curIdx ? 'done' : '');
+    return '<button class="crm-pipe-step '+cls+'" onclick="crmReqAction(\''+r.id+'\',\''+r.beneficiary_id+'\',\''+s.action+'\')">'+esc(s.l)+'</button>';
+  }).join('')+'</div>';
+}
+
+function crmRenderReqTab(){
+  var el = document.getElementById('crm-req-tab');
+  if(!el) return;
+  var t = crm.reqSubTab;
+  if(t==='beneficiary') el.innerHTML = crmReqBenTab();
+  else if(t==='tasks')  el.innerHTML = crmReqTasksTab();
+  else if(t==='docs')   el.innerHTML = crmReqDocsTab();
+  else if(t==='notes')  el.innerHTML = crmReqNotesTab();
+  else if(t==='updates')el.innerHTML = crmReqUpdatesTab();
+}
+
+function crmReqBenTab(){
+  var b = crm.reqBen;
+  if(!b) return crmEmpty('تعذّر تحميل بيانات المستفيد','','');
+  return '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">'+
+      '<div style="display:flex;align-items:center;gap:10px">'+
+        '<div class="crm-avatar '+crmAvatarClass(b.gender)+'" style="width:42px;height:42px;font-size:17px">'+esc(crmInitial(b.name))+'</div>'+
+        '<div><div style="font-size:15px;font-weight:800;color:var(--navy-deep)">'+esc(b.name)+'</div>'+
+        '<div class="crm-profile-sub" style="margin-top:3px">'+crmBadge(CRM_CAT_LABEL, b.category)+crmBenStageBadge(b)+'</div></div>'+
+      '</div>'+
+      '<button class="crm-btn crm-btn-outline crm-btn-sm" onclick="crmOpenBen(\''+b.id+'\')">فتح الملف الكامل</button>'+
+    '</div>'+
+    crmBenInfo(b);
+}
+
+function crmReqTasksTab(){
+  var cd = crmReqCD();
+  var tasks = cd.tasks||[];
+  var done = tasks.filter(function(t){ return t.done; }).length;
+  var out = '';
+  if(tasks.length){
+    var pct = Math.round(done/tasks.length*100);
+    out += '<div style="font-size:12px;color:var(--muted);margin-bottom:8px">'+done+' من '+tasks.length+' مهمة مكتملة</div>'+
+      '<div class="crm-task-prog"><div class="crm-task-prog-fill" style="width:'+pct+'%"></div></div>';
+  }
+  if(tasks.length){
+    out += '<div class="crm-task-list">'+tasks.map(function(t){
+      return '<div class="crm-task-row'+(t.done?' done':'')+'">'+
+        '<div class="crm-task-check'+(t.done?' on':'')+'" onclick="crmToggleReqTask(\''+t.id+'\')">'+(t.done?'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>':'')+'</div>'+
+        '<span class="crm-task-text">'+esc(t.text)+'</span>'+
+        '<button class="crm-task-del" onclick="crmDeleteReqTask(\''+t.id+'\')">×</button>'+
+      '</div>';
+    }).join('')+'</div>';
+  } else {
+    out += '<div style="font-size:13px;color:var(--muted);margin-bottom:14px">لا توجد مهام بعد. أضف خطوات تنفيذ هذا الطلب.</div>';
+  }
+  out += '<div class="crm-task-add">'+
+    '<input id="rq-new-task" placeholder="أضف مهمة جديدة…" onkeydown="if(event.key===\'Enter\')crmAddReqTask()">'+
+    '<button class="crm-btn crm-btn-primary crm-btn-sm" onclick="crmAddReqTask()">إضافة</button>'+
+  '</div>';
+  return out;
+}
+function crmAddReqTask(){
+  var el = document.getElementById('rq-new-task');
+  var txt = el ? el.value.trim() : '';
+  if(!txt) return;
+  var cd = crmReqCD();
+  cd.tasks.push({ id:'t_'+Date.now().toString(36)+Math.random().toString(36).slice(2,5), text:txt, done:false });
+  crmSaveReqCustom(cd);
+  crmRenderReqSubtabs(); crmRenderReqTab();
+}
+function crmToggleReqTask(id){
+  var cd = crmReqCD();
+  cd.tasks.forEach(function(t){ if(t.id===id) t.done = !t.done; });
+  crmSaveReqCustom(cd);
+  crmRenderReqTab();
+}
+function crmDeleteReqTask(id){
+  var cd = crmReqCD();
+  cd.tasks = cd.tasks.filter(function(t){ return t.id!==id; });
+  crmSaveReqCustom(cd);
+  crmRenderReqSubtabs(); crmRenderReqTab();
+}
+
+function crmReqDocsTab(){
+  var r = crm.req;
+  var docs = r.documents||[];
+  var out = '<div style="display:flex;justify-content:flex-end;margin-bottom:14px"><button class="crm-btn crm-btn-primary crm-btn-sm" onclick="crmOpenAddDoc(\''+r.beneficiary_id+'\',\''+r.id+'\')">+ مستند</button></div>';
+  if(!docs.length) return out+crmEmpty('لا توجد مستندات','أضف المستندات المطلوبة لهذا الطلب','crmOpenAddDoc(\''+r.beneficiary_id+'\',\''+r.id+'\')');
+  out += '<div class="crm-doc-list">'+docs.map(function(d){
+    return '<div class="crm-doc-row s-'+d.status+'">'+
+      '<div class="crm-doc-ico">'+crmDocIcon()+'</div>'+
+      '<div class="crm-doc-info"><div class="crm-doc-label">'+esc(d.label||CRM_DOC_LABEL[d.doc_type]||d.doc_type||'مستند')+'</div>'+
+        '<div class="crm-doc-meta">'+(CRM_DOC_STATUS_LABEL[d.status]||d.status)+(d.verified_by?' · اعتمده '+esc(d.verified_by):'')+'</div></div>'+
+      '<select class="crm-doc-status" onchange="crmUpdateReqDoc(\''+d.id+'\',\''+r.id+'\',\''+r.beneficiary_id+'\',this.value)">'+
+        Object.keys(CRM_DOC_STATUS_LABEL).map(function(s){ return '<option value="'+s+'"'+(d.status===s?' selected':'')+'>'+CRM_DOC_STATUS_LABEL[s]+'</option>'; }).join('')+
+      '</select>'+
+    '</div>';
+  }).join('')+'</div>';
+  return out;
+}
+
+function crmReqNotesTab(){
+  var r = crm.req;
+  var list = (r.notes||[]).filter(function(n){ return n.type!=='system'; });
+  var icons = {
+    note:'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>',
+    call:'<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13 19.79 19.79 0 0 1 1.61 4.44 2 2 0 0 1 3.6 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 9.91a16 16 0 0 0 6.18 6.18l1-1.04a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>',
+    visit:'<path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>',
+    action:'<polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>'
+  };
+  var out = '<div style="display:flex;justify-content:flex-end;margin-bottom:16px"><button class="crm-btn crm-btn-primary crm-btn-sm" onclick="crmOpenAddNote(\''+r.beneficiary_id+'\',\''+r.id+'\')">+ إضافة ملاحظة</button></div>';
+  if(!list.length) return out+crmEmpty('لا توجد ملاحظات','دوّن ملاحظة أو مكالمة أو قراراً يخص هذا الطلب','crmOpenAddNote(\''+r.beneficiary_id+'\',\''+r.id+'\')');
+  out += '<div class="crm-timeline">'+list.map(function(n){
+    var ico = icons[n.type]||icons.note;
+    return '<div class="crm-tl-item">'+
+      '<div class="crm-tl-dot '+n.type+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">'+ico+'</svg></div>'+
+      '<div class="crm-tl-body"><div class="crm-tl-meta">'+
+        '<span class="crm-tl-type">'+(n.internal?'<span class="crm-note-internal">داخلي</span>':'')+esc(CRM_NOTE_LABEL[n.type]||n.type)+(n.created_by?' · '+esc(n.created_by):'')+'</span>'+
+        '<div style="display:flex;align-items:center;gap:8px"><span class="crm-tl-date">'+crmFmtDate(n.created_at)+'</span>'+
+          '<button class="crm-tl-del" onclick="crmDeleteReqNote(\''+n.id+'\')">×</button></div>'+
+      '</div><div class="crm-tl-content">'+esc(n.content)+'</div></div>'+
+    '</div>';
+  }).join('')+'</div>';
+  return out;
+}
+
+function crmReqUpdatesTab(){
+  var r = crm.req;
+  var appr = crmApprChain(r);
+  var sysNotes = (r.notes||[]).filter(function(n){ return n.type==='system'; });
+  var out = '<div class="crm-sec-title" style="font-size:13px;margin-bottom:10px">سلسلة القرارات والموافقات</div>'+appr;
+  if(sysNotes.length){
+    out += '<div class="crm-sec-title" style="font-size:13px;margin:18px 0 10px">سجل النظام</div>'+
+      '<div class="crm-timeline">'+sysNotes.map(function(n){
+        return '<div class="crm-tl-item"><div class="crm-tl-dot system"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>'+
+          '<div class="crm-tl-body"><div class="crm-tl-meta"><span class="crm-tl-type">سجل النظام</span><span class="crm-tl-date">'+crmFmtDate(n.created_at)+'</span></div>'+
+          '<div class="crm-tl-content">'+esc(n.content)+'</div></div></div>';
+      }).join('')+'</div>';
+  }
+  return out;
+}
+
+/* inline field save → PATCH then refresh local copy */
+function crmReqFieldSave(field, val){
+  if(!crm.req) return;
+  var body = {}; body[field] = val;
+  crm.req[field] = val;
+  crmFetch('/requests/'+crm.req.id,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
+    .then(function(){ toast('تم الحفظ'); })
+    .catch(function(e){ toast('خطأ: '+e.message); });
+}
+
+function crmDeleteReq(reqId){
+  if(!confirm('حذف هذا الطلب نهائياً؟')) return;
+  crmFetch('/requests/'+reqId,{method:'DELETE'})
+    .then(function(){ toast('تم حذف الطلب'); crmReqBack(); })
+    .catch(function(e){ toast('خطأ: '+e.message); });
+}
+function crmDeleteReqNote(noteId){
+  crmFetch('/notes/'+noteId,{method:'DELETE'})
+    .then(function(){ crmReloadReq(); })
+    .catch(function(e){ toast('خطأ: '+e.message); });
+}
+/* reload current request detail in place (after notes/docs/actions) */
+function crmReloadReq(){
+  if(!crm.req) return;
+  crmFetch('/requests/'+crm.req.id+'/detail').then(function(r){
+    crm.req = r; crm._currentReq = r;
+    crmRenderReqSubtabs(); crmRenderReqTab();
+  }).catch(function(){});
 }
 
 function crmApprChain(r){
@@ -7714,48 +8153,6 @@ function crmReqActionBtns(r, benId){
   return btns.join('');
 }
 
-function crmShowReqModal(r, benId){
-  var docs = r.documents||[];
-  var docHtml = docs.length ? '<div class="crm-doc-list" style="margin-bottom:8px">'+docs.map(function(d){
-    return '<div class="crm-doc-row s-'+d.status+'" style="padding:9px 12px">'+
-      '<div class="crm-doc-ico" style="width:30px;height:30px">'+crmDocIcon()+'</div>'+
-      '<div class="crm-doc-info"><div class="crm-doc-label" style="font-size:12px">'+esc(d.label||CRM_DOC_LABEL[d.doc_type]||'مستند')+'</div></div>'+
-      '<select class="crm-doc-status" onchange="crmUpdateReqDoc(\''+d.id+'\',\''+r.id+'\',\''+benId+'\',this.value)">'+
-        Object.keys(CRM_DOC_STATUS_LABEL).map(function(s){ return '<option value="'+s+'"'+(d.status===s?' selected':'')+'>'+CRM_DOC_STATUS_LABEL[s]+'</option>'; }).join('')+
-      '</select>'+
-    '</div>';
-  }).join('')+'</div>' : '<div style="font-size:12px;color:var(--muted);margin-bottom:8px">لا توجد مستندات مطلوبة لهذا الطلب.</div>';
-
-  crmModal(
-    '<div class="crm-modal-title">'+esc(r.title||'طلب خدمة')+'<button class="crm-modal-x" onclick="crmCloseModal()">×</button></div>'+
-    '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:14px">'+
-      crmBadge(CRM_STATUS_LABEL, r.status)+crmBadge(CRM_PRI_LABEL, r.priority)+
-      '<span style="font-size:13px;color:var(--muted)">'+esc(CRM_SVC_LABEL[r.service_type]||r.service_type)+'</span>'+
-      (+r.amount?'<span style="font-size:14px;font-weight:800;color:var(--navy-deep);margin-right:auto">'+crmFmtMoney(r.amount)+'</span>':'')+
-    '</div>'+
-    (r.description?'<div style="background:var(--bg-tint);border-radius:8px;padding:12px;font-size:13px;color:var(--text);margin-bottom:14px;line-height:1.7">'+esc(r.description)+'</div>':'')+
-
-    '<div class="crm-sec-title" style="font-size:13px;margin-bottom:10px">سلسلة الموافقات</div>'+
-    crmApprChain(r)+
-    '<div class="crm-wf-bar" style="margin:6px 0 16px;padding:12px 14px"><span class="crm-wf-label" style="font-size:12px">الإجراء:</span><div class="crm-wf-spacer"></div>'+crmReqActionBtns(r, benId)+'</div>'+
-
-    '<div class="crm-sec-title" style="font-size:13px;margin-bottom:10px"><span>المستندات المطلوبة</span><button class="crm-btn crm-btn-outline crm-btn-sm" onclick="crmOpenAddDoc(\''+benId+'\',\''+r.id+'\')">+ مستند</button></div>'+
-    docHtml+
-
-    '<div class="crm-form-grid" style="margin-top:8px">'+
-      '<div class="crm-field"><label>الأولوية</label><select id="rd-priority">'+crmSelectOptions(CRM_PRI_LABEL,r.priority)+'</select></div>'+
-      '<div class="crm-field"><label>المُعيَّن إليه</label><input id="rd-assigned_to" value="'+esc(r.assigned_to||'')+'"></div>'+
-      '<div class="crm-field"><label>تاريخ الاستحقاق</label><input id="rd-due_date" type="date" value="'+esc(r.due_date||'')+'"></div>'+
-      '<div class="crm-field crm-form-full"><label>قرار / ملاحظات الإغلاق</label><textarea id="rd-resolution">'+esc(r.resolution||'')+'</textarea></div>'+
-    '</div>'+
-    '<div class="crm-modal-foot">'+
-    '<button class="crm-btn crm-btn-outline" onclick="crmOpenAddNote(\''+benId+'\',\''+r.id+'\')">+ ملاحظة</button>'+
-    '<div class="crm-wf-spacer"></div>'+
-    '<button class="crm-btn crm-btn-outline" onclick="crmCloseModal()">إغلاق</button>'+
-    '<button class="crm-btn crm-btn-primary" onclick="crmUpdateReq(\''+r.id+'\',\''+benId+'\')">حفظ التعديلات</button></div>'
-  );
-}
-
 function crmReqAction(reqId, benId, action){
   var labels = {advance:'إحالة الطلب للمراجعة',approve:'اعتماد الطلب',reject:'رفض الطلب',return:'إعادة الطلب',complete:'إكمال الطلب وتأكيد الصرف'};
   var needNote = (action==='reject'||action==='return');
@@ -7763,7 +8160,7 @@ function crmReqAction(reqId, benId, action){
     '<div class="crm-modal-title">'+(labels[action]||'إجراء')+' <button class="crm-modal-x" onclick="crmCloseModal()">×</button></div>'+
     '<div class="crm-field crm-form-full"><label>'+(needNote?'السبب / الملاحظة *':'ملاحظة (اختياري)')+'</label><textarea id="ra-note" style="min-height:90px"></textarea></div>'+
     '<div class="crm-modal-foot">'+
-    '<button class="crm-btn crm-btn-outline" onclick="crmOpenReqDetail(\''+reqId+'\',\''+benId+'\')">رجوع</button>'+
+    '<button class="crm-btn crm-btn-outline" onclick="crmCloseModal()">رجوع</button>'+
     '<button class="crm-btn '+(action==='reject'?'crm-btn-danger':'crm-btn-primary')+'" onclick="crmDoReqAction(\''+reqId+'\',\''+benId+'\',\''+action+'\')">تأكيد</button></div>'
   );
 }
@@ -7772,24 +8169,19 @@ function crmDoReqAction(reqId, benId, action){
   var note = el ? el.value.trim() : '';
   if((action==='reject'||action==='return') && !note){ toast('يرجى كتابة السبب'); return; }
   crmFetch('/requests/'+reqId+'/action',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:action,note:note})})
-    .then(function(){ crmCloseModal(); toast('تم تنفيذ الإجراء'); crmOpenReqDetail(reqId, benId); })
+    .then(function(){
+      crmCloseModal(); toast('تم تنفيذ الإجراء');
+      // full reload so header status + pipeline + updates refresh
+      if(crm.view==='req' && crm.req && crm.req.id===reqId){
+        crmFetch('/requests/'+reqId+'/detail').then(function(r){ crm.req=r; crm._currentReq=r; crmRenderReq(); }).catch(function(){});
+      } else { crmOpenReqDetail(reqId, benId); }
+    })
     .catch(function(e){ toast(e.message==='forbidden'?'هذه الصلاحية للمشرف':('خطأ: '+e.message)); });
 }
 function crmUpdateReqDoc(docId, reqId, benId, status){
   crmFetch('/documents/'+docId,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({status:status})})
-    .then(function(){ toast('تم تحديث المستند'); crmOpenReqDetail(reqId, benId); })
+    .then(function(){ toast('تم تحديث المستند'); crmReloadReq(); })
     .catch(function(e){ toast('خطأ: '+e.message); });
-}
-
-function crmUpdateReq(reqId, benId){
-  function fv(i){ var el=document.getElementById(i); return el?el.value.trim():''; }
-  var body = { priority:fv('rd-priority'), assigned_to:fv('rd-assigned_to'), due_date:fv('rd-due_date'), resolution:fv('rd-resolution') };
-  crmFetch('/requests/'+reqId,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
-    .then(function(){
-      crmCloseModal(); toast('تم تحديث الطلب');
-      if(crm.ben && crm.ben.id===benId) crmOpenBen(benId);
-      else if(crm.view==='reqs') crmLoadReqs();
-    }).catch(function(e){ toast('خطأ: '+e.message); });
 }
 
 /* ── Add Aid ── */
@@ -7845,7 +8237,10 @@ function crmSaveNote(benId, reqId){
   var intEl = document.getElementById('nt-internal');
   var body = { beneficiary_id:benId, request_id:reqId||'', type:fv('nt-type'), content:content, internal:(intEl&&intEl.dataset.on==='1') };
   crmFetch('/notes',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
-    .then(function(){ crmCloseModal(); toast('تمت الإضافة'); if(reqId) crmOpenReqDetail(reqId, benId); else crmOpenBen(benId); })
+    .then(function(){ crmCloseModal(); toast('تمت الإضافة');
+      if(reqId && crm.view==='req' && crm.req && crm.req.id===reqId){ crm.reqSubTab='notes'; crmReloadReq(); }
+      else if(reqId) crmOpenReqDetail(reqId, benId);
+      else crmOpenBen(benId); })
     .catch(function(e){ toast('خطأ: '+e.message); });
 }
 
