@@ -939,6 +939,39 @@ img,svg{display:block;max-width:100%}
 }
 @media(max-width:640px){.ws-row,.ws-row-3{grid-template-columns:1fr}}
 
+/* ── National theme card & new components ── */
+.ws-national-card{padding:20px 22px}
+.ws-national-features{display:grid;grid-template-columns:1fr 1fr;gap:7px 16px;margin-top:4px}
+.ws-national-features span{display:flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600;color:var(--navy-2)}
+.ws-national-features svg{width:14px;height:14px;color:var(--accent);flex-shrink:0}
+.ws-nat-badge{display:inline-flex;align-items:center;padding:5px 14px;background:rgba(10,77,92,.12);color:#0A4D5C;border-radius:20px;font-size:12px;font-weight:800;white-space:nowrap;flex-shrink:0}
+/* Style/option picker buttons */
+.ws-btn-group{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+.ws-btn-opt{padding:8px 14px;border:1.5px solid var(--line);border-radius:9px;background:#fff;font-family:inherit;font-size:13px;font-weight:600;color:var(--navy-2);cursor:pointer;transition:.14s}
+.ws-btn-opt:hover{border-color:var(--accent);color:var(--accent)}
+.ws-btn-opt.active{border-color:var(--accent);background:rgba(10,77,92,.08);color:var(--navy-deep)}
+/* Hero style option cards */
+.ws-style-opts{display:flex;flex-direction:column;gap:7px;margin-top:4px}
+.ws-style-opt{display:flex;flex-direction:column;gap:2px;padding:11px 14px;border:1.5px solid var(--line);border-radius:10px;background:#fff;cursor:pointer;transition:.14s}
+.ws-style-opt:hover,.ws-style-opt.active{border-color:var(--accent);background:rgba(10,77,92,.05)}
+.ws-style-opt.active{background:rgba(10,77,92,.08)}
+.ws-style-opt span{font-size:13px;font-weight:700;color:var(--navy-deep)}
+.ws-style-opt small{font-size:11.5px;color:var(--muted)}
+/* Range slider */
+.ws-slider-row{display:flex;align-items:center;gap:12px;margin-top:6px}
+.ws-slider-row input[type=range]{flex:1;cursor:pointer;accent-color:var(--accent)}
+.ws-slider-val{font-size:13px;font-weight:700;color:var(--navy-deep);min-width:38px;text-align:center}
+/* Icon grid (stats & highlights) */
+.ws-ico-grid{display:flex;gap:7px;flex-wrap:wrap;margin-top:4px}
+.ws-ico-opt{width:38px;height:38px;border:1.5px solid var(--line);border-radius:9px;display:flex;align-items:center;justify-content:center;cursor:pointer;background:#fff;transition:.13s;flex-shrink:0}
+.ws-ico-opt:hover{border-color:var(--accent);background:rgba(10,77,92,.05)}
+.ws-ico-opt.active{border-color:var(--accent);background:rgba(10,77,92,.1);color:#0A4D5C}
+.ws-ico-opt svg{width:17px;height:17px;pointer-events:none}
+/* Quick tools link grid */
+.ws-qt-link-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:9px}
+.ws-qt-link{display:flex;align-items:center;gap:9px;padding:13px 14px;background:#fff;border:1.5px solid var(--line);border-radius:13px;font-family:inherit;font-size:13px;font-weight:700;color:var(--navy-2);cursor:pointer;transition:.15s;text-align:right;width:100%}
+.ws-qt-link:hover{border-color:var(--accent);background:rgba(10,77,92,.04);color:var(--navy-deep)}
+.ws-qt-link svg{width:17px;height:17px;color:var(--accent);flex-shrink:0}
 /* ── Website page tabs (builder / quick tools) ── */
 .ws-page-tabs{display:flex;gap:4px;background:var(--bg-tint);border-radius:12px;padding:4px;margin-bottom:20px}
 .ws-page-tab{flex:1;padding:10px 16px;border:none;background:none;border-radius:9px;font-family:inherit;font-size:13.5px;font-weight:600;color:var(--navy-2);cursor:pointer;transition:.15s;display:flex;align-items:center;justify-content:center;gap:7px}
@@ -962,25 +995,9 @@ img,svg{display:block;max-width:100%}
 .ws-qt-sec-item .ws-mini-thumb{top:2px;right:2px;width:16px;height:16px}
 .ws-qt-sec-item .ws-mini-toggle input:checked~.ws-mini-thumb{right:auto;left:2px}
 /* Layout theme picker */
-.ws-layout-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:8px}
-.ws-layout-opt{background:var(--bg-soft);border:2px solid var(--line);border-radius:14px;padding:14px;cursor:pointer;transition:.18s;text-align:center}
-.ws-layout-opt:hover{border-color:var(--accent);background:rgba(29,155,138,.05)}
-.ws-layout-opt.active{border-color:var(--accent);background:rgba(29,155,138,.08)}
-.ws-layout-thumb{height:72px;border-radius:9px;margin-bottom:10px;overflow:hidden;position:relative;background:var(--line)}
-.ws-lt-classic{background:linear-gradient(160deg,#1e2a4a 40%,#f3f5f9 40%)}
-.ws-lt-modern{background:linear-gradient(135deg,#1e2a4a 45%,#1d9b8a 45%,#1d9b8a 55%,#f3f5f9 55%)}
-.ws-lt-premium{background:linear-gradient(180deg,#0d1628 55%,#1d9b8a 55%);position:relative}
-.ws-lt-premium::after{content:'';position:absolute;top:10px;left:50%;transform:translateX(-50%);width:28px;height:38px;border-radius:4px;border:2px solid rgba(255,255,255,.45);background:rgba(255,255,255,.1)}
-.ws-lt-national{background:linear-gradient(180deg,#073540 28px,#fff 28px);position:relative}
+.ws-lt-national{background:linear-gradient(180deg,#073540 28px,#fff 28px);position:relative;overflow:hidden}
 .ws-lt-national::before{content:'';position:absolute;top:0;left:0;right:0;height:6px;background:#0A4D5C}
-.ws-lt-national::after{content:'';position:absolute;top:8px;right:10px;width:36px;height:14px;border-radius:3px;background:#D4AF37;opacity:.9}
-.ws-lt-minimal{background:#fff;border:1px solid #e7ebf0;position:relative}
-.ws-lt-minimal::before{content:'';position:absolute;top:12px;right:12px;width:26px;height:5px;border-radius:3px;background:#0f172a}
-.ws-lt-minimal::after{content:'';position:absolute;top:23px;right:12px;width:40px;height:4px;border-radius:3px;background:#cbd5e1}
-.ws-layout-grid{grid-template-columns:repeat(auto-fit,minmax(118px,1fr))}
-.ws-layout-opt span{display:block;font-size:13.5px;font-weight:700;color:var(--navy-deep);margin-bottom:3px}
-.ws-layout-opt small{font-size:11.5px;color:var(--muted)}
-.ws-layout-opt.active span{color:var(--accent)}
+.ws-lt-national::after{content:'';position:absolute;top:9px;right:12px;width:36px;height:14px;border-radius:3px;background:#D4AF37;opacity:.9}
 
 /* ── Quick tools dashboard (redesigned) ── */
 .ws-qt-hero{background:linear-gradient(135deg,var(--navy) 0%,var(--navy-deep) 100%);border-radius:18px;padding:22px 26px;color:#fff;display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;margin-bottom:16px}
@@ -5657,6 +5674,7 @@ var WS_SECTIONS = [
   { id:'brand', label:'الهوية والألوان', icon:'<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M14 9h4M14 13h4M6 16h6"/>' },
   { id:'hero', label:'الواجهة الرئيسية', icon:'<rect x="3" y="4" width="18" height="14" rx="2"/><path d="M3 21h18"/>' },
   { id:'about', label:'من نحن', toggle:true, icon:'<circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/>' },
+  { id:'highlights', label:'مقدّمة وإنفوجرافيك', toggle:true, icon:'<rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/>' },
   { id:'values', label:'الرؤية والقيم', toggle:true, icon:'<path d="M12 2l2.4 7.4H22l-6 4.6 2.3 7.4L12 16.8 5.7 21.4 8 14 2 9.4h7.6z"/>' },
   { id:'stats', label:'الأثر والإنجازات', toggle:true, icon:'<path d="M3 3v18h18"/><rect x="7" y="11" width="3" height="6"/><rect x="12" y="7" width="3" height="10"/><rect x="17" y="13" width="3" height="4"/>' },
   { id:'programs', label:'البرامج والخدمات', toggle:true, icon:'<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>' },
@@ -5698,7 +5716,8 @@ var WS_TEMPLATES = {
   governance: function(){ return {title:'',category:'تقارير',url:''}; },
   partners: function(){ return {name:'',logo_url:''}; },
   faq: function(){ return {q:'',a:''}; },
-  pages: function(){ return {id:wsUid(),slug:'',title:'',body:''}; }
+  pages: function(){ return {id:wsUid(),slug:'',title:'',body:''}; },
+  highlights: function(){ return {icon:'star',title:'',desc:'',metric:''}; }
 };
 function wsAdd(name){ var a=wsArr(name); a.push(WS_TEMPLATES[name]()); wsRerenderSec(name); }
 function wsAddItem(name,template){ var a=wsArr(name); a.push(template||{}); wsRerenderSec(name.split('.')[0]); }
@@ -5802,7 +5821,7 @@ function wsFmtDate(d){ if(!d) return ''; try{ return new Date(d).toLocaleDateStr
 function renderWsQuickTools(published, liveUrl){
   var c = wsC();
   var news = wsArr('news'), programs = wsArr('programs'), docs = wsArr('governance');
-  var board = wsArr('board'), partners = wsArr('partners');
+  var board = wsArr('board'), partners = wsArr('partners'), highlights = wsArr('highlights');
   var visibleSecs = WS_SECTIONS.filter(function(s){ return s.toggle && wsSecVisible(s.id); }).length;
   var previewUrl = window.location.origin + '/org-site?org=' + ((org&&org.id)||'') + '&preview=1';
 
@@ -5831,6 +5850,7 @@ function renderWsQuickTools(published, liveUrl){
       wsQtStat(docs.length, 'وثيقة', 'governance', '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/>')+
       wsQtStat(board.length, 'عضو مجلس', 'board', '<circle cx="9" cy="7" r="3"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/>')+
       wsQtStat(visibleSecs, 'قسم ظاهر', 'about', '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>')+
+      wsQtStat(highlights.length, 'عنصر إنفوجرافيك', 'highlights', '<rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/>')+
     '</div>';
 
   /* news manager */
@@ -5902,7 +5922,49 @@ function renderWsQuickTools(published, liveUrl){
       '<div class="ws-qt-sec-grid">'+secItems+'</div>'+
     '</div>';
 
-  return '<div class="ws-qt-wrap" id="qt-status-card">'+hero+stats+newsBlock+docBlock+secBlock+'</div>';
+  /* programs quick manager */
+  var progRows = programs.length ? programs.slice(0,4).map(function(p,i){
+    var thumb = p.image_url
+      ? '<img class="ws-qt-thumb" src="'+esc(p.image_url)+'" onerror="this.style.display=\'none\'">'
+      : '<div class="ws-qt-thumb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></div>';
+    return '<div class="ws-qt-row">'+thumb+
+      '<div class="ws-qt-row-tx"><b>'+esc(p.title||'(بدون عنوان)')+'</b>'+
+        '<span>'+esc((p.desc||'').slice(0,65)+((p.desc||'').length>65?'…':''))+'</span>'+
+      '</div>'+
+      '<button class="ws-qt-icon-btn" title="انتقل للتعديل" onclick="wsJumpToSection(\'programs\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></button>'+
+    '</div>';
+  }).join('')+(programs.length>4?'<div class="ws-qt-empty" style="padding:10px;font-size:12px">و '+(programs.length-4)+' برامج أخرى — اضغط «إدارة البرامج» للتعديل</div>':'')
+  : '<div class="ws-qt-empty">لا توجد برامج بعد — أضف برامج جمعيتك لإبرازها في الموقع.</div>';
+  var programsBlock =
+    '<div class="ws-qt-block">'+
+      '<div class="ws-qt-sec-title">'+
+        '<h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>البرامج والخدمات</h3>'+
+        '<button class="ws-qt-add-btn" onclick="wsJumpToSection(\'programs\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>إدارة البرامج</button>'+
+      '</div>'+
+      '<div class="ws-qt-list">'+progRows+'</div>'+
+    '</div>';
+
+  /* quick access links to builder sections */
+  var quickLinks =
+    '<div class="ws-qt-block">'+
+      '<div class="ws-qt-sec-title"><h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>وصول سريع لإعدادات الموقع</h3></div>'+
+      '<div class="ws-qt-link-grid">'+
+        '<button class="ws-qt-link" onclick="wsJumpToSection(\'brand\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>الشعار والهوية والترخيص</button>'+
+        '<button class="ws-qt-link" onclick="wsJumpToSection(\'hero\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M3 21h18"/></svg>السلايدر وتصميم الواجهة</button>'+
+        '<button class="ws-qt-link" onclick="wsJumpToSection(\'stats\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><rect x="7" y="11" width="3" height="6"/><rect x="12" y="7" width="3" height="10"/></svg>إحصاءات الأثر</button>'+
+        '<button class="ws-qt-link" onclick="wsJumpToSection(\'highlights\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/></svg>إنفوجرافيك تعريفي</button>'+
+        '<button class="ws-qt-link" onclick="wsJumpToSection(\'about\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>من نحن والرؤية</button>'+
+        '<button class="ws-qt-link" onclick="wsJumpToSection(\'board\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="7" r="3"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/></svg>مجلس الإدارة</button>'+
+        '<button class="ws-qt-link" onclick="wsJumpToSection(\'contact\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2A19.79 19.79 0 0 1 2 4.18 2 2 0 0 1 4 2h3"/></svg>التواصل والسوشال</button>'+
+        '<button class="ws-qt-link" onclick="wsJumpToSection(\'seo\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>SEO ومحركات البحث</button>'+
+        '<button class="ws-qt-link" onclick="wsJumpToSection(\'domain\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20"/></svg>الدومين والنشر</button>'+
+        '<button class="ws-qt-link" onclick="wsJumpToSection(\'donation\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 1 0-7.78 7.78L12 21.23l8.84-8.84z"/></svg>بوابة التبرع</button>'+
+        '<button class="ws-qt-link" onclick="wsJumpToSection(\'governance\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>الحوكمة والشفافية</button>'+
+        '<button class="ws-qt-link" onclick="wsJumpToSection(\'partners\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/></svg>الشركاء والداعمون</button>'+
+      '</div>'+
+    '</div>';
+
+  return '<div class="ws-qt-wrap" id="qt-status-card">'+hero+stats+quickLinks+newsBlock+programsBlock+docBlock+secBlock+'</div>';
 }
 
 function wsQtStat(n, label, secId, iconPath){
@@ -6185,12 +6247,22 @@ function wsSecInner(id){
     var isNat=(c.layout_theme||'')==='national';
     var swatches=themes.map(function(t){ return '<div class="ws-theme-opt'+(cur===t.id?' active':'')+'" title="'+t.id+'" style="background:'+t.c+'" onclick="wsPickTheme(\''+t.id+'\')"></div>'; }).join('');
     return wsSecHead('brand','الهوية والألوان','اسم جمعيتك وشعارها ولون هويتها الأساسي')+
-      '<div class="ws-card"><h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7h18M3 12h18M3 17h12"/></svg>الاسم والشعار النصي</h4>'+
+      '<div class="ws-card"><h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7h18M3 12h18M3 17h12"/></svg>اسم الجمعية والجملة التعريفية</h4>'+
         wsTxt('اسم الجمعية','brand.name', (org&&org.name)||'اسم جمعيتك')+
         wsTxt('الجملة التعريفية (Slogan)','brand.tagline','معاً نصنع أثراً مستداماً')+
+        wsTxt('العنوان الفرعي (اختياري)','brand.subtitle','جمعية أهلية مرخّصة — نحو مجتمع مستدام',{hint:'يظهر تحت الاسم في بعض أقسام الموقع والتذييل'})+
       '</div>'+
-      '<div class="ws-card"><h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>شعار الجمعية (Logo)</h4>'+
-        wsImg('شعار الجمعية','brand.logo_url',{logo:true,png:true,maxW:400,hint:'يُفضّل صورة PNG بخلفية شفافة'})+
+      '<div class="ws-card"><h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>الشعار (Logo) وأيقونة المتصفح (Favicon)</h4>'+
+        wsImg('شعار الجمعية الرئيسي','brand.logo_url',{logo:true,png:true,maxW:400,hint:'PNG بخلفية شفافة — يظهر في رأس كل صفحة وبجانب الاسم'})+
+        wsImg('أيقونة المتصفح (Favicon)','brand.favicon_url',{logo:true,png:true,maxW:64,hint:'صورة مربعة 64×64 بكسل — تظهر في تبويب المتصفح وعند حفظ الموقع كاختصار'})+
+      '</div>'+
+      '<div class="ws-card"><h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>الترخيص والاعتماد الرسمي</h4>'+
+        '<div class="ws-row">'+
+          wsTxt('رقم الترخيص الرسمي','brand.license_no',(org&&org.license_no)||'4500',{hint:'يظهر في شريط الترخيص وتذييل الموقع'})+
+          wsTxt('الجهة المانحة للترخيص','brand.license_body','المركز الوطني لتنمية القطاع غير الربحي')+
+        '</div>'+
+        wsImg('صورة أو مستند الترخيص (اختياري)','brand.license_doc_url',{maxW:1600,q:0.88,hint:'صورة وثيقة الترخيص الرسمي — تُعرض في قسم الحوكمة والشفافية'})+
+        '<label class="ws-check-row" style="margin-top:10px"><input type="checkbox" '+(wsGet('brand.show_license')?'checked':'')+' onchange="wsField(\'brand.show_license\',this.checked); wsRerenderSec(\'brand\')"><span>إظهار رقم الترخيص بشكل بارز في رأس الموقع والتذييل</span></label>'+
       '</div>'+
       '<div class="ws-card"><h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="13.5" cy="6.5" r=".5"/><circle cx="17.5" cy="10.5" r=".5"/><circle cx="8.5" cy="7.5" r=".5"/><circle cx="6.5" cy="12.5" r=".5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.555C21.965 6.012 17.461 2 12 2z"/></svg>لون الهوية</h4>'+
         '<div class="ws-field"><label>اختر لوناً جاهزاً</label><div class="ws-theme-grid">'+swatches+'</div></div>'+
@@ -6228,17 +6300,74 @@ function wsSecInner(id){
         '<button class="ws-add-btn" onclick="wsAddItem(\'hero.slides\',{eyebrow:\'\',title:\'\',subtitle:\'\',image_url:\'\',primary_label:\'تبرّع الآن\',primary_link:\'#/donate\',secondary_label:\'تعرّف علينا\',secondary_link:\'#/about\'})">+ إضافة شريحة</button>'+
       '</div>';
     }
+    var heroStyle = wsGet('hero.style')||'full';
+    var heroOverlay = wsGet('hero.overlay_opacity'); if(!heroOverlay) heroOverlay='0.45';
+    var heroAlign = wsGet('hero.text_align')||'center';
+    var heroStyleOpts = [{v:'full',l:'كامل الشاشة',d:'الواجهة تملأ الشاشة بالكامل — انطباع بصري قوي'},{v:'tall',l:'مرتفع',d:'ارتفاع كبير مع مساحة نصية واسعة'},{v:'medium',l:'متوسط',d:'ارتفاع معتدل — مناسب للمحتوى الكثيف'}];
+    var alignOpts = [{v:'center',l:'منتصف'},{v:'right',l:'يمين'},{v:'left',l:'يسار'}];
     return wsSecHead('hero','الواجهة الرئيسية','أول ما يراه الزائر — العنوان والصورة وأزرار الإجراء')+
-      '<div class="ws-card"><h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7V5a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v2M9 20h6M12 4v16"/></svg>العنوان والوصف</h4>'+
+      '<div class="ws-card"><h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7V5a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v2M9 20h6M12 4v16"/></svg>المحتوى الرئيسي للواجهة</h4>'+
         wsTxt('العنوان الرئيسي','hero.title','نبني مستقبلاً أفضل لمجتمعنا')+
         wsArea('الوصف تحت العنوان','hero.subtitle','جملة أو جملتان تلخّص رسالة الجمعية وتشجّع الزائر على التفاعل.',{h:70})+
-        wsImg('صورة الخلفية / البانر','hero.image_url',{maxW:1600,q:0.82,hint:'صورة عالية الجودة بعرض كبير تعطي أفضل نتيجة'})+
+        wsImg('صورة الخلفية / البانر','hero.image_url',{maxW:1600,q:0.82,hint:'صورة عالية الجودة 1920×1080 أو أكبر — تُعطي أفضل نتيجة على الشاشات الكبيرة'})+
+      '</div>'+
+      '<div class="ws-card"><h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/></svg>تصميم قسم الواجهة</h4>'+
+        '<div class="ws-field"><label>ارتفاع الواجهة</label>'+
+          '<div class="ws-style-opts">'+
+            heroStyleOpts.map(function(o){ return '<label class="ws-style-opt'+(heroStyle===o.v?' active':'')+'" onclick="wsField(\'hero.style\',\''+o.v+'\');wsRerenderSec(\'hero\')"><span>'+o.l+'</span><small>'+o.d+'</small></label>'; }).join('')+
+          '</div>'+
+        '</div>'+
+        '<div class="ws-field"><label>محاذاة النص</label>'+
+          '<div class="ws-btn-group">'+
+            alignOpts.map(function(o){ return '<button type="button" class="ws-btn-opt'+(heroAlign===o.v?' active':'')+'" onclick="wsField(\'hero.text_align\',\''+o.v+'\');wsRerenderSec(\'hero\')">'+o.l+'</button>'; }).join('')+
+          '</div>'+
+        '</div>'+
+        '<div class="ws-field"><label>شفافية طبقة التعتيم على صورة الخلفية</label>'+
+          '<div class="ws-slider-row"><input type="range" min="0" max="0.9" step="0.05" value="'+esc(heroOverlay)+'" oninput="wsField(\'hero.overlay_opacity\',parseFloat(this.value));this.nextElementSibling.textContent=Math.round(this.value*100)+\'%\'"><span class="ws-slider-val">'+Math.round(parseFloat(heroOverlay)*100)+'%</span></div>'+
+          '<div class="hint">زيادة التعتيم تجعل النص أوضح على الصور ذات الألوان الفاتحة</div>'+
+        '</div>'+
       '</div>'+
       '<div class="ws-card"><h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="8" width="18" height="8" rx="2"/></svg>أزرار الإجراء</h4>'+
         '<div class="ws-row">'+wsTxt('نص الزر الأساسي','hero.primary_label','تبرّع الآن')+wsTxt('رابط الزر الأساسي','hero.primary_link','#donate', {dir:'ltr'})+'</div>'+
         '<div class="ws-row">'+wsTxt('نص الزر الثانوي','hero.secondary_label','تعرّف علينا')+wsTxt('رابط الزر الثانوي','hero.secondary_link','#about', {dir:'ltr'})+'</div>'+
       '</div>'+
       slidesCard;
+  }
+  if(id==='highlights'){
+    var arr=wsArr('highlights');
+    var hlStyle = wsGet('highlights.style')||'grid';
+    var hlIcons = [
+      {v:'star',ico:'<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>'},
+      {v:'heart',ico:'<path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 1 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"/>'},
+      {v:'shield',ico:'<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>'},
+      {v:'award',ico:'<circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/>'},
+      {v:'users',ico:'<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>'},
+      {v:'target',ico:'<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>'},
+      {v:'leaf',ico:'<path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10z"/>'},
+      {v:'globe',ico:'<circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20 15 15 0 0 1 0-20z"/>'},
+      {v:'zap',ico:'<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>'},
+      {v:'sun',ico:'<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>'},
+      {v:'hand',ico:'<path d="M18 11V6a2 2 0 0 0-4 0v0M14 10V4a2 2 0 0 0-4 0v2M10 10.5V6a2 2 0 0 0-4 0v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/>'},
+      {v:'home',ico:'<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>'},
+    ];
+    var items = arr.length ? arr.map(function(it,i){
+      var curIco = it.icon||'star';
+      var icoOpts = hlIcons.map(function(ic){ return '<label class="ws-ico-opt'+(curIco===ic.v?' active':'')+'" title="'+ic.v+'" onclick="wsItem(\'highlights\','+i+',\'icon\',\''+ic.v+'\');wsRerenderSec(\'highlights\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">'+ic.ico+'</svg></label>'; }).join('');
+      return '<div class="ws-item">'+wsRepHead('highlights').replace('{B}','عنصر '+(i+1)).replace('{I}',i)+
+        wsItemTxt('العنوان','highlights',i,'title','خدمة متميّزة')+
+        wsItemArea('الوصف','highlights',i,'desc','جملة قصيرة تشرح هذا العنصر وتبرز قيمته.',{h:60})+
+        wsItemTxt('رقم / إحصائية (اختياري)','highlights',i,'metric','12,000+')+
+        '<div class="ws-field"><label>الأيقونة</label><div class="ws-ico-grid">'+icoOpts+'</div></div></div>';
+    }).join('') : '<div class="ws-empty">أضف عناصر تعريفية تبرز ميّزات جمعيتك — مثل: برامج متنوعة، خدمة شاملة، حوكمة موثوقة.</div>';
+    var hlStyleOpts = [{v:'grid',l:'شبكة بطاقات',d:'بطاقات منظمة في شبكة'},{v:'feature',l:'عناصر أفقية',d:'أيقونة + نص جنباً إلى جنب'},{v:'numbered',l:'مرقّمة',d:'قائمة مرقّمة بأيقونات بارزة'}];
+    var hlStyleBar='<div class="ws-field"><label>طريقة عرض العناصر</label><div class="ws-btn-group">'+
+      hlStyleOpts.map(function(o){ return '<button type="button" class="ws-btn-opt'+(hlStyle===o.v?' active':'')+'" onclick="wsField(\'highlights.style\',\''+o.v+'\');wsRerenderSec(\'highlights\')" title="'+o.d+'">'+o.l+'</button>'; }).join('')+
+    '</div></div>'+
+    wsTxt('عنوان القسم (اختياري)','highlights.heading','لماذا تختارنا؟',{hint:'يظهر فوق العناصر في الصفحة الرئيسية'})+
+    wsArea('وصف القسم (اختياري)','highlights.subtext','جملة تعريفية تظهر تحت عنوان القسم.',{h:55});
+    return wsSecHead('highlights','مقدّمة وإنفوجرافيك','عناصر بصرية تعريفية تبرز مميزات الجمعية وخدماتها في الصفحة الرئيسية')+
+      '<div class="ws-card">'+hlStyleBar+'</div>'+
+      '<div class="ws-card">'+items+'<button class="ws-add-btn" onclick="wsAdd(\'highlights\')">'+ICADD+'إضافة عنصر</button></div>';
   }
   if(id==='about'){
     return wsSecHead('about','من نحن','نبذة تعريفية + الرؤية والرسالة')+
@@ -6263,11 +6392,32 @@ function wsSecInner(id){
   }
   if(id==='stats'){
     var arr=wsArr('stats');
+    var statsStyle = wsGet('stats.style')||'cards';
+    var statsIcons = [
+      {v:'people',ico:'<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>'},
+      {v:'star',ico:'<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>'},
+      {v:'heart',ico:'<path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 1 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"/>'},
+      {v:'award',ico:'<circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/>'},
+      {v:'globe',ico:'<circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20 15 15 0 0 1 0-20z"/>'},
+      {v:'dollar',ico:'<line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>'},
+      {v:'calendar',ico:'<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>'},
+      {v:'home',ico:'<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>'},
+    ];
     var items = arr.length ? arr.map(function(it,i){
+      var curIco = it.icon||'people';
+      var icoOpts = statsIcons.map(function(ic){ return '<label class="ws-ico-opt'+(curIco===ic.v?' active':'')+'" title="'+ic.v+'" onclick="wsItem(\'stats\','+i+',\'icon\',\''+ic.v+'\');wsRerenderSec(\'stats\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">'+ic.ico+'</svg></label>'; }).join('');
       return '<div class="ws-item">'+wsRepHead('stats').replace('{B}','إحصائية '+(i+1)).replace('{I}',i)+
-        '<div class="ws-row">'+wsItemTxt('الرقم','stats',i,'number','15,000', {dir:'ltr'})+wsItemTxt('الوصف','stats',i,'label','مستفيد')+'</div></div>';
+        '<div class="ws-row">'+wsItemTxt('الرقم','stats',i,'number','15,000', {dir:'ltr'})+wsItemTxt('الوصف','stats',i,'label','مستفيد')+'</div>'+
+        wsItemArea('نص توضيحي إضافي (اختياري)','stats',i,'sub','',{h:44})+
+        '<div class="ws-field"><label>الأيقونة</label><div class="ws-ico-grid">'+icoOpts+'</div></div></div>';
     }).join('') : '<div class="ws-empty">أضف أرقام الأثر: عدد المستفيدين، البرامج، المتطوعين...</div>';
-    return wsSecHead('stats','الأثر والإنجازات','أرقام تبرز حجم أثر الجمعية')+
+    var statsStyleOpts = [{v:'cards',l:'بطاقات',d:'كل إحصائية في بطاقة'},{v:'dark',l:'داكن',d:'خلفية داكنة رسمية'},{v:'minimal',l:'مبسّط',d:'أرقام كبيرة بدون بطاقات'}];
+    var statsStyleBar='<div class="ws-field"><label>طريقة العرض</label><div class="ws-btn-group">'+
+      statsStyleOpts.map(function(o){ return '<button type="button" class="ws-btn-opt'+(statsStyle===o.v?' active':'')+'" onclick="wsField(\'stats.style\',\''+o.v+'\');wsRerenderSec(\'stats\')" title="'+o.d+'">'+o.l+'</button>'; }).join('')+
+    '</div></div>'+
+    wsTxt('عنوان القسم (اختياري)','stats.heading','أثرنا بالأرقام',{hint:'يظهر فوق بطاقات الإحصاءات في الصفحة الرئيسية'});
+    return wsSecHead('stats','الأثر والإنجازات','أرقام تبرز حجم أثر الجمعية في المجتمع')+
+      '<div class="ws-card">'+statsStyleBar+'</div>'+
       '<div class="ws-card">'+items+'<button class="ws-add-btn" onclick="wsAdd(\'stats\')">'+ICADD+'إضافة إحصائية</button></div>';
   }
   if(id==='programs'){
@@ -6407,41 +6557,30 @@ function wsPickTheme(id){
 function wsDomain(v){ wsData.custom_domain = (v||'').trim().replace(/^https?:\/\//,''); }
 
 function wsLayoutThemePicker(){
-  var cur = wsGet('layout_theme') || 'classic';
-  return '<div class="ws-card"><h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>نمط تصميم الصفحة</h4>'+
-    '<div class="ws-layout-grid">'+
-      '<div class="ws-layout-opt'+(cur==='classic'?' active':'')+'" data-lt="classic" onclick="wsPickLayout(\'classic\')">'+
-        '<div class="ws-layout-thumb ws-lt-classic"></div>'+
-        '<span>كلاسيكي</span>'+
-        '<small>هادئ ومنظّم — مناسب لأغلب الجمعيات</small>'+
+  return '<div class="ws-card ws-national-card">'+
+    '<div class="ws-lt-national" style="height:88px;border-radius:12px;margin-bottom:16px;border:1.5px solid rgba(255,255,255,.2)"></div>'+
+    '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px">'+
+      '<div>'+
+        '<h4 style="font-size:15.5px;font-weight:800;color:var(--navy-deep);margin-bottom:4px;display:flex;align-items:center;gap:8px">'+
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:17px;height:17px;color:#0A4D5C"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>'+
+          'النمط الوطني المؤسسي'+
+        '</h4>'+
+        '<p style="font-size:12.5px;color:var(--muted);line-height:1.7">تصميم احترافي راقٍ مستوحى من هوية المنظمات السعودية — سلايدر متحرّك، حاسبة أثر، وألوان قابلة للتخصيص الكامل.</p>'+
       '</div>'+
-      '<div class="ws-layout-opt'+(cur==='modern'?' active':'')+'" data-lt="modern" onclick="wsPickLayout(\'modern\')">'+
-        '<div class="ws-layout-thumb ws-lt-modern"></div>'+
-        '<span>عصري</span>'+
-        '<small>جريء ومتميّز — انطباع أول قوي</small>'+
-      '</div>'+
-      '<div class="ws-layout-opt'+(cur==='premium'?' active':'')+'" data-lt="premium" onclick="wsPickLayout(\'premium\')">'+
-        '<div class="ws-layout-thumb ws-lt-premium"></div>'+
-        '<span>راقي</span>'+
-        '<small>تجربة احترافية عالية الجمالية</small>'+
-      '</div>'+
-      '<div class="ws-layout-opt'+(cur==='national'?' active':'')+'" data-lt="national" onclick="wsPickLayout(\'national\')">'+
-        '<div class="ws-layout-thumb ws-lt-national"></div>'+
-        '<span>وطني</span>'+
-        '<small>ثيم مؤسسي احترافي مع حاسبة الأثر</small>'+
-      '</div>'+
-      '<div class="ws-layout-opt'+(cur==='minimal'?' active':'')+'" data-lt="minimal" onclick="wsPickLayout(\'minimal\')">'+
-        '<div class="ws-layout-thumb ws-lt-minimal"></div>'+
-        '<span>ميني‑مال</span>'+
-        '<small>أبيض وبسيط — مساحات واسعة ولون واحد</small>'+
-      '</div>'+
+      '<span class="ws-nat-badge">مُفعَّل ✓</span>'+
     '</div>'+
-    '<div class="hint" style="margin-top:8px">احفظ التغييرات بعد الاختيار لتطبيق النمط على موقعك</div>'+
+    '<div class="ws-national-features">'+
+      '<span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>سلايدر متحرّك بشرائح متعددة</span>'+
+      '<span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>حاسبة الأثر التفاعلية</span>'+
+      '<span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>شريط الترخيص الرسمي</span>'+
+      '<span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>ألوان وطنية ذهبية وزرقاء</span>'+
+      '<span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>تصميم متجاوب لجميع الأجهزة</span>'+
+      '<span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>قسم إنفوجرافيك تعريفي مخصص</span>'+
+    '</div>'+
   '</div>';
 }
 function wsPickLayout(id){
-  wsField('layout_theme', id);
-  document.querySelectorAll('#ws-sec-brand .ws-layout-opt').forEach(function(el){ el.classList.toggle('active', el.getAttribute('data-lt')===id); });
+  wsField('layout_theme', 'national');
 }
 
 function wsTogglePublish(checked){
@@ -6506,7 +6645,7 @@ function wsSeedDefaults(){
     };
   }
   if(!c.theme) c.theme = (c.brand&&c.brand.theme)||'navy';
-  if(!c.layout_theme) c.layout_theme = 'classic';
+  if(!c.layout_theme) c.layout_theme = 'national';
 
   if(!c.values || !c.values.length){
     c.values = [
