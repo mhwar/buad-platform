@@ -6285,19 +6285,34 @@ function wsSecInner(id){
     var slidesCard='';
     if((wsGet('layout_theme')||'')==='national'){
       var sl=wsArr('hero.slides');
+      var heroIcoSet=[
+        {v:'award',ico:'<circle cx="12" cy="8" r="6"/><path d="M8.21 13.89 7 22l5-3 5 3-1.21-8.12"/>'},
+        {v:'briefcase',ico:'<rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>'},
+        {v:'shield',ico:'<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>'},
+        {v:'heart',ico:'<path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 1 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"/>'},
+        {v:'book',ico:'<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>'},
+        {v:'users',ico:'<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/>'},
+        {v:'chart',ico:'<path d="M3 3v18h18"/><path d="M18 17V9M13 17V5M8 17v-3"/>'},
+        {v:'target',ico:'<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>'},
+      ];
       var slItems = sl.length ? sl.map(function(it,i){
+        var curIco=(it.eyebrow_icon)||'award';
+        var icoOpts=heroIcoSet.map(function(ic){ return '<label class="ws-ico-opt'+(curIco===ic.v?' active':'')+'" title="'+ic.v+'" onclick="wsItem(\'hero.slides\','+i+',\'eyebrow_icon\',\''+ic.v+'\');wsRerenderSec(\'hero\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+ic.ico+'</svg></label>'; }).join('');
         return '<div class="ws-item">'+wsRepHead('hero.slides').replace('{B}','شريحة '+(i+1)).replace('{I}',i)+
+          wsItemTxt('سطر تعريفي علوي (Eyebrow)','hero.slides',i,'eyebrow','جمعية أهلية مرخّصة — ترخيص رقم 4500')+
+          '<div class="ws-field"><label>أيقونة السطر التعريفي</label><div class="ws-ico-grid">'+icoOpts+'</div></div>'+
           wsItemTxt('عنوان الشريحة','hero.slides',i,'title','عنوان جذّاب')+
           wsItemArea('الوصف','hero.slides',i,'subtitle','جملة تشرح الشريحة وتشجّع على التفاعل.',{h:60})+
-          wsImg('صورة الشريحة (اختياري)','hero.slides.'+i+'.image_url',{maxW:1600,q:0.82,hint:'اتركها فارغة لشريحة بخلفية لونية فقط'})+
+          '<div class="ws-row">'+wsItemTxt('رقم بطاقة الإحصاء','hero.slides',i,'chip_number','5,000+',{dir:'ltr'})+wsItemTxt('وصف بطاقة الإحصاء','hero.slides',i,'chip_label','مستفيد ومستفيدة')+'</div>'+
+          wsImg('صورة الشريحة (اختياري)','hero.slides.'+i+'.image_url',{maxW:1600,q:0.82,hint:'تظهر داخل إطار زجاجي بجانب النص. اتركها فارغة لعرض أيقونة بخلفية متدرّجة'})+
           '<div class="ws-row">'+wsItemTxt('نص الزر الأساسي','hero.slides',i,'primary_label','تبرّع الآن')+wsItemTxt('رابط الزر الأساسي','hero.slides',i,'primary_link','#/donate',{dir:'ltr'})+'</div>'+
           '<div class="ws-row">'+wsItemTxt('نص الزر الثانوي','hero.slides',i,'secondary_label','تعرّف علينا')+wsItemTxt('رابط الزر الثانوي','hero.slides',i,'secondary_link','#/about',{dir:'ltr'})+'</div>'+
         '</div>';
       }).join('') : '<div class="ws-empty">لا توجد شرائح بعد — سيُعرض المحتوى المفرد أعلاه. أضف شريحتين أو أكثر لتفعيل السلايدر المتحرّك.</div>';
-      slidesCard='<div class="ws-card"><h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 12h20"/></svg>شرائح الواجهة (سلايدر الثيم الوطني)</h4>'+
-        '<div class="hint" style="margin-bottom:10px">كل شريحة لها عنوان ووصف وأزرار، ويمكن إضافة صورة لها. تتبدّل الشرائح تلقائياً مع أزرار ونقاط تنقّل.</div>'+
+      slidesCard='<div class="ws-card"><h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 12h20"/></svg>شرائح الواجهة (السلايدر)</h4>'+
+        '<div class="hint" style="margin-bottom:10px">تصميم احترافي مقسوم: النص على جهة وصورة داخل إطار زجاجي على الجهة الأخرى، مع بطاقة إحصاء عائمة وشارة موثوقية. لكل شريحة سطر تعريفي بأيقونة، عنوان، وصف، أزرار، وبطاقة إحصاء. تتبدّل تلقائياً مع مؤشّر تقدّم وأسهم وعدّاد.</div>'+
         slItems+
-        '<button class="ws-add-btn" onclick="wsAddItem(\'hero.slides\',{eyebrow:\'\',title:\'\',subtitle:\'\',image_url:\'\',primary_label:\'تبرّع الآن\',primary_link:\'#/donate\',secondary_label:\'تعرّف علينا\',secondary_link:\'#/about\'})">+ إضافة شريحة</button>'+
+        '<button class="ws-add-btn" onclick="wsAddItem(\'hero.slides\',{eyebrow:\'\',eyebrow_icon:\'award\',title:\'\',subtitle:\'\',chip_number:\'\',chip_label:\'\',image_url:\'\',primary_label:\'تبرّع الآن\',primary_link:\'#/donate\',secondary_label:\'تعرّف علينا\',secondary_link:\'#/about\'})">+ إضافة شريحة</button>'+
       '</div>';
     }
     var heroStyle = wsGet('hero.style')||'full';
@@ -6611,9 +6626,9 @@ function wsSeedDefaults(){
   }
   if(!c.hero.slides){
     c.hero.slides = [
-      {eyebrow:'جمعية أهلية مرخّصة — ترخيص رقم 4500', title:c.hero.title||'نصنع أثراً يمتد، ونبني مستقبلاً أكثر إشراقاً', subtitle:c.hero.subtitle||'نُمكّن الأسر والأفراد عبر برامج نوعية تحقق تنمية مستدامة.', image_url:c.hero.image_url||'', primary_label:'تبرّع الآن', primary_link:'#/donate', secondary_label:'تعرّف علينا', secondary_link:'#/about'},
-      {eyebrow:'التمكين الاقتصادي', title:'من الاحتياج إلى الإنتاج المستدام', subtitle:'برامج تأهيل الأسر المنتجة تنقلها نحو الاستقلال المالي وكرامة العيش.', image_url:'https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&w=1600&q=80', primary_label:'استعرض برامجنا', primary_link:'#/programs', secondary_label:'تبرّع الآن', secondary_link:'#/donate'},
-      {eyebrow:'شفافية وحوكمة', title:'نلتزم بأعلى معايير الإفصاح والشفافية', subtitle:'اطّلع على لوائحنا وتقاريرنا المالية ووثائق الحوكمة بكل وضوح ومسؤولية.', image_url:'', primary_label:'الحوكمة والشفافية', primary_link:'#/governance', secondary_label:'عن الجمعية', secondary_link:'#/about'}
+      {eyebrow:'جمعية أهلية مرخّصة — ترخيص رقم 4500', eyebrow_icon:'award', title:c.hero.title||'نصنع أثراً يمتد، ونبني مستقبلاً أكثر إشراقاً', subtitle:c.hero.subtitle||'نُمكّن الأسر والأفراد عبر برامج نوعية تحقق تنمية مستدامة.', chip_number:'5,000+', chip_label:'مستفيد ومستفيدة', image_url:c.hero.image_url||'', primary_label:'تبرّع الآن', primary_link:'#/donate', secondary_label:'تعرّف علينا', secondary_link:'#/about'},
+      {eyebrow:'تمكين اقتصادي — أسر منتجة', eyebrow_icon:'briefcase', title:'من الاحتياج إلى الإنتاج المستدام', subtitle:'برامج تأهيل الأسر المنتجة تنقلها نحو الاستقلال المالي وكرامة العيش.', chip_number:'+200', chip_label:'مشروع أسري ناجح', image_url:'https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&w=1600&q=80', primary_label:'ادعم أسرة منتجة', primary_link:'#/donate', secondary_label:'استكشف البرامج', secondary_link:'#/programs'},
+      {eyebrow:'شفافية وحوكمة بمعايير 1447هـ', eyebrow_icon:'shield', title:'عطاؤك أمانة، وأثره موثّق ومُعلن', subtitle:'اطّلع على لوائحنا وتقاريرنا المالية ووثائق الحوكمة بكل وضوح ومسؤولية.', chip_number:'100%', chip_label:'امتثال للحوكمة', image_url:'', primary_label:'التقارير والشفافية', primary_link:'#/governance', secondary_label:'عن الجمعية', secondary_link:'#/about'}
     ];
   }
 
