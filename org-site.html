@@ -813,7 +813,7 @@ body.theme-national .sec-sub{color:var(--n-ink-3)}
 .n-hero-dot.on{background:var(--n-gold);width:26px;border-radius:5px}
 
 /* ── National hero v2 — split layout, per-slide chip & seal, progress nav ── */
-.n-hero{position:relative;overflow:hidden;color:#fff;isolation:isolate;background:var(--n-teal-2)}
+.n-hero{position:relative;overflow:hidden;color:#fff;isolation:isolate;background:var(--n-teal-2);padding-bottom:clamp(74px,7vw,98px)}
 .n-hero-bg2{position:absolute;inset:0;z-index:0;background:
   radial-gradient(60% 75% at 80% 6%,rgba(212,175,55,.20),transparent 60%),
   radial-gradient(55% 70% at 6% 96%,rgba(21,120,140,.5),transparent 60%),
@@ -857,7 +857,7 @@ body.theme-national .sec-sub{color:var(--n-ink-3)}
 .n-hseal .tx{display:flex;flex-direction:column;line-height:1.3}
 .n-hseal .tx strong{font-size:14px;font-weight:800;color:var(--n-ink)}
 .n-hseal .tx small{font-size:11px;color:var(--n-ink-3);font-weight:600}
-.n-hctrl{position:relative;z-index:5;padding-block:28px 0;display:flex}
+.n-hctrl{position:relative;z-index:5;padding-block:30px 0;display:flex}
 .n-hnav{display:inline-flex;align-items:center;gap:12px;padding:7px;padding-inline-end:16px;border-radius:999px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);backdrop-filter:blur(10px)}
 .n-hnav-arrow{width:40px;height:40px;flex:none;border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.18);cursor:pointer;transition:.18s}
 .n-hnav-arrow:hover{background:var(--n-gold);color:#2a2208;border-color:var(--n-gold)}
@@ -906,6 +906,46 @@ body.theme-national .sec-sub{color:var(--n-ink-3)}
 .n-stat:hover .n-stat-ic{background:var(--n-teal);color:#fff;transform:scale(1.08)}
 .n-stat .n{font-size:clamp(30px,4vw,42px);font-weight:800;line-height:1;letter-spacing:-1px;color:var(--n-gold);font-variant-numeric:tabular-nums}
 .n-stat .l{font-size:14px;color:var(--n-ink-2);margin-top:10px;font-weight:600}
+/* stats style: dark */
+.n-stats-dark{background:linear-gradient(135deg,var(--n-teal),var(--n-teal-2))!important}
+.n-stats-dark h2{color:#fff!important}
+.n-stats-dark .n-stat{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.14)}
+.n-stats-dark .n-stat::before{background:linear-gradient(90deg,var(--n-gold),var(--n-gold-2))}
+.n-stats-dark .n-stat-ic{background:rgba(212,175,55,.18);color:var(--n-gold)}
+.n-stats-dark .n-stat:hover .n-stat-ic{background:var(--n-gold);color:#2a2208}
+.n-stats-dark .n-stat .l{color:rgba(255,255,255,.82)}
+/* stats style: minimal */
+.n-stats-minimal{background:var(--n-ice)!important}
+.n-stats-minimal .n-stat{background:transparent;border:none;padding:14px}
+.n-stats-minimal .n-stat::before{display:none}
+.n-stats-minimal .n-stat:hover{box-shadow:none;transform:none}
+.n-stats-minimal .n-stat-ic{background:transparent;color:var(--n-gold)}
+.n-stats-minimal .n-stat:hover .n-stat-ic{background:transparent;transform:none}
+.n-stats-minimal .n-stat .n{font-size:clamp(36px,5vw,52px)}
+
+/* ── highlights / infographic ── */
+.n-hl .sub{font-size:15px;color:var(--n-ink-3);margin-top:10px;max-width:620px;margin-inline:auto;line-height:1.7}
+.n-hl-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:20px;margin-top:8px}
+.n-hl-card{background:#fff;border:1px solid var(--n-line);border-radius:18px;padding:28px 24px;text-align:center;transition:.18s}
+.n-hl-card:hover{box-shadow:var(--shadow);border-color:var(--n-teal);transform:translateY(-4px)}
+.n-hl-ic{width:58px;height:58px;border-radius:16px;background:var(--n-teal-soft);color:var(--n-teal);display:flex;align-items:center;justify-content:center;margin:0 auto 16px}
+.n-hl-ic svg{width:26px;height:26px}
+.n-hl-metric{font-size:30px;font-weight:900;color:var(--n-gold-2);line-height:1;margin-bottom:8px;font-variant-numeric:tabular-nums}
+.n-hl-card h4{font-size:18px;font-weight:800;color:var(--n-teal);margin-bottom:8px}
+.n-hl-card p{font-size:14px;color:var(--n-ink-3);line-height:1.75}
+.n-hl-feature{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:8px}
+.n-hl-frow{display:flex;gap:16px;align-items:flex-start;background:#fff;border:1px solid var(--n-line);border-radius:16px;padding:22px;transition:.18s}
+.n-hl-frow:hover{box-shadow:var(--shadow);border-color:var(--n-teal)}
+.n-hl-frow .n-hl-ic{margin:0;flex-shrink:0;width:52px;height:52px;border-radius:14px}
+.n-hl-ftx h4{font-size:17px;font-weight:800;color:var(--n-teal);margin-bottom:6px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.n-hl-ftx p{font-size:14px;color:var(--n-ink-3);line-height:1.7}
+.n-hl-ftx .n-hl-metric{font-size:14px;margin:0;padding:2px 10px;background:rgba(212,175,55,.14);border-radius:999px}
+.n-hl-numbered{display:flex;flex-direction:column;gap:14px;max-width:780px;margin:8px auto 0}
+.n-hl-nrow{display:flex;gap:16px;align-items:center;background:#fff;border:1px solid var(--n-line);border-radius:16px;padding:20px 22px;transition:.18s}
+.n-hl-nrow:hover{box-shadow:var(--shadow);border-color:var(--n-teal)}
+.n-hl-num{width:40px;height:40px;flex-shrink:0;border-radius:50%;background:var(--n-gold);color:#2a2208;font-size:18px;font-weight:900;display:flex;align-items:center;justify-content:center}
+.n-hl-nrow .n-hl-ic{margin:0;flex-shrink:0;width:48px;height:48px}
+@media(max-width:760px){.n-hl-feature{grid-template-columns:1fr}}
 
 /* ── Page header (light, for sub-pages) ── */
 .n-phead{background:linear-gradient(135deg,var(--n-teal-soft),var(--n-ice));border-bottom:1px solid var(--n-line);padding:40px 0 36px;position:relative;overflow:hidden}
@@ -1010,7 +1050,11 @@ body.theme-national .sec-sub{color:var(--n-ink-3)}
 .n-calc-slider{width:100%;-webkit-appearance:none;appearance:none;height:7px;border-radius:4px;outline:none;cursor:pointer;margin-bottom:8px;background:linear-gradient(to left,var(--n-teal) var(--pct,9%),var(--n-line) var(--pct,9%))}
 .n-calc-slider::-webkit-slider-thumb{-webkit-appearance:none;width:24px;height:24px;border-radius:50%;background:var(--n-gold);border:4px solid #fff;box-shadow:0 2px 10px rgba(212,175,55,.4);cursor:pointer}
 .n-calc-slider::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:var(--n-gold);border:4px solid #fff;cursor:pointer}
-.n-calc-range{display:flex;justify-content:space-between;font-size:12px;color:var(--n-ink-3);margin-bottom:22px;font-weight:600}
+.n-calc-range{display:flex;justify-content:space-between;font-size:12px;color:var(--n-ink-3);margin-bottom:18px;font-weight:600}
+.n-calc-chips{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap}
+.n-calc-chip{flex:1;min-width:62px;padding:10px 8px;border:1.5px solid var(--n-line);border-radius:11px;background:#fff;color:var(--n-ink-2);font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;transition:.15s;font-variant-numeric:tabular-nums}
+.n-calc-chip:hover{border-color:var(--n-gold);color:var(--n-teal)}
+.n-calc-chip.on{border-color:var(--n-gold);background:rgba(212,175,55,.12);color:var(--n-teal)}
 .n-calc-result{background:linear-gradient(135deg,var(--n-teal),var(--n-teal-2));border-radius:16px;padding:26px;text-align:center;color:#fff}
 .n-calc-result .ic{width:54px;height:54px;border-radius:15px;background:rgba(212,175,55,.18);color:var(--n-gold);display:flex;align-items:center;justify-content:center;margin:0 auto 14px}
 .n-calc-result .ic svg{width:28px;height:28px}
@@ -2121,7 +2165,14 @@ function nIc(n){
     book:'<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>',
     handshake:'<path d="M11 17l2 2a1 1 0 1 0 3-3"/><path d="M14 14l2.5 2.5a1 1 0 1 0 3-3l-3.88-3.88a3 3 0 0 0-4.24 0l-.88.88a1 1 0 1 1-3-3l2.81-2.81a5.79 5.79 0 0 1 7.06-.87l.47.28a2 2 0 0 0 1.42.25L21 4"/><path d="M21 3l1 11h-2M3 3 2 14l6.5 6.5a1 1 0 1 0 3-3M3 4h8"/>',
     check:'<polyline points="20 6 9 17 4 12"/>',
-    play:'<polygon points="6 4 20 12 6 20 6 4"/>'
+    play:'<polygon points="6 4 20 12 6 20 6 4"/>',
+    star:'<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>',
+    leaf:'<path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10z"/><path d="M2 21c0-3 1.85-5.36 5.08-6"/>',
+    zap:'<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>',
+    sun:'<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>',
+    people:'<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>',
+    dollar:'<line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>',
+    calendar:'<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>'
   };
   return '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+(m[n]||m.doc)+'</svg>';
 }
@@ -2351,7 +2402,10 @@ function nStatIcon(x,i){
 function nStatsStrip(){
   var s=arr('stats').filter(function(x){return x.number||x.label;});
   if(!s.length) s=[{number:'12,500+',label:'مستفيد ومستفيدة'},{number:'35+',label:'برنامجاً ومبادرة'},{number:'480+',label:'متطوّع ومتطوّعة'},{number:'12',label:'سنة من العطاء'}];
-  return '<section class="n-stats"><div class="wrap"><div class="n-stats-grid">'+
+  var style=CFG.stats_style||'cards';
+  var heading=CFG.stats_heading||'';
+  var head=heading?'<div class="n-sec-center" style="margin-bottom:32px"><div class="eyebrow" style="justify-content:center"><span class="ln"></span>أثرنا بالأرقام</div><h2>'+esc(heading)+'</h2></div>':'';
+  return '<section class="n-stats n-stats-'+style+'"><div class="wrap">'+head+'<div class="n-stats-grid">'+
     s.map(function(x,i){
       return '<div class="n-stat">'+
         '<span class="n-stat-ic">'+nIc(nStatIcon(x,i))+'</span>'+
@@ -2360,6 +2414,30 @@ function nStatsStrip(){
       '</div>';
     }).join('')+
   '</div></div></section>';
+}
+function nHighlights(){
+  if(!visible('highlights')) return '';
+  var items=arr('highlights').filter(function(x){return x.title||x.desc||x.metric;});
+  if(!items.length) return '';
+  var style=CFG.highlights_style||'grid';
+  var heading=CFG.highlights_heading||'لماذا تختارنا؟';
+  var sub=CFG.highlights_subtext||'';
+  var head='<div class="n-sec-center"><div class="eyebrow" style="justify-content:center"><span class="ln"></span>'+esc(heading)+'</div>'+(sub?'<div class="sub">'+esc(sub)+'</div>':'')+'</div>';
+  var body;
+  if(style==='feature'){
+    body='<div class="n-hl-feature">'+items.map(function(x){
+      return '<div class="n-hl-frow"><div class="n-hl-ic">'+nIc(x.icon||'star')+'</div><div class="n-hl-ftx"><h4>'+esc(x.title||'')+(x.metric?' <span class="n-hl-metric">'+esc(x.metric)+'</span>':'')+'</h4>'+(x.desc?'<p>'+esc(x.desc)+'</p>':'')+'</div></div>';
+    }).join('')+'</div>';
+  } else if(style==='numbered'){
+    body='<div class="n-hl-numbered">'+items.map(function(x,i){
+      return '<div class="n-hl-nrow"><div class="n-hl-num">'+(i+1)+'</div><div class="n-hl-ic">'+nIc(x.icon||'star')+'</div><div class="n-hl-ftx"><h4>'+esc(x.title||'')+(x.metric?' <span class="n-hl-metric">'+esc(x.metric)+'</span>':'')+'</h4>'+(x.desc?'<p>'+esc(x.desc)+'</p>':'')+'</div></div>';
+    }).join('')+'</div>';
+  } else {
+    body='<div class="n-hl-grid">'+items.map(function(x){
+      return '<div class="n-hl-card"><div class="n-hl-ic">'+nIc(x.icon||'star')+'</div>'+(x.metric?'<div class="n-hl-metric">'+esc(x.metric)+'</div>':'')+'<h4>'+esc(x.title||'')+'</h4>'+(x.desc?'<p>'+esc(x.desc)+'</p>':'')+'</div>';
+    }).join('')+'</div>';
+  }
+  return '<section class="n-hl n-alt"><div class="wrap">'+head+body+'</div></section>';
 }
 /* animated count-up for stats (RTL-safe; preserves prefix/suffix like "+") */
 function nCountUp(el){
@@ -2441,12 +2519,23 @@ function nProgramsTeaser(){
   '</div></section>';
 }
 
+function nQuickAmts(){
+  var d=CFG.donation||{}; var q=d.quick_amounts;
+  if(typeof q==='string') q=q.split(/[,،\s]+/);
+  if(Array.isArray(q)){ q=q.map(function(x){return parseInt(String(x).replace(/[^\d]/g,''),10);}).filter(function(x){return x>0;}); }
+  if(!q||!q.length) q=[100,250,500,1000];
+  return q.slice(0,5);
+}
 function nImpactCalc(opts){
   opts=opts||{}; var d=CFG.donation||{};
+  if(!opts.solo && d.show_calc===false) return '';
+  var qa=nQuickAmts();
+  var chips='<div class="n-calc-chips">'+qa.map(function(a){return '<button type="button" class="n-calc-chip'+(a===1000?' on':'')+'" data-amt="'+a+'" onclick="ncQuick('+a+')">'+a.toLocaleString('ar-SA')+'</button>';}).join('')+'</div>';
   var box='<div class="n-calc-box">'+
       '<div class="n-calc-label"><span>مبلغ تبرّعك</span><b id="nc-amount">١٬٠٠٠ ر.س</b></div>'+
       '<input class="n-calc-slider" id="nc-slider" type="range" min="50" max="5000" value="1000" step="50" oninput="ncUpdate(this.value)">'+
       '<div class="n-calc-range"><span>٥٠ ر.س</span><span>٥٬٠٠٠ ر.س</span></div>'+
+      chips+
       '<div class="n-calc-result"><div class="ic">'+nIc('target')+'</div>'+
         '<div class="nc-msg" id="nc-msg"></div>'+
         '<span class="nc-formula">الأثر I = التبرّع D ÷ تكلفة الوحدة U ('+nU().toLocaleString('ar-SA')+' ر.س للمستفيد)</span>'+
@@ -2455,12 +2544,13 @@ function nImpactCalc(opts){
   if(opts.solo) return '<div class="n-calc-box-wrap">'+box+'</div>';
   return '<section class="n-impact"><div class="wrap"><div class="n-impact-grid">'+
     '<div class="n-impact-tx"><div class="eyebrow"><span class="ln"></span>حاسبة الأثر التفاعلية</div>'+
-      '<h2>'+esc(d.title||'تبرّعك يُحدث أثراً ملموساً')+'</h2>'+
-      '<p>'+esc(d.desc||'حرّك المؤشّر لتكتشف فوراً حجم الأثر الذي سيُحدثه تبرّعك في حياة الأسر المنتجة.')+'</p>'+
+      '<h2>'+esc(d.calc_title||d.title||'تبرّعك يُحدث أثراً ملموساً')+'</h2>'+
+      '<p>'+esc(d.calc_desc||d.desc||'حرّك المؤشّر لتكتشف فوراً حجم الأثر الذي سيُحدثه تبرّعك في حياة الأسر المنتجة.')+'</p>'+
       '<a class="n-btn-gold" href="#/donate">'+nIc('heart')+'ابدأ تبرّعك الآن</a>'+
     '</div>'+box+
   '</div></div></section>';
 }
+function ncQuick(v){ var sl=document.getElementById('nc-slider'); if(sl) sl.value=v; ncUpdate(v); }
 
 function nAdaptShowcase(){
   var keys=Object.keys(NAT_ADAPT);
@@ -2508,7 +2598,7 @@ function nDonateCTA(){
 
 /* ── PAGE: home ── */
 function renderNatHome(){
-  document.getElementById('root').innerHTML = nChrome()+nHero()+nStatsStrip()+nAboutTeaser()+nProgramsTeaser()+nImpactCalc()+nAdaptShowcase()+nNewsTeaser()+nDonateCTA()+nFooter();
+  document.getElementById('root').innerHTML = nChrome()+nHero()+nStatsStrip()+nAboutTeaser()+nHighlights()+nProgramsTeaser()+nImpactCalc()+nAdaptShowcase()+nNewsTeaser()+nDonateCTA()+nFooter();
   nAfterRender();
 }
 
@@ -2732,6 +2822,7 @@ function ncUpdate(v){
       : 'تبرّعك بقيمة <b>'+v.toLocaleString('ar-SA')+'</b> ريال يضمن تأمين <b>'+I.toLocaleString('ar-SA')+'</b> '+esc(unit.indexOf('حقيبة')>=0?'حقائب تدريبية':unit)+' لـ <b>'+I.toLocaleString('ar-SA')+'</b> أسر منتجة تنتقل من الاحتياج إلى الإنتاج المستدام.';
   }
   if(sl){ sl.style.setProperty('--pct', ((v-50)/(5000-50)*100).toFixed(1)+'%'); }
+  document.querySelectorAll('.n-calc-chip').forEach(function(c){ c.classList.toggle('on', parseInt(c.getAttribute('data-amt'),10)===v); });
 }
 
 function nGiftUpdate(){
