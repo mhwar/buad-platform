@@ -4988,6 +4988,7 @@ function refreshTrackBars(){
     var fg=document.getElementById('ring-fg-'+track.id); if(fg) fg.setAttribute('stroke-dashoffset',(circ-(pct/100)*circ).toFixed(1));
     var rp=document.getElementById('ring-pct-'+track.id); if(rp) rp.textContent=pct+'%';
   });
+  renderTodayFocus();
 }
 
 /* ── Home dashboard plan metrics ── */
