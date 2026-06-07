@@ -13203,7 +13203,7 @@ Pages.printPfReport = function(mode) {
 
   var today = new Date().toLocaleDateString('ar-SA-u-nu-latn',{year:'numeric',month:'long',day:'numeric'});
 
-  var fmt = function(n){ return Number(n||0).toLocaleString('ar-SA',{minimumFractionDigits:2,maximumFractionDigits:2})+' ر.س'; };
+  var fmt = function(n){ return Number(n||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})+' ر.س'; };
 
   var totals = {contract:0, vat:0, net:0, remaining:0};
   var rows = projEntries.map(function(incEntry){
