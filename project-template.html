@@ -505,8 +505,7 @@ input[type=checkbox]{accent-color:var(--N);width:13px;height:13px;cursor:pointer
           <div class="cr-row"><span style="color:var(--mu)">قيمة العقد قبل الضريبة</span><span id="ob-gross" class="mn">—</span></div>
           <div class="cr-row" id="ob-exec-row"><span id="ob-exec-lbl" style="color:var(--mu)">رسوم بُعد التمكين</span><span id="ob-exec" class="mn">—</span></div>
           <div class="cr-row"><span style="color:var(--mu)">مخصص التسويق</span><span id="ob-mkt" class="mn">—</span></div>
-          <div class="cr-row" style="border-bottom:.5px solid var(--bd);padding-bottom:6px;margin-bottom:6px"><span style="color:var(--mu)">ضريبة القيمة المضافة</span><span id="ob-vat" class="mn">—</span></div>
-          <div class="cr-row"><span style="font-weight:600;color:var(--N)">الميزانية التنفيذية المتاحة</span><span id="ob-net" class="mn cn" style="font-weight:700">—</span></div>
+          <div class="cr-row"><span style="font-weight:600;color:var(--N)" id="ob-net-lbl">الميزانية التنفيذية المتاحة</span><span id="ob-net" class="mn cn" style="font-weight:700">—</span></div>
         </div>
         <div class="sg sg2" style="margin-bottom:12px">
           <div class="sc"><div class="sn cn mn" id="d-bud">—</div><div class="sl">مجموع الميزانية (ر.س)</div></div>
@@ -710,9 +709,23 @@ input[type=checkbox]{accent-color:var(--N);width:13px;height:13px;cursor:pointer
       <div class="cb">
         <div class="sg sg4" style="margin-bottom:12px">
           <div class="sc"><div class="sn cn mn" id="tr-budget">—</div><div class="sl">الميزانية المعتمدة</div></div>
-          <div class="sc"><div class="sn cg mn" id="tr-paid">0</div><div class="sl">المدفوع فعلياً</div></div>
-          <div class="sc"><div class="sn ca mn" id="tr-remain">—</div><div class="sl">المتبقي</div></div>
+          <div class="sc"><div class="sn cr mn" id="tr-inv-total">0</div><div class="sl">إجمالي الدفعات والفواتير</div></div>
+          <div class="sc"><div class="sn ca mn" id="tr-remain">—</div><div class="sl">المتبقي من البنود</div></div>
           <div class="sc"><div class="sn cs mn" id="tr-pct">0%</div><div class="sl">نسبة الصرف</div></div>
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+          <div style="flex:1;min-width:130px;background:var(--sand);border:.5px solid var(--bd);border-radius:8px;padding:8px 12px;font-size:11px">
+            <div style="color:var(--mu);margin-bottom:3px">المدفوع فعلياً (من بنود الصرف)</div>
+            <div class="mn" id="tr-paid" style="font-size:14px;font-weight:700;color:var(--G)">0</div>
+          </div>
+          <div style="flex:1;min-width:130px;background:var(--sand);border:.5px solid var(--bd);border-radius:8px;padding:8px 12px;font-size:11px">
+            <div style="color:var(--mu);margin-bottom:3px">مدفوعة من الدفعات</div>
+            <div class="mn" id="tr-inv-paid" style="font-size:14px;font-weight:700;color:var(--S)">0</div>
+          </div>
+          <div style="flex:1;min-width:130px;background:var(--sand);border:.5px solid var(--bd);border-radius:8px;padding:8px 12px;font-size:11px">
+            <div style="color:var(--mu);margin-bottom:3px">معلقة</div>
+            <div class="mn" id="tr-inv-pending" style="font-size:14px;font-weight:700;color:var(--A)">0</div>
+          </div>
         </div>
         <div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;font-size:11px;color:var(--mu);margin-bottom:4px"><span>استهلاك الميزانية</span><span id="tr-pct-lbl">0%</span></div><div class="spend-prog"><div class="spend-fill" id="tr-bar" style="width:0%;background:var(--S)"></div></div></div>
         <table class="tbl" style="table-layout:fixed"><colgroup><col><col style="width:90px"><col style="width:108px"><col style="width:108px"><col style="width:65px"><col style="width:26px"></colgroup>
@@ -733,10 +746,15 @@ input[type=checkbox]{accent-color:var(--N);width:13px;height:13px;cursor:pointer
     <div class="card">
       <div class="ch"><div class="ci ci-n">س</div><h2>سجل الدفعات والفواتير</h2></div>
       <div class="cb" style="padding:0">
-        <table class="tbl" style="table-layout:fixed"><colgroup><col style="width:80px"><col><col style="width:100px"><col style="width:110px"><col style="width:72px"><col style="width:26px"></colgroup>
+        <div style="overflow-x:auto">
+        <table class="tbl" style="table-layout:fixed;min-width:560px"><colgroup><col style="width:88px"><col><col style="width:110px"><col style="width:120px"><col style="width:90px"><col style="width:26px"></colgroup>
           <thead><tr><th>التاريخ</th><th>البيان</th><th>المبلغ (ر.س)</th><th>الجهة المستفيدة</th><th>الحالة</th><th></th></tr></thead>
           <tbody id="invoice-body"></tbody>
+          <tfoot id="invoice-foot">
+            <tr class="fin-tot"><td colspan="2">المجموع</td><td class="mn" id="inv-total">0</td><td colspan="2" id="inv-status-summary" style="font-size:10px;color:var(--mu)"></td><td></td></tr>
+          </tfoot>
         </table>
+        </div>
         <div style="padding:8px 11px;border-top:.5px solid var(--bd)"><button class="btn btn-g" onclick="addInvoice()">+ دفعة</button></div>
       </div>
     </div>
@@ -1196,12 +1214,14 @@ function syncAll(){
   var obExecLbl=EXEC_MODE==="pct"?"رسوم بُعد التمكين ("+((parseFloat(V("i-exec-pct"))||0)+"%)")
                :EXEC_MODE==="fixed"?"رسوم بُعد التمكين (مبلغ ثابت)"
                :"رسوم بُعد التمكين (من البنود)";
-  var obNet=EXEC_MODE==="budget"?gross:netBudget;
+  var finTotal2=FIN.reduce(function(s,i){return s+(i.a||0);},0);
+  var obNet=EXEC_MODE==="budget"?(gross-finTotal2):netBudget;
+  var obNetLbl=EXEC_MODE==="budget"?"الهامش المتاح (غير المخصص)":"الميزانية التنفيذية المتاحة";
   set("ob-gross",fmt(gross)+" ر.س");
   set("ob-exec-lbl",obExecLbl);
   set("ob-exec",fmt(execCost)+" ر.س");
   set("ob-mkt",fmt(mkt)+" ر.س");
-  set("ob-vat",fmt(vat)+" ر.س");
+  set("ob-net-lbl",obNetLbl);
   set("ob-net",fmt(obNet)+" ر.س");
   // Inline details section (exec toggle card)
   var edbExecLbl=EXEC_MODE==="pct"?"رسوم بُعد التمكين ("+((parseFloat(V("i-exec-pct"))||0)+"%)")
@@ -1329,7 +1349,39 @@ function renderSpend(){
   });
 }
 function addSpend(){SPEND_ITEMS.push({cat:"بند جديد",approved:0,paid:0,party:"اسم الجهة"});updateSpend();}
-function renderInvoices(){var b=document.getElementById("invoice-body");b.innerHTML="";INVOICES.forEach(function(inv,i){var sc=inv.status==="مدفوعة"?"bs":inv.status==="معلقة"?"ba":"br";var tr=document.createElement("tr");tr.innerHTML='<td><input class="ef efg" type="date" value="'+inv.date+'" style="width:76px;font-size:10.5px" onchange="INVOICES['+i+'].date=this.value"></td><td><input class="ef efg" value="'+inv.desc+'" style="width:100%" onchange="INVOICES['+i+'].desc=this.value"></td><td><input type="number" class="ef mn" value="'+inv.amt+'" style="width:94px;padding:3px 6px" onchange="INVOICES['+i+'].amt=parseInt(this.value)||0"></td><td><input class="ef efg" value="'+inv.party+'" style="width:100px" onchange="INVOICES['+i+'].party=this.value"></td><td style="text-align:center"><span class="bd '+sc+'">'+inv.status+'</span></td><td><button class="del" onclick="INVOICES.splice('+i+',1);renderInvoices()">×</button></td>';b.appendChild(tr);});}
+function renderInvoices(){
+  var b=document.getElementById("invoice-body");
+  b.innerHTML="";
+  INVOICES.forEach(function(inv,i){
+    var sc=inv.status==="مدفوعة"?"bs":inv.status==="معلقة"?"ba":"br";
+    var tr=document.createElement("tr");
+    tr.style.background=inv.status==="مدفوعة"?"var(--Sl)":inv.status==="ملغاة"?"var(--Rl)":"";
+    tr.innerHTML=
+      '<td><input class="ef efg" type="date" value="'+inv.date+'" style="width:83px;font-size:10.5px" onchange="INVOICES['+i+'].date=this.value"></td>'+
+      '<td><input class="ef efg" value="'+inv.desc+'" style="width:100%" onchange="INVOICES['+i+'].desc=this.value"></td>'+
+      '<td><input type="number" class="ef mn" value="'+inv.amt+'" style="width:100px;padding:3px 6px" onchange="INVOICES['+i+'].amt=parseFloat(this.value)||0;renderInvoices()"></td>'+
+      '<td><input class="ef efg" value="'+inv.party+'" style="width:110px" onchange="INVOICES['+i+'].party=this.value"></td>'+
+      '<td style="text-align:center">'+
+        '<select class="ef" style="font-size:10.5px;padding:2px 4px;border-radius:5px;border:.5px solid var(--bd);color:'+(inv.status==="مدفوعة"?"var(--S)":inv.status==="ملغاة"?"var(--R)":"var(--A)")+';font-weight:600;background:var(--sand)" onchange="INVOICES['+i+'].status=this.value;renderInvoices()">'+
+          '<option value="معلقة"'+(inv.status==="معلقة"?" selected":"")+'>معلقة</option>'+
+          '<option value="مدفوعة"'+(inv.status==="مدفوعة"?" selected":"")+'>مدفوعة</option>'+
+          '<option value="ملغاة"'+(inv.status==="ملغاة"?" selected":"")+'>ملغاة</option>'+
+        '</select>'+
+      '</td>'+
+      '<td><button class="del" onclick="INVOICES.splice('+i+',1);renderInvoices()">×</button></td>';
+    b.appendChild(tr);
+  });
+  // Totals
+  var total=INVOICES.reduce(function(s,inv){return s+(inv.status!=="ملغاة"?(inv.amt||0):0);},0);
+  var paid=INVOICES.reduce(function(s,inv){return s+(inv.status==="مدفوعة"?(inv.amt||0):0);},0);
+  var pending=INVOICES.reduce(function(s,inv){return s+(inv.status==="معلقة"?(inv.amt||0):0);},0);
+  var cancelled=INVOICES.filter(function(inv){return inv.status==="ملغاة";}).length;
+  var el=document.getElementById("inv-total"); if(el) el.textContent=fmt(total)+" ر.س";
+  var ss=document.getElementById("inv-status-summary"); if(ss) ss.textContent="مدفوع: "+fmt(paid)+" | معلق: "+fmt(pending)+(cancelled?" | ملغاة: "+cancelled:"");
+  var it=document.getElementById("tr-inv-total"); if(it) it.textContent=fmt(total)+" ر.س";
+  var ip=document.getElementById("tr-inv-paid"); if(ip) ip.textContent=fmt(paid)+" ر.س";
+  var ipe=document.getElementById("tr-inv-pending"); if(ipe) ipe.textContent=fmt(pending)+" ر.س";
+}
 function addInvoice(){var today=new Date().toISOString().split("T")[0];INVOICES.push({date:today,desc:"دفعة جديدة",amt:0,party:"اسم الجهة",status:"معلقة"});renderInvoices();}
 
 function renderTasks(){var b=document.getElementById("tasks-body");b.innerHTML="";TASKS.forEach(function(tk,i){var tr=document.createElement("tr");tr.style.background=tk.done?"var(--Sl)":"";tr.innerHTML='<td style="text-align:center"><input type="checkbox" '+(tk.done?"checked":"")+'  onchange="TASKS['+i+'].done=this.checked;this.closest(\'tr\').style.background=this.checked?\'var(--Sl)\':\'\';updProg()"></td><td style="'+(tk.done?"text-decoration:line-through;color:var(--mu)":"")+';font-size:11.5px">'+tk.t+'</td><td style="text-align:center;font-size:10px;color:var(--mu);font-family:\'IBM Plex Mono\',monospace">'+tk.w+'</td><td><span class="bd '+tk.c+'">'+tk.o+'</span></td><td style="text-align:center;font-size:10px;color:'+(tk.done?"var(--S)":"var(--mu)")+'">'+(tk.done?"مكتملة ✓":"معلقة")+'</td>';b.appendChild(tr);});updProg();}
