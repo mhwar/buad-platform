@@ -657,7 +657,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .data-table tr:last-child td{border-bottom:none}
 
 /* ── Entry table (Axis — flat, hover-reveal actions) ── */
-.entry-tbl{width:100%;border-collapse:collapse;table-layout:fixed}
+.entry-tbl{width:100%;border-collapse:collapse;table-layout:fixed;min-width:540px}
 .entry-tbl th{
   text-align:right;padding:var(--space-2_5) var(--space-4);
   font-size:var(--font-xs);font-weight:500;color:var(--fg-3);
@@ -665,7 +665,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
   border-bottom:1px solid var(--border);white-space:nowrap;
 }
 .entry-tbl td{
-  padding:0 var(--space-4);height:44px;
+  padding:0 var(--space-3);height:44px;
   border-bottom:1px solid var(--border-subtle);
   vertical-align:middle;white-space:nowrap;
   overflow:hidden;text-overflow:ellipsis;
@@ -682,11 +682,11 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .entry-type-dot.income{background:var(--success-500)}
 .entry-type-dot.expense{background:var(--danger-500)}
 /* columns */
-.entry-tbl .col-date{width:74px;font-family:var(--font-mono);font-size:11px;color:var(--fg-3);text-align:center}
-.entry-tbl .col-cat{width:104px}
+.entry-tbl .col-date{width:84px;font-family:var(--font-mono);font-size:11px;color:var(--fg-3);text-align:center}
+.entry-tbl .col-cat{width:120px}
 .entry-tbl .col-cat .badge{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.entry-tbl .col-amt{width:124px;text-align:left}
-.entry-tbl .col-chev{width:36px;text-align:center;overflow:visible}
+.entry-tbl .col-amt{width:168px;text-align:start;direction:ltr}
+.entry-tbl .col-chev{width:38px;text-align:center;overflow:visible}
 /* chevron toggle button */
 .entry-chev-btn{
   background:transparent;border:none;cursor:pointer;
@@ -726,12 +726,13 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .entry-expand-actions{display:flex;align-items:center;gap:var(--space-2)}
 /* tfoot summary */
 .entry-tbl tfoot td{
-  padding:var(--space-2_5) var(--space-4);height:auto;
+  padding:var(--space-2_5) var(--space-3);height:auto;
   border-top:2px solid var(--border);border-bottom:none;
   font-size:var(--font-xs);font-weight:600;color:var(--fg-2);
   background:var(--neutral-50);white-space:nowrap;
+  overflow:visible;
 }
-.entry-tbl tfoot .col-amt{line-height:1.7;white-space:nowrap}
+.entry-tbl tfoot .col-amt{line-height:1.8;white-space:nowrap;direction:ltr;text-align:start}
 .entry-tbl tfoot tr.entry-grand td{border-top:1px solid var(--border-subtle);background:var(--neutral-100)}
 /* project filter pills */
 .proj-filter-bar{
@@ -782,11 +783,11 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
     color: var(--fg-3); flex-shrink: 0;
   }
 
-  /* entry-tbl → hide extras, let description breathe */
+  /* entry-tbl → hide extras on mobile, allow horizontal scroll */
   .entry-tbl .col-dot{display:none}
   .entry-tbl .col-date{display:none}
   .entry-tbl .col-cat{display:none}
-  .entry-tbl .col-amt{width:126px;padding-inline-start:var(--space-2);padding-inline-end:var(--space-2)}
+  .entry-tbl .col-amt{width:150px;padding-inline-start:var(--space-2);padding-inline-end:var(--space-2)}
   .entry-tbl .col-chev{width:36px;padding-inline-start:4px;padding-inline-end:4px}
   /* allow desc to wrap on narrow screens */
   .entry-tbl tbody td:nth-child(2){white-space:normal;overflow:visible;height:auto;padding-top:10px;padding-bottom:10px;line-height:var(--lh-snug);padding-inline-start:var(--space-3)}
@@ -1431,10 +1432,8 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
 /* ── Scrollable table wrapper ── */
 .tbl-responsive{overflow-x:auto;-webkit-overflow-scrolling:touch}
 .tbl-responsive .data-table{min-width:560px}
-/* entry table on mobile: no scroll, hide extras */
-@media(max-width:767px){
-  .tbl-responsive:has(.entry-tbl){overflow-x:visible}
-}
+/* entry table: always allow horizontal scroll */
+.tbl-responsive:has(.entry-tbl){overflow-x:auto;-webkit-overflow-scrolling:touch}
 .entry-tbl tbody tr:last-child td{border-bottom:none}
 
 /* ── Print ── */
@@ -5272,7 +5271,7 @@ Pages.renderFinEntries = function(projId) {
             '<span style="font-weight:500;color:var(--fg-1)">'+UI.escHtml(e.desc||'')+'</span>'+agrMark +
           '</td>' +
           '<td class="col-cat"><span class="badge gray sm">'+catLabel(e.cat)+'</span></td>' +
-          '<td class="col-amt" style="font-family:var(--font-mono);font-weight:600;font-size:var(--font-sm);color:'+amtColor+';letter-spacing:-.3px">' +
+          '<td class="col-amt" dir="ltr" style="font-family:var(--font-mono);font-weight:600;font-size:var(--font-sm);color:'+amtColor+';letter-spacing:-.3px">' +
             amtSign+' '+UI.fmt(e.amount)+' <span style="font-size:10px;font-weight:400;color:var(--fg-4)">ر.س</span>' +
           '</td>' +
           '<td class="col-chev">' +
@@ -5295,9 +5294,9 @@ Pages.renderFinEntries = function(projId) {
           '<td class="col-date" style="color:var(--fg-4);font-size:var(--font-2xs)">'+filtered.length+' عملية</td>' +
           '<td style="padding-inline-start:0;color:var(--fg-3);font-weight:500;font-size:var(--font-2xs)">المصاريف / الأرباح</td>' +
           '<td class="col-cat"></td>' +
-          '<td class="col-amt" style="font-family:var(--font-mono);font-size:var(--font-2xs)">' +
-            '<div style="color:var(--success-700)">أرباح + '+UI.fmt(totalInc)+'</div>' +
-            '<div style="color:var(--danger-700)">مصاريف − '+UI.fmt(totalExp)+'</div>' +
+          '<td class="col-amt" dir="ltr" style="font-family:var(--font-mono);font-size:var(--font-2xs)">' +
+            '<div style="color:var(--success-700)">+ '+UI.fmt(totalInc)+' <span style="font-size:10px;color:var(--fg-4)">ر.س</span></div>' +
+            '<div style="color:var(--danger-700)">− '+UI.fmt(totalExp)+' <span style="font-size:10px;color:var(--fg-4)">ر.س</span></div>' +
           '</td>' +
           '<td class="col-chev"></td>' +
         '</tr>' +
@@ -5306,7 +5305,7 @@ Pages.renderFinEntries = function(projId) {
           '<td class="col-date"></td>' +
           '<td style="padding-inline-start:0;color:var(--fg-1);font-weight:700;font-size:var(--font-xs)">إجمالي المصروف من العقد</td>' +
           '<td class="col-cat"></td>' +
-          '<td class="col-amt" style="font-family:var(--font-mono);font-weight:700;font-size:var(--font-sm);color:var(--danger-700)">'+UI.fmt(grandTotal)+' ر.س</td>' +
+          '<td class="col-amt" dir="ltr" style="font-family:var(--font-mono);font-weight:700;font-size:var(--font-sm);color:var(--danger-700)">'+UI.fmt(grandTotal)+' <span style="font-size:10px;font-weight:400;color:var(--fg-4)">ر.س</span></td>' +
           '<td class="col-chev"></td>' +
         '</tr>' +
       '</tfoot>'
@@ -5334,7 +5333,8 @@ Pages.renderFinEntries = function(projId) {
         '<input class="field-input" style="padding-inline-end:34px;width:100%;font-size:var(--font-sm)" placeholder="بحث..." value="'+UI.escHtml(search)+'" oninput="window._entriesSearch=this.value;Pages.renderFinEntries(\''+projId+'\')">' +
       '</div>' +
       '<div style="margin-inline-start:auto;display:flex;gap:var(--space-2)">' +
-        '<button class="btn btn-sm" onclick="Pages.exportCSV(\''+projId+'\')" style="display:inline-flex;align-items:center;gap:var(--space-1_5)"><i data-lucide="download"></i>تصدير</button>' +
+        '<button class="btn btn-sm" onclick="Pages.exportCSV(\''+projId+'\')" style="display:inline-flex;align-items:center;gap:var(--space-1_5)" title="تصدير Excel/CSV"><i data-lucide="file-spreadsheet"></i>Excel</button>' +
+        '<button class="btn btn-sm" onclick="Pages.exportPDF(\''+projId+'\')" style="display:inline-flex;align-items:center;gap:var(--space-1_5)" title="تصدير PDF"><i data-lucide="file-text"></i>PDF</button>' +
         '<button class="btn btn-sm btn-primary" onclick="Pages.addEntryModal(\''+projId+'\')" style="display:inline-flex;align-items:center;gap:var(--space-1_5)"><i data-lucide="plus"></i>إضافة بند</button>' +
       '</div>' +
     '</div>' +
@@ -6146,58 +6146,62 @@ Pages.exportCSV = function(projId) {
   var r    = FinCalc.calc(projId);
   var c    = fin.ctrl||{};
   var entries = (fin.entries||[]).slice().sort(function(a,b){ return (a.date||'').localeCompare(b.date||''); });
-  var available = r.grossTotal - r.execAmt - r.mkt - r.cb - r.cfAmt;
   var profitPct = r.grossTotal>0 ? (r.profit/r.grossTotal*100).toFixed(1) : '0';
 
+  /* q = quote text cell, n = raw numeric cell */
   function q(v){ return '"'+String(v==null?'':v).replace(/"/g,'""')+'"'; }
-  function row(){ return Array.prototype.slice.call(arguments).map(q).join(','); }
+  function n(v){ var f=parseFloat(v); return isNaN(f)?'0':f.toFixed(2); }
+  function sep(){ return ',,,,,,,'; }
 
   var today = new Date();
-  var todayStr = today.getFullYear()+'-'+(today.getMonth()+1)+'-'+today.getDate();
+  var todayStr = today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
 
   var lines = [];
-  /* ── ملخص المشروع ── */
-  lines.push(row('# ملخص التقرير المالي — بُعد'));
-  lines.push(row('تاريخ الإصدار', todayStr));
-  lines.push(row('اسم المشروع', (proj||{}).name||''));
-  lines.push(row('العميل', cl?cl.name:''));
-  lines.push(row('رقم العقد', c.contract_no||''));
-  lines.push(row('تاريخ العقد', c.contract_date||''));
-  lines.push(row(''));
+  /* BOM for Excel Arabic compatibility */
+
+  /* ── معلومات المشروع ── */
+  lines.push(q('التقرير المالي')+','+q('بُعد — منصة إدارة المشاريع'));
+  lines.push(q('تاريخ الإصدار')+','+q(todayStr));
+  lines.push(q('اسم المشروع')+','+q((proj||{}).name||''));
+  lines.push(q('العميل')+','+q(cl?cl.name:''));
+  lines.push(q('رقم العقد')+','+q(c.contract_no||''));
+  lines.push(q('تاريخ العقد')+','+q(c.contract_date||''));
+  lines.push('');
 
   /* ── الملخص المالي ── */
-  lines.push(row('# الملخص المالي'));
-  lines.push(row('البند', 'القيمة (ر.س)'));
-  lines.push(row('قيمة العقد الكاملة', r.grossTotal));
-  lines.push(row('أتعاب التنفيذ', r.execAmt));
-  lines.push(row('التسويق', r.mkt));
-  lines.push(row('كاش باك', r.cb));
-  lines.push(row('رسوم إضافية', r.cfAmt));
-  lines.push(row('المتاح للتنفيذ', available));
-  lines.push(row('إجمالي المصاريف', r.totalExpenses));
-  lines.push(row('إجمالي الدخل/الأتعاب', r.totalIncome));
-  lines.push(row('إجمالي المصروف من العقد', r.totalDeductions));
-  lines.push(row('صافي الربح', r.profit));
-  lines.push(row('هامش الربحية %', profitPct));
-  lines.push(row('المتبقي من العقد', r.remaining));
-  lines.push(row(''));
+  lines.push(q('الملخص المالي')+','+q('القيمة (ر.س)'));
+  lines.push(q('قيمة العقد الكاملة')+','+n(r.grossTotal));
+  lines.push(q('أتعاب التنفيذ')+','+n(r.execAmt));
+  lines.push(q('التسويق')+','+n(r.mkt));
+  lines.push(q('كاش باك')+','+n(r.cb));
+  lines.push(q('رسوم إضافية')+','+n(r.cfAmt));
+  lines.push(q('المتاح للتنفيذ')+','+n(r.available));
+  lines.push(q('إجمالي المصاريف')+','+n(r.totalExpenses));
+  lines.push(q('إجمالي الأرباح/الأتعاب')+','+n(r.totalIncome));
+  lines.push(q('إجمالي المصروف من العقد')+','+n(r.totalDeductions));
+  lines.push(q('صافي الربح')+','+n(r.profit));
+  lines.push(q('هامش الربحية %')+','+profitPct);
+  lines.push(q('المتبقي من العقد')+','+n(r.remaining));
+  lines.push('');
 
   /* ── سجل المعاملات ── */
-  lines.push(row('# سجل المعاملات'));
-  lines.push(row('التاريخ','البيان','التصنيف','النوع','المبلغ','الحالة','ملاحظة'));
+  lines.push([q('التاريخ'),q('البيان'),q('التصنيف'),q('النوع'),q('المبلغ (ر.س)'),q('الحالة'),q('ملاحظة')].join(','));
   entries.forEach(function(e){
-    lines.push(row(
-      e.date||'', e.desc||'', catLabel(e.cat),
-      e.type==='income'?'دخل':'مصروف',
-      e.amount||0,
-      e.status==='paid'?'مدفوع':e.status==='pending'?'معلق':e.status==='cancelled'?'ملغي':'',
-      e.note||''
-    ));
+    var stMap = {paid:'مدفوع', pending:'معلق', cancelled:'ملغي'};
+    lines.push([
+      q(e.date||''),
+      q(e.desc||''),
+      q(catLabel(e.cat)),
+      q(e.type==='income'?'دخل':'مصروف'),
+      n(e.amount),
+      q(stMap[e.status]||''),
+      q((e.note && e.note!=='من الاتفاقية') ? e.note : (e.note==='من الاتفاقية'?'من الاتفاقية':''))
+    ].join(','));
   });
-  /* Totals */
-  lines.push(row('','','','إجمالي الدخل', r.totalIncome,'',''));
-  lines.push(row('','','','إجمالي المصاريف', r.totalExpenses,'',''));
-  lines.push(row('','','','صافي الربح', r.profit,'',''));
+  /* Totals footer */
+  lines.push([q(''),q(''),q(''),q('إجمالي الأرباح'),n(r.totalIncome),q(''),q('')].join(','));
+  lines.push([q(''),q(''),q(''),q('إجمالي المصاريف'),n(r.totalExpenses),q(''),q('')].join(','));
+  lines.push([q(''),q(''),q(''),q('إجمالي المصروف من العقد'),n(r.totalDeductions),q(''),q('')].join(','));
 
   var csv = '﻿' + lines.join('\r\n');
   var blob = new Blob([csv], {type:'text/csv;charset=utf-8'});
@@ -6206,7 +6210,102 @@ Pages.exportCSV = function(projId) {
   var fname = ((proj||{}).name||projId).replace(/[^a-zA-Z0-9؀-ۿ]/g,'_');
   a.href = url; a.download = fname+'_تقرير_'+todayStr+'.csv'; a.click();
   URL.revokeObjectURL(url);
-  UI.toast('تم تصدير التقرير بنجاح','success');
+  UI.toast('تم تصدير ملف Excel بنجاح','success');
+};
+
+Pages.exportPDF = function(projId) {
+  var projects = DB.getProjects();
+  var proj = projects.find(function(p){ return p.id===projId; });
+  var clients = DB.getClients();
+  var cl = proj ? clients.find(function(c){ return c.id===proj.client_id; }) : null;
+  var fin = DB.getFin(projId);
+  var r = FinCalc.calc(projId);
+  var entries = (fin.entries||[]).slice().sort(function(a,b){ return (b.date||'').localeCompare(a.date||''); });
+
+  var today = new Date();
+  var todayStr = today.getFullYear()+'/'+(today.getMonth()+1)+'/'+today.getDate();
+  var totalInc = 0, totalExp = 0;
+  var rowsHtml = entries.map(function(e){
+    var isInc = e.type==='income';
+    var amt = parseFloat(e.amount)||0;
+    if(isInc) totalInc+=amt; else totalExp+=amt;
+    var _dp = (e.date||'').split('-');
+    var dateD = _dp.length===3 ? (_dp[2]+'/'+_dp[1]+'/'+_dp[0].slice(2)) : '—';
+    var clr = isInc ? '#15803d' : '#b91c1c';
+    var sign = isInc ? '+' : '−';
+    var stMap = {paid:'مدفوع',pending:'معلق',cancelled:'ملغي'};
+    var agrTag = e.note==='من الاتفاقية' ? '<span style="display:inline-block;padding:1px 5px;border-radius:3px;background:#ede9fe;color:#6d28d9;font-size:10px;margin-inline-start:4px">اتفاقية</span>' : '';
+    return '<tr>'+
+      '<td>'+dateD+'</td>'+
+      '<td>'+UI.escHtml(e.desc||'')+agrTag+'</td>'+
+      '<td>'+catLabel(e.cat)+'</td>'+
+      '<td style="color:'+clr+';font-weight:600;direction:ltr;text-align:left">'+sign+' '+UI.fmt(amt)+' ر.س</td>'+
+      '<td>'+(stMap[e.status]||'')+'</td>'+
+    '</tr>';
+  }).join('');
+
+  var sumCards = [
+    ['قيمة العقد الكاملة', UI.fmt(r.grossTotal)+' ر.س', '#1e40af'],
+    ['إجمالي المصروف', UI.fmt(r.totalDeductions)+' ر.س', '#b91c1c'],
+    ['المتبقي من العقد', UI.fmt(r.remaining)+' ر.س', r.remaining>=0?'#15803d':'#b91c1c'],
+    ['صافي الربح', UI.fmt(r.profit)+' ر.س', r.profit>=0?'#15803d':'#b91c1c']
+  ].map(function(d){
+    return '<div style="border:1px solid #e5e7eb;border-radius:8px;padding:12px 16px;text-align:center;flex:1;min-width:140px">'+
+      '<div style="font-size:11px;color:#6b7280;margin-bottom:4px">'+d[0]+'</div>'+
+      '<div style="font-size:16px;font-weight:700;font-family:monospace;color:'+d[2]+'">'+d[1]+'</div>'+
+    '</div>';
+  }).join('');
+
+  var html = '<!DOCTYPE html><html dir="rtl" lang="ar">'+
+    '<head><meta charset="utf-8"><title>سجل المعاملات — '+(proj?UI.escHtml(proj.name):'')+'</title>'+
+    '<style>'+
+      '*{box-sizing:border-box;margin:0;padding:0}'+
+      'body{font-family:system-ui,Tahoma,Arial,sans-serif;direction:rtl;padding:24px 28px;color:#111827;font-size:13px;background:#fff}'+
+      'h1{font-size:20px;font-weight:700;margin-bottom:4px;color:#111827}'+
+      '.meta{color:#6b7280;font-size:12px;margin-bottom:18px}'+
+      '.sum-row{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:22px}'+
+      'table{width:100%;border-collapse:collapse;margin-top:4px}'+
+      'thead tr{background:#f9fafb}'+
+      'th{padding:9px 11px;font-size:12px;font-weight:600;color:#374151;border-bottom:2px solid #e5e7eb;text-align:right}'+
+      'td{padding:9px 11px;border-bottom:1px solid #f3f4f6;color:#1f2937;vertical-align:middle}'+
+      'tbody tr:nth-child(even) td{background:#f9fafb}'+
+      'tfoot td{background:#f3f4f6;font-weight:600;border-top:2px solid #d1d5db;font-size:12px}'+
+      'tfoot tr:last-child td{background:#fef2f2;color:#b91c1c;font-size:13px}'+
+      '.print-btn{position:fixed;bottom:20px;left:20px;padding:10px 20px;background:#4f46e5;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;box-shadow:0 2px 8px rgba(0,0,0,.2);z-index:99}'+
+      '.print-btn:hover{background:#4338ca}'+
+      '@media print{.print-btn{display:none!important} body{padding:15px} @page{size:A4;margin:15mm}}'+
+    '</style></head><body>'+
+    '<button class="print-btn" onclick="window.print()">طباعة / حفظ PDF</button>'+
+    '<h1>سجل المعاملات المالية</h1>'+
+    '<div class="meta">'+UI.escHtml((proj?proj.name:'')+(cl?' — '+cl.name:''))+' &nbsp;·&nbsp; تاريخ التصدير: '+todayStr+'</div>'+
+    '<div class="sum-row">'+sumCards+'</div>'+
+    '<table>'+
+      '<thead><tr><th style="width:72px">التاريخ</th><th>البيان</th><th style="width:100px">التصنيف</th><th style="width:150px;direction:ltr;text-align:left">المبلغ</th><th style="width:68px">الحالة</th></tr></thead>'+
+      '<tbody>'+rowsHtml+'</tbody>'+
+      '<tfoot>'+
+        '<tr>'+
+          '<td colspan="3">إجمالي الأرباح</td>'+
+          '<td style="direction:ltr;text-align:left;color:#15803d">+ '+UI.fmt(totalInc)+' ر.س</td>'+
+          '<td></td>'+
+        '</tr>'+
+        '<tr>'+
+          '<td colspan="3">إجمالي المصاريف</td>'+
+          '<td style="direction:ltr;text-align:left;color:#b91c1c">− '+UI.fmt(totalExp)+' ر.س</td>'+
+          '<td></td>'+
+        '</tr>'+
+        '<tr>'+
+          '<td colspan="3">إجمالي المصروف من العقد</td>'+
+          '<td style="direction:ltr;text-align:left">'+UI.fmt(r.totalDeductions)+' ر.س</td>'+
+          '<td></td>'+
+        '</tr>'+
+      '</tfoot>'+
+    '</table>'+
+    '</body></html>';
+
+  var win = window.open('','_blank','width=1000,height=750,scrollbars=yes');
+  if (!win) { UI.toast('يُرجى السماح بالنوافذ المنبثقة ثم المحاولة مجدداً','danger'); return; }
+  win.document.write(html);
+  win.document.close();
 };
 
 /* ─── EDIT PROJECT STATUS ─── */
