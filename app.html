@@ -879,6 +879,9 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
 .toggle input:focus-visible + .toggle-slider{box-shadow:var(--shadow-focus)}
 .inline-group{display:flex;gap:6px;align-items:center}
 .inline-group .field-input{flex:1}
+.vat-quick-btn{margin-top:8px;display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;padding:5px 11px;border-radius:20px;border:1px dashed var(--iris-300);background:var(--iris-50);color:var(--iris-700);cursor:pointer;transition:all .12s;font-family:inherit}
+.vat-quick-btn:hover{background:var(--iris-100);border-style:solid}
+.vat-quick-btn::before{content:"٪";font-size:12px;font-weight:800}
 
 /* ── Modal (v2 — sheet on mobile) ── */
 .modal-overlay{
@@ -5700,6 +5703,7 @@ Pages.addEntryModal = function(projId) {
                 '<option value="fixed">مبلغ ثابت</option>' +
               '</select>' +
             '</div>' +
+            '<button type="button" class="vat-quick-btn" onclick="Pages.setVatProfit(\'ent\')" title="نسبة ضريبة القيمة المضافة من المبلغ الشامل">احتساب نسبة الضريبة 13.043%</button>' +
           '</div>' +
         '</div>' +
         '<div class="form-group"><label class="field-label">ملاحظة</label><input id="ent-note" class="field-input" placeholder="ملاحظة اختيارية"></div>' +
@@ -5717,6 +5721,16 @@ Pages.toggleProfitField = function() {
   var has = document.getElementById('ent-has-pm');
   var row = document.getElementById('ent-profit-row');
   if (has && row) row.style.display = has.checked ? '' : 'none';
+};
+
+/* نسبة ضريبة القيمة المضافة المُستخرجة من مبلغ شامل = 15/115 = 13.043% */
+Pages.VAT_EXTRACT_PCT = 13.043;
+Pages.setVatProfit = function(prefix) {
+  var pm  = document.getElementById(prefix+'-pm');
+  var pmt = document.getElementById(prefix+'-pmt');
+  if (pm)  pm.value  = String(Pages.VAT_EXTRACT_PCT);
+  if (pmt) pmt.value = 'pct';
+  if (pm)  pm.focus();
 };
 
 Pages.switchEntryTab = function(tab) {
@@ -5821,6 +5835,7 @@ Pages.editEntryModal = function(projId, entId) {
               '<option value="fixed"'+(e.profit_margin_type==='fixed'?' selected':'')+'>مبلغ ثابت</option>' +
             '</select>' +
           '</div>' +
+          '<button type="button" class="vat-quick-btn" onclick="Pages.setVatProfit(\'eed\')" title="نسبة ضريبة القيمة المضافة من المبلغ الشامل">احتساب نسبة الضريبة 13.043%</button>' +
         '</div>' +
       '</div>' +
       '<div class="form-group"><label class="field-label">ملاحظة</label><input id="eed-note" class="field-input" value="'+UI.escHtml(e.note||'')+'"></div>' +
@@ -12927,6 +12942,8 @@ Pages.renderPfLedger = function(filter, period) {
 
   /* ══ PROJECTS ══ */
   if (Pages._pfLedgerFilter === 'projects') {
+    var clients = DB.getClients();
+    var _stColors = {active:['var(--success-700)','var(--success-50)'], completed:['var(--iris-700)','var(--iris-50)'], paused:['var(--warning-700)','var(--warning-50)'], cancelled:['var(--fg-4)','var(--neutral-100)'], draft:['var(--fg-3)','var(--neutral-100)']};
     var projEntries = (pf.income||[]).filter(function(e){
       return e.category==='project_fee' && e.project_id && incInRange(e);
     });
@@ -12946,12 +12963,21 @@ Pages.renderPfLedger = function(filter, period) {
       var execFee     = Number(incEntry.amount)||0;
       var projExp     = (pf.expenses||[]).filter(function(e){ return e.project_id===projId; });
       var totalProjExp= projExp.reduce(function(s,e){return s+(Number(e.amount)||0);},0);
-      var remaining   = netProfit; // profit as defined by FinCalc
+      var remaining   = fc ? (Number(fc.remaining)||0) : 0; // المتبقي من قيمة العقد
 
       totals.contract  += contractVal;
       totals.vat       += vatAmt;
       totals.profit    += netProfit;
       totals.remaining += remaining;
+
+      var clOfProj = proj ? clients.find(function(c){ return c.id===proj.client_id; }) : null;
+      var _stc = _stColors[proj?proj.status:'draft']||_stColors.draft;
+      var metaLine = proj ? '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:3px">'+
+        (clOfProj?'<span style="font-size:11px;color:var(--fg-3);font-weight:500">'+UI.escHtml(clOfProj.name)+'</span>':'')+
+        '<span style="font-size:9px;font-weight:700;padding:1px 7px;border-radius:10px;color:'+_stc[0]+';background:'+_stc[1]+'">'+statusLabel(proj.status)+'</span>'+
+        '<span style="font-size:10px;color:var(--fg-4)">'+typeLabel(proj.type)+'</span>'+
+        (proj.location?'<span style="font-size:10px;color:var(--fg-4)">• '+UI.escHtml(proj.location)+'</span>':'')+
+      '</div>' : '';
 
       var payDate = incEntry.payment_date || '';
       var execDate = incEntry.date || '';
@@ -12966,8 +12992,8 @@ Pages.renderPfLedger = function(filter, period) {
       var arrow = '<span style="font-size:10px;color:var(--fg-4);display:inline-block;transition:transform .15s;transform:rotate('+(isExp?'90':'0')+'deg)">▶</span>';
 
       var mainRow = '<tr style="cursor:pointer'+(isExp?';background:var(--bg-soft)':'')+'" onclick="Pages.togglePfProjectExpand(\''+projId+'\')">'+
-        '<td style="min-width:180px"><div style="display:flex;align-items:flex-start;gap:8px">'+arrow+
-          '<div><div style="font-weight:600;color:var(--fg-1)">'+UI.escHtml(proj?proj.name:(incEntry.desc||'—'))+deferBadge+'</div>'+dateHtml+'</div>'+
+        '<td style="min-width:200px"><div style="display:flex;align-items:flex-start;gap:8px">'+arrow+
+          '<div><div style="font-weight:600;color:var(--fg-1)">'+UI.escHtml(proj?proj.name:(incEntry.desc||'—'))+deferBadge+'</div>'+metaLine+dateHtml+'</div>'+
         '</div></td>'+
         '<td class="mono" style="color:var(--fg-2)">'+UI.fmt(contractVal)+'</td>'+
         '<td class="mono" style="color:var(--fg-3)">'+UI.fmt(vatAmt)+'</td>'+
@@ -12983,6 +13009,20 @@ Pages.renderPfLedger = function(filter, period) {
 
       var detailRows = '';
       if (isExp) {
+        function _br(lbl,val,color){ return '<div style="display:flex;justify-content:space-between;padding:5px 0;font-size:12px;border-bottom:1px dashed var(--border-1)"><span style="color:var(--fg-3)">'+lbl+'</span><span class="mono" style="color:'+(color||'var(--fg-1)')+'">'+UI.fmt(val)+' ر.س</span></div>'; }
+        var finBreakdown = fc ? '<div style="background:var(--bg-elevated);border:1px solid var(--border-1);border-radius:8px;padding:10px 14px;margin-bottom:10px">'+
+          '<div style="font-size:11px;font-weight:700;color:var(--fg-3);margin-bottom:6px">التفاصيل المالية للمشروع</div>'+
+          _br('قيمة العقد (شامل الضريبة)', fc.grossTotal, 'var(--iris-700)')+
+          _br('الصافي قبل الضريبة', fc.contractNet)+
+          _br('ضريبة القيمة المضافة', fc.vatAmt, 'var(--fg-3)')+
+          (fc.execAmt?_br('أتعاب التنفيذ', fc.execAmt):'')+
+          (fc.mkt?_br('التسويق', fc.mkt):'')+
+          (fc.cb?_br('كاش باك', fc.cb):'')+
+          (fc.cfAmt?_br('رسوم إضافية', fc.cfAmt):'')+
+          _br('المصاريف التشغيلية', fc.opExpenses, 'var(--danger-600)')+
+          '<div style="display:flex;justify-content:space-between;padding:7px 0 2px;margin-top:3px;border-top:2px solid var(--border-1)"><span style="font-size:12px;font-weight:700;color:var(--success-700)">صافي الربح</span><span class="mono" style="font-size:13px;font-weight:800;color:var(--success-700)">'+UI.fmt(fc.profit)+' ر.س</span></div>'+
+          '<div style="display:flex;justify-content:space-between;padding:4px 0 0"><span style="font-size:12px;font-weight:700;color:var(--primary-700)">المتبقي من العقد</span><span class="mono" style="font-size:13px;font-weight:800;color:var(--primary-700)">'+UI.fmt(fc.remaining)+' ر.س</span></div>'+
+        '</div>' : '';
         var incLines = '<div style="display:flex;justify-content:space-between;padding:6px 0;font-size:12px;border-bottom:1px solid var(--border-1)">'+
           '<span>أتعاب التنفيذ (الإجمالي)</span>'+
           '<span class="mono" style="color:var(--success-700)">+'+UI.fmt(execFee)+' ر.س</span></div>';
@@ -13006,6 +13046,7 @@ Pages.renderPfLedger = function(filter, period) {
 
         detailRows = '<tr style="background:var(--bg-soft)"><td colspan="6" style="padding:0">'+
           '<div style="padding:10px 16px 12px 46px">'+
+            finBreakdown+
             quarterInfo+
             '<div style="font-size:11px;font-weight:700;color:var(--fg-3);margin-bottom:4px">الإيرادات</div>'+incLines+
             '<div style="font-size:11px;font-weight:700;color:var(--fg-3);margin:8px 0 4px">المصاريف</div>'+expLines+
