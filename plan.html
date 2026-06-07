@@ -6711,7 +6711,7 @@ function wsSecInner(id){
   }
   if(id==='highlights'){
     var arr=wsArr('highlights');
-    var hlStyle = wsGet('highlights_style')||'grid';
+    var hlStyle = wsGet('highlights.style')||'grid';
     var hlIcons = [
       {v:'star',ico:'<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>'},
       {v:'heart',ico:'<path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 1 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"/>'},
@@ -6737,10 +6737,10 @@ function wsSecInner(id){
     }).join('') : '<div class="ws-empty">أضف عناصر تعريفية تبرز ميّزات جمعيتك — مثل: برامج متنوعة، خدمة شاملة، حوكمة موثوقة.</div>';
     var hlStyleOpts = [{v:'grid',l:'شبكة بطاقات',d:'بطاقات منظمة في شبكة'},{v:'feature',l:'عناصر أفقية',d:'أيقونة + نص جنباً إلى جنب'},{v:'numbered',l:'مرقّمة',d:'قائمة مرقّمة بأيقونات بارزة'}];
     var hlStyleBar='<div class="ws-field"><label>طريقة عرض العناصر</label><div class="ws-btn-group">'+
-      hlStyleOpts.map(function(o){ return '<button type="button" class="ws-btn-opt'+(hlStyle===o.v?' active':'')+'" onclick="wsField(\'highlights_style\',\''+o.v+'\');wsRerenderSec(\'highlights\')" title="'+o.d+'">'+o.l+'</button>'; }).join('')+
+      hlStyleOpts.map(function(o){ return '<button type="button" class="ws-btn-opt'+(hlStyle===o.v?' active':'')+'" onclick="wsField(\'highlights.style\',\''+o.v+'\');wsRerenderSec(\'highlights\')" title="'+o.d+'">'+o.l+'</button>'; }).join('')+
     '</div></div>'+
-    wsTxt('عنوان القسم (اختياري)','highlights_heading','لماذا تختارنا؟',{hint:'يظهر فوق العناصر في الصفحة الرئيسية'})+
-    wsArea('وصف القسم (اختياري)','highlights_subtext','جملة تعريفية تظهر تحت عنوان القسم.',{h:55});
+    wsTxt('عنوان القسم (اختياري)','highlights.heading','لماذا تختارنا؟',{hint:'يظهر فوق العناصر في الصفحة الرئيسية'})+
+    wsArea('وصف القسم (اختياري)','highlights.subtext','جملة تعريفية تظهر تحت عنوان القسم.',{h:55});
     return wsSecHead('highlights','مقدّمة وإنفوجرافيك','عناصر بصرية تعريفية تبرز مميزات الجمعية وخدماتها في الصفحة الرئيسية')+
       '<div class="ws-card">'+hlStyleBar+'</div>'+
       '<div class="ws-card">'+items+'<button class="ws-add-btn" onclick="wsAdd(\'highlights\')">'+ICADD+'إضافة عنصر</button></div>';
@@ -6768,7 +6768,7 @@ function wsSecInner(id){
   }
   if(id==='stats'){
     var arr=wsArr('stats');
-    var statsStyle = wsGet('stats_style')||'cards';
+    var statsStyle = wsGet('stats.style')||'cards';
     var statsIcons = [
       {v:'people',ico:'<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>'},
       {v:'star',ico:'<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>'},
@@ -6789,9 +6789,9 @@ function wsSecInner(id){
     }).join('') : '<div class="ws-empty">أضف أرقام الأثر: عدد المستفيدين، البرامج، المتطوعين...</div>';
     var statsStyleOpts = [{v:'cards',l:'بطاقات',d:'كل إحصائية في بطاقة'},{v:'dark',l:'داكن',d:'خلفية داكنة رسمية'},{v:'minimal',l:'مبسّط',d:'أرقام كبيرة بدون بطاقات'}];
     var statsStyleBar='<div class="ws-field"><label>طريقة العرض</label><div class="ws-btn-group">'+
-      statsStyleOpts.map(function(o){ return '<button type="button" class="ws-btn-opt'+(statsStyle===o.v?' active':'')+'" onclick="wsField(\'stats_style\',\''+o.v+'\');wsRerenderSec(\'stats\')" title="'+o.d+'">'+o.l+'</button>'; }).join('')+
+      statsStyleOpts.map(function(o){ return '<button type="button" class="ws-btn-opt'+(statsStyle===o.v?' active':'')+'" onclick="wsField(\'stats.style\',\''+o.v+'\');wsRerenderSec(\'stats\')" title="'+o.d+'">'+o.l+'</button>'; }).join('')+
     '</div></div>'+
-    wsTxt('عنوان القسم (اختياري)','stats_heading','أثرنا بالأرقام',{hint:'يظهر فوق بطاقات الإحصاءات في الصفحة الرئيسية'});
+    wsTxt('عنوان القسم (اختياري)','stats.heading','أثرنا بالأرقام',{hint:'يظهر فوق بطاقات الإحصاءات في الصفحة الرئيسية'});
     return wsSecHead('stats','الأثر والإنجازات','أرقام تبرز حجم أثر الجمعية في المجتمع')+
       '<div class="ws-card">'+statsStyleBar+'</div>'+
       '<div class="ws-card">'+items+'<button class="ws-add-btn" onclick="wsAdd(\'stats\')">'+ICADD+'إضافة إحصائية</button></div>';
