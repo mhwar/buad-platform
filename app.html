@@ -1103,12 +1103,12 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
 
 /* ── Clients redesign ── */
 .client-card{background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;cursor:pointer;transition:box-shadow .2s,border-color .2s,transform .2s;display:flex;flex-direction:column}
-.client-card:hover{box-shadow:0 8px 24px rgba(0,0,0,.09);border-color:var(--neutral-300);transform:translateY(-2px)}
-.client-card-top{height:5px;flex-shrink:0}
+.client-card:hover{box-shadow:0 6px 20px rgba(0,0,0,.08);border-color:var(--neutral-300);transform:translateY(-2px)}
+.client-card-top{height:4px;flex-shrink:0}
 .client-card-header{padding:16px 16px 12px;display:flex;align-items:flex-start;gap:14px}
-.client-card-avatar{width:56px;height:56px;border-radius:14px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;color:#fff;overflow:hidden;box-shadow:0 3px 10px rgba(0,0,0,.14)}
-.client-card-avatar.has-logo{background:#fff;border:1px solid var(--border-subtle);box-shadow:0 2px 8px rgba(0,0,0,.08)}
-.client-card-avatar img{width:100%;height:100%;object-fit:contain;padding:6px;box-sizing:border-box}
+.client-card-avatar{width:52px;height:52px;border-radius:12px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800;color:#fff;overflow:hidden;box-shadow:none}
+.client-card-avatar.has-logo{background:#fff;border:1px solid var(--border);box-shadow:none}
+.client-card-avatar img{width:100%;height:100%;object-fit:contain;padding:5px;box-sizing:border-box}
 .client-card-info{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
 .client-card-name{font-size:var(--font-md);font-weight:700;color:var(--fg-1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3;letter-spacing:-.01em}
 .client-card-type{font-size:10px;font-weight:700;color:var(--fg-3);background:var(--neutral-100);padding:2px 8px;border-radius:20px;display:inline-block;margin-top:1px;letter-spacing:.3px;text-transform:uppercase}
@@ -1150,22 +1150,23 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
 .sidebar-notes-area:focus{border-color:var(--iris-400)}
 /* ── Projects redesign ── */
 .proj-card-v2{background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;cursor:pointer;transition:box-shadow .2s,border-color .2s,transform .2s;display:flex;flex-direction:column;position:relative}
-.proj-card-v2:hover{box-shadow:0 8px 24px rgba(0,0,0,.09);border-color:var(--neutral-300);transform:translateY(-2px)}
-.proj-card-v2-strip{height:5px;flex-shrink:0}
-.proj-card-v2-body{padding:16px 18px;flex:1;display:flex;flex-direction:column;gap:10px}
-.proj-card-v2-header{display:flex;align-items:flex-start;gap:10px}
-.proj-card-v2-status{font-size:10px;font-weight:700;letter-spacing:.4px;padding:3px 10px;border-radius:20px;flex-shrink:0;margin-top:3px;text-transform:uppercase}
+.proj-card-v2:hover{box-shadow:0 6px 20px rgba(0,0,0,.08);border-color:var(--neutral-300);transform:translateY(-2px)}
+.proj-card-v2-strip{height:3px;flex-shrink:0}
+.proj-card-v2-body{padding:16px;flex:1;display:flex;flex-direction:column;gap:10px}
+.proj-card-v2-header{display:flex;align-items:flex-start;gap:8px}
+.proj-card-v2-status{font-size:10px;font-weight:700;letter-spacing:.3px;padding:2px 9px;border-radius:20px;flex-shrink:0;margin-top:3px}
 .proj-card-v2-name{font-size:var(--font-md);font-weight:700;color:var(--fg-1);line-height:1.35;flex:1;letter-spacing:-.01em}
-.proj-card-v2-client{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--fg-3);padding:6px 10px;background:var(--neutral-50);border-radius:8px;border:1px solid var(--border-subtle)}
-.proj-card-v2-client-av{width:22px;height:22px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;flex-shrink:0;overflow:hidden}
-.proj-card-v2-finances{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;border:1px solid var(--border-subtle);border-radius:10px;overflow:hidden}
-.proj-card-v2-fin-item{text-align:center;padding:10px 6px;background:var(--neutral-50)}
+.proj-card-v2-client{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--fg-3)}
+.proj-card-v2-client-av{width:20px;height:20px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;flex-shrink:0;overflow:hidden;box-shadow:none}
+.proj-card-v2-client-av.has-logo{background:#fff!important;border:1px solid var(--border-subtle)}
+.proj-card-v2-finances{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;border-radius:10px;overflow:hidden;background:var(--neutral-50);border:1px solid var(--border-subtle)}
+.proj-card-v2-fin-item{text-align:center;padding:9px 4px}
 .proj-card-v2-fin-item+.proj-card-v2-fin-item{border-right:1px solid var(--border-subtle)}
-.proj-card-v2-fin-val{font-size:13px;font-weight:800;font-family:var(--font-mono);color:var(--fg-1);line-height:1.2}
-.proj-card-v2-fin-lbl{font-size:9px;color:var(--fg-4);margin-top:2px;letter-spacing:.2px}
-.proj-card-v2-progress{height:5px;background:var(--neutral-200);border-radius:3px;overflow:hidden;margin-top:2px}
-.proj-card-v2-progress-fill{height:100%;border-radius:3px;transition:width .4s ease}
-.proj-card-v2-actions{display:flex;gap:6px;padding:10px 14px;border-top:1px solid var(--border-subtle);background:var(--neutral-50)}
+.proj-card-v2-fin-lbl{font-size:9px;color:var(--fg-4);margin-bottom:3px;letter-spacing:.2px}
+.proj-card-v2-fin-val{font-size:13px;font-weight:800;font-family:var(--font-mono);line-height:1}
+.proj-card-v2-progress{height:4px;background:var(--neutral-150,var(--neutral-200));border-radius:2px;overflow:hidden}
+.proj-card-v2-progress-fill{height:100%;border-radius:2px;transition:width .4s ease}
+.proj-card-v2-actions{display:flex;gap:6px;padding:10px 12px;border-top:1px solid var(--border-subtle);background:var(--neutral-50)}
 .sec-toolbar{display:flex;align-items:center;gap:var(--space-2);margin-bottom:var(--space-4);flex-wrap:wrap}
 .sec-search{flex:1;min-width:160px;max-width:260px;position:relative}
 .sec-search input{width:100%;padding:7px 10px 7px 32px;border:1px solid var(--border);border-radius:var(--radius-md);background:var(--bg-elevated);font-size:var(--font-sm);color:var(--fg-1);font-family:inherit}
@@ -3927,14 +3928,13 @@ Pages.render_clients = function(opts) {
         var valStr = totalVal>0 ? UI.fmt(totalVal) : '—';
         return '<div class="client-card" onclick="Nav.go(\'client\',{clientId:\''+cl.id+'\'})">'+
           '<div class="client-card-top" style="background:'+color+'"></div>'+
-          '<div class="client-card-header">'+
+          '<div class="client-card-header" style="flex-direction:row-reverse;align-items:flex-start">'+
             avatarHtml+
-            '<div class="client-card-info">'+
+            '<div class="client-card-info" style="text-align:right">'+
               '<div class="client-card-name" title="'+UI.escHtml(cl.name)+'">'+UI.escHtml(cl.name)+'</div>'+
               (typeMap[cl.type]||cl.type ? '<span class="client-card-type">'+(typeMap[cl.type]||cl.type||'')+'</span>' : '')+
-              (cl.city  ? '<div class="client-card-meta-row"><i data-lucide="map-pin"></i>'+UI.escHtml(cl.city)+'</div>' : '')+
-              (cl.email ? '<div class="client-card-meta-row"><i data-lucide="mail"></i>'+UI.escHtml(cl.email)+'</div>' : '')+
-              (cl.phone ? '<div class="client-card-meta-row"><i data-lucide="phone"></i>'+UI.escHtml(cl.phone)+'</div>' : '')+
+              (cl.city  ? '<div class="client-card-meta-row" style="justify-content:flex-end"><i data-lucide="map-pin"></i>'+UI.escHtml(cl.city)+'</div>' : '')+
+              (cl.email ? '<div class="client-card-meta-row" style="justify-content:flex-end"><i data-lucide="mail"></i>'+UI.escHtml(cl.email)+'</div>' : '')+
             '</div>'+
           '</div>'+
           '<div class="client-card-stats">'+
@@ -4024,21 +4024,27 @@ Pages.addClientModal = function(editId) {
           '</div>' +
         '</div>' +
       '</div>' +
-      '<div class="form-group"><label class="field-label">اسم العميل <span style="color:var(--danger)">*</span></label>' +
-        '<input id="cl-name" class="field-input" placeholder="اسم العميل" value="'+UI.escHtml(cl.name||'')+'"></div>' +
-      '<div class="form-group"><label class="field-label">نوع العميل</label>' +
-        '<select id="cl-type" class="field-input">' +
-          '<option value="company"'+(cl.type==='company'?' selected':'')+'>شركة</option>' +
-          '<option value="association"'+(cl.type==='association'?' selected':'')+'>جمعية</option>' +
-          '<option value="government"'+(cl.type==='government'?' selected':'')+'>جهة حكومية</option>' +
-          '<option value="individual"'+(cl.type==='individual'?' selected':'')+'>فرد</option>' +
-          '<option value="other"'+(cl.type==='other'?' selected':'')+'>أخرى</option>' +
-        '</select></div>' +
       '<div class="form-row">' +
-        '<div class="form-group"><label class="field-label">البريد الإلكتروني</label><input id="cl-email" class="field-input" type="email" value="'+UI.escHtml(cl.email||'')+'"></div>' +
-        '<div class="form-group"><label class="field-label">رقم الهاتف</label><input id="cl-phone" class="field-input" type="tel" value="'+UI.escHtml(cl.phone||'')+'"></div>' +
+        '<div class="form-group"><label class="field-label">اسم العميل <span style="color:var(--danger)">*</span></label><input id="cl-name" class="field-input" placeholder="اسم العميل أو المنظمة" value="'+UI.escHtml(cl.name||'')+'"></div>' +
+        '<div class="form-group"><label class="field-label">نوع العميل</label>' +
+          '<select id="cl-type" class="field-input">' +
+            '<option value="company"'+(cl.type==='company'?' selected':'')+'>شركة</option>' +
+            '<option value="association"'+(cl.type==='association'?' selected':'')+'>جمعية</option>' +
+            '<option value="government"'+(cl.type==='government'?' selected':'')+'>جهة حكومية</option>' +
+            '<option value="individual"'+(cl.type==='individual'?' selected':'')+'>فرد</option>' +
+            '<option value="other"'+(cl.type==='other'?' selected':'')+'>أخرى</option>' +
+          '</select></div>' +
       '</div>' +
-      '<div class="form-group"><label class="field-label">المدينة</label><input id="cl-city" class="field-input" value="'+UI.escHtml(cl.city||'')+'"></div>' +
+      '<div class="form-row">' +
+        '<div class="form-group"><label class="field-label">البريد الإلكتروني</label><input id="cl-email" class="field-input" type="email" placeholder="example@domain.com" value="'+UI.escHtml(cl.email||'')+'"></div>' +
+        '<div class="form-group"><label class="field-label">رقم الهاتف</label><input id="cl-phone" class="field-input" type="tel" placeholder="05xxxxxxxx" value="'+UI.escHtml(cl.phone||'')+'"></div>' +
+      '</div>' +
+      '<div class="form-row">' +
+        '<div class="form-group"><label class="field-label">المدينة</label><input id="cl-city" class="field-input" placeholder="الرياض، جدة..." value="'+UI.escHtml(cl.city||'')+'"></div>' +
+        '<div class="form-group"><label class="field-label">رقم السجل / الترخيص</label><input id="cl-regno" class="field-input" placeholder="اختياري" value="'+UI.escHtml(cl.reg_no||'')+'"></div>' +
+      '</div>' +
+      '<div class="form-group"><label class="field-label">الموقع الإلكتروني</label><input id="cl-website" class="field-input" type="url" placeholder="https://example.com" style="direction:ltr" value="'+UI.escHtml(cl.website||'')+'"></div>' +
+      '<div class="form-group"><label class="field-label">ملاحظات</label><textarea id="cl-notes-modal" class="field-input" rows="2" placeholder="ملاحظات اختيارية عن العميل...">'+UI.escHtml(cl.notes||'')+'</textarea></div>' +
     '</div>' +
     '<div class="modal-footer">' +
       '<button class="btn btn-ghost" onclick="UI.closeModalForce()">إلغاء</button>' +
@@ -4101,21 +4107,28 @@ Pages.saveClient = function(editId) {
   if (editId) {
     var idx = clients.findIndex(function(c){ return c.id===editId; });
     if (idx>=0) {
-      clients[idx].name  = name;
-      clients[idx].type  = document.getElementById('cl-type').value;
-      clients[idx].email = document.getElementById('cl-email').value.trim();
-      clients[idx].phone = document.getElementById('cl-phone').value.trim();
-      clients[idx].city  = document.getElementById('cl-city').value.trim();
+      clients[idx].name    = name;
+      clients[idx].type    = document.getElementById('cl-type').value;
+      clients[idx].email   = document.getElementById('cl-email').value.trim();
+      clients[idx].phone   = document.getElementById('cl-phone').value.trim();
+      clients[idx].city    = document.getElementById('cl-city').value.trim();
+      clients[idx].reg_no  = (document.getElementById('cl-regno')||{}).value||clients[idx].reg_no||'';
+      clients[idx].website = (document.getElementById('cl-website')||{}).value||clients[idx].website||'';
+      var notesEl = document.getElementById('cl-notes-modal');
+      if (notesEl) clients[idx].notes = notesEl.value.trim();
       if (logoChanged) clients[idx].logo = window._clientLogoData || '';
     }
     UI.toast('تم تحديث بيانات العميل','success');
   } else {
     var newCl = {
       id: DB.uid(), name: name,
-      type: document.getElementById('cl-type').value,
-      email: document.getElementById('cl-email').value.trim(),
-      phone: document.getElementById('cl-phone').value.trim(),
-      city:  document.getElementById('cl-city').value.trim(),
+      type:    document.getElementById('cl-type').value,
+      email:   document.getElementById('cl-email').value.trim(),
+      phone:   document.getElementById('cl-phone').value.trim(),
+      city:    document.getElementById('cl-city').value.trim(),
+      reg_no:  (document.getElementById('cl-regno')||{}).value||'',
+      website: (document.getElementById('cl-website')||{}).value||'',
+      notes:   ((document.getElementById('cl-notes-modal')||{}).value||'').trim(),
       created: new Date().toISOString().slice(0,10)
     };
     if (logoChanged) newCl.logo = window._clientLogoData || '';
@@ -4255,8 +4268,8 @@ Pages.render_client = function(params) {
       // Logo / avatar section
       '<div class="client-sidebar-section" style="text-align:center;padding:20px">' +
         (cl.logo ?
-          '<div style="width:80px;height:80px;border-radius:16px;overflow:hidden;background:#fff;border:1px solid var(--border-subtle);margin:0 auto 12px;box-shadow:0 2px 8px rgba(0,0,0,.08)"><img src="'+cl.logo+'" style="width:100%;height:100%;object-fit:contain;padding:8px;box-sizing:border-box"></div>' :
-          '<div style="width:80px;height:80px;border-radius:16px;background:'+clColor+';display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:800;color:#fff;margin:0 auto 12px;box-shadow:0 3px 12px rgba(0,0,0,.15)">'+UI.escHtml(initial)+'</div>'
+          '<div style="width:80px;height:80px;border-radius:16px;overflow:hidden;background:#fff;border:1px solid var(--border);margin:0 auto 12px"><img src="'+cl.logo+'" style="width:100%;height:100%;object-fit:contain;padding:8px;box-sizing:border-box"></div>' :
+          '<div style="width:80px;height:80px;border-radius:16px;background:'+clColor+';display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:800;color:#fff;margin:0 auto 12px">'+UI.escHtml(initial)+'</div>'
         )+
         '<div style="font-size:var(--font-md);font-weight:700;color:var(--fg-1);line-height:1.3">'+UI.escHtml(cl.name)+'</div>'+
         '<div style="font-size:11px;color:var(--fg-4);margin-top:4px">'+clientTypeLabel(cl.type)+'</div>'+
@@ -4531,31 +4544,30 @@ Pages.render_projects = function(opts) {
               '<div class="proj-card-v2-name">'+UI.escHtml(p.name)+'</div>'+
             '</div>'+
             (cl ? '<div class="proj-card-v2-client">'+
-              '<div class="proj-card-v2-client-av" style="background:'+clColor+'">'+
-                (cl.logo ? '<img src="'+cl.logo+'" style="width:100%;height:100%;object-fit:contain;border-radius:50%">' : UI.escHtml((cl.name||'?')[0]))+
+              '<div class="proj-card-v2-client-av'+(cl.logo?' has-logo':'')+'" style="background:'+(cl.logo?'#fff':clColor)+'">'+
+                (cl.logo ? '<img src="'+cl.logo+'" style="width:100%;height:100%;object-fit:contain;padding:2px;box-sizing:border-box">' : UI.escHtml((cl.name||'?')[0]))+
               '</div>'+
-              '<span>'+UI.escHtml(cl.name)+'</span>'+
-              '<span style="margin-right:4px;color:var(--fg-4);font-size:10px">·</span>'+
-              '<span style="color:var(--fg-4)">'+typeLbl+'</span>'+
+              '<span style="font-weight:500;color:var(--fg-2)">'+UI.escHtml(cl.name)+'</span>'+
+              (typeLbl?'<span style="color:var(--fg-4);font-size:10px">· '+typeLbl+'</span>':'')+
             '</div>' : '')+
             (r.grossTotal > 0 ?
               '<div class="proj-card-v2-finances">'+
                 '<div class="proj-card-v2-fin-item">'+
-                  '<div class="proj-card-v2-fin-val" style="color:var(--iris-600)">'+UI.fmt(r.grossTotal)+'</div>'+
                   '<div class="proj-card-v2-fin-lbl">قيمة العقد</div>'+
-                '</div>'+
-                '<div class="proj-card-v2-fin-item" style="border-right:1px solid var(--border-subtle);border-left:1px solid var(--border-subtle)">'+
-                  '<div class="proj-card-v2-fin-val" style="color:var(--success-600)">'+UI.fmt(r.profit)+'</div>'+
-                  '<div class="proj-card-v2-fin-lbl">صافي الربح</div>'+
+                  '<div class="proj-card-v2-fin-val" style="color:var(--iris-600)">'+UI.fmt(r.grossTotal)+'</div>'+
                 '</div>'+
                 '<div class="proj-card-v2-fin-item">'+
-                  '<div class="proj-card-v2-fin-val" style="color:'+(r.remaining<0?'var(--danger-600)':'var(--fg-1)')+'">'+UI.fmt(r.remaining)+'</div>'+
+                  '<div class="proj-card-v2-fin-lbl">صافي الربح</div>'+
+                  '<div class="proj-card-v2-fin-val" style="color:var(--success-600)">'+UI.fmt(r.profit)+'</div>'+
+                '</div>'+
+                '<div class="proj-card-v2-fin-item">'+
                   '<div class="proj-card-v2-fin-lbl">المتبقي</div>'+
+                  '<div class="proj-card-v2-fin-val" style="color:'+(r.remaining<0?'var(--danger-600)':'var(--fg-1)')+'">'+UI.fmt(r.remaining)+'</div>'+
                 '</div>'+
               '</div>'+
               '<div class="proj-card-v2-progress"><div class="proj-card-v2-progress-fill" style="width:'+expPct+'%;background:'+(expPct>90?'var(--danger-400)':expPct>60?'var(--warning-400)':'var(--success-400)')+'"></div></div>'
             :
-              '<div style="padding:8px 0 4px;display:flex;align-items:center;gap:6px;font-size:11px;color:var(--fg-4)">'+
+              '<div style="padding:4px 0;display:flex;align-items:center;gap:6px;font-size:11px;color:var(--fg-4)">'+
                 '<i data-lucide="circle-dashed" style="width:13px;height:13px;opacity:.5"></i>'+
                 'لم يُضَف عقد بعد'+
               '</div>'
@@ -4617,20 +4629,20 @@ Pages.addProjectModal = function(clientId) {
       '<select id="proj-client" class="field-input"><option value="">-- اختر العميل --</option>'+opts+'</select></div>';
   }
   UI.openModal(
-    '<div class="modal-header"><h3>إضافة مشروع جديد</h3><button class="modal-close" onclick="UI.closeModalForce()">×</button></div>' +
+    '<div class="modal-header"><h3>مشروع جديد</h3><button class="modal-close" onclick="UI.closeModalForce()">×</button></div>' +
     '<div class="modal-body">' +
       (clientId?'':''+clientDropdown) +
       '<div class="form-group"><label class="field-label">اسم المشروع <span style="color:var(--danger)">*</span></label>' +
-        '<input id="proj-name" class="field-input" placeholder="اسم المشروع"></div>' +
+        '<input id="proj-name" class="field-input" placeholder="اسم المشروع أو البرنامج"></div>' +
       '<div class="form-row">' +
-        '<div class="form-group"><label class="field-label">النوع</label>' +
+        '<div class="form-group"><label class="field-label">نوع المشروع</label>' +
           '<select id="proj-type" class="field-input">' +
             '<option value="training">تدريب</option>' +
             '<option value="consulting">استشارات</option>' +
             '<option value="event">فعالية</option>' +
             '<option value="other">أخرى</option>' +
           '</select></div>' +
-        '<div class="form-group"><label class="field-label">الحالة</label>' +
+        '<div class="form-group"><label class="field-label">الحالة الحالية</label>' +
           '<select id="proj-status" class="field-input">' +
             '<option value="draft">مسودة</option>' +
             '<option value="active">جاري التنفيذ</option>' +
@@ -4639,14 +4651,27 @@ Pages.addProjectModal = function(clientId) {
             '<option value="cancelled">ملغي</option>' +
           '</select></div>' +
       '</div>' +
+      '<div class="form-row">' +
+        '<div class="form-group"><label class="field-label">قيمة العقد المتوقعة <span style="font-size:10px;color:var(--fg-4)">(اختياري)</span></label>' +
+          '<input id="proj-contract-val" class="field-input" type="number" min="0" step="0.01" placeholder="0.00" style="direction:ltr"></div>' +
+        '<div class="form-group"><label class="field-label">تاريخ البداية <span style="font-size:10px;color:var(--fg-4)">(اختياري)</span></label>' +
+          '<input id="proj-start-date" class="field-input" type="date" value="'+new Date().toISOString().slice(0,10)+'"></div>' +
+      '</div>' +
+      '<div class="form-row">' +
+        '<div class="form-group"><label class="field-label">المدينة / الموقع <span style="font-size:10px;color:var(--fg-4)">(اختياري)</span></label>' +
+          '<input id="proj-location" class="field-input" placeholder="الرياض، عبر الإنترنت..."></div>' +
+        '<div class="form-group"><label class="field-label">تاريخ الانتهاء المتوقع <span style="font-size:10px;color:var(--fg-4)">(اختياري)</span></label>' +
+          '<input id="proj-end-date" class="field-input" type="date"></div>' +
+      '</div>' +
       '<div class="form-group"><label class="field-label">ملاحظات</label>' +
-        '<textarea id="proj-notes" class="field-input" rows="2" placeholder="ملاحظات اختيارية"></textarea></div>' +
+        '<textarea id="proj-notes" class="field-input" rows="2" placeholder="تفاصيل إضافية، أهداف المشروع..."></textarea></div>' +
     '</div>' +
     '<div class="modal-footer">' +
       '<button class="btn btn-ghost" onclick="UI.closeModalForce()">إلغاء</button>' +
-      '<button class="btn btn-primary" onclick="Pages.saveProject(\''+( clientId||'')+'\')">إضافة المشروع</button>' +
+      '<button class="btn btn-primary" onclick="Pages.saveProject(\''+( clientId||'')+'\')"><i data-lucide="plus"></i>إضافة المشروع</button>' +
     '</div>'
   );
+  if (typeof lucide !== 'undefined') setTimeout(function(){ lucide.createIcons({rootElement: document.getElementById('modal-box')}); }, 0);
 };
 
 Pages.saveProject = function(presetClientId) {
@@ -4659,17 +4684,28 @@ Pages.saveProject = function(presetClientId) {
   var name = (document.getElementById('proj-name').value||'').trim();
   if (!name) { UI.toast('اسم المشروع مطلوب','danger'); return; }
   var _projSession = Auth.getSession();
+  var _contractValEl = document.getElementById('proj-contract-val');
+  var _startDateEl   = document.getElementById('proj-start-date');
+  var _endDateEl     = document.getElementById('proj-end-date');
+  var _locationEl    = document.getElementById('proj-location');
   var proj = {
     id: DB.uid(),
     owner_id: _projSession ? _projSession.id : 'usr_admin_1',
     visibility: 'team',
     client_id: clientId,
     name: name,
-    type: document.getElementById('proj-type').value,
-    status: document.getElementById('proj-status').value,
-    notes: document.getElementById('proj-notes').value.trim(),
-    created: new Date().toISOString().slice(0,10)
+    type:     document.getElementById('proj-type').value,
+    status:   document.getElementById('proj-status').value,
+    notes:    document.getElementById('proj-notes').value.trim(),
+    location: _locationEl ? _locationEl.value.trim() : '',
+    start_date: _startDateEl ? _startDateEl.value : '',
+    end_date:   _endDateEl   ? _endDateEl.value   : '',
+    created:  new Date().toISOString().slice(0,10)
   };
+  if (_contractValEl && _contractValEl.value) {
+    var _cv = parseFloat(_contractValEl.value);
+    if (_cv > 0) proj._initial_contract_val = _cv;
+  }
   var projects = DB.getProjects();
   projects.push(proj);
   DB.saveProjects(projects);
