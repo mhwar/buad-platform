@@ -3258,6 +3258,8 @@ function clientTypeLabel(t) {
 }
 
 function catLabel(c) {
+  var cc = (window._curCustomCats||[]).find(function(x){ return x.id===c; });
+  if (cc) return cc.label;
   var map = {vat:'ضريبة', exec:'أتعاب', mkt:'تسويق', cashback:'كاش باك', cf:'رسوم إضافية', salary:'رواتب', logistics:'لوجستيات', materials:'مواد', other:'أخرى'};
   return map[c]||c||'—';
 }
@@ -5062,19 +5064,55 @@ Pages.renderFinCtrl = function(projId) {
       '</div>' +
     '</div>' +
     // ── Row 2.5: Op-cats config ──
-    '<div class="card" style="margin-bottom:16px">' +
-      '<div class="card-title"><i data-lucide="tags"></i>تصنيفات المصاريف التشغيلية</div>' +
-      '<div style="font-size:var(--font-2xs);color:var(--fg-3);margin-bottom:var(--space-3)">حدّد التصنيفات التي تُعدّ مصاريف تشغيلية فعلية (تُخصم من المتاح للتنفيذ). التصنيفات التعاقدية (أتعاب، تسويق...) ثابتة لا تظهر هنا.</div>' +
-      '<div style="display:flex;flex-wrap:wrap;gap:var(--space-2)">' +
-        ['salary','logistics','materials','other'].map(function(cat){
-          var catLabels={salary:'رواتب',logistics:'لوجستيات',materials:'مواد',other:'أخرى'};
-          var checked = r.opCats.indexOf(cat)>=0;
-          return '<label style="display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border:1px solid var(--border);border-radius:var(--radius-full);cursor:pointer;font-size:var(--font-xs);background:'+(checked?'var(--iris-50)':'var(--bg-elevated)')+';border-color:'+(checked?'var(--iris-300)':'var(--border)')+'">' +
-            '<input type="checkbox" '+(checked?'checked':'')+' onchange="Pages.toggleOpCat(\''+projId+'\',\''+cat+'\',this.checked)">' +
-            catLabels[cat]+'</label>';
-        }).join('') +
-      '</div>' +
-    '</div>' +
+    (function(){
+      var customCats = (c.custom_cats||[]);
+      var baseCatLabels = {salary:'رواتب',logistics:'لوجستيات',materials:'مواد',other:'أخرى'};
+      var allOpCatItems = ['salary','logistics','materials','other'].map(function(cat){
+        var checked = r.opCats.indexOf(cat)>=0;
+        return '<label style="display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border:1px solid;border-radius:var(--radius-full);cursor:pointer;font-size:var(--font-xs);background:'+(checked?'var(--iris-50)':'var(--bg-elevated)')+';border-color:'+(checked?'var(--iris-300)':'var(--border)')+'">' +
+          '<input type="checkbox" '+(checked?'checked':'')+' onchange="Pages.toggleOpCat(\''+projId+'\',\''+cat+'\',this.checked)">' +
+          baseCatLabels[cat]+'</label>';
+      });
+      customCats.forEach(function(cc){
+        if (cc.type==='income') return;
+        var checked = r.opCats.indexOf(cc.id)>=0;
+        allOpCatItems.push('<label style="display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border:1px solid;border-radius:var(--radius-full);cursor:pointer;font-size:var(--font-xs);background:'+(checked?'var(--iris-50)':'var(--bg-elevated)')+';border-color:'+(checked?'var(--iris-300)':'var(--border)')+'">' +
+          '<input type="checkbox" '+(checked?'checked':'')+' onchange="Pages.toggleOpCat(\''+projId+'\',\''+cc.id+'\',this.checked)">' +
+          UI.escHtml(cc.label)+'</label>');
+      });
+      return '<div class="card" style="margin-bottom:16px">' +
+        '<div class="card-title"><i data-lucide="tags"></i>تصنيفات المصاريف التشغيلية</div>' +
+        '<div style="font-size:var(--font-2xs);color:var(--fg-3);margin-bottom:var(--space-3)">حدّد التصنيفات التي تُعدّ مصاريف تشغيلية فعلية.</div>' +
+        '<div style="display:flex;flex-wrap:wrap;gap:var(--space-2)">' + allOpCatItems.join('') + '</div>' +
+      '</div>';
+    })() +
+    // ── Row 2.7: Custom Categories management ──
+    (function(){
+      var customCats = (c.custom_cats||[]);
+      var cRows = customCats.length
+        ? customCats.map(function(cc, i){
+            return '<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border-subtle)">' +
+              '<span class="badge gray sm">'+UI.escHtml(cc.label)+'</span>' +
+              '<span style="font-size:11px;color:var(--fg-4)">'+(cc.type==='income'?'دخل':cc.type==='expense'?'مصروف':'دخل/مصروف')+'</span>' +
+              '<button class="btn btn-sm btn-icon" style="margin-inline-start:auto;color:var(--danger-600)" onclick="Pages.deleteCustomCat(\''+projId+'\','+i+')" title="حذف"><i data-lucide="x"></i></button>' +
+            '</div>';
+          }).join('')
+        : '<div style="text-align:center;padding:8px 0;color:var(--fg-4);font-size:var(--font-xs)">لا توجد تصنيفات مخصصة</div>';
+      return '<div class="card" style="margin-bottom:16px">' +
+        '<div class="card-title"><i data-lucide="tag"></i>تصنيفات مخصصة</div>' +
+        '<div style="font-size:var(--font-2xs);color:var(--fg-3);margin-bottom:var(--space-3)">تصنيفات إضافية تظهر في قائمة التصنيفات عند إضافة أي قيد مالي لهذا المشروع.</div>' +
+        cRows +
+        '<div style="display:flex;gap:8px;margin-top:12px">' +
+          '<input id="new-cat-label" class="field-input" placeholder="اسم التصنيف" style="flex:1;font-size:var(--font-sm)">' +
+          '<select id="new-cat-type" class="field-input" style="width:120px;font-size:var(--font-sm)">' +
+            '<option value="expense">مصروف</option>' +
+            '<option value="income">دخل</option>' +
+            '<option value="both">دخل أو مصروف</option>' +
+          '</select>' +
+          '<button class="btn btn-sm btn-primary" onclick="Pages.addCustomCat(\''+projId+'\')"><i data-lucide="plus"></i>إضافة</button>' +
+        '</div>' +
+      '</div>';
+    })() +
     // ── Row 3: Budget ──
     '<div class="card">' +
       '<div class="flex flex-center justify-between mb-12">' +
@@ -5178,6 +5216,27 @@ Pages.toggleOpCat = function(projId, cat, checked) {
   Pages._refreshFinHero(projId);
 };
 
+Pages.addCustomCat = function(projId) {
+  var label = (document.getElementById('new-cat-label').value||'').trim();
+  if (!label) { UI.toast('اكتب اسم التصنيف','danger'); return; }
+  var type = (document.getElementById('new-cat-type')||{}).value || 'expense';
+  var fin = DB.getFin(projId);
+  fin.ctrl = fin.ctrl||{};
+  fin.ctrl.custom_cats = fin.ctrl.custom_cats||[];
+  fin.ctrl.custom_cats.push({id:'cc_'+DB.uid(), label:label, type:type});
+  DB.saveFin(projId, fin);
+  Pages.renderFinCtrl(projId);
+};
+
+Pages.deleteCustomCat = function(projId, idx) {
+  var fin = DB.getFin(projId);
+  fin.ctrl = fin.ctrl||{};
+  fin.ctrl.custom_cats = fin.ctrl.custom_cats||[];
+  fin.ctrl.custom_cats.splice(idx, 1);
+  DB.saveFin(projId, fin);
+  Pages.renderFinCtrl(projId);
+};
+
 Pages.addBudgetRow = function(projId) {
   var fin = DB.getFin(projId);
   fin.budget = fin.budget||[];
@@ -5214,6 +5273,7 @@ Pages.deleteBudgetRow = function(projId, idx) {
 /* ─── ENTRIES TAB ─── */
 Pages.renderFinEntries = function(projId) {
   var fin = DB.getFin(projId);
+  window._curCustomCats = (fin.ctrl||{}).custom_cats||[];
   var entries = fin.entries||[];
   var filter = window._entriesFilter||'all';
   var search = (window._entriesSearch||'').trim();
@@ -5431,6 +5491,7 @@ Pages.saveEntryDetail = function(projId, entryId) {
 Pages.addEntryModal = function(projId) {
   var r = FinCalc.calc(projId);
   var fin = DB.getFin(projId);
+  window._curCustomCats = (fin.ctrl||{}).custom_cats||[];
   var agrCats = (fin.entries||[]).filter(function(e){ return e.note==='من الاتفاقية'; }).map(function(e){ return e.cat; });
   function agrBtn(cat, amount, name) {
     var already = agrCats.indexOf(cat) >= 0;
@@ -5473,15 +5534,20 @@ Pages.addEntryModal = function(projId) {
         '<div class="form-row">' +
           '<div class="form-group"><label class="field-label">التصنيف</label>' +
             '<select id="ent-cat" class="field-input">' +
-              '<option value="exec">أتعاب</option>' +
-              '<option value="vat">ضريبة</option>' +
-              '<option value="mkt">تسويق</option>' +
-              '<option value="cashback">كاش باك</option>' +
-              '<option value="cf">رسوم إضافية</option>' +
               '<option value="salary">رواتب</option>' +
               '<option value="logistics">لوجستيات</option>' +
               '<option value="materials">مواد</option>' +
               '<option value="other">أخرى</option>' +
+              '<option value="exec">أتعاب</option>' +
+              '<option value="mkt">تسويق</option>' +
+              '<option value="cashback">كاش باك</option>' +
+              '<option value="cf">رسوم إضافية</option>' +
+              '<option value="vat">ضريبة</option>' +
+              ((fin.ctrl||{}).custom_cats && fin.ctrl.custom_cats.length
+                ? '<optgroup label="تصنيفات مخصصة">' +
+                    fin.ctrl.custom_cats.map(function(cc){ return '<option value="'+cc.id+'">'+UI.escHtml(cc.label)+'</option>'; }).join('') +
+                  '</optgroup>'
+                : '') +
             '</select></div>' +
           '<div class="form-group"><label class="field-label">المبلغ (ر.س)</label><input id="ent-amount" class="field-input" type="number" placeholder="0.00"></div>' +
         '</div>' +
@@ -5584,9 +5650,15 @@ Pages.editEntryModal = function(projId, entId) {
   var e = (fin.entries||[]).find(function(x){ return x.id===entId; });
   if (!e) return;
   var hasPm = (parseFloat(e.profit_margin)||0) > 0;
-  var cats = ['exec','vat','mkt','cashback','cf','salary','logistics','materials','other'];
+  window._curCustomCats = (fin.ctrl||{}).custom_cats||[];
+  var cats = ['salary','logistics','materials','other','exec','mkt','cashback','cf','vat'];
   var catNames = {exec:'أتعاب',vat:'ضريبة',mkt:'تسويق',cashback:'كاش باك',cf:'رسوم إضافية',salary:'رواتب',logistics:'لوجستيات',materials:'مواد',other:'أخرى'};
   var catOpts = cats.map(function(v){ return '<option value="'+v+'"'+(e.cat===v?' selected':'')+'>'+catNames[v]+'</option>'; }).join('');
+  if (window._curCustomCats.length) {
+    catOpts += '<optgroup label="تصنيفات مخصصة">' +
+      window._curCustomCats.map(function(cc){ return '<option value="'+cc.id+'"'+(e.cat===cc.id?' selected':'')+'>'+UI.escHtml(cc.label)+'</option>'; }).join('') +
+      '</optgroup>';
+  }
   var statusOpts = ['','paid','pending','cancelled'];
   var statusNames = {'':'—',paid:'مدفوع',pending:'معلق',cancelled:'ملغي'};
   var stOpts = statusOpts.map(function(v){ return '<option value="'+v+'"'+(e.status===v?' selected':'')+'>'+statusNames[v]+'</option>'; }).join('');
@@ -6145,70 +6217,86 @@ Pages.exportCSV = function(projId) {
   var fin  = DB.getFin(projId);
   var r    = FinCalc.calc(projId);
   var c    = fin.ctrl||{};
+  window._curCustomCats = (fin.ctrl||{}).custom_cats||[];
   var entries = (fin.entries||[]).slice().sort(function(a,b){ return (a.date||'').localeCompare(b.date||''); });
   var profitPct = r.grossTotal>0 ? (r.profit/r.grossTotal*100).toFixed(1) : '0';
 
-  /* q = quote text cell, n = raw numeric cell */
-  function q(v){ return '"'+String(v==null?'':v).replace(/"/g,'""')+'"'; }
-  function n(v){ var f=parseFloat(v); return isNaN(f)?'0':f.toFixed(2); }
-  function sep(){ return ',,,,,,,'; }
-
   var today = new Date();
   var todayStr = today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
+  var fname = ((proj||{}).name||projId).replace(/[^a-zA-Z0-9؀-ۿ]/g,'_');
 
-  var lines = [];
-  /* BOM for Excel Arabic compatibility */
+  function esc(v){ return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function th(v){ return '<th style="background:#1e3a5f;color:#fff;padding:7px 10px;font-size:12px;text-align:right;white-space:nowrap">'+esc(v)+'</th>'; }
+  function td(v,extra){ return '<td style="padding:6px 10px;border-bottom:1px solid #e5e7eb;font-size:12px;'+(extra||'')+'">'+esc(v)+'</td>'; }
+  function tdn(v){ return '<td style="padding:6px 10px;border-bottom:1px solid #e5e7eb;font-size:12px;direction:ltr;text-align:left;font-family:monospace" x:num="'+v+'">'+v+'</td>'; }
+  function hrow(label, val){
+    return '<tr><td style="padding:5px 10px;font-weight:600;color:#1e3a5f;font-size:12px;width:180px">'+esc(label)+'</td>'+
+      '<td style="padding:5px 10px;font-size:12px;direction:ltr;text-align:left;font-family:monospace" x:num="'+val+'">'+val+'</td></tr>';
+  }
+  var stMap = {paid:'مدفوع', pending:'معلق', cancelled:'ملغي'};
 
-  /* ── معلومات المشروع ── */
-  lines.push(q('التقرير المالي')+','+q('بُعد — منصة إدارة المشاريع'));
-  lines.push(q('تاريخ الإصدار')+','+q(todayStr));
-  lines.push(q('اسم المشروع')+','+q((proj||{}).name||''));
-  lines.push(q('العميل')+','+q(cl?cl.name:''));
-  lines.push(q('رقم العقد')+','+q(c.contract_no||''));
-  lines.push(q('تاريخ العقد')+','+q(c.contract_date||''));
-  lines.push('');
+  var entriesRows = entries.map(function(e,i){
+    return '<tr style="background:'+(i%2===0?'#fff':'#f9fafb')+'">'+
+      td(e.date||'')+ td(e.desc||'')+ td(catLabel(e.cat))+
+      td(e.type==='income'?'دخل':'مصروف')+
+      tdn((parseFloat(e.amount)||0).toFixed(2))+
+      td(stMap[e.status]||'')+
+      td((e.note&&e.note!=='من الاتفاقية')?e.note:(e.note==='من الاتفاقية'?'من الاتفاقية':''))+
+    '</tr>';
+  }).join('');
 
-  /* ── الملخص المالي ── */
-  lines.push(q('الملخص المالي')+','+q('القيمة (ر.س)'));
-  lines.push(q('قيمة العقد الكاملة')+','+n(r.grossTotal));
-  lines.push(q('أتعاب التنفيذ')+','+n(r.execAmt));
-  lines.push(q('التسويق')+','+n(r.mkt));
-  lines.push(q('كاش باك')+','+n(r.cb));
-  lines.push(q('رسوم إضافية')+','+n(r.cfAmt));
-  lines.push(q('المتاح للتنفيذ')+','+n(r.available));
-  lines.push(q('إجمالي المصاريف')+','+n(r.totalExpenses));
-  lines.push(q('إجمالي الأرباح/الأتعاب')+','+n(r.totalIncome));
-  lines.push(q('إجمالي المصروف من العقد')+','+n(r.totalDeductions));
-  lines.push(q('صافي الربح')+','+n(r.profit));
-  lines.push(q('هامش الربحية %')+','+profitPct);
-  lines.push(q('المتبقي من العقد')+','+n(r.remaining));
-  lines.push('');
+  var xls = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">'+
+    '<head><meta charset="UTF-8">'+
+    '<style>'+
+      'body{font-family:Tahoma,Arial;direction:rtl}'+
+      'table{border-collapse:collapse;width:100%}'+
+      '.sec-hdr td{background:#1e3a5f;color:#fff;font-weight:700;padding:8px 10px;font-size:13px}'+
+      '.tfoot td{background:#e8edf5;font-weight:700;border-top:2px solid #1e3a5f}'+
+    '</style></head><body dir="rtl">'+
 
-  /* ── سجل المعاملات ── */
-  lines.push([q('التاريخ'),q('البيان'),q('التصنيف'),q('النوع'),q('المبلغ (ر.س)'),q('الحالة'),q('ملاحظة')].join(','));
-  entries.forEach(function(e){
-    var stMap = {paid:'مدفوع', pending:'معلق', cancelled:'ملغي'};
-    lines.push([
-      q(e.date||''),
-      q(e.desc||''),
-      q(catLabel(e.cat)),
-      q(e.type==='income'?'دخل':'مصروف'),
-      n(e.amount),
-      q(stMap[e.status]||''),
-      q((e.note && e.note!=='من الاتفاقية') ? e.note : (e.note==='من الاتفاقية'?'من الاتفاقية':''))
-    ].join(','));
-  });
-  /* Totals footer */
-  lines.push([q(''),q(''),q(''),q('إجمالي الأرباح'),n(r.totalIncome),q(''),q('')].join(','));
-  lines.push([q(''),q(''),q(''),q('إجمالي المصاريف'),n(r.totalExpenses),q(''),q('')].join(','));
-  lines.push([q(''),q(''),q(''),q('إجمالي المصروف من العقد'),n(r.totalDeductions),q(''),q('')].join(','));
+    /* ── معلومات المشروع ── */
+    '<table style="margin-bottom:14px;width:auto">'+
+      '<tr class="sec-hdr"><td colspan="2">التقرير المالي — بُعد</td></tr>'+
+      hrow('تاريخ الإصدار', todayStr)+
+      hrow('اسم المشروع', (proj||{}).name||'')+
+      hrow('العميل', cl?cl.name:'')+
+      hrow('رقم العقد', c.contract_no||'')+
+      hrow('تاريخ العقد', c.contract_date||'')+
+    '</table>'+
 
-  var csv = '﻿' + lines.join('\r\n');
-  var blob = new Blob([csv], {type:'text/csv;charset=utf-8'});
+    /* ── الملخص المالي ── */
+    '<table style="margin-bottom:14px;width:auto">'+
+      '<tr class="sec-hdr"><td colspan="2">الملخص المالي</td></tr>'+
+      hrow('قيمة العقد الكاملة', r.grossTotal.toFixed(2))+
+      hrow('أتعاب التنفيذ', r.execAmt.toFixed(2))+
+      hrow('التسويق', r.mkt.toFixed(2))+
+      hrow('كاش باك', r.cb.toFixed(2))+
+      hrow('رسوم إضافية', r.cfAmt.toFixed(2))+
+      hrow('المتاح للتنفيذ', r.available.toFixed(2))+
+      hrow('إجمالي المصاريف', r.totalExpenses.toFixed(2))+
+      hrow('إجمالي الأرباح/الأتعاب', r.totalIncome.toFixed(2))+
+      hrow('إجمالي المصروف من العقد', r.totalDeductions.toFixed(2))+
+      hrow('صافي الربح', r.profit.toFixed(2))+
+      hrow('هامش الربحية %', profitPct)+
+      hrow('المتبقي من العقد', r.remaining.toFixed(2))+
+    '</table>'+
+
+    /* ── سجل المعاملات ── */
+    '<table>'+
+      '<thead><tr>'+th('التاريخ')+th('البيان')+th('التصنيف')+th('النوع')+th('المبلغ (ر.س)')+th('الحالة')+th('ملاحظة')+'</tr></thead>'+
+      '<tbody>'+(entriesRows||'<tr><td colspan="7" style="text-align:center;padding:12px;color:#9ca3af">لا توجد قيود</td></tr>')+'</tbody>'+
+      '<tfoot>'+
+        '<tr class="tfoot"><td colspan="4" style="padding:6px 10px;font-size:12px">إجمالي الأرباح/الأتعاب</td>'+tdn(r.totalIncome.toFixed(2))+'<td colspan="2"></td></tr>'+
+        '<tr class="tfoot"><td colspan="4" style="padding:6px 10px;font-size:12px">إجمالي المصاريف</td>'+tdn(r.totalExpenses.toFixed(2))+'<td colspan="2"></td></tr>'+
+        '<tr class="tfoot"><td colspan="4" style="padding:6px 10px;font-size:12px;font-weight:700;color:#1e3a5f">إجمالي المصروف من العقد</td>'+tdn(r.totalDeductions.toFixed(2))+'<td colspan="2"></td></tr>'+
+      '</tfoot>'+
+    '</table>'+
+    '</body></html>';
+
+  var blob = new Blob([xls], {type:'application/vnd.ms-excel;charset=utf-8'});
   var url = URL.createObjectURL(blob);
   var a = document.createElement('a');
-  var fname = ((proj||{}).name||projId).replace(/[^a-zA-Z0-9؀-ۿ]/g,'_');
-  a.href = url; a.download = fname+'_تقرير_'+todayStr+'.csv'; a.click();
+  a.href = url; a.download = fname+'_تقرير_'+todayStr+'.xls'; a.click();
   URL.revokeObjectURL(url);
   UI.toast('تم تصدير ملف Excel بنجاح','success');
 };
@@ -6220,89 +6308,100 @@ Pages.exportPDF = function(projId) {
   var cl = proj ? clients.find(function(c){ return c.id===proj.client_id; }) : null;
   var fin = DB.getFin(projId);
   var r = FinCalc.calc(projId);
-  var entries = (fin.entries||[]).slice().sort(function(a,b){ return (b.date||'').localeCompare(a.date||''); });
+  window._curCustomCats = (fin.ctrl||{}).custom_cats||[];
+  var entries = (fin.entries||[]).slice().sort(function(a,b){ return (a.date||'').localeCompare(b.date||''); });
 
   var today = new Date();
-  var todayStr = today.getFullYear()+'/'+(today.getMonth()+1)+'/'+today.getDate();
-  var totalInc = 0, totalExp = 0;
-  var rowsHtml = entries.map(function(e){
-    var isInc = e.type==='income';
+  var todayStr = today.getFullYear()+'/'+String(today.getMonth()+1).padStart(2,'0')+'/'+String(today.getDate()).padStart(2,'0');
+  var totalAmt = 0;
+  var stMap = {paid:'مدفوع', pending:'معلق', cancelled:'ملغي'};
+
+  var rowsHtml = entries.map(function(e, idx){
     var amt = parseFloat(e.amount)||0;
-    if(isInc) totalInc+=amt; else totalExp+=amt;
+    totalAmt += amt;
     var _dp = (e.date||'').split('-');
     var dateD = _dp.length===3 ? (_dp[2]+'/'+_dp[1]+'/'+_dp[0].slice(2)) : '—';
-    var clr = isInc ? '#15803d' : '#b91c1c';
-    var sign = isInc ? '+' : '−';
-    var stMap = {paid:'مدفوع',pending:'معلق',cancelled:'ملغي'};
-    var agrTag = e.note==='من الاتفاقية' ? '<span style="display:inline-block;padding:1px 5px;border-radius:3px;background:#ede9fe;color:#6d28d9;font-size:10px;margin-inline-start:4px">اتفاقية</span>' : '';
-    return '<tr>'+
-      '<td>'+dateD+'</td>'+
-      '<td>'+UI.escHtml(e.desc||'')+agrTag+'</td>'+
-      '<td>'+catLabel(e.cat)+'</td>'+
-      '<td style="color:'+clr+';font-weight:600;direction:ltr;text-align:left">'+sign+' '+UI.fmt(amt)+' ر.س</td>'+
-      '<td>'+(stMap[e.status]||'')+'</td>'+
+    var rowBg = idx%2===0 ? '' : 'background:#f9fafb';
+    return '<tr style="'+rowBg+'">'+
+      '<td style="width:76px;color:#374151">'+dateD+'</td>'+
+      '<td style="color:#111827;font-weight:500">'+UI.escHtml(e.desc||'')+'</td>'+
+      '<td style="width:108px;color:#374151">'+catLabel(e.cat)+'</td>'+
+      '<td style="width:130px;font-family:monospace;text-align:left;direction:ltr;color:#111827;font-weight:600">'+UI.fmt(amt)+' ر.س</td>'+
+      '<td style="width:72px;color:#374151">'+(stMap[e.status]||'')+'</td>'+
     '</tr>';
   }).join('');
 
-  var sumCards = [
-    ['قيمة العقد الكاملة', UI.fmt(r.grossTotal)+' ر.س', '#1e40af'],
-    ['إجمالي المصروف', UI.fmt(r.totalDeductions)+' ر.س', '#b91c1c'],
-    ['المتبقي من العقد', UI.fmt(r.remaining)+' ر.س', r.remaining>=0?'#15803d':'#b91c1c'],
-    ['صافي الربح', UI.fmt(r.profit)+' ر.س', r.profit>=0?'#15803d':'#b91c1c']
-  ].map(function(d){
-    return '<div style="border:1px solid #e5e7eb;border-radius:8px;padding:12px 16px;text-align:center;flex:1;min-width:140px">'+
-      '<div style="font-size:11px;color:#6b7280;margin-bottom:4px">'+d[0]+'</div>'+
-      '<div style="font-size:16px;font-weight:700;font-family:monospace;color:'+d[2]+'">'+d[1]+'</div>'+
-    '</div>';
-  }).join('');
+  var logoUrl = window.location.origin + '/assets/logo.svg';
+  var projName = proj ? UI.escHtml(proj.name) : '';
+  var clName = cl ? UI.escHtml(cl.name) : '';
+  var contractNo = (fin.ctrl||{}).contract_no ? ' · رقم العقد: '+UI.escHtml(fin.ctrl.contract_no) : '';
 
   var html = '<!DOCTYPE html><html dir="rtl" lang="ar">'+
-    '<head><meta charset="utf-8"><title>سجل المعاملات — '+(proj?UI.escHtml(proj.name):'')+'</title>'+
+    '<head><meta charset="utf-8"><title>كشف المعاملات — '+projName+'</title>'+
     '<style>'+
       '*{box-sizing:border-box;margin:0;padding:0}'+
-      'body{font-family:system-ui,Tahoma,Arial,sans-serif;direction:rtl;padding:24px 28px;color:#111827;font-size:13px;background:#fff}'+
-      'h1{font-size:20px;font-weight:700;margin-bottom:4px;color:#111827}'+
-      '.meta{color:#6b7280;font-size:12px;margin-bottom:18px}'+
-      '.sum-row{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:22px}'+
-      'table{width:100%;border-collapse:collapse;margin-top:4px}'+
-      'thead tr{background:#f9fafb}'+
-      'th{padding:9px 11px;font-size:12px;font-weight:600;color:#374151;border-bottom:2px solid #e5e7eb;text-align:right}'+
-      'td{padding:9px 11px;border-bottom:1px solid #f3f4f6;color:#1f2937;vertical-align:middle}'+
-      'tbody tr:nth-child(even) td{background:#f9fafb}'+
-      'tfoot td{background:#f3f4f6;font-weight:600;border-top:2px solid #d1d5db;font-size:12px}'+
-      'tfoot tr:last-child td{background:#fef2f2;color:#b91c1c;font-size:13px}'+
-      '.print-btn{position:fixed;bottom:20px;left:20px;padding:10px 20px;background:#4f46e5;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;box-shadow:0 2px 8px rgba(0,0,0,.2);z-index:99}'+
-      '.print-btn:hover{background:#4338ca}'+
-      '@media print{.print-btn{display:none!important} body{padding:15px} @page{size:A4;margin:15mm}}'+
+      'body{font-family:Tahoma,"Arial",sans-serif;direction:rtl;padding:28px 32px;color:#111827;font-size:13px;background:#fff}'+
+      '.page-header{display:flex;align-items:center;justify-content:space-between;padding-bottom:14px;border-bottom:2px solid #1e3a5f;margin-bottom:18px}'+
+      '.header-logo img{height:40px;object-fit:contain}'+
+      '.header-info{text-align:left}'+
+      '.doc-title{font-size:17px;font-weight:700;color:#1e3a5f;margin-bottom:3px}'+
+      '.doc-meta{font-size:11px;color:#6b7280}'+
+      '.proj-info{margin-bottom:16px;padding:10px 14px;background:#f8fafc;border-radius:6px;border:1px solid #e2e8f0}'+
+      '.proj-info-row{display:flex;gap:24px;font-size:12px;color:#374151}'+
+      '.proj-info-label{font-weight:600;color:#1e3a5f;margin-left:4px}'+
+      'table{width:100%;border-collapse:collapse}'+
+      'thead tr{background:#1e3a5f}'+
+      'th{padding:9px 11px;font-size:12px;font-weight:600;color:#fff;text-align:right}'+
+      'td{padding:9px 11px;border-bottom:1px solid #e5e7eb;color:#111827;vertical-align:middle;font-size:12.5px}'+
+      '.tfoot-row td{background:#f1f5f9;font-weight:700;border-top:2px solid #1e3a5f;font-size:13px;color:#1e3a5f}'+
+      '.print-bar{position:fixed;bottom:0;left:0;right:0;background:#1e3a5f;display:flex;align-items:center;justify-content:center;gap:12px;padding:10px;z-index:100}'+
+      '.print-bar button{padding:8px 22px;border:none;border-radius:4px;cursor:pointer;font-size:13px;font-family:inherit}'+
+      '.btn-print{background:#fff;color:#1e3a5f;font-weight:700}'+
+      '.btn-close{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.4)!important}'+
+      '@media print{'+
+        '.print-bar{display:none!important}'+
+        'body{padding:10mm 12mm}'+
+        '@page{size:A4 portrait;margin:10mm 12mm}'+
+        'thead{-webkit-print-color-adjust:exact;print-color-adjust:exact}'+
+        'thead tr{background:#1e3a5f!important}'+
+      '}'+
     '</style></head><body>'+
-    '<button class="print-btn" onclick="window.print()">طباعة / حفظ PDF</button>'+
-    '<h1>سجل المعاملات المالية</h1>'+
-    '<div class="meta">'+UI.escHtml((proj?proj.name:'')+(cl?' — '+cl.name:''))+' &nbsp;·&nbsp; تاريخ التصدير: '+todayStr+'</div>'+
-    '<div class="sum-row">'+sumCards+'</div>'+
+    '<div class="print-bar">'+
+      '<button class="btn-print" onclick="window.print()">🖨 طباعة / حفظ PDF</button>'+
+      '<button class="btn-close" onclick="window.close()">إغلاق</button>'+
+    '</div>'+
+    '<div class="page-header">'+
+      '<div><img src="'+logoUrl+'" onerror="this.style.display=\'none\'" alt="بُعد"></div>'+
+      '<div class="header-info">'+
+        '<div class="doc-title">كشف المعاملات المالية</div>'+
+        '<div class="doc-meta">تاريخ الإصدار: '+todayStr+'</div>'+
+      '</div>'+
+    '</div>'+
+    '<div class="proj-info">'+
+      '<div class="proj-info-row">'+
+        '<span><span class="proj-info-label">المشروع:</span>'+projName+'</span>'+
+        (clName?'<span><span class="proj-info-label">العميل:</span>'+clName+'</span>':'')+
+        contractNo+
+      '</div>'+
+    '</div>'+
     '<table>'+
-      '<thead><tr><th style="width:72px">التاريخ</th><th>البيان</th><th style="width:100px">التصنيف</th><th style="width:150px;direction:ltr;text-align:left">المبلغ</th><th style="width:68px">الحالة</th></tr></thead>'+
-      '<tbody>'+rowsHtml+'</tbody>'+
-      '<tfoot>'+
-        '<tr>'+
-          '<td colspan="3">إجمالي الأرباح</td>'+
-          '<td style="direction:ltr;text-align:left;color:#15803d">+ '+UI.fmt(totalInc)+' ر.س</td>'+
-          '<td></td>'+
-        '</tr>'+
-        '<tr>'+
-          '<td colspan="3">إجمالي المصاريف</td>'+
-          '<td style="direction:ltr;text-align:left;color:#b91c1c">− '+UI.fmt(totalExp)+' ر.س</td>'+
-          '<td></td>'+
-        '</tr>'+
-        '<tr>'+
-          '<td colspan="3">إجمالي المصروف من العقد</td>'+
-          '<td style="direction:ltr;text-align:left">'+UI.fmt(r.totalDeductions)+' ر.س</td>'+
-          '<td></td>'+
-        '</tr>'+
-      '</tfoot>'+
+      '<thead><tr>'+
+        '<th style="width:76px">التاريخ</th>'+
+        '<th>البيان</th>'+
+        '<th style="width:108px">التصنيف</th>'+
+        '<th style="width:130px;direction:ltr;text-align:left">المبلغ (ر.س)</th>'+
+        '<th style="width:72px">الحالة</th>'+
+      '</tr></thead>'+
+      '<tbody>'+(rowsHtml||'<tr><td colspan="5" style="text-align:center;color:#9ca3af;padding:20px">لا توجد قيود مسجلة</td></tr>')+'</tbody>'+
+      (entries.length ? '<tfoot><tr class="tfoot-row">'+
+        '<td colspan="3">إجمالي قيمة المعاملات</td>'+
+        '<td style="direction:ltr;text-align:left;font-family:monospace">'+UI.fmt(totalAmt)+' ر.س</td>'+
+        '<td></td>'+
+      '</tr></tfoot>' : '')+
     '</table>'+
     '</body></html>';
 
-  var win = window.open('','_blank','width=1000,height=750,scrollbars=yes');
+  var win = window.open('','_blank','width=1000,height=780,scrollbars=yes');
   if (!win) { UI.toast('يُرجى السماح بالنوافذ المنبثقة ثم المحاولة مجدداً','danger'); return; }
   win.document.write(html);
   win.document.close();
