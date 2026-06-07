@@ -13080,7 +13080,11 @@ Pages.renderPfLedger = function(filter, period) {
     sections = '<div class="card">'+
       '<div class="dash-sec-hdr" style="margin-bottom:var(--space-3)">'+
         '<h3><i data-lucide="briefcase"></i>إيرادات المشاريع</h3>'+
-        '<button class="btn btn-sm btn-ghost" onclick="Pages.pfSyncAllProjects()"><i data-lucide="refresh-cw"></i>مزامنة</button>'+
+        '<div style="display:flex;gap:6px;align-items:center">'+
+          '<button class="btn btn-sm btn-ghost" onclick="Pages.printPfReport(\'simple\')" title="طباعة تقرير مبسط"><i data-lucide="printer" style="width:13px;height:13px"></i>مبسّط</button>'+
+          '<button class="btn btn-sm btn-ghost" onclick="Pages.printPfReport(\'detailed\')" title="طباعة تقرير مفصل"><i data-lucide="file-text" style="width:13px;height:13px"></i>مفصّل</button>'+
+          '<button class="btn btn-sm btn-ghost" onclick="Pages.pfSyncAllProjects()"><i data-lucide="refresh-cw"></i>مزامنة</button>'+
+        '</div>'+
       '</div>'+
       '<div style="overflow-x:auto"><table class="data-table">'+
         '<thead><tr><th>المشروع</th><th>قيمة العقد</th><th>الضريبة</th><th style="color:var(--success-700)">صافي الربح</th><th style="color:var(--primary-600)">المتبقي</th><th style="width:80px"></th></tr></thead>'+
@@ -13172,6 +13176,190 @@ Pages.renderPfLedger = function(filter, period) {
 Pages.togglePfProjectExpand = function(projId) {
   Pages._pfExpandedProjects[projId] = !Pages._pfExpandedProjects[projId];
   Pages.renderPfLedger();
+};
+
+Pages.printPfReport = function(mode) {
+  var pf = DB.getPf();
+  var projects = DB.getProjects();
+  var clients  = DB.getClients();
+  var p = Pages._pfPeriodFilter || {type:'all_time'};
+  var range = Pages._pfGetRange(pf);
+  var fromDate = range ? range[0] : null, toDate = range ? range[1] : null;
+  function inR(d){ if(!d) return !fromDate; if(fromDate&&d<fromDate) return false; if(toDate&&d>toDate) return false; return true; }
+  function incInR(e){ return inR(e.payment_date || e.date); }
+
+  var projEntries = (pf.income||[]).filter(function(e){ return e.category==='project_fee' && e.project_id && incInR(e); });
+
+  var periodLabel = (function(){
+    if(p.type==='all_time') return 'كل الفترات';
+    if(p.type==='year') return 'سنة '+(p.year||'');
+    if(p.type==='q1') return 'الربع الأول '+(p.year||'');
+    if(p.type==='q2') return 'الربع الثاني '+(p.year||'');
+    if(p.type==='q3') return 'الربع الثالث '+(p.year||'');
+    if(p.type==='q4') return 'الربع الرابع '+(p.year||'');
+    if(p.type==='custom') return (p.from||'')+(p.to?' — '+p.to:'');
+    return '';
+  })();
+
+  var today = new Date().toLocaleDateString('ar-SA-u-nu-latn',{year:'numeric',month:'long',day:'numeric'});
+
+  var fmt = function(n){ return Number(n||0).toLocaleString('ar-SA',{minimumFractionDigits:2,maximumFractionDigits:2})+' ر.س'; };
+
+  var totals = {contract:0, vat:0, net:0, remaining:0};
+  var rows = projEntries.map(function(incEntry){
+    var proj = projects.find(function(pr){ return pr.id===incEntry.project_id; });
+    var cl   = proj ? clients.find(function(c){ return c.id===proj.client_id; }) : null;
+    var fc = null; try { fc = FinCalc.calc(incEntry.project_id); } catch(ex){}
+    var contract  = fc ? (Number(fc.grossTotal)||0) : 0;
+    var vatAmt    = fc ? (Number(fc.vatAmt)||0)     : 0;
+    var net       = fc ? (Number(fc.profit)||0)      : (Number(incEntry.amount)||0);
+    var remaining = fc ? (Number(fc.remaining)||0)   : 0;
+    totals.contract  += contract;
+    totals.vat       += vatAmt;
+    totals.net       += net;
+    totals.remaining += remaining;
+    var statusMap = {active:'نشط',completed:'مكتمل',paused:'متوقف',cancelled:'ملغى',draft:'مسودة'};
+    var stTxt = proj ? (statusMap[proj.status]||proj.status||'—') : '—';
+    if(mode==='simple'){
+      return '<tr>'+
+        '<td>'+(proj?proj.name:(incEntry.desc||'—'))+'</td>'+
+        '<td>'+(cl?cl.name:'—')+'</td>'+
+        '<td>'+stTxt+'</td>'+
+        '<td class="num">'+fmt(contract)+'</td>'+
+        '<td class="num">'+fmt(vatAmt)+'</td>'+
+        '<td class="num pos">'+fmt(net)+'</td>'+
+        '<td class="num blu">'+fmt(remaining)+'</td>'+
+      '</tr>';
+    } else {
+      var execAmt   = fc ? (Number(fc.execAmt)||0)     : 0;
+      var mkt       = fc ? (Number(fc.mkt)||0)          : 0;
+      var cb        = fc ? (Number(fc.cb)||0)            : 0;
+      var cfAmt     = fc ? (Number(fc.cfAmt)||0)         : 0;
+      var opExp     = fc ? (Number(fc.opExpenses)||0)    : 0;
+      var contractNet = fc ? (Number(fc.contractNet)||0) : 0;
+      var pm = fc && fc.profitMargins ? (Number(fc.profitMargins.netPct)||0).toFixed(1) : '—';
+      return '<div class="proj-block">'+
+        '<div class="proj-title">'+(proj?proj.name:(incEntry.desc||'—'))+
+          (stTxt?'<span class="status-tag">'+stTxt+'</span>':'')+
+        '</div>'+
+        '<div class="proj-meta">'+
+          (cl?'<span>العميل: '+cl.name+'</span>':'')+
+          (proj&&proj.location?'<span>الموقع: '+proj.location+'</span>':'')+
+          (proj&&proj.start_date?'<span>البداية: '+proj.start_date+'</span>':'')+
+          (proj&&proj.end_date?'<span>النهاية: '+proj.end_date+'</span>':'')+
+          (proj&&proj.type?'<span>النوع: '+proj.type+'</span>':'')+
+        '</div>'+
+        '<table class="fin-table">'+
+          '<tbody>'+
+            '<tr><td>قيمة العقد (شامل الضريبة)</td><td class="num">'+fmt(contract)+'</td></tr>'+
+            '<tr><td>الصافي قبل الضريبة</td><td class="num">'+fmt(contractNet)+'</td></tr>'+
+            '<tr><td>ضريبة القيمة المضافة</td><td class="num">'+fmt(vatAmt)+'</td></tr>'+
+            (execAmt?'<tr><td>أتعاب التنفيذ</td><td class="num">'+fmt(execAmt)+'</td></tr>':'')+
+            (mkt?'<tr><td>التسويق</td><td class="num">'+fmt(mkt)+'</td></tr>':'')+
+            (cb?'<tr><td>كاش باك</td><td class="num">'+fmt(cb)+'</td></tr>':'')+
+            (cfAmt?'<tr><td>رسوم إضافية</td><td class="num">'+fmt(cfAmt)+'</td></tr>':'')+
+            '<tr><td>المصاريف التشغيلية</td><td class="num neg">'+fmt(opExp)+'</td></tr>'+
+          '</tbody>'+
+          '<tfoot>'+
+            '<tr class="total-row"><td>صافي الربح</td><td class="num pos">'+fmt(net)+'</td></tr>'+
+            '<tr class="total-row"><td>المتبقي من العقد</td><td class="num blu">'+fmt(remaining)+'</td></tr>'+
+            '<tr class="pm-row"><td>هامش الربح الصافي</td><td class="num">'+pm+'%</td></tr>'+
+          '</tfoot>'+
+        '</table>'+
+      '</div>';
+    }
+  });
+
+  var simpleBody = mode==='simple' ? (
+    '<table class="main-table">'+
+      '<thead><tr><th>المشروع</th><th>العميل</th><th>الحالة</th><th>قيمة العقد</th><th>الضريبة</th><th>صافي الربح</th><th>المتبقي</th></tr></thead>'+
+      '<tbody>'+(rows.join('')||'<tr><td colspan="7" style="text-align:center;color:#999">لا توجد بيانات</td></tr>')+'</tbody>'+
+      '<tfoot><tr class="total">'+
+        '<td colspan="3">الإجماليات ('+projEntries.length+' مشروع)</td>'+
+        '<td class="num">'+fmt(totals.contract)+'</td>'+
+        '<td class="num">'+fmt(totals.vat)+'</td>'+
+        '<td class="num pos">'+fmt(totals.net)+'</td>'+
+        '<td class="num blu">'+fmt(totals.remaining)+'</td>'+
+      '</tr></tfoot>'+
+    '</table>'+
+    '<div class="summary-bar">'+
+      '<div class="sum-item"><div class="sum-lbl">إجمالي العقود</div><div class="sum-val">'+fmt(totals.contract)+'</div></div>'+
+      '<div class="sum-item"><div class="sum-lbl">إجمالي الضريبة</div><div class="sum-val">'+fmt(totals.vat)+'</div></div>'+
+      '<div class="sum-item pos"><div class="sum-lbl">صافي الأرباح</div><div class="sum-val">'+fmt(totals.net)+'</div></div>'+
+      '<div class="sum-item blu"><div class="sum-lbl">إجمالي المتبقي</div><div class="sum-val">'+fmt(totals.remaining)+'</div></div>'+
+    '</div>'
+  ) : (
+    rows.join('')+
+    '<div class="summary-bar">'+
+      '<div class="sum-item"><div class="sum-lbl">إجمالي العقود ('+projEntries.length+' مشروع)</div><div class="sum-val">'+fmt(totals.contract)+'</div></div>'+
+      '<div class="sum-item pos"><div class="sum-lbl">صافي الأرباح الكلي</div><div class="sum-val">'+fmt(totals.net)+'</div></div>'+
+      '<div class="sum-item blu"><div class="sum-lbl">إجمالي المتبقي</div><div class="sum-val">'+fmt(totals.remaining)+'</div></div>'+
+    '</div>'
+  );
+
+  var title = mode==='simple' ? 'تقرير إيرادات المشاريع — مبسّط' : 'تقرير إيرادات المشاريع — مفصّل';
+
+  var html = '<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8">'+
+    '<title>'+title+'</title>'+
+    '<style>'+
+      '*{box-sizing:border-box;margin:0;padding:0}'+
+      'body{font-family:"Segoe UI",Tahoma,Arial,sans-serif;font-size:13px;color:#111;background:#fff;direction:rtl}'+
+      '.page{max-width:900px;margin:0 auto;padding:24px 32px}'+
+      '.header{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #2563eb;padding-bottom:14px;margin-bottom:20px}'+
+      '.header-left .org-name{font-size:18px;font-weight:800;color:#2563eb}'+
+      '.header-left .rep-title{font-size:14px;font-weight:700;color:#222;margin-top:4px}'+
+      '.header-left .period{font-size:11px;color:#666;margin-top:3px}'+
+      '.header-right{text-align:left;font-size:11px;color:#666}'+
+      '.header-right .date{font-weight:600;color:#333;margin-bottom:2px}'+
+      '.main-table{width:100%;border-collapse:collapse;margin-bottom:20px}'+
+      '.main-table th{background:#2563eb;color:#fff;padding:8px 10px;font-weight:700;font-size:12px;text-align:right}'+
+      '.main-table td{padding:7px 10px;border-bottom:1px solid #e5e7eb;vertical-align:top;font-size:12px}'+
+      '.main-table tbody tr:nth-child(even) td{background:#f8fafc}'+
+      '.main-table tfoot td{background:#f1f5f9;font-weight:700;padding:9px 10px}'+
+      '.num{text-align:left;font-family:monospace;white-space:nowrap}'+
+      '.pos{color:#16a34a;font-weight:700}'+
+      '.neg{color:#dc2626}'+
+      '.blu{color:#2563eb;font-weight:700}'+
+      '.total td{font-weight:800;font-size:13px}'+
+      '.summary-bar{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-top:16px}'+
+      '.sum-item{background:#f8fafc;border:1px solid #e5e7eb;border-radius:8px;padding:12px 14px}'+
+      '.sum-item.pos{border-color:#bbf7d0;background:#f0fdf4}'+
+      '.sum-item.blu{border-color:#bfdbfe;background:#eff6ff}'+
+      '.sum-lbl{font-size:10px;color:#666;margin-bottom:4px;font-weight:600}'+
+      '.sum-val{font-size:14px;font-weight:800;font-family:monospace;color:#111}'+
+      '.sum-item.pos .sum-val{color:#16a34a}'+
+      '.sum-item.blu .sum-val{color:#2563eb}'+
+      '.proj-block{border:1px solid #e5e7eb;border-radius:10px;margin-bottom:18px;overflow:hidden;break-inside:avoid}'+
+      '.proj-title{background:#2563eb;color:#fff;padding:10px 14px;font-weight:700;font-size:14px;display:flex;align-items:center;gap:10px}'+
+      '.status-tag{font-size:10px;font-weight:700;background:rgba(255,255,255,.25);border-radius:20px;padding:2px 8px}'+
+      '.proj-meta{display:flex;gap:16px;flex-wrap:wrap;padding:8px 14px;background:#f8fafc;font-size:11px;color:#555}'+
+      '.proj-meta span{display:flex;align-items:center;gap:3px}'+
+      '.fin-table{width:100%;border-collapse:collapse}'+
+      '.fin-table td{padding:6px 14px;border-bottom:1px solid #f0f0f0;font-size:12px}'+
+      '.fin-table td:last-child{text-align:left;font-family:monospace;white-space:nowrap}'+
+      '.fin-table tfoot td{font-weight:700;background:#f1f5f9;border-top:2px solid #e5e7eb;padding:8px 14px}'+
+      '.total-row td{font-weight:800;font-size:13px}'+
+      '.pm-row td{font-size:11px;color:#555}'+
+      '.footer{margin-top:28px;padding-top:12px;border-top:1px solid #e5e7eb;font-size:10px;color:#aaa;display:flex;justify-content:space-between}'+
+      '@media print{body{font-size:11px}.page{padding:12px 16px}.proj-block{break-inside:avoid}.summary-bar{break-inside:avoid}}'+
+    '</style></head><body><div class="page">'+
+    '<div class="header">'+
+      '<div class="header-left">'+
+        '<div class="org-name">بُعد للاستشارات</div>'+
+        '<div class="rep-title">'+title+'</div>'+
+        '<div class="period">الفترة: '+periodLabel+'</div>'+
+      '</div>'+
+      '<div class="header-right"><div class="date">تاريخ الإصدار</div>'+today+'</div>'+
+    '</div>'+
+    simpleBody+
+    '<div class="footer"><span>'+title+' — بُعد للاستشارات</span><span>'+today+'</span></div>'+
+    '</div></body></html>';
+
+  var w = window.open('','_blank','width=960,height=700,toolbar=1,scrollbars=1');
+  if(!w){ UI.toast('يرجى السماح بالنوافذ المنبثقة للطباعة','warning'); return; }
+  w.document.write(html);
+  w.document.close();
+  setTimeout(function(){ w.focus(); w.print(); }, 600);
 };
 
 Pages.editPaymentDate = function(incId) {
