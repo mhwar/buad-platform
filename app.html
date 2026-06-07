@@ -4197,6 +4197,8 @@ Pages.render_client = function(params) {
   var projects = DB.getProjects().filter(function(p){ return p.client_id===clientId; });
 
   var initial = (cl.name||'?').trim().charAt(0);
+  var _palette = ['#6366f1','#0ea5e9','#10b981','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#84cc16'];
+  function avatarColor(name) { var c=0; for(var i=0;i<(name||'').length;i++) c+=name.charCodeAt(i); return _palette[c%_palette.length]; }
   var clColor = avatarColor(cl.name);
   var activeProjs    = projects.filter(function(p){ return p.status==='active'; }).length;
   var completedProjs = projects.filter(function(p){ return p.status==='completed'; }).length;
