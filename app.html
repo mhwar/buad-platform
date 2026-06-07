@@ -1102,40 +1102,70 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
 }
 
 /* ── Clients redesign ── */
-.client-card{background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;cursor:pointer;transition:box-shadow .15s,border-color .15s,transform .15s;display:flex;flex-direction:column}
-.client-card:hover{box-shadow:var(--shadow-md);border-color:var(--neutral-300);transform:translateY(-1px)}
-.client-card-header{padding:14px 16px 12px;display:flex;align-items:flex-start;gap:12px}
-.client-card-avatar{width:52px;height:52px;border-radius:12px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800;color:#fff;overflow:hidden;box-shadow:0 2px 6px rgba(0,0,0,.12);background:var(--neutral-200)}
-.client-card-avatar.has-logo{background:var(--neutral-50);border:1px solid var(--border-subtle);box-shadow:0 1px 3px rgba(0,0,0,.06)}
-.client-card-avatar img{width:100%;height:100%;object-fit:contain;padding:5px;box-sizing:border-box}
-.client-card-info{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
-.client-card-name{font-size:var(--font-md);font-weight:700;color:var(--fg-1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3}
-.client-card-type{font-size:11px;font-weight:600;color:var(--fg-3);background:var(--neutral-100);padding:2px 8px;border-radius:20px;display:inline-block;margin-top:2px}
+.client-card{background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;cursor:pointer;transition:box-shadow .2s,border-color .2s,transform .2s;display:flex;flex-direction:column}
+.client-card:hover{box-shadow:0 8px 24px rgba(0,0,0,.09);border-color:var(--neutral-300);transform:translateY(-2px)}
+.client-card-top{height:5px;flex-shrink:0}
+.client-card-header{padding:16px 16px 12px;display:flex;align-items:flex-start;gap:14px}
+.client-card-avatar{width:56px;height:56px;border-radius:14px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;color:#fff;overflow:hidden;box-shadow:0 3px 10px rgba(0,0,0,.14)}
+.client-card-avatar.has-logo{background:#fff;border:1px solid var(--border-subtle);box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.client-card-avatar img{width:100%;height:100%;object-fit:contain;padding:6px;box-sizing:border-box}
+.client-card-info{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+.client-card-name{font-size:var(--font-md);font-weight:700;color:var(--fg-1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3;letter-spacing:-.01em}
+.client-card-type{font-size:10px;font-weight:700;color:var(--fg-3);background:var(--neutral-100);padding:2px 8px;border-radius:20px;display:inline-block;margin-top:1px;letter-spacing:.3px;text-transform:uppercase}
 .client-card-meta-row{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--fg-4);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
 .client-card-meta-row [data-lucide]{width:11px;height:11px;flex-shrink:0;opacity:.55}
 .client-card-stats{display:flex;gap:0;border-top:1px solid var(--border-subtle)}
-.client-card-stat{flex:1;text-align:center;padding:8px 4px}
+.client-card-stat{flex:1;text-align:center;padding:10px 4px}
 .client-card-stat+.client-card-stat{border-right:1px solid var(--border-subtle)}
-.client-card-stat-val{font-size:14px;font-weight:800;color:var(--fg-1);font-family:var(--font-mono);line-height:1}
-.client-card-stat-lbl{font-size:10px;color:var(--fg-4);margin-top:2px}
-.client-card-actions{display:flex;gap:6px;padding:8px 12px;border-top:1px solid var(--border-subtle);background:var(--neutral-50)}
+.client-card-stat-val{font-size:15px;font-weight:800;color:var(--fg-1);font-family:var(--font-mono);line-height:1}
+.client-card-stat-lbl{font-size:10px;color:var(--fg-4);margin-top:3px;letter-spacing:.2px}
+.client-card-actions{display:flex;gap:6px;padding:10px 12px;border-top:1px solid var(--border-subtle);background:var(--neutral-50)}
+/* Delete confirmation modal */
+.del-confirm-modal{padding:0}
+.del-confirm-body{padding:24px}
+.del-confirm-icon{width:52px;height:52px;border-radius:14px;background:var(--danger-50);display:flex;align-items:center;justify-content:center;margin-bottom:16px}
+.del-confirm-icon [data-lucide]{width:24px;height:24px;color:var(--danger-600)}
+.del-confirm-title{font-size:var(--font-lg);font-weight:700;color:var(--fg-1);margin-bottom:8px}
+.del-confirm-desc{font-size:var(--font-sm);color:var(--fg-3);line-height:1.6;margin-bottom:16px}
+.del-confirm-input{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius-md);font-size:var(--font-sm);font-family:inherit;color:var(--fg-1);background:var(--bg-elevated);transition:border-color .15s;box-sizing:border-box}
+.del-confirm-input:focus{outline:none;border-color:var(--danger-400)}
+.del-confirm-input.valid{border-color:var(--danger-500);background:var(--danger-50)}
+.del-confirm-actions{display:flex;gap:8px;justify-content:flex-end;padding:16px 24px;border-top:1px solid var(--border-subtle);background:var(--neutral-50)}
+/* Client profile two-column layout */
+.client-profile-body{display:grid;grid-template-columns:300px 1fr;gap:var(--space-4);align-items:start}
+@media(max-width:780px){.client-profile-body{grid-template-columns:1fr}}
+.client-sidebar-card{background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;position:sticky;top:72px}
+.client-sidebar-section{padding:16px 18px;border-bottom:1px solid var(--border-subtle)}
+.client-sidebar-section:last-child{border-bottom:none}
+.client-sidebar-sec-title{font-size:11px;font-weight:700;color:var(--fg-4);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px}
+.client-info-field{display:flex;flex-direction:column;gap:3px;margin-bottom:12px}
+.client-info-field:last-child{margin-bottom:0}
+.client-info-field-label{font-size:11px;color:var(--fg-4);font-weight:500}
+.client-info-field-val{font-size:var(--font-sm);color:var(--fg-1);font-weight:500}
+.client-info-edit-row{display:flex;align-items:center;gap:6px;cursor:text}
+.client-info-edit-row input,.client-info-edit-row textarea{flex:1;font-size:var(--font-sm);font-family:inherit;color:var(--fg-1);background:transparent;border:none;border-bottom:1px dashed transparent;padding:2px 0;outline:none;transition:border-color .15s;width:100%}
+.client-info-edit-row input:hover,.client-info-edit-row textarea:hover{border-bottom-color:var(--neutral-300)}
+.client-info-edit-row input:focus,.client-info-edit-row textarea:focus{border-bottom-color:var(--iris-400);background:var(--iris-50);padding:2px 4px;border-radius:4px 4px 0 0}
+.sidebar-notes-area{width:100%;resize:vertical;min-height:90px;font-size:var(--font-xs);font-family:inherit;color:var(--fg-1);background:var(--neutral-50);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);padding:8px 10px;outline:none;transition:border-color .15s;box-sizing:border-box}
+.sidebar-notes-area:focus{border-color:var(--iris-400)}
 /* ── Projects redesign ── */
-.proj-card-v2{background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;cursor:pointer;transition:box-shadow .15s,border-color .15s;display:flex;flex-direction:column}
-.proj-card-v2:hover{box-shadow:var(--shadow-md);border-color:var(--neutral-300)}
-.proj-card-v2-strip{height:4px;flex-shrink:0}
-.proj-card-v2-body{padding:14px 16px;flex:1;display:flex;flex-direction:column;gap:8px}
+.proj-card-v2{background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;cursor:pointer;transition:box-shadow .2s,border-color .2s,transform .2s;display:flex;flex-direction:column;position:relative}
+.proj-card-v2:hover{box-shadow:0 8px 24px rgba(0,0,0,.09);border-color:var(--neutral-300);transform:translateY(-2px)}
+.proj-card-v2-strip{height:5px;flex-shrink:0}
+.proj-card-v2-body{padding:16px 18px;flex:1;display:flex;flex-direction:column;gap:10px}
 .proj-card-v2-header{display:flex;align-items:flex-start;gap:10px}
-.proj-card-v2-status{font-size:10px;font-weight:700;letter-spacing:.3px;padding:3px 9px;border-radius:20px;flex-shrink:0;margin-top:2px}
-.proj-card-v2-name{font-size:var(--font-md);font-weight:700;color:var(--fg-1);line-height:1.3;flex:1}
-.proj-card-v2-client{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--fg-3)}
-.proj-card-v2-client-av{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;flex-shrink:0}
-.proj-card-v2-finances{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:10px;background:var(--neutral-50);border-radius:8px}
-.proj-card-v2-fin-item{text-align:center}
-.proj-card-v2-fin-val{font-size:13px;font-weight:800;font-family:var(--font-mono);color:var(--fg-1)}
-.proj-card-v2-fin-lbl{font-size:9px;color:var(--fg-4);margin-top:1px}
-.proj-card-v2-progress{height:4px;background:var(--neutral-200);border-radius:2px;overflow:hidden}
-.proj-card-v2-progress-fill{height:100%;border-radius:2px;transition:width .3s}
-.proj-card-v2-actions{display:flex;gap:6px;padding:10px 16px;border-top:1px solid var(--border-subtle);background:var(--neutral-50)}
+.proj-card-v2-status{font-size:10px;font-weight:700;letter-spacing:.4px;padding:3px 10px;border-radius:20px;flex-shrink:0;margin-top:3px;text-transform:uppercase}
+.proj-card-v2-name{font-size:var(--font-md);font-weight:700;color:var(--fg-1);line-height:1.35;flex:1;letter-spacing:-.01em}
+.proj-card-v2-client{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--fg-3);padding:6px 10px;background:var(--neutral-50);border-radius:8px;border:1px solid var(--border-subtle)}
+.proj-card-v2-client-av{width:22px;height:22px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;flex-shrink:0;overflow:hidden}
+.proj-card-v2-finances{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;border:1px solid var(--border-subtle);border-radius:10px;overflow:hidden}
+.proj-card-v2-fin-item{text-align:center;padding:10px 6px;background:var(--neutral-50)}
+.proj-card-v2-fin-item+.proj-card-v2-fin-item{border-right:1px solid var(--border-subtle)}
+.proj-card-v2-fin-val{font-size:13px;font-weight:800;font-family:var(--font-mono);color:var(--fg-1);line-height:1.2}
+.proj-card-v2-fin-lbl{font-size:9px;color:var(--fg-4);margin-top:2px;letter-spacing:.2px}
+.proj-card-v2-progress{height:5px;background:var(--neutral-200);border-radius:3px;overflow:hidden;margin-top:2px}
+.proj-card-v2-progress-fill{height:100%;border-radius:3px;transition:width .4s ease}
+.proj-card-v2-actions{display:flex;gap:6px;padding:10px 14px;border-top:1px solid var(--border-subtle);background:var(--neutral-50)}
 .sec-toolbar{display:flex;align-items:center;gap:var(--space-2);margin-bottom:var(--space-4);flex-wrap:wrap}
 .sec-search{flex:1;min-width:160px;max-width:260px;position:relative}
 .sec-search input{width:100%;padding:7px 10px 7px 32px;border:1px solid var(--border);border-radius:var(--radius-md);background:var(--bg-elevated);font-size:var(--font-sm);color:var(--fg-1);font-family:inherit}
@@ -3896,6 +3926,7 @@ Pages.render_clients = function(opts) {
           '<div class="client-card-avatar" style="background:'+color+'">'+UI.escHtml((cl.name||'?')[0])+'</div>';
         var valStr = totalVal>0 ? UI.fmt(totalVal) : '—';
         return '<div class="client-card" onclick="Nav.go(\'client\',{clientId:\''+cl.id+'\'})">'+
+          '<div class="client-card-top" style="background:'+color+'"></div>'+
           '<div class="client-card-header">'+
             avatarHtml+
             '<div class="client-card-info">'+
@@ -3909,7 +3940,7 @@ Pages.render_clients = function(opts) {
           '<div class="client-card-stats">'+
             '<div class="client-card-stat">'+
               '<div class="client-card-stat-val">'+projs.length+'</div>'+
-              '<div class="client-card-stat-lbl">مشاريع</div>'+
+              '<div class="client-card-stat-lbl">المشاريع</div>'+
             '</div>'+
             '<div class="client-card-stat">'+
               '<div class="client-card-stat-val" style="color:var(--success-600)">'+active+'</div>'+
@@ -4102,12 +4133,52 @@ Pages.deleteClient = function(id) {
   var clients = DB.getClients();
   var cl = clients.find(function(c){ return c.id===id; });
   if (!cl) return;
-  if (!confirm('هل تريد حذف العميل "'+cl.name+'"؟ سيتم حذف جميع مشاريعه أيضاً.')) return;
+  var projs = DB.getProjects().filter(function(p){ return p.client_id===id; });
+  var projCount = projs.length;
+  var safeNameEsc = UI.escHtml(cl.name);
+  UI.openModal(
+    '<div class="del-confirm-modal">' +
+    '<div class="del-confirm-body">' +
+      '<div class="del-confirm-icon"><i data-lucide="trash-2"></i></div>' +
+      '<div class="del-confirm-title">حذف العميل</div>' +
+      '<div class="del-confirm-desc">أنت على وشك حذف العميل <strong>«'+safeNameEsc+'»</strong> بشكل نهائي.' +
+        (projCount>0 ? ' سيتم حذف <strong>'+projCount+'</strong> مشروع'+(projCount>1?'ات':'')+' مرتبطة به وكامل بياناتها المالية.' : '') +
+        '<br><br>لتأكيد الحذف، اكتب اسم العميل أدناه:' +
+      '</div>' +
+      '<input id="del-confirm-name" class="del-confirm-input" placeholder="'+safeNameEsc+'" oninput="Pages._checkDelInput(\''+id+'\')" autocomplete="off">' +
+    '</div>' +
+    '<div class="del-confirm-actions">' +
+      '<button class="btn btn-ghost" onclick="UI.closeModalForce()">إلغاء</button>' +
+      '<button id="del-confirm-btn" class="btn btn-danger" disabled onclick="Pages._execDeleteClient(\''+id+'\')"><i data-lucide="trash-2"></i>حذف نهائي</button>' +
+    '</div>' +
+    '</div>'
+  );
+};
+Pages._checkDelInput = function(id) {
+  var clients = DB.getClients();
+  var cl = clients.find(function(c){ return c.id===id; });
+  if (!cl) return;
+  var inp = document.getElementById('del-confirm-name');
+  var btn = document.getElementById('del-confirm-btn');
+  if (!inp||!btn) return;
+  var match = inp.value.trim() === cl.name.trim();
+  inp.classList.toggle('valid', match);
+  btn.disabled = !match;
+};
+Pages._execDeleteClient = function(id) {
+  var clients = DB.getClients();
+  var cl = clients.find(function(c){ return c.id===id; });
+  if (!cl) return;
   var projs = DB.getProjects().filter(function(p){ return p.client_id!==id; });
   DB.saveProjects(projs);
   DB.saveClients(clients.filter(function(c){ return c.id!==id; }));
-  UI.toast('تم الحذف');
-  Pages.render_clients();
+  UI.closeModalForce();
+  UI.toast('تم حذف العميل «'+cl.name+'»', 'success');
+  if (document.getElementById('pg-clients') && document.getElementById('pg-clients').style.display!=='none') {
+    Pages.render_clients();
+  } else {
+    Nav.go('clients');
+  }
 };
 
 /* ─── CLIENT DETAIL ─── */
@@ -4126,6 +4197,7 @@ Pages.render_client = function(params) {
   var projects = DB.getProjects().filter(function(p){ return p.client_id===clientId; });
 
   var initial = (cl.name||'?').trim().charAt(0);
+  var clColor = avatarColor(cl.name);
   var activeProjs    = projects.filter(function(p){ return p.status==='active'; }).length;
   var completedProjs = projects.filter(function(p){ return p.status==='completed'; }).length;
   var pausedProjs    = projects.filter(function(p){ return p.status==='paused'; }).length;
@@ -4142,21 +4214,21 @@ Pages.render_client = function(params) {
     '<div class="client-hero">' +
       '<div class="client-hero-band">' +
         (cl.logo ?
-          '<div class="client-hero-avatar" style="background:var(--neutral-50);border:1px solid var(--border-subtle);overflow:hidden">'+
+          '<div class="client-hero-avatar" style="background:#fff;border:1px solid var(--border-subtle);overflow:hidden">'+
             '<img src="'+cl.logo+'" style="width:100%;height:100%;object-fit:contain;padding:8px;box-sizing:border-box">'+
           '</div>' :
-          '<div class="client-hero-avatar">'+UI.escHtml(initial)+'</div>') +
+          '<div class="client-hero-avatar" style="background:'+clColor+'">'+UI.escHtml(initial)+'</div>') +
         '<div class="client-hero-info">' +
           '<div class="client-hero-name">'+UI.escHtml(cl.name)+'</div>' +
           '<div class="client-hero-meta">' +
             '<span class="client-hero-meta-item"><i data-lucide="building-2"></i>'+clientTypeLabel(cl.type)+'</span>' +
             (cl.city?'<span class="client-hero-meta-item"><i data-lucide="map-pin"></i>'+UI.escHtml(cl.city)+'</span>':'') +
-            (cl.email?'<span class="client-hero-meta-item"><i data-lucide="mail"></i>'+UI.escHtml(cl.email)+'</span>':'') +
+            (cl.email?'<span class="client-hero-meta-item"><i data-lucide="mail"></i><a href="mailto:'+UI.escHtml(cl.email)+'" style="color:inherit;text-decoration:none">'+UI.escHtml(cl.email)+'</a></span>':'') +
             (cl.phone?'<span class="client-hero-meta-item"><i data-lucide="phone"></i>'+UI.escHtml(cl.phone)+'</span>':'') +
           '</div>' +
         '</div>' +
         '<div class="client-hero-actions">' +
-          '<button class="proj-hero-edit" onclick="Pages.editClientModal(\''+cl.id+'\')"><i data-lucide="pencil"></i>تعديل</button>' +
+          '<button class="proj-hero-edit" onclick="Pages.addClientModal(\''+cl.id+'\')"><i data-lucide="pencil"></i>تعديل</button>' +
           '<button class="proj-hero-edit" style="background:var(--iris-500);color:#fff;border-color:var(--iris-500)" onclick="Pages.addProjectModal(\''+cl.id+'\')"><i data-lucide="plus"></i>مشروع جديد</button>' +
         '</div>' +
       '</div>' +
@@ -4173,14 +4245,67 @@ Pages.render_client = function(params) {
     '<div class="hero-tab-bar">' +
       '<button class="hero-tab-pill'+(tab==='overview'?' active':'')+'" onclick="Pages.switchClientTab(\'overview\',\''+cl.id+'\')"><i data-lucide="layout-dashboard"></i>نظرة عامة</button>' +
       '<button class="hero-tab-pill'+(tab==='projects'?' active':'')+'" onclick="Pages.switchClientTab(\'projects\',\''+cl.id+'\')"><i data-lucide="briefcase"></i>المشاريع<span class="hero-tab-count" style="margin-inline-start:6px">'+projects.length+'</span></button>' +
-      '<button class="hero-tab-pill'+(tab==='info'?' active':'')+'" onclick="Pages.switchClientTab(\'info\',\''+cl.id+'\')"><i data-lucide="file-text"></i>معلومات</button>' +
+    '</div>';
+
+  /* ── Sidebar: info card (inline editable) ── */
+  var sidebarHtml =
+    '<div class="client-sidebar-card">' +
+      // Logo / avatar section
+      '<div class="client-sidebar-section" style="text-align:center;padding:20px">' +
+        (cl.logo ?
+          '<div style="width:80px;height:80px;border-radius:16px;overflow:hidden;background:#fff;border:1px solid var(--border-subtle);margin:0 auto 12px;box-shadow:0 2px 8px rgba(0,0,0,.08)"><img src="'+cl.logo+'" style="width:100%;height:100%;object-fit:contain;padding:8px;box-sizing:border-box"></div>' :
+          '<div style="width:80px;height:80px;border-radius:16px;background:'+clColor+';display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:800;color:#fff;margin:0 auto 12px;box-shadow:0 3px 12px rgba(0,0,0,.15)">'+UI.escHtml(initial)+'</div>'
+        )+
+        '<div style="font-size:var(--font-md);font-weight:700;color:var(--fg-1);line-height:1.3">'+UI.escHtml(cl.name)+'</div>'+
+        '<div style="font-size:11px;color:var(--fg-4);margin-top:4px">'+clientTypeLabel(cl.type)+'</div>'+
+        '<button class="btn btn-sm btn-ghost" style="margin-top:12px;width:100%" onclick="Pages.addClientModal(\''+cl.id+'\')"><i data-lucide="pencil"></i>تعديل البيانات</button>'+
+      '</div>'+
+      // Contact info (inline editable)
+      '<div class="client-sidebar-section">' +
+        '<div class="client-sidebar-sec-title">معلومات التواصل</div>' +
+        // Email
+        '<div class="client-info-field">' +
+          '<div class="client-info-field-label"><i data-lucide="mail" style="width:11px;height:11px;vertical-align:middle;margin-left:3px"></i>البريد الإلكتروني</div>' +
+          '<div class="client-info-edit-row"><input type="email" value="'+UI.escHtml(cl.email||'')+'" placeholder="أضف البريد..." onblur="Pages.saveClientField(\''+cl.id+'\',\'email\',this.value)" style="font-family:var(--font-sans)"></div>'+
+        '</div>'+
+        // Phone
+        '<div class="client-info-field">' +
+          '<div class="client-info-field-label"><i data-lucide="phone" style="width:11px;height:11px;vertical-align:middle;margin-left:3px"></i>رقم الهاتف</div>' +
+          '<div class="client-info-edit-row"><input type="tel" value="'+UI.escHtml(cl.phone||'')+'" placeholder="أضف رقم الهاتف..." onblur="Pages.saveClientField(\''+cl.id+'\',\'phone\',this.value)" style="direction:ltr;text-align:right"></div>'+
+        '</div>'+
+        // City
+        '<div class="client-info-field">' +
+          '<div class="client-info-field-label"><i data-lucide="map-pin" style="width:11px;height:11px;vertical-align:middle;margin-left:3px"></i>المدينة</div>' +
+          '<div class="client-info-edit-row"><input type="text" value="'+UI.escHtml(cl.city||'')+'" placeholder="أضف المدينة..." onblur="Pages.saveClientField(\''+cl.id+'\',\'city\',this.value)"></div>'+
+        '</div>'+
+        // Website
+        '<div class="client-info-field">' +
+          '<div class="client-info-field-label"><i data-lucide="globe" style="width:11px;height:11px;vertical-align:middle;margin-left:3px"></i>الموقع الإلكتروني</div>' +
+          '<div class="client-info-edit-row"><input type="url" value="'+UI.escHtml(cl.website||'')+'" placeholder="أضف رابط الموقع..." onblur="Pages.saveClientField(\''+cl.id+'\',\'website\',this.value)" style="direction:ltr;text-align:right"></div>'+
+        '</div>'+
+        // Reg no
+        '<div class="client-info-field">' +
+          '<div class="client-info-field-label"><i data-lucide="hash" style="width:11px;height:11px;vertical-align:middle;margin-left:3px"></i>رقم السجل / الترخيص</div>' +
+          '<div class="client-info-edit-row"><input type="text" value="'+UI.escHtml(cl.reg_no||'')+'" placeholder="—" onblur="Pages.saveClientField(\''+cl.id+'\',\'reg_no\',this.value)" style="direction:ltr;text-align:right"></div>'+
+        '</div>'+
+      '</div>'+
+      // Notes
+      '<div class="client-sidebar-section">' +
+        '<div class="client-sidebar-sec-title">ملاحظات</div>' +
+        '<textarea id="cl-notes-area" class="sidebar-notes-area" placeholder="أضف ملاحظات..." onblur="Pages.saveClientNotes(\''+cl.id+'\')">'+UI.escHtml(cl.notes||'')+'</textarea>'+
+      '</div>'+
+      // Danger zone
+      '<div class="client-sidebar-section">' +
+        '<div class="client-sidebar-sec-title" style="color:var(--danger-500)">منطقة الخطر</div>' +
+        '<div style="font-size:11px;color:var(--fg-4);margin-bottom:10px">حذف العميل يحذف جميع مشاريعه وبياناته المالية.</div>'+
+        '<button class="btn btn-sm btn-danger" style="width:100%" onclick="Pages.deleteClient(\''+cl.id+'\')"><i data-lucide="trash-2"></i>حذف العميل</button>'+
+      '</div>'+
     '</div>';
 
   /* ── Tab content ── */
   var tabContent = '';
 
   if (tab === 'overview') {
-    // Recent projects (latest 3) + status distribution + contact summary
     var recentProjs = projects.slice().sort(function(a,b){ return (b.created||'').localeCompare(a.created||''); }).slice(0,3);
     var recentHtml = '';
     if (recentProjs.length===0) {
@@ -4196,7 +4321,6 @@ Pages.render_client = function(params) {
       }
     }
 
-    // Status distribution
     var maxCount = Math.max(activeProjs, completedProjs, pausedProjs, cancelledProjs, 1);
     function distRow(lbl, count, color, dotColor){
       var pct = count>0 ? Math.round(count/maxCount*100) : 0;
@@ -4221,21 +4345,9 @@ Pages.render_client = function(params) {
         '<div class="dash-sec-hdr"><h3><i data-lucide="briefcase"></i>أحدث المشاريع</h3></div>' +
         recentHtml +
       '</div>' +
-      '<div class="ov-2col">' +
-        '<div class="card">' +
-          '<div class="dash-sec-hdr"><h3><i data-lucide="bar-chart-2"></i>توزيع المشاريع حسب الحالة</h3></div>' +
-          distHtml +
-        '</div>' +
-        '<div class="card">' +
-          '<div class="dash-sec-hdr"><h3><i data-lucide="phone"></i>معلومات التواصل</h3></div>' +
-          '<div style="display:flex;flex-direction:column;gap:var(--space-2_5);font-size:var(--font-xs)">' +
-            '<div style="display:flex;justify-content:space-between;align-items:center;gap:var(--space-2)"><span style="color:var(--fg-3)">النوع</span><span style="color:var(--fg-1);font-weight:500">'+clientTypeLabel(cl.type)+'</span></div>' +
-            '<div style="display:flex;justify-content:space-between;align-items:center;gap:var(--space-2)"><span style="color:var(--fg-3)">المدينة</span><span style="color:var(--fg-1);font-weight:500">'+(cl.city?UI.escHtml(cl.city):'<span style="color:var(--fg-4)">—</span>')+'</span></div>' +
-            '<div style="display:flex;justify-content:space-between;align-items:center;gap:var(--space-2)"><span style="color:var(--fg-3)">البريد</span><span style="color:var(--fg-1);font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0">'+(cl.email?UI.escHtml(cl.email):'<span style="color:var(--fg-4)">—</span>')+'</span></div>' +
-            '<div style="display:flex;justify-content:space-between;align-items:center;gap:var(--space-2)"><span style="color:var(--fg-3)">الجوال</span><span style="color:var(--fg-1);font-weight:500;font-family:var(--font-mono)">'+(cl.phone?UI.escHtml(cl.phone):'<span style="color:var(--fg-4)">—</span>')+'</span></div>' +
-            (cl.website?'<div style="display:flex;justify-content:space-between;align-items:center;gap:var(--space-2)"><span style="color:var(--fg-3)">الموقع</span><a href="'+UI.escHtml(cl.website)+'" target="_blank" style="color:var(--iris-600);font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0">'+UI.escHtml(cl.website)+'</a></div>':'') +
-          '</div>' +
-        '</div>' +
+      '<div class="card">' +
+        '<div class="dash-sec-hdr"><h3><i data-lucide="bar-chart-2"></i>توزيع المشاريع حسب الحالة</h3></div>' +
+        distHtml +
       '</div>';
   }
   else if (tab === 'projects') {
@@ -4256,35 +4368,15 @@ Pages.render_client = function(params) {
     }
     tabContent = projList;
   }
-  else if (tab === 'info') {
-    tabContent =
-      '<div class="card">' +
-        '<div class="dash-sec-hdr"><h3><i data-lucide="file-text"></i>ملاحظات وتفاصيل</h3></div>' +
-        '<div class="form-group" style="margin-bottom:var(--space-3)">' +
-          '<label class="field-label">ملاحظات</label>' +
-          '<textarea id="cl-notes-area" class="field-input" style="min-height:120px;resize:vertical" placeholder="أضف ملاحظات عن العميل..." onblur="Pages.saveClientNotes(\''+cl.id+'\')">' +
-            UI.escHtml(cl.notes||'') +
-          '</textarea>' +
-        '</div>' +
-        '<div class="form-row" style="margin-bottom:var(--space-3)">' +
-          '<div class="form-group" style="margin-bottom:0"><label class="field-label">رقم السجل / الترخيص</label><input class="field-input" value="'+UI.escHtml(cl.reg_no||'')+'" placeholder="—" onblur="Pages.saveClientField(\''+cl.id+'\',\'reg_no\',this.value)"></div>' +
-          '<div class="form-group" style="margin-bottom:0"><label class="field-label">الموقع الإلكتروني</label><input class="field-input" value="'+UI.escHtml(cl.website||'')+'" placeholder="—" onblur="Pages.saveClientField(\''+cl.id+'\',\'website\',this.value)"></div>' +
-        '</div>' +
-        '<div class="form-row">' +
-          '<div class="form-group" style="margin-bottom:0"><label class="field-label">البريد الإلكتروني</label><input class="field-input" type="email" value="'+UI.escHtml(cl.email||'')+'" placeholder="—" onblur="Pages.saveClientField(\''+cl.id+'\',\'email\',this.value)"></div>' +
-          '<div class="form-group" style="margin-bottom:0"><label class="field-label">رقم الهاتف</label><input class="field-input" type="tel" value="'+UI.escHtml(cl.phone||'')+'" placeholder="—" onblur="Pages.saveClientField(\''+cl.id+'\',\'phone\',this.value)"></div>' +
-        '</div>' +
-      '</div>' +
-      '<div class="card" style="margin-top:var(--space-4);border-color:var(--danger-100)">' +
-        '<div class="dash-sec-hdr"><h3 style="color:var(--danger-700)"><i data-lucide="alert-triangle"></i>منطقة الخطر</h3></div>' +
-        '<div style="display:flex;justify-content:space-between;align-items:center;gap:var(--space-3);flex-wrap:wrap">' +
-          '<div style="font-size:var(--font-xs);color:var(--fg-3);flex:1;min-width:200px">حذف العميل يحذف جميع مشاريعه وبياناتهم المالية. لا يمكن التراجع.</div>' +
-          '<button class="btn btn-sm btn-danger" onclick="Pages.deleteClient(\''+cl.id+'\')"><i data-lucide="trash-2"></i>حذف العميل</button>' +
-        '</div>' +
-      '</div>';
-  }
 
-  document.getElementById('pg-client').innerHTML = heroHtml + tabsHtml + tabContent;
+  var mainContent = tabsHtml + tabContent;
+
+  document.getElementById('pg-client').innerHTML =
+    heroHtml +
+    '<div class="client-profile-body">' +
+      sidebarHtml +
+      '<div class="client-profile-main">' + mainContent + '</div>' +
+    '</div>';
   document.getElementById('top-actions').innerHTML = '';
 };
 
