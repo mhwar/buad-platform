@@ -2922,6 +2922,16 @@ var FinCalc = {
     var totalAllEntries = entries.reduce(function(s,e){ return s+(parseFloat(e.amount)||0); }, 0);
     var remaining  = grossTotal - totalAllEntries;
 
+    // ── أرقام متّسقة للملخص المالي (تتجنّب الازدواج الحسابي) ──
+    // الالتزامات التعاقدية = الأتعاب + التسويق + الكاش باك + الرسوم الإضافية
+    var obligations = execAmt + mkt + cb + cfAmt;
+    // المصاريف التشغيلية الفعلية = مصاريف مسجّلة لا تخص الالتزامات التعاقدية (لتفادي خصمها مرتين)
+    var obligationCats = ['exec','vat','mkt','cashback','cf'];
+    var opExpenses = entries.filter(function(e){ return e.type==='expense' && obligationCats.indexOf(e.cat)<0; })
+      .reduce(function(s,e){ return s+(parseFloat(e.amount)||0); }, 0);
+    // المتبقي للتنفيذ = المتاح للتنفيذ − المصاريف التشغيلية الفعلية (سلسلة متّسقة وقابلة للاشتقاق)
+    var remainingExec = available - opExpenses;
+
     // اكتشاف بنود الاتفاقية غير المسجّلة
     var regCats = entries.map(function(e){ return e.cat; });
     var missingItems = [];
@@ -2935,6 +2945,7 @@ var FinCalc = {
       contractNet:contractNet, grossTotal:grossTotal,
       execAmt:execAmt, mkt:mkt, cb:cb,
       budgetTotal:budgetTotal, available:available,
+      obligations:obligations, opExpenses:opExpenses, remainingExec:remainingExec,
       totalExpenses:totalExpenses, totalIncome:totalIncome, totalAllEntries:totalAllEntries,
       execIncomeReg:execIncomeReg, nonExecInc:nonExecInc,
       profitMargins:profitMargins,
@@ -4572,7 +4583,7 @@ Pages.render_fin = function(params) {
 
   var profitPct = r.grossTotal > 0 ? (r.profit / r.grossTotal * 100).toFixed(1) : '0';
   var expPct    = r.contractNet > 0 ? Math.min(100, Math.round(r.totalExpenses / r.contractNet * 100)) : 0;
-  var overspent = r.remaining < 0;
+  var overspent = r.remainingExec < 0;
 
   var clInitial = cl ? UI.escHtml((cl.name||'?')[0]) : '';
   var clId = cl ? cl.id : '';
@@ -4612,7 +4623,7 @@ Pages.render_fin = function(params) {
       '<div class="proj-hero-stats">' +
         '<div class="phs ph-brand"><div class="phs-lbl">قيمة العقد الإجمالية</div><div class="phs-val" id="phs-contract">'+UI.fmt(r.grossTotal)+'</div></div>' +
         '<div class="phs ph-success"><div class="phs-lbl">صافي الربح</div><div class="phs-val" id="phs-profit">'+UI.fmt(r.profit)+'</div></div>' +
-        '<div class="phs '+(overspent?'ph-danger':'ph-warn')+'"><div class="phs-lbl">المتبقي'+(overspent?' ▲ تجاوز':'')+' </div><div class="phs-val" id="phs-remaining">'+UI.fmt(r.remaining)+'</div></div>' +
+        '<div class="phs '+(overspent?'ph-danger':'ph-warn')+'"><div class="phs-lbl">المتبقي للتنفيذ'+(overspent?' ▲ تجاوز':'')+' </div><div class="phs-val" id="phs-remaining">'+UI.fmt(r.remainingExec)+'</div></div>' +
         '<div class="phs ph-'+(parseFloat(profitPct)>=20?'success':parseFloat(profitPct)>=0?'warn':'danger')+'"><div class="phs-lbl">هامش الربح</div><div class="phs-val">'+profitPct+'%</div></div>' +
       '</div>' +
     '</div>';
@@ -4918,16 +4929,13 @@ function _calcTrailHtml(r, c) {
       '<span class="calc-trail-val" style="'+valStyle+'">'+UI.fmt(val)+' ر.س</span>' +
     '</div>';
   }
-  var vatLabel = (r.vatPct||0) + '% ' + (r.vatIncluded ? 'مستخرجة' : 'مضافة');
   var available = r.contractNet - r.execAmt - r.mkt - r.cb - r.cfAmt;
   var html = '<div class="calc-trail" id="calc-trail-inner">';
-  html += row('', 'قيمة العقد المدخلة', '', r.cv, 'brand');
-  html += row('−', 'ضريبة القيمة المضافة', vatLabel, r.vatAmt, 'red');
-  html += row('=', 'صافي العقد', '', r.contractNet, '', true);
+  html += row('', 'صافي العقد', 'قيمة العقد دون الضريبة', r.contractNet, 'brand');
   if ((parseFloat(c.exec_v)||0) > 0) html += row('−', 'أتعاب التنفيذ', feeLabel(c.exec_v, c.exec_type||'pct', c.exec_base||'net'), r.execAmt, 'red');
   if ((parseFloat(c.mkt_v)||0) > 0)  html += row('−', 'التسويق', feeLabel(c.mkt_v, c.mkt_type||'pct', c.mkt_base||'net')+(c.mkt_internal?' — داخلي':''), r.mkt, 'red');
   if ((parseFloat(c.cb_v)||0) > 0)   html += row('−', 'كاش باك', feeLabel(c.cb_v, c.cb_type||'pct', c.cb_base||'net'), r.cb, 'red');
-  if ((parseFloat(c.cf_v)||0) > 0)   html += row('−', 'ضريبة القيمة المضافة', feeLabel(c.cf_v, c.cf_type||'pct', c.cf_base||'net'), r.cfAmt, 'red');
+  if ((parseFloat(c.cf_v)||0) > 0)   html += row('−', 'رسوم إضافية', feeLabel(c.cf_v, c.cf_type||'pct', c.cf_base||'net'), r.cfAmt, 'red');
   html += row('=', 'المتاح للتنفيذ', '', available, available >= 0 ? 'green' : 'red', true);
   html += '</div>';
   return html;
@@ -5061,7 +5069,7 @@ Pages.renderFinCtrl = function(projId) {
 Pages._refreshFinHero = function(projId) {
   var r = FinCalc.calc(projId);
   var phsC = document.getElementById('phs-contract'); if(phsC) phsC.textContent = UI.fmt(r.grossTotal);
-  var phsR = document.getElementById('phs-remaining'); if(phsR) phsR.textContent = UI.fmt(r.remaining);
+  var phsR = document.getElementById('phs-remaining'); if(phsR) phsR.textContent = UI.fmt(r.remainingExec);
   var phsP = document.getElementById('phs-profit');   if(phsP) phsP.textContent = UI.fmt(r.profit);
   // Update profit margin phs
   var profitPct = r.grossTotal > 0 ? (r.profit / r.grossTotal * 100).toFixed(1) : '0.0';
@@ -5075,7 +5083,7 @@ Pages._refreshFinHero = function(projId) {
   });
   // Update overspent color on remaining
   var phsRBox = phsR && phsR.closest ? phsR.closest('.phs') : null;
-  if (phsRBox) phsRBox.className = 'phs ' + (r.remaining < 0 ? 'ph-danger' : 'ph-warn');
+  if (phsRBox) phsRBox.className = 'phs ' + (r.remainingExec < 0 ? 'ph-danger' : 'ph-warn');
 };
 
 Pages.autoSaveCtrl = function(projId) {
@@ -5121,7 +5129,7 @@ Pages.autoSaveCtrl = function(projId) {
   }
   // Update hero stats bar
   var phsC = document.getElementById('phs-contract'); if(phsC) phsC.textContent = UI.fmt(r.grossTotal);
-  var phsR = document.getElementById('phs-remaining'); if(phsR) phsR.textContent = UI.fmt(r.remaining);
+  var phsR = document.getElementById('phs-remaining'); if(phsR) phsR.textContent = UI.fmt(r.remainingExec);
   var phsP = document.getElementById('phs-profit'); if(phsP) phsP.textContent = UI.fmt(r.profit);
   // Update calc trail
   var oldTrail = document.getElementById('calc-trail-inner');
@@ -5345,7 +5353,7 @@ Pages.openEntryDetail = function(projId, entryId) {
     '<div class="modal-footer" style="display:flex;justify-content:space-between;align-items:center">' +
       '<button class="btn btn-sm" style="color:var(--danger-600);border-color:var(--danger-200);display:inline-flex;align-items:center;gap:var(--space-1_5)" onclick="if(confirm(\'حذف هذا البند؟\')){Pages.deleteEntry(\''+projId+'\',\''+entryId+'\');UI.closeModalForce()}"><i data-lucide="trash-2"></i>حذف</button>' +
       '<div style="display:flex;gap:var(--space-2)">' +
-        '<button class="btn btn-sm" onclick="Pages.editEntryModal(\''+projId+'\',\''+entryId+'\');UI.closeModalForce()" style="display:inline-flex;align-items:center;gap:var(--space-1_5)"><i data-lucide="pencil"></i>تعديل</button>' +
+        '<button class="btn btn-sm" onclick="Pages.editEntryModal(\''+projId+'\',\''+entryId+'\')" style="display:inline-flex;align-items:center;gap:var(--space-1_5)"><i data-lucide="pencil"></i>تعديل</button>' +
         '<button class="btn btn-sm btn-primary" onclick="Pages.saveEntryDetail(\''+projId+'\',\''+entryId+'\')" style="display:inline-flex;align-items:center;gap:var(--space-1_5)"><i data-lucide="check"></i>حفظ</button>' +
       '</div>' +
     '</div>'
@@ -5653,14 +5661,17 @@ Pages.renderFinOverview = function(projId) {
       '<span class="wf-val" style="color:'+color+'">'+val+'</span>' +
     '</div>';
   }
+  var execExpPct = available>0 ? Math.min(100, Math.round(r.opExpenses/available*100)) : 0;
   var kpis =
     '<div class="card" style="margin-bottom:var(--space-4)">' +
       '<div class="dash-sec-hdr" style="margin-bottom:var(--space-3)"><h3><i data-lucide="activity"></i>الملخص المالي</h3></div>' +
       '<div class="wf-table">' +
+        ovRow('', 'صافي العقد', 'قيمة العقد دون الضريبة', UI.fmt(r.contractNet)+' ر.س', 'var(--iris-600)') +
+        (r.obligations>0 ? ovRow('−', 'الالتزامات التعاقدية', 'أتعاب · تسويق · رسوم', UI.fmt(r.obligations)+' ر.س', 'var(--danger-700)') : '') +
+        ovRow('=', 'المتاح للتنفيذ', 'الميزانية المخصّصة للتنفيذ', UI.fmt(r.available)+' ر.س', r.available>=0?'var(--success-700)':'var(--danger-700)', true) +
+        ovRow('−', 'المصاريف التشغيلية الفعلية', expCount+' بند · '+execExpPct+'% من المتاح', UI.fmt(r.opExpenses)+' ر.س', 'var(--danger-700)') +
+        ovRow('=', 'المتبقي للتنفيذ', r.remainingExec<0?'تجاوز الميزانية':'', UI.fmt(r.remainingExec)+' ر.س', r.remainingExec>=0?'var(--success-700)':'var(--danger-700)', true) +
         ovRow('', 'الدخل المسجّل', incCount+' بند', '+'+UI.fmt(r.totalIncome)+' ر.س', 'var(--success-700)') +
-        ovRow('', 'إجمالي المصاريف', expCount+' بند · '+expPct+'% من العقد', '−'+UI.fmt(r.totalExpenses)+' ر.س', 'var(--danger-700)') +
-        ovRow('=', 'المتاح للتنفيذ', 'بعد خصم الأتعاب', UI.fmt(available)+' ر.س', available>=0?'var(--success-700)':'var(--danger-700)', true) +
-        ovRow('', 'إجمالي المعاملات', '', fin.entries.length+' معاملة', 'var(--fg-1)') +
       '</div>' +
     '</div>';
 
@@ -5675,13 +5686,11 @@ Pages.renderFinOverview = function(projId) {
   }
 
   var wfHtml =
-    wfRow('', 'قيمة العقد المدخلة', r.cv, 'brand') +
-    (r.vatAmt>0 ? wfRow('−', 'ضريبة القيمة المضافة ('+r.vatPct+'%)', r.vatAmt, 'red') : '') +
-    wfRow('=', 'صافي العقد', r.contractNet, '', true) +
+    wfRow('', 'صافي العقد', r.contractNet, 'brand') +
     (r.execAmt>0 ? wfRow('−', 'أتعاب التنفيذ', r.execAmt, 'red') : '') +
     (r.mkt>0     ? wfRow('−', 'التسويق', r.mkt, 'red') : '') +
     (r.cb>0      ? wfRow('−', 'كاش باك', r.cb, 'red') : '') +
-    (r.cfAmt>0   ? wfRow('−', 'ضريبة القيمة المضافة (الرسوم)', r.cfAmt, 'red') : '') +
+    (r.cfAmt>0   ? wfRow('−', 'رسوم إضافية', r.cfAmt, 'red') : '') +
     wfRow('=', 'المتاح للتنفيذ', available, available>=0?'green':'red', true);
 
   /* ── Income vs Expenses chart ── */
