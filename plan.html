@@ -1594,6 +1594,68 @@ img,svg{display:block;max-width:100%}
 .pa-badge-lbl{font-size:10.5px;font-weight:700;color:var(--ink);text-align:center}
 .pa-badge.locked{opacity:.45;filter:grayscale(1)}
 .pa-badge-date{font-size:9.5px;color:var(--muted);text-align:center}
+/* ── Plan: phase resources panel ── */
+.plan-res-panel{display:none;gap:8px;flex-wrap:wrap;padding:10px 16px;border-top:1px solid var(--line);background:var(--bg-soft)}
+.plan-res-panel.open{display:flex}
+.plan-res-link{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;background:#fff;border:1px solid var(--line);border-radius:8px;font-size:12px;color:var(--navy);text-decoration:none;transition:.14s;font-weight:600}
+[data-theme="dark"] .plan-res-link{background:var(--bg)}
+.plan-res-link:hover{border-color:var(--accent);color:var(--accent)}
+.plan-res-link svg{width:12px;height:12px;flex-shrink:0}
+.plan-res-soon{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;background:var(--bg-soft);border:1px dashed var(--line);border-radius:8px;font-size:12px;color:var(--muted);font-weight:600;opacity:.7}
+.plan-res-btn{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border:1px solid var(--line);border-radius:20px;font-size:11px;font-weight:600;color:var(--navy-2);background:transparent;cursor:pointer;font-family:inherit;transition:.13s;flex-shrink:0;white-space:nowrap}
+.plan-res-btn:hover{border-color:var(--accent);color:var(--accent)}
+.plan-res-btn svg{width:11px;height:11px}
+/* ── Plan: today focus ── */
+.plan-today-focus{background:#fff;border:1px solid var(--line);border-radius:12px;padding:11px 18px;margin-bottom:16px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+[data-theme="dark"] .plan-today-focus{background:var(--bg)}
+.ptf-label{font-size:11px;font-weight:700;color:var(--muted);flex-shrink:0;white-space:nowrap;display:flex;align-items:center;gap:4px}
+.ptf-label svg{width:12px;height:12px;color:var(--accent)}
+.ptf-items{display:flex;gap:6px;flex-wrap:wrap;flex:1}
+.ptf-item{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:8px;font-size:11.5px;font-weight:600;cursor:pointer;border:1px solid var(--line);background:var(--bg-soft);transition:.12s;color:var(--ink)}
+.ptf-item:hover{border-color:var(--navy);background:var(--bg-tint)}
+.ptf-item.overdue{color:#dc2626;background:#fef2f2;border-color:#fecaca}
+/* ── Plan: track progress ring ── */
+.track-ring{width:36px;height:36px;flex-shrink:0;position:relative}
+.track-ring svg{width:36px;height:36px;transform:rotate(-90deg)}
+.track-ring-bg{fill:none;stroke:var(--line);stroke-width:4}
+.track-ring-fg{fill:none;stroke:var(--accent);stroke-width:4;stroke-linecap:round;transition:stroke-dashoffset .55s ease}
+.track-ring-pct{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:800;color:var(--navy)}
+/* ── Plan: task priority badge ── */
+.task-priority{font-size:9.5px;font-weight:700;padding:2px 6px;border-radius:20px;display:inline-flex;align-items:center;gap:2px;flex-shrink:0}
+.task-priority.overdue{color:#dc2626;background:#fef2f2}
+.task-priority.current{color:#1d4ed8;background:#eff6ff}
+/* ── Plan: post-100-day section ── */
+.plan-post100{margin-top:22px}
+.plan-post100-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(218px,1fr));gap:13px}
+.plan-p100-card{background:#fff;border:1px solid var(--line);border-radius:13px;padding:18px;display:flex;flex-direction:column;gap:8px;transition:.16s}
+[data-theme="dark"] .plan-p100-card{background:var(--bg)}
+.plan-p100-card:hover{box-shadow:var(--shadow);transform:translateY(-2px)}
+.plan-p100-ico{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.plan-p100-ico svg{width:18px;height:18px}
+.plan-p100-tag{font-size:9.5px;font-weight:700;padding:2px 7px;border-radius:20px;display:inline-block}
+.plan-p100-title{font-size:13.5px;font-weight:700;color:var(--navy-deep)}
+.plan-p100-desc{font-size:12px;color:var(--muted);line-height:1.65}
+/* ── Plan: admin editor ── */
+.plan-admin-editor-ov{position:fixed;inset:0;background:rgba(10,18,48,.52);backdrop-filter:blur(4px);z-index:1600;display:flex;align-items:center;justify-content:center;padding:20px}
+.plan-admin-box{background:var(--bg);border-radius:var(--radius-lg);box-shadow:var(--shadow-lg);width:100%;max-width:620px;max-height:88vh;overflow-y:auto;display:flex;flex-direction:column}
+[data-theme="dark"] .plan-admin-box{background:#1a2540}
+.plan-admin-hd{display:flex;align-items:center;gap:12px;padding:18px 22px;border-bottom:1px solid var(--line);flex-shrink:0}
+.plan-admin-hd h3{font-size:16px;font-weight:700;color:var(--navy-deep);flex:1;display:flex;align-items:center;gap:8px}
+.plan-admin-body{padding:20px 22px;flex:1}
+.plan-admin-sec{margin-bottom:22px}
+.plan-admin-sec:last-child{margin-bottom:0}
+.plan-admin-sec-hd{font-size:13px;font-weight:700;color:var(--navy-deep);margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:7px}
+.plan-admin-sec-hd svg{width:14px;height:14px;color:var(--accent)}
+.plan-admin-entry{display:flex;gap:6px;align-items:center;margin-bottom:7px;flex-wrap:wrap}
+.plan-admin-entry input{flex:1;min-width:100px;padding:6px 10px;border:1px solid var(--line);border-radius:8px;font-size:12.5px;font-family:inherit;background:var(--bg-soft);color:var(--ink);direction:rtl}
+.plan-admin-entry input:focus{outline:none;border-color:var(--accent)}
+.plan-admin-del{width:26px;height:26px;border-radius:7px;border:1px solid var(--line);background:transparent;color:#dc2626;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.12s;flex-shrink:0;padding:0}
+.plan-admin-del:hover{background:#fef2f2;border-color:#fecaca}
+.plan-admin-del svg{width:13px;height:13px}
+.plan-admin-add{display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border:1.5px dashed var(--line);border-radius:9px;font-size:12px;font-weight:600;color:var(--navy-2);background:transparent;cursor:pointer;font-family:inherit;transition:.12s;margin-top:3px}
+.plan-admin-add:hover{border-color:var(--accent);color:var(--accent)}
+.plan-admin-add svg{width:13px;height:13px}
+.plan-admin-ft{display:flex;justify-content:flex-end;gap:8px;padding:14px 22px;border-top:1px solid var(--line);flex-shrink:0;background:var(--bg-soft)}
 .badge-pop{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:3000;pointer-events:none;opacity:0;transition:opacity .3s}
 .badge-pop.show{opacity:1}
 .badge-pop-box{background:#fff;border-radius:20px;padding:32px 40px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.25);transform:scale(.8);transition:transform .4s cubic-bezier(.34,1.56,.64,1);border:2px solid var(--gold)}
@@ -1980,8 +2042,10 @@ img,svg{display:block;max-width:100%}
             <button class="btn btn-ghost btn-sm" onclick="printPlanReport()" style="gap:5px;display:flex;align-items:center"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:15px;height:15px"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>طباعة</button>
           </div>
         </div>
+        <div id="plan-today-focus"></div>
         <div id="plan-analytics"></div>
         <div id="tracks"></div>
+        <div id="plan-post100"></div>
       </section>
 
       <!-- ─── Tasks ─── -->
@@ -2664,7 +2728,7 @@ function go(id){
   if(id==='settings') renderSettingsUsers();
   if(id==='grants') renderGrants();
   if(id==='tasks') renderTasks();
-  if(id==='plan'){ renderTracks(); renderPlanAnalytics(); }
+  if(id==='plan'){ renderTodayFocus(); renderTracks(); renderPlanAnalytics(); renderPost100(); }
 }
 
 /* ── Requested-services state (per org, persisted locally for instant UI) ── */
@@ -4769,6 +4833,16 @@ function renderMyRequests(){
 /* ── Render plan tracks ── */
 function renderTracks(){
   if(_planView === 'timeline'){ document.getElementById('tracks').innerHTML = _renderTimelineView(); return; }
+  var days = _daysElapsed();
+  var cfg = _getPlanConfig();
+
+  function _priorityBadge(t, p){
+    if(p.done || !days) return '';
+    var target = _taskTargetDay(t);
+    if(days > target) return '<span class="task-priority overdue">⚠ متأخرة</span>';
+    if(target <= days + 10) return '<span class="task-priority current">◉ الآن</span>';
+    return '';
+  }
 
   function _buildTaskHtml(t, p, isCustom){
     var at = p.at ? ('أُنجزت في '+p.at) : '';
@@ -4810,11 +4884,12 @@ function renderTracks(){
     var openBtn = token() ? '<button class="task-open-btn" onclick="openPlanTaskDrawer(\''+t.id+'\')" title="فتح التفاصيل"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>تفاصيل</button>' : '';
     var delBtn = isCustom && token() ? '<button class="custom-task-del" onclick="deleteCustomTask(\''+t.id+'\')" title="حذف المهمة"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>' : '';
     var blockedBadge = (p.blocked && !p.done) ? '<span style="font-size:10px;font-weight:700;color:var(--danger);background:var(--danger-soft);padding:2px 7px;border-radius:6px;display:inline-flex;align-items:center;gap:3px">⚠ معاق</span>' : '';
+    var priorityBadge = _priorityBadge(t, p);
     return '<div class="task'+(p.done?' done':'')+(p.blocked&&!p.done?' task-blocked':'')+(isCustom?' custom-task':'')+'" data-id="'+t.id+'">'+
       '<div class="task-main">'+
         '<div class="chk" onclick="toggleTask(\''+t.id+'\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>'+
         '<div class="tx">'+
-          '<div class="h"><span class="name">'+esc(t.title)+'</span><span class="day">'+esc(t.day||'مخصصة')+'</span>'+blockedBadge+addBtn+'</div>'+
+          '<div class="h"><span class="name">'+esc(t.title)+'</span><span class="day">'+esc(t.day||'مخصصة')+'</span>'+priorityBadge+blockedBadge+addBtn+'</div>'+
           '<div class="desc">'+esc(t.desc)+'</div>'+
           stepBarHtml+
           '<div class="done-at">✓ '+at+'</div>'+
@@ -4834,14 +4909,32 @@ function renderTracks(){
     var tasksHtml = stdTasks.map(function(t){ return _buildTaskHtml(t, progress[t.id]||{}, false); }).join('');
     tasksHtml += customTasks.map(function(t){ return _buildTaskHtml(t, progress[t.id]||{}, true); }).join('');
     var addCustomBtn = token() ? '<button class="btn btn-ghost" style="width:100%;margin-top:10px;font-size:12.5px;gap:6px;display:flex;align-items:center;justify-content:center" onclick="openAddCustomTask(\''+track.id+'\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" style="width:14px;height:14px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>إضافة مهمة مخصصة</button>' : '';
+
+    /* Resources panel */
+    var trackCfg = cfg.tracks.find(function(tc){ return tc.id===track.id; });
+    var customRes = (trackCfg && trackCfg.resources) ? trackCfg.resources : [];
+    var defaultRes = TRACK_RES_DEFAULTS[track.id] || [];
+    var allRes = defaultRes.concat(customRes);
+    var resLinksHtml = allRes.map(function(r){
+      return r.url
+        ? '<a class="plan-res-link" href="'+esc(r.url)+'" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>'+esc(r.title)+'</a>'
+        : '<span class="plan-res-soon">'+esc(r.title)+' — قريباً</span>';
+    }).join('');
+    var resPanel = '<div class="plan-res-panel" id="plan-res-'+track.id+'">'+resLinksHtml+'</div>';
+    var resBtnHtml = '<button class="plan-res-btn" id="plan-res-btn-'+track.id+'" onclick="event.stopPropagation();togglePlanResources(\''+track.id+'\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg> مصادر المرحلة</button>';
+
+    /* Track progress ring */
+    var ringHtml = _trackRingHtml(pct, track.id);
+
     return '<div class="track'+(ti===0?' open':'')+'" id="track-'+track.id+'">'+
       '<div class="track-head" onclick="toggleTrack(\''+track.id+'\')">'+
-        '<div class="tnum">'+(ti+1)+'</div>'+
+        ringHtml+
         '<div class="ti"><h3>'+esc(track.title)+'</h3><div class="meta">'+esc(track.desc)+'</div></div>'+
-        '<span class="tpct" id="pct-'+track.id+'">'+pct+'%</span>'+
+        resBtnHtml+
         '<span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m6 9 6 6 6-6"/></svg></span>'+
       '</div>'+
       '<div class="track-mini"><i id="mini-'+track.id+'" style="width:'+pct+'%"></i></div>'+
+      resPanel+
       '<div class="track-body">'+tasksHtml+addCustomBtn+'</div>'+
     '</div>';
   }).join('');
@@ -4884,6 +4977,7 @@ function toggleTask(taskId){
 }
 
 function refreshTrackBars(){
+  var r = 14, circ = 2*Math.PI*r;
   PLAN.forEach(function(track){
     var customTasks = (progress._custom||[]).filter(function(c){ return c.track===track.id; });
     var allTasks = track.tasks.concat(customTasks);
@@ -4891,7 +4985,10 @@ function refreshTrackBars(){
     var pct = allTasks.length ? Math.round(done/allTasks.length*100) : 0;
     var p=document.getElementById('pct-'+track.id); if(p) p.textContent=pct+'%';
     var m=document.getElementById('mini-'+track.id); if(m) m.style.width=pct+'%';
+    var fg=document.getElementById('ring-fg-'+track.id); if(fg) fg.setAttribute('stroke-dashoffset',(circ-(pct/100)*circ).toFixed(1));
+    var rp=document.getElementById('ring-pct-'+track.id); if(rp) rp.textContent=pct+'%';
   });
+  renderTodayFocus();
 }
 
 /* ── Home dashboard plan metrics ── */
@@ -5390,6 +5487,270 @@ function renderPlanAnalytics(){
     '<div class="pa-badges">'+_renderBadges(doneCount)+'</div>'+
   '</div>';
   el.innerHTML = html;
+}
+
+/* ── Plan 2.0 enhancements ── */
+
+/* Default resources per track */
+var TRACK_RES_DEFAULTS = {
+  t1:[
+    { title:'التأمينات الاجتماعية (GOSI)', url:'https://www.gosi.gov.sa' },
+    { title:'العنوان الوطني (سبل)', url:'https://splonline.com.sa' },
+    { title:'المركز الوطني — التسجيل', url:'https://ncnp.gov.sa' },
+    { title:'وزارة الموارد البشرية', url:'https://www.hrsd.gov.sa' },
+    { title:'هيئة الزكاة والضريبة', url:'https://zatca.gov.sa' }
+  ],
+  t2:[
+    { title:'لائحة الحوكمة للجمعيات', url:'https://ncnp.gov.sa' },
+    { title:'دليل تأسيس الجمعيات', url:'https://ncnp.gov.sa' },
+    { title:'منصة إحسان للتبرعات', url:'https://ehsan.sa' },
+    { title:'منصة العمل التطوعي', url:'https://nvg.gov.sa' },
+    { title:'نموذج الخطة التشغيلية', url:'' }
+  ]
+};
+
+/* Default post-100-day roadmap items */
+var POST100_DEFAULTS = [
+  { id:'p1', title:'التوسع في الخدمات والبرامج', desc:'مراجعة برامج السنة الأولى وتوسيعها بناءً على الأثر الفعلي وملاحظات المستفيدين.', tag:'السنة الأولى', color:'#1d4ed8', ico:'rocket' },
+  { id:'p2', title:'بناء منظومة التمويل والشراكات', desc:'التقديم للمنح وبناء علاقات مع الجهات المانحة وتنويع مصادر الدخل المستدام.', tag:'مستمر', color:'#0891b2', ico:'link' },
+  { id:'p3', title:'قياس الأثر الاجتماعي', desc:'تطوير منهجية لقياس الأثر وإصدار تقرير سنوي يعزز المصداقية مع الجهات المانحة.', tag:'السنة الأولى', color:'#16a34a', ico:'chart' },
+  { id:'p4', title:'التأهيل للاعتماد المؤسسي', desc:'التهيؤ لتقييم المركز الوطني أو معايير الحوكمة الدولية لرفع مستوى الجمعية.', tag:'اختياري', color:'#7c3aed', ico:'shield' },
+  { id:'p5', title:'تطوير قدرات الفريق', desc:'برامج تدريب مستمرة للموظفين والمتطوعين لرفع الكفاءة التشغيلية والمؤسسية.', tag:'مستمر', color:'#ea580c', ico:'people' },
+  { id:'p6', title:'الانضمام لشبكات القطاع', desc:'الانضمام لتحالفات وشبكات الجمعيات المحلية والإقليمية لتوسيع نطاق التأثير.', tag:'اختياري', color:'#0f766e', ico:'network' }
+];
+
+/* Get plan config merged with defaults */
+function _getPlanConfig(){
+  var def = { tracks:[{id:'t1',resources:[]},{id:'t2',resources:[]}], post100:{show:true,items:[],hidden_defaults:[]} };
+  try{
+    var raw = progress._meta && progress._meta.plan_config;
+    if(!raw) return def;
+    var cfg = typeof raw==='string' ? JSON.parse(raw) : raw;
+    def.tracks.forEach(function(dt){
+      var f = (cfg.tracks||[]).filter(function(x){ return x.id===dt.id; })[0];
+      if(f) dt.resources = f.resources||[];
+    });
+    if(cfg.post100){
+      def.post100.items = cfg.post100.items||[];
+      def.post100.hidden_defaults = cfg.post100.hidden_defaults||[];
+      def.post100.show = cfg.post100.show!==false;
+    }
+  }catch(e){}
+  return def;
+}
+
+function _savePlanConfig(cfg){
+  if(!progress._meta) progress._meta = {};
+  progress._meta.plan_config = cfg;
+  scheduleSave();
+  toast('تم حفظ الإعدادات ✓');
+}
+
+/* Extract target day number from Arabic day string */
+function _taskTargetDay(t){
+  if(typeof t.day==='number') return t.day;
+  if(!t.day) return 50;
+  var norm = String(t.day)
+    .replace(/١/g,'1').replace(/٢/g,'2').replace(/٣/g,'3').replace(/٤/g,'4').replace(/٥/g,'5')
+    .replace(/٦/g,'6').replace(/٧/g,'7').replace(/٨/g,'8').replace(/٩/g,'9').replace(/٠/g,'0');
+  var m = norm.match(/(\d+)/g);
+  return m ? parseInt(m[m.length-1]) : 30;
+}
+
+/* SVG ring for track header */
+function _trackRingHtml(pct, trackId){
+  var r=14, circ=+(2*Math.PI*r).toFixed(1), offset=+(circ-(pct/100)*circ).toFixed(1);
+  return '<div class="track-ring">'+
+    '<svg viewBox="0 0 36 36">'+
+      '<circle class="track-ring-bg" cx="18" cy="18" r="'+r+'"/>'+
+      '<circle class="track-ring-fg" id="ring-fg-'+trackId+'" cx="18" cy="18" r="'+r+'" stroke-dasharray="'+circ+'" stroke-dashoffset="'+offset+'"/>'+
+    '</svg>'+
+    '<div class="track-ring-pct" id="ring-pct-'+trackId+'">'+pct+'%</div>'+
+  '</div>';
+}
+
+/* Toggle resources panel */
+function togglePlanResources(trackId){
+  var el=document.getElementById('plan-res-'+trackId); if(!el) return;
+  var open=el.classList.toggle('open');
+  var btn=document.getElementById('plan-res-btn-'+trackId);
+  if(btn) btn.style.color = open ? 'var(--accent)' : '';
+}
+
+/* Today's focus widget */
+function renderTodayFocus(){
+  var el=document.getElementById('plan-today-focus'); if(!el) return;
+  if(!token()){ el.innerHTML=''; return; }
+  var days=_daysElapsed();
+  if(!days){ el.innerHTML=''; return; }
+  var overdue=[], upcoming=[];
+  PLAN.forEach(function(tr){
+    tr.tasks.forEach(function(t){
+      var p=progress[t.id]||{}; if(p.done) return;
+      var target=_taskTargetDay(t);
+      if(days>target) overdue.push(t);
+      else if(target<=days+14) upcoming.push(t);
+    });
+  });
+  if(!overdue.length&&!upcoming.length){ el.innerHTML=''; return; }
+  var html='<div class="plan-today-focus">';
+  if(overdue.length){
+    html+='<span class="ptf-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:12px;height:12px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> متأخرة ('+overdue.length+'):</span>';
+    html+='<div class="ptf-items">';
+    overdue.slice(0,3).forEach(function(t){ html+='<span class="ptf-item overdue" onclick="openPlanTaskDrawer(\''+t.id+'\')">'+esc(t.title)+'</span>'; });
+    if(overdue.length>3) html+='<span class="ptf-item overdue">+'+( overdue.length-3)+' أخرى</span>';
+    html+='</div>';
+  }
+  if(upcoming.length){
+    html+='<span class="ptf-label" style="margin-right:6px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:12px;height:12px"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> هذا الأسبوع:</span>';
+    html+='<div class="ptf-items">';
+    upcoming.slice(0,3).forEach(function(t){ html+='<span class="ptf-item" onclick="openPlanTaskDrawer(\''+t.id+'\')">'+esc(t.title)+'</span>'; });
+    html+='</div>';
+  }
+  html+='</div>';
+  el.innerHTML=html;
+}
+
+/* Post-100-day roadmap section */
+function renderPost100(){
+  var el=document.getElementById('plan-post100'); if(!el) return;
+  var cfg=_getPlanConfig();
+  if(!cfg.post100.show){ el.innerHTML=''; return; }
+  var hiddenIds=cfg.post100.hidden_defaults||[];
+  var defaults=POST100_DEFAULTS.filter(function(d){ return hiddenIds.indexOf(d.id)<0; });
+  var custom=(cfg.post100.items||[]).map(function(item,i){
+    return Object.assign({color:'#64748b',ico:'star'},item);
+  });
+  var allItems=defaults.concat(custom);
+  var icoSvg={
+    rocket:'<path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/>',
+    link:'<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>',
+    chart:'<path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/>',
+    shield:'<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>',
+    people:'<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+    network:'<circle cx="12" cy="5" r="3"/><circle cx="5" cy="19" r="3"/><circle cx="19" cy="19" r="3"/><line x1="12" y1="8" x2="5" y2="16"/><line x1="12" y1="8" x2="19" y2="16"/>',
+    star:'<path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>'
+  };
+  var tagColors={'السنة الأولى':'#1d4ed8','مستمر':'#16a34a','اختياري':'#7c3aed','مخصص':'#64748b'};
+  var adminBtn=token()?'<button class="btn btn-ghost btn-sm" onclick="openPlanAdminEditor()" style="display:inline-flex;align-items:center;gap:5px;font-size:11.5px;flex-shrink:0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:13px;height:13px"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> تخصيص</button>':'';
+  var html='<div class="plan-post100">'+
+    '<div class="section-h" style="margin-top:0">خارطة طريق ما بعد المئة يوم <span style="font-size:12px;font-weight:500;color:var(--muted);margin-right:8px">المرحلة التالية لجمعيتك</span>'+adminBtn+'</div>'+
+    '<div class="plan-post100-grid">';
+  allItems.forEach(function(item){
+    var paths=icoSvg[item.ico]||icoSvg.star;
+    var tc=tagColors[item.tag]||'#64748b';
+    html+='<div class="plan-p100-card">'+
+      '<div style="display:flex;align-items:center;gap:10px;margin-bottom:2px">'+
+        '<div class="plan-p100-ico" style="background:'+item.color+'1a;color:'+item.color+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:18px;height:18px">'+paths+'</svg></div>'+
+        '<span class="plan-p100-tag" style="background:'+tc+'18;color:'+tc+'">'+esc(item.tag)+'</span>'+
+      '</div>'+
+      '<div class="plan-p100-title">'+esc(item.title)+'</div>'+
+      '<div class="plan-p100-desc">'+esc(item.desc)+'</div>'+
+    '</div>';
+  });
+  html+='</div></div>';
+  el.innerHTML=html;
+}
+
+/* Admin editor for plan config */
+function openPlanAdminEditor(){
+  var cfg=_getPlanConfig();
+  function resRows(trackId){
+    var track=(cfg.tracks||[]).filter(function(t){ return t.id===trackId; })[0];
+    return ((track&&track.resources)||[]).map(function(r,i){
+      return '<div class="plan-admin-entry" data-res="'+trackId+'" data-idx="'+i+'">'+
+        '<input type="text" placeholder="العنوان" value="'+esc(r.title)+'" class="padm-rt">'+
+        '<input type="url" placeholder="https://..." value="'+esc(r.url)+'" class="padm-ru" style="max-width:200px">'+
+        '<button class="plan-admin-del" onclick="this.closest(\'.plan-admin-entry\').remove()" title="حذف"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:13px;height:13px"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>'+
+      '</div>';
+    }).join('');
+  }
+  function p100Rows(){
+    return ((cfg.post100&&cfg.post100.items)||[]).map(function(item,i){
+      return '<div class="plan-admin-entry" data-p100="'+i+'">'+
+        '<input type="text" placeholder="العنوان*" value="'+esc(item.title)+'" class="padm-pt" style="min-width:140px">'+
+        '<input type="text" placeholder="الوسم" value="'+esc(item.tag||'')+'" class="padm-ptag" style="max-width:80px">'+
+        '<input type="text" placeholder="الوصف" value="'+esc(item.desc||'')+'" class="padm-pd">'+
+        '<button class="plan-admin-del" onclick="this.closest(\'.plan-admin-entry\').remove()" title="حذف"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:13px;height:13px"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>'+
+      '</div>';
+    }).join('');
+  }
+  function addResRow(containerId){
+    var c=document.getElementById(containerId); if(!c) return;
+    var d=document.createElement('div'); d.className='plan-admin-entry';
+    d.innerHTML='<input type="text" placeholder="العنوان" class="padm-rt"><input type="url" placeholder="https://..." class="padm-ru" style="max-width:200px"><button class="plan-admin-del" onclick="this.closest(\'.plan-admin-entry\').remove()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:13px;height:13px"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>';
+    c.appendChild(d);
+  }
+  function addP100Row(containerId){
+    var c=document.getElementById(containerId); if(!c) return;
+    var d=document.createElement('div'); d.className='plan-admin-entry';
+    d.innerHTML='<input type="text" placeholder="العنوان*" class="padm-pt" style="min-width:140px"><input type="text" placeholder="الوسم" class="padm-ptag" style="max-width:80px"><input type="text" placeholder="الوصف" class="padm-pd"><button class="plan-admin-del" onclick="this.closest(\'.plan-admin-entry\').remove()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:13px;height:13px"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>';
+    c.appendChild(d);
+  }
+  var html='<div class="plan-admin-editor-ov" id="padm-ov" onclick="if(event.target.id===\'padm-ov\')closePlanAdminEditor()">'+
+    '<div class="plan-admin-box">'+
+      '<div class="plan-admin-hd">'+
+        '<h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:18px;height:18px"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> تخصيص خطة المئة يوم</h3>'+
+        '<button class="modal-x" onclick="closePlanAdminEditor()">✕</button>'+
+      '</div>'+
+      '<div class="plan-admin-body">'+
+        '<div class="plan-admin-sec">'+
+          '<div class="plan-admin-sec-hd"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:14px;height:14px"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg> مصادر المسار الأول — إنطلاقة الأعمال</div>'+
+          '<div id="padm-res-t1">'+resRows('t1')+'</div>'+
+          '<button class="plan-admin-add" onclick="(function(){var c=document.getElementById(\'padm-res-t1\');var d=document.createElement(\'div\');d.className=\'plan-admin-entry\';d.innerHTML=\'<input type=\\"text\\" placeholder=\\"العنوان\\" class=\\"padm-rt\\"><input type=\\"url\\" placeholder=\\"https://...\\" class=\\"padm-ru\\" style=\\"max-width:200px\\"><button class=\\"plan-admin-del\\" onclick=\\"this.closest(\\\\\\".plan-admin-entry\\\\\\").remove()\\"><svg viewBox=\\"0 0 24 24\\" fill=\\"none\\" stroke=\\"currentColor\\" stroke-width=\\"2\\" stroke-linecap=\\"round\\" style=\\"width:13px;height:13px\\"><polyline points=\\"3 6 5 6 21 6\\"/><path d=\\"M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2\\"/></svg></button>\';c.appendChild(d);})()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:13px;height:13px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> إضافة مصدر</button>'+
+        '</div>'+
+        '<div class="plan-admin-sec">'+
+          '<div class="plan-admin-sec-hd"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:14px;height:14px"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg> مصادر المسار الثاني — التطوير المؤسسي</div>'+
+          '<div id="padm-res-t2">'+resRows('t2')+'</div>'+
+          '<button class="plan-admin-add" onclick="(function(){var c=document.getElementById(\'padm-res-t2\');var d=document.createElement(\'div\');d.className=\'plan-admin-entry\';d.innerHTML=\'<input type=\\"text\\" placeholder=\\"العنوان\\" class=\\"padm-rt\\"><input type=\\"url\\" placeholder=\\"https://...\\" class=\\"padm-ru\\" style=\\"max-width:200px\\"><button class=\\"plan-admin-del\\" onclick=\\"this.closest(\\\\\\".plan-admin-entry\\\\\\").remove()\\"><svg viewBox=\\"0 0 24 24\\" fill=\\"none\\" stroke=\\"currentColor\\" stroke-width=\\"2\\" stroke-linecap=\\"round\\" style=\\"width:13px;height:13px\\"><polyline points=\\"3 6 5 6 21 6\\"/><path d=\\"M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2\\"/></svg></button>\';c.appendChild(d);})()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:13px;height:13px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> إضافة مصدر</button>'+
+        '</div>'+
+        '<div class="plan-admin-sec">'+
+          '<div class="plan-admin-sec-hd"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:14px;height:14px"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/></svg> بطاقات ما بعد المئة يوم (مخصصة)</div>'+
+          '<p style="font-size:12px;color:var(--muted);margin-bottom:10px">البطاقات الافتراضية تُعرض تلقائياً. أضف هنا بطاقات إضافية خاصة بجمعيتك.</p>'+
+          '<div id="padm-p100">'+p100Rows()+'</div>'+
+          '<button class="plan-admin-add" onclick="(function(){var c=document.getElementById(\'padm-p100\');var d=document.createElement(\'div\');d.className=\'plan-admin-entry\';d.innerHTML=\'<input type=\\"text\\" placeholder=\\"العنوان*\\" class=\\"padm-pt\\" style=\\"min-width:140px\\"><input type=\\"text\\" placeholder=\\"الوسم\\" class=\\"padm-ptag\\" style=\\"max-width:80px\\"><input type=\\"text\\" placeholder=\\"الوصف\\" class=\\"padm-pd\\"><button class=\\"plan-admin-del\\" onclick=\\"this.closest(\\\\\\".plan-admin-entry\\\\\\").remove()\\"><svg viewBox=\\"0 0 24 24\\" fill=\\"none\\" stroke=\\"currentColor\\" stroke-width=\\"2\\" stroke-linecap=\\"round\\" style=\\"width:13px;height:13px\\"><polyline points=\\"3 6 5 6 21 6\\"/><path d=\\"M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2\\"/></svg></button>\';c.appendChild(d);})()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:13px;height:13px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> إضافة بطاقة</button>'+
+        '</div>'+
+      '</div>'+
+      '<div class="plan-admin-ft">'+
+        '<button class="btn btn-ghost" onclick="closePlanAdminEditor()">إلغاء</button>'+
+        '<button class="btn btn-primary" onclick="planAdminSave()">حفظ التغييرات</button>'+
+      '</div>'+
+    '</div>'+
+  '</div>';
+  var wrap=document.createElement('div'); wrap.id='padm-wrap'; wrap.innerHTML=html;
+  document.body.appendChild(wrap);
+}
+
+function closePlanAdminEditor(){
+  var el=document.getElementById('padm-wrap'); if(el) el.remove();
+}
+
+function planAdminSave(){
+  function collectRes(containerId){
+    var c=document.getElementById(containerId); if(!c) return [];
+    var res=[];
+    c.querySelectorAll('.plan-admin-entry').forEach(function(row){
+      var ti=row.querySelector('.padm-rt'), ui=row.querySelector('.padm-ru');
+      if(ti&&ti.value.trim()) res.push({ title:ti.value.trim(), url:(ui?ui.value.trim():'') });
+    });
+    return res;
+  }
+  function collectP100(){
+    var c=document.getElementById('padm-p100'); if(!c) return [];
+    var items=[];
+    c.querySelectorAll('.plan-admin-entry').forEach(function(row){
+      var ti=row.querySelector('.padm-pt'), tg=row.querySelector('.padm-ptag'), di=row.querySelector('.padm-pd');
+      if(ti&&ti.value.trim()) items.push({ id:'c_'+Date.now()+'_'+Math.random().toString(36).slice(2,5), title:ti.value.trim(), tag:(tg&&tg.value.trim())||'مخصص', desc:(di&&di.value.trim())||'', ico:'star', color:'#64748b' });
+    });
+    return items;
+  }
+  var cfg=_getPlanConfig();
+  cfg.tracks=[{ id:'t1', resources:collectRes('padm-res-t1') },{ id:'t2', resources:collectRes('padm-res-t2') }];
+  cfg.post100.items=collectP100();
+  _savePlanConfig(cfg);
+  closePlanAdminEditor();
+  renderTracks();
+  renderPost100();
 }
 
 /* ── Set plan view ── */
@@ -6504,12 +6865,25 @@ function wsSecInner(id){
       '<div class="ws-card">'+items+'<button class="ws-add-btn" onclick="wsAdd(\'faq\')">'+ICADD+'إضافة سؤال</button></div>';
   }
   if(id==='donation'){
-    return wsSecHead('donation','بوابة التبرع','قسم بارز يحفّز الزوار على التبرّع')+
+    var showCalc = wsGet('donation.show_calc'); var calcOn = (showCalc!==false);
+    return wsSecHead('donation','بوابة التبرع وحاسبة الأثر','قسم يحفّز الزوار على التبرّع + حاسبة أثر تفاعلية')+
       '<div class="ws-card"><h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 1 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"/></svg>محتوى قسم التبرع</h4>'+
         wsTxt('عنوان القسم','donation.title','تبرّعك يصنع الفرق')+
         wsArea('نص تحفيزي','donation.desc','ساهم معنا في إحداث أثر مستدام في حياة المستفيدين.',{h:70})+
         wsTxt('رابط بوابة التبرع','donation.url','https://...', {type:'url', dir:'ltr', hint:'رابط منصة إحسان أو بوابة التبرع المعتمدة لديكم'})+
         wsTxt('رقم الحساب / آيبان (اختياري)','donation.account','SA00 0000 ...', {dir:'ltr'})+
+      '</div>'+
+      '<div class="ws-card"><h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>حاسبة الأثر التفاعلية</h4>'+
+        '<label class="ws-check-row" style="margin-bottom:12px"><input type="checkbox" '+(calcOn?'checked':'')+' onchange="wsField(\'donation.show_calc\',this.checked); wsRerenderSec(\'donation\')"><span>إظهار حاسبة الأثر في الصفحة الرئيسية</span></label>'+
+        (calcOn?(
+          '<div class="ws-row">'+
+            wsTxt('تكلفة خدمة المستفيد الواحد (ر.س)','donation.unit_cost','250',{type:'number',dir:'ltr',hint:'يُقسّم مبلغ التبرّع عليها لحساب عدد المستفيدين'})+
+            wsTxt('وصف الوحدة','donation.unit_label','حقيبة تدريبية لأسرة منتجة',{hint:'ما الذي يحصل عليه المستفيد بهذا المبلغ'})+
+          '</div>'+
+          wsTxt('المبالغ السريعة','donation.quick_amounts','100, 250, 500, 1000',{dir:'ltr',hint:'أزرار مبالغ جاهزة مفصولة بفواصل (حتى 5)'})+
+          wsTxt('عنوان الحاسبة (اختياري)','donation.calc_title','تبرّعك يُحدث أثراً ملموساً',{hint:'يُترك فارغاً ليُستخدم عنوان قسم التبرع'})+
+          wsArea('وصف الحاسبة (اختياري)','donation.calc_desc','حرّك المؤشّر لتكتشف فوراً حجم الأثر الذي سيُحدثه تبرّعك.',{h:60})
+        ):'<div class="hint">فعّل الخيار أعلاه لإظهار حاسبة الأثر وضبط إعداداتها.</div>')+
       '</div>';
   }
   if(id==='pages'){
@@ -6676,12 +7050,27 @@ function wsSeedDefaults(){
 
   if(!c.stats || !c.stats.length){
     c.stats = [
-      {number:'12,500+',label:'مستفيد ومستفيدة'},
-      {number:'35+',label:'برنامجاً ومبادرة'},
-      {number:'480+',label:'متطوع ومتطوعة'},
-      {number:'12',label:'سنة من العطاء'}
+      {number:'12,500+',label:'مستفيد ومستفيدة',icon:'people'},
+      {number:'35+',label:'برنامجاً ومبادرة',icon:'briefcase'},
+      {number:'480+',label:'متطوع ومتطوعة',icon:'hand'},
+      {number:'12',label:'سنة من العطاء',icon:'calendar'}
     ];
     if(c.sections.stats===undefined) c.sections.stats = true;
+  }
+  if(!c.stats_style) c.stats_style = 'cards';
+  if(!c.stats_heading) c.stats_heading = 'أثرنا بالأرقام';
+
+  if(!c.highlights || !c.highlights.length){
+    c.highlights = [
+      {icon:'shield',title:'حوكمة وشفافية',desc:'نلتزم بأعلى معايير الإفصاح والامتثال لمعايير القطاع غير الربحي.',metric:'100%'},
+      {icon:'target',title:'أثر قابل للقياس',desc:'نقيس نتائج برامجنا بمؤشرات واضحة ونعلن أثرنا بشفافية.',metric:'+30%'},
+      {icon:'users',title:'فريق وكفاءات',desc:'كوادر متخصصة ومتطوعون مؤهّلون يخدمون المستفيدين باحترافية.',metric:'480+'},
+      {icon:'heart',title:'خدمة شاملة',desc:'برامج متنوعة تغطي التمكين الاقتصادي والتأهيل الأسري والرعاية.',metric:'35+'}
+    ];
+    c.highlights_style = 'grid';
+    c.highlights_heading = 'لماذا تختارنا؟';
+    c.highlights_subtext = 'نجمع بين الاحترافية والشفافية والأثر المستدام لنكون شريكك الموثوق في العطاء.';
+    if(c.sections.highlights===undefined) c.sections.highlights = true;
   }
 
   if(!c.programs || !c.programs.length){
@@ -6764,7 +7153,11 @@ function wsSeedDefaults(){
       url:'https://ehsan.sa',
       account:'SA00 0000 0000 0000 0000 0000',
       unit_cost:250,
-      unit_label:'حقيبة تدريبية لأسرة منتجة'
+      unit_label:'حقيبة تدريبية لأسرة منتجة',
+      show_calc:true,
+      quick_amounts:'100, 250, 500, 1000',
+      calc_title:'تبرّعك يُحدث أثراً ملموساً',
+      calc_desc:'حرّك المؤشّر لتكتشف فوراً حجم الأثر الذي سيُحدثه تبرّعك في حياة الأسر المنتجة.'
     };
     if(c.sections.donation===undefined) c.sections.donation = true;
   }
