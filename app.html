@@ -13298,6 +13298,7 @@ Pages.printPfReport = function(mode) {
   );
 
   var title = mode==='simple' ? 'تقرير إيرادات المشاريع — مبسّط' : 'تقرير إيرادات المشاريع — مفصّل';
+  var logoUrl = (function(){ try { return new URL('assets/logo.svg', window.location.href).href; } catch(e){ return 'assets/logo.svg'; } })();
 
   var html = '<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8">'+
     '<title>'+title+'</title>'+
@@ -13306,7 +13307,7 @@ Pages.printPfReport = function(mode) {
       'body{font-family:"Segoe UI",Tahoma,Arial,sans-serif;font-size:13px;color:#111;background:#fff;direction:rtl}'+
       '.page{max-width:900px;margin:0 auto;padding:24px 32px}'+
       '.header{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #2563eb;padding-bottom:14px;margin-bottom:20px}'+
-      '.header-left .org-name{font-size:18px;font-weight:800;color:#2563eb}'+
+      '.header-left .org-logo{height:46px;object-fit:contain;display:block;margin-bottom:6px}'+
       '.header-left .rep-title{font-size:14px;font-weight:700;color:#222;margin-top:4px}'+
       '.header-left .period{font-size:11px;color:#666;margin-top:3px}'+
       '.header-right{text-align:left;font-size:11px;color:#666}'+
@@ -13345,14 +13346,14 @@ Pages.printPfReport = function(mode) {
     '</style></head><body><div class="page">'+
     '<div class="header">'+
       '<div class="header-left">'+
-        '<div class="org-name">بُعد للاستشارات</div>'+
+        '<img src="'+logoUrl+'" alt="بُعد التمكين" class="org-logo" onerror="this.outerHTML=\'<div style=&quot;font-size:18px;font-weight:800;color:#2563eb&quot;>بُعد التمكين</div>\'">'+
         '<div class="rep-title">'+title+'</div>'+
         '<div class="period">الفترة: '+periodLabel+'</div>'+
       '</div>'+
       '<div class="header-right"><div class="date">تاريخ الإصدار</div>'+today+'</div>'+
     '</div>'+
     simpleBody+
-    '<div class="footer"><span>'+title+' — بُعد للاستشارات</span><span>'+today+'</span></div>'+
+    '<div class="footer"><span>'+title+' — بُعد التمكين</span><span>'+today+'</span></div>'+
     '</div></body></html>';
 
   var w = window.open('','_blank','width=960,height=700,toolbar=1,scrollbars=1');
