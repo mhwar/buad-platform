@@ -978,6 +978,15 @@ export async function onRequest(context) {
   const me = await verifyJWT(rawToken, jwtSecret);
   if (!me || me.action || me.kind === 'org') return json({ error: 'Unauthorized' }, 401);
 
+  /* ─── GET /api/me ─── current user's authoritative profile + a freshly-signed token.
+        Lets role changes take effect on refresh without forcing a re-login. */
+  if (path === '/me' && method === 'GET') {
+    const u = await db.prepare('SELECT id, name, email, role FROM users WHERE id = ?').bind(me.id).first();
+    if (!u) return json({ error: 'not_found' }, 404);
+    const token = await signJWT({ id: u.id, name: u.name, email: u.email, role: u.role }, jwtSecret);
+    return json({ user: u, token });
+  }
+
   /* ─── POST /api/admin/run-migrations ─── apply pending DB schema changes ─── */
   if (path === '/admin/run-migrations' && method === 'POST') {
     if (me.role !== 'admin') return json({ error: 'Forbidden' }, 403);
