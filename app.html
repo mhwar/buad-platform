@@ -2158,6 +2158,33 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
 .ctab-pills{display:flex;gap:4px;padding:var(--space-1_5) var(--space-2);border-bottom:1px solid var(--border);flex-shrink:0}
 .ctab-pill{flex:1;padding:6px 0;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--bg);font-size:var(--font-xs);color:var(--fg-2);cursor:pointer;font-family:inherit;text-align:center;transition:var(--transition-fast)}
 .ctab-pill.active{background:oklch(0.15 0.02 275);border-color:oklch(0.15 0.02 275);color:#fff;font-weight:600}
+/* ─── Contract build wizard ─── */
+.cwiz-steps{display:flex;align-items:center;gap:2px;padding:var(--space-2) var(--space-2);border-bottom:1px solid var(--border);flex-shrink:0}
+.cwiz-step{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 2px;border:none;background:none;cursor:pointer;font-family:inherit;position:relative;transition:var(--transition-fast)}
+.cwiz-num{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:var(--font-2xs);font-weight:700;background:var(--bg);border:1.5px solid var(--border);color:var(--fg-3);transition:var(--transition-fast)}
+.cwiz-lbl{font-size:9px;color:var(--fg-3);text-align:center;line-height:1.2;font-weight:600}
+.cwiz-step.active .cwiz-num{background:oklch(0.15 0.02 275);border-color:oklch(0.15 0.02 275);color:#fff}
+.cwiz-step.active .cwiz-lbl{color:var(--fg-1)}
+.cwiz-step.done .cwiz-num{background:var(--success-500,#16a34a);border-color:var(--success-500,#16a34a);color:#fff}
+.cwiz-nav{display:flex;align-items:center;justify-content:space-between;gap:var(--space-2);padding:var(--space-3) var(--space-3);border-top:1px solid var(--border);flex-shrink:0;background:var(--bg)}
+.cwiz-nav .btn{min-width:84px;justify-content:center}
+/* Review & approve panel */
+.crev-check{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:var(--radius-sm);background:var(--bg-elevated);border:1px solid var(--border);margin-bottom:6px;font-size:var(--font-xs)}
+.crev-check i{width:15px;height:15px;flex-shrink:0}
+.crev-check.ok{color:var(--fg-1)}
+.crev-check.ok i{color:var(--success-600,#16a34a)}
+.crev-check.miss{color:var(--fg-3)}
+.crev-check.miss i{color:var(--warning-600,#d97706)}
+.cstat-track{display:flex;align-items:center;gap:0;margin:var(--space-3) 0}
+.cstat-node{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;position:relative}
+.cstat-dot{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--bg);border:2px solid var(--border);color:var(--fg-3);z-index:1}
+.cstat-node.active .cstat-dot,.cstat-node.passed .cstat-dot{background:var(--success-500,#16a34a);border-color:var(--success-500,#16a34a);color:#fff}
+.cstat-node.active .cstat-dot{box-shadow:0 0 0 3px var(--success-100,#dcfce7)}
+.cstat-lbl{font-size:9px;font-weight:600;color:var(--fg-3);text-align:center}
+.cstat-node.active .cstat-lbl{color:var(--fg-1)}
+.cstat-line{position:absolute;top:13px;height:2px;background:var(--border);width:100%;right:50%;z-index:0}
+.cstat-node.passed .cstat-line,.cstat-node.active .cstat-line{background:var(--success-500,#16a34a)}
+.cstat-node:first-child .cstat-line{display:none}
 /* Variable group labels */
 .var-group-lbl{font-size:var(--font-2xs);font-weight:700;color:var(--fg-3);letter-spacing:.4px;padding:var(--space-2) 0 var(--space-1);margin-top:var(--space-3);border-bottom:1px solid var(--border);margin-bottom:var(--space-2);display:flex;align-items:center;gap:5px}
 .var-group-lbl:first-child{margin-top:0}
@@ -4827,8 +4854,8 @@ Pages.switchFinTab = function(tab, projId) {
 Pages.renderFinContracts = function(projId) {
   var contracts = DB.getContracts(projId);
   var tplNames = {service:'عقد تقديم خدمات', nda:'اتفاقية عدم إفصاح', employment:'عقد عمل', consulting:'عقد استشارات', blank:'نموذج فارغ'};
-  var statusLabel = {draft:'مسودة', final:'نهائي'};
-  var statusBadge = {draft:'amber', final:'emerald'};
+  var statusLabel = {draft:'مسودة', review:'قيد المراجعة', approved:'معتمد', final:'معتمد'};
+  var statusBadge = {draft:'amber', review:'indigo', approved:'emerald', final:'emerald'};
 
   var cardsHtml = '';
   if (contracts.length === 0) {
@@ -7186,25 +7213,10 @@ Pages.render_contract = function(params) {
     // Header section — image + positioned text overlays
     Pages._renderBandSettings(projId, contractId, 'header', 'رأس الصفحة', plh) +
     // Footer section — image + positioned text overlays
-    Pages._renderBandSettings(projId, contractId, 'footer', 'تذييل الصفحة', plf) +
-    '<div class="stg-section">' +
-      '<div class="stg-section-lbl">إعدادات أخرى</div>' +
-      '<div class="var-field">' +
-        '<div class="var-field-lbl">تصنيف التذييل</div>' +
-        '<select class="var-field-inp" onchange="Pages.updateContractCover(\''+projId+'\',\''+contractId+'\',\'footer_label\',this.value)">' +
-          ['سري','مسودة','نسخة طبق الأصل','نهائي'].map(function(s){
-            return '<option value="'+s+'"'+(contract.footer_label===s?' selected':'')+'>'+s+'</option>';
-          }).join('') +
-        '</select>' +
-      '</div>' +
-      '<div class="var-field">' +
-        '<div class="var-field-lbl">حالة العقد</div>' +
-        '<select class="var-field-inp" onchange="Pages.updateContractStatus(\''+projId+'\',\''+contractId+'\',this.value)">' +
-          '<option value="draft"'+(contract.status==='draft'?' selected':'')+'>مسودة</option>' +
-          '<option value="final"'+(contract.status==='final'?' selected':'')+'>نهائي</option>' +
-        '</select>' +
-      '</div>' +
-    '</div>';
+    Pages._renderBandSettings(projId, contractId, 'footer', 'تذييل الصفحة', plf);
+
+  // STEP 4 — REVIEW & APPROVE PANEL
+  var reviewPanelHtml = Pages._renderContractReviewPanel(projId, contractId, contract);
 
   var docHtml = Pages._renderContractDoc(contract);
 
@@ -7214,15 +7226,16 @@ Pages.render_contract = function(params) {
       docHtml +
     '</div>' +
     '<div class="contract-sidebar contract-sidebar-right">' +
-      '<div class="ctab-pills">' +
-        '<button class="ctab-pill active" id="ctab-vars-btn" onclick="Pages.switchContractTab(\'vars\')">المتغيرات</button>' +
-        '<button class="ctab-pill" id="ctab-cls-btn" onclick="Pages.switchContractTab(\'clauses\')">البنود</button>' +
-        '<button class="ctab-pill" id="ctab-sets-btn" onclick="Pages.switchContractTab(\'settings\')">الإعدادات</button>' +
-      '</div>' +
+      Pages._renderContractWizBar(contract) +
       '<div class="contract-sidebar-body">' +
         '<div id="ctab-vars-panel">'+varsPanelHtml+'</div>' +
         '<div id="ctab-cls-panel" style="display:none">'+clsPanelHtml+'</div>' +
         '<div id="ctab-sets-panel" style="display:none">'+settingsPanelHtml+'</div>' +
+        '<div id="ctab-review-panel" style="display:none">'+reviewPanelHtml+'</div>' +
+      '</div>' +
+      '<div class="cwiz-nav" id="cwiz-nav">' +
+        '<button class="btn btn-sm" id="cwiz-prev" onclick="Pages.contractWizNav(-1)"><i data-lucide="chevron-right" style="width:14px;height:14px"></i>السابق</button>' +
+        '<button class="btn btn-sm btn-primary" id="cwiz-next" onclick="Pages.contractWizNav(1)">التالي<i data-lucide="chevron-left" style="width:14px;height:14px"></i></button>' +
       '</div>' +
     '</div>' +
     '<div class="contract-mobile-bar" id="contract-mobile-bar">' +
@@ -7261,7 +7274,8 @@ Pages.render_contract = function(params) {
 
   if (typeof lucide !== 'undefined') lucide.createIcons({rootElement: pageEl});
   if (typeof lucide !== 'undefined') lucide.createIcons({rootElement: document.getElementById('top-actions')});
-  if (Pages._contractActiveTab) Pages.switchContractTab(Pages._contractActiveTab);
+  // Always initialise the wizard (active step + nav button state)
+  Pages.switchContractTab(Pages._contractActiveTab || 'vars');
   setTimeout(Pages._scaleDocPages, 0);
 };
 
@@ -8420,9 +8434,16 @@ Pages.updateContractTitle = function(projId, contractId, value) {
   DB.saveContract(projId, c);
   // Live-update the cover title + first-body-page title
   var docEl = document.getElementById('contract-doc');
-  if (docEl) {
+  // Free-form cover holds the title as a {{title}} text element — needs full re-render
+  if (c.cover && Array.isArray(c.cover.elements)) {
+    Pages._refreshCoverPage(projId, contractId);
+  } else if (docEl) {
+    // Old-style cover: direct inline update
     var covTitle = docEl.querySelector('.cov-title');
     if (covTitle) covTitle.textContent = value;
+  }
+  // First page body title always updates inline
+  if (docEl) {
     var bodyTitle = docEl.querySelector('.doc-body-title');
     if (bodyTitle) bodyTitle.textContent = value;
   }
@@ -9475,6 +9496,87 @@ Pages.updateContractStatus = function(projId, contractId, value) {
   DB.saveContract(projId, c);
 };
 
+/* Advance/revert contract status from the review step, then refresh review panel + step bar */
+Pages.setContractStage = function(projId, contractId, value) {
+  Pages.updateContractStatus(projId, contractId, value);
+  var c = DB.getContracts(projId).find(function(x){return x.id===contractId;});
+  // Re-render the review panel in place
+  var panel = document.getElementById('ctab-review-panel');
+  if (panel && c) {
+    panel.innerHTML = Pages._renderContractReviewPanel(projId, contractId, c);
+    if (typeof lucide !== 'undefined') lucide.createIcons({rootElement:panel});
+  }
+  // Refresh step-bar markers (review ✓ depends on status)
+  if (Pages._contractActiveTab) Pages.switchContractTab(Pages._contractActiveTab);
+  var msg = {draft:'تم الإرجاع إلى مسودة', review:'تم إرسال العقد للمراجعة', approved:'تم اعتماد العقد'};
+  UI.toast(msg[value] || 'تم تحديث الحالة', value==='approved' ? 'success' : '');
+};
+
+/* STEP 4 — review & approve panel */
+Pages._renderContractReviewPanel = function(projId, contractId, c) {
+  var v = c.variables || {};
+  var status = (c.status === 'final') ? 'approved' : (c.status || 'draft');
+  var enabledClauses = (c.clauses||[]).filter(function(cl){ return cl.enabled !== false; }).length;
+
+  function chk(ok, label, hint) {
+    return '<div class="crev-check '+(ok?'ok':'miss')+'">' +
+      '<i data-lucide="'+(ok?'check-circle-2':'circle-alert')+'"></i>' +
+      '<span style="flex:1">'+label+'</span>' +
+      '<span style="font-size:var(--font-2xs);color:var(--fg-4)">'+(ok?'':hint||'')+'</span>' +
+    '</div>';
+  }
+
+  var checklist =
+    chk(!!String(c.title||'').trim(), 'عنوان العقد', 'مطلوب') +
+    chk(!!String(v.party_a_name||'').trim() && !!String(v.party_b_name||'').trim(), 'بيانات الطرفين', 'ناقص') +
+    chk(!!String(v.contract_amount||'').trim(), 'قيمة العقد', 'مطلوب') +
+    chk(enabledClauses>0, 'البنود ('+enabledClauses+' بند مُفعّل)', 'أضف بنداً');
+
+  // Status stepper (visual)
+  var stages = [{id:'draft',lbl:'مسودة'},{id:'review',lbl:'قيد المراجعة'},{id:'approved',lbl:'معتمد'}];
+  var curIdx = stages.map(function(s){return s.id;}).indexOf(status);
+  var tracker = '<div class="cstat-track">' +
+    stages.map(function(s, i){
+      var cls = 'cstat-node' + (i<curIdx?' passed':'') + (i===curIdx?' active':'');
+      var icon = (i<curIdx) ? '<i data-lucide="check" style="width:14px;height:14px"></i>' : (i+1);
+      return '<div class="'+cls+'"><div class="cstat-line"></div><div class="cstat-dot">'+icon+'</div><div class="cstat-lbl">'+s.lbl+'</div></div>';
+    }).join('') +
+  '</div>';
+
+  // Stage action buttons
+  var actions = '';
+  if (status === 'draft') {
+    actions = '<button class="btn btn-primary" style="width:100%;justify-content:center" onclick="Pages.setContractStage(\''+projId+'\',\''+contractId+'\',\'review\')"><i data-lucide="send"></i>إرسال للمراجعة</button>';
+  } else if (status === 'review') {
+    actions = '<button class="btn btn-primary" style="width:100%;justify-content:center;margin-bottom:8px" onclick="Pages.setContractStage(\''+projId+'\',\''+contractId+'\',\'approved\')"><i data-lucide="badge-check"></i>اعتماد العقد</button>' +
+      '<button class="btn btn-sm" style="width:100%;justify-content:center" onclick="Pages.setContractStage(\''+projId+'\',\''+contractId+'\',\'draft\')"><i data-lucide="undo-2" style="width:13px;height:13px"></i>إرجاع لمسودة</button>';
+  } else { // approved
+    actions = '<div style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--success-50,#f0fdf4);border:1px solid var(--success-200,#bbf7d0);border-radius:var(--radius-sm);color:var(--success-700,#15803d);font-size:var(--font-xs);font-weight:600;margin-bottom:8px"><i data-lucide="shield-check" style="width:16px;height:16px"></i>العقد معتمد — يمكن تعديله وسيُحدَّث في حساب المشروع</div>' +
+      '<button class="btn btn-sm" style="width:100%;justify-content:center" onclick="Pages.setContractStage(\''+projId+'\',\''+contractId+'\',\'review\')"><i data-lucide="undo-2" style="width:13px;height:13px"></i>إلغاء الاعتماد</button>';
+  }
+
+  return '<div class="stg-section" style="margin-top:0;padding-top:0;border-top:none">' +
+      '<div class="stg-section-lbl">قائمة التحقّق</div>' +
+      checklist +
+    '</div>' +
+    '<div class="stg-section">' +
+      '<div class="stg-section-lbl">حالة العقد</div>' +
+      tracker +
+      actions +
+    '</div>' +
+    '<div class="stg-section">' +
+      '<div class="stg-section-lbl">تصنيف التذييل</div>' +
+      '<div class="var-field">' +
+        '<select class="var-field-inp" onchange="Pages.updateContractCover(\''+projId+'\',\''+contractId+'\',\'footer_label\',this.value)">' +
+          ['سري','مسودة','نسخة طبق الأصل','نهائي'].map(function(s){
+            return '<option value="'+s+'"'+(c.footer_label===s?' selected':'')+'>'+s+'</option>';
+          }).join('') +
+        '</select>' +
+        '<div style="font-size:var(--font-2xs);color:var(--fg-4);margin-top:4px">يظهر كعلامة مائية/تذييل في كل صفحة</div>' +
+      '</div>' +
+    '</div>';
+};
+
 Pages.togglePageGuides = function() {
   var docEl = document.getElementById('contract-doc');
   var btn = document.getElementById('contract-guides-btn');
@@ -9517,26 +9619,91 @@ Pages.toggleContractPreview = function() {
   }
 };
 
+/* Wizard step order + labels */
+Pages._contractWizSteps = ['vars','clauses','settings','review'];
+Pages._contractWizMeta = {
+  vars:     {n:'١', label:'المتغيّرات والأطراف'},
+  clauses:  {n:'٢', label:'البنود'},
+  settings: {n:'٣', label:'الغلاف والتصميم'},
+  review:   {n:'٤', label:'المراجعة والاعتماد'}
+};
+
+/* Is a wizard step "complete" (for the ✓ marker)? */
+Pages._contractStepComplete = function(c, stepId) {
+  if (!c) return false;
+  var v = c.variables || {};
+  if (stepId === 'vars') {
+    return !!(String(c.title||'').trim() && String(v.party_a_name||'').trim() &&
+              String(v.party_b_name||'').trim() && String(v.contract_amount||'').trim());
+  }
+  if (stepId === 'clauses') {
+    return (c.clauses||[]).some(function(cl){ return cl.enabled !== false; });
+  }
+  if (stepId === 'review') {
+    return c.status === 'approved' || c.status === 'final';
+  }
+  return false; // settings is optional — no required marker
+};
+
+/* Render the numbered wizard step bar */
+Pages._renderContractWizBar = function(c) {
+  var active = Pages._contractActiveTab || 'vars';
+  return '<div class="cwiz-steps" id="cwiz-steps">' +
+    Pages._contractWizSteps.map(function(id){
+      var m = Pages._contractWizMeta[id];
+      var done = Pages._contractStepComplete(c, id);
+      var cls = 'cwiz-step' + (id===active?' active':'') + (done&&id!==active?' done':'');
+      var numHtml = (done && id!==active) ? '<i data-lucide="check" style="width:13px;height:13px"></i>' : m.n;
+      return '<button class="'+cls+'" id="cwiz-step-'+id+'" onclick="Pages.switchContractTab(\''+id+'\')">' +
+        '<span class="cwiz-num">'+numHtml+'</span>' +
+        '<span class="cwiz-lbl">'+m.label+'</span>' +
+      '</button>';
+    }).join('') +
+  '</div>';
+};
+
+/* Navigate prev/next through wizard steps */
+Pages.contractWizNav = function(dir) {
+  var steps = Pages._contractWizSteps;
+  var cur = steps.indexOf(Pages._contractActiveTab || 'vars');
+  if (cur < 0) cur = 0;
+  var next = Math.min(steps.length-1, Math.max(0, cur + dir));
+  Pages.switchContractTab(steps[next]);
+};
+
 Pages.switchContractTab = function(tab) {
+  // Normalise legacy ids
+  if (tab !== 'vars' && tab !== 'clauses' && tab !== 'settings' && tab !== 'review') tab = 'vars';
   Pages._contractActiveTab = tab;
-  var vp = document.getElementById('ctab-vars-panel');
-  var cp = document.getElementById('ctab-cls-panel');
-  var sp = document.getElementById('ctab-sets-panel');
-  var vb = document.getElementById('ctab-vars-btn');
-  var cb = document.getElementById('ctab-cls-btn');
-  var sb = document.getElementById('ctab-sets-btn');
-  if (!vp) return;
-  [vp, cp, sp].forEach(function(el){ if (el) el.style.display = 'none'; });
-  [vb, cb, sb].forEach(function(el){ if (el) el.classList.remove('active'); });
-  if (tab === 'vars') {
-    if (vp) vp.style.display = '';
-    if (vb) vb.classList.add('active');
-  } else if (tab === 'clauses') {
-    if (cp) cp.style.display = '';
-    if (cb) cb.classList.add('active');
-  } else {
-    if (sp) sp.style.display = '';
-    if (sb) sb.classList.add('active');
+  var panels = {vars:'ctab-vars-panel', clauses:'ctab-cls-panel', settings:'ctab-sets-panel', review:'ctab-review-panel'};
+  Object.keys(panels).forEach(function(k){
+    var el = document.getElementById(panels[k]);
+    if (el) el.style.display = (k===tab ? '' : 'none');
+  });
+  // Update step bar markers
+  var c = null;
+  try { c = DB.getContracts(Pages._contractProjId).find(function(x){return x.id===Pages._contractId;}); } catch(e){}
+  Pages._contractWizSteps.forEach(function(id){
+    var btn = document.getElementById('cwiz-step-'+id);
+    if (!btn) return;
+    var done = c ? Pages._contractStepComplete(c, id) : false;
+    btn.classList.toggle('active', id===tab);
+    btn.classList.toggle('done', done && id!==tab);
+    var numEl = btn.querySelector('.cwiz-num');
+    if (numEl) {
+      if (done && id!==tab) numEl.innerHTML = '<i data-lucide="check" style="width:13px;height:13px"></i>';
+      else numEl.textContent = Pages._contractWizMeta[id].n;
+    }
+  });
+  // Update nav buttons
+  var prevBtn = document.getElementById('cwiz-prev');
+  var nextBtn = document.getElementById('cwiz-next');
+  var idx = Pages._contractWizSteps.indexOf(tab);
+  if (prevBtn) prevBtn.style.visibility = (idx<=0 ? 'hidden' : 'visible');
+  if (nextBtn) nextBtn.style.display = (idx>=Pages._contractWizSteps.length-1 ? 'none' : '');
+  if (typeof lucide !== 'undefined') {
+    var bar = document.getElementById('cwiz-steps'); if (bar) lucide.createIcons({rootElement:bar});
+    var nav = document.getElementById('cwiz-nav'); if (nav) lucide.createIcons({rootElement:nav});
   }
 };
 
