@@ -10214,7 +10214,8 @@ Pages.render_templates = function() {
             '<span class="badge iris sm">مخصص</span>' +
           '</div>' +
           '<div style="display:flex;gap:var(--space-2)">' +
-            '<button class="btn btn-sm" style="flex:1;justify-content:center" onclick="Nav.go(\'template-editor\',{templateId:\''+t.id+'\'})"><i data-lucide="pencil"></i>تعديل</button>' +
+            '<button class="btn btn-sm btn-primary" style="flex:1;justify-content:center" onclick="Nav.go(\'template-editor\',{templateId:\''+t.id+'\'})"><i data-lucide="pencil"></i>تعديل</button>' +
+            '<button class="btn btn-sm" style="flex:1;justify-content:center" onclick="Pages.duplicateCustomTemplate(\''+t.id+'\')"><i data-lucide="copy"></i>نسخ</button>' +
             '<button class="btn btn-sm btn-danger" onclick="Pages.deleteCustomTemplateConfirm(\''+t.id+'\')"><i data-lucide="trash-2"></i></button>' +
           '</div>' +
         '</div>';
@@ -10230,7 +10231,10 @@ Pages.render_templates = function() {
         '<div style="width:44px;height:44px;border-radius:var(--radius-sm);background:var(--neutral-100);color:var(--fg-2);display:flex;align-items:center;justify-content:center;margin-bottom:var(--space-3)"><i data-lucide="'+t.icon+'"></i></div>' +
         '<div style="font-size:var(--font-sm);font-weight:600;color:var(--fg-1);margin-bottom:3px">'+t.name+'</div>' +
         '<div style="font-size:var(--font-xs);color:var(--fg-3);margin-bottom:var(--space-3)">'+t.sub+'</div>' +
-        '<button class="btn btn-sm" style="width:100%;justify-content:center" onclick="Pages.duplicateBuiltInTemplate(\''+t.key+'\')"><i data-lucide="copy"></i>نسخ وتخصيص</button>' +
+        '<div style="display:flex;gap:var(--space-2)">' +
+          '<button class="btn btn-sm btn-primary" style="flex:1;justify-content:center" onclick="Pages.duplicateBuiltInTemplate(\''+t.key+'\')"><i data-lucide="pencil"></i>تعديل</button>' +
+          '<button class="btn btn-sm" style="flex:1;justify-content:center" onclick="Pages.copyBuiltInTemplate(\''+t.key+'\')"><i data-lucide="copy"></i>نسخ</button>' +
+        '</div>' +
       '</div>';
     }).join('') +
     '</div>';
@@ -10276,6 +10280,47 @@ Pages.duplicateBuiltInTemplate = function(tplKey) {
   };
   DB.saveCustomTemplate(newTpl);
   Nav.go('template-editor', {templateId: newTpl.id});
+};
+
+/* Copy built-in template silently (no navigation) */
+Pages.copyBuiltInTemplate = function(tplKey) {
+  var tpl = CONTRACT_TEMPLATES[tplKey];
+  if (!tpl) return;
+  var today = (new Date()).toISOString().slice(0,10);
+  var clauses = tpl.clauses.map(function(cl, i) {
+    return { id: DB.uid(), key: cl.key, title: 'المادة '+(CONTRACT_ORDINALS[i]||(i+1).toString())+': '+(cl.baseTitle||cl.key), content: cl.content, enabled: true };
+  });
+  var newTpl = {
+    id: DB.uid(), name: tpl.title + ' (نسخة)', template_type: tplKey,
+    created: today, updated: today, clauses: clauses,
+    cover: {frame_style:'modern', company_name:'', logo:''}, footer_label: 'سري',
+    doc_style: { font_size:14, line_height:1.5, title_size:18, clause_title_size:14, subtitle_size:12 },
+    doc_margins: { top:0, right:2.0, bottom:0, left:2.0 },
+    page_layout: {
+      header: { show:true, image:'', height:180, overlay:[] },
+      footer: { show:true, image:'', height:90, overlay:[{ text:'صفحة {{page_number}} من {{total_pages}}', pos:'bottom-center', font_size:9, color:'#6B7280', font_weight:'400' }] }
+    }
+  };
+  DB.saveCustomTemplate(newTpl);
+  UI.toast('تم نسخ النموذج إلى «نماذجي المخصصة»', 'success');
+  Pages.render_templates();
+};
+
+/* Duplicate an existing custom template */
+Pages.duplicateCustomTemplate = function(id) {
+  var tpls = DB.getCustomTemplates();
+  var src = tpls.find(function(x){ return x.id === id; });
+  if (!src) return;
+  var today = (new Date()).toISOString().slice(0,10);
+  var copy = JSON.parse(JSON.stringify(src));
+  copy.id = DB.uid();
+  copy.name = (src.name || 'نموذج') + ' (نسخة)';
+  copy.created = today;
+  copy.updated = today;
+  if (copy.clauses) copy.clauses = copy.clauses.map(function(cl){ return Object.assign({}, cl, {id: DB.uid()}); });
+  DB.saveCustomTemplate(copy);
+  UI.toast('تم نسخ النموذج بنجاح', 'success');
+  Pages.render_templates();
 };
 
 Pages.deleteCustomTemplateConfirm = function(id) {
