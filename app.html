@@ -2559,8 +2559,29 @@ var DB = {
   },
   saveFin: function(pid, d) {
     localStorage.setItem('buad2_fin_'+pid, JSON.stringify(d));
-    DB._scheduleSave();
+    DB._scheduleFinSave(pid, d);
   }
+};
+
+// Per-project fin save: pushes ONLY this project's data via /api/fin/:pid.
+// The server updates workspace.fin[pid] atomically without touching other projects,
+// so two users editing different projects never overwrite each other.
+DB._finTimers     = {};
+DB._finPending    = {}; // pid -> latest fin data awaiting push
+DB._scheduleFinSave = function(pid, d) {
+  DB._finPending[pid] = d;
+  if (!DB._token) return;
+  clearTimeout(DB._finTimers[pid]);
+  DB._finTimers[pid] = setTimeout(function() {
+    var payload = DB._finPending[pid];
+    if (!payload) return;
+    delete DB._finPending[pid];
+    fetch('/api/fin/' + pid, {
+      method: 'PUT',
+      headers: DB._apiHeaders(),
+      body: JSON.stringify(payload)
+    }).catch(function(e) { console.warn('Fin save failed:', e); });
+  }, 150);
 };
 DB.getSettings = function() {
   try { return JSON.parse(localStorage.getItem('buad2_settings') || '{}'); } catch(e) { return {}; }
@@ -2602,18 +2623,34 @@ DB._scheduleSave = function() {
 
 // Flush any pending (debounced) save immediately.
 // Used on logout (before token is cleared) and on page hide/unload as a safety net.
-// Emergency flush on page unload: synchronous XHR guarantees completion before the page tears down.
-// Async fetch (even with keepalive) is unreliable at unload for large workspaces (64 KB limit).
+// Emergency flush on page unload / logout: synchronous XHR guarantees completion before
+// the page tears down. Flushes per-project fin saves first (targeted endpoint, atomic),
+// then the full workspace if other sections (clients/projects/settings) have pending changes.
 DB._flushNow = function() {
-  if (!DB._token || !DB._pendingSave) return;
+  if (!DB._token) return;
+  // Flush pending per-project fin saves via /api/fin/:pid (server-side atomic merge)
+  Object.keys(DB._finPending || {}).forEach(function(pid) {
+    clearTimeout(DB._finTimers[pid]);
+    var data = DB._finPending[pid];
+    delete DB._finPending[pid];
+    try {
+      var xhr = new XMLHttpRequest();
+      xhr.open('PUT', '/api/fin/' + pid, false); // synchronous
+      xhr.setRequestHeader('Content-Type', 'application/json');
+      xhr.setRequestHeader('Authorization', 'Bearer ' + DB._token);
+      xhr.send(JSON.stringify(data));
+    } catch (e) { /* best-effort */ }
+  });
+  // Flush full workspace if non-fin sections have pending changes
+  if (!DB._pendingSave) return;
   clearTimeout(DB._saveTimer);
   DB._pendingSave = false;
   try {
-    var xhr = new XMLHttpRequest();
-    xhr.open('PUT', '/api/workspace', false); // synchronous
-    xhr.setRequestHeader('Content-Type', 'application/json');
-    xhr.setRequestHeader('Authorization', 'Bearer ' + DB._token);
-    xhr.send(JSON.stringify(DB._buildWorkspace()));
+    var xhr2 = new XMLHttpRequest();
+    xhr2.open('PUT', '/api/workspace', false); // synchronous
+    xhr2.setRequestHeader('Content-Type', 'application/json');
+    xhr2.setRequestHeader('Authorization', 'Bearer ' + DB._token);
+    xhr2.send(JSON.stringify(DB._buildWorkspace()));
   } catch (e) { /* best-effort */ }
 };
 if (typeof window !== 'undefined') {
