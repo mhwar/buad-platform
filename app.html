@@ -2569,7 +2569,6 @@ var DB = {
   saveFin: function(pid, d) {
     localStorage.setItem('buad2_fin_'+pid, JSON.stringify(d));
     DB._scheduleFinSave(pid, d);
-    DB._scheduleSave(); // backup: full workspace also pushed (handles settings/projects etc.)
   }
 };
 
@@ -2612,9 +2611,18 @@ DB._syncFinish = function(ok) {
    CRITICAL: _finPending[pid] is kept until the server CONFIRMS receipt so that
    _flushNow can still resend if the user refreshes before the fetch completes. */
 DB._finTimers  = {};
-DB._finPending = {};
+// Persist _finPending across page refreshes so _pullFromServer can never silently
+// overwrite unsaved local data and so startup can retry any failed saves.
+DB._finPending = (function(){
+  try { return JSON.parse(localStorage.getItem('buad2_fin_pending')||'{}'); }
+  catch(e){ return {}; }
+})();
+DB._finPendingFlush = function() {
+  localStorage.setItem('buad2_fin_pending', JSON.stringify(DB._finPending));
+};
 DB._scheduleFinSave = function(pid, d) {
-  DB._finPending[pid] = d;  // set immediately; cleared only on server success
+  DB._finPending[pid] = d;
+  DB._finPendingFlush();
   if (!DB._token) return;
   clearTimeout(DB._finTimers[pid]);
   DB._finTimers[pid] = setTimeout(function() {
@@ -2627,7 +2635,10 @@ DB._scheduleFinSave = function(pid, d) {
       body: JSON.stringify(payload)
     }).then(function(r) {
       if (r.ok) {
-        if (DB._finPending[pid] === payload) delete DB._finPending[pid];
+        if (DB._finPending[pid] === payload) {
+          delete DB._finPending[pid];
+          DB._finPendingFlush();
+        }
       }
       DB._syncFinish(r.ok);
     }).catch(function(e) {
@@ -2694,6 +2705,7 @@ DB._flushNow = function() {
       xhr.send(JSON.stringify(data));
     } catch (e) { /* best-effort */ }
   });
+  DB._finPendingFlush(); // persist cleared state
   // Flush full workspace if non-fin sections have pending changes
   if (!DB._pendingSave) return;
   clearTimeout(DB._saveTimer);
@@ -2780,6 +2792,8 @@ DB._pullFromServer = function() {
       }
       if (ws.fin) {
         Object.keys(ws.fin).forEach(function(pid) {
+          // Skip projects with unsaved local changes — local data is authoritative until confirmed.
+          if (DB._finPending[pid]) return;
           localStorage.setItem('buad2_fin_' + pid, JSON.stringify(ws.fin[pid]));
         });
       }
@@ -15098,6 +15112,16 @@ Pages._initApp = function() {
     Auth.refreshSession().then(function(){
       Pages._updateSidebarUser();
       return DB._pullFromServer();
+    }).then(function() {
+      // Re-apply and retry any fin data that failed to reach the server in a previous session.
+      // _pullFromServer skipped these projects; make sure localStorage matches pending data.
+      var pending = Object.keys(DB._finPending);
+      if (pending.length) {
+        pending.forEach(function(pid) {
+          localStorage.setItem('buad2_fin_' + pid, JSON.stringify(DB._finPending[pid]));
+          DB._scheduleFinSave(pid, DB._finPending[pid]);
+        });
+      }
     }).then(doNav);
     DB._pullUsers(); // refresh users list in background
     DB._getRequests().then(function(reqs){ Pages._requests = reqs || []; Pages._updateRequestsBadge(); }); // website requests badge
