@@ -2313,6 +2313,15 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
 .cmb-tab.active{color:var(--iris-600);background:var(--iris-50)}
 .cmb-tab [data-lucide]{width:17px;height:17px;stroke-width:1.5}
 .cmb-actions{display:flex;gap:var(--space-1_5);margin-inline-start:auto}
+/* ── Sync status badge ── */
+#sync-badge{position:fixed;bottom:20px;left:0;right:0;margin:0 auto;width:fit-content;
+  z-index:9001;align-items:center;gap:6px;padding:7px 18px;border-radius:30px;
+  font-size:13px;font-family:inherit;font-weight:600;pointer-events:none;display:none;
+  box-shadow:0 3px 14px rgba(0,0,0,.18);transition:opacity .2s;}
+#sync-badge.sync-saving{background:#fef9c3;color:#854d0e;}
+#sync-badge.sync-saved{background:#dcfce7;color:#166534;}
+#sync-badge.sync-error{background:#fee2e2;color:#991b1b;}
+@keyframes spin{to{transform:rotate(360deg)}}
 </style>
 </head>
 <body>
@@ -2560,27 +2569,71 @@ var DB = {
   saveFin: function(pid, d) {
     localStorage.setItem('buad2_fin_'+pid, JSON.stringify(d));
     DB._scheduleFinSave(pid, d);
+    DB._scheduleSave(); // backup: full workspace also pushed (handles settings/projects etc.)
   }
 };
 
-// Per-project fin save: pushes ONLY this project's data via /api/fin/:pid.
-// The server updates workspace.fin[pid] atomically without touching other projects,
-// so two users editing different projects never overwrite each other.
-DB._finTimers     = {};
-DB._finPending    = {}; // pid -> latest fin data awaiting push
+/* ── Sync status indicator ──────────────────────────────────────────── */
+DB._syncCount = 0;  // number of in-flight saves
+DB._syncHadError = false;
+DB._syncHideTimer = null;
+DB._syncShow = function(cls, text) {
+  var badge = document.getElementById('sync-badge');
+  if (!badge) return;
+  clearTimeout(DB._syncHideTimer);
+  badge.className = cls;
+  badge.textContent = text;
+  badge.style.display = 'flex';
+};
+DB._syncUpdate = function() {
+  if (DB._syncHadError) {
+    DB._syncShow('sync-error', '⚠ فشل الحفظ — لا تُحدّث الصفحة');
+    return;
+  }
+  if (DB._syncCount > 0) {
+    DB._syncShow('sync-saving', '⟳ جاري الحفظ...');
+    return;
+  }
+  DB._syncShow('sync-saved', '✓ تم الحفظ');
+  DB._syncHideTimer = setTimeout(function() {
+    var badge = document.getElementById('sync-badge');
+    if (badge) badge.style.display = 'none';
+  }, 2500);
+};
+DB._syncBegin  = function() { DB._syncCount++; DB._syncUpdate(); };
+DB._syncFinish = function(ok) {
+  DB._syncCount = Math.max(0, DB._syncCount - 1);
+  if (!ok) DB._syncHadError = true; else DB._syncHadError = false;
+  DB._syncUpdate();
+};
+
+/* Per-project fin save: pushes ONLY this project's data via /api/fin/:pid.
+   The server updates workspace.fin[pid] atomically without touching other projects.
+   CRITICAL: _finPending[pid] is kept until the server CONFIRMS receipt so that
+   _flushNow can still resend if the user refreshes before the fetch completes. */
+DB._finTimers  = {};
+DB._finPending = {};
 DB._scheduleFinSave = function(pid, d) {
-  DB._finPending[pid] = d;
+  DB._finPending[pid] = d;  // set immediately; cleared only on server success
   if (!DB._token) return;
   clearTimeout(DB._finTimers[pid]);
   DB._finTimers[pid] = setTimeout(function() {
     var payload = DB._finPending[pid];
-    if (!payload) return;
-    delete DB._finPending[pid];
+    if (!payload || !DB._token) return;
+    DB._syncBegin();
     fetch('/api/fin/' + pid, {
       method: 'PUT',
       headers: DB._apiHeaders(),
       body: JSON.stringify(payload)
-    }).catch(function(e) { console.warn('Fin save failed:', e); });
+    }).then(function(r) {
+      if (r.ok) {
+        if (DB._finPending[pid] === payload) delete DB._finPending[pid];
+      }
+      DB._syncFinish(r.ok);
+    }).catch(function(e) {
+      console.warn('Fin save failed:', e);
+      DB._syncFinish(false);
+    });
   }, 150);
 };
 DB.getSettings = function() {
@@ -2684,6 +2737,7 @@ DB._buildWorkspace = function() {
 DB._pushToServer = function() {
   if (!DB._token) return Promise.resolve(false);
   DB._pendingSave = false;
+  DB._syncBegin();
   var localWs = DB._buildWorkspace();
   return fetch('/api/workspace', { headers: DB._apiHeaders() })
     .then(function(r) { return r.ok ? r.json() : null; })
@@ -2703,8 +2757,8 @@ DB._pushToServer = function() {
         body: JSON.stringify(merged)
       });
     })
-    .then(function(r) { return r && r.ok; })
-    .catch(function(e) { console.warn('Sync push failed:', e); return false; });
+    .then(function(r) { var ok = !!(r && r.ok); DB._syncFinish(ok); return ok; })
+    .catch(function(e) { console.warn('Sync push failed:', e); DB._syncFinish(false); return false; });
 };
 
 DB._pullFromServer = function() {
@@ -15112,6 +15166,9 @@ Pages._initApp = function() {
   Pages._initApp();
 })();
 </script>
+
+<!-- Sync status badge (shows when data is being saved / saved / failed) -->
+<div id="sync-badge" role="status" aria-live="polite"></div>
 
 <!-- Ctrl Drawer -->
 <div id="proj-kebab-portal" style="position:fixed;z-index:99999;top:0;left:0;pointer-events:none"></div>
