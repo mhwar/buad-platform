@@ -6777,9 +6777,6 @@ Pages.saveProjectInCtrl = function(projId) {
   projects[idx].type   = document.getElementById('cp-type').value;
   projects[idx].status = document.getElementById('cp-status').value;
   DB.saveProjects(projects);
-  if (projects[idx].status === 'active' && oldStatus !== 'active') {
-    Pages._pfSyncProjectFee(projId, projects[idx].name);
-  }
   UI.toast('تم حفظ بيانات المشروع','success');
   Pages.closeCtrlDrawer();
   Pages.render_fin({projId: projId, tab: Pages._finTab});
@@ -6871,9 +6868,7 @@ Pages.openProjectDatesModal = function(projId) {
   Pages.closeProjKebab();
   var projects = DB.getProjects();
   var proj = projects.find(function(p){ return p.id===projId; })||{};
-  var pf = DB.getPf();
-  var incEntry = (pf.income||[]).find(function(e){ return e.project_id===projId; });
-  var payDate = incEntry ? (incEntry.payment_date||incEntry.date||'') : '';
+  var payDate = proj.pay_date || '';
 
   var typeOpt = function(v,l){ return '<option value="'+v+'"'+(proj.type===v?' selected':'')+'>'+l+'</option>'; };
 
@@ -6936,21 +6931,9 @@ Pages.saveProjectDates = function(projId) {
   projects[idx].status     = g('pjd-status');
   projects[idx].start_date = g('pjd-start');
   projects[idx].end_date   = g('pjd-end');
+  projects[idx].pay_date   = g('pjd-pay');
   projects[idx].note       = g('pjd-note');
   DB.saveProjects(projects);
-  if (projects[idx].status === 'active' && oldStatus !== 'active') {
-    Pages._pfSyncProjectFee(projId, projects[idx].name);
-  }
-  /* update payment_date on pf income entry */
-  var payVal = g('pjd-pay');
-  if (payVal) {
-    var pf = DB.getPf();
-    var eIdx = (pf.income||[]).findIndex(function(e){ return e.project_id===projId; });
-    if (eIdx >= 0) {
-      pf.income[eIdx].payment_date = payVal;
-      DB.savePf(pf);
-    }
-  }
   UI.closeModalForce();
   UI.toast('تم حفظ بيانات المشروع', 'success');
   if (typeof Pages._finProjId !== 'undefined' && Pages._finProjId === projId) {
@@ -6965,101 +6948,12 @@ Pages.setProjStatus = function(projId, status) {
   var oldStatus = projects[idx].status;
   projects[idx].status = status;
   DB.saveProjects(projects);
-  if (status === 'active' && oldStatus !== 'active') {
-    Pages._pfSyncProjectFee(projId, projects[idx].name);
-  }
   Pages.closeProjKebab();
   Pages.render_fin({projId:projId, tab:Pages._finTab});
   var labels = {draft:'مسودة',active:'جاري التنفيذ',completed:'مكتمل',paused:'متوقف مؤقتاً',cancelled:'ملغي'};
   UI.toast('الحالة: '+labels[status], 'success');
 };
 
-Pages._pfSyncProjectFee = function(projId, projName) {
-  var r = FinCalc.calc(projId);
-  if (!r || !r.execAmt || r.execAmt <= 0) return;
-  var pf = DB.getPf();
-  if (!pf.income) pf.income = [];
-  if (!pf.expenses) pf.expenses = [];
-  var alreadySynced = (pf.income||[]).some(function(e){ return e.project_id === projId; });
-  if (!alreadySynced) {
-    pf.income.push({
-      id: DB.uid(), project_id: projId,
-      date: new Date().toISOString().slice(0,10),
-      desc: 'أتعاب تنفيذ: ' + (projName || projId),
-      category: 'project_fee', amount: r.execAmt,
-      note: 'تم الإضافة تلقائياً عند تفعيل المشروع'
-    });
-  }
-  Pages._pfSyncProjectExpenses(projId, projName, r, pf);
-  DB.savePf(pf);
-  if (!alreadySynced) UI.toast('تم عكس أتعاب المنصة في مالية المنصة', 'success');
-};
-
-Pages._pfSyncProjectExpenses = function(projId, projName, r, pf) {
-  if (!pf) pf = DB.getPf();
-  if (!pf.expenses) pf.expenses = [];
-  var expMap = {};
-  (pf.expenses||[]).forEach(function(e){
-    if (e.project_id === projId && e.project_expense_cat) expMap[e.project_expense_cat] = e;
-  });
-  /* البنود التي تُعكس تلقائياً كمصاريف على مستوى المنصة.
-     opExpenses = المصاريف التشغيلية المسجَّلة داخل المشروع — تُخصم في حال وجودها */
-  var items = [
-    {cat:'cf',  lbl:'أتعاب الاستشاري المالي', cat2:'consulting', amount: Number(r.cfAmt)||0},
-    {cat:'mkt', lbl:'تسويق ومصاريف مبيعات',   cat2:'marketing',  amount: Number(r.mkt)||0},
-    {cat:'op',  lbl:'مصاريف تشغيلية',          cat2:'other',      amount: Number(r.opExpenses)||0}
-  ];
-  items.forEach(function(item) {
-    var existing = expMap[item.cat];
-    if (item.amount > 0) {
-      if (existing) {
-        existing.amount   = item.amount;
-        existing.desc     = item.lbl + ': ' + (projName||projId);
-        existing.category = item.cat2;
-      } else {
-        pf.expenses.push({
-          id: DB.uid(), project_id: projId, project_expense_cat: item.cat,
-          date: new Date().toISOString().slice(0,10),
-          desc: item.lbl + ': ' + (projName||projId),
-          category: item.cat2, amount: item.amount,
-          note: 'تزامن تلقائي من المشروع'
-        });
-      }
-    } else if (existing) {
-      /* انخفض المبلغ إلى صفر — نحذف القيد المتزامن سابقاً */
-      pf.expenses = pf.expenses.filter(function(e){ return e !== existing; });
-    }
-  });
-};
-
-Pages.pfSyncAllProjects = function() {
-  var projects = DB.getProjects().filter(function(p){
-    return p.status === 'active' || p.status === 'completed';
-  });
-  var pf = DB.getPf();
-  if (!pf.income) pf.income = [];
-  if (!pf.expenses) pf.expenses = [];
-  var syncedIncIds = (pf.income||[]).filter(function(e){ return e.project_id; }).map(function(e){ return e.project_id; });
-  var added = 0;
-  projects.forEach(function(p) {
-    var r = FinCalc.calc(p.id);
-    if (!r) return;
-    if (syncedIncIds.indexOf(p.id) < 0 && (r.execAmt||0) > 0) {
-      pf.income.push({
-        id: DB.uid(), project_id: p.id,
-        date: (p.created || new Date().toISOString()).slice(0,10),
-        desc: 'أتعاب تنفيذ: ' + (p.name || p.id),
-        category: 'project_fee', amount: r.execAmt,
-        note: 'تم الإضافة تلقائياً'
-      });
-      added++;
-    }
-    Pages._pfSyncProjectExpenses(p.id, p.name, r, pf);
-  });
-  DB.savePf(pf);
-  UI.toast(added > 0 ? 'تمت مزامنة '+added+' مشروع — مع عكس أتعاب وتسويق ومصاريف التشغيل' : 'تمت مزامنة مصاريف المشاريع (أتعاب، تسويق، تشغيل)', 'success');
-  Pages.renderPfLedger(Pages._pfLedgerFilter||'projects', Pages._pfPeriodFilter||{type:'all_time'});
-};
 
 Pages.setProjVisibility = function(projId, vis) {
   var projects = DB.getProjects();
@@ -12578,6 +12472,45 @@ Pages._pfCalc = function(pf, from, to) {
   return { income: income, expenses: expenses, netProfit: income - expenses };
 };
 
+/* حذف قيود المزامنة الوهمية التي أنشأتها النسخة السابقة من النظام */
+Pages._pfCleanSyncArtifacts = function() {
+  var pf = DB.getPf();
+  var beforeInc = (pf.income||[]).length;
+  var beforeExp = (pf.expenses||[]).length;
+  pf.income   = (pf.income  ||[]).filter(function(e){ return !e.project_id && e.category !== 'project_fee'; });
+  pf.expenses = (pf.expenses||[]).filter(function(e){ return !e.project_id; });
+  if (pf.income.length !== beforeInc || pf.expenses.length !== beforeExp) {
+    DB.savePf(pf);
+  }
+};
+
+/* حساب الأرباح الكاملة: مشاريع (من FinCalc) + خدمات يدوية − مصاريف يدوية */
+Pages._pfCalcFull = function(pf, from, to) {
+  function inRange(d){ if(!d) return true; if(from && d<from) return false; if(to && d>to) return false; return true; }
+  var projects = DB.getProjects();
+  var projectProfit = projects
+    .filter(function(p){ return p.status==='active' || p.status==='completed'; })
+    .reduce(function(s,p){
+      var r; try { r = FinCalc.calc(p.id); } catch(ex){ r = null; }
+      return s + Math.max(0, (r && r.profit) ? Number(r.profit) : 0);
+    }, 0);
+  var serviceIncome = (pf.income||[])
+    .filter(function(e){ return inRange(e.payment_date||e.date); })
+    .reduce(function(s,e){ return s+(Number(e.amount)||0); }, 0);
+  var platformExpenses = (pf.expenses||[])
+    .filter(function(e){ return inRange(e.date); })
+    .reduce(function(s,e){ return s+(Number(e.amount)||0); }, 0);
+  var netProfit = projectProfit + serviceIncome - platformExpenses;
+  return {
+    projectProfit:    projectProfit,
+    serviceIncome:    serviceIncome,
+    platformExpenses: platformExpenses,
+    income:           projectProfit + serviceIncome,
+    expenses:         platformExpenses,
+    netProfit:        netProfit
+  };
+};
+
 Pages._pfRetainedTotals = function(pf) {
   var totals = { ops: 0, dev: 0, reserve: 0 };
   (pf.distributions||[]).filter(function(d){ return d.status==='completed' && (d.retained_amount||0) > 0; })
@@ -12636,6 +12569,7 @@ Pages.render_pf = function() {
     if (typeof lucide !== 'undefined') lucide.createIcons({rootElement: pg});
     return;
   }
+  Pages._pfCleanSyncArtifacts();
   if (!['overview','ledger','distrib'].includes(Pages._pfTab)) Pages._pfTab = 'overview';
   function tab(id, lbl, icon) {
     return '<button class="hero-tab-pill'+(Pages._pfTab===id?' active':'')+'" onclick="Pages.switchPfTab(\''+id+'\')">'+
@@ -12699,8 +12633,8 @@ Pages.renderPfOverview = function(period) {
     return null;
   }
   var range  = getRange(p);
-  var c      = Pages._pfCalc(pf, range?range[0]:null, range?range[1]:null);
-  var cAll   = Pages._pfCalc(pf, null, null);
+  var c      = Pages._pfCalcFull(pf, range?range[0]:null, range?range[1]:null);
+  var cAll   = Pages._pfCalcFull(pf, null, null);
 
   /* period label */
   var pLabelMap = {year:'السنة '+yr, q1:'ق١ '+yr, q2:'ق٢ '+yr, q3:'ق٣ '+yr, q4:'ق٤ '+yr, all_time:'الكل', custom:'مخصص'};
@@ -12752,38 +12686,38 @@ Pages.renderPfOverview = function(period) {
   /* ── Period KPIs ── */
   var kpis =
     '<div class="kpi-grid" style="margin-bottom:var(--space-4)">'+
+      '<div class="kpi-card"><div class="kpi-card-accent" style="background:var(--iris-500)"></div>'+
+        '<div class="kpi-card-icon" style="background:var(--iris-50);color:var(--iris-600)"><i data-lucide="briefcase"></i></div>'+
+        '<div class="kpi-card-label">أرباح المشاريع (الكل)</div>'+
+        '<div class="kpi-card-value" style="color:var(--iris-700)"><span class="mono">'+UI.fmt(cAll.projectProfit)+'</span></div>'+
+        '<div class="kpi-card-sub">ريال سعودي</div></div>'+
       '<div class="kpi-card"><div class="kpi-card-accent" style="background:var(--success-500)"></div>'+
         '<div class="kpi-card-icon" style="background:var(--success-50);color:var(--success-600)"><i data-lucide="trending-up"></i></div>'+
-        '<div class="kpi-card-label">إيرادات '+pLabel+'</div>'+
-        '<div class="kpi-card-value" style="color:var(--success-700)"><span class="mono">'+UI.fmt(c.income)+'</span></div>'+
+        '<div class="kpi-card-label">إيرادات الخدمات — '+pLabel+'</div>'+
+        '<div class="kpi-card-value" style="color:var(--success-700)"><span class="mono">'+UI.fmt(c.serviceIncome)+'</span></div>'+
         '<div class="kpi-card-sub">ريال سعودي</div></div>'+
       '<div class="kpi-card"><div class="kpi-card-accent" style="background:var(--danger-500)"></div>'+
         '<div class="kpi-card-icon" style="background:var(--danger-50);color:var(--danger-600)"><i data-lucide="trending-down"></i></div>'+
-        '<div class="kpi-card-label">مصروفات '+pLabel+'</div>'+
-        '<div class="kpi-card-value" style="color:var(--danger-700)"><span class="mono">'+UI.fmt(c.expenses)+'</span></div>'+
+        '<div class="kpi-card-label">مصاريف التشغيل — '+pLabel+'</div>'+
+        '<div class="kpi-card-value" style="color:var(--danger-700)"><span class="mono">'+UI.fmt(c.platformExpenses)+'</span></div>'+
         '<div class="kpi-card-sub">ريال سعودي</div></div>'+
-      '<div class="kpi-card"><div class="kpi-card-accent" style="background:'+(c.netProfit>=0?'var(--primary-500)':'var(--danger-500)')+'"></div>'+
+      '<div class="kpi-card"><div class="kpi-card-accent" style="background:'+(cAll.netProfit>=0?'var(--primary-500)':'var(--danger-500)')+'"></div>'+
         '<div class="kpi-card-icon" style="background:var(--primary-50);color:var(--primary-600)"><i data-lucide="circle-dollar-sign"></i></div>'+
-        '<div class="kpi-card-label">صافي الربح — '+pLabel+'</div>'+
-        '<div class="kpi-card-value" style="color:'+(c.netProfit>=0?'var(--primary-700)':'var(--danger-700)')+'"><span class="mono">'+UI.fmt(Math.abs(c.netProfit))+'</span></div>'+
-        '<div class="kpi-card-sub">'+(c.netProfit>=0?'ربح':'خسارة')+'</div></div>'+
-      '<div class="kpi-card"><div class="kpi-card-accent" style="background:var(--accent-500)"></div>'+
-        '<div class="kpi-card-icon" style="background:var(--accent-50);color:var(--accent-600)"><i data-lucide="users-round"></i></div>'+
-        '<div class="kpi-card-label">موزَّع — '+pLabel+'</div>'+
-        '<div class="kpi-card-value" style="color:var(--accent-600)"><span class="mono">'+UI.fmt(distPeriod)+'</span></div>'+
-        '<div class="kpi-card-sub">'+(pf.distributions||[]).filter(function(d){return d.status==='completed'&&distInRange(d);}).length+' توزيع</div></div>'+
+        '<div class="kpi-card-label">صافي الأرباح الكلي</div>'+
+        '<div class="kpi-card-value" style="color:'+(cAll.netProfit>=0?'var(--primary-700)':'var(--danger-700)')+'"><span class="mono">'+UI.fmt(Math.abs(cAll.netProfit))+'</span></div>'+
+        '<div class="kpi-card-sub">'+(cAll.netProfit>=0?'ربح':'خسارة')+'</div></div>'+
     '</div>';
 
   /* ── All-time summary bar ── */
   var summaryBar =
     '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:var(--space-4)">'+
-      '<div style="background:var(--success-50);border:1px solid var(--success-200);border-radius:10px;padding:12px 16px">'+
-        '<div style="font-size:11px;color:var(--success-600);font-weight:600;margin-bottom:4px">إجمالي الإيرادات الكلي</div>'+
-        '<div class="mono" style="font-size:18px;font-weight:800;color:var(--success-700)">'+UI.fmt(cAll.income)+' <span style="font-size:12px;font-weight:500">ر.س</span></div>'+
+      '<div style="background:var(--iris-50);border:1px solid var(--iris-200);border-radius:10px;padding:12px 16px">'+
+        '<div style="font-size:11px;color:var(--iris-600);font-weight:600;margin-bottom:4px">إجمالي أرباح المشاريع</div>'+
+        '<div class="mono" style="font-size:18px;font-weight:800;color:var(--iris-700)">'+UI.fmt(cAll.projectProfit)+' <span style="font-size:12px;font-weight:500">ر.س</span></div>'+
       '</div>'+
       '<div style="background:var(--primary-50);border:1px solid var(--primary-200);border-radius:10px;padding:12px 16px">'+
         '<div style="font-size:11px;color:var(--primary-600);font-weight:600;margin-bottom:4px">إجمالي صافي الأرباح</div>'+
-        '<div class="mono" style="font-size:18px;font-weight:800;color:var(--primary-700)">'+UI.fmt(cAll.netProfit)+' <span style="font-size:12px;font-weight:500">ر.س</span></div>'+
+        '<div class="mono" style="font-size:18px;font-weight:800;color:'+(cAll.netProfit>=0?'var(--primary-700)':'var(--danger-700)')+'">'+UI.fmt(cAll.netProfit)+' <span style="font-size:12px;font-weight:500">ر.س</span></div>'+
       '</div>'+
       '<div style="background:var(--accent-50);border:1px solid var(--accent-200);border-radius:10px;padding:12px 16px;cursor:pointer" onclick="Pages.switchPfTab(\'distrib\')" title="عرض التوزيعات">'+
         '<div style="font-size:11px;color:var(--accent-600);font-weight:600;margin-bottom:4px">إجمالي التوزيعات</div>'+
@@ -12968,56 +12902,45 @@ Pages.renderPfLedger = function(filter, period) {
   if (Pages._pfLedgerFilter === 'projects') {
     var clients = DB.getClients();
     var _stColors = {active:['var(--success-700)','var(--success-50)'], completed:['var(--iris-700)','var(--iris-50)'], paused:['var(--warning-700)','var(--warning-50)'], cancelled:['var(--fg-4)','var(--neutral-100)'], draft:['var(--fg-3)','var(--neutral-100)']};
-    var projEntries = (pf.income||[]).filter(function(e){
-      return e.category==='project_fee' && e.project_id && incInRange(e);
+    var allProj = projects.filter(function(p){
+      return p.status==='active' || p.status==='completed' || p.status==='paused';
     });
 
     var totals = {contract:0, vat:0, profit:0, remaining:0};
 
-    var projRows = projEntries.map(function(incEntry){
-      var projId = incEntry.project_id;
+    var projRows = allProj.map(function(proj){
+      var projId = proj.id;
       var isExp = !!Pages._pfExpandedProjects[projId];
-      var proj = projects.find(function(p){ return p.id===projId; });
       var fc = null;
       try { fc = FinCalc.calc(projId); } catch(ex){}
 
       var contractVal = fc ? (Number(fc.grossTotal)||0) : 0;
       var vatAmt      = fc ? (Number(fc.vatAmt)||0)     : 0;
-      var netProfit   = fc ? (Number(fc.profit)||0)     : (Number(incEntry.amount)||0);
-      var execFee     = Number(incEntry.amount)||0;
-      var projExp     = (pf.expenses||[]).filter(function(e){ return e.project_id===projId; });
-      var totalProjExp= projExp.reduce(function(s,e){return s+(Number(e.amount)||0);},0);
-      var remaining   = fc ? (Number(fc.remaining)||0) : 0; // المتبقي من قيمة العقد
+      var netProfit   = fc ? (Number(fc.profit)||0)     : 0;
+      var remaining   = fc ? (Number(fc.remaining)||0)  : 0;
 
       totals.contract  += contractVal;
       totals.vat       += vatAmt;
       totals.profit    += netProfit;
       totals.remaining += remaining;
 
-      var clOfProj = proj ? clients.find(function(c){ return c.id===proj.client_id; }) : null;
-      var _stc = _stColors[proj?proj.status:'draft']||_stColors.draft;
-      var metaLine = proj ? '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:3px">'+
+      var clOfProj = clients.find(function(c){ return c.id===proj.client_id; });
+      var _stc = _stColors[proj.status]||_stColors.draft;
+      var metaLine = '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:3px">'+
         (clOfProj?'<span style="font-size:11px;color:var(--fg-3);font-weight:500">'+UI.escHtml(clOfProj.name)+'</span>':'')+
         '<span style="font-size:9px;font-weight:700;padding:1px 7px;border-radius:10px;color:'+_stc[0]+';background:'+_stc[1]+'">'+statusLabel(proj.status)+'</span>'+
         '<span style="font-size:10px;color:var(--fg-4)">'+typeLabel(proj.type)+'</span>'+
         (proj.location?'<span style="font-size:10px;color:var(--fg-4)">• '+UI.escHtml(proj.location)+'</span>':'')+
-      '</div>' : '';
+      '</div>';
 
-      var payDate = incEntry.payment_date || '';
-      var execDate = incEntry.date || '';
-      var dateHtml = payDate ?
-        '<div style="font-size:11px;color:var(--fg-4)">تنفيذ: '+UI.escHtml(execDate)+'<span style="margin:0 4px">•</span>استلام: '+UI.escHtml(payDate)+'</div>' :
-        '<div style="font-size:11px;color:var(--fg-4);display:flex;align-items:center;gap:4px">'+UI.escHtml(execDate)+
-          '<button class="btn btn-sm btn-ghost" style="padding:0 4px;font-size:10px;color:var(--primary-500);height:18px" title="تحديد تاريخ الاستلام" onclick="event.stopPropagation();Pages.editPaymentDate(\''+incEntry.id+'\')">+استلام</button></div>';
-
-      var deferBadge = incEntry.deferred ?
-        ' <span style="font-size:9px;font-weight:700;color:var(--warning-700);background:var(--warning-50);padding:1px 5px;border-radius:8px">مؤجل</span>' : '';
+      var projDate = proj.start_date || (proj.created||'').slice(0,10) || '';
+      var dateHtml = projDate ? '<div style="font-size:11px;color:var(--fg-4)">'+UI.escHtml(projDate)+'</div>' : '';
 
       var arrow = '<span style="font-size:10px;color:var(--fg-4);display:inline-block;transition:transform .15s;transform:rotate('+(isExp?'90':'0')+'deg)">▶</span>';
 
       var mainRow = '<tr style="cursor:pointer'+(isExp?';background:var(--bg-soft)':'')+'" onclick="Pages.togglePfProjectExpand(\''+projId+'\')">'+
         '<td style="min-width:200px"><div style="display:flex;align-items:flex-start;gap:8px">'+arrow+
-          '<div><div style="font-weight:600;color:var(--fg-1)">'+UI.escHtml(proj?proj.name:(incEntry.desc||'—'))+deferBadge+'</div>'+metaLine+dateHtml+'</div>'+
+          '<div><div style="font-weight:600;color:var(--fg-1)">'+UI.escHtml(proj.name||'—')+'</div>'+metaLine+dateHtml+'</div>'+
         '</div></td>'+
         '<td class="mono" style="color:var(--fg-2)">'+UI.fmt(contractVal)+'</td>'+
         '<td class="mono" style="color:var(--fg-3)">'+UI.fmt(vatAmt)+'</td>'+
@@ -13026,15 +12949,13 @@ Pages.renderPfLedger = function(filter, period) {
         '<td onclick="event.stopPropagation()" style="white-space:nowrap">'+
           '<button class="btn btn-sm btn-ghost" title="فتح ملف المشروع" onclick="UI.closeModalForce();Nav.go(\'fin\',{projId:\''+projId+'\'})">'+
             '<i data-lucide="external-link" style="width:13px;height:13px"></i></button>'+
-          '<button class="btn btn-sm btn-ghost" onclick="Pages.openProjectActionsMenu(\''+projId+'\',\''+incEntry.id+'\')">'+
-            '<i data-lucide="more-vertical" style="width:14px;height:14px"></i></button>'+
         '</td>'+
       '</tr>';
 
       var detailRows = '';
-      if (isExp) {
+      if (isExp && fc) {
         function _br(lbl,val,color){ return '<div style="display:flex;justify-content:space-between;padding:5px 0;font-size:12px;border-bottom:1px dashed var(--border-1)"><span style="color:var(--fg-3)">'+lbl+'</span><span class="mono" style="color:'+(color||'var(--fg-1)')+'">'+UI.fmt(val)+' ر.س</span></div>'; }
-        var finBreakdown = fc ? '<div style="background:var(--bg-elevated);border:1px solid var(--border-1);border-radius:8px;padding:10px 14px;margin-bottom:10px">'+
+        var finBreakdown = '<div style="background:var(--bg-elevated);border:1px solid var(--border-1);border-radius:8px;padding:10px 14px;margin-bottom:10px">'+
           '<div style="font-size:11px;font-weight:700;color:var(--fg-3);margin-bottom:6px">التفاصيل المالية للمشروع</div>'+
           _br('قيمة العقد (شامل الضريبة)', fc.grossTotal, 'var(--iris-700)')+
           _br('الصافي قبل الضريبة', fc.contractNet)+
@@ -13043,44 +12964,15 @@ Pages.renderPfLedger = function(filter, period) {
           (fc.mkt?_br('التسويق', fc.mkt):'')+
           (fc.cb?_br('كاش باك', fc.cb):'')+
           (fc.cfAmt?_br('رسوم إضافية', fc.cfAmt):'')+
-          _br('المصاريف التشغيلية', fc.opExpenses, 'var(--danger-600)')+
+          (fc.opExpenses?_br('المصاريف التشغيلية', fc.opExpenses, 'var(--danger-600)'):'')+
           '<div style="display:flex;justify-content:space-between;padding:7px 0 2px;margin-top:3px;border-top:2px solid var(--border-1)"><span style="font-size:12px;font-weight:700;color:var(--success-700)">صافي الربح</span><span class="mono" style="font-size:13px;font-weight:800;color:var(--success-700)">'+UI.fmt(fc.profit)+' ر.س</span></div>'+
           '<div style="display:flex;justify-content:space-between;padding:4px 0 0"><span style="font-size:12px;font-weight:700;color:var(--primary-700)">المتبقي من العقد</span><span class="mono" style="font-size:13px;font-weight:800;color:var(--primary-700)">'+UI.fmt(fc.remaining)+' ر.س</span></div>'+
-        '</div>' : '';
-        var incLines = '<div style="display:flex;justify-content:space-between;padding:6px 0;font-size:12px;border-bottom:1px solid var(--border-1)">'+
-          '<span>أتعاب التنفيذ (الإجمالي)</span>'+
-          '<span class="mono" style="color:var(--success-700)">+'+UI.fmt(execFee)+' ر.س</span></div>';
-
-        var expLines = projExp.length ?
-          projExp.map(function(e){
-            return '<div style="display:flex;justify-content:space-between;padding:5px 0;font-size:12px;border-bottom:1px solid var(--border-1)">'+
-              '<span style="color:var(--fg-3)">'+UI.escHtml(e.desc||e.category)+'</span>'+
-              '<span class="mono" style="color:var(--danger-600)">−'+UI.fmt(Number(e.amount)||0)+' ر.س</span></div>';
-          }).join('') :
-          '<div style="font-size:12px;color:var(--fg-4);padding:5px 0">لا توجد مصاريف — اضغط مزامنة</div>';
-
-        var quarterInfo = '';
-        if(execDate || payDate) {
-          function toQ(d){ if(!d) return '—'; var m=parseInt((d||'').slice(5,7)); return 'ق'+(Math.ceil(m/3))+' '+(d||'').slice(0,4); }
-          quarterInfo = '<div style="display:flex;gap:12px;padding:6px 10px;background:var(--primary-50);border-radius:6px;font-size:11px;margin-bottom:8px">'+
-            '<span><span style="color:var(--fg-4)">ربع التنفيذ: </span><span style="font-weight:700;color:var(--primary-700)">'+toQ(execDate)+'</span></span>'+
-            (payDate?'<span><span style="color:var(--fg-4)">ربع الاستلام: </span><span style="font-weight:700;color:var(--success-700)">'+toQ(payDate)+'</span></span>':'')+
-          '</div>';
-        }
+        '</div>';
 
         detailRows = '<tr style="background:var(--bg-soft)"><td colspan="6" style="padding:0">'+
           '<div style="padding:10px 16px 12px 46px">'+
             finBreakdown+
-            quarterInfo+
-            '<div style="font-size:11px;font-weight:700;color:var(--fg-3);margin-bottom:4px">الإيرادات</div>'+incLines+
-            '<div style="font-size:11px;font-weight:700;color:var(--fg-3);margin:8px 0 4px">المصاريف</div>'+expLines+
-            '<div style="display:flex;justify-content:space-between;padding:8px 0 0;margin-top:4px;border-top:2px solid var(--border-1)">'+
-              '<span style="font-size:12px;font-weight:700">صافي الربح المتبقي</span>'+
-              '<span class="mono" style="font-size:13px;font-weight:800;color:var(--success-700)">'+UI.fmt(netProfit)+' ر.س</span>'+
-            '</div>'+
             '<div style="margin-top:8px;display:flex;gap:8px">'+
-              '<button class="btn btn-sm btn-ghost" onclick="Pages.editPaymentDate(\''+incEntry.id+'\')">'+
-                '<i data-lucide="calendar" style="width:12px;height:12px"></i>تعديل تاريخ الاستلام</button>'+
               '<button class="btn btn-sm btn-ghost" onclick="Nav.go(\'fin\',{projId:\''+projId+'\'})">'+
                 '<i data-lucide="external-link" style="width:12px;height:12px"></i>فتح ملف المشروع</button>'+
             '</div>'+
@@ -13091,9 +12983,9 @@ Pages.renderPfLedger = function(filter, period) {
       return mainRow + detailRows;
     }).join('');
 
-    var totalsRow = projEntries.length ?
+    var totalsRow = allProj.length ?
       '<tr style="background:var(--bg-soft);border-top:2px solid var(--border-1)">'+
-        '<td style="font-weight:700;font-size:13px">الإجماليات ('+projEntries.length+' مشروع)</td>'+
+        '<td style="font-weight:700;font-size:13px">الإجماليات ('+allProj.length+' مشروع)</td>'+
         '<td class="mono" style="font-weight:700">'+UI.fmt(totals.contract)+' ر.س</td>'+
         '<td class="mono" style="font-weight:700">'+UI.fmt(totals.vat)+' ر.س</td>'+
         '<td class="mono" style="font-weight:800;color:var(--success-700)">'+UI.fmt(totals.profit)+' ر.س</td>'+
@@ -13103,17 +12995,16 @@ Pages.renderPfLedger = function(filter, period) {
 
     sections = '<div class="card">'+
       '<div class="dash-sec-hdr" style="margin-bottom:var(--space-3)">'+
-        '<h3><i data-lucide="briefcase"></i>إيرادات المشاريع</h3>'+
+        '<h3><i data-lucide="briefcase"></i>إيرادات المشاريع والعقود</h3>'+
         '<div style="display:flex;gap:6px;align-items:center">'+
           '<button class="btn btn-sm btn-ghost" onclick="Pages.printPfReport(\'simple\')" title="طباعة تقرير مبسط"><i data-lucide="printer" style="width:13px;height:13px"></i>مبسّط</button>'+
           '<button class="btn btn-sm btn-ghost" onclick="Pages.printPfReport(\'detailed\')" title="طباعة تقرير مفصل"><i data-lucide="file-text" style="width:13px;height:13px"></i>مفصّل</button>'+
-          '<button class="btn btn-sm btn-ghost" onclick="Pages.pfSyncAllProjects()"><i data-lucide="refresh-cw"></i>مزامنة</button>'+
         '</div>'+
       '</div>'+
       '<div style="overflow-x:auto"><table class="data-table">'+
-        '<thead><tr><th>المشروع</th><th>قيمة العقد</th><th>الضريبة</th><th style="color:var(--success-700)">صافي الربح</th><th style="color:var(--primary-600)">المتبقي</th><th style="width:80px"></th></tr></thead>'+
-        '<tbody>'+(projEntries.length ? projRows+totalsRow :
-          '<tr><td colspan="6" style="text-align:center;padding:32px;color:var(--fg-4)">لا توجد مشاريع — فعِّل مشروعاً أو اضغط مزامنة</td></tr>')+
+        '<thead><tr><th>المشروع</th><th>قيمة العقد</th><th>الضريبة</th><th style="color:var(--success-700)">صافي الربح</th><th style="color:var(--primary-600)">المتبقي</th><th style="width:60px"></th></tr></thead>'+
+        '<tbody>'+(allProj.length ? projRows+totalsRow :
+          '<tr><td colspan="6" style="text-align:center;padding:32px;color:var(--fg-4)">لا توجد مشاريع نشطة أو مكتملة</td></tr>')+
         '</tbody>'+
       '</table></div>'+
     '</div>';
@@ -13212,7 +13103,7 @@ Pages.printPfReport = function(mode) {
   function inR(d){ if(!d) return !fromDate; if(fromDate&&d<fromDate) return false; if(toDate&&d>toDate) return false; return true; }
   function incInR(e){ return inR(e.payment_date || e.date); }
 
-  var projEntries = (pf.income||[]).filter(function(e){ return e.category==='project_fee' && e.project_id && incInR(e); });
+  var projEntries = projects.filter(function(p){ return p.status==='active' || p.status==='completed' || p.status==='paused'; });
 
   var periodLabel = (function(){
     if(p.type==='all_time') return 'كل الفترات';
@@ -13230,23 +13121,22 @@ Pages.printPfReport = function(mode) {
   var fmt = function(n){ return Number(n||0).toLocaleString('ar-SA',{minimumFractionDigits:2,maximumFractionDigits:2})+' ر.س'; };
 
   var totals = {contract:0, vat:0, net:0, remaining:0};
-  var rows = projEntries.map(function(incEntry){
-    var proj = projects.find(function(pr){ return pr.id===incEntry.project_id; });
-    var cl   = proj ? clients.find(function(c){ return c.id===proj.client_id; }) : null;
-    var fc = null; try { fc = FinCalc.calc(incEntry.project_id); } catch(ex){}
+  var rows = projEntries.map(function(proj){
+    var cl   = clients.find(function(c){ return c.id===proj.client_id; });
+    var fc = null; try { fc = FinCalc.calc(proj.id); } catch(ex){}
     var contract  = fc ? (Number(fc.grossTotal)||0) : 0;
     var vatAmt    = fc ? (Number(fc.vatAmt)||0)     : 0;
-    var net       = fc ? (Number(fc.profit)||0)      : (Number(incEntry.amount)||0);
-    var remaining = fc ? (Number(fc.remaining)||0)   : 0;
+    var net       = fc ? (Number(fc.profit)||0)     : 0;
+    var remaining = fc ? (Number(fc.remaining)||0)  : 0;
     totals.contract  += contract;
     totals.vat       += vatAmt;
     totals.net       += net;
     totals.remaining += remaining;
     var statusMap = {active:'نشط',completed:'مكتمل',paused:'متوقف',cancelled:'ملغى',draft:'مسودة'};
-    var stTxt = proj ? (statusMap[proj.status]||proj.status||'—') : '—';
+    var stTxt = statusMap[proj.status]||proj.status||'—';
     if(mode==='simple'){
       return '<tr>'+
-        '<td>'+(proj?proj.name:(incEntry.desc||'—'))+'</td>'+
+        '<td>'+UI.escHtml(proj.name||'—')+'</td>'+
         '<td>'+(cl?cl.name:'—')+'</td>'+
         '<td>'+stTxt+'</td>'+
         '<td class="num">'+fmt(contract)+'</td>'+
@@ -13263,15 +13153,15 @@ Pages.printPfReport = function(mode) {
       var contractNet = fc ? (Number(fc.contractNet)||0) : 0;
       var pm = fc && fc.profitMargins ? (Number(fc.profitMargins.netPct)||0).toFixed(1) : '—';
       return '<div class="proj-block">'+
-        '<div class="proj-title">'+(proj?proj.name:(incEntry.desc||'—'))+
+        '<div class="proj-title">'+UI.escHtml(proj.name||'—')+
           (stTxt?'<span class="status-tag">'+stTxt+'</span>':'')+
         '</div>'+
         '<div class="proj-meta">'+
           (cl?'<span>العميل: '+cl.name+'</span>':'')+
-          (proj&&proj.location?'<span>الموقع: '+proj.location+'</span>':'')+
-          (proj&&proj.start_date?'<span>البداية: '+proj.start_date+'</span>':'')+
-          (proj&&proj.end_date?'<span>النهاية: '+proj.end_date+'</span>':'')+
-          (proj&&proj.type?'<span>النوع: '+proj.type+'</span>':'')+
+          (proj.location?'<span>الموقع: '+proj.location+'</span>':'')+
+          (proj.start_date?'<span>البداية: '+proj.start_date+'</span>':'')+
+          (proj.end_date?'<span>النهاية: '+proj.end_date+'</span>':'')+
+          (proj.type?'<span>النوع: '+proj.type+'</span>':'')+
         '</div>'+
         '<table class="fin-table">'+
           '<tbody>'+
@@ -13468,21 +13358,18 @@ Pages.openProjectDistrib = function(projId) {
   var pf = DB.getPf();
   var projects = DB.getProjects();
   var proj = projects.find(function(p){ return p.id===projId; });
-  var incEntry = (pf.income||[]).find(function(e){ return e.project_id===projId; });
-  if (!incEntry) { UI.toast('لا توجد بيانات إيراد لهذا المشروع', 'danger'); return; }
   var fc = null;
   try { fc = FinCalc.calc(projId); } catch(ex){}
-  var netProfit = fc ? (Number(fc.profit)||0) : (Number(incEntry.amount)||0);
-  var execFee   = Number(incEntry.amount)||0;
-  var projExp   = (pf.expenses||[]).filter(function(e){ return e.project_id===projId; });
-  var totalExp  = projExp.reduce(function(s,e){return s+(Number(e.amount)||0);},0);
+  if (!fc) { UI.toast('لا توجد بيانات مالية لهذا المشروع', 'danger'); return; }
+  var netProfit = Number(fc.profit)||0;
+  var today = new Date().toISOString().slice(0,10);
   Pages._pfDistribState = {
     step: 2,
-    from: incEntry.payment_date||incEntry.date,
-    to:   incEntry.payment_date||incEntry.date,
+    from: proj ? (proj.start_date||today) : today,
+    to:   proj ? (proj.end_date||today)   : today,
     period_type: 'custom',
-    period_label: 'أرباح مشروع: '+(proj?proj.name:(incEntry.desc||projId)),
-    _income: execFee, _expenses: totalExp, _netProfit: netProfit,
+    period_label: 'أرباح مشروع: '+(proj?proj.name:projId),
+    _income: netProfit, _expenses: 0, _netProfit: netProfit,
     _project_id: projId
   };
   Pages._pfDistribRender();
@@ -13650,30 +13537,25 @@ Pages.openPartnersModal = function() {
 
 /* ── min bank balance required for active project execution ── */
 Pages._pfBankMin = function(pf, projects) {
-  var collectedIds = {};
-  (pf.income||[]).filter(function(e){ return e.category==='project_fee' && e.project_id; })
-    .forEach(function(e){ collectedIds[e.project_id] = true; });
   var total = 0;
-  (projects||[]).filter(function(p){ return p.status==='active' && collectedIds[p.id]; })
+  (projects||DB.getProjects()).filter(function(p){ return p.status==='active'; })
     .forEach(function(p) {
       var fc = null; try { fc = FinCalc.calc(p.id); } catch(ex){}
       if (!fc) return;
-      var projExpPaid = (pf.expenses||[]).filter(function(e){ return e.project_id===p.id; })
-        .reduce(function(s,e){ return s+(Number(e.amount)||0); },0);
-      total += Math.max(0, (Number(fc.execAmt)||0) - projExpPaid);
+      total += Math.max(0, Number(fc.remainingExec)||0);
     });
   return total;
 };
 
-/* ── distributable profit = ledger all-time netProfit − previous completed distributions ──
-   Same formula as overview page: sum(pf.income) − sum(pf.expenses) − prevDistributed */
+/* ── distributable profit = FinCalc project profits + service income − platform expenses − prevDistributed ── */
 Pages._pfDistribProfit = function(pf) {
-  var cAll = Pages._pfCalc(pf, null, null);
+  var cAll = Pages._pfCalcFull(pf, null, null);
   var prevDistributed = (pf.distributions||[])
     .filter(function(d){ return d.status==='completed'; })
     .reduce(function(s,d){ return s+(Number(d.distributed_amount)||0); },0);
   var available = cAll.netProfit - prevDistributed;
-  return { totalIncome:cAll.income, totalExpenses:cAll.expenses,
+  return { totalIncome:cAll.income, totalExpenses:cAll.platformExpenses,
+           projectProfit:cAll.projectProfit, serviceIncome:cAll.serviceIncome,
            totalNetProfit:cAll.netProfit, prevDistributed:prevDistributed,
            available:available };
 };
@@ -13687,7 +13569,7 @@ Pages.renderPfDistrib = function() {
   var pctOk = Math.abs(totalPct-100)<0.01;
 
   /* ── financial health ── */
-  var cAll = Pages._pfCalc(pf, null, null);
+  var cAll = Pages._pfCalcFull(pf, null, null);
   var distAll = (pf.distributions||[]).filter(function(d){ return d.status==='completed'; })
     .reduce(function(s,d){ return s+(Number(d.distributed_amount)||0); },0);
   var retained = Pages._pfRetainedTotals(pf);
@@ -13703,10 +13585,7 @@ Pages.renderPfDistrib = function() {
   var hMsg   = hOk ? 'الوضع المالي سليم — يمكن توزيع الأرباح بأمان'
                    : 'تنبيه: بعض الأرباح محجوزة لتنفيذ المشاريع النشطة';
 
-  var collectedIds = {};
-  (pf.income||[]).filter(function(e){ return e.category==='project_fee' && e.project_id; })
-    .forEach(function(e){ collectedIds[e.project_id] = true; });
-  var activeCount = projects.filter(function(p){ return p.status==='active' && collectedIds[p.id]; }).length;
+  var activeCount = projects.filter(function(p){ return p.status==='active'; }).length;
 
   var bankAlert =
     '<div style="border:1px solid '+hBorder+';background:'+hBg+';border-radius:14px;padding:16px 20px;margin-bottom:var(--space-4)">'+
@@ -13902,12 +13781,9 @@ Pages._pfDistribRender = function() {
     }).join('');
     var range = Pages._pfPeriodRanges(st.period_type==='custom'?'quarter':st.period_type);
 
-    /* projects with collected fees */
+    /* all active/completed projects are eligible for distribution */
     var allProjects = DB.getProjects();
-    var collectedIds = {};
-    (pf.income||[]).filter(function(e){ return e.category==='project_fee' && e.project_id; })
-      .forEach(function(e){ collectedIds[e.project_id] = true; });
-    var eligibleProjs = allProjects.filter(function(p){ return collectedIds[p.id]; });
+    var eligibleProjs = allProjects.filter(function(p){ return p.status==='active' || p.status==='completed'; });
     var selectedIds = st._selectedProjIds || eligibleProjs.map(function(p){ return p.id; });
 
     var projCheckboxes = eligibleProjs.length ?
