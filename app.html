@@ -2597,25 +2597,30 @@ DB._scheduleSave = function() {
   if (!DB._token) return; // offline mode — skip
   DB._pendingSave = true;
   clearTimeout(DB._saveTimer);
-  DB._saveTimer = setTimeout(DB._pushToServer, 2000);
+  DB._saveTimer = setTimeout(DB._pushToServer, 300); // short debounce: data reaches server before user can refresh
 };
 
-// Immediately flush any pending (debounced) save. Used on page hide/unload so that
-// data entered just before a refresh isn't lost — otherwise the 2s debounce never
-// fires and the next load overwrites local edits with the older server snapshot.
-// `keepalive` lets the request complete even as the page is being torn down.
+// Flush any pending (debounced) save immediately.
+// Used on logout (before token is cleared) and on page hide/unload as a safety net.
 DB._flushNow = function() {
   if (!DB._token || !DB._pendingSave) return;
   clearTimeout(DB._saveTimer);
   DB._pendingSave = false;
+  var wsJson = JSON.stringify(DB._buildWorkspace());
   try {
+    // keepalive = browser completes the request even as the page tears down.
+    // If the workspace exceeds the 64 KB keepalive limit the fetch throws synchronously;
+    // we catch that and fall back to a plain (non-keepalive) fire-and-forget.
     fetch('/api/workspace', {
       method: 'PUT',
       headers: DB._apiHeaders(),
-      body: JSON.stringify(DB._buildWorkspace()),
+      body: wsJson,
       keepalive: true
-    });
-  } catch (e) { /* best-effort */ }
+    }).catch(function(){});
+  } catch (e) {
+    // Keepalive size limit exceeded — send without keepalive (best-effort for unload events)
+    try { fetch('/api/workspace', { method:'PUT', headers:DB._apiHeaders(), body:wsJson }).catch(function(){}); } catch(_){}
+  }
 };
 if (typeof window !== 'undefined') {
   window.addEventListener('pagehide', DB._flushNow);
@@ -2894,6 +2899,7 @@ Auth._localLogin = function(email, pass) {
   return true;
 };
 Auth.logout = function() {
+  DB._flushNow(); // push any pending saves BEFORE clearing token
   Auth.clearSession();
   DB._token = null;
   localStorage.removeItem('buad2_jwt');
