@@ -2602,25 +2602,19 @@ DB._scheduleSave = function() {
 
 // Flush any pending (debounced) save immediately.
 // Used on logout (before token is cleared) and on page hide/unload as a safety net.
+// Emergency flush on page unload: synchronous XHR guarantees completion before the page tears down.
+// Async fetch (even with keepalive) is unreliable at unload for large workspaces (64 KB limit).
 DB._flushNow = function() {
   if (!DB._token || !DB._pendingSave) return;
   clearTimeout(DB._saveTimer);
   DB._pendingSave = false;
-  var wsJson = JSON.stringify(DB._buildWorkspace());
   try {
-    // keepalive = browser completes the request even as the page tears down.
-    // If the workspace exceeds the 64 KB keepalive limit the fetch throws synchronously;
-    // we catch that and fall back to a plain (non-keepalive) fire-and-forget.
-    fetch('/api/workspace', {
-      method: 'PUT',
-      headers: DB._apiHeaders(),
-      body: wsJson,
-      keepalive: true
-    }).catch(function(){});
-  } catch (e) {
-    // Keepalive size limit exceeded — send without keepalive (best-effort for unload events)
-    try { fetch('/api/workspace', { method:'PUT', headers:DB._apiHeaders(), body:wsJson }).catch(function(){}); } catch(_){}
-  }
+    var xhr = new XMLHttpRequest();
+    xhr.open('PUT', '/api/workspace', false); // synchronous
+    xhr.setRequestHeader('Content-Type', 'application/json');
+    xhr.setRequestHeader('Authorization', 'Bearer ' + DB._token);
+    xhr.send(JSON.stringify(DB._buildWorkspace()));
+  } catch (e) { /* best-effort */ }
 };
 if (typeof window !== 'undefined') {
   window.addEventListener('pagehide', DB._flushNow);
@@ -2645,15 +2639,35 @@ DB._buildWorkspace = function() {
   return ws;
 };
 
+// Pull-then-merge-then-push: fetch the latest server workspace, overlay local changes on top,
+// then push the merged result. This prevents one user's push from erasing another user's
+// concurrent changes (last-write-wins on the entire blob caused data loss).
+// Merge strategy: local wins for top-level sections; fin is merged per-project so a user
+// editing project A doesn't erase another user's changes to project B.
 DB._pushToServer = function() {
   if (!DB._token) return Promise.resolve(false);
   DB._pendingSave = false;
-  var ws = DB._buildWorkspace();
-  return fetch('/api/workspace', {
-    method: 'PUT',
-    headers: DB._apiHeaders(),
-    body: JSON.stringify(ws)
-  }).then(function(r){ return r.ok; }).catch(function(e) { console.warn('Sync push failed:', e); return false; });
+  var localWs = DB._buildWorkspace();
+  return fetch('/api/workspace', { headers: DB._apiHeaders() })
+    .then(function(r) { return r.ok ? r.json() : null; })
+    .then(function(serverWs) {
+      var base = serverWs || {};
+      var merged = {
+        clients:   localWs.clients,
+        projects:  localWs.projects,
+        settings:  localWs.settings,
+        templates: localWs.templates,
+        pf:        localWs.pf,
+        fin:       Object.assign({}, base.fin || {}, localWs.fin || {})
+      };
+      return fetch('/api/workspace', {
+        method: 'PUT',
+        headers: DB._apiHeaders(),
+        body: JSON.stringify(merged)
+      });
+    })
+    .then(function(r) { return r && r.ok; })
+    .catch(function(e) { console.warn('Sync push failed:', e); return false; });
 };
 
 DB._pullFromServer = function() {
