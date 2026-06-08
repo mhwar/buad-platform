@@ -1265,6 +1265,23 @@ export async function onRequest(context) {
     return json(data);
   }
 
+  /* ─── PUT /api/fin/:projectId ─── atomic per-project fin update (server-side merge).
+       Updates ONLY one project's fin data inside the shared workspace blob,
+       so concurrent users editing different projects never overwrite each other. */
+  const finPidMatch = path.match(/^\/fin\/([^/]+)$/);
+  if (finPidMatch && method === 'PUT') {
+    const pid = finPidMatch[1];
+    let body;
+    try { body = await request.json(); } catch (e) { return json({ error: 'Bad request' }, 400); }
+    const row = await db.prepare('SELECT data FROM workspace WHERE id = ?').bind('main').first();
+    const ws = row ? JSON.parse(row.data) : {};
+    if (!ws.fin) ws.fin = {};
+    ws.fin[pid] = body;
+    await db.prepare('INSERT OR REPLACE INTO workspace (id, data, updated_at) VALUES (?, ?, unixepoch())')
+      .bind('main', JSON.stringify(ws)).run();
+    return json({ ok: true });
+  }
+
   /* ─── PUT /api/workspace ─── */
   if (path === '/workspace' && method === 'PUT') {
     let body;
