@@ -4245,6 +4245,14 @@ Pages.addClientModal = function(editId) {
         '<div class="form-group"><label class="field-label">المدينة</label><input id="cl-city" class="field-input" placeholder="الرياض، جدة..." value="'+UI.escHtml(cl.city||'')+'"></div>' +
         '<div class="form-group"><label class="field-label">رقم السجل / الترخيص</label><input id="cl-regno" class="field-input" placeholder="اختياري" value="'+UI.escHtml(cl.reg_no||'')+'"></div>' +
       '</div>' +
+      '<div class="form-row">' +
+        '<div class="form-group"><label class="field-label">الرقم الضريبي</label><input id="cl-taxno" class="field-input" placeholder="3XXXXXXXXXXXXXXX" value="'+UI.escHtml(cl.tax_no||'')+'"></div>' +
+        '<div class="form-group"><label class="field-label">العنوان الوطني</label><input id="cl-address" class="field-input" placeholder="الرياض، المملكة العربية السعودية" value="'+UI.escHtml(cl.address||'')+'"></div>' +
+      '</div>' +
+      '<div class="form-row">' +
+        '<div class="form-group"><label class="field-label">اسم الممثل المفوض</label><input id="cl-contact-name" class="field-input" placeholder="اسم المفوض" value="'+UI.escHtml(cl.contact_name||'')+'"></div>' +
+        '<div class="form-group"><label class="field-label">صفة الممثل</label><input id="cl-contact-title" class="field-input" placeholder="المدير التنفيذي" value="'+UI.escHtml(cl.contact_title||'')+'"></div>' +
+      '</div>' +
       '<div class="form-group"><label class="field-label">الموقع الإلكتروني</label><input id="cl-website" class="field-input" type="url" placeholder="https://example.com" style="direction:ltr" value="'+UI.escHtml(cl.website||'')+'"></div>' +
       '<div class="form-group"><label class="field-label">ملاحظات</label><textarea id="cl-notes-modal" class="field-input" rows="2" placeholder="ملاحظات اختيارية عن العميل...">'+UI.escHtml(cl.notes||'')+'</textarea></div>' +
     '</div>' +
@@ -4309,13 +4317,17 @@ Pages.saveClient = function(editId) {
   if (editId) {
     var idx = clients.findIndex(function(c){ return c.id===editId; });
     if (idx>=0) {
-      clients[idx].name    = name;
-      clients[idx].type    = document.getElementById('cl-type').value;
-      clients[idx].email   = document.getElementById('cl-email').value.trim();
-      clients[idx].phone   = document.getElementById('cl-phone').value.trim();
-      clients[idx].city    = document.getElementById('cl-city').value.trim();
-      clients[idx].reg_no  = (document.getElementById('cl-regno')||{}).value||clients[idx].reg_no||'';
-      clients[idx].website = (document.getElementById('cl-website')||{}).value||clients[idx].website||'';
+      clients[idx].name          = name;
+      clients[idx].type          = document.getElementById('cl-type').value;
+      clients[idx].email         = document.getElementById('cl-email').value.trim();
+      clients[idx].phone         = document.getElementById('cl-phone').value.trim();
+      clients[idx].city          = document.getElementById('cl-city').value.trim();
+      clients[idx].reg_no        = (document.getElementById('cl-regno')||{}).value||clients[idx].reg_no||'';
+      clients[idx].tax_no        = (document.getElementById('cl-taxno')||{}).value||clients[idx].tax_no||'';
+      clients[idx].address       = (document.getElementById('cl-address')||{}).value||clients[idx].address||'';
+      clients[idx].contact_name  = (document.getElementById('cl-contact-name')||{}).value||clients[idx].contact_name||'';
+      clients[idx].contact_title = (document.getElementById('cl-contact-title')||{}).value||clients[idx].contact_title||'';
+      clients[idx].website       = (document.getElementById('cl-website')||{}).value||clients[idx].website||'';
       var notesEl = document.getElementById('cl-notes-modal');
       if (notesEl) clients[idx].notes = notesEl.value.trim();
       if (logoChanged) clients[idx].logo = window._clientLogoData || '';
@@ -4324,14 +4336,18 @@ Pages.saveClient = function(editId) {
   } else {
     var newCl = {
       id: DB.uid(), name: name,
-      type:    document.getElementById('cl-type').value,
-      email:   document.getElementById('cl-email').value.trim(),
-      phone:   document.getElementById('cl-phone').value.trim(),
-      city:    document.getElementById('cl-city').value.trim(),
-      reg_no:  (document.getElementById('cl-regno')||{}).value||'',
-      website: (document.getElementById('cl-website')||{}).value||'',
-      notes:   ((document.getElementById('cl-notes-modal')||{}).value||'').trim(),
-      created: new Date().toISOString().slice(0,10)
+      type:          document.getElementById('cl-type').value,
+      email:         document.getElementById('cl-email').value.trim(),
+      phone:         document.getElementById('cl-phone').value.trim(),
+      city:          document.getElementById('cl-city').value.trim(),
+      reg_no:        (document.getElementById('cl-regno')||{}).value||'',
+      tax_no:        (document.getElementById('cl-taxno')||{}).value||'',
+      address:       (document.getElementById('cl-address')||{}).value||'',
+      contact_name:  (document.getElementById('cl-contact-name')||{}).value||'',
+      contact_title: (document.getElementById('cl-contact-title')||{}).value||'',
+      website:       (document.getElementById('cl-website')||{}).value||'',
+      notes:         ((document.getElementById('cl-notes-modal')||{}).value||'').trim(),
+      created:       new Date().toISOString().slice(0,10)
     };
     if (logoChanged) newCl.logo = window._clientLogoData || '';
     clients.push(newCl);
@@ -4504,6 +4520,28 @@ Pages.render_client = function(params) {
         '<div class="client-info-field">' +
           '<div class="client-info-field-label"><i data-lucide="hash" style="width:11px;height:11px;vertical-align:middle;margin-left:3px"></i>رقم السجل / الترخيص</div>' +
           '<div class="client-info-edit-row"><input type="text" value="'+UI.escHtml(cl.reg_no||'')+'" placeholder="—" onblur="Pages.saveClientField(\''+cl.id+'\',\'reg_no\',this.value)" style="direction:ltr;text-align:right"></div>'+
+        '</div>'+
+        // Tax no
+        '<div class="client-info-field">' +
+          '<div class="client-info-field-label"><i data-lucide="receipt" style="width:11px;height:11px;vertical-align:middle;margin-left:3px"></i>الرقم الضريبي</div>' +
+          '<div class="client-info-edit-row"><input type="text" value="'+UI.escHtml(cl.tax_no||'')+'" placeholder="—" onblur="Pages.saveClientField(\''+cl.id+'\',\'tax_no\',this.value)" style="direction:ltr;text-align:right"></div>'+
+        '</div>'+
+        // Full address
+        '<div class="client-info-field">' +
+          '<div class="client-info-field-label"><i data-lucide="map-pin-house" style="width:11px;height:11px;vertical-align:middle;margin-left:3px"></i>العنوان الوطني</div>' +
+          '<div class="client-info-edit-row"><input type="text" value="'+UI.escHtml(cl.address||'')+'" placeholder="أضف العنوان..." onblur="Pages.saveClientField(\''+cl.id+'\',\'address\',this.value)"></div>'+
+        '</div>'+
+      '</div>'+
+      // Authorized signatory
+      '<div class="client-sidebar-section">' +
+        '<div class="client-sidebar-sec-title">المفوض بالتواقيع</div>' +
+        '<div class="client-info-field">' +
+          '<div class="client-info-field-label"><i data-lucide="pen-line" style="width:11px;height:11px;vertical-align:middle;margin-left:3px"></i>اسم الممثل المفوض</div>' +
+          '<div class="client-info-edit-row"><input type="text" value="'+UI.escHtml(cl.contact_name||'')+'" placeholder="اسم المفوض..." onblur="Pages.saveClientField(\''+cl.id+'\',\'contact_name\',this.value)"></div>'+
+        '</div>'+
+        '<div class="client-info-field">' +
+          '<div class="client-info-field-label"><i data-lucide="badge" style="width:11px;height:11px;vertical-align:middle;margin-left:3px"></i>صفة الممثل</div>' +
+          '<div class="client-info-edit-row"><input type="text" value="'+UI.escHtml(cl.contact_title||'')+'" placeholder="المدير التنفيذي..." onblur="Pages.saveClientField(\''+cl.id+'\',\'contact_title\',this.value)"></div>'+
         '</div>'+
       '</div>'+
       // Notes
@@ -5184,25 +5222,26 @@ Pages.createContract = function(projId, tplKey) {
     contract_footer = 'سري';
   }
 
+  var _cs = DB.getSettings();
   var vars = {
-    party_a_name: '',
-    party_a_rep_name: '',
-    party_a_title: '',
-    party_a_id: '',
-    party_a_address: '',
-    party_a_phone: '',
-    party_a_email: '',
-    party_a_reg: '',
-    party_a_tax: '',
-    party_b_name: cl ? cl.name : '',
+    party_a_name:     _cs.company_name         || '',
+    party_a_rep_name: _cs.company_signer_name  || '',
+    party_a_title:    _cs.company_signer_title || '',
+    party_a_id:       _cs.company_signer_id    || '',
+    party_a_address:  _cs.company_address      || '',
+    party_a_phone:    _cs.company_phone        || '',
+    party_a_email:    _cs.company_email        || '',
+    party_a_reg:      _cs.company_reg          || '',
+    party_a_tax:      _cs.company_tax          || '',
+    party_b_name:     cl ? cl.name : '',
     party_b_rep_name: cl ? (cl.contact_name||'') : '',
-    party_b_title: '',
-    party_b_id: cl ? (cl.reg_no||'') : '',
-    party_b_address: cl ? (cl.city||'') : '',
-    party_b_phone: cl ? (cl.phone||'') : '',
-    party_b_email: cl ? (cl.email||'') : '',
-    party_b_reg: cl ? (cl.reg_no||'') : '',
-    party_b_tax: cl ? (cl.tax_no||'') : '',
+    party_b_title:    cl ? (cl.contact_title||'') : '',
+    party_b_id:       cl ? (cl.reg_no||'') : '',
+    party_b_address:  cl ? (cl.address||cl.city||'') : '',
+    party_b_phone:    cl ? (cl.phone||'') : '',
+    party_b_email:    cl ? (cl.email||'') : '',
+    party_b_reg:      cl ? (cl.reg_no||'') : '',
+    party_b_tax:      cl ? (cl.tax_no||'') : '',
     contract_date_gregorian: fin.ctrl && fin.ctrl.contract_date ? fin.ctrl.contract_date : today,
     contract_city: cl ? (cl.city||'الرياض') : 'الرياض',
     signature_city: cl ? (cl.city||'الرياض') : 'الرياض',
@@ -7270,7 +7309,12 @@ Pages.render_contract = function(params) {
       '<div class="var-field-lbl">الوصف تحت العنوان (في الغلاف)</div>' +
       '<input class="var-field-inp" value="'+UI.escHtml(coverSubtitle)+'" placeholder="مثال: المملكة العربية السعودية" oninput="Pages.updateContractCover(\''+projId+'\',\''+contractId+'\',\'subtitle\',this.value)">' +
     '</div>' +
-    '<div class="var-group-lbl"><i data-lucide="user"></i>الطرف الأول</div>' +
+    '<div class="var-group-lbl" style="display:flex;align-items:center;justify-content:space-between">' +
+      '<span><i data-lucide="user"></i>الطرف الأول</span>' +
+      '<button class="btn btn-sm" style="font-size:11px;padding:3px 10px;gap:4px" onclick="Pages.fillPartyAFromSettings(\''+projId+'\',\''+contractId+'\')">' +
+        '<i data-lucide="arrow-down-to-line"></i>ملء من بيانات الجهة' +
+      '</button>' +
+    '</div>' +
     varField('party_a_name', 'اسم الجهة / الطرف', false) +
     varField('party_a_rep_name', 'اسم الممثل المفوض', false) +
     varField('party_a_title', 'صفة الممثل', false) +
@@ -7280,7 +7324,12 @@ Pages.render_contract = function(params) {
     varField('party_a_address', 'العنوان', false) +
     varField('party_a_phone', 'الجوال', false) +
     varField('party_a_email', 'البريد الإلكتروني', false) +
-    '<div class="var-group-lbl"><i data-lucide="users"></i>الطرف الثاني</div>' +
+    '<div class="var-group-lbl" style="display:flex;align-items:center;justify-content:space-between">' +
+      '<span><i data-lucide="users"></i>الطرف الثاني</span>' +
+      '<button class="btn btn-sm" style="font-size:11px;padding:3px 10px;gap:4px" onclick="Pages.fillPartyBFromClient(\''+projId+'\',\''+contractId+'\')">' +
+        '<i data-lucide="arrow-down-to-line"></i>ملء من بيانات العميل' +
+      '</button>' +
+    '</div>' +
     varField('party_b_name', 'اسم الجهة / الطرف', true) +
     varField('party_b_rep_name', 'اسم الممثل المفوض', true) +
     varField('party_b_title', 'صفة الممثل', false) +
@@ -7586,9 +7635,19 @@ Pages._applyVarsToCoverEl = function(text, vars, contract) {
   return text.replace(/\{\{(\w+)\}\}/g, function(match, key) {
     if (key === 'title') return UI.escHtml((contract && contract.title) || '');
     if (key === 'footer_label') return UI.escHtml((contract && contract.footer_label) || '');
-    if (key === 'company_name') return UI.escHtml(settings.company_name || (vars && vars.company_name) || '');
-    if (key === 'company_email') return UI.escHtml(settings.company_email || '');
-    if (key === 'company_phone') return UI.escHtml(settings.company_phone || '');
+    if (key === 'company_name')         return UI.escHtml(settings.company_name         || (vars && vars.company_name) || '');
+    if (key === 'company_email')        return UI.escHtml(settings.company_email        || '');
+    if (key === 'company_phone')        return UI.escHtml(settings.company_phone        || '');
+    if (key === 'company_website')      return UI.escHtml(settings.company_website      || '');
+    if (key === 'company_address')      return UI.escHtml(settings.company_address      || '');
+    if (key === 'company_reg')          return UI.escHtml(settings.company_reg          || '');
+    if (key === 'company_tax')          return UI.escHtml(settings.company_tax          || '');
+    if (key === 'company_signer_name')  return UI.escHtml(settings.company_signer_name  || '');
+    if (key === 'company_signer_title') return UI.escHtml(settings.company_signer_title || '');
+    if (key === 'company_signer_id')    return UI.escHtml(settings.company_signer_id    || '');
+    if (key === 'company_bank_name')    return UI.escHtml(settings.company_bank_name    || '');
+    if (key === 'company_bank_iban')    return UI.escHtml(settings.company_bank_iban    || '');
+
     if (key === 'duration_full') {
       var dv = ((vars && vars.duration_months) || '').toString().trim();
       var du = ((vars && vars.duration_unit) || 'شهر').trim();
@@ -8105,6 +8164,84 @@ Pages._fmtDateDisplay = function(v) {
   return v; // not ISO — return as-is
 };
 
+Pages.fillPartyAFromSettings = function(projId, contractId) {
+  var contracts = DB.getContracts(projId);
+  var c = contracts.find(function(x){ return x.id === contractId; });
+  if (!c) return;
+  var s = DB.getSettings();
+  if (!c.variables) c.variables = {};
+  var map = {
+    party_a_name:     s.company_name         || '',
+    party_a_rep_name: s.company_signer_name  || '',
+    party_a_title:    s.company_signer_title || '',
+    party_a_id:       s.company_signer_id    || '',
+    party_a_address:  s.company_address      || '',
+    party_a_phone:    s.company_phone        || '',
+    party_a_email:    s.company_email        || '',
+    party_a_reg:      s.company_reg          || '',
+    party_a_tax:      s.company_tax          || ''
+  };
+  Object.assign(c.variables, map);
+  c.updated = (new Date()).toISOString().slice(0,10);
+  DB.saveContract(projId, c);
+  // Live-update all chips in the open doc
+  var docEl = document.getElementById('contract-doc');
+  if (docEl) {
+    Object.keys(map).forEach(function(key) {
+      var val = map[key];
+      docEl.querySelectorAll('[data-vk="'+key+'"]').forEach(function(chip) {
+        chip.textContent = val || '{{'+key+'}}';
+        chip.className = 'var-chip' + (val ? '' : ' empty');
+      });
+    });
+  }
+  if (c.cover && Array.isArray(c.cover.elements)) Pages._refreshCoverPage(projId, contractId);
+  Pages._refreshContractCover(c);
+  // Refresh the vars panel so inputs reflect new values
+  var panel = document.getElementById('contract-vars-panel');
+  if (panel) panel.innerHTML = Pages.varsPanelHtml(projId, contractId);
+  if (window.lucide) lucide.createIcons();
+};
+
+Pages.fillPartyBFromClient = function(projId, contractId) {
+  var contracts = DB.getContracts(projId);
+  var c = contracts.find(function(x){ return x.id === contractId; });
+  if (!c) return;
+  var proj = DB.getProjects().find(function(p){ return p.id === projId; });
+  var cl = proj && proj.client_id ? DB.getClients().find(function(x){ return x.id === proj.client_id; }) : null;
+  if (!cl) { UI.toast('لا يوجد عميل مرتبط بهذا المشروع','warning'); return; }
+  if (!c.variables) c.variables = {};
+  var map = {
+    party_b_name:     cl.name            || '',
+    party_b_rep_name: cl.contact_name    || '',
+    party_b_title:    cl.contact_title   || '',
+    party_b_id:       cl.reg_no          || '',
+    party_b_address:  cl.address || cl.city || '',
+    party_b_phone:    cl.phone           || '',
+    party_b_email:    cl.email           || '',
+    party_b_reg:      cl.reg_no          || '',
+    party_b_tax:      cl.tax_no          || ''
+  };
+  Object.assign(c.variables, map);
+  c.updated = (new Date()).toISOString().slice(0,10);
+  DB.saveContract(projId, c);
+  var docEl = document.getElementById('contract-doc');
+  if (docEl) {
+    Object.keys(map).forEach(function(key) {
+      var val = map[key];
+      docEl.querySelectorAll('[data-vk="'+key+'"]').forEach(function(chip) {
+        chip.textContent = val || '{{'+key+'}}';
+        chip.className = 'var-chip' + (val ? '' : ' empty');
+      });
+    });
+  }
+  if (c.cover && Array.isArray(c.cover.elements)) Pages._refreshCoverPage(projId, contractId);
+  Pages._refreshContractCover(c);
+  var panel = document.getElementById('contract-vars-panel');
+  if (panel) panel.innerHTML = Pages.varsPanelHtml(projId, contractId);
+  if (window.lucide) lucide.createIcons();
+};
+
 Pages._applyVars = function(text, vars) {
   if (!vars) return text;
   var settings = DB.getSettings();
@@ -8127,9 +8264,18 @@ Pages._applyVars = function(text, vars) {
       return chip('contract_date_gregorian', Pages._fmtDateDisplay(vars.contract_date_gregorian));
     }
     // Company/organization tokens come from app settings (fallback to vars)
-    if (key === 'company_name')  return chip('company_name',  settings.company_name  || vars.company_name);
-    if (key === 'company_email') return chip('company_email', settings.company_email || vars.company_email);
-    if (key === 'company_phone') return chip('company_phone', settings.company_phone || vars.company_phone);
+    if (key === 'company_name')         return chip('company_name',         settings.company_name         || vars.company_name);
+    if (key === 'company_email')        return chip('company_email',        settings.company_email        || vars.company_email);
+    if (key === 'company_phone')        return chip('company_phone',        settings.company_phone        || vars.company_phone);
+    if (key === 'company_website')      return chip('company_website',      settings.company_website      || vars.company_website);
+    if (key === 'company_address')      return chip('company_address',      settings.company_address      || vars.company_address);
+    if (key === 'company_reg')          return chip('company_reg',          settings.company_reg          || vars.company_reg);
+    if (key === 'company_tax')          return chip('company_tax',          settings.company_tax          || vars.company_tax);
+    if (key === 'company_signer_name')  return chip('company_signer_name',  settings.company_signer_name  || vars.company_signer_name);
+    if (key === 'company_signer_title') return chip('company_signer_title', settings.company_signer_title || vars.company_signer_title);
+    if (key === 'company_signer_id')    return chip('company_signer_id',    settings.company_signer_id    || vars.company_signer_id);
+    if (key === 'company_bank_name')    return chip('company_bank_name',    settings.company_bank_name    || vars.company_bank_name);
+    if (key === 'company_bank_iban')    return chip('company_bank_iban',    settings.company_bank_iban    || vars.company_bank_iban);
     var val = vars[key];
     if (val && val.trim()) {
       return '<span class="var-chip" data-vk="'+key+'">'+UI.escHtml(val)+'</span>';
@@ -14462,14 +14608,33 @@ Pages.render_settings = function(opts) {
             'oninput="DB.saveSettings({'+key+':this.value})">' +
         '</div>';
       }
+      function sec(icon, label) {
+        return '<div style="font-size:12px;font-weight:600;color:var(--fg-2);margin:14px 0 6px;padding-bottom:5px;border-bottom:1px solid var(--border-1);display:flex;align-items:center;gap:6px"><i data-lucide="'+icon+'"></i>'+label+'</div>';
+      }
       return '<div class="card" style="margin-bottom:var(--space-5)">' +
         '<div class="dash-sec-hdr"><h3><i data-lucide="building-2"></i>بيانات الجهة</h3>' +
-          '<span style="font-size:11px;color:var(--fg-3)">تُستخدم في الرأس والذيل عبر {{company_name}} وغيرها</span>' +
+          '<span style="font-size:11px;color:var(--fg-3)">تُستخدم تلقائياً كالطرف الأول في العقود الجديدة</span>' +
         '</div>' +
+        sec('building', 'المعلومات الأساسية') +
         '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:0 16px">' +
-          fld('company_name',  'اسم الجهة / الشركة',    'شركة نماء للاستشارات') +
-          fld('company_email', 'البريد الإلكتروني',      'info@example.sa', 'email') +
-          fld('company_phone', 'رقم التواصل',            '+966 5X XXX XXXX', 'tel') +
+          fld('company_name',    'اسم الجهة / الشركة',    'شركة نماء للاستشارات') +
+          fld('company_email',   'البريد الإلكتروني',      'info@example.sa', 'email') +
+          fld('company_phone',   'رقم التواصل',            '+966 5X XXX XXXX', 'tel') +
+          fld('company_website', 'الموقع الإلكتروني',      'www.example.sa') +
+          fld('company_address', 'العنوان الوطني',         'الرياض، المملكة العربية السعودية') +
+          fld('company_reg',     'السجل التجاري',          '1010XXXXXX') +
+          fld('company_tax',     'الرقم الضريبي',          '3XXXXXXXXXXXXXXX') +
+        '</div>' +
+        sec('pen-line', 'المفوض بالتواقيع') +
+        '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:0 16px">' +
+          fld('company_signer_name',  'اسم المفوض',         'محمد بن أحمد') +
+          fld('company_signer_title', 'صفة المفوض',         'المدير التنفيذي') +
+          fld('company_signer_id',    'رقم هوية المفوض',    '1XXXXXXXXX') +
+        '</div>' +
+        sec('landmark', 'الحساب البنكي') +
+        '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:0 16px">' +
+          fld('company_bank_name', 'اسم البنك',          'مصرف الراجحي') +
+          fld('company_bank_iban', 'رقم الآيبان (IBAN)', 'SA00 0000 0000 0000 0000 0000') +
         '</div>' +
       '</div>';
     })() +
