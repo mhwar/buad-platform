@@ -2592,11 +2592,38 @@ DB._apiHeaders = function() {
   return h;
 };
 
+DB._pendingSave = false;
 DB._scheduleSave = function() {
   if (!DB._token) return; // offline mode — skip
+  DB._pendingSave = true;
   clearTimeout(DB._saveTimer);
   DB._saveTimer = setTimeout(DB._pushToServer, 2000);
 };
+
+// Immediately flush any pending (debounced) save. Used on page hide/unload so that
+// data entered just before a refresh isn't lost — otherwise the 2s debounce never
+// fires and the next load overwrites local edits with the older server snapshot.
+// `keepalive` lets the request complete even as the page is being torn down.
+DB._flushNow = function() {
+  if (!DB._token || !DB._pendingSave) return;
+  clearTimeout(DB._saveTimer);
+  DB._pendingSave = false;
+  try {
+    fetch('/api/workspace', {
+      method: 'PUT',
+      headers: DB._apiHeaders(),
+      body: JSON.stringify(DB._buildWorkspace()),
+      keepalive: true
+    });
+  } catch (e) { /* best-effort */ }
+};
+if (typeof window !== 'undefined') {
+  window.addEventListener('pagehide', DB._flushNow);
+  window.addEventListener('beforeunload', DB._flushNow);
+  document.addEventListener('visibilitychange', function(){
+    if (document.visibilityState === 'hidden') DB._flushNow();
+  });
+}
 
 DB._buildWorkspace = function() {
   var ws = {
@@ -2615,6 +2642,7 @@ DB._buildWorkspace = function() {
 
 DB._pushToServer = function() {
   if (!DB._token) return Promise.resolve(false);
+  DB._pendingSave = false;
   var ws = DB._buildWorkspace();
   return fetch('/api/workspace', {
     method: 'PUT',
@@ -2795,6 +2823,25 @@ Auth._seedAdmin = function() {
   }
 };
 Auth.getUsers = function() { return DB.getSettings().users || []; };
+
+// Re-read the current user's role from the server (authoritative) and refresh the
+// stored session + JWT. This makes a role change (e.g. promotion to admin) take
+// effect on the next page load WITHOUT requiring the user to log out and back in.
+// Resolves to true when the role actually changed.
+Auth.refreshSession = function() {
+  if (!DB._token) return Promise.resolve(false);
+  return fetch('/api/me', { headers: DB._apiHeaders() })
+    .then(function(r){ return r.ok ? r.json() : null; })
+    .then(function(d){
+      if (!d || !d.user) return false;
+      if (d.token) { DB._token = d.token; localStorage.setItem('buad2_jwt', d.token); }
+      var cur = Auth.getSession() || {};
+      var changed = cur.role !== d.user.role;
+      Auth.setSession({ id:d.user.id, name:d.user.name, email:d.user.email, role:d.user.role });
+      return changed;
+    })
+    .catch(function(){ return false; });
+};
 
 // Normalize email: always lowercase + trimmed
 Auth._normalEmail = function(e) { return (e||'').toLowerCase().trim(); };
@@ -14936,7 +14983,11 @@ Pages._initApp = function() {
   };
 
   if (DB._token) {
-    DB._pullFromServer().then(doNav);
+    // Refresh role first so menus/pages reflect any permission change, then pull workspace.
+    Auth.refreshSession().then(function(){
+      Pages._updateSidebarUser();
+      return DB._pullFromServer();
+    }).then(doNav);
     DB._pullUsers(); // refresh users list in background
     DB._getRequests().then(function(reqs){ Pages._requests = reqs || []; Pages._updateRequestsBadge(); }); // website requests badge
     DB._getOrgs().then(function(orgs){ Pages._orgs = orgs || []; var b=document.getElementById('sb-badge-orgs'); if(b){ b.textContent=Pages._orgs.length; b.style.display=Pages._orgs.length?'':'none'; } }); // associations badge
