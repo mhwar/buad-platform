@@ -13215,7 +13215,7 @@ Pages.printPfReport = function(mode) {
 
   var today = new Date().toLocaleDateString('ar-SA-u-nu-latn',{year:'numeric',month:'long',day:'numeric'});
 
-  var fmt = function(n){ return Number(n||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})+' ر.س'; };
+  var fmt = function(n){ return Number(n||0).toLocaleString('ar-SA',{minimumFractionDigits:2,maximumFractionDigits:2})+' ر.س'; };
 
   var totals = {contract:0, vat:0, net:0, remaining:0};
   var rows = projEntries.map(function(incEntry){
@@ -13310,7 +13310,6 @@ Pages.printPfReport = function(mode) {
   );
 
   var title = mode==='simple' ? 'تقرير إيرادات المشاريع — مبسّط' : 'تقرير إيرادات المشاريع — مفصّل';
-  var logoUrl = (function(){ try { return new URL('assets/logo.svg', window.location.href).href; } catch(e){ return 'assets/logo.svg'; } })();
 
   var html = '<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8">'+
     '<title>'+title+'</title>'+
@@ -13319,7 +13318,7 @@ Pages.printPfReport = function(mode) {
       'body{font-family:"Segoe UI",Tahoma,Arial,sans-serif;font-size:13px;color:#111;background:#fff;direction:rtl}'+
       '.page{max-width:900px;margin:0 auto;padding:24px 32px}'+
       '.header{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #2563eb;padding-bottom:14px;margin-bottom:20px}'+
-      '.header-left .org-logo{height:46px;object-fit:contain;display:block;margin-bottom:6px}'+
+      '.header-left .org-name{font-size:18px;font-weight:800;color:#2563eb}'+
       '.header-left .rep-title{font-size:14px;font-weight:700;color:#222;margin-top:4px}'+
       '.header-left .period{font-size:11px;color:#666;margin-top:3px}'+
       '.header-right{text-align:left;font-size:11px;color:#666}'+
@@ -13358,14 +13357,14 @@ Pages.printPfReport = function(mode) {
     '</style></head><body><div class="page">'+
     '<div class="header">'+
       '<div class="header-left">'+
-        '<img src="'+logoUrl+'" alt="بُعد التمكين" class="org-logo" onerror="this.outerHTML=\'<div style=&quot;font-size:18px;font-weight:800;color:#2563eb&quot;>بُعد التمكين</div>\'">'+
+        '<div class="org-name">بُعد للاستشارات</div>'+
         '<div class="rep-title">'+title+'</div>'+
         '<div class="period">الفترة: '+periodLabel+'</div>'+
       '</div>'+
       '<div class="header-right"><div class="date">تاريخ الإصدار</div>'+today+'</div>'+
     '</div>'+
     simpleBody+
-    '<div class="footer"><span>'+title+' — بُعد التمكين</span><span>'+today+'</span></div>'+
+    '<div class="footer"><span>'+title+' — بُعد للاستشارات</span><span>'+today+'</span></div>'+
     '</div></body></html>';
 
   var w = window.open('','_blank','width=960,height=700,toolbar=1,scrollbars=1');
@@ -13654,23 +13653,37 @@ Pages._pfBankMin = function(pf, projects) {
   return total;
 };
 
-/* ── income/expense calc filtered by selected project IDs ── */
-Pages._pfCalcFiltered = function(pf, from, to, projIds) {
+/* ── distributable profit (consistent with projects ledger FinCalc) ──
+   project profit = Σ FinCalc.profit of selected projects (period-independent)
+   + service income within period − general (non-project) expenses within period */
+Pages._pfDistribProfit = function(pf, from, to, projIds) {
   function inRange(d){ if(!d) return true; if(from&&d<from) return false; if(to&&d>to) return false; return true; }
-  var income = 0, expenses = 0;
+  var ids = projIds && projIds.length ? projIds : null;
+  /* fall back to all collected projects when none explicitly selected */
+  if (!ids) {
+    var collected = {};
+    (pf.income||[]).filter(function(e){ return e.category==='project_fee' && e.project_id; })
+      .forEach(function(e){ collected[e.project_id]=true; });
+    ids = Object.keys(collected);
+  }
+  var projProfit = 0;
+  ids.forEach(function(pid){
+    var fc = null; try { fc = FinCalc.calc(pid); } catch(ex){}
+    if (fc) projProfit += Number(fc.profit)||0;
+  });
+  var serviceIncome = 0;
   (pf.income||[]).forEach(function(e){
-    if (!inRange(e.payment_date||e.date)) return;
-    if (e.category==='project_fee' && e.project_id) {
-      if (!projIds || !projIds.length || projIds.indexOf(e.project_id)>=0) income += Number(e.amount)||0;
-    } else { income += Number(e.amount)||0; }
+    if (e.category==='project_fee') return;
+    if (inRange(e.payment_date||e.date)) serviceIncome += Number(e.amount)||0;
   });
+  var generalExp = 0;
   (pf.expenses||[]).forEach(function(e){
-    if (!inRange(e.date)) return;
-    if (e.project_id) {
-      if (!projIds || !projIds.length || projIds.indexOf(e.project_id)>=0) expenses += Number(e.amount)||0;
-    } else { expenses += Number(e.amount)||0; }
+    if (e.project_id) return; /* project expenses already inside FinCalc.profit */
+    if (inRange(e.date)) generalExp += Number(e.amount)||0;
   });
-  return { income:income, expenses:expenses, netProfit:income-expenses };
+  var net = projProfit + serviceIncome - generalExp;
+  return { projProfit:projProfit, serviceIncome:serviceIncome, generalExp:generalExp,
+           netProfit:net, projCount:ids.length };
 };
 
 Pages.renderPfDistrib = function() {
@@ -13877,7 +13890,8 @@ Pages.deletePartner = function(id, returnToPartners) {
 Pages._pfDistribState = {};
 
 Pages.openNewDistrib = function() {
-  Pages._pfDistribState = { step: 1, from: '', to: '', period_type: 'quarter', period_label: '' };
+  var nowQ = 'q'+(Math.floor(new Date().getMonth()/3)+1);
+  Pages._pfDistribState = { step: 1, from: '', to: '', period_type: nowQ, period_label: '' };
   Pages._pfDistribRender();
 };
 
@@ -13935,19 +13949,25 @@ Pages._pfDistribRender = function() {
       '<div style="margin-top:var(--space-3);padding:12px 14px;background:var(--bg-soft);border-radius:8px;font-size:12px;color:var(--fg-4)">'+
         'لا توجد مشاريع محصَّلة أتعابها — ستُحتسب الإيرادات الكلية للفترة</div>';
 
-    body = '<div class="form-group"><label>نوع الفترة</label>'+
-      '<select class="form-control" id="pd-type" onchange="Pages._pfPeriodTypeChange()">'+periodOpts+'</select></div>'+
-      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">'+
-        '<div class="form-group"><label>من</label><input type="date" id="pd-from" class="form-control" value="'+(st.from||range[0])+'"></div>'+
-        '<div class="form-group"><label>إلى</label><input type="date" id="pd-to" class="form-control" value="'+(st.to||range[1])+'"></div>'+
+    body = '<div style="background:var(--bg-soft);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:var(--space-3)">'+
+        '<div style="display:flex;align-items:center;gap:7px;font-size:12px;font-weight:700;color:var(--fg-2);margin-bottom:12px">'+
+          '<i data-lucide="calendar-range" style="width:15px;height:15px;color:var(--primary-600)"></i>فترة التوزيع</div>'+
+        '<div class="form-group" style="margin-bottom:12px"><label style="font-size:12px">نوع الفترة</label>'+
+          '<select class="form-control" id="pd-type" onchange="Pages._pfPeriodTypeChange()">'+periodOpts+'</select></div>'+
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">'+
+          '<div class="form-group" style="margin:0"><label style="font-size:12px">من تاريخ</label><input type="date" id="pd-from" class="form-control" value="'+(st.from||range[0])+'"></div>'+
+          '<div class="form-group" style="margin:0"><label style="font-size:12px">إلى تاريخ</label><input type="date" id="pd-to" class="form-control" value="'+(st.to||range[1])+'"></div>'+
+        '</div>'+
+        '<div class="form-group" style="margin:0"><label style="font-size:12px">اسم الفترة <span style="color:var(--fg-4);font-weight:400">(يظهر في التقرير)</span></label>'+
+          '<input type="text" id="pd-label" class="form-control" value="'+UI.escHtml(st.period_label||'')+'" placeholder="مثال: الربع الثاني 2026"></div>'+
       '</div>'+
-      '<div class="form-group"><label>اسم الفترة (يظهر في التقرير)</label>'+
-        '<input type="text" id="pd-label" class="form-control" value="'+UI.escHtml(st.period_label||'')+'" placeholder="مثال: الربع الأول 2025"></div>'+
       projCheckboxes;
 
   } else if (st.step === 2) {
-    var c = Pages._pfCalcFiltered(pf, st.from, st.to, st._selectedProjIds);
-    st._income = c.income; st._expenses = c.expenses; st._netProfit = c.netProfit;
+    var c = Pages._pfDistribProfit(pf, st.from, st.to, st._selectedProjIds);
+    st._income   = c.projProfit + c.serviceIncome;
+    st._expenses = c.generalExp;
+    st._netProfit = c.netProfit;
 
     var selNames = '';
     if (st._selectedProjIds && st._selectedProjIds.length) {
@@ -13957,17 +13977,19 @@ Pages._pfDistribRender = function() {
         return pr ? pr.name : id;
       });
       selNames = '<div style="background:var(--primary-50);border-radius:8px;padding:8px 12px;margin-bottom:var(--space-3);font-size:12px;color:var(--primary-700)">'+
-        '<strong>المشاريع المشمولة: </strong>'+UI.escHtml(names.join('، '))+
+        '<strong>المشاريع المشمولة ('+names.length+'): </strong>'+UI.escHtml(names.join('، '))+
       '</div>';
     }
 
     body = selNames+
       '<div style="background:var(--bg-soft);border-radius:10px;padding:16px;margin-bottom:var(--space-3)">'+
         '<div class="wf-table">'+
-          '<div class="wf-row"><span class="wf-lbl">إجمالي الإيرادات</span><span class="wf-val" style="color:var(--success-700)">+'+UI.fmt(c.income)+' ر.س</span></div>'+
-          '<div class="wf-row"><span class="wf-lbl">إجمالي المصروفات</span><span class="wf-val" style="color:var(--danger-700)">−'+UI.fmt(c.expenses)+' ر.س</span></div>'+
-          '<div class="wf-row wf-total"><span class="wf-lbl">صافي الربح</span><span class="wf-val" style="color:'+(c.netProfit>=0?'var(--success-700)':'var(--danger-700)')+'">'+UI.fmt(c.netProfit)+' ر.س</span></div>'+
+          '<div class="wf-row"><span class="wf-lbl">أرباح المشاريع المحددة <span style="font-size:10px;color:var(--fg-4)">(صافي بعد المصاريف)</span></span><span class="wf-val" style="color:var(--success-700)">+'+UI.fmt(c.projProfit)+' ر.س</span></div>'+
+          (c.serviceIncome?'<div class="wf-row"><span class="wf-lbl">إيرادات الخدمات <span style="font-size:10px;color:var(--fg-4)">(خلال الفترة)</span></span><span class="wf-val" style="color:var(--success-700)">+'+UI.fmt(c.serviceIncome)+' ر.س</span></div>':'')+
+          (c.generalExp?'<div class="wf-row"><span class="wf-lbl">مصاريف عامة <span style="font-size:10px;color:var(--fg-4)">(غير مرتبطة بمشروع)</span></span><span class="wf-val" style="color:var(--danger-700)">−'+UI.fmt(c.generalExp)+' ر.س</span></div>':'')+
+          '<div class="wf-row wf-total"><span class="wf-lbl">صافي الربح القابل للتوزيع</span><span class="wf-val" style="color:'+(c.netProfit>=0?'var(--success-700)':'var(--danger-700)')+'">'+UI.fmt(c.netProfit)+' ر.س</span></div>'+
         '</div>'+
+        '<div style="font-size:10px;color:var(--fg-4);margin-top:8px;display:flex;align-items:flex-start;gap:5px"><i data-lucide="info" style="width:11px;height:11px;flex-shrink:0;margin-top:1px"></i><span>أرباح المشاريع محسوبة وفق صافي ربح كل مشروع (نفس القيمة الظاهرة في سجل المشاريع) — مستقلة عن تاريخ الفترة لتجنّب أي تضارب</span></div>'+
       '</div>'+
       (c.netProfit<=0?'<div style="padding:10px 14px;background:var(--danger-50);border-radius:8px;font-size:12px;color:var(--danger-700);margin-bottom:var(--space-3)">صافي الربح صفر أو سالب — لن يكون هناك توزيع فعلي</div>':'')+
       '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:var(--space-3)">'+
