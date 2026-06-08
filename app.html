@@ -12494,11 +12494,12 @@ Pages._pfCalcFull = function(pf, from, to) {
       var r; try { r = FinCalc.calc(p.id); } catch(ex){ r = null; }
       return s + Math.max(0, (r && r.profit) ? Number(r.profit) : 0);
     }, 0);
+  /* فقط القيود اليدوية — نُصفِّي أي قيد مرتبط بمشروع (project_id) لأن أرباح المشاريع تأتي من FinCalc */
   var serviceIncome = (pf.income||[])
-    .filter(function(e){ return inRange(e.payment_date||e.date); })
+    .filter(function(e){ return !e.project_id && e.category !== 'project_fee' && inRange(e.payment_date||e.date); })
     .reduce(function(s,e){ return s+(Number(e.amount)||0); }, 0);
   var platformExpenses = (pf.expenses||[])
-    .filter(function(e){ return inRange(e.date); })
+    .filter(function(e){ return !e.project_id && inRange(e.date); })
     .reduce(function(s,e){ return s+(Number(e.amount)||0); }, 0);
   var netProfit = projectProfit + serviceIncome - platformExpenses;
   return {
