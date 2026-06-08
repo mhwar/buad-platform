@@ -7002,20 +7002,32 @@ Pages._pfSyncProjectExpenses = function(projId, projName, r, pf) {
   (pf.expenses||[]).forEach(function(e){
     if (e.project_id === projId && e.project_expense_cat) expMap[e.project_expense_cat] = e;
   });
-  var toSync = [];
-  if ((r.cfAmt||0) > 0) toSync.push({cat:'cf', lbl:'أتعاب الاستشاري المالي', cat2:'consulting', amount: r.cfAmt});
-  if ((r.mkt||0)   > 0) toSync.push({cat:'mkt', lbl:'تسويق ومصاريف مبيعات', cat2:'marketing',   amount: r.mkt});
-  toSync.forEach(function(item) {
-    if (!expMap[item.cat]) {
-      pf.expenses.push({
-        id: DB.uid(), project_id: projId, project_expense_cat: item.cat,
-        date: new Date().toISOString().slice(0,10),
-        desc: item.lbl + ': ' + (projName||projId),
-        category: item.cat2, amount: item.amount,
-        note: 'تزامن تلقائي من المشروع'
-      });
-    } else {
-      expMap[item.cat].amount = item.amount;
+  /* البنود التي تُعكس تلقائياً كمصاريف على مستوى المنصة.
+     opExpenses = المصاريف التشغيلية المسجَّلة داخل المشروع — تُخصم في حال وجودها */
+  var items = [
+    {cat:'cf',  lbl:'أتعاب الاستشاري المالي', cat2:'consulting', amount: Number(r.cfAmt)||0},
+    {cat:'mkt', lbl:'تسويق ومصاريف مبيعات',   cat2:'marketing',  amount: Number(r.mkt)||0},
+    {cat:'op',  lbl:'مصاريف تشغيلية',          cat2:'other',      amount: Number(r.opExpenses)||0}
+  ];
+  items.forEach(function(item) {
+    var existing = expMap[item.cat];
+    if (item.amount > 0) {
+      if (existing) {
+        existing.amount   = item.amount;
+        existing.desc     = item.lbl + ': ' + (projName||projId);
+        existing.category = item.cat2;
+      } else {
+        pf.expenses.push({
+          id: DB.uid(), project_id: projId, project_expense_cat: item.cat,
+          date: new Date().toISOString().slice(0,10),
+          desc: item.lbl + ': ' + (projName||projId),
+          category: item.cat2, amount: item.amount,
+          note: 'تزامن تلقائي من المشروع'
+        });
+      }
+    } else if (existing) {
+      /* انخفض المبلغ إلى صفر — نحذف القيد المتزامن سابقاً */
+      pf.expenses = pf.expenses.filter(function(e){ return e !== existing; });
     }
   });
 };
@@ -7045,7 +7057,7 @@ Pages.pfSyncAllProjects = function() {
     Pages._pfSyncProjectExpenses(p.id, p.name, r, pf);
   });
   DB.savePf(pf);
-  UI.toast(added > 0 ? 'تمت مزامنة '+added+' مشروع بنجاح' : 'تمت مزامنة مصاريف المشاريع', 'success');
+  UI.toast(added > 0 ? 'تمت مزامنة '+added+' مشروع — مع عكس أتعاب وتسويق ومصاريف التشغيل' : 'تمت مزامنة مصاريف المشاريع (أتعاب، تسويق، تشغيل)', 'success');
   Pages.renderPfLedger(Pages._pfLedgerFilter||'projects', Pages._pfPeriodFilter||{type:'all_time'});
 };
 
