@@ -12705,6 +12705,7 @@ Pages.renderPfOverview = function(period) {
   var distAll = (pf.distributions||[]).filter(function(d){ return d.status==='completed'; })
     .reduce(function(s,d){ return s+(Number(d.distributed_amount)||0); },0);
   var retained = Pages._pfRetainedTotals(pf);
+  var bankMin = Pages._pfBankMin(pf, DB.getProjects());
 
   /* filter bar */
   var years = [];
@@ -12854,7 +12855,18 @@ Pages.renderPfOverview = function(period) {
     '<div class="wf-table">'+recentHtml+'</div>'+
   '</div>';
 
-  el.innerHTML = '<div class="page-content">'+filterBar+kpis+summaryBar+retainedHtml+chart+txCard+'</div>';
+  var bankMinAlert = bankMin>0 ?
+    '<div style="border:1px solid var(--warning-200);background:var(--warning-50);border-radius:12px;padding:14px 18px;margin-bottom:var(--space-4);display:flex;align-items:center;gap:12px">'+
+      '<i data-lucide="piggy-bank" style="width:22px;height:22px;color:var(--warning-600);flex-shrink:0"></i>'+
+      '<div style="flex:1">'+
+        '<div style="font-weight:700;font-size:13px;color:var(--warning-700);margin-bottom:2px">'+
+          'احتفظ بحد أدنى <span class="mono" style="font-size:14px">'+UI.fmt(bankMin)+' ر.س</span> في الحساب البنكي</div>'+
+        '<div style="font-size:11px;color:var(--fg-3)">هذا المبلغ مطلوب لتغطية تكاليف تنفيذ المشاريع النشطة — لا ينبغي إدراجه في توزيعات الأرباح</div>'+
+      '</div>'+
+      '<button class="btn btn-sm btn-ghost" onclick="Pages.switchPfTab(\'distrib\')" style="flex-shrink:0;white-space:nowrap">توزيع الأرباح</button>'+
+    '</div>' : '';
+
+  el.innerHTML = '<div class="page-content">'+filterBar+kpis+summaryBar+bankMinAlert+retainedHtml+chart+txCard+'</div>';
   if (typeof lucide !== 'undefined') lucide.createIcons({rootElement: el});
 };
 
@@ -13624,72 +13636,185 @@ Pages.openPartnersModal = function() {
   if (typeof lucide !== 'undefined') lucide.createIcons();
 };
 
+/* ── min bank balance required for active project execution ── */
+Pages._pfBankMin = function(pf, projects) {
+  var collectedIds = {};
+  (pf.income||[]).filter(function(e){ return e.category==='project_fee' && e.project_id; })
+    .forEach(function(e){ collectedIds[e.project_id] = true; });
+  var total = 0;
+  (projects||[]).filter(function(p){ return p.status==='active' && collectedIds[p.id]; })
+    .forEach(function(p) {
+      var fc = null; try { fc = FinCalc.calc(p.id); } catch(ex){}
+      if (!fc) return;
+      var projExpPaid = (pf.expenses||[]).filter(function(e){ return e.project_id===p.id; })
+        .reduce(function(s,e){ return s+(Number(e.amount)||0); },0);
+      total += Math.max(0, (Number(fc.execAmt)||0) - projExpPaid);
+    });
+  return total;
+};
+
+/* ── income/expense calc filtered by selected project IDs ── */
+Pages._pfCalcFiltered = function(pf, from, to, projIds) {
+  function inRange(d){ if(!d) return true; if(from&&d<from) return false; if(to&&d>to) return false; return true; }
+  var income = 0, expenses = 0;
+  (pf.income||[]).forEach(function(e){
+    if (!inRange(e.payment_date||e.date)) return;
+    if (e.category==='project_fee' && e.project_id) {
+      if (!projIds || !projIds.length || projIds.indexOf(e.project_id)>=0) income += Number(e.amount)||0;
+    } else { income += Number(e.amount)||0; }
+  });
+  (pf.expenses||[]).forEach(function(e){
+    if (!inRange(e.date)) return;
+    if (e.project_id) {
+      if (!projIds || !projIds.length || projIds.indexOf(e.project_id)>=0) expenses += Number(e.amount)||0;
+    } else { expenses += Number(e.amount)||0; }
+  });
+  return { income:income, expenses:expenses, netProfit:income-expenses };
+};
+
 Pages.renderPfDistrib = function() {
   var el = document.getElementById('pf-tab-distrib'); if (!el) return;
   var pf = DB.getPf();
+  var projects = DB.getProjects();
   var partners = pf.partners || [];
   var totalPct = partners.reduce(function(s,p){ return s+(Number(p.share_pct)||0); },0);
   var pctOk = Math.abs(totalPct-100)<0.01;
 
-  var partnerSummary = partners.length ?
-    '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">'+
-      partners.map(function(p) {
-        return '<div style="display:flex;align-items:center;gap:6px;padding:5px 12px;background:var(--bg-soft);border-radius:20px">'+
-          '<div style="width:22px;height:22px;border-radius:50%;background:var(--primary-500);display:flex;align-items:center;justify-content:center;color:#fff;font-size:10px;font-weight:700;flex-shrink:0">'+
-            UI.escHtml((p.name||'؟').charAt(0))+'</div>'+
-          '<span style="font-weight:600;font-size:13px">'+UI.escHtml(p.name)+'</span>'+
-          '<span style="font-size:12px;font-weight:800;color:var(--primary-600);font-family:monospace">'+p.share_pct+'٪</span>'+
-        '</div>';
-      }).join('')+
-    '</div>' :
-    '<div style="color:var(--fg-4);font-size:13px">لا يوجد شركاء — افتح إدارة الشركاء لإضافة شركاء</div>';
+  /* ── financial health ── */
+  var cAll = Pages._pfCalc(pf, null, null);
+  var distAll = (pf.distributions||[]).filter(function(d){ return d.status==='completed'; })
+    .reduce(function(s,d){ return s+(Number(d.distributed_amount)||0); },0);
+  var retained = Pages._pfRetainedTotals(pf);
+  var bankMin = Pages._pfBankMin(pf, projects);
+  var undistributed = cAll.netProfit - distAll;
+  var availForDist = undistributed - bankMin;
 
-  var warn = (!pctOk && partners.length) ?
-    '<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--warning-50);color:var(--warning-700);border-radius:8px;font-size:12px;margin-top:8px">'+
-      '<i data-lucide="alert-triangle" style="width:14px;height:14px;flex-shrink:0"></i>'+
-      'مجموع الحصص = '+totalPct+'٪ — يجب ١٠٠٪ لإنشاء توزيع</div>' : '';
+  var hOk = availForDist >= 0;
+  var hColor = hOk ? 'var(--success-700)' : 'var(--warning-700)';
+  var hBg    = hOk ? 'var(--success-50)'  : 'var(--warning-50)';
+  var hBorder= hOk ? 'var(--success-200)' : 'var(--warning-200)';
+  var hIcon  = hOk ? 'shield-check' : 'triangle-alert';
+  var hMsg   = hOk ? 'الوضع المالي سليم — يمكن توزيع الأرباح بأمان'
+                   : 'تنبيه: بعض الأرباح محجوزة لتنفيذ المشاريع النشطة';
 
+  var collectedIds = {};
+  (pf.income||[]).filter(function(e){ return e.category==='project_fee' && e.project_id; })
+    .forEach(function(e){ collectedIds[e.project_id] = true; });
+  var activeCount = projects.filter(function(p){ return p.status==='active' && collectedIds[p.id]; }).length;
+
+  var bankAlert =
+    '<div style="border:1px solid '+hBorder+';background:'+hBg+';border-radius:14px;padding:16px 20px;margin-bottom:var(--space-4)">'+
+      '<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">'+
+        '<i data-lucide="'+hIcon+'" style="width:20px;height:20px;color:'+hColor+';flex-shrink:0"></i>'+
+        '<span style="font-weight:700;font-size:13px;color:'+hColor+'">'+hMsg+'</span>'+
+      '</div>'+
+      '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:10px">'+
+        '<div style="background:rgba(255,255,255,.75);border-radius:10px;padding:12px 14px">'+
+          '<div style="font-size:10px;font-weight:700;color:var(--fg-4);margin-bottom:5px">صافي الأرباح الكلي</div>'+
+          '<div class="mono" style="font-size:15px;font-weight:800;color:'+(cAll.netProfit>=0?'var(--success-700)':'var(--danger-700)')+'">'+UI.fmt(cAll.netProfit)+' ر.س</div>'+
+        '</div>'+
+        '<div style="background:rgba(255,255,255,.75);border-radius:10px;padding:12px 14px">'+
+          '<div style="font-size:10px;font-weight:700;color:var(--fg-4);margin-bottom:5px">غير الموزَّع حتى الآن</div>'+
+          '<div class="mono" style="font-size:15px;font-weight:800;color:var(--primary-700)">'+UI.fmt(undistributed)+' ر.س</div>'+
+        '</div>'+
+        (bankMin>0?
+          '<div style="background:rgba(255,255,255,.75);border-radius:10px;padding:12px 14px;border:1px dashed var(--warning-300)">'+
+            '<div style="font-size:10px;font-weight:700;color:var(--warning-700);margin-bottom:5px;display:flex;align-items:center;gap:4px">'+
+              '<i data-lucide="lock" style="width:10px;height:10px"></i>محجوز لتنفيذ المشاريع</div>'+
+            '<div class="mono" style="font-size:15px;font-weight:800;color:var(--warning-700)">'+UI.fmt(bankMin)+' ر.س</div>'+
+            '<div style="font-size:10px;color:var(--fg-4)">'+activeCount+' مشروع نشط</div>'+
+          '</div>' : '')+
+        '<div style="background:rgba(255,255,255,.75);border-radius:10px;padding:12px 14px'+(availForDist<0?';border:1px solid var(--danger-200)':'')+'" >'+
+          '<div style="font-size:10px;font-weight:700;color:var(--fg-4);margin-bottom:5px">متاح للتوزيع الآن</div>'+
+          '<div class="mono" style="font-size:15px;font-weight:800;color:'+(availForDist>=0?'var(--accent-700)':'var(--danger-700)')+'">'+UI.fmt(Math.max(0,availForDist))+' ر.س</div>'+
+          '<div style="font-size:10px;color:var(--fg-4)">بعد خصم احتياطي التنفيذ</div>'+
+        '</div>'+
+      '</div>'+
+      (bankMin>0?
+        '<div style="margin-top:10px;font-size:11px;color:var(--fg-3);display:flex;align-items:flex-start;gap:5px">'+
+          '<i data-lucide="info" style="width:12px;height:12px;flex-shrink:0;margin-top:1px"></i>'+
+          '<span>يُنصح بالاحتفاظ بما لا يقل عن <strong style="color:var(--primary-700)">'+UI.fmt(bankMin)+' ر.س</strong> في الحساب البنكي لتغطية تكاليف تنفيذ المشاريع النشطة قبل أي توزيع</span>'+
+        '</div>' : '')+
+    '</div>';
+
+  /* ── partner cards ── */
+  var pColors = ['var(--iris-600)','var(--success-600)','var(--warning-600)','var(--danger-600)','var(--primary-600)'];
+  var partnerSection =
+    '<div class="dash-sec-hdr" style="margin-bottom:var(--space-3)">'+
+      '<h3><i data-lucide="users-round"></i>الشركاء</h3>'+
+      '<div style="display:flex;align-items:center;gap:8px">'+
+        (!pctOk&&partners.length?'<span style="font-size:11px;color:var(--warning-700);font-weight:700;background:var(--warning-50);padding:2px 8px;border-radius:20px">مجموع الحصص '+totalPct.toFixed(1)+'٪</span>':'')+
+        '<button class="btn btn-sm btn-ghost" onclick="Pages.openPartnersModal()"><i data-lucide="settings-2"></i>إدارة الشركاء</button>'+
+      '</div>'+
+    '</div>'+
+    (partners.length ?
+      '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px">'+
+        partners.map(function(p,i) {
+          var col = pColors[i%pColors.length];
+          var myShare = availForDist>0 ? Math.round(availForDist*(Number(p.share_pct)||0)/100) : 0;
+          return '<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:10px">'+
+            '<div style="display:flex;align-items:center;gap:10px">'+
+              '<div style="width:38px;height:38px;border-radius:50%;background:'+col+';display:flex;align-items:center;justify-content:center;color:#fff;font-size:15px;font-weight:800;flex-shrink:0">'+UI.escHtml((p.name||'؟').charAt(0))+'</div>'+
+              '<div><div style="font-weight:700;font-size:14px">'+UI.escHtml(p.name)+'</div>'+
+              (p.note?'<div style="font-size:11px;color:var(--fg-4)">'+UI.escHtml(p.note)+'</div>':'')+
+              '</div>'+
+            '</div>'+
+            '<div style="display:flex;justify-content:space-between;align-items:center">'+
+              '<div style="font-size:11px;color:var(--fg-4)">الحصة</div>'+
+              '<div style="font-size:18px;font-weight:800;color:'+col+';font-family:monospace">'+p.share_pct+'<span style="font-size:12px">٪</span></div>'+
+            '</div>'+
+            '<div style="height:5px;background:var(--border);border-radius:99px;overflow:hidden">'+
+              '<div style="height:100%;width:'+p.share_pct+'%;background:'+col+';border-radius:99px"></div>'+
+            '</div>'+
+            (availForDist>0?
+              '<div style="background:var(--bg-soft);border-radius:8px;padding:6px 10px;font-size:11px;color:var(--fg-3)">'+
+                'نصيبك المتاح الآن: <span class="mono" style="font-weight:700;color:'+col+'">'+UI.fmt(myShare)+'</span> ر.س'+
+              '</div>' : '')+
+          '</div>';
+        }).join('')+
+      '</div>' :
+      '<div style="padding:28px;text-align:center;color:var(--fg-4);font-size:13px;background:var(--bg-soft);border-radius:12px">'+
+        'لا يوجد شركاء — افتح إدارة الشركاء لإضافة شركاء</div>');
+
+  /* ── distribution history ── */
   var retainedMap = {ops:'تشغيل',dev:'تطوير',reserve:'احتياطي'};
   var dists = (pf.distributions||[]).slice().sort(function(a,b){ return (b.created_at||'').localeCompare(a.created_at||''); });
   var distRows = dists.length ? dists.map(function(d) {
-    var statusHtml = d.status==='completed' ?
-      '<span class="badge badge-success">مكتمل</span>' :
-      '<span class="badge badge-warning">مسودة</span>';
-    var retainedLine = (d.retained_amount||0) > 0 ?
-      '<div style="font-size:11px;color:var(--fg-4);margin-top:2px">محتجز: '+UI.fmt(d.retained_amount)+' ('+UI.escHtml(retainedMap[d.retained_category]||'')+')</div>' : '';
+    var isComp = d.status==='completed';
+    var statusHtml = isComp ?
+      '<span style="font-size:10px;font-weight:700;color:var(--success-700);background:var(--success-50);padding:2px 8px;border-radius:20px">مكتمل</span>' :
+      '<span style="font-size:10px;font-weight:700;color:var(--warning-700);background:var(--warning-50);padding:2px 8px;border-radius:20px">مسودة</span>';
+    var retainedLine = (d.retained_amount||0)>0 ?
+      '<div style="font-size:10px;color:var(--fg-4);margin-top:2px">محتجز: '+UI.fmt(d.retained_amount)+' ('+UI.escHtml(retainedMap[d.retained_category]||'')+')</div>' : '';
+    var projLine = (d.selected_project_ids&&d.selected_project_ids.length) ?
+      '<div style="font-size:10px;color:var(--primary-600);margin-top:2px">'+d.selected_project_ids.length+' مشروع</div>' : '';
     return '<tr>'+
-      '<td style="font-weight:600">'+UI.escHtml(d.period_label||'—')+'</td>'+
-      '<td>'+UI.escHtml((d.created_at||'').slice(0,10))+'</td>'+
-      '<td class="mono">'+UI.fmt(Number(d.gross_income)||0)+' ر.س</td>'+
-      '<td class="mono">'+UI.fmt(Number(d.gross_expenses)||0)+' ر.س</td>'+
+      '<td><div style="font-weight:700">'+UI.escHtml(d.period_label||'—')+'</div>'+
+          '<div style="font-size:11px;color:var(--fg-4)">'+UI.escHtml((d.created_at||'').slice(0,10))+'</div></td>'+
+      '<td class="mono" style="color:var(--success-700)">'+UI.fmt(Number(d.gross_income)||0)+' ر.س</td>'+
+      '<td class="mono" style="color:var(--danger-600)">'+UI.fmt(Number(d.gross_expenses)||0)+' ر.س</td>'+
       '<td class="mono" style="font-weight:700;color:'+(Number(d.net_profit)>=0?'var(--success-700)':'var(--danger-700)')+'">'+UI.fmt(Number(d.net_profit)||0)+' ر.س</td>'+
-      '<td class="mono"><div style="font-weight:700;color:var(--accent-600)">'+UI.fmt(Number(d.distributed_amount)||0)+' ر.س</div>'+retainedLine+'</td>'+
+      '<td class="mono"><div style="font-weight:700;color:var(--accent-600)">'+UI.fmt(Number(d.distributed_amount)||0)+' ر.س</div>'+retainedLine+projLine+'</td>'+
       '<td>'+statusHtml+'</td>'+
       '<td>'+
-        '<button class="btn btn-sm btn-ghost" onclick="Pages.viewDistrib(\''+d.id+'\')"><i data-lucide="eye" style="width:14px;height:14px"></i></button>'+
-        '<button class="btn btn-sm btn-ghost" style="color:var(--danger-500)" onclick="Pages.deletePfDistrib(\''+d.id+'\')"><i data-lucide="trash-2" style="width:14px;height:14px"></i></button>'+
+        '<button class="btn btn-sm btn-ghost" onclick="Pages.viewDistrib(\''+d.id+'\')"><i data-lucide="eye" style="width:13px;height:13px"></i></button>'+
+        '<button class="btn btn-sm btn-ghost" style="color:var(--danger-500)" onclick="Pages.deletePfDistrib(\''+d.id+'\')"><i data-lucide="trash-2" style="width:13px;height:13px"></i></button>'+
       '</td>'+
     '</tr>';
   }).join('') :
-  '<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--fg-4)">لا توجد توزيعات — أنشئ أول توزيع</td></tr>';
+  '<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--fg-4)">لا توجد توزيعات — أنشئ أول توزيع</td></tr>';
 
   el.innerHTML = '<div class="page-content">'+
-    '<div class="card" style="margin-bottom:var(--space-4)">'+
-      '<div class="dash-sec-hdr" style="margin-bottom:var(--space-3)">'+
-        '<h3><i data-lucide="users-round"></i>الشركاء</h3>'+
-        '<button class="btn btn-sm btn-ghost" onclick="Pages.openPartnersModal()">'+
-          '<i data-lucide="settings-2"></i>إدارة الشركاء</button>'+
-      '</div>'+
-      partnerSummary+warn+
-    '</div>'+
+    bankAlert+
+    '<div class="card" style="margin-bottom:var(--space-4)">'+partnerSection+'</div>'+
     '<div class="card">'+
       '<div class="dash-sec-hdr" style="margin-bottom:var(--space-3)">'+
         '<h3><i data-lucide="pie-chart"></i>سجل توزيعات الأرباح</h3>'+
-        '<button class="btn btn-primary btn-sm" onclick="Pages.openNewDistrib()" '+(pctOk&&partners.length?'':'disabled')+'>'+
+        '<button class="btn btn-primary btn-sm" onclick="Pages.openNewDistrib()" '+(pctOk&&partners.length?'':'disabled title="أضف شركاء وتأكد من مجموع الحصص ١٠٠٪"')+'>'+
           '<i data-lucide="plus"></i>توزيع جديد</button>'+
       '</div>'+
       '<div style="overflow-x:auto"><table class="data-table">'+
-        '<thead><tr><th>الفترة</th><th>التاريخ</th><th>الإيرادات</th><th>المصروفات</th><th>صافي الربح</th><th>الموزَّع / المحتجز</th><th>الحالة</th><th></th></tr></thead>'+
+        '<thead><tr><th>الفترة</th><th>الإيرادات</th><th>المصروفات</th><th>صافي الربح</th><th>الموزَّع / المحتجز</th><th>الحالة</th><th></th></tr></thead>'+
         '<tbody>'+distRows+'</tbody>'+
       '</table></div>'+
     '</div>'+
@@ -13769,6 +13894,46 @@ Pages._pfDistribRender = function() {
       return '<option value="'+o[0]+'"'+(st.period_type===o[0]?' selected':'')+'>'+o[1]+'</option>';
     }).join('');
     var range = Pages._pfPeriodRanges(st.period_type==='custom'?'quarter':st.period_type);
+
+    /* projects with collected fees */
+    var allProjects = DB.getProjects();
+    var collectedIds = {};
+    (pf.income||[]).filter(function(e){ return e.category==='project_fee' && e.project_id; })
+      .forEach(function(e){ collectedIds[e.project_id] = true; });
+    var eligibleProjs = allProjects.filter(function(p){ return collectedIds[p.id]; });
+    var selectedIds = st._selectedProjIds || eligibleProjs.map(function(p){ return p.id; });
+
+    var projCheckboxes = eligibleProjs.length ?
+      '<div class="form-group" style="margin-top:var(--space-3)">'+
+        '<label style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-weight:600">'+
+          '<span>المشاريع المشمولة في التوزيع</span>'+
+          '<button type="button" class="btn btn-sm btn-ghost" style="font-size:11px;padding:2px 8px" onclick="Pages._pfToggleAllProjs()">تحديد / إلغاء الكل</button>'+
+        '</label>'+
+        '<div id="pd-projs" style="display:flex;flex-direction:column;gap:6px;background:var(--bg-soft);border-radius:10px;padding:12px;max-height:190px;overflow-y:auto">'+
+          eligibleProjs.map(function(p) {
+            var fc = null; try { fc = FinCalc.calc(p.id); } catch(ex){}
+            var grossTotal = fc ? UI.fmt(Number(fc.grossTotal)||0) : '—';
+            var stColors = {active:'var(--success-700)',completed:'var(--iris-700)',paused:'var(--warning-700)',cancelled:'var(--fg-4)',draft:'var(--fg-3)'};
+            var stLabels = {active:'نشط',completed:'مكتمل',paused:'متوقف',cancelled:'ملغى',draft:'مسودة'};
+            var stCol = stColors[p.status]||'var(--fg-4)';
+            var isChecked = selectedIds.indexOf(p.id)>=0;
+            return '<label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:7px 10px;border-radius:8px;background:var(--bg-card)">'+
+              '<input type="checkbox" class="pd-proj-chk" value="'+p.id+'"'+(isChecked?' checked':'')+' style="width:15px;height:15px;flex-shrink:0">'+
+              '<div style="flex:1;min-width:0">'+
+                '<div style="font-weight:600;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+UI.escHtml(p.name)+'</div>'+
+                '<div style="font-size:10px;display:flex;gap:6px;align-items:center;margin-top:2px">'+
+                  '<span style="color:'+stCol+';font-weight:700">'+UI.escHtml(stLabels[p.status]||p.status)+'</span>'+
+                  '<span style="color:var(--fg-4)">قيمة العقد: '+grossTotal+' ر.س</span>'+
+                '</div>'+
+              '</div>'+
+            '</label>';
+          }).join('')+
+        '</div>'+
+        '<div style="font-size:11px;color:var(--fg-4);margin-top:5px">سيُحتسب الدخل والمصروفات المرتبطة بالمشاريع المحددة فقط</div>'+
+      '</div>' :
+      '<div style="margin-top:var(--space-3);padding:12px 14px;background:var(--bg-soft);border-radius:8px;font-size:12px;color:var(--fg-4)">'+
+        'لا توجد مشاريع محصَّلة أتعابها — ستُحتسب الإيرادات الكلية للفترة</div>';
+
     body = '<div class="form-group"><label>نوع الفترة</label>'+
       '<select class="form-control" id="pd-type" onchange="Pages._pfPeriodTypeChange()">'+periodOpts+'</select></div>'+
       '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">'+
@@ -13776,11 +13941,26 @@ Pages._pfDistribRender = function() {
         '<div class="form-group"><label>إلى</label><input type="date" id="pd-to" class="form-control" value="'+(st.to||range[1])+'"></div>'+
       '</div>'+
       '<div class="form-group"><label>اسم الفترة (يظهر في التقرير)</label>'+
-        '<input type="text" id="pd-label" class="form-control" value="'+UI.escHtml(st.period_label||'')+'" placeholder="مثال: الربع الأول 2025"></div>';
+        '<input type="text" id="pd-label" class="form-control" value="'+UI.escHtml(st.period_label||'')+'" placeholder="مثال: الربع الأول 2025"></div>'+
+      projCheckboxes;
+
   } else if (st.step === 2) {
-    var c = Pages._pfCalc(pf, st.from, st.to);
+    var c = Pages._pfCalcFiltered(pf, st.from, st.to, st._selectedProjIds);
     st._income = c.income; st._expenses = c.expenses; st._netProfit = c.netProfit;
-    body =
+
+    var selNames = '';
+    if (st._selectedProjIds && st._selectedProjIds.length) {
+      var allP = DB.getProjects();
+      var names = st._selectedProjIds.map(function(id){
+        var pr = allP.find(function(x){ return x.id===id; });
+        return pr ? pr.name : id;
+      });
+      selNames = '<div style="background:var(--primary-50);border-radius:8px;padding:8px 12px;margin-bottom:var(--space-3);font-size:12px;color:var(--primary-700)">'+
+        '<strong>المشاريع المشمولة: </strong>'+UI.escHtml(names.join('، '))+
+      '</div>';
+    }
+
+    body = selNames+
       '<div style="background:var(--bg-soft);border-radius:10px;padding:16px;margin-bottom:var(--space-3)">'+
         '<div class="wf-table">'+
           '<div class="wf-row"><span class="wf-lbl">إجمالي الإيرادات</span><span class="wf-val" style="color:var(--success-700)">+'+UI.fmt(c.income)+' ر.س</span></div>'+
@@ -13788,6 +13968,7 @@ Pages._pfDistribRender = function() {
           '<div class="wf-row wf-total"><span class="wf-lbl">صافي الربح</span><span class="wf-val" style="color:'+(c.netProfit>=0?'var(--success-700)':'var(--danger-700)')+'">'+UI.fmt(c.netProfit)+' ر.س</span></div>'+
         '</div>'+
       '</div>'+
+      (c.netProfit<=0?'<div style="padding:10px 14px;background:var(--danger-50);border-radius:8px;font-size:12px;color:var(--danger-700);margin-bottom:var(--space-3)">صافي الربح صفر أو سالب — لن يكون هناك توزيع فعلي</div>':'')+
       '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:var(--space-3)">'+
         '<div class="form-group" style="margin:0"><label>نسبة التوزيع ٪</label>'+
           '<input type="number" id="pd-pct" class="form-control" value="'+(st._distribPct||100)+'" min="0" max="100" step="1" oninput="Pages._pfDistribUpdateShares()">'+
@@ -13812,13 +13993,20 @@ Pages._pfDistribRender = function() {
     '<div class="modal-body">'+body+'</div>'+
     '<div class="modal-footer">'+
       (st.step>1?'<button class="btn btn-ghost" onclick="Pages._pfDistribState.step--;Pages._pfDistribRender()">السابق</button>':'<button class="btn btn-ghost" onclick="UI.closeModalForce()">إلغاء</button>')+
-      (st.step<2?'<button class="btn btn-primary" onclick="Pages._pfDistribNext()">التالي</button>':
+      (st.step<2?'<button class="btn btn-primary" onclick="Pages._pfDistribNext()">التالي ←</button>':
         '<button class="btn btn-ghost" onclick="Pages.saveDistrib(\'draft\')">حفظ مسودة</button>'+
         '<button class="btn btn-primary" onclick="Pages.saveDistrib(\'completed\')">تأكيد التوزيع</button>')+
     '</div>';
   UI.openModal(html, true);
   if (typeof lucide !== 'undefined') lucide.createIcons();
   if (st.step===2) Pages._pfDistribUpdateShares();
+};
+
+Pages._pfToggleAllProjs = function() {
+  var chks = document.querySelectorAll('.pd-proj-chk');
+  var allChecked = true;
+  chks.forEach(function(c){ if(!c.checked) allChecked=false; });
+  chks.forEach(function(c){ c.checked = !allChecked; });
 };
 
 Pages._pfPeriodTypeChange = function() {
@@ -13845,6 +14033,9 @@ Pages._pfDistribNext = function() {
     var map = {q1:'الربع الأول '+y, q2:'الربع الثاني '+y, q3:'الربع الثالث '+y, q4:'الربع الرابع '+y, annual:'سنة '+y};
     st.period_label = map[st.period_type] || (st.from+' — '+st.to);
   }
+  /* capture selected project IDs */
+  var chks = document.querySelectorAll('.pd-proj-chk:checked');
+  st._selectedProjIds = Array.prototype.map.call(chks, function(c){ return c.value; });
   st.step++;
   Pages._pfDistribRender();
 };
@@ -13915,6 +14106,7 @@ Pages.saveDistrib = function(status) {
     distributed_amount: amt,
     retained_amount: retainedAmt,
     retained_category: retainedAmt > 0 ? retainedCat : null,
+    selected_project_ids: st._selectedProjIds || [],
     entries: entries,
     status: status
   };
