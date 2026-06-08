@@ -4245,6 +4245,14 @@ Pages.addClientModal = function(editId) {
         '<div class="form-group"><label class="field-label">المدينة</label><input id="cl-city" class="field-input" placeholder="الرياض، جدة..." value="'+UI.escHtml(cl.city||'')+'"></div>' +
         '<div class="form-group"><label class="field-label">رقم السجل / الترخيص</label><input id="cl-regno" class="field-input" placeholder="اختياري" value="'+UI.escHtml(cl.reg_no||'')+'"></div>' +
       '</div>' +
+      '<div class="form-row">' +
+        '<div class="form-group"><label class="field-label">الرقم الضريبي</label><input id="cl-taxno" class="field-input" placeholder="3XXXXXXXXXXXXXXX" value="'+UI.escHtml(cl.tax_no||'')+'"></div>' +
+        '<div class="form-group"><label class="field-label">العنوان الوطني</label><input id="cl-address" class="field-input" placeholder="الرياض، المملكة العربية السعودية" value="'+UI.escHtml(cl.address||'')+'"></div>' +
+      '</div>' +
+      '<div class="form-row">' +
+        '<div class="form-group"><label class="field-label">اسم الممثل المفوض</label><input id="cl-contact-name" class="field-input" placeholder="اسم المفوض" value="'+UI.escHtml(cl.contact_name||'')+'"></div>' +
+        '<div class="form-group"><label class="field-label">صفة الممثل</label><input id="cl-contact-title" class="field-input" placeholder="المدير التنفيذي" value="'+UI.escHtml(cl.contact_title||'')+'"></div>' +
+      '</div>' +
       '<div class="form-group"><label class="field-label">الموقع الإلكتروني</label><input id="cl-website" class="field-input" type="url" placeholder="https://example.com" style="direction:ltr" value="'+UI.escHtml(cl.website||'')+'"></div>' +
       '<div class="form-group"><label class="field-label">ملاحظات</label><textarea id="cl-notes-modal" class="field-input" rows="2" placeholder="ملاحظات اختيارية عن العميل...">'+UI.escHtml(cl.notes||'')+'</textarea></div>' +
     '</div>' +
@@ -4309,13 +4317,17 @@ Pages.saveClient = function(editId) {
   if (editId) {
     var idx = clients.findIndex(function(c){ return c.id===editId; });
     if (idx>=0) {
-      clients[idx].name    = name;
-      clients[idx].type    = document.getElementById('cl-type').value;
-      clients[idx].email   = document.getElementById('cl-email').value.trim();
-      clients[idx].phone   = document.getElementById('cl-phone').value.trim();
-      clients[idx].city    = document.getElementById('cl-city').value.trim();
-      clients[idx].reg_no  = (document.getElementById('cl-regno')||{}).value||clients[idx].reg_no||'';
-      clients[idx].website = (document.getElementById('cl-website')||{}).value||clients[idx].website||'';
+      clients[idx].name          = name;
+      clients[idx].type          = document.getElementById('cl-type').value;
+      clients[idx].email         = document.getElementById('cl-email').value.trim();
+      clients[idx].phone         = document.getElementById('cl-phone').value.trim();
+      clients[idx].city          = document.getElementById('cl-city').value.trim();
+      clients[idx].reg_no        = (document.getElementById('cl-regno')||{}).value||clients[idx].reg_no||'';
+      clients[idx].tax_no        = (document.getElementById('cl-taxno')||{}).value||clients[idx].tax_no||'';
+      clients[idx].address       = (document.getElementById('cl-address')||{}).value||clients[idx].address||'';
+      clients[idx].contact_name  = (document.getElementById('cl-contact-name')||{}).value||clients[idx].contact_name||'';
+      clients[idx].contact_title = (document.getElementById('cl-contact-title')||{}).value||clients[idx].contact_title||'';
+      clients[idx].website       = (document.getElementById('cl-website')||{}).value||clients[idx].website||'';
       var notesEl = document.getElementById('cl-notes-modal');
       if (notesEl) clients[idx].notes = notesEl.value.trim();
       if (logoChanged) clients[idx].logo = window._clientLogoData || '';
@@ -4324,14 +4336,18 @@ Pages.saveClient = function(editId) {
   } else {
     var newCl = {
       id: DB.uid(), name: name,
-      type:    document.getElementById('cl-type').value,
-      email:   document.getElementById('cl-email').value.trim(),
-      phone:   document.getElementById('cl-phone').value.trim(),
-      city:    document.getElementById('cl-city').value.trim(),
-      reg_no:  (document.getElementById('cl-regno')||{}).value||'',
-      website: (document.getElementById('cl-website')||{}).value||'',
-      notes:   ((document.getElementById('cl-notes-modal')||{}).value||'').trim(),
-      created: new Date().toISOString().slice(0,10)
+      type:          document.getElementById('cl-type').value,
+      email:         document.getElementById('cl-email').value.trim(),
+      phone:         document.getElementById('cl-phone').value.trim(),
+      city:          document.getElementById('cl-city').value.trim(),
+      reg_no:        (document.getElementById('cl-regno')||{}).value||'',
+      tax_no:        (document.getElementById('cl-taxno')||{}).value||'',
+      address:       (document.getElementById('cl-address')||{}).value||'',
+      contact_name:  (document.getElementById('cl-contact-name')||{}).value||'',
+      contact_title: (document.getElementById('cl-contact-title')||{}).value||'',
+      website:       (document.getElementById('cl-website')||{}).value||'',
+      notes:         ((document.getElementById('cl-notes-modal')||{}).value||'').trim(),
+      created:       new Date().toISOString().slice(0,10)
     };
     if (logoChanged) newCl.logo = window._clientLogoData || '';
     clients.push(newCl);
@@ -4504,6 +4520,28 @@ Pages.render_client = function(params) {
         '<div class="client-info-field">' +
           '<div class="client-info-field-label"><i data-lucide="hash" style="width:11px;height:11px;vertical-align:middle;margin-left:3px"></i>رقم السجل / الترخيص</div>' +
           '<div class="client-info-edit-row"><input type="text" value="'+UI.escHtml(cl.reg_no||'')+'" placeholder="—" onblur="Pages.saveClientField(\''+cl.id+'\',\'reg_no\',this.value)" style="direction:ltr;text-align:right"></div>'+
+        '</div>'+
+        // Tax no
+        '<div class="client-info-field">' +
+          '<div class="client-info-field-label"><i data-lucide="receipt" style="width:11px;height:11px;vertical-align:middle;margin-left:3px"></i>الرقم الضريبي</div>' +
+          '<div class="client-info-edit-row"><input type="text" value="'+UI.escHtml(cl.tax_no||'')+'" placeholder="—" onblur="Pages.saveClientField(\''+cl.id+'\',\'tax_no\',this.value)" style="direction:ltr;text-align:right"></div>'+
+        '</div>'+
+        // Full address
+        '<div class="client-info-field">' +
+          '<div class="client-info-field-label"><i data-lucide="map-pin-house" style="width:11px;height:11px;vertical-align:middle;margin-left:3px"></i>العنوان الوطني</div>' +
+          '<div class="client-info-edit-row"><input type="text" value="'+UI.escHtml(cl.address||'')+'" placeholder="أضف العنوان..." onblur="Pages.saveClientField(\''+cl.id+'\',\'address\',this.value)"></div>'+
+        '</div>'+
+      '</div>'+
+      // Authorized signatory
+      '<div class="client-sidebar-section">' +
+        '<div class="client-sidebar-sec-title">المفوض بالتواقيع</div>' +
+        '<div class="client-info-field">' +
+          '<div class="client-info-field-label"><i data-lucide="pen-line" style="width:11px;height:11px;vertical-align:middle;margin-left:3px"></i>اسم الممثل المفوض</div>' +
+          '<div class="client-info-edit-row"><input type="text" value="'+UI.escHtml(cl.contact_name||'')+'" placeholder="اسم المفوض..." onblur="Pages.saveClientField(\''+cl.id+'\',\'contact_name\',this.value)"></div>'+
+        '</div>'+
+        '<div class="client-info-field">' +
+          '<div class="client-info-field-label"><i data-lucide="badge" style="width:11px;height:11px;vertical-align:middle;margin-left:3px"></i>صفة الممثل</div>' +
+          '<div class="client-info-edit-row"><input type="text" value="'+UI.escHtml(cl.contact_title||'')+'" placeholder="المدير التنفيذي..." onblur="Pages.saveClientField(\''+cl.id+'\',\'contact_title\',this.value)"></div>'+
         '</div>'+
       '</div>'+
       // Notes
@@ -5195,15 +5233,15 @@ Pages.createContract = function(projId, tplKey) {
     party_a_email:    _cs.company_email        || '',
     party_a_reg:      _cs.company_reg          || '',
     party_a_tax:      _cs.company_tax          || '',
-    party_b_name: cl ? cl.name : '',
+    party_b_name:     cl ? cl.name : '',
     party_b_rep_name: cl ? (cl.contact_name||'') : '',
-    party_b_title: '',
-    party_b_id: cl ? (cl.reg_no||'') : '',
-    party_b_address: cl ? (cl.city||'') : '',
-    party_b_phone: cl ? (cl.phone||'') : '',
-    party_b_email: cl ? (cl.email||'') : '',
-    party_b_reg: cl ? (cl.reg_no||'') : '',
-    party_b_tax: cl ? (cl.tax_no||'') : '',
+    party_b_title:    cl ? (cl.contact_title||'') : '',
+    party_b_id:       cl ? (cl.reg_no||'') : '',
+    party_b_address:  cl ? (cl.address||cl.city||'') : '',
+    party_b_phone:    cl ? (cl.phone||'') : '',
+    party_b_email:    cl ? (cl.email||'') : '',
+    party_b_reg:      cl ? (cl.reg_no||'') : '',
+    party_b_tax:      cl ? (cl.tax_no||'') : '',
     contract_date_gregorian: fin.ctrl && fin.ctrl.contract_date ? fin.ctrl.contract_date : today,
     contract_city: cl ? (cl.city||'الرياض') : 'الرياض',
     signature_city: cl ? (cl.city||'الرياض') : 'الرياض',
@@ -7286,7 +7324,12 @@ Pages.render_contract = function(params) {
     varField('party_a_address', 'العنوان', false) +
     varField('party_a_phone', 'الجوال', false) +
     varField('party_a_email', 'البريد الإلكتروني', false) +
-    '<div class="var-group-lbl"><i data-lucide="users"></i>الطرف الثاني</div>' +
+    '<div class="var-group-lbl" style="display:flex;align-items:center;justify-content:space-between">' +
+      '<span><i data-lucide="users"></i>الطرف الثاني</span>' +
+      '<button class="btn btn-sm" style="font-size:11px;padding:3px 10px;gap:4px" onclick="Pages.fillPartyBFromClient(\''+projId+'\',\''+contractId+'\')">' +
+        '<i data-lucide="arrow-down-to-line"></i>ملء من بيانات العميل' +
+      '</button>' +
+    '</div>' +
     varField('party_b_name', 'اسم الجهة / الطرف', true) +
     varField('party_b_rep_name', 'اسم الممثل المفوض', true) +
     varField('party_b_title', 'صفة الممثل', false) +
@@ -8155,6 +8198,45 @@ Pages.fillPartyAFromSettings = function(projId, contractId) {
   if (c.cover && Array.isArray(c.cover.elements)) Pages._refreshCoverPage(projId, contractId);
   Pages._refreshContractCover(c);
   // Refresh the vars panel so inputs reflect new values
+  var panel = document.getElementById('contract-vars-panel');
+  if (panel) panel.innerHTML = Pages.varsPanelHtml(projId, contractId);
+  if (window.lucide) lucide.createIcons();
+};
+
+Pages.fillPartyBFromClient = function(projId, contractId) {
+  var contracts = DB.getContracts(projId);
+  var c = contracts.find(function(x){ return x.id === contractId; });
+  if (!c) return;
+  var proj = DB.getProjects().find(function(p){ return p.id === projId; });
+  var cl = proj && proj.client_id ? DB.getClients().find(function(x){ return x.id === proj.client_id; }) : null;
+  if (!cl) { UI.toast('لا يوجد عميل مرتبط بهذا المشروع','warning'); return; }
+  if (!c.variables) c.variables = {};
+  var map = {
+    party_b_name:     cl.name            || '',
+    party_b_rep_name: cl.contact_name    || '',
+    party_b_title:    cl.contact_title   || '',
+    party_b_id:       cl.reg_no          || '',
+    party_b_address:  cl.address || cl.city || '',
+    party_b_phone:    cl.phone           || '',
+    party_b_email:    cl.email           || '',
+    party_b_reg:      cl.reg_no          || '',
+    party_b_tax:      cl.tax_no          || ''
+  };
+  Object.assign(c.variables, map);
+  c.updated = (new Date()).toISOString().slice(0,10);
+  DB.saveContract(projId, c);
+  var docEl = document.getElementById('contract-doc');
+  if (docEl) {
+    Object.keys(map).forEach(function(key) {
+      var val = map[key];
+      docEl.querySelectorAll('[data-vk="'+key+'"]').forEach(function(chip) {
+        chip.textContent = val || '{{'+key+'}}';
+        chip.className = 'var-chip' + (val ? '' : ' empty');
+      });
+    });
+  }
+  if (c.cover && Array.isArray(c.cover.elements)) Pages._refreshCoverPage(projId, contractId);
+  Pages._refreshContractCover(c);
   var panel = document.getElementById('contract-vars-panel');
   if (panel) panel.innerHTML = Pages.varsPanelHtml(projId, contractId);
   if (window.lucide) lucide.createIcons();
