@@ -11766,7 +11766,7 @@ Pages.doEnableToolFromReq = function(reqId, tool, orgEmail){ Pages.openReqDrawer
 Pages._OPMONTHS = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
 Pages._OPMONTHS_SHORT = ['ينا','فبر','مار','أبر','ماي','يون','يول','أغس','سبت','أكت','نوف','ديس'];
 Pages._OPGOAL_COLORS = ['#6366f1','#0ea5e9','#10b981','#f59e0b','#ec4899','#8b5cf6','#14b8a6','#ef4444'];
-Pages._opCur = { orgId:null, tab:'overview', month:(new Date()).getMonth(), kpiYear:(new Date()).getFullYear(), kpiPeriod:0, planView:'detailed', collapsed:{} };
+Pages._opCur = { orgId:null, tab:'overview', month:(new Date()).getMonth(), kpiYear:(new Date()).getFullYear(), kpiPeriod:0, planView:'detailed', collapsed:{}, drawerGid:null, drawerTab:'overview', sheetCols:{} };
 Pages._opLoadingOrgs = false;
 
 /* منظورات بطاقة الأداء المتوازن للجمعيات الخيرية */
@@ -12065,13 +12065,17 @@ Pages._opGoalStats = function(g){
   (g.initiatives||[]).forEach(function(ini){ (ini.activities||[]).forEach(function(a){
     var s=Pages._opActStats(a); sum+=s.pct; acts++; if(s.pct>=100) doneActs++;
   });});
-  var kpiPct=null;
-  if(g.kpis && g.kpis.length && g.kpis[0].target){
-    var k=g.kpis[0]; var vals=Object.values(k.actuals||{}).map(parseFloat).filter(isFinite);
-    var latest=vals.length?vals[vals.length-1]:0;
-    kpiPct=Math.min(100,Math.round(latest/(k.target||1)*100));
-  }
-  return { pct: acts?Math.round(sum/acts):0, acts:acts, inits:(g.initiatives||[]).length, doneActs:doneActs, kpiPct:kpiPct };
+  var actPct=acts?Math.round(sum/acts):0;
+  var kpiPct=null; var kpiVals=[];
+  (g.kpis||[]).forEach(function(k){
+    if(!k.target) return;
+    var vals=Object.values(k.actuals||{}).map(parseFloat).filter(isFinite);
+    if(!vals.length) return;
+    kpiVals.push(Math.min(100,Math.round(vals[vals.length-1]/k.target*100)));
+  });
+  if(kpiVals.length) kpiPct=Math.round(kpiVals.reduce(function(a,b){return a+b;},0)/kpiVals.length);
+  var pct=kpiPct!=null?kpiPct:actPct;
+  return { pct:pct, actPct:actPct, acts:acts, inits:(g.initiatives||[]).length, doneActs:doneActs, kpiPct:kpiPct };
 };
 Pages._opPlanStats = function(p){
   var inits=0, acts=0, doneActs=0, sum=0, byMonth=[0,0,0,0,0,0,0,0,0,0,0,0], byMonthDone=[0,0,0,0,0,0,0,0,0,0,0,0];
@@ -12221,7 +12225,7 @@ Pages._opStyle = function(){
   '.op-kpi-val{font-size:24px;font-weight:800;color:var(--fg-1);line-height:1}'+
   '.op-kpi-lbl{font-size:12px;color:var(--fg-3);margin-top:6px}'+
   '.op-goal{border:1px solid var(--border-1);border-radius:14px;margin-bottom:14px;background:var(--bg-1);overflow:hidden}'+
-  '.op-goal-hd{display:flex;align-items:center;gap:10px;padding:13px 15px;border-right:4px solid var(--iris-500);background:var(--bg-2)}'+
+  '.op-goal-hd{display:flex;align-items:center;gap:10px;padding:13px 15px;background:var(--bg-2)}'+
   '.op-ini{padding:4px 14px 12px}'+
   '.op-ini-hd{display:flex;align-items:center;gap:7px;font-weight:700;font-size:13px;color:var(--fg-2);padding:10px 0 7px}'+
   '.op-grid{width:100%;border-collapse:collapse;direction:rtl;font-size:12px}'+
@@ -12501,7 +12505,7 @@ Pages._opTabPlan = function(plan){
       return '<span style="font-size:10px;background:'+gc+'18;color:'+gc+';border-radius:5px;padding:2px 7px;font-weight:600;border:1px solid '+gc+'33">'+
         UI.escHtml(k.title||'')+(k.target!=null?' → '+(d==='%'?k.target+'%':k.target+(d?' '+d:'')):'')+'</span>'; 
     }).join('');
-    var hdr='<div class="op-goal-hd" style="border-right-color:'+gc+'">'+
+    var hdr='<div class="op-goal-hd">'+
       '<button class="op-mini" style="flex-shrink:0" onclick="Pages._opToggleGoal(\''+g.id+'\')"><i data-lucide="'+(isCollapsed?'chevron-left':'chevron-down')+'"></i></button>'+
       '<div style="flex:1;min-width:0">'+
         '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">'+
@@ -12517,15 +12521,15 @@ Pages._opTabPlan = function(plan){
       '<button class="op-mini danger" onclick="Pages.opDeleteGoal(\''+g.id+'\')"><i data-lucide="trash-2"></i></button>'+
       '<button class="btn btn-xs btn-ghost" onclick="Pages.opIniModal(\''+g.id+'\',null)"><i data-lucide="plus"></i>مبادرة</button>'+
     '</div>';
-    if(isCollapsed) return '<div class="op-goal">'+hdr+'</div>';
+    if(isCollapsed) return '<div class="op-goal" style="border-top:3px solid '+gc+'">'+hdr+'</div>';
     var inis=(g.initiatives||[]).map(function(ini){
       var rows=(ini.activities||[]).map(function(a){
         var s=Pages._opActStats(a); var cells='';
         for (var i=0;i<12;i++){
           if (a.plan&&a.plan[i]){
-            cells+='<td class="op-msched" ondblclick="Pages.opToggleMonth(\''+g.id+'\',\'+ini.id+\',\'+a.id+\','+i+')" title="'+Pages._OPMONTHS[i]+' — نقرة مزدوجة للإلغاء"><input class="op-done-inp" type="number" min="0" value="'+(a.done&&a.done[i]?a.done[i]:'')+'" placeholder="0" onchange="Pages.opSetDone(\''+g.id+'\',\'+ini.id+\',\'+a.id+\','+i+',this.value)"></td>';
+            cells+='<td class="op-msched" ondblclick="Pages.opToggleMonth(\''+g.id+'\',\''+ini.id+'\',\''+a.id+'\','+i+')" title="'+Pages._OPMONTHS[i]+' — نقرة مزدوجة للإلغاء"><input class="op-done-inp" type="number" min="0" value="'+(a.done&&a.done[i]?a.done[i]:'')+'" placeholder="0" onchange="Pages.opSetDone(\''+g.id+'\',\''+ini.id+'\',\''+a.id+'\','+i+',this.value)"></td>';
           } else {
-            cells+='<td class="op-mcell" onclick="Pages.opToggleMonth(\''+g.id+'\',\'+ini.id+\',\'+a.id+\','+i+')" title="جدولة '+Pages._OPMONTHS[i]+'"></td>';
+            cells+='<td class="op-mcell" onclick="Pages.opToggleMonth(\''+g.id+'\',\''+ini.id+'\',\''+a.id+'\','+i+')" title="جدولة '+Pages._OPMONTHS[i]+'"></td>';
           }
         }
         var uDisp=a.unit?Pages._opUnitDisplay(a.unit):'';
@@ -12534,8 +12538,8 @@ Pages._opTabPlan = function(plan){
             '<div style="font-weight:600;color:var(--fg-1)">'+UI.escHtml(a.title)+'</div>'+
             '<div style="font-size:10.5px;color:var(--fg-3)">'+UI.escHtml(a.kpi||'')+(a.owner?' · '+UI.escHtml(a.owner):'')+'</div>'+
             '<div style="margin-top:3px;display:flex;gap:4px">'+
-              '<button class="op-mini" onclick="Pages.opActModal(\''+g.id+'\',\'+ini.id+\',\'+a.id+\')"><i data-lucide="pencil"></i></button>'+
-              '<button class="op-mini danger" onclick="Pages.opDeleteActivity(\''+g.id+'\',\'+ini.id+\',\'+a.id+\')"><i data-lucide="trash-2"></i></button></div></td>'+
+              '<button class="op-mini" onclick="Pages.opActModal(\''+g.id+'\',\''+ini.id+'\',\''+a.id+'\')"><i data-lucide="pencil"></i></button>'+
+              '<button class="op-mini danger" onclick="Pages.opDeleteActivity(\''+g.id+'\',\''+ini.id+'\',\''+a.id+'\')"><i data-lucide="trash-2"></i></button></div></td>'+
           '<td><strong>'+s.target+(uDisp?' '+uDisp:'')+'</strong></td>'+cells+
           '<td><strong>'+s.done+'</strong></td>'+
           '<td><span style="font-weight:800;color:'+Pages._opPctColor(s.pct)+'">'+s.pct+'%</span></td>'+
@@ -12543,13 +12547,13 @@ Pages._opTabPlan = function(plan){
       }).join('');
       var monthHdr=''; for (var m=0;m<12;m++) monthHdr+='<th>'+Pages._OPMONTHS_SHORT[m]+'</th>';
       return '<div class="op-ini"><div class="op-ini-hd"><i data-lucide="git-branch"></i><span>'+UI.escHtml(ini.title)+'</span>'+
-        '<button class="op-mini" onclick="Pages.opIniModal(\''+g.id+'\',\'+ini.id+\')"><i data-lucide="pencil"></i></button>'+
-        '<button class="op-mini danger" onclick="Pages.opDeleteInitiative(\''+g.id+'\',\'+ini.id+\')"><i data-lucide="trash-2"></i></button>'+
-        '<button class="btn btn-xs btn-ghost" style="margin-right:auto" onclick="Pages.opActModal(\''+g.id+'\',\'+ini.id+\',null)"><i data-lucide="plus"></i>نشاط</button></div>'+
+        '<button class="op-mini" onclick="Pages.opIniModal(\''+g.id+'\',\''+ini.id+'\')"><i data-lucide="pencil"></i></button>'+
+        '<button class="op-mini danger" onclick="Pages.opDeleteInitiative(\''+g.id+'\',\''+ini.id+'\')"><i data-lucide="trash-2"></i></button>'+
+        '<button class="btn btn-xs btn-ghost" style="margin-right:auto" onclick="Pages.opActModal(\''+g.id+'\',\''+ini.id+'\',null)"><i data-lucide="plus"></i>نشاط</button></div>'+
         '<div style="overflow-x:auto"><table class="op-grid"><thead><tr><th class="op-act">النشاط</th><th>المستهدف</th>'+monthHdr+'<th>المنجز</th><th>%</th></tr></thead><tbody>'+
         (rows||'<tr><td colspan="16" style="color:var(--fg-3);padding:10px">لا أنشطة — أضف نشاطاً</td></tr>')+'</tbody></table></div></div>';
     }).join('');
-    return '<div class="op-goal">'+hdr+inis+'</div>';
+    return '<div class="op-goal" style="border-top:3px solid '+gc+'">'+hdr+inis+'</div>';
   };
 
   var body='';
@@ -13127,6 +13131,12 @@ Pages.opGoalDrawer = function(gid){
   var g=(plan.goals||[]).filter(function(x){return x.id===gid;})[0]; if(!g) return;
   Pages._opCur.drawerGid=gid;
   if(!Pages._opCur.drawerTab) Pages._opCur.drawerTab='overview';
+  /* inject drawer CSS into <head> once so it works even before _opStyle renders */
+  if(!document.getElementById('op-drawer-style')){
+    var st=document.createElement('style'); st.id='op-drawer-style';
+    st.textContent='.op-drawer{position:fixed;top:0;right:0;width:min(520px,100vw);height:100vh;background:var(--bg-0);box-shadow:-4px 0 28px rgba(0,0,0,.13);z-index:1100;transform:translateX(105%);transition:transform .28s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;overflow:hidden}.op-drawer.open{transform:translateX(0)}.op-drawer-bd{position:fixed;inset:0;background:rgba(0,0,0,.28);z-index:1099;opacity:0;pointer-events:none;transition:opacity .25s}.op-drawer-bd.open{opacity:1;pointer-events:auto}.op-drawer-hd{padding:16px 16px 0;border-bottom:1px solid var(--border-1);background:var(--bg-1);flex-shrink:0}.op-drawer-body{flex:1;overflow-y:auto;padding:14px 16px}';
+    document.head.appendChild(st);
+  }
   var drawer=document.getElementById('op-goal-drawer');
   if(!drawer){
     drawer=document.createElement('div'); drawer.id='op-goal-drawer'; drawer.className='op-drawer';
@@ -13158,9 +13168,11 @@ Pages.opGoalDrawer = function(gid){
     '<div style="display:flex;border-bottom:2px solid var(--border-1)">'+tabBar+'</div>'+
   '</div>';
   var body='';
-  if(dt==='overview') body=Pages._opDrawerOverview(g);
-  else if(dt==='activities') body=Pages._opDrawerActivities(g);
-  else body=Pages._opDrawerTracking(g);
+  try{
+    if(dt==='overview') body=Pages._opDrawerOverview(g);
+    else if(dt==='activities') body=Pages._opDrawerActivities(g);
+    else body=Pages._opDrawerTracking(g);
+  }catch(e){ console.error('opGoalDrawer body error',e); body='<div style="padding:20px;color:var(--danger-500)">خطأ في تحميل البيانات: '+e.message+'</div>'; }
   drawer.innerHTML=hdr+'<div class="op-drawer-body">'+body+'</div>';
   drawer.classList.add('open');
   var bd2=document.getElementById('op-drawer-bd'); if(bd2) bd2.classList.add('open');
@@ -13235,8 +13247,8 @@ Pages._opDrawerActivities = function(g){
           '<div style="font-size:10px;color:var(--fg-4)">'+s.done+'/'+(s.target||(a.unit?Pages._opUnitDisplay(a.unit):''))+'</div>'+
         '</div>'+
         '<div style="display:flex;gap:3px">'+
-          '<button class="op-mini" onclick="Pages.opActModal(\''+g.id+'\',\'+ini.id+\',\'+a.id+\')"><i data-lucide="pencil"></i></button>'+
-          '<button class="op-mini danger" onclick="Pages.opDeleteActivity(\''+g.id+'\',\'+ini.id+\',\'+a.id+\')"><i data-lucide="trash-2"></i></button>'+
+          '<button class="op-mini" onclick="Pages.opActModal(\''+g.id+'\',\''+ini.id+'\',\''+a.id+'\')"><i data-lucide="pencil"></i></button>'+
+          '<button class="op-mini danger" onclick="Pages.opDeleteActivity(\''+g.id+'\',\''+ini.id+'\',\''+a.id+'\')"><i data-lucide="trash-2"></i></button>'+
         '</div>'+
       '</div>';
     }).join('');
@@ -13244,8 +13256,8 @@ Pages._opDrawerActivities = function(g){
       '<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--bg-2);border-radius:8px 8px 0 0">'+
         '<i data-lucide="git-branch" style="width:14px;height:14px;color:'+gc+'"></i>'+
         '<span style="font-weight:700;font-size:12.5px;color:var(--fg-1);flex:1;min-width:0">'+UI.escHtml(ini.title)+'</span>'+
-        '<button class="op-mini" onclick="Pages.opIniModal(\''+g.id+'\',\'+ini.id+\')"><i data-lucide="pencil"></i></button>'+
-        '<button class="btn btn-xs btn-ghost" onclick="Pages.opActModal(\''+g.id+'\',\'+ini.id+\',null)"><i data-lucide="plus"></i>نشاط</button>'+
+        '<button class="op-mini" onclick="Pages.opIniModal(\''+g.id+'\',\''+ini.id+'\')"><i data-lucide="pencil"></i></button>'+
+        '<button class="btn btn-xs btn-ghost" onclick="Pages.opActModal(\''+g.id+'\',\''+ini.id+'\',null)"><i data-lucide="plus"></i>نشاط</button>'+
       '</div>'+
       '<div style="border:1px solid var(--border-1);border-top:none;border-radius:0 0 8px 8px;overflow:hidden">'+
         (acts||'<div style="padding:12px;color:var(--fg-3);font-size:12px;text-align:center">لا أنشطة</div>')+
