@@ -4882,15 +4882,15 @@ Pages.render_projects = function(opts) {
     /* list view */
     body =
       '<div style="background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden">'+
-        '<div style="display:grid;grid-template-columns:2.5fr 1fr 1fr 1fr 0.8fr auto;align-items:center;gap:12px;padding:10px 16px;font-size:11px;font-weight:700;color:var(--fg-4);letter-spacing:.4px;text-transform:uppercase;border-bottom:1px solid var(--border-subtle);background:var(--neutral-50)">'+
-          '<span>المشروع</span><span>العميل</span><span style="text-align:left">قيمة العقد</span><span style="text-align:left">صافي الربح</span><span>الحالة</span><span></span>'+
+        '<div style="display:grid;grid-template-columns:2.5fr 1fr 1fr 1fr 1fr 0.8fr auto;align-items:center;gap:12px;padding:10px 16px;font-size:11px;font-weight:700;color:var(--fg-4);letter-spacing:.4px;text-transform:uppercase;border-bottom:1px solid var(--border-subtle);background:var(--neutral-50)">'+
+          '<span>المشروع</span><span>العميل</span><span style="text-align:left">قيمة العقد</span><span style="text-align:left">صافي الربح</span><span style="text-align:left">المتبقي</span><span>الحالة</span><span></span>'+
         '</div>'+
         projects.map(function(p) {
           var cl  = clients.find(function(c){ return c.id===p.client_id; });
           var r   = FinCalc.calc(p.id);
           var cfg = stCfg[p.status]||stCfg.draft;
           var clColor = avatarColor(cl?cl.name:'?');
-          return '<div style="display:grid;grid-template-columns:2.5fr 1fr 1fr 1fr 0.8fr auto;align-items:center;gap:12px;padding:11px 16px;border-bottom:1px solid var(--border-subtle);cursor:pointer;transition:background .1s;border-right:3px solid '+cfg.color+'" '+
+          return '<div style="display:grid;grid-template-columns:2.5fr 1fr 1fr 1fr 1fr 0.8fr auto;align-items:center;gap:12px;padding:11px 16px;border-bottom:1px solid var(--border-subtle);cursor:pointer;transition:background .1s;border-right:3px solid '+cfg.color+'" '+
             'onmouseover="this.style.background=\'var(--neutral-50)\'" onmouseout="this.style.background=\'\'" '+
             'onclick="Nav.go(\'fin\',{projId:\''+p.id+'\'})" >'+
             '<div style="min-width:0">'+
@@ -4904,6 +4904,7 @@ Pages.render_projects = function(opts) {
             '</div>'+
             '<span style="font-size:13px;font-family:var(--font-mono);font-weight:700;color:var(--iris-600)">'+UI.fmt(r.grossTotal)+'</span>'+
             '<span style="font-size:13px;font-family:var(--font-mono);font-weight:700;color:var(--success-600)">'+UI.fmt(r.profit)+'</span>'+
+            '<span style="font-size:13px;font-family:var(--font-mono);font-weight:700;color:var(--fg-2)">'+UI.fmt(r.remaining||0)+'</span>'+
             '<span style="font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px;background:'+cfg.bg+';color:'+cfg.color+'">'+cfg.lbl+'</span>'+
             '<div style="display:flex;gap:4px" onclick="event.stopPropagation()">'+
               '<button class="btn btn-sm btn-ghost" onclick="Nav.go(\'fin\',{projId:\''+p.id+'\'})" title="فتح"><i data-lucide="arrow-left"></i></button>'+
@@ -16400,7 +16401,6 @@ Pages.printPfReport = function(mode) {
       return '<tr>'+
         '<td>'+UI.escHtml(proj.name||'—')+'</td>'+
         '<td>'+(cl?cl.name:'—')+'</td>'+
-        '<td>'+stTxt+'</td>'+
         '<td class="num">'+fmt(contract)+'</td>'+
         '<td class="num">'+fmt(vatAmt)+'</td>'+
         '<td class="num pos">'+fmt(net)+'</td>'+
@@ -16448,10 +16448,10 @@ Pages.printPfReport = function(mode) {
 
   var simpleBody = mode==='simple' ? (
     '<table class="main-table">'+
-      '<thead><tr><th>المشروع</th><th>العميل</th><th>الحالة</th><th>قيمة العقد</th><th>الضريبة</th><th>صافي الربح</th><th>المتبقي</th></tr></thead>'+
-      '<tbody>'+(rows.join('')||'<tr><td colspan="7" style="text-align:center;color:#999">لا توجد بيانات</td></tr>')+'</tbody>'+
+      '<thead><tr><th>المشروع</th><th>العميل</th><th>قيمة العقد</th><th>الضريبة</th><th>صافي الربح</th><th>المتبقي</th></tr></thead>'+
+      '<tbody>'+(rows.join('')||'<tr><td colspan="6" style="text-align:center;color:#999">لا توجد بيانات</td></tr>')+'</tbody>'+
       '<tfoot><tr class="total">'+
-        '<td colspan="3">الإجماليات ('+projEntries.length+' مشروع)</td>'+
+        '<td colspan="2">الإجماليات ('+projEntries.length+' مشروع)</td>'+
         '<td class="num">'+fmt(totals.contract)+'</td>'+
         '<td class="num">'+fmt(totals.vat)+'</td>'+
         '<td class="num pos">'+fmt(totals.net)+'</td>'+
