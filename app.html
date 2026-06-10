@@ -2903,6 +2903,23 @@ DB.getContracts = function(pid) {
   var fin = DB.getFin(pid);
   return fin.contracts || [];
 };
+DB.getLetters = function(pid) {
+  var fin = DB.getFin(pid);
+  return fin.letters || [];
+};
+DB.saveLetter = function(pid, letter) {
+  var fin = DB.getFin(pid);
+  if (!fin.letters) fin.letters = [];
+  var idx = fin.letters.findIndex ? fin.letters.findIndex(function(x){return x.id===letter.id;}) : -1;
+  if (idx < 0) { for(var i=0;i<fin.letters.length;i++){if(fin.letters[i].id===letter.id){idx=i;break;}} }
+  if (idx >= 0) fin.letters[idx] = letter; else fin.letters.push(letter);
+  DB.saveFin(pid, fin);
+};
+DB.deleteLetter = function(pid, lid) {
+  var fin = DB.getFin(pid);
+  fin.letters = (fin.letters||[]).filter(function(x){return x.id!==lid;});
+  DB.saveFin(pid, fin);
+};
 DB.saveContract = function(pid, c) {
   var fin = DB.getFin(pid);
   if (!fin.contracts) fin.contracts = [];
@@ -5089,10 +5106,12 @@ Pages.render_fin = function(params) {
       '<button class="hero-tab-pill'+(tab==='overview'?' active':'')+'" onclick="Pages.switchFinTab(\'overview\',\''+projId+'\')"><i data-lucide="layout-dashboard"></i>نظرة عامة</button>' +
       '<button class="hero-tab-pill'+(tab==='entries'?' active':'')+'" onclick="Pages.switchFinTab(\'entries\',\''+projId+'\')"><i data-lucide="receipt"></i>سجل المعاملات</button>' +
       '<button class="hero-tab-pill'+(tab==='contracts'?' active':'')+'" onclick="Pages.switchFinTab(\'contracts\',\''+projId+'\')"><i data-lucide="file-text"></i>العقود'+(contracts.length?'<span class="hero-tab-count">'+contracts.length+'</span>':'')+' </button>' +
+      '<button class="hero-tab-pill'+(tab==='letters'?' active':'')+'" onclick="Pages.switchFinTab(\'letters\',\''+projId+'\')"><i data-lucide="mail"></i>الخطابات'+(DB.getLetters(projId).length?'<span class="hero-tab-count">'+DB.getLetters(projId).length+'</span>':'')+' </button>' +
     '</div>' +
     '<div id="fin-tab-overview" class="tab-content'+(tab==='overview'?' active':'')+'"></div>' +
     '<div id="fin-tab-entries" class="tab-content'+(tab==='entries'?' active':'')+'"></div>' +
-    '<div id="fin-tab-contracts" class="tab-content'+(tab==='contracts'?' active':'')+'"></div>';
+    '<div id="fin-tab-contracts" class="tab-content'+(tab==='contracts'?' active':'')+'"></div>' +
+    '<div id="fin-tab-letters" class="tab-content'+(tab==='letters'?' active':'')+'"></div>';
 
   document.getElementById('top-actions').innerHTML =
     '<button class="btn btn-sm" onclick="Nav.go(\'projects\')" style="display:inline-flex;align-items:center;gap:5px"><i data-lucide="arrow-right"></i>المشاريع</button>';
@@ -5108,15 +5127,17 @@ Pages.switchFinTab = function(tab, projId) {
   document.querySelectorAll('#pg-fin .hero-tab-pill').forEach(function(b){
     var match = (tab==='overview' && b.textContent.indexOf('نظرة عامة')>=0) ||
                 (tab==='entries' && b.textContent.indexOf('سجل المعاملات')>=0) ||
-                (tab==='contracts' && b.textContent.indexOf('العقود')>=0);
+                (tab==='contracts' && b.textContent.indexOf('العقود')>=0) ||
+                (tab==='letters' && b.textContent.indexOf('الخطابات')>=0);
     b.classList.toggle('active', match);
   });
-  ['overview','entries','contracts'].forEach(function(t){
+  ['overview','entries','contracts','letters'].forEach(function(t){
     var el = document.getElementById('fin-tab-'+t);
     if (el) el.className = 'tab-content'+(t===tab?' active':'');
   });
   if (tab==='overview') Pages.renderFinOverview(projId);
   else if (tab==='contracts') Pages.renderFinContracts(projId);
+  else if (tab==='letters') Pages.renderFinLetters(projId);
   else Pages.renderFinEntries(projId);
 };
 
@@ -5177,6 +5198,223 @@ Pages.deleteContractConfirm = function(projId, contractId) {
       '<button class="btn btn-sm btn-danger" onclick="DB.deleteContract(\''+projId+'\',\''+contractId+'\');UI.closeModalForce();Pages.renderFinContracts(\''+projId+'\')">حذف</button>' +
     '</div>'
   );
+};
+
+Pages.renderFinLetters = function(projId) {
+  var letters = DB.getLetters(projId);
+  var typeLabel = {cashback:'كاش باك', custom:'مخصص'};
+  var cardsHtml = '';
+  if (letters.length === 0) {
+    cardsHtml = '<div class="proj-row-empty" style="margin-bottom:var(--space-4)">' +
+      '<div style="margin-bottom:var(--space-3)"><i data-lucide="mail" style="width:32px;height:32px;opacity:.3"></i></div>' +
+      '<p style="margin-bottom:var(--space-3)">لم يتم إنشاء أي خطاب لهذا المشروع بعد</p>' +
+      '<button class="btn btn-primary btn-sm" onclick="Pages.letterModal(\''+projId+'\',null)" style="display:inline-flex;align-items:center;gap:6px"><i data-lucide="plus"></i>إنشاء خطاب جديد</button>' +
+      '</div>';
+  } else {
+    letters.forEach(function(l) {
+      cardsHtml += '<div class="contract-card">' +
+        '<div class="contract-card-icon" style="background:var(--iris-50);color:var(--iris-600)"><i data-lucide="mail"></i></div>' +
+        '<div class="contract-card-main">' +
+          '<div class="contract-card-title">'+UI.escHtml(l.title||'خطاب بدون عنوان')+'</div>' +
+          '<div class="contract-card-meta">' +
+            '<span>'+(l.no?'صادر رقم: '+UI.escHtml(l.no):'بدون رقم صادر')+'</span>' +
+            '<span>'+(l.to?'إلى: '+UI.escHtml(l.to):'')+'</span>' +
+            '<span>'+UI.escHtml(l.date||l.created||'')+'</span>' +
+          '</div>' +
+        '</div>' +
+        '<span class="badge indigo sm">'+UI.escHtml(typeLabel[l.type]||l.type||'خطاب')+'</span>' +
+        '<button class="btn btn-sm" onclick="Pages.printLetter(\''+projId+'\',\''+l.id+'\')" style="display:inline-flex;align-items:center;gap:5px"><i data-lucide="printer"></i>طباعة</button>' +
+        '<button class="btn btn-sm" onclick="Pages.letterModal(\''+projId+'\',\''+l.id+'\')" style="display:inline-flex;align-items:center;gap:5px"><i data-lucide="pencil"></i>تعديل</button>' +
+        '<button class="btn btn-sm" onclick="Pages.deleteLetterConfirm(\''+projId+'\',\''+l.id+'\')" style="color:var(--danger-600)"><i data-lucide="trash-2"></i></button>' +
+      '</div>';
+    });
+  }
+  document.getElementById('fin-tab-letters').innerHTML =
+    '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--space-4)">' +
+      '<div>' +
+        '<h3 style="font-size:var(--font-md);font-weight:700;color:var(--fg-1)">خطابات المشروع</h3>' +
+        '<div style="font-size:var(--font-xs);color:var(--fg-3);margin-top:2px">'+letters.length+' خطاب</div>' +
+      '</div>' +
+      '<button class="btn btn-primary btn-sm" onclick="Pages.letterModal(\''+projId+'\',null)" style="display:inline-flex;align-items:center;gap:6px"><i data-lucide="plus"></i>خطاب جديد</button>' +
+    '</div>' +
+    cardsHtml;
+  if (typeof lucide !== 'undefined') lucide.createIcons({rootElement: document.getElementById('fin-tab-letters')});
+};
+
+Pages.deleteLetterConfirm = function(projId, letterId) {
+  var letters = DB.getLetters(projId);
+  var l = letters.find(function(x){return x.id===letterId;});
+  if (!l) return;
+  UI.openModal(
+    '<div class="modal-header"><h3>حذف الخطاب</h3><button class="modal-close" onclick="UI.closeModalForce()">×</button></div>' +
+    '<div class="modal-body"><p style="color:var(--fg-2)">هل تريد حذف خطاب "<strong>'+UI.escHtml(l.title||'بدون عنوان')+'</strong>"؟ لا يمكن التراجع.</p></div>' +
+    '<div class="modal-footer" style="display:flex;gap:var(--space-2);justify-content:flex-end">' +
+      '<button class="btn btn-sm" onclick="UI.closeModalForce()">إلغاء</button>' +
+      '<button class="btn btn-sm btn-danger" onclick="DB.deleteLetter(\''+projId+'\',\''+letterId+'\');UI.closeModalForce();Pages.renderFinLetters(\''+projId+'\')">حذف</button>' +
+    '</div>'
+  );
+};
+
+Pages.letterModal = function(projId, letterId) {
+  var letters = DB.getLetters(projId);
+  var l = letterId ? letters.find(function(x){return x.id===letterId;}) : null;
+  var isNew = !l;
+  if (isNew) {
+    l = {
+      id: DB.uid(),
+      type: 'cashback',
+      no: '',
+      date: new Date().toISOString().slice(0,10),
+      to: '',
+      title: 'كاش باك للجمعية من قيمة العقد',
+      body: 'نتقدم بخالص الشكر والتقدير لشراكتكم الكريمة، وبناءً على الاتفاقية المبرمة بيننا، يسعدنا إفادتكم بأن قيمة الكاش باك المستحقة للجمعية من إجمالي قيمة العقد قد تمت معالجتها.\n\nويُعدّ هذا الدعم المالي الكريم من أبرز أوجه المساهمة الفاعلة في تعزيز برامج ومبادرات الجمعية، ونشاطاتها التنموية المستدامة، إذ يُسهم بشكل مباشر في رفع مستوى الخدمات المقدمة للمستفيدين وتوسيع نطاق الأثر الاجتماعي المنشود.\n\nونثمّن عالياً هذا الدعم السخي الذي يُجسّد روح المسؤولية الاجتماعية ويُرسّخ قيم الشراكة الحقيقية، سائلين المولى عزّ وجلّ أن يوفّقكم ويبارك في مسيرتكم.',
+      created: new Date().toISOString().slice(0,10)
+    };
+  }
+  var tplOpts = [
+    {key:'cashback', label:'كاش باك للجمعية'},
+    {key:'custom', label:'مخصص'}
+  ];
+  UI.openModal(
+    '<div class="modal-header">' +
+      '<h3>'+(isNew?'إنشاء خطاب جديد':'تعديل الخطاب')+'</h3>' +
+      '<button class="modal-close" onclick="UI.closeModalForce()">×</button>' +
+    '</div>' +
+    '<div class="modal-body" style="display:flex;flex-direction:column;gap:var(--space-4)">' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-3)">' +
+        '<div class="form-group">' +
+          '<label class="form-label">نوع الخطاب</label>' +
+          '<select class="form-select" id="ltr-type" onchange="Pages._letterTypeChange(this.value)">' +
+            tplOpts.map(function(o){return '<option value="'+o.key+'"'+(l.type===o.key?' selected':'')+'>'+o.label+'</option>';}).join('') +
+          '</select>' +
+        '</div>' +
+        '<div class="form-group">' +
+          '<label class="form-label">رقم الصادر</label>' +
+          '<input class="form-input" id="ltr-no" type="text" placeholder="مثال: 2025/001" value="'+UI.escHtml(l.no||'')+'">' +
+        '</div>' +
+      '</div>' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-3)">' +
+        '<div class="form-group">' +
+          '<label class="form-label">التاريخ</label>' +
+          '<input class="form-input" id="ltr-date" type="date" value="'+UI.escHtml(l.date||'')+'">' +
+        '</div>' +
+        '<div class="form-group">' +
+          '<label class="form-label">موجه إلى</label>' +
+          '<input class="form-input" id="ltr-to" type="text" placeholder="اسم الجهة أو الشخص" value="'+UI.escHtml(l.to||'')+'">' +
+        '</div>' +
+      '</div>' +
+      '<div class="form-group">' +
+        '<label class="form-label">عنوان الخطاب</label>' +
+        '<input class="form-input" id="ltr-title" type="text" placeholder="عنوان الخطاب" value="'+UI.escHtml(l.title||'')+'">' +
+      '</div>' +
+      '<div class="form-group">' +
+        '<label class="form-label">نص الخطاب</label>' +
+        '<textarea class="form-input" id="ltr-body" rows="8" placeholder="نص الخطاب..." style="resize:vertical;font-size:var(--font-sm);line-height:1.8">'+UI.escHtml(l.body||'')+'</textarea>' +
+      '</div>' +
+    '</div>' +
+    '<div class="modal-footer" style="display:flex;gap:var(--space-2);justify-content:flex-end">' +
+      '<button class="btn btn-sm" onclick="UI.closeModalForce()">إلغاء</button>' +
+      '<button class="btn btn-sm" onclick="Pages.printLetter(\''+projId+'\',\''+l.id+'\',true)" style="display:inline-flex;align-items:center;gap:5px"><i data-lucide="printer"></i>طباعة مباشرة</button>' +
+      '<button class="btn btn-primary btn-sm" onclick="Pages._saveLetterFromModal(\''+projId+'\',\''+l.id+'\')">حفظ</button>' +
+    '</div>'
+  );
+  if (typeof lucide !== 'undefined') lucide.createIcons({rootElement: document.querySelector('.modal-wrap')});
+};
+
+Pages._letterTypeChange = function(type) {
+  if (type === 'cashback') {
+    var titleEl = document.getElementById('ltr-title');
+    var bodyEl = document.getElementById('ltr-body');
+    if (titleEl && !titleEl.value) titleEl.value = 'كاش باك للجمعية من قيمة العقد';
+    if (bodyEl && !bodyEl.value) {
+      bodyEl.value = 'نتقدم بخالص الشكر والتقدير لشراكتكم الكريمة، وبناءً على الاتفاقية المبرمة بيننا، يسعدنا إفادتكم بأن قيمة الكاش باك المستحقة للجمعية من إجمالي قيمة العقد قد تمت معالجتها.\n\nويُعدّ هذا الدعم المالي الكريم من أبرز أوجه المساهمة الفاعلة في تعزيز برامج ومبادرات الجمعية، ونشاطاتها التنموية المستدامة، إذ يُسهم بشكل مباشر في رفع مستوى الخدمات المقدمة للمستفيدين وتوسيع نطاق الأثر الاجتماعي المنشود.\n\nونثمّن عالياً هذا الدعم السخي الذي يُجسّد روح المسؤولية الاجتماعية ويُرسّخ قيم الشراكة الحقيقية، سائلين المولى عزّ وجلّ أن يوفّقكم ويبارك في مسيرتكم.';
+    }
+  }
+};
+
+Pages._saveLetterFromModal = function(projId, letterId) {
+  var letters = DB.getLetters(projId);
+  var existing = letters.find(function(x){return x.id===letterId;});
+  var l = existing || {id: letterId, created: new Date().toISOString().slice(0,10)};
+  l.type = (document.getElementById('ltr-type')||{}).value || 'custom';
+  l.no = ((document.getElementById('ltr-no')||{}).value||'').trim();
+  l.date = ((document.getElementById('ltr-date')||{}).value||'').trim();
+  l.to = ((document.getElementById('ltr-to')||{}).value||'').trim();
+  l.title = ((document.getElementById('ltr-title')||{}).value||'').trim();
+  l.body = ((document.getElementById('ltr-body')||{}).value||'').trim();
+  DB.saveLetter(projId, l);
+  UI.closeModalForce();
+  Pages.renderFinLetters(projId);
+};
+
+Pages.printLetter = function(projId, letterId, saveFirst) {
+  if (saveFirst) {
+    var letters = DB.getLetters(projId);
+    var existing = letters.find(function(x){return x.id===letterId;});
+    var l = existing || {id: letterId, created: new Date().toISOString().slice(0,10)};
+    l.type = (document.getElementById('ltr-type')||{}).value || 'custom';
+    l.no = ((document.getElementById('ltr-no')||{}).value||'').trim();
+    l.date = ((document.getElementById('ltr-date')||{}).value||'').trim();
+    l.to = ((document.getElementById('ltr-to')||{}).value||'').trim();
+    l.title = ((document.getElementById('ltr-title')||{}).value||'').trim();
+    l.body = ((document.getElementById('ltr-body')||{}).value||'').trim();
+    DB.saveLetter(projId, l);
+    UI.closeModalForce();
+    Pages.renderFinLetters(projId);
+  }
+  var letters = DB.getLetters(projId);
+  var l = letters.find(function(x){return x.id===letterId;});
+  if (!l) return;
+
+  var contracts = DB.getContracts(projId);
+  var refContract = contracts.length ? contracts[contracts.length-1] : null;
+  var hdrHtml = '', ftrHtml = '';
+  var hdrH = 180, ftrH = 90;
+  if (refContract && refContract.page_layout) {
+    var pl = refContract.page_layout;
+    if (pl.header) {
+      hdrH = pl.header.height || 180;
+      hdrHtml = Pages._renderHeaderBand(pl.header, 1, 1, {}, refContract);
+    }
+    if (pl.footer) {
+      ftrH = pl.footer.height || 90;
+      ftrHtml = Pages._renderFooterBand(pl.footer, 1, 1, {}, refContract);
+    }
+  }
+
+  var dateDisplay = '';
+  if (l.date) {
+    var dp = l.date.split('-');
+    if (dp.length===3) dateDisplay = dp[2]+'/'+dp[1]+'/'+dp[0];
+  }
+
+  var bodyLines = UI.escHtml(l.body||'').replace(/\n/g,'<br>');
+
+  var pageHtml =
+    '<div class="doc-page" style="--hdr-h:'+hdrH+'px;--ftr-h:'+ftrH+'px">' +
+      hdrHtml +
+      '<main class="doc-page-body" style="padding:24px 40px;display:flex;flex-direction:column;overflow:hidden;font-family:\'Tajawal\',\'Segoe UI\',sans-serif;direction:rtl">' +
+        '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;font-size:13px;color:#444">' +
+          (l.no ? '<div><strong>رقم الصادر:</strong> '+UI.escHtml(l.no)+'</div>' : '<div></div>') +
+          (dateDisplay ? '<div><strong>التاريخ:</strong> '+dateDisplay+'</div>' : '<div></div>') +
+        '</div>' +
+        (l.to ? '<div style="margin-bottom:16px;font-size:13px;color:#333"><strong>إلى:</strong> '+UI.escHtml(l.to)+'</div>' : '') +
+        '<div style="margin-bottom:20px;text-align:center">' +
+          '<h2 style="font-size:16px;font-weight:700;color:#1a1a2e;border-bottom:2px solid #1a1a2e;padding-bottom:8px;display:inline-block;min-width:300px">'+UI.escHtml(l.title||'')+'</h2>' +
+        '</div>' +
+        '<div style="font-size:13px;line-height:2;color:#222;text-align:justify;flex:1">' +
+          bodyLines +
+        '</div>' +
+        '<div style="margin-top:auto;padding-top:32px;text-align:right;font-size:13px;color:#333">' +
+          '<div style="margin-bottom:6px">التوقيع:</div>' +
+          '<div style="height:50px;border-bottom:1px solid #999;width:220px;margin-right:auto;margin-left:0"></div>' +
+          '<div style="margin-top:8px;font-weight:700;font-size:13px">المدير التنفيذي لبُعد التمكين</div>' +
+        '</div>' +
+      '</main>' +
+      ftrHtml +
+    '</div>';
+
+  Pages._opPrintHtml(UI.escHtml(l.title||'خطاب'), pageHtml);
 };
 
 Pages.addContractModal = function(projId) {
