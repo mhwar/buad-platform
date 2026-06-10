@@ -5316,6 +5316,10 @@ Pages._newLetter = function(projId) {
     subject_pos: 'center',
     subject_size: null,
     sig_pos: 'left',
+    stamp_image: '',
+    stamp_size: 120,
+    stamp_pos: 'center',
+    stamp_offset_y: 8,
     page_layout: pl,
     doc_style: { font_size: 13, line_height: 1.9 },
     doc_margins: { top: 0, right: 2.5, bottom: 0, left: 2.5 },
@@ -5352,6 +5356,10 @@ Pages._migrateLetter = function(l, projId) {
   if (l.subject_pos == null)      { l.subject_pos = 'center'; changed = true; }
   if (l.subject_size == null)     { l.subject_size = null; changed = true; }
   if (l.sig_pos == null)          { l.sig_pos = 'left'; changed = true; }
+  if (l.stamp_image == null)      { l.stamp_image = ''; changed = true; }
+  if (l.stamp_size == null)       { l.stamp_size = 120; changed = true; }
+  if (l.stamp_pos == null)        { l.stamp_pos = 'center'; changed = true; }
+  if (l.stamp_offset_y == null)   { l.stamp_offset_y = 8; changed = true; }
   if (changed) { try { DB.saveLetter(projId, l); } catch(e){} }
   return l;
 };
@@ -5441,12 +5449,24 @@ Pages._renderLetterDoc = function(letter, opts) {
   // ── Signature block — repositionable (right/center/left) ──
   var sigPos = letter.sig_pos || 'left';
   var sigMargin = sigPos === 'center' ? '22px auto 0' : sigPos === 'right' ? '22px 0 0 auto' : '22px auto 0 0';
+  // Stamp / signature image — placed under the name, repositionable & resizable
+  var stampHtml = '';
+  if (letter.stamp_image) {
+    var stW = letter.stamp_size || 120;
+    var stAlign = letter.stamp_pos || 'center';
+    var stMargin = stAlign === 'right' ? '0 0 0 auto' : stAlign === 'left' ? '0 auto 0 0' : '0 auto';
+    var stOff = (typeof letter.stamp_offset_y === 'number') ? letter.stamp_offset_y : 8;
+    stampHtml = '<div style="margin-top:'+stOff+'px"><img src="'+letter.stamp_image+'" alt="" ' +
+      'style="display:block;width:'+stW+'px;max-width:100%;object-fit:contain;margin:'+stMargin+'"></div>';
+  } else {
+    // No image yet — keep a thin line for a handwritten signature
+    stampHtml = '<div style="border-bottom:1.5px solid #374151;margin:28px auto 6px;width:175px"></div>';
+  }
   var sig =
     '<div style="margin:'+sigMargin+';text-align:center;width:250px">' +
       '<div style="font-weight:700;color:#0F2A4A">'+UI.escHtml(letter.signer_title||'المدير التنفيذي لبُعد التمكين')+'</div>' +
       (letter.signer_name ? '<div style="margin-top:4px;color:#1F2937">'+UI.escHtml(letter.signer_name)+'</div>' : '') +
-      '<div style="border-bottom:1.5px solid #374151;margin:28px auto 6px;width:175px"></div>' +
-      '<div style="font-size:9pt;color:#9CA3AF">التوقيع والختم</div>' +
+      stampHtml +
     '</div>';
 
   // Order: metaRow → subject → recipient → salutation → body → closing → signature
@@ -5477,6 +5497,26 @@ Pages.updateLetterField = function(field, value) {
   l[field] = value;
   Pages._saveLetterDraft(l);
   Pages._refreshLetterCanvas();
+};
+/* Like updateLetterField but also re-renders the sidebar — use for toggle
+   buttons (position pickers) so the active highlight updates immediately. */
+Pages.updateLetterFieldUI = function(field, value) {
+  var l = Pages._curLetter(); if (!l) return;
+  l[field] = value;
+  Pages._saveLetterDraft(l);
+  Pages._refreshLetterCanvas();
+  Pages._renderLetterSidebar();
+};
+Pages.handleLetterStampImage = function(input) {
+  var l = Pages._curLetter(); if (!l || !input.files || !input.files[0]) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    l.stamp_image = e.target.result;
+    Pages._saveLetterDraft(l);
+    Pages._refreshLetterCanvas();
+    Pages._renderLetterSidebar();
+  };
+  reader.readAsDataURL(input.files[0]);
 };
 Pages.updateLetterBody = function(text) {
   var l = Pages._curLetter(); if (!l) return;
@@ -5580,7 +5620,7 @@ Pages._letterSidebarHtml = function(projId, l) {
     (function(){
       var p = l.no_pos || 'right';
       function posBtn(val, lbl) {
-        return '<button class="btn btn-sm" onclick="Pages.updateLetterField(\'no_pos\',\''+val+'\')" ' +
+        return '<button class="btn btn-sm" onclick="Pages.updateLetterFieldUI(\'no_pos\',\''+val+'\')" ' +
           'style="flex:1;'+(p===val?'background:var(--iris-600);color:#fff;border-color:var(--iris-600)':'')+'">'+lbl+'</button>';
       }
       return '<div class="var-field" style="margin-top:-6px"><div class="var-field-lbl">موضع رقم الصادر</div>' +
@@ -5591,7 +5631,7 @@ Pages._letterSidebarHtml = function(projId, l) {
     (function(){
       var p = l.date_pos || 'left';
       function posBtn(val, lbl) {
-        return '<button class="btn btn-sm" onclick="Pages.updateLetterField(\'date_pos\',\''+val+'\')" ' +
+        return '<button class="btn btn-sm" onclick="Pages.updateLetterFieldUI(\'date_pos\',\''+val+'\')" ' +
           'style="flex:1;'+(p===val?'background:var(--iris-600);color:#fff;border-color:var(--iris-600)':'')+'">'+lbl+'</button>';
       }
       return '<div class="var-field" style="margin-top:-6px"><div class="var-field-lbl">موضع التاريخ</div>' +
@@ -5613,7 +5653,7 @@ Pages._letterSidebarHtml = function(projId, l) {
       var sp = l.subject_pos || 'center';
       var ss = l.subject_size || '';
       function posBtn(val, lbl) {
-        return '<button class="btn btn-sm" onclick="Pages.updateLetterField(\'subject_pos\',\''+val+'\')" ' +
+        return '<button class="btn btn-sm" onclick="Pages.updateLetterFieldUI(\'subject_pos\',\''+val+'\')" ' +
           'style="flex:1;'+(sp===val?'background:var(--iris-600);color:#fff;border-color:var(--iris-600)':'')+'">'+lbl+'</button>';
       }
       return '<div class="var-field" style="margin-top:-4px"><div class="var-field-lbl">موضع الموضوع</div>' +
@@ -5635,11 +5675,41 @@ Pages._letterSidebarHtml = function(projId, l) {
     (function(){
       var sp = l.sig_pos || 'left';
       function posBtn(val, lbl) {
-        return '<button class="btn btn-sm" onclick="Pages.updateLetterField(\'sig_pos\',\''+val+'\')" ' +
+        return '<button class="btn btn-sm" onclick="Pages.updateLetterFieldUI(\'sig_pos\',\''+val+'\')" ' +
           'style="flex:1;'+(sp===val?'background:var(--iris-600);color:#fff;border-color:var(--iris-600)':'')+'">'+lbl+'</button>';
       }
       return '<div class="var-field" style="margin-top:4px"><div class="var-field-lbl">موضع كتلة التوقيع</div>' +
         '<div style="display:flex;gap:4px">'+posBtn('right','يمين')+posBtn('center','وسط')+posBtn('left','يسار')+'</div></div>';
+    })() +
+    // ── Stamp / signature image (under the name) ──
+    (function(){
+      var html = '<div class="var-field"><div class="var-field-lbl">صورة التوقيع / الختم (تظهر تحت الاسم)</div>';
+      if (l.stamp_image) {
+        html += '<img src="'+l.stamp_image+'" style="width:100%;max-height:80px;object-fit:contain;border:1px solid var(--border);border-radius:var(--radius-xs);margin-bottom:4px;display:block;background:var(--bg-elevated)">' +
+          '<button class="btn btn-sm" style="width:100%;margin-bottom:4px" onclick="document.getElementById(\'ltr-stamp-inp\').click()"><i data-lucide="upload"></i>تغيير</button>' +
+          '<button class="btn btn-sm" style="width:100%;color:var(--danger-600)" onclick="Pages.updateLetterFieldUI(\'stamp_image\',\'\')">إزالة</button>';
+      } else {
+        html += '<button class="btn btn-sm" style="width:100%" onclick="document.getElementById(\'ltr-stamp-inp\').click()"><i data-lucide="upload"></i>رفع صورة التوقيع أو الختم</button>';
+      }
+      html += '<input type="file" id="ltr-stamp-inp" accept="image/*" style="display:none" onchange="Pages.handleLetterStampImage(this)"></div>';
+      if (l.stamp_image) {
+        var sp = l.stamp_pos || 'center';
+        function posBtn(val, lbl) {
+          return '<button class="btn btn-sm" onclick="Pages.updateLetterFieldUI(\'stamp_pos\',\''+val+'\')" ' +
+            'style="flex:1;'+(sp===val?'background:var(--iris-600);color:#fff;border-color:var(--iris-600)':'')+'">'+lbl+'</button>';
+        }
+        var stW = l.stamp_size || 120;
+        var stOff = (typeof l.stamp_offset_y === 'number') ? l.stamp_offset_y : 8;
+        html += '<div class="var-field"><div class="var-field-lbl">موضع الصورة</div>' +
+            '<div style="display:flex;gap:4px">'+posBtn('right','يمين')+posBtn('center','وسط')+posBtn('left','يسار')+'</div></div>' +
+          '<div class="var-field"><div class="var-field-lbl">حجم الصورة: <span id="ltr-stamp-w">'+stW+'</span> بكسل</div>' +
+            '<input type="range" min="60" max="320" step="10" value="'+stW+'" class="var-field-inp" style="padding:0;height:26px" ' +
+            'oninput="document.getElementById(\'ltr-stamp-w\').textContent=this.value;Pages.updateLetterField(\'stamp_size\',parseFloat(this.value))"></div>' +
+          '<div class="var-field"><div class="var-field-lbl">تحريك عمودي: <span id="ltr-stamp-y">'+stOff+'</span> بكسل</div>' +
+            '<input type="range" min="-40" max="80" step="2" value="'+stOff+'" class="var-field-inp" style="padding:0;height:26px" ' +
+            'oninput="document.getElementById(\'ltr-stamp-y\').textContent=this.value;Pages.updateLetterField(\'stamp_offset_y\',parseFloat(this.value))"></div>';
+      }
+      return html;
     })();
 
   // ── FORMAT PANEL ──
@@ -5708,9 +5778,13 @@ Pages._renderLetterSidebar = function() {
   var l = Pages._curLetter(); if (!l) return;
   var sb = document.getElementById('letter-sidebar');
   if (!sb) return;
+  var prevBody = sb.querySelector('.contract-sidebar-body');
+  var prevScroll = prevBody ? prevBody.scrollTop : 0;
   sb.innerHTML = Pages._letterSidebarHtml(Pages._letterProjId, l);
   if (typeof lucide !== 'undefined') lucide.createIcons({rootElement: sb});
   Pages.switchLetterTab(Pages._letterTab || 'content');
+  var newBody = sb.querySelector('.contract-sidebar-body');
+  if (newBody) newBody.scrollTop = prevScroll;
 };
 
 Pages.render_letter = function(params) {
