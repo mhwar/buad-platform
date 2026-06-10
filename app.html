@@ -2518,6 +2518,7 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
     <div id="pg-projects" class="page"></div>
     <div id="pg-fin"      class="page"></div>
     <div id="pg-contract" class="page contract-editor-page"></div>
+    <div id="pg-letter"   class="page contract-editor-page"></div>
     <div id="pg-templates" class="page"></div>
     <div id="pg-template-editor" class="page contract-editor-page"></div>
     <div id="pg-pf"       class="page"></div>
@@ -3305,6 +3306,7 @@ var Nav = {
     if (page==='client') { var ni=document.getElementById('nav-clients'); if(ni) ni.classList.add('active'); }
     if (page==='fin') { var ni2=document.getElementById('nav-projects'); if(ni2) ni2.classList.add('active'); }
     if (page==='contract') { var ni3=document.getElementById('nav-projects'); if(ni3) ni3.classList.add('active'); }
+    if (page==='letter') { var ni3b=document.getElementById('nav-projects'); if(ni3b) ni3b.classList.add('active'); }
     if (page==='templates') { var nt=document.getElementById('nav-templates'); if(nt) nt.classList.add('active'); }
     if (page==='template-editor') { var nt2=document.getElementById('nav-templates'); if(nt2) nt2.classList.add('active'); }
     if (page==='fin' && params && params.tab) { Pages._finTab = params.tab; }
@@ -3324,6 +3326,7 @@ var Nav = {
     if (page === 'client'          && params.clientId)   hash = 'client/'   + params.clientId;
     if (page === 'fin'             && params.projId)      hash = 'fin/'      + params.projId;
     if (page === 'contract'        && params.projId)      hash = 'contract/' + params.projId + (params.contractId ? '/' + params.contractId : '');
+    if (page === 'letter'          && params.projId)      hash = 'letter/'   + params.projId + (params.letterId ? '/' + params.letterId : '');
     if (page === 'template-editor' && params.templateId) hash = 'template-editor/' + params.templateId;
     if (params && params.tab)  hash += '?tab=' + params.tab;
     var newHash = '#/' + hash;
@@ -3342,6 +3345,7 @@ var Nav = {
     if (page === 'client'          && segs[1]) params.clientId   = segs[1];
     if (page === 'fin'             && segs[1]) params.projId     = segs[1];
     if (page === 'contract'        && segs[1]) { params.projId = segs[1]; if (segs[2]) params.contractId = segs[2]; }
+    if (page === 'letter'          && segs[1]) { params.projId = segs[1]; if (segs[2]) params.letterId = segs[2]; }
     if (page === 'template-editor' && segs[1]) params.templateId = segs[1];
     if (query.tab) params.tab = query.tab;
     return { page: page, params: params };
@@ -3389,6 +3393,17 @@ var Nav = {
         '<span class="bc-sep">←</span>' +
         (pp?'<span onclick="Nav.go(\'fin\',{projId:\''+params.projId+'\',tab:\'contracts\'})" style="cursor:pointer;color:var(--iris-500)">'+UI.escHtml(pp.name)+'</span><span class="bc-sep">←</span>':'') +
         '<span class="bc-page">'+(cc?UI.escHtml(cc.title):'عقد')+'</span>';
+      if (typeof lucide !== 'undefined') lucide.createIcons({rootElement: bc});
+      return;
+    }
+    if (page==='letter' && params && params.projId) {
+      var lpp = DB.getProjects().find(function(p){return p.id===params.projId;});
+      var llc = lpp ? DB.getLetters(params.projId).find(function(x){return x.id===params.letterId;}) : null;
+      bc.innerHTML = iconHtml('briefcase')+
+        '<span onclick="Nav.go(\'projects\')" style="cursor:pointer;color:var(--iris-500)">المشاريع</span>' +
+        '<span class="bc-sep">←</span>' +
+        (lpp?'<span onclick="Nav.go(\'fin\',{projId:\''+params.projId+'\',tab:\'letters\'})" style="cursor:pointer;color:var(--iris-500)">'+UI.escHtml(lpp.name)+'</span><span class="bc-sep">←</span>':'') +
+        '<span class="bc-page">'+(llc?UI.escHtml(llc.title||'خطاب'):'خطاب')+'</span>';
       if (typeof lucide !== 'undefined') lucide.createIcons({rootElement: bc});
       return;
     }
@@ -5208,7 +5223,7 @@ Pages.renderFinLetters = function(projId) {
     cardsHtml = '<div class="proj-row-empty" style="margin-bottom:var(--space-4)">' +
       '<div style="margin-bottom:var(--space-3)"><i data-lucide="mail" style="width:32px;height:32px;opacity:.3"></i></div>' +
       '<p style="margin-bottom:var(--space-3)">لم يتم إنشاء أي خطاب لهذا المشروع بعد</p>' +
-      '<button class="btn btn-primary btn-sm" onclick="Pages.letterModal(\''+projId+'\',null)" style="display:inline-flex;align-items:center;gap:6px"><i data-lucide="plus"></i>إنشاء خطاب جديد</button>' +
+      '<button class="btn btn-primary btn-sm" onclick="Pages.createLetter(\''+projId+'\')" style="display:inline-flex;align-items:center;gap:6px"><i data-lucide="plus"></i>إنشاء خطاب جديد</button>' +
       '</div>';
   } else {
     letters.forEach(function(l) {
@@ -5223,8 +5238,7 @@ Pages.renderFinLetters = function(projId) {
           '</div>' +
         '</div>' +
         '<span class="badge indigo sm">'+UI.escHtml(typeLabel[l.type]||l.type||'خطاب')+'</span>' +
-        '<button class="btn btn-sm" onclick="Pages.printLetter(\''+projId+'\',\''+l.id+'\')" style="display:inline-flex;align-items:center;gap:5px"><i data-lucide="printer"></i>طباعة</button>' +
-        '<button class="btn btn-sm" onclick="Pages.letterModal(\''+projId+'\',\''+l.id+'\')" style="display:inline-flex;align-items:center;gap:5px"><i data-lucide="pencil"></i>تعديل</button>' +
+        '<button class="btn btn-sm" onclick="Nav.go(\'letter\',{projId:\''+projId+'\',letterId:\''+l.id+'\'})" style="display:inline-flex;align-items:center;gap:5px"><i data-lucide="arrow-left"></i>فتح المحرر</button>' +
         '<button class="btn btn-sm" onclick="Pages.deleteLetterConfirm(\''+projId+'\',\''+l.id+'\')" style="color:var(--danger-600)"><i data-lucide="trash-2"></i></button>' +
       '</div>';
     });
@@ -5233,9 +5247,9 @@ Pages.renderFinLetters = function(projId) {
     '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--space-4)">' +
       '<div>' +
         '<h3 style="font-size:var(--font-md);font-weight:700;color:var(--fg-1)">خطابات المشروع</h3>' +
-        '<div style="font-size:var(--font-xs);color:var(--fg-3);margin-top:2px">'+letters.length+' خطاب</div>' +
+        '<div style="font-size:var(--font-xs);color:var(--fg-3);margin-top:2px">'+letters.length+' خطاب · تُحرَّر وتُطبع كالعقود على ورق A4</div>' +
       '</div>' +
-      '<button class="btn btn-primary btn-sm" onclick="Pages.letterModal(\''+projId+'\',null)" style="display:inline-flex;align-items:center;gap:6px"><i data-lucide="plus"></i>خطاب جديد</button>' +
+      '<button class="btn btn-primary btn-sm" onclick="Pages.createLetter(\''+projId+'\')" style="display:inline-flex;align-items:center;gap:6px"><i data-lucide="plus"></i>خطاب جديد</button>' +
     '</div>' +
     cardsHtml;
   if (typeof lucide !== 'undefined') lucide.createIcons({rootElement: document.getElementById('fin-tab-letters')});
@@ -5255,166 +5269,452 @@ Pages.deleteLetterConfirm = function(projId, letterId) {
   );
 };
 
-Pages.letterModal = function(projId, letterId) {
-  var letters = DB.getLetters(projId);
-  var l = letterId ? letters.find(function(x){return x.id===letterId;}) : null;
-  var isNew = !l;
-  if (isNew) {
-    l = {
-      id: DB.uid(),
-      type: 'cashback',
-      no: '',
-      date: new Date().toISOString().slice(0,10),
-      to: '',
-      title: 'كاش باك للجمعية من قيمة العقد',
-      body: 'نتقدم بخالص الشكر والتقدير لشراكتكم الكريمة، وبناءً على الاتفاقية المبرمة بيننا، يسعدنا إفادتكم بأن قيمة الكاش باك المستحقة للجمعية من إجمالي قيمة العقد قد تمت معالجتها.\n\nويُعدّ هذا الدعم المالي الكريم من أبرز أوجه المساهمة الفاعلة في تعزيز برامج ومبادرات الجمعية، ونشاطاتها التنموية المستدامة، إذ يُسهم بشكل مباشر في رفع مستوى الخدمات المقدمة للمستفيدين وتوسيع نطاق الأثر الاجتماعي المنشود.\n\nونثمّن عالياً هذا الدعم السخي الذي يُجسّد روح المسؤولية الاجتماعية ويُرسّخ قيم الشراكة الحقيقية، سائلين المولى عزّ وجلّ أن يوفّقكم ويبارك في مسيرتكم.',
-      created: new Date().toISOString().slice(0,10)
-    };
-  }
-  var tplOpts = [
-    {key:'cashback', label:'كاش باك للجمعية'},
-    {key:'custom', label:'مخصص'}
-  ];
-  UI.openModal(
-    '<div class="modal-header">' +
-      '<h3>'+(isNew?'إنشاء خطاب جديد':'تعديل الخطاب')+'</h3>' +
-      '<button class="modal-close" onclick="UI.closeModalForce()">×</button>' +
-    '</div>' +
-    '<div class="modal-body" style="display:flex;flex-direction:column;gap:var(--space-4)">' +
-      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-3)">' +
-        '<div class="form-group">' +
-          '<label class="form-label">نوع الخطاب</label>' +
-          '<select class="form-select" id="ltr-type" onchange="Pages._letterTypeChange(this.value)">' +
-            tplOpts.map(function(o){return '<option value="'+o.key+'"'+(l.type===o.key?' selected':'')+'>'+o.label+'</option>';}).join('') +
-          '</select>' +
-        '</div>' +
-        '<div class="form-group">' +
-          '<label class="form-label">رقم الصادر</label>' +
-          '<input class="form-input" id="ltr-no" type="text" placeholder="مثال: 2025/001" value="'+UI.escHtml(l.no||'')+'">' +
-        '</div>' +
-      '</div>' +
-      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-3)">' +
-        '<div class="form-group">' +
-          '<label class="form-label">التاريخ</label>' +
-          '<input class="form-input" id="ltr-date" type="date" value="'+UI.escHtml(l.date||'')+'">' +
-        '</div>' +
-        '<div class="form-group">' +
-          '<label class="form-label">موجه إلى</label>' +
-          '<input class="form-input" id="ltr-to" type="text" placeholder="اسم الجهة أو الشخص" value="'+UI.escHtml(l.to||'')+'">' +
-        '</div>' +
-      '</div>' +
-      '<div class="form-group">' +
-        '<label class="form-label">عنوان الخطاب</label>' +
-        '<input class="form-input" id="ltr-title" type="text" placeholder="عنوان الخطاب" value="'+UI.escHtml(l.title||'')+'">' +
-      '</div>' +
-      '<div class="form-group">' +
-        '<label class="form-label">نص الخطاب</label>' +
-        '<textarea class="form-input" id="ltr-body" rows="8" placeholder="نص الخطاب..." style="resize:vertical;font-size:var(--font-sm);line-height:1.8">'+UI.escHtml(l.body||'')+'</textarea>' +
-      '</div>' +
-    '</div>' +
-    '<div class="modal-footer" style="display:flex;gap:var(--space-2);justify-content:flex-end">' +
-      '<button class="btn btn-sm" onclick="UI.closeModalForce()">إلغاء</button>' +
-      '<button class="btn btn-sm" onclick="Pages.printLetter(\''+projId+'\',\''+l.id+'\',true)" style="display:inline-flex;align-items:center;gap:5px"><i data-lucide="printer"></i>طباعة مباشرة</button>' +
-      '<button class="btn btn-primary btn-sm" onclick="Pages._saveLetterFromModal(\''+projId+'\',\''+l.id+'\')">حفظ</button>' +
-    '</div>'
-  );
-  if (typeof lucide !== 'undefined') lucide.createIcons({rootElement: document.querySelector('.modal-wrap')});
-};
+/* ─────────────────────────────────────────────────────────────
+   LETTER SYSTEM — full A4 editor, treated like contracts
+   ───────────────────────────────────────────────────────────── */
 
-Pages._letterTypeChange = function(type) {
-  if (type === 'cashback') {
-    var titleEl = document.getElementById('ltr-title');
-    var bodyEl = document.getElementById('ltr-body');
-    if (titleEl && !titleEl.value) titleEl.value = 'كاش باك للجمعية من قيمة العقد';
-    if (bodyEl && !bodyEl.value) {
-      bodyEl.value = 'نتقدم بخالص الشكر والتقدير لشراكتكم الكريمة، وبناءً على الاتفاقية المبرمة بيننا، يسعدنا إفادتكم بأن قيمة الكاش باك المستحقة للجمعية من إجمالي قيمة العقد قد تمت معالجتها.\n\nويُعدّ هذا الدعم المالي الكريم من أبرز أوجه المساهمة الفاعلة في تعزيز برامج ومبادرات الجمعية، ونشاطاتها التنموية المستدامة، إذ يُسهم بشكل مباشر في رفع مستوى الخدمات المقدمة للمستفيدين وتوسيع نطاق الأثر الاجتماعي المنشود.\n\nونثمّن عالياً هذا الدعم السخي الذي يُجسّد روح المسؤولية الاجتماعية ويُرسّخ قيم الشراكة الحقيقية، سائلين المولى عزّ وجلّ أن يوفّقكم ويبارك في مسيرتكم.';
-    }
+/* Pre-filled letter templates (conventional Arabic official-letter wording) */
+Pages._letterTemplates = {
+  cashback: {
+    title: 'كاش باك للجمعية من قيمة العقد',
+    body: 'إشارةً إلى الاتفاقية المبرمة بيننا، ومن منطلق حرصنا الدائم على دعم العمل الخيري والتنموي وتعزيز الشراكة المثمرة مع جمعيتكم الموقّرة، يسعدنا أن نُفيدكم بأنه قد تقرّر صرف مبلغ (كاش باك) للجمعية من إجمالي قيمة العقد، وذلك مساهمةً منّا في تمكين الجمعية من تنفيذ برامجها ومبادراتها التنموية.\n\nويأتي هذا الدعم تأكيداً على إيماننا العميق بأهمية الدور الذي تؤديه الجمعية في خدمة المجتمع والمستفيدين، وإسهاماً فاعلاً في رفع كفاءة الخدمات المقدّمة وتوسيع نطاق الأثر الاجتماعي المنشود، بما يحقق التطلعات المشتركة نحو تنمية مستدامة.\n\nسائلين المولى عز وجل أن يكتب لكم التوفيق والسداد، وأن يبارك في جهودكم، وأن يديم بيننا أواصر التعاون البنّاء.',
+    salutation: 'السلام عليكم ورحمة الله وبركاته، وبعد:',
+    closing: 'وتفضلوا بقبول وافر التحية والتقدير،'
   }
 };
 
-Pages._saveLetterFromModal = function(projId, letterId) {
-  var letters = DB.getLetters(projId);
-  var existing = letters.find(function(x){return x.id===letterId;});
-  var l = existing || {id: letterId, created: new Date().toISOString().slice(0,10)};
-  l.type = (document.getElementById('ltr-type')||{}).value || 'custom';
-  l.no = ((document.getElementById('ltr-no')||{}).value||'').trim();
-  l.date = ((document.getElementById('ltr-date')||{}).value||'').trim();
-  l.to = ((document.getElementById('ltr-to')||{}).value||'').trim();
-  l.title = ((document.getElementById('ltr-title')||{}).value||'').trim();
-  l.body = ((document.getElementById('ltr-body')||{}).value||'').trim();
-  DB.saveLetter(projId, l);
-  UI.closeModalForce();
-  Pages.renderFinLetters(projId);
-};
-
-Pages.printLetter = function(projId, letterId, saveFirst) {
-  if (saveFirst) {
-    var letters = DB.getLetters(projId);
-    var existing = letters.find(function(x){return x.id===letterId;});
-    var l = existing || {id: letterId, created: new Date().toISOString().slice(0,10)};
-    l.type = (document.getElementById('ltr-type')||{}).value || 'custom';
-    l.no = ((document.getElementById('ltr-no')||{}).value||'').trim();
-    l.date = ((document.getElementById('ltr-date')||{}).value||'').trim();
-    l.to = ((document.getElementById('ltr-to')||{}).value||'').trim();
-    l.title = ((document.getElementById('ltr-title')||{}).value||'').trim();
-    l.body = ((document.getElementById('ltr-body')||{}).value||'').trim();
-    DB.saveLetter(projId, l);
-    UI.closeModalForce();
-    Pages.renderFinLetters(projId);
-  }
-  var letters = DB.getLetters(projId);
-  var l = letters.find(function(x){return x.id===letterId;});
-  if (!l) return;
-
+/* Build a fresh letter object — inherits header/footer from the project's
+   latest contract so the letterhead matches exactly, like the user asked. */
+Pages._newLetter = function(projId) {
   var contracts = DB.getContracts(projId);
-  var refContract = contracts.length ? contracts[contracts.length-1] : null;
-  var hdrHtml = '', ftrHtml = '';
-  var hdrH = 180, ftrH = 90;
-  if (refContract && refContract.page_layout) {
-    var pl = refContract.page_layout;
-    if (pl.header) {
-      hdrH = pl.header.height || 180;
-      hdrHtml = Pages._renderHeaderBand(pl.header, 1, 1, {}, refContract);
-    }
-    if (pl.footer) {
-      ftrH = pl.footer.height || 90;
-      ftrHtml = Pages._renderFooterBand(pl.footer, 1, 1, {}, refContract);
-    }
+  var ref = contracts.length ? contracts[contracts.length-1] : null;
+  var pl;
+  if (ref && ref.page_layout) {
+    pl = JSON.parse(JSON.stringify(ref.page_layout));
+  } else {
+    pl = { header:{show:true,height:180,image:'',overlay:[],bottom_gap:0}, footer:{show:true,height:90,image:'',overlay:[],top_gap:0} };
   }
+  var tpl = Pages._letterTemplates.cashback;
+  return {
+    id: DB.uid(),
+    type: 'cashback',
+    no: '',
+    date: new Date().toISOString().slice(0,10),
+    to_honorific: 'السادة',
+    to: '',
+    recipient_suffix: 'المحترمين',
+    show_salutation: true,
+    salutation: tpl.salutation,
+    title: tpl.title,
+    body: tpl.body,
+    show_closing: true,
+    closing: tpl.closing,
+    signer_name: '',
+    signer_title: 'المدير التنفيذي لبُعد التمكين',
+    page_layout: pl,
+    doc_style: { font_size: 13, line_height: 1.9 },
+    doc_margins: { top: 0, right: 2.5, bottom: 0, left: 2.5 },
+    variables: {},
+    created: new Date().toISOString().slice(0,10)
+  };
+};
 
-  var dateDisplay = '';
-  if (l.date) {
-    var dp = l.date.split('-');
-    if (dp.length===3) dateDisplay = dp[2]+'/'+dp[1]+'/'+dp[0];
+/* Ensure older letters (from the early modal version) have the new fields */
+Pages._migrateLetter = function(l, projId) {
+  if (!l) return l;
+  var changed = false;
+  if (!l.page_layout) {
+    var contracts = DB.getContracts(projId);
+    var ref = contracts.length ? contracts[contracts.length-1] : null;
+    l.page_layout = (ref && ref.page_layout)
+      ? JSON.parse(JSON.stringify(ref.page_layout))
+      : { header:{show:true,height:180,image:'',overlay:[]}, footer:{show:true,height:90,image:'',overlay:[]} };
+    changed = true;
   }
+  if (!l.doc_style)   { l.doc_style = { font_size:13, line_height:1.9 }; changed = true; }
+  if (!l.doc_margins) { l.doc_margins = { top:0, right:2.5, bottom:0, left:2.5 }; changed = true; }
+  if (!l.variables)   { l.variables = {}; changed = true; }
+  if (l.to_honorific == null)     { l.to_honorific = 'السادة'; changed = true; }
+  if (l.recipient_suffix == null) { l.recipient_suffix = 'المحترمين'; changed = true; }
+  if (l.show_salutation == null)  { l.show_salutation = true; changed = true; }
+  if (l.salutation == null)       { l.salutation = 'السلام عليكم ورحمة الله وبركاته، وبعد:'; changed = true; }
+  if (l.show_closing == null)     { l.show_closing = true; changed = true; }
+  if (l.closing == null)          { l.closing = 'وتفضلوا بقبول وافر التحية والتقدير،'; changed = true; }
+  if (l.signer_title == null)     { l.signer_title = 'المدير التنفيذي لبُعد التمكين'; changed = true; }
+  if (l.signer_name == null)      { l.signer_name = ''; changed = true; }
+  if (changed) { try { DB.saveLetter(projId, l); } catch(e){} }
+  return l;
+};
 
-  var bodyLines = UI.escHtml(l.body||'').replace(/\n/g,'<br>');
+Pages.createLetter = function(projId) {
+  var l = Pages._newLetter(projId);
+  DB.saveLetter(projId, l);
+  Nav.go('letter', { projId: projId, letterId: l.id });
+};
 
-  var pageHtml =
-    '<div class="doc-page" style="--hdr-h:'+hdrH+'px;--ftr-h:'+ftrH+'px">' +
-      hdrHtml +
-      '<main class="doc-page-body" style="padding:24px 40px;display:flex;flex-direction:column;overflow:hidden;font-family:\'Tajawal\',\'Segoe UI\',sans-serif;direction:rtl">' +
-        '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;font-size:13px;color:#444">' +
-          (l.no ? '<div><strong>رقم الصادر:</strong> '+UI.escHtml(l.no)+'</div>' : '<div></div>') +
-          (dateDisplay ? '<div><strong>التاريخ:</strong> '+dateDisplay+'</div>' : '<div></div>') +
-        '</div>' +
-        (l.to ? '<div style="margin-bottom:16px;font-size:13px;color:#333"><strong>إلى:</strong> '+UI.escHtml(l.to)+'</div>' : '') +
-        '<div style="margin-bottom:20px;text-align:center">' +
-          '<h2 style="font-size:16px;font-weight:700;color:#1a1a2e;border-bottom:2px solid #1a1a2e;padding-bottom:8px;display:inline-block;min-width:300px">'+UI.escHtml(l.title||'')+'</h2>' +
-        '</div>' +
-        '<div style="font-size:13px;line-height:2;color:#222;text-align:justify;flex:1">' +
-          bodyLines +
-        '</div>' +
-        '<div style="margin-top:auto;padding-top:32px;text-align:right;font-size:13px;color:#333">' +
-          '<div style="margin-bottom:6px">التوقيع:</div>' +
-          '<div style="height:50px;border-bottom:1px solid #999;width:220px;margin-right:auto;margin-left:0"></div>' +
-          '<div style="margin-top:8px;font-weight:700;font-size:13px">المدير التنفيذي لبُعد التمكين</div>' +
-        '</div>' +
-      '</main>' +
-      ftrHtml +
+Pages._curLetter = function() {
+  if (!Pages._letterProjId || !Pages._letterId) return null;
+  return DB.getLetters(Pages._letterProjId).find(function(x){return x.id===Pages._letterId;}) || null;
+};
+
+Pages._saveLetterDraft = function(l) {
+  if (!Pages._letterProjId || !l) return;
+  l.updated = (new Date()).toISOString().slice(0,10);
+  DB.saveLetter(Pages._letterProjId, l);
+};
+
+/* Render the A4 letter document — reused by both the editor canvas and print.
+   Follows the conventional Arabic official-letter structure. */
+Pages._renderLetterDoc = function(letter, opts) {
+  opts = opts || {};
+  var editable = opts.editable !== false;
+  var pl = letter.page_layout || { header:{}, footer:{} };
+  var hdrH = (pl.header && pl.header.height) || 180;
+  var ftrH = (pl.footer && pl.footer.height) || 90;
+  var ds = letter.doc_style || {};
+  var fs = ds.font_size || 13;
+  var lh = ds.line_height || 1.9;
+  var dm = letter.doc_margins || { right:2.5, left:2.5 };
+  var vars = letter.variables || {};
+  var headerGap = (pl.header && typeof pl.header.bottom_gap === 'number') ? pl.header.bottom_gap : 28;
+  var footerGap = (pl.footer && typeof pl.footer.top_gap === 'number') ? pl.footer.top_gap : 16;
+  var bodyStyle = 'padding:'+headerGap+'px '+(dm.right||2.5)+'cm '+footerGap+'px '+(dm.left||2.5)+'cm;' +
+    'font-size:'+fs+'pt;line-height:'+lh+';display:flex;flex-direction:column;color:#1F2937;direction:rtl';
+
+  var dateDisp = Pages._fmtDateDisplay(letter.date||'');
+  var metaRow = (letter.no || dateDisp) ?
+    '<div style="display:flex;justify-content:space-between;margin-bottom:24px;color:#374151">' +
+      '<div>'+(letter.no?'<strong>الرقم: </strong>'+UI.escHtml(letter.no):'')+'</div>' +
+      '<div>'+(dateDisp?'<strong>التاريخ: </strong>'+dateDisp:'')+'</div>' +
+    '</div>' : '';
+  var recip = letter.to ?
+    '<div style="margin-bottom:14px;font-weight:700;color:#0F2A4A">' +
+      (letter.to_honorific?UI.escHtml(letter.to_honorific)+' / ':'') + UI.escHtml(letter.to) +
+      (letter.recipient_suffix?'&nbsp;&nbsp;'+UI.escHtml(letter.recipient_suffix):'') +
+    '</div>' : '';
+  var salut = (letter.show_salutation !== false && letter.salutation) ?
+    '<div style="margin-bottom:18px">'+UI.escHtml(letter.salutation)+'</div>' : '';
+  var subject = letter.title ?
+    '<div style="text-align:center;margin-bottom:22px">' +
+      '<span style="font-weight:700;color:#0F2A4A;border-bottom:2px solid #0F2A4A;padding-bottom:5px;font-size:'+(fs+2)+'pt">'+
+        UI.escHtml(letter.title)+'</span>' +
+    '</div>' : '';
+  var bodyAttrs = editable
+    ? ' contenteditable="true" onblur="Pages.updateLetterBody(this.innerText)" style="outline:none;text-align:justify;flex:1;min-height:120px"'
+    : ' style="text-align:justify;flex:1"';
+  var bodyHtml = '<div class="ltr-body-edit"'+bodyAttrs+'>'+(UI.escHtml(letter.body||'').replace(/\n/g,'<br>'))+'</div>';
+  var closing = (letter.show_closing !== false && letter.closing) ?
+    '<div style="margin-top:18px">'+UI.escHtml(letter.closing)+'</div>' : '';
+  var sig =
+    '<div style="margin-top:30px;text-align:center;width:250px;margin-right:auto;margin-left:0">' +
+      '<div style="font-weight:700;color:#0F2A4A">'+UI.escHtml(letter.signer_title||'المدير التنفيذي لبُعد التمكين')+'</div>' +
+      (letter.signer_name
+        ? '<div style="margin-top:4px;color:#1F2937">'+UI.escHtml(letter.signer_name)+'</div>'
+        : '<div style="margin-top:4px;color:#9CA3AF">الاسم</div>') +
+      '<div style="border-bottom:1.5px solid #374151;margin:26px auto 6px;width:175px"></div>' +
+      '<div style="font-size:9pt;color:#9CA3AF">التوقيع والختم</div>' +
     '</div>';
 
-  Pages._opPrintHtml(UI.escHtml(l.title||'خطاب'), pageHtml);
+  return '<div class="contract-doc" id="letter-doc" style="font-size:'+fs+'pt;line-height:'+lh+'">' +
+    '<div class="doc-page" style="--hdr-h:'+hdrH+'px;--ftr-h:'+ftrH+'px">' +
+      Pages._renderHeaderBand(pl.header||{}, 1, 1, vars, letter) +
+      '<div class="doc-page-body" style="'+bodyStyle+'">' +
+        metaRow + recip + salut + subject + bodyHtml + closing + sig +
+      '</div>' +
+      Pages._renderFooterBand(pl.footer||{}, 1, 1, vars, letter) +
+    '</div>' +
+  '</div>';
+};
+
+Pages._refreshLetterCanvas = function() {
+  var area = document.getElementById('letter-canvas-area');
+  if (!area) return;
+  var l = Pages._curLetter();
+  if (!l) return;
+  area.innerHTML = Pages._renderLetterDoc(l);
+  if (typeof lucide !== 'undefined') lucide.createIcons({rootElement: area});
+  setTimeout(Pages._scaleDocPages, 0);
+};
+
+/* ─── Field update handlers ─── */
+Pages.updateLetterField = function(field, value) {
+  var l = Pages._curLetter(); if (!l) return;
+  l[field] = value;
+  Pages._saveLetterDraft(l);
+  Pages._refreshLetterCanvas();
+};
+Pages.updateLetterBody = function(text) {
+  var l = Pages._curLetter(); if (!l) return;
+  l.body = text;
+  Pages._saveLetterDraft(l);
+};
+Pages.updateLetterStyle = function(field, value) {
+  var l = Pages._curLetter(); if (!l) return;
+  if (!l.doc_style) l.doc_style = {};
+  l.doc_style[field] = value;
+  Pages._saveLetterDraft(l);
+  Pages._refreshLetterCanvas();
+};
+Pages.updateLetterMargin = function(side, value) {
+  var l = Pages._curLetter(); if (!l) return;
+  if (!l.doc_margins) l.doc_margins = {};
+  l.doc_margins[side] = parseFloat(value) || 0;
+  Pages._saveLetterDraft(l);
+  Pages._refreshLetterCanvas();
+};
+Pages.updateLetterBand = function(section, key, value) {
+  var l = Pages._curLetter(); if (!l) return;
+  if (!l.page_layout) l.page_layout = { header:{}, footer:{} };
+  if (!l.page_layout[section]) l.page_layout[section] = {};
+  l.page_layout[section][key] = value;
+  Pages._saveLetterDraft(l);
+  Pages._refreshLetterCanvas();
+  if (key === 'image') Pages._renderLetterSidebar(); // refresh thumb/remove button
+};
+Pages.handleLetterBandImage = function(section, input) {
+  var l = Pages._curLetter(); if (!l || !input.files || !input.files[0]) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    if (!l.page_layout[section]) l.page_layout[section] = {};
+    l.page_layout[section].image = e.target.result;
+    Pages._saveLetterDraft(l);
+    Pages._refreshLetterCanvas();
+    Pages._renderLetterSidebar();
+  };
+  reader.readAsDataURL(input.files[0]);
+};
+Pages.copyLetterLayoutFromContract = function(contractId) {
+  var l = Pages._curLetter(); if (!l) return;
+  var c = DB.getContracts(Pages._letterProjId).find(function(x){return x.id===contractId;});
+  if (!c || !c.page_layout) return;
+  l.page_layout = JSON.parse(JSON.stringify(c.page_layout));
+  Pages._saveLetterDraft(l);
+  Pages._refreshLetterCanvas();
+  Pages._renderLetterSidebar();
+  UI.toast('تم نسخ الترويسة من العقد');
+};
+Pages.applyLetterTemplate = function(type) {
+  var l = Pages._curLetter(); if (!l) return;
+  var tpl = Pages._letterTemplates[type];
+  if (!tpl) return;
+  l.type = type;
+  l.title = tpl.title;
+  l.body = tpl.body;
+  l.salutation = tpl.salutation;
+  l.closing = tpl.closing;
+  Pages._saveLetterDraft(l);
+  Pages._refreshLetterCanvas();
+  Pages._renderLetterSidebar();
+  UI.toast('تم تطبيق القالب');
+};
+
+Pages.switchLetterTab = function(tab) {
+  Pages._letterTab = tab;
+  ['content','format'].forEach(function(t){
+    var p = document.getElementById('ltab-'+t+'-panel');
+    if (p) p.style.display = (t===tab ? 'block' : 'none');
+    var b = document.getElementById('ltab-'+t+'-btn');
+    if (b) b.classList.toggle('active', t===tab);
+  });
+};
+
+/* Build the sidebar inner HTML (content + format panels) */
+Pages._letterSidebarHtml = function(projId, l) {
+  function lf(field, label, ph) {
+    return '<div class="var-field"><div class="var-field-lbl">'+label+'</div>' +
+      '<input class="var-field-inp" value="'+UI.escHtml(l[field]||'')+'" placeholder="'+(ph||'')+'" ' +
+      'oninput="Pages.updateLetterField(\''+field+'\',this.value)"></div>';
+  }
+  function lcheck(field, label) {
+    return '<div class="var-field"><label style="display:flex;align-items:center;gap:6px;font-size:var(--font-xs);cursor:pointer">' +
+      '<input type="checkbox" '+(l[field]!==false?'checked':'')+' onchange="Pages.updateLetterField(\''+field+'\',this.checked)"> '+label+'</label></div>';
+  }
+  var honorifics = ['السادة','سعادة','المكرم','فضيلة','الأستاذ','الأستاذة'];
+  var suffixes = ['المحترمين','المحترم','المحترمة','حفظه الله','الموقرين'];
+
+  // ── CONTENT PANEL ──
+  var dateIso = (l.date && /^\d{4}-\d{2}-\d{2}$/.test(l.date)) ? l.date : '';
+  var contentHtml =
+    '<div class="var-group-lbl"><i data-lucide="file-signature"></i>بيانات الخطاب</div>' +
+    '<div class="var-field"><div class="var-field-lbl">نوع الخطاب</div>' +
+      '<select class="var-field-inp" onchange="Pages.updateLetterField(\'type\',this.value)">' +
+        ['cashback','custom'].map(function(t){return '<option value="'+t+'"'+((l.type||'custom')===t?' selected':'')+'>'+(t==='cashback'?'كاش باك للجمعية':'مخصص')+'</option>';}).join('') +
+      '</select></div>' +
+    '<button class="btn btn-sm" style="width:100%;margin-bottom:10px;gap:5px" onclick="Pages.applyLetterTemplate(\'cashback\')"><i data-lucide="sparkles" style="width:13px;height:13px"></i>إدراج قالب كاش باك للجمعية</button>' +
+    lf('no','رقم الصادر','مثال: 2025/001') +
+    '<div class="var-field"><div class="var-field-lbl">التاريخ</div>' +
+      '<input type="date" class="var-field-inp" value="'+dateIso+'" oninput="Pages.updateLetterField(\'date\',this.value)"></div>' +
+    '<div class="var-group-lbl"><i data-lucide="user"></i>المرسَل إليه</div>' +
+    '<div class="var-field"><div class="var-field-lbl">صفة المخاطبة</div>' +
+      '<select class="var-field-inp" onchange="Pages.updateLetterField(\'to_honorific\',this.value)">' +
+        honorifics.map(function(h){return '<option value="'+h+'"'+((l.to_honorific||'')===h?' selected':'')+'>'+h+'</option>';}).join('') +
+      '</select></div>' +
+    lf('to','الجهة / الاسم','اسم الجهة أو الشخص') +
+    '<div class="var-field"><div class="var-field-lbl">لاحقة الاحترام</div>' +
+      '<select class="var-field-inp" onchange="Pages.updateLetterField(\'recipient_suffix\',this.value)">' +
+        suffixes.map(function(s){return '<option value="'+s+'"'+((l.recipient_suffix||'')===s?' selected':'')+'>'+s+'</option>';}).join('') +
+      '</select></div>' +
+    '<div class="var-group-lbl"><i data-lucide="message-square"></i>التحية والموضوع</div>' +
+    lcheck('show_salutation','إظهار التحية') +
+    lf('salutation','نص التحية','السلام عليكم ورحمة الله وبركاته،') +
+    lf('title','موضوع الخطاب','عنوان / موضوع الخطاب') +
+    '<div class="var-field"><div style="font-size:11px;color:var(--fg-4);background:var(--iris-50);border:1px solid var(--iris-100);border-radius:var(--radius-xs);padding:6px 8px">' +
+      '<i data-lucide="info" style="width:11px;height:11px;vertical-align:-1px"></i> اكتب نص الخطاب مباشرةً داخل الصفحة على اليسار.</div></div>' +
+    '<div class="var-group-lbl"><i data-lucide="pen-line"></i>الخاتمة والتوقيع</div>' +
+    lcheck('show_closing','إظهار الخاتمة') +
+    lf('closing','نص الخاتمة','وتفضلوا بقبول وافر التحية والتقدير،') +
+    lf('signer_title','صفة الموقّع','المدير التنفيذي لبُعد التمكين') +
+    lf('signer_name','اسم الموقّع','الاسم (اختياري)');
+
+  // ── FORMAT PANEL ──
+  var ds = l.doc_style || {font_size:13, line_height:1.9};
+  var dm = l.doc_margins || {right:2.5, left:2.5};
+  function bandPanel(section, label) {
+    var band = (l.page_layout && l.page_layout[section]) || {};
+    var defH = section === 'header' ? 180 : 90;
+    var inpId = 'ltr-'+section+'-img-inp';
+    return '<div class="stg-section">' +
+      '<div class="stg-section-lbl">'+label+'</div>' +
+      '<div class="var-field"><label style="display:flex;align-items:center;gap:6px;font-size:var(--font-xs);cursor:pointer">' +
+        '<input type="checkbox" '+(band.show!==false?'checked':'')+' onchange="Pages.updateLetterBand(\''+section+'\',\'show\',this.checked)"> إظهار '+label+'</label></div>' +
+      '<div class="var-field"><div class="var-field-lbl">الارتفاع (بكسل)</div>' +
+        '<input type="number" class="var-field-inp" min="40" max="400" step="10" value="'+(band.height||defH)+'" ' +
+        'oninput="Pages.updateLetterBand(\''+section+'\',\'height\',parseFloat(this.value)||'+defH+')"></div>' +
+      '<div class="var-field"><div class="var-field-lbl">صورة '+label+'</div>' +
+        (band.image
+          ? '<img src="'+band.image+'" style="width:100%;max-height:56px;object-fit:contain;border:1px solid var(--border);border-radius:var(--radius-xs);margin-bottom:4px;display:block">' +
+            '<button class="btn btn-sm" style="width:100%;margin-bottom:4px" onclick="document.getElementById(\''+inpId+'\').click()"><i data-lucide="upload"></i>تغيير</button>' +
+            '<button class="btn btn-sm" style="width:100%;color:var(--danger-600)" onclick="Pages.updateLetterBand(\''+section+'\',\'image\',\'\')">إزالة</button>'
+          : '<button class="btn btn-sm" style="width:100%" onclick="document.getElementById(\''+inpId+'\').click()"><i data-lucide="upload"></i>رفع صورة</button>') +
+        '<input type="file" id="'+inpId+'" accept="image/*" style="display:none" onchange="Pages.handleLetterBandImage(\''+section+'\',this)"></div>' +
+    '</div>';
+  }
+  var contracts = DB.getContracts(projId);
+  var copyHtml = contracts.length ?
+    '<div class="stg-section"><div class="stg-section-lbl">نسخ الترويسة من عقد</div>' +
+      '<div class="var-field"><select class="var-field-inp" onchange="if(this.value){Pages.copyLetterLayoutFromContract(this.value);this.value=\'\'}">' +
+        '<option value="">— اختر عقداً —</option>' +
+        contracts.map(function(c){return '<option value="'+c.id+'">'+UI.escHtml(c.title||'عقد')+'</option>';}).join('') +
+      '</select><div style="font-size:10px;color:var(--fg-4);margin-top:4px">ينسخ رأس وتذييل الصفحة من العقد المحدد بنفس القياسات</div></div>' +
+    '</div>' : '';
+
+  var formatHtml =
+    '<div class="stg-section" style="margin-top:0;padding-top:0;border-top:none">' +
+      '<div class="stg-section-lbl">الخط والتباعد</div>' +
+      '<div class="var-field"><div class="var-field-lbl">حجم النص: <span id="ltr-fs-lbl">'+(ds.font_size||13)+'</span>pt</div>' +
+        '<input type="range" min="10" max="18" step="0.5" value="'+(ds.font_size||13)+'" class="var-field-inp" style="padding:0;height:26px" ' +
+        'oninput="Pages.updateLetterStyle(\'font_size\',parseFloat(this.value));document.getElementById(\'ltr-fs-lbl\').textContent=this.value"></div>' +
+      '<div class="var-field"><div class="var-field-lbl">تباعد الأسطر: <span id="ltr-lh-lbl">'+(ds.line_height||1.9)+'</span></div>' +
+        '<input type="range" min="1.2" max="2.6" step="0.1" value="'+(ds.line_height||1.9)+'" class="var-field-inp" style="padding:0;height:26px" ' +
+        'oninput="Pages.updateLetterStyle(\'line_height\',parseFloat(this.value));document.getElementById(\'ltr-lh-lbl\').textContent=this.value"></div>' +
+    '</div>' +
+    '<div class="stg-section"><div class="stg-section-lbl">الهوامش (سم)</div>' +
+      '<div class="margin-grid">' +
+        '<div class="margin-field"><label>يمين</label><input type="number" min="1" max="5" step="0.5" value="'+(dm.right||2.5)+'" oninput="Pages.updateLetterMargin(\'right\',this.value)"></div>' +
+        '<div class="margin-field"><label>يسار</label><input type="number" min="1" max="5" step="0.5" value="'+(dm.left||2.5)+'" oninput="Pages.updateLetterMargin(\'left\',this.value)"></div>' +
+      '</div></div>' +
+    copyHtml +
+    bandPanel('header','رأس الصفحة') +
+    bandPanel('footer','تذييل الصفحة');
+
+  return '<div class="contract-wiz-tabs" style="display:flex;gap:4px;padding:8px;border-bottom:1px solid var(--border)">' +
+      '<button class="hero-tab-pill active" id="ltab-content-btn" style="flex:1;justify-content:center" onclick="Pages.switchLetterTab(\'content\')"><i data-lucide="edit-3"></i>المحتوى</button>' +
+      '<button class="hero-tab-pill" id="ltab-format-btn" style="flex:1;justify-content:center" onclick="Pages.switchLetterTab(\'format\')"><i data-lucide="sliders-horizontal"></i>التنسيق</button>' +
+    '</div>' +
+    '<div class="contract-sidebar-body">' +
+      '<div id="ltab-content-panel">'+contentHtml+'</div>' +
+      '<div id="ltab-format-panel" style="display:none">'+formatHtml+'</div>' +
+    '</div>';
+};
+
+/* Re-render just the sidebar (keeps current tab) */
+Pages._renderLetterSidebar = function() {
+  var l = Pages._curLetter(); if (!l) return;
+  var sb = document.getElementById('letter-sidebar');
+  if (!sb) return;
+  sb.innerHTML = Pages._letterSidebarHtml(Pages._letterProjId, l);
+  if (typeof lucide !== 'undefined') lucide.createIcons({rootElement: sb});
+  Pages.switchLetterTab(Pages._letterTab || 'content');
+};
+
+Pages.render_letter = function(params) {
+  params = params || {};
+  var projId = params.projId;
+  var letterId = params.letterId;
+  var proj = DB.getProjects().find(function(p){return p.id===projId;});
+  if (!proj) { document.getElementById('pg-letter').innerHTML='<div class="empty-state"><h3>المشروع غير موجود</h3></div>'; return; }
+  var letter = DB.getLetters(projId).find(function(x){return x.id===letterId;});
+  if (!letter) { document.getElementById('pg-letter').innerHTML='<div class="empty-state"><h3>الخطاب غير موجود</h3></div>'; return; }
+
+  Pages._migrateLetter(letter, projId);
+  Pages._letterProjId = projId;
+  Pages._letterId = letterId;
+  Pages._letterTab = Pages._letterTab || 'content';
+
+  var pageEl = document.getElementById('pg-letter');
+  pageEl.innerHTML =
+    '<div class="contract-canvas-area" id="letter-canvas-area">' +
+      Pages._renderLetterDoc(letter) +
+    '</div>' +
+    '<div class="contract-sidebar contract-sidebar-right" id="letter-sidebar">' +
+      Pages._letterSidebarHtml(projId, letter) +
+    '</div>';
+
+  document.getElementById('top-actions').innerHTML =
+    '<button class="btn btn-sm" onclick="Nav.go(\'fin\',{projId:\''+projId+'\',tab:\'letters\'})" style="display:inline-flex;align-items:center;gap:5px"><i data-lucide="arrow-right"></i>العودة للمشروع</button>' +
+    '<button class="btn btn-sm btn-primary" onclick="Pages.printLetter()" style="display:inline-flex;align-items:center;gap:5px"><i data-lucide="printer"></i>طباعة PDF</button>';
+
+  if (typeof lucide !== 'undefined') lucide.createIcons({rootElement: pageEl});
+  if (typeof lucide !== 'undefined') lucide.createIcons({rootElement: document.getElementById('top-actions')});
+  Pages.switchLetterTab(Pages._letterTab);
+  setTimeout(Pages._scaleDocPages, 0);
+};
+
+/* Print the current letter — same A4 + header/footer CSS as contracts */
+Pages.printLetter = function() {
+  var l = Pages._curLetter();
+  if (!l) return;
+  var docHtml = Pages._renderLetterDoc(l, { editable:false });
+  var ds = l.doc_style || {font_size:13, line_height:1.9};
+  var css =
+    '*{box-sizing:border-box;margin:0;padding:0}' +
+    'html,body{background:#fff}' +
+    'body{font-family:\'IBM Plex Sans Arabic\',Tajawal,system-ui,sans-serif;direction:rtl;color:#1F2937;font-size:'+(ds.font_size||13)+'pt;line-height:'+(ds.line_height||1.9)+'}' +
+    '@page{size:A4 portrait;margin:0}' +
+    '.contract-doc{display:flex;flex-direction:column;align-items:stretch;gap:0;direction:rtl}' +
+    '.doc-page{width:210mm;height:297mm;background:#fff;display:grid;grid-template-rows:var(--hdr-h,180px) 1fr var(--ftr-h,90px);overflow:hidden;position:relative;page-break-after:always;break-after:page;-webkit-print-color-adjust:exact;print-color-adjust:exact}' +
+    '.doc-page:last-child{page-break-after:auto;break-after:auto}' +
+    '.doc-page-hdr,.doc-page-ftr{position:relative;overflow:hidden;width:100%}' +
+    '.doc-page-hdr-img,.doc-page-ftr-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}' +
+    '.doc-page-hdr-overlay,.doc-page-ftr-overlay{position:absolute;inset:0;pointer-events:none}' +
+    '.hdr-slot,.ftr-slot{position:absolute;white-space:nowrap;line-height:1.3;font-family:inherit}' +
+    '.hdr-slot[data-pos="top-right"],.ftr-slot[data-pos="top-right"]{top:8px;right:16px}' +
+    '.hdr-slot[data-pos="top-left"],.ftr-slot[data-pos="top-left"]{top:8px;left:16px}' +
+    '.hdr-slot[data-pos="top-center"],.ftr-slot[data-pos="top-center"]{top:8px;left:50%;transform:translateX(-50%)}' +
+    '.hdr-slot[data-pos="bottom-right"],.ftr-slot[data-pos="bottom-right"]{bottom:8px;right:16px}' +
+    '.hdr-slot[data-pos="bottom-left"],.ftr-slot[data-pos="bottom-left"]{bottom:8px;left:16px}' +
+    '.hdr-slot[data-pos="bottom-center"],.ftr-slot[data-pos="bottom-center"]{bottom:8px;left:50%;transform:translateX(-50%)}' +
+    '.hdr-slot[data-pos="center"],.ftr-slot[data-pos="center"]{top:50%;left:50%;transform:translate(-50%,-50%)}' +
+    '.hdr-slot[data-pos="center-right"],.ftr-slot[data-pos="center-right"]{top:50%;right:16px;transform:translateY(-50%)}' +
+    '.hdr-slot[data-pos="center-left"],.ftr-slot[data-pos="center-left"]{top:50%;left:16px;transform:translateY(-50%)}' +
+    '.doc-page-hdr.empty,.doc-page-ftr.empty{background:transparent}' +
+    '.doc-page-hdr.empty>span,.doc-page-ftr.empty>span{display:none}' +
+    '.doc-page-body{overflow:hidden;position:relative}' +
+    '.ltr-body-edit{white-space:pre-wrap;word-wrap:break-word}' +
+    '@media print{*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}}';
+
+  var html = '<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8">' +
+    '<title>'+UI.escHtml(l.title||'خطاب')+'</title>' +
+    '<link rel="preconnect" href="https://fonts.googleapis.com">' +
+    '<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">' +
+    '<style>'+css+'</style>' +
+    '</head><body>' + docHtml +
+    '<script>window.onload=function(){setTimeout(function(){window.print();},400);}<\/script>' +
+    '</body></html>';
+
+  var w = window.open('', '_blank', 'width=980,height=820');
+  if (w) { w.document.write(html); w.document.close(); }
+  else UI.toast('يرجى السماح بالنوافذ المنبثقة للطباعة', 'warn');
 };
 
 Pages.addContractModal = function(projId) {
