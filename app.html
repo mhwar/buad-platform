@@ -5311,6 +5311,8 @@ Pages._newLetter = function(projId) {
     closing: tpl.closing,
     signer_name: '',
     signer_title: 'المدير التنفيذي لبُعد التمكين',
+    no_pos: 'right',
+    date_pos: 'left',
     page_layout: pl,
     doc_style: { font_size: 13, line_height: 1.9 },
     doc_margins: { top: 0, right: 2.5, bottom: 0, left: 2.5 },
@@ -5342,6 +5344,8 @@ Pages._migrateLetter = function(l, projId) {
   if (l.closing == null)          { l.closing = 'وتفضلوا بقبول وافر التحية والتقدير،'; changed = true; }
   if (l.signer_title == null)     { l.signer_title = 'المدير التنفيذي لبُعد التمكين'; changed = true; }
   if (l.signer_name == null)      { l.signer_name = ''; changed = true; }
+  if (l.no_pos == null)           { l.no_pos = 'right'; changed = true; }
+  if (l.date_pos == null)         { l.date_pos = 'left'; changed = true; }
   if (changed) { try { DB.saveLetter(projId, l); } catch(e){} }
   return l;
 };
@@ -5382,23 +5386,38 @@ Pages._renderLetterDoc = function(letter, opts) {
     'font-size:'+fs+'pt;line-height:'+lh+';display:flex;flex-direction:column;color:#1F2937;direction:rtl';
 
   var dateDisp = Pages._fmtDateDisplay(letter.date||'');
+
+  // Meta row: رقم الصادر + التاريخ with independent positioning
+  var noPos   = letter.no_pos   || 'right';
+  var datePos = letter.date_pos || 'left';
+  function metaPos(pos) {
+    if (pos === 'left')   return 'left:0';
+    if (pos === 'center') return 'left:50%;transform:translateX(-50%)';
+    return 'right:0';
+  }
   var metaRow = (letter.no || dateDisp) ?
-    '<div style="display:flex;justify-content:space-between;margin-bottom:24px;color:#374151">' +
-      '<div>'+(letter.no?'<strong>الرقم: </strong>'+UI.escHtml(letter.no):'')+'</div>' +
-      '<div>'+(dateDisp?'<strong>التاريخ: </strong>'+dateDisp:'')+'</div>' +
+    '<div style="position:relative;height:26px;margin-bottom:18px;font-size:'+(fs-1)+'pt;color:#374151">' +
+      (letter.no
+        ? '<div style="position:absolute;white-space:nowrap;'+metaPos(noPos)+'"><strong>رقم الصادر: </strong>'+UI.escHtml(letter.no)+'</div>'
+        : '') +
+      (dateDisp
+        ? '<div style="position:absolute;white-space:nowrap;'+metaPos(datePos)+'"><strong>التاريخ: </strong>'+dateDisp+'</div>'
+        : '') +
     '</div>' : '';
+
   var recip = letter.to ?
     '<div style="margin-bottom:14px;font-weight:700;color:#0F2A4A">' +
       (letter.to_honorific?UI.escHtml(letter.to_honorific)+' / ':'') + UI.escHtml(letter.to) +
       (letter.recipient_suffix?'&nbsp;&nbsp;'+UI.escHtml(letter.recipient_suffix):'') +
     '</div>' : '';
-  var salut = (letter.show_salutation !== false && letter.salutation) ?
-    '<div style="margin-bottom:18px">'+UI.escHtml(letter.salutation)+'</div>' : '';
+  // Subject appears BEFORE salutation (conventional Arabic official-letter order)
   var subject = letter.title ?
-    '<div style="text-align:center;margin-bottom:22px">' +
+    '<div style="text-align:center;margin-bottom:18px">' +
       '<span style="font-weight:700;color:#0F2A4A;border-bottom:2px solid #0F2A4A;padding-bottom:5px;font-size:'+(fs+2)+'pt">'+
         UI.escHtml(letter.title)+'</span>' +
     '</div>' : '';
+  var salut = (letter.show_salutation !== false && letter.salutation) ?
+    '<div style="margin-bottom:18px">'+UI.escHtml(letter.salutation)+'</div>' : '';
   var bodyAttrs = editable
     ? ' contenteditable="true" onblur="Pages.updateLetterBody(this.innerText)" style="outline:none;text-align:justify;flex:1;min-height:120px"'
     : ' style="text-align:justify;flex:1"';
@@ -5419,7 +5438,7 @@ Pages._renderLetterDoc = function(letter, opts) {
     '<div class="doc-page" style="--hdr-h:'+hdrH+'px;--ftr-h:'+ftrH+'px">' +
       Pages._renderHeaderBand(pl.header||{}, 1, 1, vars, letter) +
       '<div class="doc-page-body" style="'+bodyStyle+'">' +
-        metaRow + recip + salut + subject + bodyHtml + closing + sig +
+        metaRow + recip + subject + salut + bodyHtml + closing + sig +
       '</div>' +
       Pages._renderFooterBand(pl.footer||{}, 1, 1, vars, letter) +
     '</div>' +
@@ -5542,8 +5561,26 @@ Pages._letterSidebarHtml = function(projId, l) {
       '</select></div>' +
     '<button class="btn btn-sm" style="width:100%;margin-bottom:10px;gap:5px" onclick="Pages.applyLetterTemplate(\'cashback\')"><i data-lucide="sparkles" style="width:13px;height:13px"></i>إدراج قالب كاش باك للجمعية</button>' +
     lf('no','رقم الصادر','مثال: 2025/001') +
+    (function(){
+      var p = l.no_pos || 'right';
+      function posBtn(val, lbl) {
+        return '<button class="btn btn-sm" onclick="Pages.updateLetterField(\'no_pos\',\''+val+'\')" ' +
+          'style="flex:1;'+(p===val?'background:var(--iris-600);color:#fff;border-color:var(--iris-600)':'')+'">'+lbl+'</button>';
+      }
+      return '<div class="var-field" style="margin-top:-6px"><div class="var-field-lbl">موضع رقم الصادر</div>' +
+        '<div style="display:flex;gap:4px">'+posBtn('right','يمين')+posBtn('center','وسط')+posBtn('left','يسار')+'</div></div>';
+    })() +
     '<div class="var-field"><div class="var-field-lbl">التاريخ</div>' +
       '<input type="date" class="var-field-inp" value="'+dateIso+'" oninput="Pages.updateLetterField(\'date\',this.value)"></div>' +
+    (function(){
+      var p = l.date_pos || 'left';
+      function posBtn(val, lbl) {
+        return '<button class="btn btn-sm" onclick="Pages.updateLetterField(\'date_pos\',\''+val+'\')" ' +
+          'style="flex:1;'+(p===val?'background:var(--iris-600);color:#fff;border-color:var(--iris-600)':'')+'">'+lbl+'</button>';
+      }
+      return '<div class="var-field" style="margin-top:-6px"><div class="var-field-lbl">موضع التاريخ</div>' +
+        '<div style="display:flex;gap:4px">'+posBtn('right','يمين')+posBtn('center','وسط')+posBtn('left','يسار')+'</div></div>';
+    })() +
     '<div class="var-group-lbl"><i data-lucide="user"></i>المرسَل إليه</div>' +
     '<div class="var-field"><div class="var-field-lbl">صفة المخاطبة</div>' +
       '<select class="var-field-inp" onchange="Pages.updateLetterField(\'to_honorific\',this.value)">' +
@@ -5554,10 +5591,10 @@ Pages._letterSidebarHtml = function(projId, l) {
       '<select class="var-field-inp" onchange="Pages.updateLetterField(\'recipient_suffix\',this.value)">' +
         suffixes.map(function(s){return '<option value="'+s+'"'+((l.recipient_suffix||'')===s?' selected':'')+'>'+s+'</option>';}).join('') +
       '</select></div>' +
-    '<div class="var-group-lbl"><i data-lucide="message-square"></i>التحية والموضوع</div>' +
+    '<div class="var-group-lbl"><i data-lucide="message-square"></i>الموضوع والتحية</div>' +
+    lf('title','موضوع الخطاب (يظهر قبل التحية)','عنوان / موضوع الخطاب') +
     lcheck('show_salutation','إظهار التحية') +
     lf('salutation','نص التحية','السلام عليكم ورحمة الله وبركاته،') +
-    lf('title','موضوع الخطاب','عنوان / موضوع الخطاب') +
     '<div class="var-field"><div style="font-size:11px;color:var(--fg-4);background:var(--iris-50);border:1px solid var(--iris-100);border-radius:var(--radius-xs);padding:6px 8px">' +
       '<i data-lucide="info" style="width:11px;height:11px;vertical-align:-1px"></i> اكتب نص الخطاب مباشرةً داخل الصفحة على اليسار.</div></div>' +
     '<div class="var-group-lbl"><i data-lucide="pen-line"></i>الخاتمة والتوقيع</div>' +
