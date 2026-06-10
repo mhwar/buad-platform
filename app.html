@@ -5313,6 +5313,9 @@ Pages._newLetter = function(projId) {
     signer_title: 'المدير التنفيذي لبُعد التمكين',
     no_pos: 'right',
     date_pos: 'left',
+    subject_pos: 'center',
+    subject_size: null,
+    sig_pos: 'left',
     page_layout: pl,
     doc_style: { font_size: 13, line_height: 1.9 },
     doc_margins: { top: 0, right: 2.5, bottom: 0, left: 2.5 },
@@ -5346,6 +5349,9 @@ Pages._migrateLetter = function(l, projId) {
   if (l.signer_name == null)      { l.signer_name = ''; changed = true; }
   if (l.no_pos == null)           { l.no_pos = 'right'; changed = true; }
   if (l.date_pos == null)         { l.date_pos = 'left'; changed = true; }
+  if (l.subject_pos == null)      { l.subject_pos = 'center'; changed = true; }
+  if (l.subject_size == null)     { l.subject_size = null; changed = true; }
+  if (l.sig_pos == null)          { l.sig_pos = 'left'; changed = true; }
   if (changed) { try { DB.saveLetter(projId, l); } catch(e){} }
   return l;
 };
@@ -5396,49 +5402,59 @@ Pages._renderLetterDoc = function(letter, opts) {
     return 'right:0';
   }
   var metaRow = (letter.no || dateDisp) ?
-    '<div style="position:relative;height:26px;margin-bottom:18px;font-size:'+(fs-1)+'pt;color:#374151">' +
-      (letter.no
-        ? '<div style="position:absolute;white-space:nowrap;'+metaPos(noPos)+'"><strong>رقم الصادر: </strong>'+UI.escHtml(letter.no)+'</div>'
-        : '') +
-      (dateDisp
-        ? '<div style="position:absolute;white-space:nowrap;'+metaPos(datePos)+'"><strong>التاريخ: </strong>'+dateDisp+'</div>'
-        : '') +
+    '<div style="position:relative;height:26px;margin-bottom:16px;font-size:'+(fs-1)+'pt;color:#374151">' +
+      (letter.no   ? '<div style="position:absolute;white-space:nowrap;'+metaPos(noPos)+'"><strong>رقم الصادر: </strong>'+UI.escHtml(letter.no)+'</div>' : '') +
+      (dateDisp ? '<div style="position:absolute;white-space:nowrap;'+metaPos(datePos)+'"><strong>التاريخ: </strong>'+dateDisp+'</div>' : '') +
     '</div>' : '';
 
+  // ── Subject — before recipient; repositionable + variable size ──
+  var subjectPos  = letter.subject_pos  || 'center';
+  var subjectSize = letter.subject_size || (fs + 2);
+  var subjectAlign = {right:'right',center:'center',left:'left'}[subjectPos] || 'center';
+  var subject = letter.title ?
+    '<div style="text-align:'+subjectAlign+';margin-bottom:16px">' +
+      '<span style="font-weight:700;color:#0F2A4A;border-bottom:2px solid #0F2A4A;padding-bottom:4px;font-size:'+subjectSize+'pt">'+
+        UI.escHtml(letter.title)+'</span>' +
+    '</div>' : '';
+
+  // ── Recipient ──
   var recip = letter.to ?
     '<div style="margin-bottom:14px;font-weight:700;color:#0F2A4A">' +
       (letter.to_honorific?UI.escHtml(letter.to_honorific)+' / ':'') + UI.escHtml(letter.to) +
       (letter.recipient_suffix?'&nbsp;&nbsp;'+UI.escHtml(letter.recipient_suffix):'') +
     '</div>' : '';
-  // Subject appears BEFORE salutation (conventional Arabic official-letter order)
-  var subject = letter.title ?
-    '<div style="text-align:center;margin-bottom:18px">' +
-      '<span style="font-weight:700;color:#0F2A4A;border-bottom:2px solid #0F2A4A;padding-bottom:5px;font-size:'+(fs+2)+'pt">'+
-        UI.escHtml(letter.title)+'</span>' +
-    '</div>' : '';
+
+  // ── Salutation ──
   var salut = (letter.show_salutation !== false && letter.salutation) ?
-    '<div style="margin-bottom:18px">'+UI.escHtml(letter.salutation)+'</div>' : '';
+    '<div style="margin-bottom:16px">'+UI.escHtml(letter.salutation)+'</div>' : '';
+
+  // ── Body — flex:0 so it hugs content; signature follows right after ──
   var bodyAttrs = editable
-    ? ' contenteditable="true" onblur="Pages.updateLetterBody(this.innerText)" style="outline:none;text-align:justify;flex:1;min-height:120px"'
-    : ' style="text-align:justify;flex:1"';
+    ? ' contenteditable="true" onblur="Pages.updateLetterBody(this.innerText)" style="outline:none;text-align:justify;flex:0 0 auto;min-height:80px"'
+    : ' style="text-align:justify;flex:0 0 auto"';
   var bodyHtml = '<div class="ltr-body-edit"'+bodyAttrs+'>'+(UI.escHtml(letter.body||'').replace(/\n/g,'<br>'))+'</div>';
+
+  // ── Closing ──
   var closing = (letter.show_closing !== false && letter.closing) ?
-    '<div style="margin-top:18px">'+UI.escHtml(letter.closing)+'</div>' : '';
+    '<div style="margin-top:16px">'+UI.escHtml(letter.closing)+'</div>' : '';
+
+  // ── Signature block — repositionable (right/center/left) ──
+  var sigPos = letter.sig_pos || 'left';
+  var sigMargin = sigPos === 'center' ? '22px auto 0' : sigPos === 'right' ? '22px 0 0 auto' : '22px auto 0 0';
   var sig =
-    '<div style="margin-top:30px;text-align:center;width:250px;margin-right:auto;margin-left:0">' +
+    '<div style="margin:'+sigMargin+';text-align:center;width:250px">' +
       '<div style="font-weight:700;color:#0F2A4A">'+UI.escHtml(letter.signer_title||'المدير التنفيذي لبُعد التمكين')+'</div>' +
-      (letter.signer_name
-        ? '<div style="margin-top:4px;color:#1F2937">'+UI.escHtml(letter.signer_name)+'</div>'
-        : '<div style="margin-top:4px;color:#9CA3AF">الاسم</div>') +
-      '<div style="border-bottom:1.5px solid #374151;margin:26px auto 6px;width:175px"></div>' +
+      (letter.signer_name ? '<div style="margin-top:4px;color:#1F2937">'+UI.escHtml(letter.signer_name)+'</div>' : '') +
+      '<div style="border-bottom:1.5px solid #374151;margin:28px auto 6px;width:175px"></div>' +
       '<div style="font-size:9pt;color:#9CA3AF">التوقيع والختم</div>' +
     '</div>';
 
+  // Order: metaRow → subject → recipient → salutation → body → closing → signature
   return '<div class="contract-doc" id="letter-doc" style="font-size:'+fs+'pt;line-height:'+lh+'">' +
     '<div class="doc-page" style="--hdr-h:'+hdrH+'px;--ftr-h:'+ftrH+'px">' +
       Pages._renderHeaderBand(pl.header||{}, 1, 1, vars, letter) +
       '<div class="doc-page-body" style="'+bodyStyle+'">' +
-        metaRow + recip + subject + salut + bodyHtml + closing + sig +
+        metaRow + subject + recip + salut + bodyHtml + closing + sig +
       '</div>' +
       Pages._renderFooterBand(pl.footer||{}, 1, 1, vars, letter) +
     '</div>' +
@@ -5591,8 +5607,22 @@ Pages._letterSidebarHtml = function(projId, l) {
       '<select class="var-field-inp" onchange="Pages.updateLetterField(\'recipient_suffix\',this.value)">' +
         suffixes.map(function(s){return '<option value="'+s+'"'+((l.recipient_suffix||'')===s?' selected':'')+'>'+s+'</option>';}).join('') +
       '</select></div>' +
-    '<div class="var-group-lbl"><i data-lucide="message-square"></i>الموضوع والتحية</div>' +
-    lf('title','موضوع الخطاب (يظهر قبل التحية)','عنوان / موضوع الخطاب') +
+    '<div class="var-group-lbl"><i data-lucide="heading"></i>الموضوع</div>' +
+    lf('title','نص الموضوع','عنوان / موضوع الخطاب') +
+    (function(){
+      var sp = l.subject_pos || 'center';
+      var ss = l.subject_size || '';
+      function posBtn(val, lbl) {
+        return '<button class="btn btn-sm" onclick="Pages.updateLetterField(\'subject_pos\',\''+val+'\')" ' +
+          'style="flex:1;'+(sp===val?'background:var(--iris-600);color:#fff;border-color:var(--iris-600)':'')+'">'+lbl+'</button>';
+      }
+      return '<div class="var-field" style="margin-top:-4px"><div class="var-field-lbl">موضع الموضوع</div>' +
+        '<div style="display:flex;gap:4px">'+posBtn('right','يمين')+posBtn('center','وسط')+posBtn('left','يسار')+'</div></div>' +
+        '<div class="var-field"><div class="var-field-lbl">حجم خط الموضوع (pt) — اتركه فارغاً للافتراضي</div>' +
+        '<input type="number" class="var-field-inp" min="9" max="26" step="0.5" value="'+ss+'" placeholder="افتراضي" ' +
+        'oninput="Pages.updateLetterField(\'subject_size\',this.value?parseFloat(this.value):null)"></div>';
+    })() +
+    '<div class="var-group-lbl"><i data-lucide="message-square"></i>التحية</div>' +
     lcheck('show_salutation','إظهار التحية') +
     lf('salutation','نص التحية','السلام عليكم ورحمة الله وبركاته،') +
     '<div class="var-field"><div style="font-size:11px;color:var(--fg-4);background:var(--iris-50);border:1px solid var(--iris-100);border-radius:var(--radius-xs);padding:6px 8px">' +
@@ -5601,7 +5631,16 @@ Pages._letterSidebarHtml = function(projId, l) {
     lcheck('show_closing','إظهار الخاتمة') +
     lf('closing','نص الخاتمة','وتفضلوا بقبول وافر التحية والتقدير،') +
     lf('signer_title','صفة الموقّع','المدير التنفيذي لبُعد التمكين') +
-    lf('signer_name','اسم الموقّع','الاسم (اختياري)');
+    lf('signer_name','اسم الموقّع','الاسم (اختياري)') +
+    (function(){
+      var sp = l.sig_pos || 'left';
+      function posBtn(val, lbl) {
+        return '<button class="btn btn-sm" onclick="Pages.updateLetterField(\'sig_pos\',\''+val+'\')" ' +
+          'style="flex:1;'+(sp===val?'background:var(--iris-600);color:#fff;border-color:var(--iris-600)':'')+'">'+lbl+'</button>';
+      }
+      return '<div class="var-field" style="margin-top:4px"><div class="var-field-lbl">موضع كتلة التوقيع</div>' +
+        '<div style="display:flex;gap:4px">'+posBtn('right','يمين')+posBtn('center','وسط')+posBtn('left','يسار')+'</div></div>';
+    })();
 
   // ── FORMAT PANEL ──
   var ds = l.doc_style || {font_size:13, line_height:1.9};
