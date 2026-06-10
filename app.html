@@ -6807,11 +6807,11 @@ Pages._buildPDFDoc = function(projId, mode) {
       '<td style="color:#111827;font-weight:500">'+UI.escHtml(e.desc||'')+'</td>'+
       '<td style="width:108px;color:#374151">'+catLabel(e.cat)+'</td>'+
       amtCell+
-      '<td style="width:72px;color:#374151">'+(stMap[e.status]||'')+'</td>'+
+      (detailed ? '<td style="width:72px;color:#374151">'+(stMap[e.status]||'')+'</td>' : '')+
     '</tr>';
   }).join('');
 
-  /* ── summary cards (detailed only) ── */
+  /* ── summary cards ── */
   var sumCardsHtml = '';
   if (detailed) {
     var profitPct = r.grossTotal>0 ? (r.profit/r.grossTotal*100).toFixed(1) : '0';
@@ -6820,6 +6820,13 @@ Pages._buildPDFDoc = function(projId, mode) {
       ['إجمالي المصروف من العقد', UI.fmt(r.totalDeductions)+' ر.س', '#b91c1c'],
       ['المتبقي من العقد', UI.fmt(r.remaining)+' ر.س', r.remaining>=0?'#15803d':'#b91c1c'],
       ['صافي الربح ('+profitPct+'%)', UI.fmt(r.profit)+' ر.س', r.profit>=0?'#15803d':'#b91c1c']
+    ].map(function(d){
+      return '<div class="sum-card"><div class="sum-lbl">'+d[0]+'</div><div class="sum-val" style="color:'+d[2]+'">'+d[1]+'</div></div>';
+    }).join('') + '</div>';
+  } else {
+    sumCardsHtml = '<div class="sum-row">' + [
+      ['قيمة العقد الكاملة', UI.fmt(r.grossTotal)+' ر.س', '#1e3a5f'],
+      ['المتبقي من العقد', UI.fmt(r.remaining)+' ر.س', r.remaining>=0?'#15803d':'#b91c1c']
     ].map(function(d){
       return '<div class="sum-card"><div class="sum-lbl">'+d[0]+'</div><div class="sum-val" style="color:'+d[2]+'">'+d[1]+'</div></div>';
     }).join('') + '</div>';
@@ -6834,7 +6841,7 @@ Pages._buildPDFDoc = function(projId, mode) {
       '<tr class="tfoot-row tfoot-grand"><td colspan="3">إجمالي المصروف من العقد</td><td style="direction:ltr;text-align:left;font-family:monospace">'+UI.fmt(r.totalDeductions)+' ر.س</td><td></td></tr>'+
     '</tfoot>';
   } else {
-    tfootHtml = '<tfoot><tr class="tfoot-row tfoot-grand"><td colspan="3">إجمالي قيمة المعاملات</td><td style="direction:ltr;text-align:left;font-family:monospace">'+UI.fmt(totalAmt)+' ر.س</td><td></td></tr></tfoot>';
+    tfootHtml = '<tfoot><tr class="tfoot-row tfoot-grand"><td colspan="3">إجمالي قيمة المعاملات</td><td style="direction:ltr;text-align:left;font-family:monospace">'+UI.fmt(totalAmt)+' ر.س</td></tr></tfoot>';
   }
 
   var amtHeader = detailed ? 'المبلغ' : 'المبلغ (ر.س)';
@@ -6900,9 +6907,9 @@ Pages._buildPDFDoc = function(projId, mode) {
         '<th>البيان</th>'+
         '<th style="width:108px">التصنيف</th>'+
         '<th style="width:'+(detailed?'140':'130')+'px;direction:ltr;text-align:left">'+amtHeader+'</th>'+
-        '<th style="width:72px">الحالة</th>'+
+        (detailed ? '<th style="width:72px">الحالة</th>' : '')+
       '</tr></thead>'+
-      '<tbody>'+(rowsHtml||'<tr><td colspan="5" style="text-align:center;color:#9ca3af;padding:20px">لا توجد قيود مسجلة</td></tr>')+'</tbody>'+
+      '<tbody>'+(rowsHtml||'<tr><td colspan="'+(detailed?5:4)+'" style="text-align:center;color:#9ca3af;padding:20px">لا توجد قيود مسجلة</td></tr>')+'</tbody>'+
       (entries.length ? tfootHtml : '')+
     '</table>'+
     '</body></html>';
