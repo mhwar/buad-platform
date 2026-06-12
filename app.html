@@ -2456,6 +2456,10 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
         <span class="sb-label">الخطة التشغيلية</span>
         <span class="sb-badge" id="sb-badge-opplan" style="display:none">0</span>
       </a>
+      <a class="sb-item" id="nav-stratplan" onclick="Nav.go('stratplan')">
+        <span class="sb-icon"><i data-lucide="compass"></i></span>
+        <span class="sb-label">الخطة الاستراتيجية</span>
+      </a>
       <a class="sb-item" id="nav-resources" onclick="Nav.go('resources')">
         <span class="sb-icon"><i data-lucide="book-open"></i></span>
         <span class="sb-label">الموارد والأدلة</span>
@@ -2527,6 +2531,7 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
     <div id="pg-site"     class="page"></div>
     <div id="pg-orgs"     class="page"></div>
     <div id="pg-opplan"   class="page"></div>
+    <div id="pg-stratplan" class="page"></div>
     <div id="pg-resources" class="page"></div>
     <div id="pg-grants"   class="page"></div>
     <div id="pg-settings" class="page"></div>
@@ -2750,6 +2755,7 @@ DB._buildWorkspace = function() {
     templates: (function(){ try { return JSON.parse(localStorage.getItem('buad2_custom_templates')||'[]'); } catch(e){ return []; } })(),
     opplans:        DB.getOpPlans(),
     opplan_enabled: DB.getOpPlanEnabled(),
+    stratplans:     DB.getStratPlans(),
     fin: {}
   };
   // Don't send users/passwords to workspace
@@ -2780,6 +2786,7 @@ DB._pushToServer = function() {
         templates: localWs.templates,
         opplans:        localWs.opplans,
         opplan_enabled: localWs.opplan_enabled,
+        stratplans:     localWs.stratplans,
         pf:        localWs.pf,
         fin:       Object.assign({}, base.fin || {}, localWs.fin || {})
       };
@@ -2806,6 +2813,7 @@ DB._pullFromServer = function() {
       if (ws.templates && ws.templates.length) localStorage.setItem('buad2_custom_templates', JSON.stringify(ws.templates));
       if (ws.opplans)        localStorage.setItem(DB._OPPLAN_KEY,    JSON.stringify(ws.opplans));
       if (ws.opplan_enabled) localStorage.setItem(DB._OPPLAN_EN_KEY, JSON.stringify(ws.opplan_enabled));
+      if (ws.stratplans)     localStorage.setItem(DB._STRAT_KEY,     JSON.stringify(ws.stratplans));
       if (ws.settings) {
         var localS = DB.getSettings();
         // Keep local users list (managed separately via /api/users)
@@ -2949,26 +2957,85 @@ DB.deleteCustomTemplate = function(id) {
   localStorage.setItem('buad2_custom_templates', JSON.stringify(arr));
 };
 
-/* ─── Operational plans (الخطة التشغيلية) — per-association, synced via workspace ─── */
+/* ─── Operational plans (الخطة التشغيلية) — per-association, multi-year, synced via workspace ───
+   التخزين: m[orgId] = [plan2025, plan2026, …] — الشكل القديم (كائن واحد) يُرحَّل تلقائياً */
 DB._OPPLAN_KEY = 'buad2_opplans';
 DB._OPPLAN_EN_KEY = 'buad2_opplan_enabled';
+DB._OPPLAN_ACTIVE_KEY = 'buad2_opplan_active_year';
 DB.getOpPlans = function() {
   try { return JSON.parse(localStorage.getItem(DB._OPPLAN_KEY)||'{}'); } catch(e){ return {}; }
 };
+DB._opNormalizePlans = function(entry) {
+  if (!entry) return [];
+  if (Array.isArray(entry)) return entry;
+  return [entry]; // legacy: كائن واحد → مصفوفة بعنصر
+};
+/* كل خطط الجمعية مفروزة حسب السنة تصاعدياً */
+DB.getOpPlanList = function(orgId) {
+  var m = DB.getOpPlans();
+  return DB._opNormalizePlans(m[orgId]).slice().sort(function(a,b){ return (a.year||0)-(b.year||0); });
+};
+DB.getOpPlanByYear = function(orgId, year) {
+  return DB.getOpPlanList(orgId).filter(function(p){ return p.year===year; })[0] || null;
+};
+/* السنة النشطة المختارة لكل جمعية (تفضيل محلي) */
+DB.getOpPlanActiveYear = function(orgId) {
+  try { var m=JSON.parse(localStorage.getItem(DB._OPPLAN_ACTIVE_KEY)||'{}'); return m[orgId]||null; } catch(e){ return null; }
+};
+DB.setOpPlanActiveYear = function(orgId, year) {
+  try { var m=JSON.parse(localStorage.getItem(DB._OPPLAN_ACTIVE_KEY)||'{}'); m[orgId]=year; localStorage.setItem(DB._OPPLAN_ACTIVE_KEY, JSON.stringify(m)); } catch(e){}
+};
+/* خطة السنة النشطة (أو أحدث سنة) — التوقيع القديم يبقى كما هو لكل المستدعين */
 DB.getOpPlan = function(orgId) {
-  var m = DB.getOpPlans(); return m[orgId] || null;
+  var list = DB.getOpPlanList(orgId);
+  if (!list.length) return null;
+  var ay = DB.getOpPlanActiveYear(orgId);
+  if (ay) { var byY = list.filter(function(p){ return p.year===ay; })[0]; if (byY) return byY; }
+  return list[list.length-1];
 };
 DB.saveOpPlan = function(orgId, plan) {
   var m = DB.getOpPlans();
   plan.updated = (new Date()).toISOString().slice(0,10);
-  m[orgId] = plan;
+  var list = DB._opNormalizePlans(m[orgId]);
+  var idx = -1;
+  for (var i=0;i<list.length;i++){ if (list[i].id===plan.id) { idx=i; break; } }
+  if (idx<0) { for (var j=0;j<list.length;j++){ if (list[j].year===plan.year) { idx=j; break; } } }
+  if (idx>=0) list[idx]=plan; else list.push(plan);
+  m[orgId] = list;
   localStorage.setItem(DB._OPPLAN_KEY, JSON.stringify(m));
   DB._scheduleSave();
 };
-DB.deleteOpPlan = function(orgId) {
+/* حذف خطة سنة محددة (planId) أو كل خطط الجمعية إن لم يُحدد */
+DB.deleteOpPlan = function(orgId, planId) {
   var m = DB.getOpPlans();
-  delete m[orgId];
+  if (planId) {
+    var list = DB._opNormalizePlans(m[orgId]).filter(function(p){ return p.id!==planId; });
+    if (list.length) m[orgId]=list; else delete m[orgId];
+  } else {
+    delete m[orgId];
+  }
   localStorage.setItem(DB._OPPLAN_KEY, JSON.stringify(m));
+  DB._scheduleSave();
+};
+/* ─── Strategic plans (الخطة الاستراتيجية) — متعددة السنوات لكل جمعية ─── */
+DB._STRAT_KEY = 'buad2_stratplans';
+DB.getStratPlans = function() {
+  try { return JSON.parse(localStorage.getItem(DB._STRAT_KEY)||'{}'); } catch(e){ return {}; }
+};
+DB.getStratPlan = function(orgId) {
+  var m = DB.getStratPlans(); return m[orgId] || null;
+};
+DB.saveStratPlan = function(orgId, sp) {
+  var m = DB.getStratPlans();
+  sp.updated = (new Date()).toISOString().slice(0,10);
+  m[orgId] = sp;
+  localStorage.setItem(DB._STRAT_KEY, JSON.stringify(m));
+  DB._scheduleSave();
+};
+DB.deleteStratPlan = function(orgId) {
+  var m = DB.getStratPlans();
+  delete m[orgId];
+  localStorage.setItem(DB._STRAT_KEY, JSON.stringify(m));
   DB._scheduleSave();
 };
 DB.getOpPlanEnabled = function() {
@@ -3363,8 +3430,8 @@ var Nav = {
   updateBreadcrumb: function(page, params) {
     var bc = document.getElementById('breadcrumb');
     if (!bc) return;
-    var icons = {dash:'layout-dashboard', clients:'users', projects:'briefcase', settings:'settings-2', resources:'book-open', grants:'hand-coins', orgs:'calendar-check', opplan:'target', website:'inbox', services:'layout-grid', site:'globe', pf:'banknote'};
-    var labels = {dash:'الرئيسية', clients:'العملاء', projects:'المشاريع', settings:'الإعدادات', resources:'الموارد والأدلة', grants:'فرص المنح', orgs:'خطة المئة يوم', opplan:'الخطة التشغيلية', website:'الطلبات الواردة', services:'الخدمات والأدوات', site:'إدارة الموقع', pf:'مالية المنصة'};
+    var icons = {dash:'layout-dashboard', clients:'users', projects:'briefcase', settings:'settings-2', resources:'book-open', grants:'hand-coins', orgs:'calendar-check', opplan:'target', stratplan:'compass', website:'inbox', services:'layout-grid', site:'globe', pf:'banknote'};
+    var labels = {dash:'الرئيسية', clients:'العملاء', projects:'المشاريع', settings:'الإعدادات', resources:'الموارد والأدلة', grants:'فرص المنح', orgs:'خطة المئة يوم', opplan:'الخطة التشغيلية', stratplan:'الخطة الاستراتيجية', website:'الطلبات الواردة', services:'الخدمات والأدوات', site:'إدارة الموقع', pf:'مالية المنصة'};
     function iconHtml(n){ return n ? '<i data-lucide="'+n+'" style="width:14px;height:14px;opacity:.6;flex-shrink:0"></i>' : ''; }
     if (labels[page]) {
       bc.innerHTML = iconHtml(icons[page])+'<span class="bc-page">'+labels[page]+'</span>';
@@ -12510,10 +12577,18 @@ Pages._opPerspBadge = function(perspective, small){
 };
 /* ─── أدوات التتبع الذكية: الحالة + اتجاه المؤشر ─── */
 Pages._opExpectedPct = function(){
-  var n=new Date(), s=new Date(n.getFullYear(),0,1);
-  return Math.min(100, Math.max(0, Math.round((n-s)/31536000000*100)));
+  var n=new Date(), yr=n.getFullYear(), s=new Date(yr,0,1), e=new Date(yr+1,0,1);
+  return Math.min(100, Math.max(0, Math.round((n-s)/(e-s)*100)));
 };
 Pages._opGoalStatus = function(g){
+  // تجاوز يدوي للحالة إن حُدِّد
+  if(g && g.status_override){
+    var ov={done:{k:'done',label:'مكتمل',color:'var(--success-500)',manual:true},
+            ontrack:{k:'ontrack',label:'في المسار',color:'var(--iris-500)',manual:true},
+            risk:{k:'risk',label:'متعثر',color:'var(--warning-500)',manual:true},
+            behind:{k:'behind',label:'متأخر',color:'var(--danger-500)',manual:true}}[g.status_override];
+    if(ov) return ov;
+  }
   var p=Pages._opGoalStats(g).pct, e=Pages._opExpectedPct();
   if(p>=100)  return {k:'done',    label:'مكتمل',    color:'var(--success-500)'};
   if(p===0)   return {k:'idle',    label:'لم يبدأ',  color:'var(--fg-4)'};
@@ -12525,39 +12600,77 @@ Pages._opStatusBadge = function(g){
   var s=Pages._opGoalStatus(g);
   return '<span style="display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:700;white-space:nowrap;'+
     'color:'+s.color+';background:'+s.color+'1a;border-radius:6px;padding:2px 8px">'+
-    '<span style="width:6px;height:6px;border-radius:50%;background:'+s.color+';flex-shrink:0"></span>'+s.label+'</span>';
+    '<span style="width:6px;height:6px;border-radius:50%;background:'+s.color+';flex-shrink:0"></span>'+s.label+(s.manual?' <span style="opacity:.65;font-weight:500">(يدوي)</span>':'')+'</span>';
+};
+/* فرز زمني صحيح لمفاتيح الفترات: 2025-01 < 2025-Q1 < 2025-H1 < 2025
+   يحوّل كل مفتاح إلى (سنة + نهاية الفترة كشهر) ويفرز رقمياً بدل الفرز الأبجدي */
+Pages._opPeriodKeyOrd = function(key){
+  var m;
+  if((m=/^(\d{4})-(\d{2})$/.exec(key)))  return parseInt(m[1],10)*100 + parseInt(m[2],10);        // نهاية الشهر نفسه
+  if((m=/^(\d{4})-Q(\d)$/.exec(key)))    return parseInt(m[1],10)*100 + parseInt(m[2],10)*3;      // نهاية الربع
+  if((m=/^(\d{4})-H(\d)$/.exec(key)))    return parseInt(m[1],10)*100 + parseInt(m[2],10)*6;      // نهاية النصف
+  if((m=/^(\d{4})$/.exec(key)))          return parseInt(m[1],10)*100 + 12;                        // نهاية السنة
+  return 0;
+};
+Pages._opSortPeriodKeys = function(keys){
+  return (keys||[]).slice().sort(function(a,b){ return Pages._opPeriodKeyOrd(a)-Pages._opPeriodKeyOrd(b); });
 };
 /* قيم المؤشر مرتّبة زمنياً من actuals */
 Pages._opKpiSeries = function(k){
-  var keys=Object.keys(k.actuals||{}).sort();
+  var keys=Pages._opSortPeriodKeys(Object.keys(k.actuals||{}));
   return keys.map(function(key){ return parseFloat(k.actuals[key]); }).filter(isFinite);
+};
+/* آخر (مفتاح، قيمة) مسجّلة للمؤشر — بالفرز الزمني */
+Pages._opKpiLatest = function(k){
+  var keys=Pages._opSortPeriodKeys(Object.keys(k.actuals||{}).filter(function(pk){ return isFinite(parseFloat(k.actuals[pk])); }));
+  if(!keys.length) return null;
+  var key=keys[keys.length-1];
+  return { key:key, val:parseFloat(k.actuals[key]) };
 };
 /* ─── أدوات المؤشرات الذكية v2 ─── */
 /* التكرار الفعلي للمؤشر (يتجاوز تكرار الهدف إن حُدِّد) */
 Pages._opKpiFreq = function(g,k){ return (k&&k.frequency)||((g)&&g.frequency)||'quarterly'; };
+/* اتجاه المؤشر: 'up' تصاعدي (الأعلى أفضل) أو 'down' تنازلي (الأقل أفضل) */
+Pages._opKpiDir = function(k){ return (k&&k.direction)==='down'?'down':'up'; };
+/* نسبة إنجاز المؤشر الموحّدة: (القيمة − الأساس) / (المستهدف − الأساس)
+   تعمل للاتجاهين تلقائياً (البسط والمقام سالبان معاً في التنازلي) */
+Pages._opKpiAchievementPct = function(k, latestVal){
+  var target=parseFloat(k.target);
+  if(!isFinite(target)) return null;
+  var base=parseFloat(k.baseline); if(!isFinite(base)) base=0;
+  var latest=latestVal;
+  if(latest==null){ var lt=Pages._opKpiLatest(k); if(!lt) return null; latest=lt.val; }
+  if(target===base) return null; // لا مدى للقياس
+  var pct=Math.round((latest-base)/(target-base)*100);
+  return Math.min(100, Math.max(0, pct));
+};
 /* القيمة المتوقعة للمؤشر الآن (بالإسقاط الخطي من الأساس للهدف) */
 Pages._opKpiExpectedVal = function(k,g,year){
-  if(!k.target) return null;
-  var yr=year||(new Date()).getFullYear();
+  if(k.target==null||k.target===''||!isFinite(parseFloat(k.target))) return null;
+  var yr=year||(Pages._opCur&&Pages._opCur.kpiYear)||(new Date()).getFullYear();
   var elapsed=(Date.now()-new Date(yr,0,1))/(new Date(yr+1,0,1)-new Date(yr,0,1));
   elapsed=Math.min(1,Math.max(0,elapsed));
-  return (k.baseline||0)+((k.target-(k.baseline||0))*elapsed);
+  var base=parseFloat(k.baseline); if(!isFinite(base)) base=0;
+  return base+((parseFloat(k.target)-base)*elapsed);
 };
-/* حالة الضوء الثلاثي للمؤشر */
+/* حالة الضوء الثلاثي للمؤشر — موحّدة على نسبة الإنجاز مقابل نسبة الزمن المنقضي */
 Pages._opKpiTrafficLight = function(k,g){
-  var series=Pages._opKpiSeries(k);
-  if(!series.length) return {k:'unset',label:'لم يُحدَّث',color:'var(--fg-4)'};
-  var latest=series[series.length-1];
-  if(k.danger_threshold!=null&&latest<=parseFloat(k.danger_threshold)) return {k:'danger',label:'خطر',color:'var(--danger-500)'};
-  if(k.warning_threshold!=null&&latest<=parseFloat(k.warning_threshold)) return {k:'warning',label:'تحذير',color:'var(--warning-500)'};
-  var yr=Pages._opCur.kpiYear||(new Date()).getFullYear();
-  var exp=Pages._opKpiExpectedVal(k,g,yr);
-  if(exp!=null&&exp>0){
-    if(latest>=exp*0.9)  return {k:'good',   label:'في المسار',color:'var(--success-500)'};
-    if(latest>=exp*0.6)  return {k:'warning',label:'متعثر',    color:'var(--warning-500)'};
-    return                      {k:'behind', label:'متأخر',    color:'var(--danger-500)'};
+  var lt=Pages._opKpiLatest(k);
+  if(!lt) return {k:'unset',label:'لم يُحدَّث',color:'var(--fg-4)'};
+  var latest=lt.val;
+  var dir=Pages._opKpiDir(k);
+  // العتبات حسب الاتجاه: تصاعدي → خطر إذا انخفضت القيمة عن العتبة، تنازلي → خطر إذا ارتفعت
+  if(k.danger_threshold!=null&&k.danger_threshold!==''){
+    var dth=parseFloat(k.danger_threshold);
+    if(isFinite(dth)&&(dir==='up'?latest<=dth:latest>=dth)) return {k:'danger',label:'خطر',color:'var(--danger-500)'};
   }
-  var pct=k.target?Math.min(100,Math.round(latest/k.target*100)):null; if(pct==null) return {k:'unset',label:'لا هدف',color:'var(--fg-4)'};
+  if(k.warning_threshold!=null&&k.warning_threshold!==''){
+    var wth=parseFloat(k.warning_threshold);
+    if(isFinite(wth)&&(dir==='up'?latest<=wth:latest>=wth)) return {k:'warning',label:'تحذير',color:'var(--warning-500)'};
+  }
+  var pct=Pages._opKpiAchievementPct(k, latest);
+  if(pct==null) return {k:'unset',label:'لا هدف',color:'var(--fg-4)'};
+  if(pct>=100) return {k:'good',label:'محقَّق',color:'var(--success-500)'};
   var ep=Pages._opExpectedPct();
   if(pct>=ep*0.9) return {k:'good',   label:'في المسار',color:'var(--success-500)'};
   if(pct>=ep*0.6) return {k:'warning',label:'متعثر',    color:'var(--warning-500)'};
@@ -12584,24 +12697,46 @@ Pages._opIniStatusBadge = function(ini){
   return '<span style="display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px;background:'+m.c+'1a;color:'+m.c+'">'+
     '<span style="width:5px;height:5px;border-radius:50%;background:'+m.c+'"></span>'+m.l+'</span>';
 };
+/* مفتاح الفترة الحالية لتكرار معيّن (لمقارنة حداثة المؤشر) */
+Pages._opCurrentPeriodKey = function(freq, year){
+  var now=new Date(); var yr=year||now.getFullYear(); var mo=now.getMonth();
+  if(freq==='monthly')     return Pages._opPeriodKey(yr,'monthly',mo);
+  if(freq==='quarterly')   return Pages._opPeriodKey(yr,'quarterly',Math.floor(mo/3));
+  if(freq==='semi_annual') return Pages._opPeriodKey(yr,'semi_annual',Math.floor(mo/6));
+  return String(yr);
+};
 /* عناصر تحتاج متابعة */
 Pages._opFocusItems = function(plan){
   var items=[]; var now=new Date(); var mo=now.getMonth(); var prevMo=(mo+11)%12; var yr=now.getFullYear();
+  // تحذير الأوزان: المجموع يجب أن يساوي 100%
+  var wInfo=Pages._opGoalsWeightInfo(plan);
+  if(wInfo.anySet && wInfo.total!==100)
+    items.push({type:'weights',label:'مجموع أوزان الأهداف '+wInfo.total+'% — يجب أن يساوي 100%',desc:'عدّل أوزان الأهداف لتعكس أهميتها النسبية بدقة',color:'var(--warning-500)',icon:'scale',action:"Pages.opSwitchTab('plan')"});
   (plan.goals||[]).forEach(function(g){
     (g.kpis||[]).forEach(function(k){
-      var f=Pages._opKpiFreq(g,k); var ps=(Pages._OPPLAN_FREQS[f]||{}).periods||4;
-      var hasVal=Object.keys(k.actuals||{}).some(function(pk){ return pk.indexOf(String(yr))===0&&k.actuals[pk]!=null; });
-      if(!hasVal) items.push({type:'kpi_missing',label:'مؤشر لم يُحدَّث',desc:UI.escHtml(k.title||'')+'  ·  '+UI.escHtml(g.title),color:'var(--warning-500)',icon:'trending-up',action:"Pages.opKpiDetail('"+g.id+"','"+k.id+"')"});
-      else { var tl=Pages._opKpiTrafficLight(k,g); if(tl.k==='danger') items.push({type:'kpi_behind',label:'مؤشر في خطر',desc:UI.escHtml(k.title||'')+'  ·  '+UI.escHtml(g.title),color:'var(--danger-500)',icon:'trending-down',action:"Pages.opKpiDetail('"+g.id+"','"+k.id+"')"}); }
+      // حداثة المؤشر: مقارنة آخر فترة مسجّلة (فرز زمني) مع الفترة الحالية حسب تكرار المؤشر
+      var f=Pages._opKpiFreq(g,k);
+      var lt=Pages._opKpiLatest(k);
+      var curKey=Pages._opCurrentPeriodKey(f, yr);
+      var stale=!lt || Pages._opPeriodKeyOrd(lt.key) < Pages._opPeriodKeyOrd(curKey) - (f==='monthly'?1:f==='quarterly'?3:f==='semi_annual'?6:12);
+      if(!lt)
+        items.push({type:'kpi_missing',label:'مؤشر لم يُحدَّث',desc:UI.escHtml(k.title||'')+'  ·  '+UI.escHtml(g.title),color:'var(--warning-500)',icon:'trending-up',action:"Pages.opKpiDetail('"+g.id+"','"+k.id+"')"});
+      else if(stale)
+        items.push({type:'kpi_stale',label:'مؤشر متأخر عن التحديث (آخر تسجيل: '+UI.escHtml(Pages._opKeyLabel(lt.key))+')',desc:UI.escHtml(k.title||'')+'  ·  '+UI.escHtml(g.title),color:'var(--warning-500)',icon:'clock-alert',action:"Pages.opKpiDetail('"+g.id+"','"+k.id+"')"});
+      else { var tl=Pages._opKpiTrafficLight(k,g); if(tl.k==='danger'||tl.k==='behind') items.push({type:'kpi_behind',label:tl.k==='danger'?'مؤشر في خطر':'مؤشر متأخر عن مساره',desc:UI.escHtml(k.title||'')+'  ·  '+UI.escHtml(g.title),color:'var(--danger-500)',icon:'trending-down',action:"Pages.opKpiDetail('"+g.id+"','"+k.id+"')"}); }
     });
     (g.initiatives||[]).forEach(function(ini){
       if(ini.status==='paused'||ini.status==='cancelled') return;
       (ini.activities||[]).forEach(function(a){
-        if(a.plan&&a.plan[prevMo]&&!(a.done&&a.done[prevMo]>0))
+        // فحص الشهر الحالي والسابق معاً
+        if(a.plan&&a.plan[mo]&&!(a.done&&a.done[mo]>0))
+          items.push({type:'act_unrecorded',label:'نشاط بدون تسجيل في '+Pages._OPMONTHS[mo],desc:UI.escHtml(a.title),color:'var(--warning-500)',icon:'calendar-x',action:"Pages.opActDetail('"+g.id+"','"+ini.id+"','"+a.id+"')"});
+        else if(a.plan&&a.plan[prevMo]&&!(a.done&&a.done[prevMo]>0))
           items.push({type:'act_unrecorded',label:'نشاط بدون تسجيل في '+Pages._OPMONTHS[prevMo],desc:UI.escHtml(a.title),color:'var(--warning-500)',icon:'calendar-x',action:"Pages.opActDetail('"+g.id+"','"+ini.id+"','"+a.id+"')"});
       });
-      if((ini.status||'active')==='active'&&ini.start_month!=null&&ini.end_month!=null&&mo>=ini.start_month&&mo<=ini.end_month&&Pages._opIniStats(ini).pct===0)
-        items.push({type:'ini_idle',label:'مبادرة في نطاقها ولم تبدأ',desc:UI.escHtml(ini.title)+'  ·  '+UI.escHtml(g.title),color:'var(--danger-500)',icon:'git-branch',action:"Pages.opIniDetail('"+g.id+"','"+ini.id+"')"});
+      // مبادرة نشطة بدأ نطاقها الزمني (أو تجاوزته) وتقدمها صفر
+      if((ini.status||'active')==='active'&&ini.start_month!=null&&mo>=ini.start_month&&Pages._opIniStats(ini).pct===0)
+        items.push({type:'ini_idle',label:mo>(ini.end_month!=null?ini.end_month:11)?'مبادرة تجاوزت نطاقها ولم تبدأ':'مبادرة في نطاقها ولم تبدأ',desc:UI.escHtml(ini.title)+'  ·  '+UI.escHtml(g.title),color:'var(--danger-500)',icon:'git-branch',action:"Pages.opIniDetail('"+g.id+"','"+ini.id+"')"});
     });
   });
   return items.slice(0,10);
@@ -12637,6 +12772,7 @@ Pages._opKeyLabel = function(key){
   if(/^\d{4}-(\d{2})$/.test(key)){ var m=parseInt(RegExp.$1,10)-1; return Pages._OPMONTHS[m]||key; }
   if(/-Q(\d)/.test(key)) return 'الربع '+RegExp.$1;
   if(/-H(\d)/.test(key)) return RegExp.$1==='1'?'النصف الأول':'النصف الثاني';
+  if(/^(\d{4})$/.test(key)) return 'سنوي '+RegExp.$1;
   return key;
 };
 /* رسم بياني كبير لاتجاه المؤشر مع تسميات الفترات والقيم (لبطاقة التفاصيل) */
@@ -12961,33 +13097,70 @@ Pages._opGoalStats = function(g){
     var s=Pages._opActStats(a); sum+=s.pct; acts++; if(s.pct>=100) doneActs++;
   });});
   var actPct=acts?Math.round(sum/acts):0;
+  // نسبة المؤشرات: موحّدة على (القيمة − الأساس)/(المستهدف − الأساس) — تدعم الاتجاهين
   var kpiPct=null; var kpiVals=[];
   (g.kpis||[]).forEach(function(k){
-    if(!k.target) return;
-    var vals=Object.values(k.actuals||{}).map(parseFloat).filter(isFinite);
-    if(!vals.length) return;
-    kpiVals.push(Math.min(100,Math.round(vals[vals.length-1]/k.target*100)));
+    var p=Pages._opKpiAchievementPct(k);
+    if(p!=null) kpiVals.push(p);
   });
   if(kpiVals.length) kpiPct=Math.round(kpiVals.reduce(function(a,b){return a+b;},0)/kpiVals.length);
-  var pct=kpiPct!=null?kpiPct:actPct;
-  return { pct:pct, actPct:actPct, acts:acts, inits:(g.initiatives||[]).length, doneActs:doneActs, kpiPct:kpiPct };
+  // الدمج الموزون: 70% نتائج (مؤشرات) + 30% تنفيذ (أنشطة) عند توفر الاثنين
+  var pct, src;
+  if(kpiPct!=null && acts>0){ pct=Math.round(kpiPct*0.7+actPct*0.3); src='blend'; }
+  else if(kpiPct!=null){ pct=kpiPct; src='kpi'; }
+  else { pct=actPct; src='act'; }
+  return { pct:pct, actPct:actPct, acts:acts, inits:(g.initiatives||[]).length, doneActs:doneActs, kpiPct:kpiPct, src:src };
+};
+/* معلومات أوزان الأهداف: المجموع وهل حُدد أي وزن */
+Pages._opGoalsWeightInfo = function(p){
+  var total=0, anySet=false, setCount=0;
+  (p.goals||[]).forEach(function(g){
+    var w=parseFloat(g.weight);
+    if(isFinite(w)&&w>0){ total+=w; anySet=true; setCount++; }
+  });
+  return { total:Math.round(total), anySet:anySet, setCount:setCount, goals:(p.goals||[]).length };
+};
+/* الوزن الفعّال للهدف: وزنه إن حُدد، وإلا متوسط الأوزان المحددة (حتى لا يختفي من الحساب) */
+Pages._opGoalEffWeight = function(g, p){
+  var w=parseFloat(g.weight);
+  if(isFinite(w)&&w>0) return w;
+  var info=Pages._opGoalsWeightInfo(p);
+  if(info.setCount>0) return info.total/info.setCount;
+  return 1; // لا أوزان محددة → تساوي الجميع
+};
+/* متوسط موزون لتقدم مجموعة أهداف (للمنظورات وللخطة) */
+Pages._opWeightedPct = function(goalsList){
+  var setW=(goalsList||[]).map(function(g){return parseFloat(g.weight);}).filter(function(w){return isFinite(w)&&w>0;});
+  var avgW=setW.length?setW.reduce(function(a,b){return a+b;},0)/setW.length:1;
+  var sum=0, wsum=0;
+  (goalsList||[]).forEach(function(g){
+    var gs=Pages._opGoalStats(g);
+    var w=parseFloat(g.weight); if(!isFinite(w)||w<=0) w=avgW;
+    sum+=gs.pct*w; wsum+=w;
+  });
+  return wsum?Math.round(sum/wsum):0;
 };
 Pages._opPlanStats = function(p){
-  var inits=0, acts=0, doneActs=0, sum=0, byMonth=[0,0,0,0,0,0,0,0,0,0,0,0], byMonthDone=[0,0,0,0,0,0,0,0,0,0,0,0];
-  var bp={beneficiaries:{sum:0,n:0},financial:{sum:0,n:0},operations:{sum:0,n:0},learning:{sum:0,n:0}};
+  var inits=0, acts=0, doneActs=0, byMonth=[0,0,0,0,0,0,0,0,0,0,0,0], byMonthDone=[0,0,0,0,0,0,0,0,0,0,0,0];
+  var bp={beneficiaries:{sum:0,wsum:0},financial:{sum:0,wsum:0},operations:{sum:0,wsum:0},learning:{sum:0,wsum:0}};
+  var bpN={beneficiaries:0,financial:0,operations:0,learning:0};
+  var wTotalSum=0, wTotal=0;
   (p.goals||[]).forEach(function(g){ inits+=(g.initiatives||[]).length;
     var gs=Pages._opGoalStats(g);
-    var persp=g.perspective||'operations'; if(!bp[persp]) bp[persp]={sum:0,n:0};
-    bp[persp].sum+=gs.pct; bp[persp].n++;
+    var w=Pages._opGoalEffWeight(g, p);
+    var persp=g.perspective||'operations'; if(!bp[persp]){ bp[persp]={sum:0,wsum:0}; bpN[persp]=0; }
+    bp[persp].sum+=gs.pct*w; bp[persp].wsum+=w; bpN[persp]++;
+    wTotalSum+=gs.pct*w; wTotal+=w;
     (g.initiatives||[]).forEach(function(ini){ (ini.activities||[]).forEach(function(a){
-      var s=Pages._opActStats(a); acts++; sum+=s.pct; if(s.pct>=100) doneActs++;
+      var s=Pages._opActStats(a); acts++; if(s.pct>=100) doneActs++;
       (a.plan||[]).forEach(function(b,i){ if(b){ byMonth[i]++; if((a.done&&a.done[i])>0) byMonthDone[i]++; } });
     });});
   });
   var byPerspective={};
-  Object.keys(bp).forEach(function(k){ byPerspective[k]={ pct:bp[k].n?Math.round(bp[k].sum/bp[k].n):0, goals:bp[k].n }; });
+  Object.keys(bp).forEach(function(k){ byPerspective[k]={ pct:bp[k].wsum?Math.round(bp[k].sum/bp[k].wsum):0, goals:bpN[k]||0 }; });
   return { goals:(p.goals||[]).length, inits:inits, acts:acts, doneActs:doneActs,
-           pct: acts?Math.round(sum/acts):0, byMonth:byMonth, byMonthDone:byMonthDone, byPerspective:byPerspective };
+           pct: wTotal?Math.round(wTotalSum/wTotal):0, byMonth:byMonth, byMonthDone:byMonthDone, byPerspective:byPerspective,
+           weightInfo: Pages._opGoalsWeightInfo(p) };
 };
 Pages._opPctColor = function(p){ return p>=100?'var(--success-500)':p>=50?'var(--iris-500)':p>0?'var(--warning-500)':'var(--fg-4)'; };
 Pages._opRing = function(pct, size){
@@ -13091,20 +13264,553 @@ Pages.createBlankOpPlan = function(orgId){
   UI.toast('تم إنشاء خطة فارغة — ابدأ بإضافة الأهداف','success');
   Pages.render_opplan({ orgId:orgId, tab:'plan' });
 };
-Pages.opDeletePlanConfirm = function(orgId){
+Pages.opDeletePlanConfirm = function(orgId, planId){
   var name = Pages._opOrgName(orgId);
+  var target = planId ? DB.getOpPlanList(orgId).filter(function(p){return p.id===planId;})[0] : null;
+  var what = target ? 'خطة سنة <strong>'+target.year+'</strong>' : 'الخطة التشغيلية';
   UI.openModal(
     '<div class="modal-header"><h3>حذف الخطة</h3><button class="modal-close" onclick="UI.closeModalForce()">×</button></div>'+
-    '<div class="modal-body"><p style="color:var(--fg-2)">سيتم حذف الخطة التشغيلية لـ«<strong>'+UI.escHtml(name)+'</strong>» نهائياً. الجمعية تبقى مُفعّلة ويمكن إنشاء خطة جديدة.</p></div>'+
+    '<div class="modal-body"><p style="color:var(--fg-2)">سيتم حذف '+what+' لـ«<strong>'+UI.escHtml(name)+'</strong>» نهائياً.'+(target&&DB.getOpPlanList(orgId).length>1?' خطط السنوات الأخرى تبقى محفوظة.':' الجمعية تبقى مُفعّلة ويمكن إنشاء خطة جديدة.')+'</p></div>'+
     '<div class="modal-footer"><button class="btn btn-ghost" onclick="UI.closeModalForce()">إلغاء</button>'+
-    '<button class="btn btn-danger" onclick="Pages.opDoDeletePlan(\''+orgId+'\')"><i data-lucide="trash-2"></i>حذف نهائي</button></div>'
+    '<button class="btn btn-danger" onclick="Pages.opDoDeletePlan(\''+orgId+'\','+(planId?'\''+planId+'\'':'null')+')"><i data-lucide="trash-2"></i>حذف نهائي</button></div>'
   );
   if (typeof lucide!=='undefined') setTimeout(function(){ lucide.createIcons(); },30);
 };
-Pages.opDoDeletePlan = function(orgId){
-  DB.deleteOpPlan(orgId); UI.closeModalForce();
+Pages.opDoDeletePlan = function(orgId, planId){
+  DB.deleteOpPlan(orgId, planId||undefined); UI.closeModalForce();
   UI.toast('تم حذف الخطة','success');
-  Pages.render_opplan({ orgId:null });
+  var remaining=DB.getOpPlanList(orgId);
+  if(remaining.length){ DB.setOpPlanActiveYear(orgId, remaining[remaining.length-1].year); Pages.render_opplan({ orgId:orgId }); }
+  else Pages.render_opplan({ orgId:null });
+};
+/* التبديل بين خطط السنوات */
+Pages.opSetActiveYear = function(year){
+  if(!Pages._opCur.orgId) return;
+  DB.setOpPlanActiveYear(Pages._opCur.orgId, year);
+  Pages._opCur.kpiYear = year;
+  Pages.render_opplan({ orgId:Pages._opCur.orgId });
+};
+/* إنشاء خطة سنة جديدة — لا تحذف خطط السنوات السابقة */
+Pages.opNewYearPlan = function(){
+  var orgId=Pages._opCur.orgId; if(!orgId) return;
+  var list=DB.getOpPlanList(orgId);
+  var maxYear=list.length?list[list.length-1].year:(new Date()).getFullYear()-1;
+  var newYear=maxYear+1;
+  var copyOpts=list.map(function(p){ return '<option value="'+p.year+'">'+p.year+' — '+UI.escHtml(p.title||'خطة')+'</option>'; }).join('');
+  UI.openModal(
+    '<div class="modal-header"><h3>خطة سنة جديدة</h3><button class="modal-close" onclick="UI.closeModalForce()">×</button></div>'+
+    '<div class="modal-body">'+
+      '<div class="form-group"><label class="field-label">سنة الخطة الجديدة</label>'+
+        '<input id="op-ny-year" type="number" class="field-input" value="'+newYear+'" min="2020" max="2050"></div>'+
+      '<div class="form-group"><label class="field-label">طريقة البدء</label>'+
+        '<select id="op-ny-mode" class="field-input">'+
+          (list.length?'<option value="copy">نسخ هيكل خطة سنة سابقة (أهداف ومؤشرات ومبادرات — بدون القيم الفعلية)</option>':'')+
+          '<option value="blank">خطة فارغة</option>'+
+        '</select></div>'+
+      (list.length?'<div class="form-group"><label class="field-label">النسخ من سنة</label><select id="op-ny-src" class="field-input">'+copyOpts+'</select></div>':'')+
+      '<div style="font-size:11.5px;color:var(--fg-3);background:var(--iris-50);border:1px solid var(--iris-100);border-radius:8px;padding:8px 12px">خطط السنوات السابقة تبقى محفوظة — يمكنك التنقل بينها من منتقي السنة في رأس الصفحة.</div>'+
+    '</div>'+
+    '<div class="modal-footer"><button class="btn btn-ghost" onclick="UI.closeModalForce()">إلغاء</button>'+
+    '<button class="btn btn-primary" onclick="Pages.opDoNewYearPlan()"><i data-lucide="calendar-plus"></i>إنشاء</button></div>'
+  );
+  if (typeof lucide!=='undefined') setTimeout(function(){ lucide.createIcons(); },30);
+};
+Pages.opDoNewYearPlan = function(){
+  var orgId=Pages._opCur.orgId; if(!orgId) return;
+  var year=parseInt((document.getElementById('op-ny-year')||{}).value)|| (new Date()).getFullYear();
+  if(DB.getOpPlanByYear(orgId, year)){ UI.toast('توجد خطة لسنة '+year+' بالفعل — اخترها من منتقي السنة','danger'); return; }
+  var modeEl=document.getElementById('op-ny-mode');
+  var mode=modeEl?modeEl.value:'blank';
+  var org=Pages._opFindOrg(orgId);
+  var plan;
+  if(mode==='copy'){
+    var srcYear=parseInt((document.getElementById('op-ny-src')||{}).value)||0;
+    var src=DB.getOpPlanByYear(orgId, srcYear)||DB.getOpPlan(orgId);
+    if(!src){ UI.toast('لا توجد خطة للنسخ منها','danger'); return; }
+    plan=JSON.parse(JSON.stringify(src));
+    plan.id=DB.uid(); plan.year=year;
+    plan.title='الخطة التشغيلية لـ'+(plan.org_name||org.name)+' '+year;
+    plan.created=(new Date()).toISOString().slice(0,10); plan.updated='';
+    /* تفريغ القيم الفعلية والملاحظات — يبقى الهيكل والمستهدفات */
+    (plan.goals||[]).forEach(function(g){
+      g.status_override=null;
+      (g.kpis||[]).forEach(function(k){ k.actuals={}; k.notes={}; });
+      (g.initiatives||[]).forEach(function(ini){
+        ini.progress_note=''; if(ini.status==='done'||ini.status==='cancelled') ini.status='active';
+        (ini.activities||[]).forEach(function(a){ a.done=[0,0,0,0,0,0,0,0,0,0,0,0]; if(a.done_notes) a.done_notes={}; });
+      });
+    });
+  } else {
+    plan={ id:DB.uid(), org_id:orgId, org_name:org.name, year:year,
+      title:'الخطة التشغيلية لـ'+org.name+' '+year, start_month:0,
+      created:(new Date()).toISOString().slice(0,10), updated:'', goals:[] };
+  }
+  DB.saveOpPlan(orgId, plan);
+  DB.setOpPlanActiveYear(orgId, year);
+  Pages._opCur.kpiYear=year;
+  UI.closeModalForce();
+  UI.toast('تم إنشاء خطة '+year+' — خطط السنوات السابقة محفوظة','success');
+  Pages.render_opplan({ orgId:orgId, tab: mode==='copy'?'plan':'plan' });
+};
+
+/* ═══════════════════════════════════════════════════════════
+   الخطة الاستراتيجية — متعددة السنوات، تتغذى من الخطط التشغيلية
+   ═══════════════════════════════════════════════════════════ */
+Pages._stratCur = { orgId:null };
+
+/* أحدث قيمة فعلية لمؤشر استراتيجي في سنة معيّنة — تُسحب من المؤشر التشغيلي المرتبط */
+Pages._stratKpiYearActual = function(orgId, k, year){
+  var link=k.op_links&&k.op_links[String(year)];
+  if(!link) return null;
+  var plan=DB.getOpPlanByYear(orgId, year);
+  if(!plan) return null;
+  var g=(plan.goals||[]).filter(function(x){return x.id===link.goalId;})[0]; if(!g) return null;
+  var ok=(g.kpis||[]).filter(function(x){return x.id===link.kpiId;})[0]; if(!ok) return null;
+  // آخر قيمة مسجلة ضمن تلك السنة فقط
+  var keys=Pages._opSortPeriodKeys(Object.keys(ok.actuals||{}).filter(function(pk){
+    return pk.indexOf(String(year))===0 && isFinite(parseFloat(ok.actuals[pk]));
+  }));
+  if(!keys.length) return null;
+  return { val:parseFloat(ok.actuals[keys[keys.length-1]]), key:keys[keys.length-1], opGoal:g, opKpi:ok };
+};
+/* أحدث قيمة فعلية للمؤشر الاستراتيجي عبر كل السنوات */
+Pages._stratKpiLatestActual = function(sp, k){
+  var latest=null;
+  for(var y=sp.start_year; y<=sp.end_year; y++){
+    var a=Pages._stratKpiYearActual(sp.org_id, k, y);
+    if(a) latest={ val:a.val, year:y };
+  }
+  return latest;
+};
+/* نسبة تقدم المؤشر الاستراتيجي نحو المستهدف النهائي */
+Pages._stratKpiProgress = function(sp, k){
+  var tgt=parseFloat(k.final_target);
+  if(!isFinite(tgt)) return null;
+  var base=parseFloat(k.baseline); if(!isFinite(base)) base=0;
+  if(tgt===base) return null;
+  var lt=Pages._stratKpiLatestActual(sp, k);
+  if(!lt) return null;
+  return Math.min(100, Math.max(0, Math.round((lt.val-base)/(tgt-base)*100)));
+};
+Pages._stratGoalProgress = function(sp, g){
+  var vals=(g.kpis||[]).map(function(k){ return Pages._stratKpiProgress(sp,k); }).filter(function(p){ return p!=null; });
+  if(!vals.length) return 0;
+  return Math.round(vals.reduce(function(a,b){return a+b;},0)/vals.length);
+};
+Pages._stratPlanProgress = function(sp){
+  var goals=sp.goals||[]; if(!goals.length) return 0;
+  var setW=goals.map(function(g){return parseFloat(g.weight);}).filter(function(w){return isFinite(w)&&w>0;});
+  var avgW=setW.length?setW.reduce(function(a,b){return a+b;},0)/setW.length:1;
+  var sum=0,wsum=0;
+  goals.forEach(function(g){
+    var w=parseFloat(g.weight); if(!isFinite(w)||w<=0) w=avgW;
+    sum+=Pages._stratGoalProgress(sp,g)*w; wsum+=w;
+  });
+  return wsum?Math.round(sum/wsum):0;
+};
+/* البحث العكسي: هل هذا المؤشر التشغيلي مرتبط بمؤشر استراتيجي؟ */
+Pages._stratFindLinkForOpKpi = function(orgId, kpiId){
+  var sp=DB.getStratPlan(orgId); if(!sp) return null;
+  var found=null;
+  (sp.goals||[]).forEach(function(sg){
+    (sg.kpis||[]).forEach(function(sk){
+      Object.keys(sk.op_links||{}).forEach(function(y){
+        if(sk.op_links[y]&&sk.op_links[y].kpiId===kpiId) found={sp:sp, goal:sg, kpi:sk, year:parseInt(y,10)};
+      });
+    });
+  });
+  return found;
+};
+
+Pages.render_stratplan = function(opts){
+  if (opts===undefined){ Pages._stratCur.orgId=null; opts={}; }
+  if (opts&&opts.orgId!==undefined) Pages._stratCur.orgId=opts.orgId;
+  var el=document.getElementById('pg-stratplan'); if(!el) return;
+  if (Pages._orgs===null && DB._token && !Pages._opLoadingOrgs){
+    Pages._opLoadingOrgs=true;
+    DB._getOrgs().then(function(list){ Pages._orgs=list||[]; Pages._opLoadingOrgs=false; if(Nav._cur==='stratplan') Pages.render_stratplan({orgId:Pages._stratCur.orgId}); });
+  }
+  var body;
+  if (Pages._stratCur.orgId){
+    var sp=DB.getStratPlan(Pages._stratCur.orgId);
+    body = sp ? Pages._stratDetailHtml(sp) : Pages._stratChooserHtml(Pages._stratCur.orgId);
+  } else body=Pages._stratListHtml();
+  el.innerHTML=Pages._opStyle()+body;
+  if (typeof lucide!=='undefined') lucide.createIcons({rootElement:el});
+};
+
+/* قائمة الجمعيات — نفس جمعيات الخطة التشغيلية المفعّلة + أي جمعية لها خطة استراتيجية */
+Pages._stratListHtml = function(){
+  var enabled=DB.getOpPlanEnabled().slice();
+  Object.keys(DB.getStratPlans()).forEach(function(oid){ if(enabled.indexOf(oid)<0) enabled.push(oid); });
+  var header='<div class="page-header"><div><h1>الخطة الاستراتيجية</h1>'+
+    '<div class="page-header-sub">خطط استراتيجية متعددة السنوات — أهداف ومؤشرات بمستهدفات سنوية تتغذى تلقائياً من الخطط التشغيلية</div></div></div>';
+  if (!enabled.length){
+    return '<div class="op-wrap">'+header+
+      '<div class="card" style="text-align:center;padding:48px 24px;color:var(--fg-3)">'+
+      '<div style="width:64px;height:64px;border-radius:16px;background:var(--iris-50);color:var(--iris-600);display:flex;align-items:center;justify-content:center;margin:0 auto 16px"><i data-lucide="compass" style="width:30px;height:30px"></i></div>'+
+      '<div style="font-size:16px;font-weight:700;color:var(--fg-1);margin-bottom:8px">لا توجد جمعيات مُفعّلة بعد</div>'+
+      '<div style="max-width:460px;margin:0 auto">فعّل «الخطة التشغيلية» لأي جمعية أولاً — الجمعيات المفعّلة تظهر هنا لإنشاء خططها الاستراتيجية.</div>'+
+      '</div></div>';
+  }
+  var cards=enabled.map(function(orgId){
+    var name=Pages._opOrgName(orgId); var sp=DB.getStratPlan(orgId);
+    if (sp){
+      var pct=Pages._stratPlanProgress(sp);
+      return '<div class="card" style="padding:16px">'+
+        '<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">'+Pages._opRingBox(pct,56)+
+          '<div style="flex:1;min-width:0"><div style="font-weight:700;font-size:14px;color:var(--fg-1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+UI.escHtml(name)+'</div>'+
+            '<div style="font-size:11px;color:var(--fg-3)">'+sp.start_year+' — '+sp.end_year+' · '+(sp.goals||[]).length+' أهداف استراتيجية</div></div></div>'+
+        '<div style="display:flex;gap:6px">'+
+          '<button class="btn btn-sm btn-primary" style="flex:1;justify-content:center" onclick="Nav.go(\'stratplan\',{orgId:\''+orgId+'\'})"><i data-lucide="folder-open"></i>فتح</button>'+
+          '<button class="btn btn-sm btn-danger" onclick="Pages.stratDeletePlanConfirm(\''+orgId+'\')"><i data-lucide="trash-2"></i></button>'+
+        '</div></div>';
+    }
+    return '<div class="card" style="padding:16px;display:flex;flex-direction:column">'+
+      '<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px"><div style="width:56px;height:56px;border-radius:14px;background:var(--bg-2);color:var(--fg-3);display:flex;align-items:center;justify-content:center"><i data-lucide="compass"></i></div>'+
+        '<div style="flex:1;min-width:0"><div style="font-weight:700;font-size:14px;color:var(--fg-1)">'+UI.escHtml(name)+'</div><div style="font-size:11px;color:var(--fg-3)">لم تُنشأ الخطة الاستراتيجية بعد</div></div></div>'+
+      '<button class="btn btn-sm btn-primary" style="width:100%;justify-content:center;margin-top:auto" onclick="Nav.go(\'stratplan\',{orgId:\''+orgId+'\'})"><i data-lucide="plus"></i>إنشاء الخطة الاستراتيجية</button></div>';
+  }).join('');
+  return '<div class="op-wrap">'+header+'<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:14px">'+cards+'</div></div>';
+};
+
+/* إنشاء خطة استراتيجية جديدة */
+Pages._stratChooserHtml = function(orgId){
+  var name=Pages._opOrgName(orgId);
+  var yr=(new Date()).getFullYear();
+  return '<div class="op-wrap"><div style="margin-bottom:16px"><button class="btn btn-sm btn-ghost" onclick="Pages.render_stratplan({orgId:null})"><i data-lucide="arrow-right"></i>الجمعيات</button></div>'+
+    '<div class="card" style="max-width:560px;margin:0 auto;padding:24px">'+
+      '<div style="text-align:center;margin-bottom:18px"><div style="width:56px;height:56px;border-radius:14px;background:var(--iris-50);color:var(--iris-600);display:flex;align-items:center;justify-content:center;margin:0 auto 10px"><i data-lucide="compass" style="width:26px;height:26px"></i></div>'+
+        '<h2 style="margin:0">الخطة الاستراتيجية لـ'+UI.escHtml(name)+'</h2>'+
+        '<div style="color:var(--fg-3);font-size:12.5px;margin-top:4px">حدد مدة الخطة — لكل مؤشر مستهدف نهائي يُوزَّع على مستهدفات سنوية</div></div>'+
+      '<div class="form-group"><label class="field-label">عنوان الخطة</label>'+
+        '<input id="st-f-title" class="field-input" value="الخطة الاستراتيجية لـ'+UI.escHtml(name)+'" placeholder="عنوان الخطة"></div>'+
+      '<div class="form-group"><label class="field-label">الرؤية (اختياري)</label>'+
+        '<textarea id="st-f-vision" class="field-input" rows="2" placeholder="رؤية الجمعية للسنوات القادمة"></textarea></div>'+
+      '<div class="form-row">'+
+        '<div class="form-group"><label class="field-label">سنة البداية</label><input id="st-f-start" type="number" class="field-input" value="'+yr+'" min="2020" max="2050"></div>'+
+        '<div class="form-group"><label class="field-label">سنة النهاية</label><input id="st-f-end" type="number" class="field-input" value="'+(yr+3)+'" min="2020" max="2060"></div>'+
+      '</div>'+
+      '<button class="btn btn-primary" style="width:100%;justify-content:center" onclick="Pages.stratCreatePlan(\''+orgId+'\')"><i data-lucide="rocket"></i>إنشاء الخطة</button>'+
+    '</div></div>';
+};
+Pages.stratCreatePlan = function(orgId){
+  var org=Pages._opFindOrg(orgId);
+  var title=(document.getElementById('st-f-title').value||'').trim()||('الخطة الاستراتيجية لـ'+org.name);
+  var vision=(document.getElementById('st-f-vision').value||'').trim();
+  var sy=parseInt(document.getElementById('st-f-start').value)||(new Date()).getFullYear();
+  var ey=parseInt(document.getElementById('st-f-end').value)||sy+3;
+  if(ey<sy){ UI.toast('سنة النهاية يجب أن تكون بعد سنة البداية','danger'); return; }
+  if(ey-sy>10){ UI.toast('الحد الأقصى لمدة الخطة 10 سنوات','danger'); return; }
+  var sp={ id:DB.uid(), org_id:orgId, org_name:org.name, title:title, vision:vision,
+    start_year:sy, end_year:ey, created:(new Date()).toISOString().slice(0,10), updated:'', goals:[] };
+  DB.saveStratPlan(orgId, sp);
+  UI.toast('تم إنشاء الخطة الاستراتيجية — ابدأ بإضافة الأهداف','success');
+  Pages.render_stratplan({orgId:orgId});
+};
+Pages.stratDeletePlanConfirm = function(orgId){
+  var name=Pages._opOrgName(orgId);
+  UI.openModal(
+    '<div class="modal-header"><h3>حذف الخطة الاستراتيجية</h3><button class="modal-close" onclick="UI.closeModalForce()">×</button></div>'+
+    '<div class="modal-body"><p style="color:var(--fg-2)">سيتم حذف الخطة الاستراتيجية لـ«<strong>'+UI.escHtml(name)+'</strong>» نهائياً. الخطط التشغيلية لا تتأثر.</p></div>'+
+    '<div class="modal-footer"><button class="btn btn-ghost" onclick="UI.closeModalForce()">إلغاء</button>'+
+    '<button class="btn btn-danger" onclick="DB.deleteStratPlan(\''+orgId+'\');UI.closeModalForce();Pages.render_stratplan({orgId:null})"><i data-lucide="trash-2"></i>حذف نهائي</button></div>');
+  if (typeof lucide!=='undefined') setTimeout(function(){ lucide.createIcons(); },30);
+};
+
+/* عرض الخطة الاستراتيجية */
+Pages._stratDetailHtml = function(sp){
+  var pct=Pages._stratPlanProgress(sp);
+  var years=[]; for(var y=sp.start_year;y<=sp.end_year;y++) years.push(y);
+  var curYear=(new Date()).getFullYear();
+  var head='<div style="display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap;margin-bottom:16px">'+
+    '<button class="btn btn-sm btn-ghost" onclick="Pages.render_stratplan({orgId:null})"><i data-lucide="arrow-right"></i>الجمعيات</button>'+
+    Pages._opRingBox(pct,64)+
+    '<div style="flex:1;min-width:200px">'+
+      '<h1 style="margin:0;font-size:20px;cursor:pointer" onclick="Pages.stratEditMeta()">'+UI.escHtml(sp.title||'الخطة الاستراتيجية')+' <i data-lucide="pencil" style="width:13px;height:13px;opacity:.5;vertical-align:middle"></i></h1>'+
+      '<div style="font-size:12px;color:var(--fg-3);margin-top:4px">'+sp.start_year+' — '+sp.end_year+' ('+years.length+' سنوات) · '+(sp.goals||[]).length+' أهداف استراتيجية</div>'+
+      (sp.vision?'<div style="font-size:12px;color:var(--fg-2);margin-top:5px;background:var(--iris-50);border:1px solid var(--iris-100);border-radius:8px;padding:6px 10px;max-width:620px"><i data-lucide="eye" style="width:12px;height:12px;vertical-align:-2px"></i> '+UI.escHtml(sp.vision)+'</div>':'')+
+    '</div>'+
+    '<button class="btn btn-sm btn-danger" onclick="Pages.stratDeletePlanConfirm(\''+sp.org_id+'\')"><i data-lucide="trash-2"></i></button>'+
+  '</div>';
+  /* شارة مجموع الأوزان */
+  var wTotal=0, wAny=false;
+  (sp.goals||[]).forEach(function(g){ var w=parseFloat(g.weight); if(isFinite(w)&&w>0){ wTotal+=w; wAny=true; } });
+  var weightBadge=wAny?'<span style="display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:4px 10px;border-radius:7px;'+
+    (Math.round(wTotal)===100?'background:var(--success-500)14;color:var(--success-600);border:1px solid var(--success-500)33':'background:var(--warning-500)14;color:var(--warning-600);border:1px solid var(--warning-500)44')+'">'+
+    '<i data-lucide="scale" style="width:12px;height:12px"></i>مجموع الأوزان: '+Math.round(wTotal)+'%'+(Math.round(wTotal)===100?' ✓':' — يجب 100%')+'</span>':'';
+  var toolbar='<div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap">'+
+    '<button class="btn btn-primary btn-sm" onclick="Pages.stratGoalModal(null)"><i data-lucide="plus"></i>هدف استراتيجي</button>'+
+    (weightBadge?'<div style="margin-right:auto">'+weightBadge+'</div>':'')+
+  '</div>';
+
+  var goalsHtml=(sp.goals||[]).map(function(g){
+    var gp=Pages._stratGoalProgress(sp,g);
+    var pColor=(Pages._OPPLAN_PERSPECTIVES[g.perspective]||{}).color||'var(--iris-500)';
+    /* جدول السنوات: صفوف = المؤشرات، أعمدة = السنوات */
+    var yearHdr=years.map(function(y){
+      return '<th style="text-align:center;min-width:130px'+(y===curYear?';background:var(--iris-50)':'')+'">'+y+(y===curYear?' <span style="font-size:9px;color:var(--iris-500)">(الحالية)</span>':'')+'</th>';
+    }).join('');
+    var kpiRows=(g.kpis||[]).map(function(k){
+      var kp=Pages._stratKpiProgress(sp,k);
+      var cells=years.map(function(y){
+        var yt=(k.yearly_targets||{})[String(y)];
+        var act=Pages._stratKpiYearActual(sp.org_id,k,y);
+        var link=(k.op_links||{})[String(y)];
+        var dir=(k.direction==='down')?'down':'up';
+        var stColor='var(--fg-4)';
+        if(act&&yt!=null&&yt!==''){
+          var ytn=parseFloat(yt);
+          var hit=dir==='up'?act.val>=ytn:act.val<=ytn;
+          var near=dir==='up'?act.val>=ytn*0.85:act.val<=ytn*1.15;
+          stColor=hit?'var(--success-500)':near?'var(--warning-500)':'var(--danger-500)';
+        }
+        return '<td style="text-align:center;vertical-align:top'+(y===curYear?';background:var(--iris-50)4d':'')+'">'+
+          '<input class="field-input" type="number" style="padding:4px;font-size:12px;font-weight:700;text-align:center;width:100%;max-width:110px;margin:0 auto" value="'+(yt!=null?yt:'')+'" placeholder="مستهدف" '+
+            'onchange="Pages.stratSetYearTarget(\''+g.id+'\',\''+k.id+'\','+y+',this.value)">'+
+          '<div style="font-size:11px;margin-top:4px;font-weight:700;color:'+stColor+'">'+
+            (act?'فعلي: '+act.val:'<span style="color:var(--fg-4)">لا فعلي</span>')+'</div>'+
+          (link
+            ?'<div style="font-size:9.5px;color:var(--iris-500);margin-top:2px;cursor:pointer" title="إلغاء الربط" onclick="Pages.stratUnlink(\''+g.id+'\',\''+k.id+'\','+y+')"><i data-lucide="link" style="width:9px;height:9px"></i> مرتبط ×</div>'
+            :'<button class="btn btn-xs btn-ghost" style="font-size:9.5px;padding:1px 6px;margin-top:2px" onclick="Pages.stratLinkModal(\''+g.id+'\',\''+k.id+'\','+y+')"><i data-lucide="link" style="width:9px;height:9px"></i>ربط</button>')+
+        '</td>';
+      }).join('');
+      return '<tr>'+
+        '<td style="border-right:3px solid '+pColor+'44;min-width:170px">'+
+          '<div style="font-weight:700;font-size:12.5px;color:var(--fg-1)">'+UI.escHtml(k.title||'')+'</div>'+
+          '<div style="font-size:10.5px;color:var(--fg-3);margin-top:2px">الأساس '+(k.baseline!=null?k.baseline:0)+' ← النهائي '+(k.final_target!=null?k.final_target:'—')+(k.unit?' '+UI.escHtml(k.unit):'')+' '+(k.direction==='down'?'⬇':'⬆')+'</div>'+
+          (kp!=null?'<div style="margin-top:4px;display:flex;align-items:center;gap:5px"><div style="flex:1;height:5px;border-radius:3px;background:var(--bg-3);overflow:hidden"><div style="height:100%;width:'+kp+'%;background:'+Pages._opPctColor(kp)+'"></div></div><span style="font-size:10.5px;font-weight:800;color:'+Pages._opPctColor(kp)+'">'+kp+'%</span></div>':'')+
+          '<button class="btn btn-xs btn-ghost" style="font-size:9.5px;padding:1px 6px;margin-top:3px" title="توزيع خطي تلقائي للمستهدفات السنوية" onclick="Pages.stratAutoDistribute(\''+g.id+'\',\''+k.id+'\')"><i data-lucide="wand-2" style="width:9px;height:9px"></i>توزيع تلقائي</button>'+
+        '</td>'+cells+'</tr>';
+    }).join('')||'<tr><td colspan="'+(years.length+1)+'" style="padding:12px;color:var(--fg-3);text-align:center">لا مؤشرات — عدّل الهدف لإضافة مؤشرات</td></tr>';
+    return '<div class="card" style="margin-bottom:16px;border-top:3px solid '+pColor+';padding:14px 16px">'+
+      '<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap">'+
+        (g.perspective?Pages._opPerspBadge(g.perspective,true):'')+
+        '<div style="font-weight:800;font-size:14px;color:var(--fg-1);flex:1;min-width:160px">'+UI.escHtml(g.title)+'</div>'+
+        (g.weight?'<span style="font-size:10.5px;color:var(--fg-4)">الوزن '+g.weight+'%</span>':'')+
+        (g.owner?'<span style="font-size:10.5px;color:var(--fg-3)">'+UI.escHtml(g.owner)+'</span>':'')+
+        '<span style="font-weight:800;font-size:15px;color:'+Pages._opPctColor(gp)+'">'+gp+'%</span>'+
+        '<button class="op-mini" onclick="Pages.stratGoalModal(\''+g.id+'\')"><i data-lucide="pencil"></i></button>'+
+        '<button class="op-mini danger" onclick="Pages.stratDeleteGoal(\''+g.id+'\')"><i data-lucide="trash-2"></i></button>'+
+      '</div>'+
+      (g.description?'<div style="font-size:11.5px;color:var(--fg-3);margin-bottom:10px">'+UI.escHtml(g.description)+'</div>':'')+
+      '<div style="overflow-x:auto"><table class="op-grid"><thead><tr><th style="text-align:right">المؤشر</th>'+yearHdr+'</tr></thead><tbody>'+kpiRows+'</tbody></table></div>'+
+    '</div>';
+  }).join('')||'<div class="card" style="text-align:center;padding:36px;color:var(--fg-3)"><div style="opacity:.4;margin-bottom:8px"><i data-lucide="compass" style="width:32px;height:32px"></i></div>ابدأ بإضافة الأهداف الاستراتيجية — لكل هدف مؤشرات بمستهدف نهائي يُوزَّع على السنوات</div>';
+
+  return '<div class="op-wrap">'+head+toolbar+goalsHtml+'</div>';
+};
+
+Pages.stratEditMeta = function(){
+  var sp=DB.getStratPlan(Pages._stratCur.orgId); if(!sp) return;
+  UI.openModal('<div class="modal-header"><h3>بيانات الخطة الاستراتيجية</h3><button class="modal-close" onclick="UI.closeModalForce()">×</button></div>'+
+    '<div class="modal-body">'+
+      '<div class="form-group"><label class="field-label">عنوان الخطة</label><input id="st-m-title" class="field-input" value="'+UI.escHtml(sp.title||'')+'"></div>'+
+      '<div class="form-group"><label class="field-label">الرؤية</label><textarea id="st-m-vision" class="field-input" rows="2">'+UI.escHtml(sp.vision||'')+'</textarea></div>'+
+      '<div class="form-row">'+
+        '<div class="form-group"><label class="field-label">سنة البداية</label><input id="st-m-start" type="number" class="field-input" value="'+sp.start_year+'"></div>'+
+        '<div class="form-group"><label class="field-label">سنة النهاية</label><input id="st-m-end" type="number" class="field-input" value="'+sp.end_year+'"></div>'+
+      '</div>'+
+      '<div style="font-size:11px;color:var(--fg-4)">تغيير المدة لا يحذف المستهدفات السنوية المسجلة — السنوات خارج المدى تُخفى فقط.</div>'+
+    '</div>'+
+    '<div class="modal-footer"><button class="btn btn-ghost" onclick="UI.closeModalForce()">إلغاء</button>'+
+    '<button class="btn btn-primary" onclick="Pages.stratSaveMeta()"><i data-lucide="save"></i>حفظ</button></div>');
+  if (typeof lucide!=='undefined') setTimeout(function(){ lucide.createIcons(); },30);
+};
+Pages.stratSaveMeta = function(){
+  var sp=DB.getStratPlan(Pages._stratCur.orgId); if(!sp) return;
+  sp.title=(document.getElementById('st-m-title').value||'').trim()||sp.title;
+  sp.vision=(document.getElementById('st-m-vision').value||'').trim();
+  var sy=parseInt(document.getElementById('st-m-start').value)||sp.start_year;
+  var ey=parseInt(document.getElementById('st-m-end').value)||sp.end_year;
+  if(ey<sy){ UI.toast('سنة النهاية يجب أن تكون بعد سنة البداية','danger'); return; }
+  sp.start_year=sy; sp.end_year=ey;
+  DB.saveStratPlan(Pages._stratCur.orgId, sp);
+  UI.closeModalForce(); Pages.render_stratplan({orgId:Pages._stratCur.orgId});
+};
+
+/* نموذج الهدف الاستراتيجي */
+Pages.stratGoalModal = function(gid){
+  var sp=DB.getStratPlan(Pages._stratCur.orgId); if(!sp) return;
+  var g=gid?(sp.goals||[]).filter(function(x){return x.id===gid;})[0]:null;
+  var curPersp=g?g.perspective:'operations';
+  var perspGrid='<div class="op-persp-grid">'+Object.keys(Pages._OPPLAN_PERSPECTIVES).map(function(key){
+    var p=Pages._OPPLAN_PERSPECTIVES[key]; var sel=curPersp===key;
+    return '<div class="op-persp-card'+(sel?' selected':'')+'" style="--_pc:'+p.color+';--_pb:'+p.color+'1a" onclick="Pages._opSelectPersp(this,\''+key+'\')">'+
+      '<div class="persp-icon" style="background:'+p.color+'1a;color:'+p.color+'"><i data-lucide="'+p.icon+'"></i></div>'+
+      '<div class="persp-label">'+p.label+'</div></div>';
+  }).join('')+'</div><input type="hidden" id="op-f-persp" value="'+curPersp+'">';
+  var kpiRows=((g&&g.kpis)||[]).map(function(k){
+    return '<div class="op-kpi-row" style="grid-template-columns:2fr 64px 80px 58px 80px 26px">'+
+      '<input class="field-input st-kpi-t" style="min-width:0" placeholder="عنوان المؤشر *" value="'+UI.escHtml(k.title||'')+'">'+
+      '<input class="field-input st-kpi-b" type="number" style="max-width:64px" placeholder="الأساس" value="'+(k.baseline!=null?k.baseline:'')+'">'+
+      '<input class="field-input st-kpi-ft" type="number" style="max-width:80px" placeholder="النهائي" value="'+(k.final_target!=null?k.final_target:'')+'">'+
+      '<select class="field-input st-kpi-dir" style="max-width:58px;font-size:11px;padding:3px 2px"><option value="up"'+((k.direction||'up')==='up'?' selected':'')+'>⬆ أعلى</option><option value="down"'+(k.direction==='down'?' selected':'')+'>⬇ أقل</option></select>'+
+      '<input class="field-input st-kpi-u" style="max-width:80px;font-size:11px" placeholder="الوحدة" value="'+UI.escHtml(k.unit||'')+'">'+
+      '<input type="hidden" class="st-kpi-id" value="'+k.id+'">'+
+      '<button class="del-kpi" onclick="this.closest(\'.op-kpi-row\').remove()" title="حذف">×</button></div>';
+  }).join('');
+  /* الوزن المتبقي */
+  var otherTotal=0; (sp.goals||[]).forEach(function(og){ if(!g||og.id!==g.id){ var w=parseFloat(og.weight); if(isFinite(w)&&w>0) otherTotal+=w; } });
+  var remaining=Math.round(100-otherTotal);
+  UI.openModal('<div class="modal-header"><h3>'+(g?'تعديل هدف استراتيجي':'هدف استراتيجي جديد')+'</h3><button class="modal-close" onclick="UI.closeModalForce()">×</button></div>'+
+   '<div class="modal-body" style="max-height:74vh;overflow-y:auto">'+
+   '<div class="op-modal-section"><div class="op-modal-sec-title">المنظور الاستراتيجي (BSC)</div>'+perspGrid+
+     '<div class="form-group"><label class="field-label">الهدف الاستراتيجي <span style="color:var(--danger-600)">*</span></label>'+
+       '<input id="st-g-title" class="field-input" value="'+UI.escHtml(g?g.title:'')+'" placeholder="مثال: تحقيق الاستدامة المالية الكاملة"></div>'+
+     '<div class="form-group"><label class="field-label">وصف الهدف</label>'+
+       '<textarea id="st-g-desc" class="field-input" rows="2">'+UI.escHtml(g?g.description||'':'')+'</textarea></div>'+
+     '<div class="form-row">'+
+       '<div class="form-group"><label class="field-label">المسؤول</label><input id="st-g-owner" class="field-input" value="'+UI.escHtml(g?g.owner||'':'')+'"></div>'+
+       '<div class="form-group"><label class="field-label">الوزن النسبي % <span style="font-weight:400;color:'+(remaining<0?'var(--danger-600)':'var(--success-600)')+';font-size:10.5px">(المتبقي: '+remaining+'%)</span></label><input id="st-g-weight" type="number" min="0" max="100" class="field-input" value="'+(g&&g.weight!=null?g.weight:'')+'"></div>'+
+     '</div></div>'+
+   '<div class="op-modal-section"><div class="op-modal-sec-title">المؤشرات الاستراتيجية <button class="btn btn-xs btn-ghost" onclick="Pages.stratAddKpiRow()"><i data-lucide="plus"></i>إضافة مؤشر</button></div>'+
+     '<div style="font-size:10.5px;color:var(--fg-4);display:grid;grid-template-columns:2fr 64px 80px 58px 80px 26px;gap:5px;padding:0 2px;margin-bottom:4px"><span>عنوان المؤشر</span><span>الأساس</span><span>المستهدف النهائي</span><span>الاتجاه</span><span>الوحدة</span><span></span></div>'+
+     '<div id="st-kpis-list">'+kpiRows+'</div>'+
+     '<div style="font-size:11px;color:var(--fg-3);margin-top:8px">المستهدف النهائي = القيمة المطلوبة نهاية '+sp.end_year+' — وزّعه على السنوات من جدول الخطة</div>'+
+   '</div>'+
+   '</div><div class="modal-footer">'+
+   '<button class="btn btn-ghost" onclick="UI.closeModalForce()">إلغاء</button>'+
+   '<button class="btn btn-primary" onclick="Pages.stratSaveGoal('+(gid?'\''+gid+'\'':'null')+')"><i data-lucide="save"></i>حفظ الهدف</button></div>');
+  if(typeof lucide!=='undefined') setTimeout(function(){ lucide.createIcons(); },30);
+};
+Pages.stratAddKpiRow = function(){
+  var list=document.getElementById('st-kpis-list'); if(!list) return;
+  var row=document.createElement('div'); row.className='op-kpi-row'; row.style.gridTemplateColumns='2fr 64px 80px 58px 80px 26px';
+  row.innerHTML='<input class="field-input st-kpi-t" style="min-width:0" placeholder="عنوان المؤشر *">'+
+    '<input class="field-input st-kpi-b" type="number" style="max-width:64px" placeholder="الأساس">'+
+    '<input class="field-input st-kpi-ft" type="number" style="max-width:80px" placeholder="النهائي">'+
+    '<select class="field-input st-kpi-dir" style="max-width:58px;font-size:11px;padding:3px 2px"><option value="up">⬆ أعلى</option><option value="down">⬇ أقل</option></select>'+
+    '<input class="field-input st-kpi-u" style="max-width:80px;font-size:11px" placeholder="الوحدة">'+
+    '<input type="hidden" class="st-kpi-id" value="">'+
+    '<button class="del-kpi" onclick="this.closest(\'.op-kpi-row\').remove()" title="حذف">×</button>';
+  list.appendChild(row);
+};
+Pages.stratSaveGoal = function(gid){
+  var sp=DB.getStratPlan(Pages._stratCur.orgId); if(!sp) return;
+  var title=(document.getElementById('st-g-title').value||'').trim();
+  if(!title){ UI.toast('عنوان الهدف مطلوب','danger'); return; }
+  var persp=(document.getElementById('op-f-persp').value||'operations').trim();
+  var desc=(document.getElementById('st-g-desc').value||'').trim();
+  var owner=(document.getElementById('st-g-owner').value||'').trim();
+  var weight=parseFloat(document.getElementById('st-g-weight').value)||0;
+  var kpis=[];
+  document.querySelectorAll('#st-kpis-list .op-kpi-row').forEach(function(row){
+    var t=(row.querySelector('.st-kpi-t').value||'').trim(); if(!t) return;
+    var b=row.querySelector('.st-kpi-b').value!==''?parseFloat(row.querySelector('.st-kpi-b').value):0;
+    var ft=row.querySelector('.st-kpi-ft').value!==''?parseFloat(row.querySelector('.st-kpi-ft').value):null;
+    var dir=row.querySelector('.st-kpi-dir').value==='down'?'down':'up';
+    var u=(row.querySelector('.st-kpi-u').value||'').trim();
+    var kid=row.querySelector('.st-kpi-id').value;
+    kpis.push({ id:kid||DB.uid(), title:t, baseline:b, final_target:ft, direction:dir, unit:u, yearly_targets:{}, op_links:{} });
+  });
+  if(gid){
+    var g=(sp.goals||[]).filter(function(x){return x.id===gid;})[0];
+    if(g){
+      g.title=title; g.perspective=persp; g.description=desc; g.owner=owner; g.weight=weight;
+      var oldKpis=g.kpis||[];
+      g.kpis=kpis.map(function(k){
+        var old=oldKpis.filter(function(x){return x.id===k.id;})[0];
+        if(old){ k.yearly_targets=old.yearly_targets||{}; k.op_links=old.op_links||{}; }
+        return k;
+      });
+    }
+  } else {
+    if(!sp.goals) sp.goals=[];
+    sp.goals.push({ id:DB.uid(), title:title, perspective:persp, description:desc, owner:owner, weight:weight, kpis:kpis });
+  }
+  DB.saveStratPlan(Pages._stratCur.orgId, sp);
+  UI.closeModalForce(); Pages.render_stratplan({orgId:Pages._stratCur.orgId});
+  var wTotal=0,wAny=false; (sp.goals||[]).forEach(function(og){ var w=parseFloat(og.weight); if(isFinite(w)&&w>0){ wTotal+=w; wAny=true; } });
+  if(wAny&&Math.round(wTotal)!==100) UI.toast('تنبيه: مجموع أوزان الأهداف '+Math.round(wTotal)+'% — يجب أن يساوي 100%','warning');
+};
+Pages.stratDeleteGoal = function(gid){
+  Pages._opConfirmDel('سيتم حذف الهدف الاستراتيجي ومؤشراته ومستهدفاته السنوية.',function(){
+    var sp=DB.getStratPlan(Pages._stratCur.orgId); if(!sp) return;
+    sp.goals=(sp.goals||[]).filter(function(x){return x.id!==gid;});
+    DB.saveStratPlan(Pages._stratCur.orgId, sp);
+    Pages.render_stratplan({orgId:Pages._stratCur.orgId});
+  });
+};
+Pages._stratFindKpi = function(sp, gid, kid){
+  var g=(sp.goals||[]).filter(function(x){return x.id===gid;})[0]; if(!g) return null;
+  var k=(g.kpis||[]).filter(function(x){return x.id===kid;})[0]; if(!k) return null;
+  return { g:g, k:k };
+};
+Pages.stratSetYearTarget = function(gid, kid, year, val){
+  var sp=DB.getStratPlan(Pages._stratCur.orgId); if(!sp) return;
+  var loc=Pages._stratFindKpi(sp,gid,kid); if(!loc) return;
+  if(!loc.k.yearly_targets) loc.k.yearly_targets={};
+  if(val===''||val==null) delete loc.k.yearly_targets[String(year)];
+  else loc.k.yearly_targets[String(year)]=parseFloat(val);
+  DB.saveStratPlan(Pages._stratCur.orgId, sp);
+};
+/* توزيع خطي تلقائي للمستهدفات السنوية من الأساس إلى النهائي */
+Pages.stratAutoDistribute = function(gid, kid){
+  var sp=DB.getStratPlan(Pages._stratCur.orgId); if(!sp) return;
+  var loc=Pages._stratFindKpi(sp,gid,kid); if(!loc) return;
+  var k=loc.k;
+  var ft=parseFloat(k.final_target);
+  if(!isFinite(ft)){ UI.toast('حدد المستهدف النهائي أولاً','danger'); return; }
+  var base=parseFloat(k.baseline); if(!isFinite(base)) base=0;
+  var n=sp.end_year-sp.start_year+1;
+  if(!k.yearly_targets) k.yearly_targets={};
+  for(var i=1;i<=n;i++){
+    var y=sp.start_year+i-1;
+    var v=base+(ft-base)*(i/n);
+    k.yearly_targets[String(y)]=Math.round(v*100)/100;
+  }
+  DB.saveStratPlan(Pages._stratCur.orgId, sp);
+  UI.toast('تم التوزيع الخطي للمستهدفات السنوية — يمكنك تعديل أي سنة يدوياً');
+  Pages.render_stratplan({orgId:Pages._stratCur.orgId});
+};
+/* ربط مؤشر استراتيجي بمؤشر تشغيلي لسنة معيّنة */
+Pages.stratLinkModal = function(gid, kid, year){
+  var sp=DB.getStratPlan(Pages._stratCur.orgId); if(!sp) return;
+  var plan=DB.getOpPlanByYear(sp.org_id, year);
+  if(!plan){
+    UI.openModal('<div class="modal-header"><h3>ربط بمؤشر تشغيلي — '+year+'</h3><button class="modal-close" onclick="UI.closeModalForce()">×</button></div>'+
+      '<div class="modal-body"><p style="color:var(--fg-2)">لا توجد خطة تشغيلية لسنة <strong>'+year+'</strong> لهذه الجمعية بعد.</p>'+
+      '<p style="color:var(--fg-3);font-size:12px">أنشئ خطة تشغيلية لسنة '+year+' من صفحة الخطة التشغيلية (زر «خطة سنة جديدة») ثم عُد للربط — وستتغذى القيم الفعلية تلقائياً.</p></div>'+
+      '<div class="modal-footer"><button class="btn btn-ghost" onclick="UI.closeModalForce()">إغلاق</button>'+
+      '<button class="btn btn-primary" onclick="UI.closeModalForce();Nav.go(\'opplan\',{orgId:\''+sp.org_id+'\'})"><i data-lucide="target"></i>فتح الخطة التشغيلية</button></div>');
+    if (typeof lucide!=='undefined') setTimeout(function(){ lucide.createIcons(); },30);
+    return;
+  }
+  var opts='';
+  (plan.goals||[]).forEach(function(og){
+    (og.kpis||[]).forEach(function(ok){
+      opts+='<div style="display:flex;align-items:center;gap:8px;padding:9px 12px;border:1px solid var(--border-1);border-radius:9px;margin-bottom:6px;cursor:pointer;background:var(--bg-1)" '+
+        'onclick="Pages.stratDoLink(\''+gid+'\',\''+kid+'\','+year+',\''+og.id+'\',\''+ok.id+'\')">'+
+        (og.perspective?Pages._opPerspBadge(og.perspective,true):'')+
+        '<div style="flex:1;min-width:0"><div style="font-weight:600;font-size:12.5px;color:var(--fg-1)">'+UI.escHtml(ok.title||'مؤشر')+'</div>'+
+        '<div style="font-size:10.5px;color:var(--fg-3)">'+UI.escHtml(og.title)+'</div></div>'+
+        '<i data-lucide="link" style="width:14px;height:14px;color:var(--iris-500)"></i></div>';
+    });
+  });
+  UI.openModal('<div class="modal-header"><h3>ربط بمؤشر تشغيلي — '+year+'</h3><button class="modal-close" onclick="UI.closeModalForce()">×</button></div>'+
+    '<div class="modal-body" style="max-height:60vh;overflow-y:auto">'+
+    '<div style="font-size:12px;color:var(--fg-3);margin-bottom:10px">اختر المؤشر التشغيلي من خطة '+year+' — قيمه الفعلية ستظهر تلقائياً في الجدول الاستراتيجي</div>'+
+    (opts||'<div style="text-align:center;padding:20px;color:var(--fg-3)">لا توجد مؤشرات في خطة '+year+' — أضف مؤشرات للأهداف أولاً</div>')+'</div>'+
+    '<div class="modal-footer"><button class="btn btn-ghost" onclick="UI.closeModalForce()">إلغاء</button></div>');
+  if (typeof lucide!=='undefined') setTimeout(function(){ lucide.createIcons(); },30);
+};
+Pages.stratDoLink = function(gid, kid, year, opGoalId, opKpiId){
+  var sp=DB.getStratPlan(Pages._stratCur.orgId); if(!sp) return;
+  var loc=Pages._stratFindKpi(sp,gid,kid); if(!loc) return;
+  if(!loc.k.op_links) loc.k.op_links={};
+  loc.k.op_links[String(year)]={ goalId:opGoalId, kpiId:opKpiId };
+  DB.saveStratPlan(Pages._stratCur.orgId, sp);
+  UI.closeModalForce();
+  UI.toast('تم الربط — القيم الفعلية تتغذى تلقائياً من الخطة التشغيلية','success');
+  Pages.render_stratplan({orgId:Pages._stratCur.orgId});
+};
+Pages.stratUnlink = function(gid, kid, year){
+  var sp=DB.getStratPlan(Pages._stratCur.orgId); if(!sp) return;
+  var loc=Pages._stratFindKpi(sp,gid,kid); if(!loc||!loc.k.op_links) return;
+  delete loc.k.op_links[String(year)];
+  DB.saveStratPlan(Pages._stratCur.orgId, sp);
+  Pages.render_stratplan({orgId:Pages._stratCur.orgId});
 };
 
 /* ─── أنماط الأداة ─── */
@@ -13255,6 +13961,8 @@ Pages.render_opplan = function(opts){
   var body;
   if (Pages._opCur.orgId){
     var plan=DB.getOpPlan(Pages._opCur.orgId);
+    /* السنة الافتراضية لتتبع المؤشرات = سنة الخطة المعروضة */
+    if (plan && Pages._opCur._kpiYearFor!==plan.id){ Pages._opCur.kpiYear=plan.year; Pages._opCur._kpiYearFor=plan.id; }
     body = plan ? Pages._opDetailHtml(plan) : Pages._opChooserHtml(Pages._opCur.orgId);
   } else body=Pages._opListHtml();
   el.innerHTML=Pages._opStyle()+body;
@@ -13356,12 +14064,22 @@ Pages._opDetailHtml = function(plan){
        '<div style="font-size:12px;color:var(--fg-3);margin-top:4px">سنة '+plan.year+' · '+st.goals+' أهداف · '+st.inits+' مبادرات · '+st.acts+' أنشطة · '+st.doneActs+' منجزة</div>'+
      '</div>'+
      '<div style="display:flex;gap:6px;align-items:center">'+
+       (function(){
+         /* منتقي سنوات الخطط — كل خطة سنة محفوظة بشكل مستقل */
+         var list=DB.getOpPlanList(plan.org_id);
+         var yearSel='';
+         if(list.length>1){
+           yearSel='<select class="field-input" style="width:auto;padding:5px 9px;font-size:12.5px;font-weight:700" title="التنقل بين خطط السنوات" onchange="Pages.opSetActiveYear(parseInt(this.value))">'+
+             list.map(function(p){ return '<option value="'+p.year+'"'+(p.year===plan.year?' selected':'')+'>'+p.year+'</option>'; }).join('')+'</select>';
+         }
+         return yearSel+'<button class="btn btn-xs btn-ghost" title="إنشاء خطة سنة جديدة (لا تحذف خطط السنوات السابقة)" onclick="Pages.opNewYearPlan()"><i data-lucide="calendar-plus"></i>خطة سنة جديدة</button>';
+       })()+
        '<div style="display:flex;gap:2px;border:1px solid var(--border-1);border-radius:9px;padding:3px;background:var(--surface-1)" title="التقارير والتصدير">'+
          '<button class="btn btn-xs btn-ghost" onclick="Pages.opExportXls()"><i data-lucide="sheet"></i>Excel</button>'+
          '<button class="btn btn-xs btn-ghost" onclick="Pages.opPrint()"><i data-lucide="printer"></i>طباعة</button>'+
          '<button class="btn btn-xs btn-ghost" style="color:var(--iris-600)" onclick="Pages.opPrintProgressReport()"><i data-lucide="file-text"></i>تقرير المجلس</button>'+
        '</div>'+
-       '<button class="btn btn-sm btn-danger" onclick="Pages.opDeletePlanConfirm(\''+plan.org_id+'\')"><i data-lucide="trash-2"></i></button>'+
+       '<button class="btn btn-sm btn-danger" title="حذف خطة سنة '+plan.year+' فقط" onclick="Pages.opDeletePlanConfirm(\''+plan.org_id+'\',\''+plan.id+'\')"><i data-lucide="trash-2"></i></button>'+
      '</div>'+
    '</div>';
   var tabbar='<div class="op-tabs">'+tabs.map(function(t){ return '<div class="op-tab'+(tab===t[0]?' active':'')+'" onclick="Pages.opSwitchTab(\''+t[0]+'\')">'+t[1]+'</div>'; }).join('')+'</div>';
@@ -13371,7 +14089,7 @@ Pages._opDetailHtml = function(plan){
 
 Pages._opFocusSection = function(plan){
   var items=Pages._opFocusItems(plan); if(!items.length) return '';
-  var icons={kpi_missing:'alert-circle',kpi_behind:'trending-down',act_unrecorded:'calendar-x',ini_idle:'git-branch'};
+  var icons={kpi_missing:'alert-circle',kpi_stale:'clock-alert',kpi_behind:'trending-down',act_unrecorded:'calendar-x',ini_idle:'git-branch',weights:'scale'};
   var rows=items.map(function(it){
     return '<div class="op-focus-item" onclick="'+it.action+'">'+
       '<div class="op-focus-icon" style="background:'+it.color+'1a;color:'+it.color+'"><i data-lucide="'+(icons[it.type]||'alert-circle')+'" style="width:14px;height:14px"></i></div>'+
@@ -13425,7 +14143,7 @@ Pages._opTabOverview = function(plan){
   /* Strategic Goals list — enhanced */
   var goalsHtml=(plan.goals||[]).map(function(g){
     var gs=Pages._opGoalStats(g); var gc=Pages._opGoalColor(g);
-    var kpiLine=''; if(g.kpis&&g.kpis.length){ var k=g.kpis[0]; var latest=Object.values(k.actuals||{}).map(parseFloat).filter(isFinite); kpiLine='<div style="font-size:11px;color:var(--fg-3);margin-top:2px">'+UI.escHtml(k.title||'')+(k.target?' — '+((latest.length?latest[latest.length-1]:0))+' / '+k.target+' '+UI.escHtml(k.unit||''):'')+'</div>'; }
+    var kpiLine=''; if(g.kpis&&g.kpis.length){ var k=g.kpis[0]; var klt=Pages._opKpiLatest(k); kpiLine='<div style="font-size:11px;color:var(--fg-3);margin-top:2px">'+UI.escHtml(k.title||'')+(k.target?' — '+(klt?klt.val:0)+' / '+k.target+' '+UI.escHtml(k.unit||''):'')+'</div>'; }
     var baseFlow=''; if(g.baseline!=null&&g.target_value!=null){ baseFlow='<div style="font-size:10.5px;color:var(--fg-4);margin-top:3px;display:flex;align-items:center;gap:4px"><span>'+g.baseline+(g.unit?' '+g.unit:'')+'</span><span class="op-baseline-arrow">←</span><span style="font-weight:700;color:var(--fg-2)">'+g.target_value+(g.unit?' '+g.unit:'')+'</span></div>'; }
     return '<div style="display:flex;align-items:flex-start;gap:10px;padding:12px 0;border-bottom:1px solid var(--bg-2)">'+
       '<span style="width:10px;height:10px;border-radius:50%;background:'+gc+';flex-shrink:0;margin-top:4px"></span>'+
@@ -13472,10 +14190,20 @@ Pages._opTabPlan = function(plan){
   var collapseBtns = view==='detailed' ?
     '<button class="btn btn-xs btn-ghost" title="طي الكل" onclick="Pages._opCollapseAll(true)"><i data-lucide="minimize-2"></i></button>'+
     '<button class="btn btn-xs btn-ghost" title="توسيع الكل" onclick="Pages._opCollapseAll(false)"><i data-lucide="maximize-2"></i></button>' : '';
+  /* شارة مجموع الأوزان — يجب أن يساوي 100% */
+  var wInfo=Pages._opGoalsWeightInfo(plan);
+  var weightBadge='';
+  if(wInfo.anySet){
+    var wOk=wInfo.total===100;
+    weightBadge='<span title="'+(wOk?'مجموع أوزان الأهداف صحيح':'يجب أن يساوي مجموع أوزان الأهداف 100%')+'" style="display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:4px 10px;border-radius:7px;'+
+      (wOk?'background:var(--success-500)14;color:var(--success-600);border:1px solid var(--success-500)33':'background:var(--warning-500)14;color:var(--warning-600);border:1px solid var(--warning-500)44')+'">'+
+      '<i data-lucide="scale" style="width:12px;height:12px"></i>مجموع الأوزان: '+wInfo.total+'%'+(wOk?' ✓':' — يجب 100%')+'</span>';
+  }
   var toolbar='<div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap">'+
     '<button class="btn btn-primary btn-sm" onclick="Pages.opGoalModal(null)"><i data-lucide="plus"></i>إضافة هدف</button>'+
     '<div style="display:flex;gap:2px;border:1px solid var(--border-1);border-radius:8px;padding:2px;background:var(--bg-1)">'+vBtns+'</div>'+
     colBtn+collapseBtns+
+    (weightBadge?'<div style="margin-right:auto">'+weightBadge+'</div>':'')+
   '</div>';
 
   /* ─── تجميع حسب المنظور ─── */
@@ -13553,8 +14281,8 @@ Pages._opTabPlan = function(plan){
   bscOrder.forEach(function(perspKey){
     var pg=grouped[perspKey]; if(!pg||!pg.length) return;
     var p=Pages._OPPLAN_PERSPECTIVES[perspKey];
-    var perspStats=pg.reduce(function(acc,g){ var gs=Pages._opGoalStats(g); acc.pct+=gs.pct; acc.n++; acc.acts+=gs.acts; acc.doneActs+=gs.doneActs; return acc; },{pct:0,n:0,acts:0,doneActs:0});
-    var perspPct=perspStats.n?Math.round(perspStats.pct/perspStats.n):0;
+    var perspStats=pg.reduce(function(acc,g){ var gs=Pages._opGoalStats(g); acc.n++; acc.acts+=gs.acts; acc.doneActs+=gs.doneActs; return acc; },{n:0,acts:0,doneActs:0});
+    var perspPct=Pages._opWeightedPct(pg);
     body+='<div style="margin-bottom:22px">'+
       '<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:'+p.color+'0f;border:1.5px solid '+p.color+'44;border-radius:10px;margin-bottom:10px">'+
         '<span style="width:32px;height:32px;border-radius:8px;background:'+p.color+';display:flex;align-items:center;justify-content:center;flex-shrink:0"><i data-lucide="'+p.icon+'" style="width:16px;height:16px;color:#fff"></i></span>'+
@@ -13577,8 +14305,7 @@ Pages._opTabPlanCards = function(goals, grouped, bscOrder){
   bscOrder.forEach(function(perspKey){
     var pg=grouped[perspKey]; if(!pg||!pg.length) return;
     var p=Pages._OPPLAN_PERSPECTIVES[perspKey];
-    var perspStats=pg.reduce(function(acc,g){ var gs=Pages._opGoalStats(g); acc.pct+=gs.pct; acc.n++; return acc; },{pct:0,n:0});
-    var perspPct=perspStats.n?Math.round(perspStats.pct/perspStats.n):0;
+    var perspPct=Pages._opWeightedPct(pg);
     body+='<div style="margin-bottom:24px">'+
       '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;padding:8px 12px;background:'+p.color+'0a;border-radius:8px;border-right:3px solid '+p.color+'">'+
         '<i data-lucide="'+p.icon+'" style="width:16px;height:16px;color:'+p.color+'"></i>'+
@@ -13592,9 +14319,9 @@ Pages._opTabPlanCards = function(goals, grouped, bscOrder){
         var kpi1=(g.kpis||[])[0];
         var kpiLine='';
         if(kpi1){
-          var vals=Object.values(kpi1.actuals||{}).map(parseFloat).filter(isFinite);
-          var latest=vals.length?vals[vals.length-1]:null;
-          var kpct=kpi1.target&&latest!=null?Math.min(100,Math.round(latest/kpi1.target*100)):null;
+          var klt=Pages._opKpiLatest(kpi1);
+          var latest=klt?klt.val:null;
+          var kpct=latest!=null?Pages._opKpiAchievementPct(kpi1, latest):null;
           kpiLine='<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border-1)">'+
             '<div style="font-size:10.5px;color:var(--fg-3);margin-bottom:3px">'+UI.escHtml(kpi1.title||'')+'</div>'+
             '<div style="display:flex;align-items:center;gap:6px;font-size:11px">'+
@@ -13632,6 +14359,7 @@ Pages._opTabPlanCards = function(goals, grouped, bscOrder){
             '<span style="font-size:11px;color:var(--fg-3)">'+gs.acts+' نشاط · '+gs.doneActs+' منجز</span>'+
             '<span style="font-weight:800;font-size:15px;color:'+Pages._opPctColor(gs.pct)+'">'+gs.pct+'%</span>'+
           '</div>'+
+          (gs.src==='blend'?'<div style="font-size:10px;color:var(--fg-4);margin-top:2px;text-align:left">مؤشرات '+gs.kpiPct+'% × 70 + تنفيذ '+gs.actPct+'% × 30</div>':gs.src==='kpi'?'<div style="font-size:10px;color:var(--fg-4);margin-top:2px;text-align:left">محسوب من المؤشرات</div>':'')+
           kpiLine+
           '<div style="margin-top:8px;display:flex;gap:6px">'+
             '<button class="btn btn-xs btn-ghost" style="flex:1" onclick="Pages.opIniModal(\''+g.id+'\',null)"><i data-lucide="plus"></i>مبادرة</button>'+
@@ -13829,7 +14557,7 @@ Pages._opQuickKpi = function(goalId, kpiId, pk, val, pctElId){
     var g=(plan.goals||[]).filter(function(x){return x.id===goalId;})[0]; if(!g) return;
     var k=(g.kpis||[]).filter(function(x){return x.id===kpiId;})[0]; if(!k) return;
     var el=document.getElementById(pctElId); if(!el) return;
-    var pct=(k.target&&val!=='')?Math.min(100,Math.round(parseFloat(val)/k.target*100)):null;
+    var pct=(val!=='')?Pages._opKpiAchievementPct(k, parseFloat(val)):null;
     if(pct!=null){ el.textContent=pct+'%'; el.style.color=Pages._opPctColor(pct); }
     else { el.textContent='—'; el.style.color='var(--fg-4)'; }
   }
@@ -13861,7 +14589,7 @@ Pages._opTabTracking = function(plan){
       var rows=(g.kpis||[]).map(function(k){
         var series=Pages._opKpiSeries(k);
         var latest=series.length?series[series.length-1]:null;
-        var pct=k.target&&latest!=null?Math.min(100,Math.round(latest/k.target*100)):null;
+        var pct=latest!=null?Pages._opKpiAchievementPct(k, latest):null;
         var valTxt=latest!=null?Pages._opFormatKpiVal(latest,k.unit):'—';
         return '<div class="op-track-row" onclick="Pages.opKpiDetail(\''+g.id+'\',\''+k.id+'\')">'+
           '<div style="width:3px;height:34px;border-radius:2px;background:'+gc+';flex-shrink:0"></div>'+
@@ -13941,14 +14669,17 @@ Pages._opTabTrackingKpiBulk = function(plan){
       '<span style="font-size:12.5px">'+UI.escHtml(g.title)+'</span></td></tr>';
     g.kpis.forEach(function(k){
       var tl=Pages._opKpiTrafficLight(k,g); var lightDot='<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:'+tl.color+';margin-left:5px"></span>';
-      var kCols='<td class="op-bulk-kpi-cell" style="border-right:3px solid '+gc+'44">'+lightDot+UI.escHtml(k.title||'')+'</td>';
-      for(var i=0;i<ps;i++){
-        var pk=Pages._opPeriodKey(year,f,i);
+      var kf=Pages._opKpiFreq(g,k); var kps=(Pages._OPPLAN_FREQS[kf]||{periods:4}).periods;
+      var mismatch=kf!==f;
+      var kCols='<td class="op-bulk-kpi-cell" style="border-right:3px solid '+gc+'44">'+lightDot+UI.escHtml(k.title||'')+
+        (mismatch?'<div style="font-size:9.5px;color:var(--fg-4);margin-top:1px">تكرار مستقل: '+((Pages._OPPLAN_FREQS[kf]||{}).label||kf)+'</div>':'')+'</td>';
+      for(var i=0;i<kps;i++){
+        var pk=Pages._opPeriodKey(year,kf,i);
         var v=(k.actuals&&k.actuals[pk]!=null)?k.actuals[pk]:'';
-        var isCur=(f==='monthly'&&i===curMo)||(f==='quarterly'&&i===curQ)||(f==='semi_annual'&&i===Math.floor(curMo/6))||(f==='annual'&&i===0);
-        var cp=k.target&&v!==''?Math.min(100,Math.round(parseFloat(v)/k.target*100)):null;
-        var bg=cp!=null?(cp>=80?'var(--success-500)':'cp'>=50?'var(--warning-500)':'var(--danger-500)'):'';
+        var isCur=(kf==='monthly'&&i===curMo)||(kf==='quarterly'&&i===curQ)||(kf==='semi_annual'&&i===Math.floor(curMo/6))||(kf==='annual'&&i===0);
+        var cp=v!==''?Pages._opKpiAchievementPct(k, parseFloat(v)):null;
         kCols+='<td class="'+(isCur?'op-bulk-current':'')+'" style="text-align:center">'+
+          (mismatch?'<div style="font-size:9px;color:var(--fg-4)">'+Pages._opPeriodLabel(kf,i)+'</div>':'')+
           '<input class="op-bulk-inp" type="number" min="0" value="'+UI.escHtml(String(v))+'" placeholder="—" '+
             'onchange="Pages.opSaveKpiActual(\''+g.id+'\',\''+k.id+'\',\''+pk+'\',this.value);this.style.borderColor=\'var(--iris-400)\'">'+
           (k.target?'<div style="font-size:10px;font-weight:700;margin-top:2px;color:'+(cp!=null?Pages._opPctColor(cp):'var(--fg-4)')+'">'+(cp!=null?cp+'%':'/ '+k.target)+'</div>':'')+
@@ -13971,11 +14702,13 @@ Pages.opKpiDetail = function(goalId, kpiId){
   var g=(plan.goals||[]).filter(function(x){return x.id===goalId;})[0]; if(!g) return;
   var k=(g.kpis||[]).filter(function(x){return x.id===kpiId;})[0]; if(!k) return;
   var gc=Pages._opGoalColor(g);
-  var f=g.frequency||'quarterly'; var fd=Pages._OPPLAN_FREQS[f]; var periods=fd?fd.periods:4;
+  var f=Pages._opKpiFreq(g,k); var fd=Pages._OPPLAN_FREQS[f]; var periods=fd?fd.periods:4;
   var year=Pages._opCur.kpiYear||(new Date()).getFullYear();
-  var pairs=Object.keys(k.actuals||{}).sort().map(function(key){ return {l:Pages._opKeyLabel(key),v:parseFloat(k.actuals[key])}; }).filter(function(p){ return isFinite(p.v); });
+  var dir=Pages._opKpiDir(k);
+  var sortedKeys=Pages._opSortPeriodKeys(Object.keys(k.actuals||{}).filter(function(key){ return isFinite(parseFloat(k.actuals[key])); }));
+  var pairs=sortedKeys.map(function(key){ return {key:key,l:Pages._opKeyLabel(key),v:parseFloat(k.actuals[key])}; });
   var latest=pairs.length?pairs[pairs.length-1].v:null;
-  var pct=k.target&&latest!=null?Math.min(100,Math.round(latest/k.target*100)):null;
+  var pct=latest!=null?Pages._opKpiAchievementPct(k, latest):null;
   var chart=Pages._opTrendChart(pairs.map(function(p){return p.v;}), pairs.map(function(p){return p.l;}), k.target, gc);
   var expVal=Pages._opKpiExpectedVal(k,g,year);
   var tl=Pages._opKpiTrafficLight(k,g);
@@ -13983,7 +14716,7 @@ Pages.opKpiDetail = function(goalId, kpiId){
   for(var i=0;i<periods;i++){
     var pk=Pages._opPeriodKey(year,f,i); var lbl=Pages._opPeriodLabel(f,i);
     var v=(k.actuals&&k.actuals[pk]!=null)?k.actuals[pk]:'';
-    var cp=k.target&&v!==''?Math.min(100,Math.round(parseFloat(v)/k.target*100)):null;
+    var cp=v!==''?Pages._opKpiAchievementPct(k, parseFloat(v)):null;
     var noteVal=(k.notes&&k.notes[pk])?k.notes[pk]:'';
     cells+='<div class="op-detail-cell'+(v!==''?' filled':'')+'"><label>'+lbl+'</label>'+
       '<input class="field-input" style="padding:5px;font-size:13px;font-weight:700;text-align:center;width:100%" type="number" min="0" value="'+UI.escHtml(String(v))+'" placeholder="—" onchange="Pages._opKpiDetailSave(\''+goalId+'\',\''+kpiId+'\',\''+pk+'\',this.value)">'+
@@ -13993,38 +14726,85 @@ Pages.opKpiDetail = function(goalId, kpiId){
   }
   var statusBadge=Pages._opStatusBadge(g);
   var lightBadge=Pages._opKpiLightBadge(k,g);
-  /* gap analysis */
+  /* تحليل الفجوة — حسب اتجاه المؤشر */
   var gapHtml='';
-  if(k.target!=null&&latest!=null){
-    var gap=k.target-latest; var periodsLeft=periods-Object.keys(k.actuals||{}).filter(function(pk){return pk.indexOf(String(year))===0;}).length;
-    if(gap>0&&periodsLeft>0) gapHtml='<div style="background:var(--warning-500)0f;border:1px solid var(--warning-500)33;border-radius:9px;padding:10px 14px;font-size:12px;color:var(--fg-2);margin-bottom:14px;display:flex;align-items:center;gap:8px"><i data-lucide="info" style="width:14px;height:14px;color:var(--warning-500);flex-shrink:0"></i>تحتاج تحقيق <strong style="color:var(--warning-600)">'+Pages._opFormatKpiVal(gap,k.unit)+'</strong> إضافية موزّعة على <strong>'+periodsLeft+'</strong> '+(periods===12?'شهر متبقٍ':'فترات متبقية')+' لتحقيق الهدف</div>';
-    else if(gap<=0) gapHtml='<div style="background:var(--success-500)0f;border:1px solid var(--success-500)33;border-radius:9px;padding:10px 14px;font-size:12px;color:var(--fg-2);margin-bottom:14px;display:flex;align-items:center;gap:8px"><i data-lucide="check-circle" style="width:14px;height:14px;color:var(--success-500);flex-shrink:0"></i>تم تجاوز الهدف — ممتاز!</div>';
+  if(k.target!=null&&k.target!==''&&latest!=null){
+    var tgt=parseFloat(k.target);
+    var achieved=dir==='up'?latest>=tgt:latest<=tgt;
+    var gap=dir==='up'?tgt-latest:latest-tgt;
+    var curYearKeys=Object.keys(k.actuals||{}).filter(function(pk2){return pk2.indexOf(String(year))===0&&k.actuals[pk2]!=null&&k.actuals[pk2]!=='';});
+    var periodsLeft=Math.max(0, periods-curYearKeys.length);
+    if(achieved) gapHtml='<div style="background:var(--success-500)0f;border:1px solid var(--success-500)33;border-radius:9px;padding:10px 14px;font-size:12px;color:var(--fg-2);margin-bottom:14px;display:flex;align-items:center;gap:8px"><i data-lucide="check-circle" style="width:14px;height:14px;color:var(--success-500);flex-shrink:0"></i>تم تحقيق الهدف — ممتاز!</div>';
+    else if(periodsLeft>0) gapHtml='<div style="background:var(--warning-500)0f;border:1px solid var(--warning-500)33;border-radius:9px;padding:10px 14px;font-size:12px;color:var(--fg-2);margin-bottom:14px;display:flex;align-items:center;gap:8px"><i data-lucide="info" style="width:14px;height:14px;color:var(--warning-500);flex-shrink:0"></i>'+(dir==='up'?'تحتاج تحقيق <strong style="color:var(--warning-600)">'+Pages._opFormatKpiVal(gap,k.unit)+'</strong> إضافية':'تحتاج خفض <strong style="color:var(--warning-600)">'+Pages._opFormatKpiVal(gap,k.unit)+'</strong>')+' خلال <strong>'+periodsLeft+'</strong> '+(periods===12?'شهر متبقٍ':'فترات متبقية')+' لتحقيق الهدف</div>';
+    else gapHtml='<div style="background:var(--danger-500)0f;border:1px solid var(--danger-500)33;border-radius:9px;padding:10px 14px;font-size:12px;color:var(--fg-2);margin-bottom:14px;display:flex;align-items:center;gap:8px"><i data-lucide="alert-triangle" style="width:14px;height:14px;color:var(--danger-500);flex-shrink:0"></i>انتهت فترات السنة والفجوة <strong style="color:var(--danger-600)">'+Pages._opFormatKpiVal(gap,k.unit)+'</strong> — راجع المستهدف أو خطة المعالجة</div>';
+  }
+  /* المبادرات المرتبطة بهذا المؤشر */
+  var linkedInis=(g.initiatives||[]).filter(function(ini){ return ini.kpi_id===kpiId; });
+  var linkedHtml='';
+  if(linkedInis.length){
+    linkedHtml='<div style="font-weight:700;font-size:12.5px;color:var(--fg-2);margin:14px 0 8px;display:flex;align-items:center;gap:6px"><i data-lucide="git-branch" style="width:14px;height:14px"></i>المبادرات المرتبطة بهذا المؤشر ('+linkedInis.length+')</div>'+
+      linkedInis.map(function(ini){
+        var ist=Pages._opIniStats(ini);
+        return '<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;border:1px solid var(--border-1);border-radius:9px;margin-bottom:6px;background:var(--bg-1);cursor:pointer" onclick="UI.closeModalForce();Pages.opIniDetail(\''+g.id+'\',\''+ini.id+'\')">'+
+          Pages._opIniStatusBadge(ini)+
+          '<span style="flex:1;min-width:0;font-size:12px;font-weight:600;color:var(--fg-1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+UI.escHtml(ini.title)+'</span>'+
+          '<span style="font-weight:800;font-size:12px;color:'+Pages._opPctColor(ist.pct)+'">'+ist.pct+'%</span>'+
+        '</div>';
+      }).join('');
+  }
+  /* سجل كل القيم المخزنة (يشمل قيم تكرارات سابقة) */
+  var historyHtml='';
+  if(sortedKeys.length){
+    historyHtml='<details style="margin-top:10px"><summary style="cursor:pointer;font-weight:700;font-size:12px;color:var(--fg-3);padding:6px 0;list-style:none;display:flex;align-items:center;gap:6px"><i data-lucide="history" style="width:13px;height:13px"></i>سجل القيم ('+sortedKeys.length+') — يشمل قيم التكرارات والسنوات السابقة</summary>'+
+      '<div style="border:1px solid var(--border-1);border-radius:10px;padding:8px 12px;margin-top:8px;background:var(--bg-1);max-height:180px;overflow-y:auto">'+
+      sortedKeys.map(function(key){
+        var hv=parseFloat(k.actuals[key]); var hp=Pages._opKpiAchievementPct(k,hv);
+        var yMatch=/^(\d{4})/.exec(key);
+        return '<div style="display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid var(--bg-2);font-size:11.5px">'+
+          '<span style="color:var(--fg-3);min-width:110px">'+(yMatch?yMatch[1]+' · ':'')+Pages._opKeyLabel(key)+'</span>'+
+          '<span style="font-weight:700;color:var(--fg-1)">'+Pages._opFormatKpiVal(hv,k.unit)+'</span>'+
+          (hp!=null?'<span style="margin-right:auto;font-weight:700;color:'+Pages._opPctColor(hp)+'">'+hp+'%</span>':'')+
+        '</div>';
+      }).join('')+'</div></details>';
   }
   /* KPI settings section */
   var freqOpts=Object.keys(Pages._OPPLAN_FREQS).map(function(fk){
     return '<option value="'+fk+'"'+((k.frequency||'')=== fk?' selected':'')+'>'+Pages._OPPLAN_FREQS[fk].label+'</option>';
   }).join('');
+  var thLblW=dir==='up'?'حد التحذير (إذا انخفض عن)':'حد التحذير (إذا ارتفع عن)';
+  var thLblD=dir==='up'?'حد الخطر (إذا انخفض عن)':'حد الخطر (إذا ارتفع عن)';
   var settingsHtml='<details style="margin-top:14px"><summary style="cursor:pointer;font-weight:700;font-size:12px;color:var(--fg-3);padding:6px 0;list-style:none;display:flex;align-items:center;gap:6px"><i data-lucide="settings-2" style="width:13px;height:13px"></i>إعدادات المؤشر</summary>'+
     '<div style="border:1px solid var(--border-1);border-radius:10px;padding:12px 14px;margin-top:8px;background:var(--bg-1)">'+
       '<div class="form-row">'+
+        '<div class="form-group"><label class="field-label" style="font-size:11px">اتجاه المؤشر</label>'+
+          '<select class="field-input" style="font-size:12px" onchange="Pages._opKpiSettingsSave(\''+goalId+'\',\''+kpiId+'\',\'direction\',this.value)">'+
+            '<option value="up"'+(dir==='up'?' selected':'')+'>⬆ تصاعدي — الأعلى أفضل</option>'+
+            '<option value="down"'+(dir==='down'?' selected':'')+'>⬇ تنازلي — الأقل أفضل (تكاليف، أخطاء…)</option>'+
+          '</select></div>'+
         '<div class="form-group"><label class="field-label" style="font-size:11px">تكرار القياس (مستقل)</label>'+
           '<select class="field-input" style="font-size:12px" onchange="Pages._opKpiSettingsSave(\''+goalId+'\',\''+kpiId+'\',\'frequency\',this.value)">'+
-            '<option value="">من الهدف ('+((Pages._OPPLAN_FREQS[f]||{}).label||f)+')</option>'+freqOpts+
+            '<option value="">من الهدف ('+((Pages._OPPLAN_FREQS[g.frequency||'quarterly']||{}).label||'')+')</option>'+freqOpts+
           '</select></div>'+
-        '<div class="form-group"><label class="field-label" style="font-size:11px">المسؤول</label>'+
-          '<input class="field-input" style="font-size:12px" value="'+UI.escHtml(k.owner||'')+'" placeholder="اسم المسؤول" onchange="Pages._opKpiSettingsSave(\''+goalId+'\',\''+kpiId+'\',\'owner\',this.value)"></div>'+
       '</div>'+
       '<div class="form-row">'+
-        '<div class="form-group"><label class="field-label" style="font-size:11px;color:var(--warning-600)">حد التحذير (≤)</label>'+
+        '<div class="form-group"><label class="field-label" style="font-size:11px">المسؤول</label>'+
+          '<input class="field-input" style="font-size:12px" value="'+UI.escHtml(k.owner||'')+'" placeholder="اسم المسؤول" onchange="Pages._opKpiSettingsSave(\''+goalId+'\',\''+kpiId+'\',\'owner\',this.value)"></div>'+
+        '<div class="form-group"></div>'+
+      '</div>'+
+      '<div class="form-row">'+
+        '<div class="form-group"><label class="field-label" style="font-size:11px;color:var(--warning-600)">'+thLblW+'</label>'+
           '<input class="field-input" type="number" style="font-size:12px" value="'+(k.warning_threshold!=null?k.warning_threshold:'')+'" placeholder="—" onchange="Pages._opKpiSettingsSave(\''+goalId+'\',\''+kpiId+'\',\'warning_threshold\',this.value)"></div>'+
-        '<div class="form-group"><label class="field-label" style="font-size:11px;color:var(--danger-600)">حد الخطر (≤)</label>'+
+        '<div class="form-group"><label class="field-label" style="font-size:11px;color:var(--danger-600)">'+thLblD+'</label>'+
           '<input class="field-input" type="number" style="font-size:12px" value="'+(k.danger_threshold!=null?k.danger_threshold:'')+'" placeholder="—" onchange="Pages._opKpiSettingsSave(\''+goalId+'\',\''+kpiId+'\',\'danger_threshold\',this.value)"></div>'+
       '</div>'+
     '</div></details>';
   var expCard=expVal!=null?'<div style="flex:1;min-width:90px;text-align:center;padding:10px;border:1px solid var(--warning-500)33;border-radius:9px;background:var(--warning-500)08"><div style="font-size:10.5px;color:var(--fg-3)">المتوقع الآن</div><div style="font-weight:800;font-size:17px;color:var(--warning-600)">'+Pages._opFormatKpiVal(Math.round(expVal),k.unit)+'</div></div>':'';
+  /* شارة الربط بالخطة الاستراتيجية */
+  var stratLink=Pages._stratFindLinkForOpKpi?Pages._stratFindLinkForOpKpi(Pages._opCur.orgId, kpiId):null;
+  var stratBadge=stratLink?'<span style="display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;padding:2px 8px;border-radius:5px;background:var(--iris-500)14;color:var(--iris-600);cursor:pointer" title="مرتبط بالخطة الاستراتيجية" onclick="UI.closeModalForce();Nav.go(\'stratplan\',{orgId:\''+Pages._opCur.orgId+'\'})"><i data-lucide="compass" style="width:10px;height:10px"></i>استراتيجي: '+UI.escHtml(stratLink.kpi.title||'')+'</span>':'';
   var html='<div class="modal-header" style="border-top:3px solid '+gc+'">'+
       '<div style="min-width:0"><h3 style="margin:0">'+UI.escHtml(k.title||'مؤشر')+'</h3>'+
-        '<div style="font-size:11.5px;color:var(--fg-3);margin-top:3px;display:flex;align-items:center;gap:8px">'+(g.perspective?Pages._opPerspBadge(g.perspective,true)+' ':'')+UI.escHtml(g.title)+' '+lightBadge+'</div></div>'+
+        '<div style="font-size:11.5px;color:var(--fg-3);margin-top:3px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">'+(g.perspective?Pages._opPerspBadge(g.perspective,true)+' ':'')+UI.escHtml(g.title)+' '+lightBadge+stratBadge+'</div></div>'+
       '<button class="modal-close" onclick="UI.closeModalForce()">×</button></div>'+
     '<div class="modal-body" style="max-height:76vh;overflow-y:auto">'+
       '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px">'+
@@ -14038,6 +14818,8 @@ Pages.opKpiDetail = function(goalId, kpiId){
       gapHtml+
       '<div style="font-weight:700;font-size:12.5px;color:var(--fg-2);margin-bottom:8px;display:flex;align-items:center;gap:6px"><i data-lucide="edit-3" style="width:14px;height:14px"></i>تسجيل القيم الفعلية — '+year+'<span style="font-size:10.5px;font-weight:400;color:var(--fg-4)">(أضف ملاحظة اختيارية لكل قيمة)</span></div>'+
       '<div class="op-detail-grid">'+cells+'</div>'+
+      linkedHtml+
+      historyHtml+
       settingsHtml+
     '</div>'+
     '<div class="modal-footer" style="justify-content:space-between">'+
@@ -14065,24 +14847,31 @@ Pages._opKpiSettingsSave = function(goalId, kpiId, field, val){
   var plan=DB.getOpPlan(Pages._opCur.orgId); if(!plan) return;
   var g=(plan.goals||[]).filter(function(x){return x.id===goalId;})[0]; if(!g) return;
   var k=(g.kpis||[]).filter(function(x){return x.id===kpiId;})[0]; if(!k) return;
-  if(field==='frequency'){ k.frequency=val||null; }
+  if(field==='frequency'){
+    var hadVals=Object.keys(k.actuals||{}).length>0;
+    k.frequency=val||null;
+    if(hadVals) UI.toast('تم تغيير التكرار — القيم السابقة محفوظة وتظهر في "سجل القيم"');
+  }
   else if(field==='owner'){ k.owner=val; }
+  else if(field==='direction'){ k.direction=val==='down'?'down':'up'; }
   else if(field==='warning_threshold'){ k.warning_threshold=val!==''?parseFloat(val):null; }
   else if(field==='danger_threshold'){ k.danger_threshold=val!==''?parseFloat(val):null; }
   DB.saveOpPlan(Pages._opCur.orgId,plan);
+  if(field==='frequency'||field==='direction') Pages.opKpiDetail(goalId, kpiId);
 };
 Pages.opPrintKpi = function(goalId, kpiId){
   var plan=DB.getOpPlan(Pages._opCur.orgId); if(!plan) return;
   var g=(plan.goals||[]).filter(function(x){return x.id===goalId;})[0]; if(!g) return;
   var k=(g.kpis||[]).filter(function(x){return x.id===kpiId;})[0]; if(!k) return;
-  var rows=Object.keys(k.actuals||{}).sort().map(function(key){
-    var v=k.actuals[key]; var cp=k.target?Math.min(100,Math.round(parseFloat(v)/k.target*100)):'';
-    return '<tr><td>'+Pages._opKeyLabel(key)+'</td><td>'+v+(k.unit?' '+Pages._opUnitDisplay(k.unit):'')+'</td><td>'+(cp!==''?cp+'%':'—')+'</td></tr>';
+  var rows=Pages._opSortPeriodKeys(Object.keys(k.actuals||{})).map(function(key){
+    var v=k.actuals[key]; var cp=Pages._opKpiAchievementPct(k, parseFloat(v));
+    return '<tr><td>'+Pages._opKeyLabel(key)+'</td><td>'+v+(k.unit?' '+Pages._opUnitDisplay(k.unit):'')+'</td><td>'+(cp!=null?cp+'%':'—')+'</td></tr>';
   }).join('')||'<tr><td colspan="3" style="text-align:center;color:#94a3b8">لا توجد قيم مسجّلة</td></tr>';
   var body='<h1>'+UI.escHtml(k.title||'مؤشر')+'</h1><h2>'+UI.escHtml(g.title)+'</h2>'+
     '<div class="meta"><span><b>خط الأساس:</b> '+Pages._opFormatKpiVal(k.baseline,k.unit)+'</span>'+
     '<span><b>المستهدف:</b> '+Pages._opFormatKpiVal(k.target,k.unit)+'</span>'+
-    '<span><b>تكرار القياس:</b> '+(Pages._OPPLAN_FREQS[g.frequency||'quarterly']||{}).label+'</span></div>'+
+    '<span><b>الاتجاه:</b> '+(Pages._opKpiDir(k)==='down'?'تنازلي (الأقل أفضل)':'تصاعدي (الأعلى أفضل)')+'</span>'+
+    '<span><b>تكرار القياس:</b> '+(Pages._OPPLAN_FREQS[Pages._opKpiFreq(g,k)]||{}).label+'</span></div>'+
     '<table><thead><tr><th>الفترة</th><th>القيمة الفعلية</th><th>نسبة التحقق</th></tr></thead><tbody>'+rows+'</tbody></table>';
   Pages._opPrintHtml(k.title||'مؤشر أداء', body);
 };
@@ -14154,10 +14943,20 @@ Pages.opIniDetail = function(gid, iid){
   var loc=Pages._opLocate(plan,gid,iid,null); if(!loc||!loc.ini) return;
   var g=loc.g, ini=loc.ini; var gc=Pages._opGoalColor(g);
   var s=Pages._opIniStats(ini);
+  var linkedKpi=ini.kpi_id?(g.kpis||[]).filter(function(kk){return kk.id===ini.kpi_id;})[0]:null;
+  var linkedKpiRow='';
+  if(linkedKpi){
+    var lkPct=Pages._opKpiAchievementPct(linkedKpi);
+    linkedKpiRow='<div><span style="color:var(--fg-3)">المؤشر المرتبط:</span> '+
+      '<a style="color:var(--iris-500);cursor:pointer;font-weight:600" onclick="UI.closeModalForce();Pages.opKpiDetail(\''+g.id+'\',\''+linkedKpi.id+'\')">'+UI.escHtml(linkedKpi.title||'مؤشر')+'</a>'+
+      (lkPct!=null?' <span style="font-weight:700;color:'+Pages._opPctColor(lkPct)+'">('+lkPct+'%)</span>':'')+
+      ' '+Pages._opKpiLightBadge(linkedKpi,g)+'</div>';
+  }
   var infoRows=''+
     (ini.description?'<div><span style="color:var(--fg-3)">الوصف:</span> '+UI.escHtml(ini.description)+'</div>':'')+
     (ini.owner?'<div><span style="color:var(--fg-3)">المسؤول:</span> '+UI.escHtml(ini.owner)+'</div>':'')+
     (ini.start_month!=null&&ini.end_month!=null?'<div><span style="color:var(--fg-3)">المدة:</span> '+Pages._OPMONTHS[ini.start_month]+' — '+Pages._OPMONTHS[ini.end_month]+'</div>':'')+
+    linkedKpiRow+
     '';
   var actRows=(ini.activities||[]).map(function(a){
     var as=Pages._opActStats(a);
@@ -14298,8 +15097,13 @@ Pages._opTabInitiatives = function(plan){
       '<button class="op-mini" title="إضافة نشاط" onclick="Pages.opActModal(\''+g.id+'\',\''+ini.id+'\',null)"><i data-lucide="plus"></i></button>'+
       '<button class="op-mini danger" title="حذف" onclick="Pages.opDeleteInitiative(\''+g.id+'\',\''+ini.id+'\')"><i data-lucide="trash-2"></i></button>'+
     '</div>';
+    var kpiLink='';
+    if(ini.kpi_id){
+      var linkedKpi=(g.kpis||[]).filter(function(kk){return kk.id===ini.kpi_id;})[0];
+      if(linkedKpi) kpiLink='<div style="font-size:10px;color:var(--iris-500);margin-top:3px;display:flex;align-items:center;gap:3px"><i data-lucide="link" style="width:9px;height:9px"></i>'+UI.escHtml(linkedKpi.title||'مؤشر')+'</div>';
+    }
     return '<tr onclick="Pages.opIniDetail(\''+g.id+'\',\''+ini.id+'\')" style="cursor:pointer">'+
-      '<td class="pin pin-goal" style="right:0;border-right:3px solid '+gc+'">'+UI.escHtml(ini.title)+monthBar+'</td>'+
+      '<td class="pin pin-goal" style="right:0;border-right:3px solid '+gc+'">'+UI.escHtml(ini.title)+kpiLink+monthBar+'</td>'+
       '<td>'+(g.perspective?Pages._opPerspBadge(g.perspective,true)+' ':'')+'<span style="color:var(--fg-2);font-size:12px">'+UI.escHtml(g.title)+'</span></td>'+
       '<td style="font-size:12px;color:var(--fg-2)">'+(ini.owner?UI.escHtml(ini.owner):'<span style="color:var(--fg-4)">—</span>')+'</td>'+
       '<td>'+priBadge+'</td>'+
@@ -14317,7 +15121,7 @@ Pages._opTabReport = function(plan){
   var bscCards=bscOrder.map(function(k){
     var pg=(plan.goals||[]).filter(function(g){return g.perspective===k;}); if(!pg.length) return '';
     var p=Pages._OPPLAN_PERSPECTIVES[k];
-    var avgPct=pg.reduce(function(a,g){return a+Pages._opGoalStats(g).pct;},0)/pg.length;
+    var avgPct=Pages._opWeightedPct(pg);
     return '<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:'+p.color+'0a;border:1px solid '+p.color+'33;border-radius:8px;flex:1;min-width:130px">'+
       '<i data-lucide="'+p.icon+'" style="width:14px;height:14px;color:'+p.color+'"></i>'+
       '<div><div style="font-weight:700;font-size:11.5px;color:'+p.color+'">'+p.label+'</div>'+
@@ -14358,7 +15162,7 @@ Pages.opPrintProgressReport = function(plan){
   var goalRows=(plan.goals||[]).map(function(g){
     var gs=Pages._opGoalStats(g); var s=Pages._opGoalStatus(g);
     var p2=Pages._OPPLAN_PERSPECTIVES[g.perspective||'operations'];
-    var kpiLatest='—'; if(g.kpis&&g.kpis.length){ var k=g.kpis[0]; var sv=Object.values(k.actuals||{}).map(parseFloat).filter(isFinite); if(sv.length) kpiLatest=sv[sv.length-1]+(k.unit?' '+k.unit:''); }
+    var kpiLatest='—'; if(g.kpis&&g.kpis.length){ var k=g.kpis[0]; var klt=Pages._opKpiLatest(k); if(klt) kpiLatest=klt.val+(k.unit?' '+k.unit:'')+' <span style="color:#94a3b8;font-size:10px">('+Pages._opKeyLabel(klt.key)+')</span>'; }
     return '<tr><td>'+(p2?p2.label:'')+'</td><td>'+UI.escHtml(g.title)+'</td><td><b>'+gs.pct+'%</b></td><td>'+s.label+'</td><td>'+(g.weight?g.weight+'%':'—')+'</td><td>'+kpiLatest+'</td></tr>';
   }).join('');
   var iniRows='';
@@ -14367,18 +15171,28 @@ Pages.opPrintProgressReport = function(plan){
     var pg=(plan.goals||[]).filter(function(g){return g.perspective===pk;});
     var p2=Pages._OPPLAN_PERSPECTIVES[pk];
     pg.forEach(function(g){
-      (g.initiatives||[]).filter(function(ini){return (ini.status||'active')==='active';}).forEach(function(ini){
+      // المبادرات النشطة + الموقوفة التي لها ملاحظة تقدم (حتى لا تغيب عن المجلس)
+      (g.initiatives||[]).filter(function(ini){
+        var stt=ini.status||'active';
+        return stt==='active' || (stt==='paused' && ini.progress_note);
+      }).forEach(function(ini){
         var s=Pages._opIniStats(ini);
-        iniRows+='<tr><td>'+(p2?p2.label:'')+'</td><td>'+UI.escHtml(ini.title)+'</td><td>'+(ini.owner?UI.escHtml(ini.owner):'—')+'</td><td><b>'+s.pct+'%</b></td><td style="font-size:11px">'+(ini.progress_note?UI.escHtml(ini.progress_note):'—')+'</td></tr>';
+        var stt=ini.status||'active';
+        var iniTitle=UI.escHtml(ini.title)+(stt==='paused'?' <span style="color:#f59e0b;font-size:10px;font-weight:700">(موقوفة)</span>':'');
+        iniRows+='<tr><td>'+(p2?p2.label:'')+'</td><td>'+iniTitle+'</td><td>'+(ini.owner?UI.escHtml(ini.owner):'—')+'</td><td><b>'+s.pct+'%</b></td><td style="font-size:11px">'+(ini.progress_note?UI.escHtml(ini.progress_note):'—')+'</td></tr>';
       });
     });
   });
+  // تحذير الأوزان
+  var wInfo=Pages._opGoalsWeightInfo(plan);
+  var weightWarn=(wInfo.anySet&&wInfo.total!==100)?'<div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:10px 14px;font-size:12px;color:#92400e;margin-bottom:16px">⚠ مجموع أوزان الأهداف '+wInfo.total+'% — يجب أن يساوي 100% لتكون نسب الإنجاز الموزونة دقيقة</div>':'';
   var focusItems=Pages._opFocusItems(plan);
   var focusRows=focusItems.map(function(it){ return '<li>'+it.label+': '+it.desc+'</li>'; }).join('');
   var body='<div style="text-align:center;border-bottom:2px solid #334155;padding-bottom:20px;margin-bottom:24px">'+
     '<h1 style="margin:0 0 4px;font-size:22px">'+UI.escHtml(plan.title||'الخطة التشغيلية')+'</h1>'+
-    '<div style="color:#64748b;font-size:14px">تقرير التقدم — '+plan.year+' &nbsp;|&nbsp; تاريخ الإصدار: '+dateStr+'</div>'+
+    '<div style="color:#64748b;font-size:14px">تقرير التقدم — '+plan.year+' &nbsp;|&nbsp; تاريخ الإصدار: '+dateStr+' &nbsp;|&nbsp; البيانات كما في هذا التاريخ</div>'+
   '</div>'+
+  weightWarn+
   '<h2>ملخص تنفيذي</h2>'+
   '<div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:20px">'+
     '<div style="text-align:center;padding:12px 20px;border:1px solid #e2e8f0;border-radius:8px"><div style="font-size:28px;font-weight:900;color:#6366f1">'+st.pct+'%</div><div>الإنجاز الكلي</div></div>'+
@@ -14421,9 +15235,11 @@ Pages.opEditMeta = function(){
 };
 Pages.opSaveMeta = function(){
   var plan=DB.getOpPlan(Pages._opCur.orgId); if(!plan)return;
+  var oldYear=plan.year;
   plan.title=(document.getElementById('op-f-title').value||'').trim()||plan.title;
   plan.year=parseInt(document.getElementById('op-f-year').value)||plan.year;
   DB.saveOpPlan(Pages._opCur.orgId,plan); UI.closeModalForce(); Pages.render_opplan({orgId:Pages._opCur.orgId});
+  if(oldYear!==plan.year) UI.toast('تم تغيير سنة الخطة — قيم السنوات الأخرى محفوظة وتظهر عبر منتقي السنة في تبويب المتابعة');
 };
 Pages.opGoalModal = function(gid){
   var plan=DB.getOpPlan(Pages._opCur.orgId); if(!plan)return;
@@ -14448,10 +15264,15 @@ Pages.opGoalModal = function(gid){
     var unitOpts='<option value="">وحدة</option>'+Pages._OPPLAN_UNITS.map(function(u){
       return '<option value="'+u.v+'"'+(selVal===u.v?' selected':'')+'>'+u.s+'</option>';
     }).join('');
-    return '<div class="op-kpi-row" style="grid-template-columns:2fr 64px 74px 84px 84px 26px">'+
+    var kDir=Pages._opKpiDir(k);
+    return '<div class="op-kpi-row" style="grid-template-columns:2fr 64px 74px 58px 84px 84px 26px">'+
       '<input class="field-input op-kpi-t" style="min-width:0" placeholder="عنوان المؤشر *" value="'+UI.escHtml(k.title||'')+'">'+
       '<input class="field-input op-kpi-b" type="number" style="max-width:64px" placeholder="الأساس" value="'+(k.baseline!=null&&k.baseline!==''?k.baseline:'')+'">'+
       '<input class="field-input op-kpi-tv" type="number" style="max-width:74px" placeholder="المستهدف" value="'+(k.target!=null?k.target:'')+'">'+
+      '<select class="field-input op-kpi-dir" style="max-width:58px;font-size:11px;padding:3px 2px" title="اتجاه المؤشر">'+
+        '<option value="up"'+(kDir==='up'?' selected':'')+'>⬆ أعلى</option>'+
+        '<option value="down"'+(kDir==='down'?' selected':'')+'>⬇ أقل</option>'+
+      '</select>'+
       '<div style="min-width:84px">'+
         '<select class="field-input op-kpi-u-sel" style="font-size:11px;padding:3px 4px" onchange="Pages._opKpiUnitChange(this)">'+unitOpts+'</select>'+
         '<input class="field-input op-kpi-u-txt" style="font-size:11px;padding:3px;margin-top:2px'+(isOther?'':';display:none')+'" placeholder="أكتب" value="'+(isOther?UI.escHtml(k.unit||''):'')+'">'+
@@ -14473,8 +15294,22 @@ Pages.opGoalModal = function(gid){
        '<textarea id="op-f-desc" class="field-input" rows="2" placeholder="وصف مختصر للهدف">'+UI.escHtml(g?g.description||'':'')+'</textarea></div>'+
      '<div class="form-row">'+
        '<div class="form-group"><label class="field-label">المسؤول</label><input id="op-f-owner" class="field-input" value="'+UI.escHtml(g?g.owner||'':'')+'"></div>'+
-       '<div class="form-group"><label class="field-label">الوزن النسبي %</label><input id="op-f-weight" type="number" min="0" max="100" class="field-input" value="'+(g&&g.weight!=null?g.weight:'')+'" placeholder="مثال: 20"></div>'+
+       (function(){
+         /* الوزن المتبقي = 100 − مجموع أوزان بقية الأهداف */
+         var otherTotal=0;
+         (plan.goals||[]).forEach(function(og){ if(!g||og.id!==g.id){ var w=parseFloat(og.weight); if(isFinite(w)&&w>0) otherTotal+=w; } });
+         var remaining=Math.round(100-otherTotal);
+         var remColor=remaining<0?'var(--danger-600)':'var(--success-600)';
+         return '<div class="form-group"><label class="field-label">الوزن النسبي % <span style="font-weight:400;color:'+remColor+';font-size:10.5px">(المتبقي من 100%: '+remaining+'%)</span></label><input id="op-f-weight" type="number" min="0" max="100" class="field-input" value="'+(g&&g.weight!=null?g.weight:'')+'" placeholder="مثال: 20"></div>';
+       })()+
      '</div>'+
+     (g?'<div class="form-group"><label class="field-label">حالة الهدف <span style="font-weight:400;color:var(--fg-4);font-size:10.5px">(تجاوز يدوي للحالة المحسوبة تلقائياً)</span></label>'+
+       '<select id="op-f-status-ov" class="field-input">'+
+         '<option value="">تلقائي (حسب الإنجاز والزمن)</option>'+
+         [['ontrack','في المسار'],['risk','متعثر'],['behind','متأخر'],['done','مكتمل']].map(function(o){
+           return '<option value="'+o[0]+'"'+(g.status_override===o[0]?' selected':'')+'>'+o[1]+'</option>';
+         }).join('')+
+       '</select></div>':'')+
    '</div>'+
 
    '<div class="op-modal-section">'+
@@ -14499,7 +15334,7 @@ Pages.opGoalModal = function(gid){
 
    '<div class="op-modal-section">'+
      '<div class="op-modal-sec-title">مؤشرات الأداء (KPIs) <button class="btn btn-xs btn-ghost" onclick="Pages.opGoalAddKpi()"><i data-lucide="plus"></i>إضافة مؤشر</button></div>'+
-     '<div style="font-size:10.5px;color:var(--fg-4);display:grid;grid-template-columns:2fr 64px 74px 84px 84px 26px;gap:5px;padding:0 2px;margin-bottom:4px"><span>عنوان المؤشر</span><span>الأساس</span><span>المستهدف</span><span>الوحدة</span><span>المسؤول</span><span></span></div>'+
+     '<div style="font-size:10.5px;color:var(--fg-4);display:grid;grid-template-columns:2fr 64px 74px 58px 84px 84px 26px;gap:5px;padding:0 2px;margin-bottom:4px"><span>عنوان المؤشر</span><span>الأساس</span><span>المستهدف</span><span>الاتجاه</span><span>الوحدة</span><span>المسؤول</span><span></span></div>'+
      '<div id="op-kpis-list">'+kpiRows+'</div>'+
      '<div style="font-size:11px;color:var(--fg-3);margin-top:8px">أضف مؤشراً لقياس تحقق الهدف</div>'+
    '</div>'+
@@ -14524,6 +15359,8 @@ Pages.opSaveGoal = function(gid){
   var targetVal=document.getElementById('op-f-target-val').value!==''?parseFloat(document.getElementById('op-f-target-val').value):null;
   var targetDate=(document.getElementById('op-f-target-date').value||'').trim();
   var dataSource=(document.getElementById('op-f-datasource').value||'').trim();
+  var statusOvEl=document.getElementById('op-f-status-ov');
+  var statusOv=statusOvEl?(statusOvEl.value||''):'';
   /* collect KPIs */
   var kpis=[];
   document.querySelectorAll('#op-kpis-list .op-kpi-row').forEach(function(row){
@@ -14533,8 +15370,9 @@ Pages.opSaveGoal = function(gid){
     var uSel=row.querySelector('.op-kpi-u-sel'); var u=uSel?uSel.value:'';
     if(u==='other'){ var uTxt=row.querySelector('.op-kpi-u-txt'); u=uTxt?(uTxt.value||'').trim():''; }
     var ownerInp=row.querySelector('.op-kpi-owner'); var kOwner=ownerInp?(ownerInp.value||'').trim():'';
+    var dirSel=row.querySelector('.op-kpi-dir'); var kDir=dirSel&&dirSel.value==='down'?'down':'up';
     var idInp=row.querySelector('.op-kpi-id'); var kid=idInp?idInp.value:'';
-    kpis.push({id:kid||DB.uid(),title:t,baseline:b,target:tv,unit:u,owner:kOwner,actuals:{}});
+    kpis.push({id:kid||DB.uid(),title:t,baseline:b,target:tv,unit:u,owner:kOwner,direction:kDir,actuals:{}});
   });
   var perspColor=(Pages._OPPLAN_PERSPECTIVES[persp]||{}).color||Pages._OPGOAL_COLORS[0];
   var indicator=kpis.length?kpis[0].title:'';
@@ -14545,6 +15383,7 @@ Pages.opSaveGoal = function(gid){
       g.weight=weight; g.owner=owner; g.frequency=freq; g.unit=unit;
       g.baseline=baseline; g.baseline_date=baselineDate; g.target_value=targetVal; g.target_date=targetDate;
       g.data_source=dataSource; g.color=perspColor;
+      g.status_override=statusOv||null;
       var oldKpis=g.kpis||[];
       g.kpis=kpis.map(function(k){
         var old=oldKpis.filter(function(x){return x.id===k.id;})[0];
@@ -14552,6 +15391,9 @@ Pages.opSaveGoal = function(gid){
         if(old){ k.notes=old.notes||{}; k.frequency=old.frequency||null; k.warning_threshold=old.warning_threshold!=null?old.warning_threshold:null; k.danger_threshold=old.danger_threshold!=null?old.danger_threshold:null; }
         return k;
       });
+      /* تنظيف مراجع المبادرات المعلّقة: مؤشر حُذف من الهدف */
+      var keptIds={}; g.kpis.forEach(function(k){ keptIds[k.id]=true; });
+      (g.initiatives||[]).forEach(function(ini){ if(ini.kpi_id&&!keptIds[ini.kpi_id]) ini.kpi_id=null; });
     }
   } else {
     if(!plan.goals)plan.goals=[];
@@ -14561,6 +15403,9 @@ Pages.opSaveGoal = function(gid){
       data_source:dataSource,kpis:kpis,initiatives:[]});
   }
   DB.saveOpPlan(Pages._opCur.orgId,plan); UI.closeModalForce(); Pages.render_opplan({orgId:Pages._opCur.orgId,tab:'plan'});
+  /* تحذير غير مانع: مجموع الأوزان يجب أن يساوي 100% */
+  var wInfo=Pages._opGoalsWeightInfo(plan);
+  if(wInfo.anySet&&wInfo.total!==100) UI.toast('تنبيه: مجموع أوزان الأهداف '+wInfo.total+'% — يجب أن يساوي 100%','warning');
 };
 /* BSC modal helpers */
 Pages._opSelectPersp = function(el, key){
@@ -14573,10 +15418,11 @@ Pages.opGoalAddKpi = function(){
   var unitOpts='<option value="">وحدة</option>'+Pages._OPPLAN_UNITS.map(function(u){
     return '<option value="'+u.v+'">'+u.s+'</option>';
   }).join('');
-  var row=document.createElement('div'); row.className='op-kpi-row'; row.style.gridTemplateColumns='2fr 64px 74px 84px 84px 26px';
+  var row=document.createElement('div'); row.className='op-kpi-row'; row.style.gridTemplateColumns='2fr 64px 74px 58px 84px 84px 26px';
   row.innerHTML='<input class="field-input op-kpi-t" style="min-width:0" placeholder="عنوان المؤشر *">'+
     '<input class="field-input op-kpi-b" type="number" style="max-width:64px" placeholder="الأساس">'+
     '<input class="field-input op-kpi-tv" type="number" style="max-width:74px" placeholder="المستهدف">'+
+    '<select class="field-input op-kpi-dir" style="max-width:58px;font-size:11px;padding:3px 2px" title="اتجاه المؤشر"><option value="up">⬆ أعلى</option><option value="down">⬇ أقل</option></select>'+
     '<div style="min-width:84px">'+
       '<select class="field-input op-kpi-u-sel" style="font-size:11px;padding:3px 4px" onchange="Pages._opKpiUnitChange(this)">'+unitOpts+'</select>'+
       '<input class="field-input op-kpi-u-txt" style="font-size:11px;padding:3px;margin-top:2px;display:none" placeholder="أكتب" title="وحدة مخصصة">'+
@@ -14862,7 +15708,7 @@ Pages._opDrawerOverview = function(g){
     (g.kpis||[]).map(function(k){
       var series=Pages._opKpiSeries(k);
       var latest=series.length?series[series.length-1]:null;
-      var pct=k.target&&latest!=null?Math.min(100,Math.round(latest/k.target*100)):null;
+      var pct=latest!=null?Pages._opKpiAchievementPct(k, latest):null;
       return '<div style="padding:10px 12px;background:var(--bg-2);border-radius:8px;margin-bottom:8px">'+
         '<div style="display:flex;align-items:flex-start;gap:8px">'+
           '<div style="flex:1;min-width:0"><div style="font-weight:600;font-size:12.5px;color:var(--fg-1)">'+UI.escHtml(k.title||'')+'</div></div>'+
@@ -14942,17 +15788,18 @@ Pages._opDrawerTracking = function(g){
   var kpiRows=(g.kpis||[]).map(function(k){
     var uDisp=k.unit?Pages._opUnitDisplay(k.unit):'';
     var series=Pages._opKpiSeries(k);
-    var periods2=Array.from({length:periods}).map(function(_,i){
-      var pk=Pages._opPeriodKey(kpiYear,freq,i);
+    var kFreq=Pages._opKpiFreq(g,k); var kPeriods=(Pages._OPPLAN_FREQS[kFreq]||{periods:4}).periods;
+    var periods2=Array.from({length:kPeriods}).map(function(_,i){
+      var pk=Pages._opPeriodKey(kpiYear,kFreq,i);
       var val=(k.actuals&&k.actuals[pk]!=null)?k.actuals[pk]:'';
-      var pct=k.target&&val!==''?Math.min(100,Math.round(parseFloat(val)/k.target*100)):null;
+      var pct=val!==''?Pages._opKpiAchievementPct(k, parseFloat(val)):null;
       var filled=val!=='';
       var pctId='op-dkpct-'+k.id+'-'+i;
       var pctHtml=k.target
         ? '<div id="'+pctId+'" style="font-size:10px;text-align:center;font-weight:700;margin-top:3px;color:'+(pct!=null?Pages._opPctColor(pct):'var(--fg-4)')+'">'+(pct!=null?pct+'%':'—')+'</div>'
         : (k.unit==='%'?'<div style="font-size:10px;color:var(--fg-4);text-align:center;margin-top:3px">'+uDisp+'</div>':'');
       return '<div style="border:1px solid '+(filled?gc:'var(--border-1)')+';border-radius:8px;padding:8px 10px;background:'+(filled?gc+'14':'var(--bg-1)')+'">'+
-        '<div style="font-size:10.5px;color:var(--fg-3);margin-bottom:4px;text-align:center">'+Pages._opPeriodLabel(freq,i)+'</div>'+
+        '<div style="font-size:10.5px;color:var(--fg-3);margin-bottom:4px;text-align:center">'+Pages._opPeriodLabel(kFreq,i)+'</div>'+
         '<input class="field-input" style="padding:4px;font-size:13px;font-weight:700;text-align:center;width:100%" type="number" min="0" value="'+(val!==''?val:'')+'" placeholder="—" onchange="Pages._opQuickKpi(\''+g.id+'\',\''+k.id+'\',\''+pk+'\',this.value,'+(k.target?'\''+pctId+'\'':'null')+')">'+
         pctHtml+
       '</div>';
@@ -15071,9 +15918,9 @@ Pages._opBuildKpiTable = function(plan){
       var gs=Pages._opGoalStats(g);
       rows+='<tr class="goal"><td colspan="6">'+UI.escHtml(g.title)+'</td></tr>';
       (g.kpis||[]).forEach(function(k){
-        var vals=Object.values(k.actuals||{}).map(parseFloat).filter(isFinite);
-        var latest=vals.length?vals[vals.length-1]:'—';
-        var pct=k.target&&vals.length?Math.min(100,Math.round(parseFloat(vals[vals.length-1])/k.target*100)):null;
+        var klt=Pages._opKpiLatest(k);
+        var latest=klt?klt.val:'—';
+        var pct=klt?Pages._opKpiAchievementPct(k, klt.val):null;
         rows+='<tr><td class="ta-r">'+UI.escHtml(k.title||'')+'</td>'+
           '<td>'+Pages._opFormatKpiVal(k.baseline,k.unit)+'</td>'+
           '<td>'+Pages._opFormatKpiVal(k.target,k.unit)+'</td>'+
@@ -15116,7 +15963,7 @@ Pages.opPrint = function(){
   var bscCards=bscOrder.map(function(k){
     var pg=(plan.goals||[]).filter(function(g){return g.perspective===k;}); if(!pg.length) return '';
     var p=Pages._OPPLAN_PERSPECTIVES[k];
-    var avgPct=pg.reduce(function(a,g){return a+Pages._opGoalStats(g).pct;},0)/pg.length;
+    var avgPct=Pages._opWeightedPct(pg);
     return '<div class="bsc-card" style="border-color:'+p.color+'44">'+
       '<div style="font-weight:800;font-size:12px;color:'+p.color+'">'+p.label+'</div>'+
       '<div style="font-size:10px;color:#555">'+pg.length+' أهداف · '+Math.round(avgPct)+'%</div>'+
