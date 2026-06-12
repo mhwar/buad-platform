@@ -12615,10 +12615,15 @@ Pages._opPeriodKeyOrd = function(key){
 Pages._opSortPeriodKeys = function(keys){
   return (keys||[]).slice().sort(function(a,b){ return Pages._opPeriodKeyOrd(a)-Pages._opPeriodKeyOrd(b); });
 };
-/* قيم المؤشر مرتّبة زمنياً من actuals */
-Pages._opKpiSeries = function(k){
-  var keys=Pages._opSortPeriodKeys(Object.keys(k.actuals||{}));
-  return keys.map(function(key){ return parseFloat(k.actuals[key]); }).filter(isFinite);
+/* قيم المؤشر مرتّبة زمنياً من actuals — للتراكمي تُعاد المجاميع التراكمية عند forChart=true */
+Pages._opKpiSeries = function(k, forChart){
+  var mt=k.measurement_type||'point_in_time';
+  var keys=Pages._opSortPeriodKeys(Object.keys(k.actuals||{}).filter(function(pk){ return isFinite(parseFloat(k.actuals[pk])); }));
+  var vals=keys.map(function(pk){ return parseFloat(k.actuals[pk]); });
+  if(forChart && mt==='cumulative_ytd'){
+    var cum=0; return vals.map(function(v){ cum+=v; return cum; });
+  }
+  return vals;
 };
 /* آخر (مفتاح، قيمة) مسجّلة للمؤشر — بالفرز الزمني */
 Pages._opKpiLatest = function(k){
@@ -12632,17 +12637,50 @@ Pages._opKpiLatest = function(k){
 Pages._opKpiFreq = function(g,k){ return (k&&k.frequency)||((g)&&g.frequency)||'quarterly'; };
 /* اتجاه المؤشر: 'up' تصاعدي (الأعلى أفضل) أو 'down' تنازلي (الأقل أفضل) */
 Pages._opKpiDir = function(k){ return (k&&k.direction)==='down'?'down':'up'; };
-/* نسبة إنجاز المؤشر الموحّدة: (القيمة − الأساس) / (المستهدف − الأساس)
-   تعمل للاتجاهين تلقائياً (البسط والمقام سالبان معاً في التنازلي) */
-Pages._opKpiAchievementPct = function(k, latestVal){
+/* نسبة إنجاز المؤشر الموحّدة — تدعم أنواع القياس الأربعة
+   point_in_time (افتراضي): آخر قيمة مسجّلة
+   cumulative_ytd: مجموع قيم السنة / المستهدف
+   yes_no: ثنائي — 100% إذا آخر قيمة ≥ 1، وإلا 0%
+   average: متوسط قيم السنة */
+Pages._opKpiAchievementPct = function(k, latestVal, year){
+  var mt=k.measurement_type||'point_in_time';
   var target=parseFloat(k.target);
   if(!isFinite(target)) return null;
   var base=parseFloat(k.baseline); if(!isFinite(base)) base=0;
+  if(target===base) return null;
+
+  if(mt==='yes_no'){
+    var lt=Pages._opKpiLatest(k); if(!lt) return null;
+    return lt.val>=1?100:0;
+  }
+
+  var yr=year||(Pages._opCur&&Pages._opCur.kpiYear)||(new Date()).getFullYear();
+
+  if(mt==='cumulative_ytd'){
+    var keys=Pages._opSortPeriodKeys(Object.keys(k.actuals||{}).filter(function(pk){
+      return pk.indexOf(String(yr))===0 && isFinite(parseFloat(k.actuals[pk]));
+    }));
+    if(!keys.length) return null;
+    var sum=keys.reduce(function(acc,pk){ return acc+parseFloat(k.actuals[pk]); },0);
+    var pctC=Math.round((sum-base)/(target-base)*100);
+    return Math.min(100,Math.max(0,pctC));
+  }
+
+  if(mt==='average'){
+    var keys2=Pages._opSortPeriodKeys(Object.keys(k.actuals||{}).filter(function(pk){
+      return pk.indexOf(String(yr))===0 && isFinite(parseFloat(k.actuals[pk]));
+    }));
+    if(!keys2.length) return null;
+    var avg=keys2.reduce(function(a,pk){ return a+parseFloat(k.actuals[pk]); },0)/keys2.length;
+    var pctA=Math.round((avg-base)/(target-base)*100);
+    return Math.min(100,Math.max(0,pctA));
+  }
+
+  // point_in_time (default)
   var latest=latestVal;
-  if(latest==null){ var lt=Pages._opKpiLatest(k); if(!lt) return null; latest=lt.val; }
-  if(target===base) return null; // لا مدى للقياس
+  if(latest==null){ var lt2=Pages._opKpiLatest(k); if(!lt2) return null; latest=lt2.val; }
   var pct=Math.round((latest-base)/(target-base)*100);
-  return Math.min(100, Math.max(0, pct));
+  return Math.min(100,Math.max(0,pct));
 };
 /* القيمة المتوقعة للمؤشر الآن (بالإسقاط الخطي من الأساس للهدف) */
 Pages._opKpiExpectedVal = function(k,g,year){
@@ -13478,8 +13516,21 @@ Pages._stratListHtml = function(){
 Pages._stratChooserHtml = function(orgId){
   var name=Pages._opOrgName(orgId);
   var yr=(new Date()).getFullYear();
+  var opPlans=DB.getOpPlanList(orgId)||[];
+  var seedCard=opPlans.length?
+    '<div style="border:2px dashed var(--iris-400);border-radius:12px;padding:18px 20px;margin-bottom:16px;background:var(--iris-50)">'+
+      '<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">'+
+        '<div style="width:38px;height:38px;border-radius:10px;background:var(--iris-100);color:var(--iris-600);display:flex;align-items:center;justify-content:center;flex-shrink:0"><i data-lucide="link" style="width:18px;height:18px"></i></div>'+
+        '<div><div style="font-weight:700;font-size:13.5px;color:var(--fg-1)">بناء من خطة تشغيلية موجودة</div>'+
+        '<div style="font-size:11.5px;color:var(--fg-3)">اختر خطة وسنحوّل أهدافها ومؤشراتها إلى بنية استراتيجية مع ربط تلقائي</div></div>'+
+      '</div>'+
+      '<button class="btn btn-primary btn-sm" style="width:100%;justify-content:center" onclick="Pages._stratSeedWizard(\''+orgId+'\')"><i data-lucide="wand-2"></i>بدء معالج البناء</button>'+
+    '</div>':
+    '';
   return '<div class="op-wrap"><div style="margin-bottom:16px"><button class="btn btn-sm btn-ghost" onclick="Pages.render_stratplan({orgId:null})"><i data-lucide="arrow-right"></i>الجمعيات</button></div>'+
-    '<div class="card" style="max-width:560px;margin:0 auto;padding:24px">'+
+    '<div style="max-width:560px;margin:0 auto">'+
+    seedCard+
+    '<div class="card" style="padding:24px">'+
       '<div style="text-align:center;margin-bottom:18px"><div style="width:56px;height:56px;border-radius:14px;background:var(--iris-50);color:var(--iris-600);display:flex;align-items:center;justify-content:center;margin:0 auto 10px"><i data-lucide="compass" style="width:26px;height:26px"></i></div>'+
         '<h2 style="margin:0">الخطة الاستراتيجية لـ'+UI.escHtml(name)+'</h2>'+
         '<div style="color:var(--fg-3);font-size:12.5px;margin-top:4px">حدد مدة الخطة — لكل مؤشر مستهدف نهائي يُوزَّع على مستهدفات سنوية</div></div>'+
@@ -13491,8 +13542,8 @@ Pages._stratChooserHtml = function(orgId){
         '<div class="form-group"><label class="field-label">سنة البداية</label><input id="st-f-start" type="number" class="field-input" value="'+yr+'" min="2020" max="2050"></div>'+
         '<div class="form-group"><label class="field-label">سنة النهاية</label><input id="st-f-end" type="number" class="field-input" value="'+(yr+3)+'" min="2020" max="2060"></div>'+
       '</div>'+
-      '<button class="btn btn-primary" style="width:100%;justify-content:center" onclick="Pages.stratCreatePlan(\''+orgId+'\')"><i data-lucide="rocket"></i>إنشاء الخطة</button>'+
-    '</div></div>';
+      '<button class="btn btn-primary" style="width:100%;justify-content:center" onclick="Pages.stratCreatePlan(\''+orgId+'\')"><i data-lucide="rocket"></i>إنشاء خطة فارغة</button>'+
+    '</div></div></div>';
 };
 Pages.stratCreatePlan = function(orgId){
   var org=Pages._opFindOrg(orgId);
@@ -13516,6 +13567,134 @@ Pages.stratDeletePlanConfirm = function(orgId){
     '<div class="modal-footer"><button class="btn btn-ghost" onclick="UI.closeModalForce()">إلغاء</button>'+
     '<button class="btn btn-danger" onclick="DB.deleteStratPlan(\''+orgId+'\');UI.closeModalForce();Pages.render_stratplan({orgId:null})"><i data-lucide="trash-2"></i>حذف نهائي</button></div>');
   if (typeof lucide!=='undefined') setTimeout(function(){ lucide.createIcons(); },30);
+};
+
+/* ─── معالج بناء الخطة الاستراتيجية من خطة تشغيلية ─── */
+Pages._stratSeedWizard = function(orgId){
+  var opPlans=DB.getOpPlanList(orgId)||[];
+  if(!opPlans.length){ UI.toast('لا توجد خطط تشغيلية لهذه الجمعية','warning'); return; }
+  var yr=(new Date()).getFullYear();
+  var planOpts=opPlans.map(function(p){ return '<option value="'+p.year+'">خطة '+p.year+(p.year===yr?' (الحالية)':'')+'</option>'; }).join('');
+  var html='<div class="modal-header"><h3>معالج بناء الخطة الاستراتيجية</h3><button class="modal-close" onclick="UI.closeModalForce()">×</button></div>'+
+    '<div class="modal-body" style="max-height:72vh;overflow-y:auto">'+
+    '<div style="background:var(--iris-50);border:1px solid var(--iris-100);border-radius:9px;padding:10px 14px;font-size:12px;color:var(--fg-2);margin-bottom:14px">'+
+      '<i data-lucide="info" style="width:13px;height:13px;vertical-align:-2px;color:var(--iris-500)"></i> '+
+      'سيتم نقل أهداف ومؤشرات الخطة التشغيلية المختارة وربطها تلقائياً بالسنة الأولى من الخطة الاستراتيجية.'+
+    '</div>'+
+    '<div class="form-group"><label class="field-label">الخطة التشغيلية المرجعية</label>'+
+      '<select id="sw-src-year" class="field-input">'+planOpts+'</select></div>'+
+    '<div class="form-group"><label class="field-label">عنوان الخطة الاستراتيجية</label>'+
+      '<input id="sw-title" class="field-input" value="الخطة الاستراتيجية لـ'+UI.escHtml(Pages._opOrgName(orgId))+'" placeholder="عنوان الخطة"></div>'+
+    '<div class="form-group"><label class="field-label">الرؤية (اختياري)</label>'+
+      '<textarea id="sw-vision" class="field-input" rows="2" placeholder="رؤية الجمعية للسنوات القادمة"></textarea></div>'+
+    '<div class="form-row">'+
+      '<div class="form-group"><label class="field-label">سنة البداية</label>'+
+        '<input id="sw-start" type="number" class="field-input" value="'+opPlans[opPlans.length-1].year+'" min="2020" max="2050"></div>'+
+      '<div class="form-group"><label class="field-label">سنة النهاية</label>'+
+        '<input id="sw-end" type="number" class="field-input" value="'+(opPlans[opPlans.length-1].year+3)+'" min="2020" max="2060"></div>'+
+    '</div>'+
+    '<div id="sw-goals-section"></div>'+
+    '</div>'+
+    '<div class="modal-footer">'+
+      '<button class="btn btn-ghost" onclick="UI.closeModalForce()">إلغاء</button>'+
+      '<button class="btn btn-secondary btn-sm" onclick="Pages._stratSeedLoadGoals(\''+orgId+'\')"><i data-lucide="list"></i>عرض الأهداف</button>'+
+      '<button class="btn btn-primary" onclick="Pages._stratSeedConfirm(\''+orgId+'\')"><i data-lucide="rocket"></i>إنشاء الخطة الاستراتيجية</button>'+
+    '</div>';
+  UI.openModal(html);
+  setTimeout(function(){ Pages._stratSeedLoadGoals(orgId); if(typeof lucide!=='undefined') lucide.createIcons(); },30);
+};
+Pages._stratSeedLoadGoals = function(orgId){
+  var yearVal=parseInt((document.getElementById('sw-src-year')||{}).value)||0;
+  var plan=DB.getOpPlanByYear(orgId, yearVal)||(DB.getOpPlanList(orgId)||[])[0];
+  if(!plan||(plan.goals||[]).length===0){
+    var sec=document.getElementById('sw-goals-section'); if(sec) sec.innerHTML='<div style="color:var(--fg-3);font-size:12px;padding:10px 0">لا توجد أهداف في هذه الخطة</div>'; return;
+  }
+  var rows=(plan.goals||[]).map(function(g){
+    var kpiChecks=(g.kpis||[]).map(function(k){
+      return '<label style="display:flex;align-items:center;gap:6px;font-size:11.5px;padding:3px 0;cursor:pointer">'+
+        '<input type="checkbox" class="sw-kpi-chk" data-goal="'+g.id+'" data-kpi="'+k.id+'" checked> '+UI.escHtml(k.title||'مؤشر')+
+        '<span style="color:var(--fg-3);font-size:10.5px">('+Pages._opFormatKpiVal(k.baseline,k.unit)+' → '+Pages._opFormatKpiVal(k.target,k.unit)+')</span>'+
+        (k.measurement_type&&k.measurement_type!=='point_in_time'?'<span style="font-size:10px;padding:1px 5px;border-radius:4px;background:var(--iris-50);color:var(--iris-600)">'+{'cumulative_ytd':'تراكمي','yes_no':'نعم/لا','average':'متوسط'}[k.measurement_type]+'</span>':'')+
+      '</label>';
+    }).join('');
+    return '<div style="border:1px solid var(--border-1);border-radius:9px;padding:10px 12px;margin-bottom:8px;background:var(--bg-1)">'+
+      '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:700;font-size:12.5px;color:var(--fg-1);margin-bottom:6px">'+
+        '<input type="checkbox" class="sw-goal-chk" data-goal="'+g.id+'" checked onchange="Pages._stratSeedToggleGoal(this)"> '+
+        (g.perspective?Pages._opPerspBadge(g.perspective,true)+' ':'')+UI.escHtml(g.title||'هدف')+
+      '</label>'+
+      '<div style="padding-right:20px">'+kpiChecks+'</div>'+
+    '</div>';
+  }).join('');
+  var sec=document.getElementById('sw-goals-section');
+  if(sec){ sec.innerHTML='<div style="font-weight:700;font-size:12px;color:var(--fg-2);margin-bottom:8px">الأهداف والمؤشرات ('+plan.goals.length+')</div>'+rows;
+    setTimeout(function(){ if(typeof lucide!=='undefined') lucide.createIcons({rootElement:sec}); },20);
+  }
+};
+Pages._stratSeedToggleGoal = function(cb){
+  var gid=cb.dataset.goal; var checked=cb.checked;
+  document.querySelectorAll('.sw-kpi-chk[data-goal="'+gid+'"]').forEach(function(c){ c.checked=checked; });
+};
+Pages._stratSeedConfirm = function(orgId){
+  var yearVal=parseInt((document.getElementById('sw-src-year')||{}).value)||0;
+  var plan=DB.getOpPlanByYear(orgId, yearVal)||(DB.getOpPlanList(orgId)||[])[0];
+  if(!plan){ UI.toast('لم يتم تحديد خطة','danger'); return; }
+  var title=((document.getElementById('sw-title')||{}).value||'').trim();
+  var vision=((document.getElementById('sw-vision')||{}).value||'').trim();
+  var sy=parseInt((document.getElementById('sw-start')||{}).value)||plan.year;
+  var ey=parseInt((document.getElementById('sw-end')||{}).value)||sy+3;
+  if(ey<sy){ UI.toast('سنة النهاية يجب أن تكون بعد سنة البداية','danger'); return; }
+  /* جمع الاختيارات */
+  var goalIds=[], kpiIds={};
+  document.querySelectorAll('.sw-goal-chk:checked').forEach(function(cb){ goalIds.push(cb.dataset.goal); });
+  document.querySelectorAll('.sw-kpi-chk:checked').forEach(function(cb){
+    if(!kpiIds[cb.dataset.goal]) kpiIds[cb.dataset.goal]=[];
+    kpiIds[cb.dataset.goal].push(cb.dataset.kpi);
+  });
+  if(!goalIds.length){ UI.toast('اختر هدفاً واحداً على الأقل','warning'); return; }
+  Pages._stratDoSeed(orgId, plan, {goalIds:goalIds,kpiIds:kpiIds}, {title:title,vision:vision,start_year:sy,end_year:ey});
+  UI.closeModalForce();
+};
+Pages._stratDoSeed = function(orgId, srcPlan, selections, stratMeta){
+  var sp={ id:DB.uid(), org_id:orgId,
+    title:stratMeta.title||'الخطة الاستراتيجية',
+    vision:stratMeta.vision||'',
+    start_year:stratMeta.start_year,
+    end_year:stratMeta.end_year,
+    created:(new Date()).toISOString().slice(0,10),
+    updated:'', goals:[] };
+  selections.goalIds.forEach(function(gid){
+    var og=(srcPlan.goals||[]).filter(function(g){return g.id===gid;})[0]; if(!og) return;
+    var sg={ id:DB.uid(), title:og.title,
+      perspective:og.perspective||'', description:og.description||'',
+      owner:og.owner||'', weight:og.weight||0, kpis:[] };
+    (selections.kpiIds[gid]||[]).forEach(function(kid){
+      var ok=(og.kpis||[]).filter(function(k){return k.id===kid;})[0]; if(!ok) return;
+      var yt={}; yt[String(stratMeta.start_year)]=parseFloat(ok.target)||0;
+      var sk={ id:DB.uid(), title:ok.title, unit:ok.unit||'',
+        direction:ok.direction||'up',
+        measurement_type:ok.measurement_type||'point_in_time',
+        baseline:parseFloat(ok.baseline)||0,
+        final_target:parseFloat(ok.target)||0,
+        yearly_targets:yt, op_links:{} };
+      sk.op_links[String(stratMeta.start_year)]={ goalId:og.id, kpiId:ok.id };
+      /* توزيع تلقائي خطي للسنوات المتبقية */
+      Pages._stratAutoDistribute(sk, stratMeta.start_year, stratMeta.end_year);
+      sg.kpis.push(sk);
+    });
+    sp.goals.push(sg);
+  });
+  DB.saveStratPlan(orgId, sp);
+  var kpiCount=sp.goals.reduce(function(n,g){return n+(g.kpis||[]).length;},0);
+  UI.toast('تم إنشاء الخطة الاستراتيجية — '+sp.goals.length+' أهداف، '+kpiCount+' مؤشرات مرتبطة','success');
+  Pages.render_stratplan({orgId:orgId});
+};
+Pages._stratAutoDistribute = function(sk, startYear, endYear){
+  var n=endYear-startYear+1; if(n<=0) return;
+  var base=parseFloat(sk.baseline)||0, fin=parseFloat(sk.final_target)||0;
+  for(var y=startYear; y<=endYear; y++){
+    var frac=(y-startYear+1)/n;
+    sk.yearly_targets[String(y)]=Math.round(base+(fin-base)*frac);
+  }
 };
 
 /* عرض الخطة الاستراتيجية */
@@ -14705,22 +14884,60 @@ Pages.opKpiDetail = function(goalId, kpiId){
   var f=Pages._opKpiFreq(g,k); var fd=Pages._OPPLAN_FREQS[f]; var periods=fd?fd.periods:4;
   var year=Pages._opCur.kpiYear||(new Date()).getFullYear();
   var dir=Pages._opKpiDir(k);
+  var mt=k.measurement_type||'point_in_time';
   var sortedKeys=Pages._opSortPeriodKeys(Object.keys(k.actuals||{}).filter(function(key){ return isFinite(parseFloat(k.actuals[key])); }));
   var pairs=sortedKeys.map(function(key){ return {key:key,l:Pages._opKeyLabel(key),v:parseFloat(k.actuals[key])}; });
   var latest=pairs.length?pairs[pairs.length-1].v:null;
-  var pct=latest!=null?Pages._opKpiAchievementPct(k, latest):null;
-  var chart=Pages._opTrendChart(pairs.map(function(p){return p.v;}), pairs.map(function(p){return p.l;}), k.target, gc);
+  var pct=Pages._opKpiAchievementPct(k, (mt==='cumulative_ytd'||mt==='average'||mt==='yes_no')?null:latest, year);
+  var chartVals=mt==='cumulative_ytd'?Pages._opKpiSeries(k,true):pairs.map(function(p){return p.v;});
+  var chart=Pages._opTrendChart(chartVals, pairs.map(function(p){return p.l;}), k.target, gc);
   var expVal=Pages._opKpiExpectedVal(k,g,year);
   var tl=Pages._opKpiTrafficLight(k,g);
+  /* ملخص تراكمي/متوسط */
+  var curYearActKeys=Pages._opSortPeriodKeys(Object.keys(k.actuals||{}).filter(function(pk2){ return pk2.indexOf(String(year))===0&&isFinite(parseFloat(k.actuals[pk2])); }));
+  var summaryHtml='';
+  if(mt==='cumulative_ytd'&&curYearActKeys.length){
+    var ytdSum=curYearActKeys.reduce(function(a,pk2){return a+parseFloat(k.actuals[pk2]);},0);
+    var ytdPct=Pages._opKpiAchievementPct(k,null,year);
+    summaryHtml='<div style="background:var(--iris-50);border:1px solid var(--iris-100);border-radius:9px;padding:9px 14px;font-size:12px;margin-bottom:10px;display:flex;align-items:center;gap:12px">'+
+      '<i data-lucide="sigma" style="width:14px;height:14px;color:var(--iris-500)"></i>'+
+      '<span>المجموع حتى الآن: <strong>'+Pages._opFormatKpiVal(ytdSum,k.unit)+'</strong></span>'+
+      '<span style="color:var(--fg-3)">المستهدف: '+Pages._opFormatKpiVal(k.target,k.unit)+'</span>'+
+      (ytdPct!=null?'<span style="margin-right:auto;font-weight:800;color:'+Pages._opPctColor(ytdPct)+'">'+ytdPct+'%</span>':'')+
+    '</div>';
+  } else if(mt==='average'&&curYearActKeys.length){
+    var avgSum=curYearActKeys.reduce(function(a,pk2){return a+parseFloat(k.actuals[pk2]);},0);
+    var avgVal=avgSum/curYearActKeys.length;
+    var avgPct=Pages._opKpiAchievementPct(k,null,year);
+    summaryHtml='<div style="background:var(--iris-50);border:1px solid var(--iris-100);border-radius:9px;padding:9px 14px;font-size:12px;margin-bottom:10px;display:flex;align-items:center;gap:12px">'+
+      '<i data-lucide="bar-chart-2" style="width:14px;height:14px;color:var(--iris-500)"></i>'+
+      '<span>المتوسط الحالي: <strong>'+Pages._opFormatKpiVal(Math.round(avgVal*10)/10,k.unit)+'</strong></span>'+
+      (avgPct!=null?'<span style="margin-right:auto;font-weight:800;color:'+Pages._opPctColor(avgPct)+'">'+avgPct+'%</span>':'')+
+    '</div>';
+  }
   var cells='';
   for(var i=0;i<periods;i++){
     var pk=Pages._opPeriodKey(year,f,i); var lbl=Pages._opPeriodLabel(f,i);
     var v=(k.actuals&&k.actuals[pk]!=null)?k.actuals[pk]:'';
-    var cp=v!==''?Pages._opKpiAchievementPct(k, parseFloat(v)):null;
     var noteVal=(k.notes&&k.notes[pk])?k.notes[pk]:'';
+    var inputHtml='';
+    var pctHtml='';
+    if(mt==='yes_no'){
+      var yv=String(v);
+      inputHtml='<select class="field-input" style="padding:5px;font-size:12px;font-weight:700;text-align:center;width:100%" onchange="Pages._opKpiDetailSave(\''+goalId+'\',\''+kpiId+'\',\''+pk+'\',this.value)">'+
+        '<option value=""'+(yv===''?' selected':'')+'>—</option>'+
+        '<option value="1"'+(yv==='1'?' selected':'')+'>نعم ✓</option>'+
+        '<option value="0"'+(yv==='0'?' selected':'')+'>لا ✗</option>'+
+      '</select>';
+      pctHtml='<div style="font-size:10px;text-align:center;font-weight:700;margin-top:3px;color:'+(yv==='1'?'var(--success-500)':yv==='0'?'var(--danger-500)':'var(--fg-4)')+'">'+
+        (yv==='1'?'محقق':yv==='0'?'غير محقق':'—')+'</div>';
+    } else {
+      var cp=v!==''?Pages._opKpiAchievementPct(k, parseFloat(v), year):null;
+      inputHtml='<input class="field-input" style="padding:5px;font-size:13px;font-weight:700;text-align:center;width:100%" type="number" min="0" value="'+UI.escHtml(String(v))+'" placeholder="—" onchange="Pages._opKpiDetailSave(\''+goalId+'\',\''+kpiId+'\',\''+pk+'\',this.value)">';
+      pctHtml=(k.target?'<div style="font-size:10px;text-align:center;font-weight:700;margin-top:3px;color:'+(cp!=null?Pages._opPctColor(cp):'var(--fg-4)')+'">'+(cp!=null?cp+'%':'—')+'</div>':'');
+    }
     cells+='<div class="op-detail-cell'+(v!==''?' filled':'')+'"><label>'+lbl+'</label>'+
-      '<input class="field-input" style="padding:5px;font-size:13px;font-weight:700;text-align:center;width:100%" type="number" min="0" value="'+UI.escHtml(String(v))+'" placeholder="—" onchange="Pages._opKpiDetailSave(\''+goalId+'\',\''+kpiId+'\',\''+pk+'\',this.value)">'+
-      (k.target?'<div style="font-size:10px;text-align:center;font-weight:700;margin-top:3px;color:'+(cp!=null?Pages._opPctColor(cp):'var(--fg-4)')+'">'+(cp!=null?cp+'%':'—')+'</div>':'')+
+      inputHtml+pctHtml+
       '<textarea class="op-kpi-note-inp" rows="1" placeholder="ملاحظة…" onblur="Pages._opKpiNotesSave(\''+goalId+'\',\''+kpiId+'\',\''+pk+'\',this.value)">'+UI.escHtml(noteVal)+'</textarea>'+
     '</div>';
   }
@@ -14773,6 +14990,7 @@ Pages.opKpiDetail = function(goalId, kpiId){
   }).join('');
   var thLblW=dir==='up'?'حد التحذير (إذا انخفض عن)':'حد التحذير (إذا ارتفع عن)';
   var thLblD=dir==='up'?'حد الخطر (إذا انخفض عن)':'حد الخطر (إذا ارتفع عن)';
+  var mtDescMap={point_in_time:'قراءة مستقلة — كل فترة تعكس الحالة الراهنة (مثل: نسبة رضا العملاء)',cumulative_ytd:'يُجمع عبر الفترات — الإنجاز = مجموع الفترات / المستهدف الكلي (مثل: عدد المستفيدين)',yes_no:'مؤشر ثنائي — تحقق أو لم يتحقق (مثل: الحصول على اعتماد)',average:'متوسط القراءات الدورية (مثل: نسبة حضور مجلس الإدارة)'};
   var settingsHtml='<details style="margin-top:14px"><summary style="cursor:pointer;font-weight:700;font-size:12px;color:var(--fg-3);padding:6px 0;list-style:none;display:flex;align-items:center;gap:6px"><i data-lucide="settings-2" style="width:13px;height:13px"></i>إعدادات المؤشر</summary>'+
     '<div style="border:1px solid var(--border-1);border-radius:10px;padding:12px 14px;margin-top:8px;background:var(--bg-1)">'+
       '<div class="form-row">'+
@@ -14785,6 +15003,17 @@ Pages.opKpiDetail = function(goalId, kpiId){
           '<select class="field-input" style="font-size:12px" onchange="Pages._opKpiSettingsSave(\''+goalId+'\',\''+kpiId+'\',\'frequency\',this.value)">'+
             '<option value="">من الهدف ('+((Pages._OPPLAN_FREQS[g.frequency||'quarterly']||{}).label||'')+')</option>'+freqOpts+
           '</select></div>'+
+      '</div>'+
+      '<div class="form-row">'+
+        '<div class="form-group" style="grid-column:1/-1"><label class="field-label" style="font-size:11px">نوع القياس</label>'+
+          '<select class="field-input" style="font-size:12px" onchange="Pages._opKpiSettingsSave(\''+goalId+'\',\''+kpiId+'\',\'measurement_type\',this.value)">'+
+            '<option value="point_in_time"'+(mt==='point_in_time'?' selected':'')+'>نقطة زمنية</option>'+
+            '<option value="cumulative_ytd"'+(mt==='cumulative_ytd'?' selected':'')+'>تراكمي (Cumulative YTD)</option>'+
+            '<option value="yes_no"'+(mt==='yes_no'?' selected':'')+'>نعم / لا (ثنائي)</option>'+
+            '<option value="average"'+(mt==='average'?' selected':'')+'>متوسط</option>'+
+          '</select>'+
+          '<div style="font-size:11px;color:var(--fg-3);margin-top:4px">'+UI.escHtml(mtDescMap[mt]||'')+'</div>'+
+        '</div>'+
       '</div>'+
       '<div class="form-row">'+
         '<div class="form-group"><label class="field-label" style="font-size:11px">المسؤول</label>'+
@@ -14808,7 +15037,10 @@ Pages.opKpiDetail = function(goalId, kpiId){
       '<button class="modal-close" onclick="UI.closeModalForce()">×</button></div>'+
     '<div class="modal-body" style="max-height:76vh;overflow-y:auto">'+
       '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px">'+
-        '<div style="flex:1;min-width:90px;text-align:center;padding:10px;border:1px solid var(--border-1);border-radius:9px;background:var(--bg-1)"><div style="font-size:10.5px;color:var(--fg-3)">الفعلي الأخير</div><div style="font-weight:800;font-size:17px;color:var(--fg-1)">'+(latest!=null?Pages._opFormatKpiVal(latest,k.unit):'—')+'</div></div>'+
+        '<div style="flex:1;min-width:90px;text-align:center;padding:10px;border:1px solid var(--border-1);border-radius:9px;background:var(--bg-1)">'+
+          '<div style="font-size:10.5px;color:var(--fg-3)">'+(mt==='cumulative_ytd'?'المجموع التراكمي':mt==='average'?'متوسط القراءات':mt==='yes_no'?'الحالة':mt==='point_in_time'?'الفعلي الأخير':'الفعلي الأخير')+'</div>'+
+          '<div style="font-weight:800;font-size:17px;color:var(--fg-1)">'+(mt==='cumulative_ytd'&&curYearActKeys.length?(function(){var s=curYearActKeys.reduce(function(a,pk3){return a+parseFloat(k.actuals[pk3]);},0);return Pages._opFormatKpiVal(s,k.unit);})():mt==='yes_no'?(latest!=null?(latest>=1?'نعم ✓':'لا ✗'):'—'):(latest!=null?Pages._opFormatKpiVal(latest,k.unit):'—'))+'</div>'+
+        '</div>'+
         '<div style="flex:1;min-width:90px;text-align:center;padding:10px;border:1px solid var(--border-1);border-radius:9px;background:var(--bg-1)"><div style="font-size:10.5px;color:var(--fg-3)">المستهدف</div><div style="font-weight:800;font-size:17px;color:var(--fg-1)">'+Pages._opFormatKpiVal(k.target,k.unit)+'</div></div>'+
         expCard+
         '<div style="flex:1;min-width:90px;text-align:center;padding:10px;border:1px solid var(--border-1);border-radius:9px;background:var(--bg-1)"><div style="font-size:10.5px;color:var(--fg-3)">نسبة التحقق</div><div style="font-weight:800;font-size:17px;color:'+(pct!=null?Pages._opPctColor(pct):'var(--fg-4)')+'">'+(pct!=null?pct+'%':'—')+'</div></div>'+
@@ -14817,6 +15049,7 @@ Pages.opKpiDetail = function(goalId, kpiId){
       '<div style="border:1px solid var(--border-1);border-radius:10px;padding:10px 8px 4px;margin-bottom:16px;background:var(--surface-0)">'+chart+'</div>'+
       gapHtml+
       '<div style="font-weight:700;font-size:12.5px;color:var(--fg-2);margin-bottom:8px;display:flex;align-items:center;gap:6px"><i data-lucide="edit-3" style="width:14px;height:14px"></i>تسجيل القيم الفعلية — '+year+'<span style="font-size:10.5px;font-weight:400;color:var(--fg-4)">(أضف ملاحظة اختيارية لكل قيمة)</span></div>'+
+      summaryHtml+
       '<div class="op-detail-grid">'+cells+'</div>'+
       linkedHtml+
       historyHtml+
@@ -14854,10 +15087,11 @@ Pages._opKpiSettingsSave = function(goalId, kpiId, field, val){
   }
   else if(field==='owner'){ k.owner=val; }
   else if(field==='direction'){ k.direction=val==='down'?'down':'up'; }
+  else if(field==='measurement_type'){ k.measurement_type=val||'point_in_time'; }
   else if(field==='warning_threshold'){ k.warning_threshold=val!==''?parseFloat(val):null; }
   else if(field==='danger_threshold'){ k.danger_threshold=val!==''?parseFloat(val):null; }
   DB.saveOpPlan(Pages._opCur.orgId,plan);
-  if(field==='frequency'||field==='direction') Pages.opKpiDetail(goalId, kpiId);
+  if(field==='frequency'||field==='direction'||field==='measurement_type') Pages.opKpiDetail(goalId, kpiId);
 };
 Pages.opPrintKpi = function(goalId, kpiId){
   var plan=DB.getOpPlan(Pages._opCur.orgId); if(!plan) return;
@@ -15265,13 +15499,20 @@ Pages.opGoalModal = function(gid){
       return '<option value="'+u.v+'"'+(selVal===u.v?' selected':'')+'>'+u.s+'</option>';
     }).join('');
     var kDir=Pages._opKpiDir(k);
-    return '<div class="op-kpi-row" style="grid-template-columns:2fr 64px 74px 58px 84px 84px 26px">'+
+    var kMt=k.measurement_type||'point_in_time';
+    return '<div class="op-kpi-row" style="grid-template-columns:2fr 64px 74px 58px 90px 84px 84px 26px">'+
       '<input class="field-input op-kpi-t" style="min-width:0" placeholder="عنوان المؤشر *" value="'+UI.escHtml(k.title||'')+'">'+
       '<input class="field-input op-kpi-b" type="number" style="max-width:64px" placeholder="الأساس" value="'+(k.baseline!=null&&k.baseline!==''?k.baseline:'')+'">'+
       '<input class="field-input op-kpi-tv" type="number" style="max-width:74px" placeholder="المستهدف" value="'+(k.target!=null?k.target:'')+'">'+
       '<select class="field-input op-kpi-dir" style="max-width:58px;font-size:11px;padding:3px 2px" title="اتجاه المؤشر">'+
         '<option value="up"'+(kDir==='up'?' selected':'')+'>⬆ أعلى</option>'+
         '<option value="down"'+(kDir==='down'?' selected':'')+'>⬇ أقل</option>'+
+      '</select>'+
+      '<select class="field-input op-kpi-mt" style="max-width:90px;font-size:11px;padding:3px 2px" title="نوع القياس">'+
+        '<option value="point_in_time"'+(kMt==='point_in_time'?' selected':'')+'>نقطة زمنية</option>'+
+        '<option value="cumulative_ytd"'+(kMt==='cumulative_ytd'?' selected':'')+'>تراكمي</option>'+
+        '<option value="yes_no"'+(kMt==='yes_no'?' selected':'')+'>نعم / لا</option>'+
+        '<option value="average"'+(kMt==='average'?' selected':'')+'>متوسط</option>'+
       '</select>'+
       '<div style="min-width:84px">'+
         '<select class="field-input op-kpi-u-sel" style="font-size:11px;padding:3px 4px" onchange="Pages._opKpiUnitChange(this)">'+unitOpts+'</select>'+
@@ -15371,8 +15612,9 @@ Pages.opSaveGoal = function(gid){
     if(u==='other'){ var uTxt=row.querySelector('.op-kpi-u-txt'); u=uTxt?(uTxt.value||'').trim():''; }
     var ownerInp=row.querySelector('.op-kpi-owner'); var kOwner=ownerInp?(ownerInp.value||'').trim():'';
     var dirSel=row.querySelector('.op-kpi-dir'); var kDir=dirSel&&dirSel.value==='down'?'down':'up';
+    var mtSel=row.querySelector('.op-kpi-mt'); var kMt=mtSel?mtSel.value:'point_in_time';
     var idInp=row.querySelector('.op-kpi-id'); var kid=idInp?idInp.value:'';
-    kpis.push({id:kid||DB.uid(),title:t,baseline:b,target:tv,unit:u,owner:kOwner,direction:kDir,actuals:{}});
+    kpis.push({id:kid||DB.uid(),title:t,baseline:b,target:tv,unit:u,owner:kOwner,direction:kDir,measurement_type:kMt||'point_in_time',actuals:{}});
   });
   var perspColor=(Pages._OPPLAN_PERSPECTIVES[persp]||{}).color||Pages._OPGOAL_COLORS[0];
   var indicator=kpis.length?kpis[0].title:'';
@@ -15388,7 +15630,7 @@ Pages.opSaveGoal = function(gid){
       g.kpis=kpis.map(function(k){
         var old=oldKpis.filter(function(x){return x.id===k.id;})[0];
         k.actuals=old?old.actuals||{}:{};
-        if(old){ k.notes=old.notes||{}; k.frequency=old.frequency||null; k.warning_threshold=old.warning_threshold!=null?old.warning_threshold:null; k.danger_threshold=old.danger_threshold!=null?old.danger_threshold:null; }
+        if(old){ k.notes=old.notes||{}; k.frequency=old.frequency||null; k.warning_threshold=old.warning_threshold!=null?old.warning_threshold:null; k.danger_threshold=old.danger_threshold!=null?old.danger_threshold:null; k.measurement_type=k.measurement_type||old.measurement_type||'point_in_time'; }
         return k;
       });
       /* تنظيف مراجع المبادرات المعلّقة: مؤشر حُذف من الهدف */
@@ -15418,11 +15660,12 @@ Pages.opGoalAddKpi = function(){
   var unitOpts='<option value="">وحدة</option>'+Pages._OPPLAN_UNITS.map(function(u){
     return '<option value="'+u.v+'">'+u.s+'</option>';
   }).join('');
-  var row=document.createElement('div'); row.className='op-kpi-row'; row.style.gridTemplateColumns='2fr 64px 74px 58px 84px 84px 26px';
+  var row=document.createElement('div'); row.className='op-kpi-row'; row.style.gridTemplateColumns='2fr 64px 74px 58px 90px 84px 84px 26px';
   row.innerHTML='<input class="field-input op-kpi-t" style="min-width:0" placeholder="عنوان المؤشر *">'+
     '<input class="field-input op-kpi-b" type="number" style="max-width:64px" placeholder="الأساس">'+
     '<input class="field-input op-kpi-tv" type="number" style="max-width:74px" placeholder="المستهدف">'+
     '<select class="field-input op-kpi-dir" style="max-width:58px;font-size:11px;padding:3px 2px" title="اتجاه المؤشر"><option value="up">⬆ أعلى</option><option value="down">⬇ أقل</option></select>'+
+    '<select class="field-input op-kpi-mt" style="max-width:90px;font-size:11px;padding:3px 2px" title="نوع القياس"><option value="point_in_time">نقطة زمنية</option><option value="cumulative_ytd">تراكمي</option><option value="yes_no">نعم / لا</option><option value="average">متوسط</option></select>'+
     '<div style="min-width:84px">'+
       '<select class="field-input op-kpi-u-sel" style="font-size:11px;padding:3px 4px" onchange="Pages._opKpiUnitChange(this)">'+unitOpts+'</select>'+
       '<input class="field-input op-kpi-u-txt" style="font-size:11px;padding:3px;margin-top:2px;display:none" placeholder="أكتب" title="وحدة مخصصة">'+
