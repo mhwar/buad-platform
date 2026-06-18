@@ -16899,30 +16899,179 @@ Pages.render_website = function(opts) {
 
 /* ════════════════ SERVICES & TOOLS (الخدمات والأدوات) — dedicated page ════════════════ */
 Pages.render_services = function(opts) {
-  if (!DB._token) {
-    document.getElementById('pg-services').innerHTML =
-      '<div class="page-header"><div><h1>الخدمات والأدوات</h1></div></div>'+
-      '<div class="card" style="text-align:center;padding:40px;color:var(--fg-2)">تتطلب هذه الصفحة الاتصال بالخادم.</div>';
-    if (typeof lucide!=='undefined') lucide.createIcons();
-    return;
+  var el = document.getElementById('pg-services');
+  var tab = Pages._servicesTab || 'tools';
+  function tabBtn(k, lbl, ic) {
+    return '<button class="hero-tab-pill'+(tab===k?' active':'')+'" onclick="Pages.switchServicesTab(\''+k+'\')">'+
+      '<i data-lucide="'+ic+'" style="width:14px;height:14px"></i>'+lbl+'</button>';
   }
-  if (Pages._site === null) {
-    document.getElementById('pg-services').innerHTML =
-      '<div class="page-header"><div><h1>الخدمات والأدوات</h1></div></div>'+
-      '<div class="card" style="text-align:center;padding:50px;color:var(--fg-3)">جارٍ التحميل…</div>';
-    DB._getSite().then(function(s){ Pages._site = s || {}; if (Nav._cur==='services') Pages.render_services({_loaded:true}); });
-    return;
-  }
-  document.getElementById('pg-services').innerHTML =
+  var header =
     '<div class="page-header"><div>'+
       '<h1>الخدمات والأدوات</h1>'+
-      '<div class="page-header-sub">تحكّم بالخدمات الاحترافية والأدوات المعروضة على الجمعيات وحدّد إتاحتها</div>'+
+      '<div class="page-header-sub">إدارة أدوات المنصة وخدمات الموقع الاحترافية</div>'+
     '</div>'+
     '<div style="display:flex;gap:8px">'+
-      '<a href="/" target="_blank" class="btn btn-ghost btn-sm" style="display:inline-flex;align-items:center;gap:6px"><i data-lucide="external-link"></i>معاينة الموقع</a>'+
-    '</div></div>'+
-    Pages._renderServicesTab();
-  if (typeof lucide!=='undefined') lucide.createIcons();
+      '<a href="/" target="_blank" class="btn btn-ghost btn-sm" style="display:inline-flex;align-items:center;gap:6px">'+
+        '<i data-lucide="external-link"></i>معاينة الموقع</a>'+
+    '</div></div>';
+  var tabBar =
+    '<div class="hero-tab-bar" style="margin-bottom:22px">'+
+      tabBtn('tools','أدوات المنصة','layout-grid')+
+      tabBtn('website','خدمات الموقع','briefcase')+
+    '</div>';
+  var body;
+  if (tab === 'tools') {
+    body = Pages._renderPlatformToolsSection();
+  } else {
+    if (!DB._token) {
+      body = '<div class="card" style="text-align:center;padding:40px;color:var(--fg-2)">تتطلب هذه الخاصية الاتصال بالخادم.</div>';
+    } else if (Pages._site === null) {
+      body = '<div class="card" style="text-align:center;padding:50px;color:var(--fg-3)">جارٍ التحميل…</div>';
+      DB._getSite().then(function(s){ Pages._site = s || {}; if (Nav._cur==='services' && (Pages._servicesTab||'tools')==='website') Pages.render_services({_loaded:true}); });
+    } else {
+      body = Pages._renderWebServicesTab();
+    }
+  }
+  el.innerHTML = header + tabBar + body;
+  if (typeof lucide !== 'undefined') lucide.createIcons();
+};
+
+Pages._servicesTab = 'tools';
+
+Pages.switchServicesTab = function(tab) {
+  Pages._servicesTab = tab;
+  Pages.render_services({_loaded:true});
+};
+
+Pages._platformTools = [
+  { key:'opplan',    label:'الخطة التشغيلية',       icon:'target',          color:'#7c3aed', desc:'الخطط التشغيلية السنوية ومتابعة المؤشرات',               navKey:'opplan',    gateType:'opplan'  },
+  { key:'stratplan', label:'الخطة الاستراتيجية',     icon:'compass',         color:'#0369a1', desc:'بناء الخطط الاستراتيجية ومتابعة الأهداف بعيدة المدى',    navKey:'stratplan', gateType:null      },
+  { key:'orgs',      label:'خطة المئة يوم',           icon:'calendar-check',  color:'#059669', desc:'متابعة مهام الجمعيات الناشئة وخطط المئة يوم',           navKey:'orgs',      gateType:null      },
+  { key:'letter',    label:'الخطابات',                icon:'mail',            color:'#d97706', desc:'إعداد وإدارة المراسلات والخطابات الرسمية',              navKey:'projects',  gateType:null      },
+  { key:'contract',  label:'العقود',                  icon:'file-text',       color:'#db2777', desc:'صياغة وإدارة عقود المشاريع والخدمات',                   navKey:'projects',  gateType:null      },
+  { key:'templates', label:'النماذج',                 icon:'layout-template', color:'#6366f1', desc:'مكتبة النماذج الاحترافية للاستخدام المتكرر',           navKey:'templates', gateType:null      },
+  { key:'website',   label:'الموقع الإلكتروني',       icon:'globe',           color:'#16a34a', desc:'إدارة الموقع الإلكتروني للجمعية وعرض خدماتها',          navKey:null,        gateType:'website' },
+  { key:'crm',       label:'إدارة المستفيدين (CRM)',  icon:'users',           color:'#0891b2', desc:'نظام إدارة وتتبع المستفيدين والتفاعلات',                navKey:null,        gateType:'crm'     },
+  { key:'resources', label:'الموارد والأدلة',         icon:'book-open',       color:'#92400e', desc:'مكتبة الأدلة والموارد التدريبية والإرشادية',            navKey:'resources', gateType:null      },
+  { key:'grants',    label:'فرص المنح',               icon:'hand-coins',      color:'#7c3aed', desc:'تجميع فرص التمويل والمنح المتاحة للجمعيات',            navKey:'grants',    gateType:null      },
+];
+
+Pages._getToolPauseStatus = function() {
+  try { return JSON.parse(localStorage.getItem('buad2_tool_paused') || '{}'); } catch(e) { return {}; }
+};
+Pages._setToolPauseStatus = function(s) {
+  localStorage.setItem('buad2_tool_paused', JSON.stringify(s));
+};
+Pages.toggleToolPause = function(key) {
+  var s = Pages._getToolPauseStatus();
+  s[key] = s[key] === 'paused' ? 'active' : 'paused';
+  Pages._setToolPauseStatus(s);
+  Pages.render_services({_loaded:true});
+};
+
+Pages._toolOrgCount = function(gateType) {
+  if (gateType === 'opplan') return DB.getOpPlanEnabled().length;
+  if (gateType === 'website') return (Pages._orgs||[]).filter(function(o){ return o.website_enabled; }).length;
+  if (gateType === 'crm') return (Pages._orgs||[]).filter(function(o){ return o.crm_enabled; }).length;
+  return null;
+};
+
+Pages._renderPlatformToolsSection = function() {
+  var paused = Pages._getToolPauseStatus();
+  var cards = Pages._platformTools.map(function(t) {
+    var isPaused = paused[t.key] === 'paused';
+    var cnt = t.gateType ? Pages._toolOrgCount(t.gateType) : null;
+    var badge = cnt !== null
+      ? '<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;background:var(--iris-50);color:var(--iris-600);font-size:11.5px;font-weight:700">'+cnt+' جمعية</span>'
+      : '<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;background:#f0fdf4;color:#16a34a;font-size:11.5px;font-weight:700">للجميع</span>';
+    if (isPaused)
+      badge = '<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;background:#fff7ed;color:#d97706;font-size:11.5px;font-weight:700">⏸ موقوفة مؤقتاً</span>';
+    var openBtn = t.navKey
+      ? '<button onclick="Nav.go(\''+t.navKey+'\')" class="btn btn-sm btn-primary" style="display:inline-flex;align-items:center;gap:5px"><i data-lucide="arrow-left" style="width:13px;height:13px"></i>فتح</button>'
+      : '';
+    var manageBtn = t.gateType
+      ? '<button onclick="Pages._openToolOrgsModal(\''+t.key+'\',\''+t.label+'\')" class="btn btn-sm btn-ghost" style="display:inline-flex;align-items:center;gap:5px"><i data-lucide="sliders" style="width:13px;height:13px"></i>إدارة التفعيل</button>'
+      : '';
+    var pauseBtn = '<button onclick="Pages.toggleToolPause(\''+t.key+'\')" class="btn btn-sm btn-ghost" style="padding:5px 9px;color:'+(isPaused?'#d97706':'var(--fg-3)')+'" title="'+(isPaused?'إلغاء الإيقاف':'إيقاف مؤقت')+'"><i data-lucide="'+(isPaused?'play':'pause-circle')+'" style="width:14px;height:14px"></i></button>';
+    return '<div class="card" style="padding:18px 20px;'+(isPaused?'opacity:.7;border:1px solid #fed7aa;':'')+'">'+
+      '<div style="display:flex;align-items:flex-start;gap:13px;margin-bottom:12px">'+
+        '<div style="width:44px;height:44px;border-radius:12px;background:'+t.color+'18;color:'+t.color+';display:flex;align-items:center;justify-content:center;flex-shrink:0">'+
+          '<i data-lucide="'+t.icon+'" style="width:20px;height:20px"></i></div>'+
+        '<div style="flex:1;min-width:0">'+
+          '<div style="font-weight:700;font-size:15px;color:var(--fg-1);margin-bottom:3px">'+UI.escHtml(t.label)+'</div>'+
+          '<div style="font-size:12.5px;color:var(--fg-3);line-height:1.5">'+UI.escHtml(t.desc)+'</div>'+
+        '</div>'+
+      '</div>'+
+      '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">'+
+        badge+
+        '<div style="display:flex;gap:5px;align-items:center">'+openBtn+manageBtn+pauseBtn+'</div>'+
+      '</div>'+
+    '</div>';
+  });
+  return '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:14px">'+cards.join('')+'</div>';
+};
+
+Pages._openToolOrgsModal = function(toolKey, toolLabel) {
+  if (!Pages._orgs && DB._token) {
+    UI.openModal(
+      '<div class="modal-header"><h3>إدارة «'+UI.escHtml(toolLabel)+'»</h3><button class="modal-close" onclick="UI.closeModalForce()">×</button></div>'+
+      '<div style="padding:30px;text-align:center;color:var(--fg-3)">جارٍ تحميل الجمعيات…</div>'
+    );
+    DB._getOrgs().then(function(list){ Pages._orgs = list || []; Pages._openToolOrgsModal(toolKey, toolLabel); });
+    return;
+  }
+  var orgs = Pages._orgs || [];
+  function isEnabled(o) {
+    if (toolKey === 'opplan') return DB.isOpPlanEnabled(o.id);
+    if (toolKey === 'website') return !!o.website_enabled;
+    if (toolKey === 'crm') return !!o.crm_enabled;
+    return false;
+  }
+  var rows = orgs.length
+    ? orgs.map(function(o) {
+        var on = isEnabled(o);
+        return '<div style="display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:1px solid var(--bg-2)">'+
+          '<div style="font-size:14px;color:var(--fg-1)">'+UI.escHtml(o.name||o.id)+'</div>'+
+          '<button onclick="Pages._toolOrgToggle(\''+toolKey+'\',\''+o.id+'\',\''+UI.escHtml(toolLabel)+'\','+(on?0:1)+')" class="btn btn-sm '+(on?'btn-danger':'btn-primary')+'" style="min-width:80px">'+
+            (on?'إيقاف':'تفعيل')+'</button>'+
+        '</div>';
+      }).join('')
+    : '<div style="padding:20px;text-align:center;color:var(--fg-3)">لا توجد جمعيات مسجّلة.</div>';
+  UI.openModal(
+    '<div class="modal-header"><h3>إدارة تفعيل «'+UI.escHtml(toolLabel)+'»</h3>'+
+    '<button class="modal-close" onclick="UI.closeModalForce()">×</button></div>'+
+    '<div style="padding:0 20px 8px;max-height:400px;overflow-y:auto">'+rows+'</div>'+
+    '<div style="padding:10px 20px;color:var(--fg-4);font-size:12px">يُطبَّق التغيير فوراً.</div>'
+  );
+  if (typeof lucide !== 'undefined') setTimeout(function(){ lucide.createIcons(); }, 50);
+};
+
+Pages._toolOrgToggle = function(toolKey, orgId, toolLabel, enable) {
+  enable = !!+enable;
+  if (toolKey === 'opplan') {
+    DB.setOpPlanEnabled(orgId, enable);
+    UI.toast(enable ? 'تم التفعيل' : 'تم الإيقاف', 'success');
+    Pages._openToolOrgsModal(toolKey, toolLabel);
+    if (Nav._cur === 'services') Pages.render_services({_loaded:true});
+  } else if (toolKey === 'website') {
+    DB._toggleOrgWebsite(orgId, enable).then(function(ok) {
+      if (ok) {
+        Pages._orgs = (Pages._orgs||[]).map(function(x){ return x.id===orgId ? Object.assign({},x,{website_enabled:enable}) : x; });
+        UI.toast(enable ? 'تم تفعيل الموقع' : 'تم إيقاف الموقع', 'success');
+        Pages._openToolOrgsModal(toolKey, toolLabel);
+        if (Nav._cur === 'services') Pages.render_services({_loaded:true});
+      } else { UI.toast('تعذّر التحديث','danger'); }
+    });
+  } else if (toolKey === 'crm') {
+    DB._toggleOrgCrm(orgId, enable).then(function(ok) {
+      if (ok) {
+        Pages._orgs = (Pages._orgs||[]).map(function(x){ return x.id===orgId ? Object.assign({},x,{crm_enabled:enable}) : x; });
+        UI.toast(enable ? 'تم تفعيل CRM' : 'تم إيقاف CRM', 'success');
+        Pages._openToolOrgsModal(toolKey, toolLabel);
+        if (Nav._cur === 'services') Pages.render_services({_loaded:true});
+      } else { UI.toast('تعذّر التحديث','danger'); }
+    });
+  }
 };
 
 /* ════════════════ SITE MANAGEMENT (إدارة الموقع) — dedicated page ════════════════ */
@@ -17376,8 +17525,8 @@ Pages.enableToolFromRequest = function(reqId, service, orgEmail, orgName){
   Pages.openReqDrawer(reqId);
 };
 
-/* ── Services tab ── */
-Pages._renderServicesTab = function(){
+/* ── Website services tab ── */
+Pages._renderWebServicesTab = function(){
   var sd = Pages._siteData();
   var svcs = sd.services;
   var cards = svcs.map(function(s, i){
