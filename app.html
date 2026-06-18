@@ -8077,11 +8077,14 @@ Pages.render_contract = function(params) {
   Pages._contractProjId = projId;
   Pages._contractPreview = false;
 
-  // One-time repair of clause corruption from the old inline-edit bug:
-  // accumulated "المادة …:" title prefixes and duplicated content paragraphs.
-  if (!contract._clauses_repaired_v1) {
+  // One-time repair of clause corruption: accumulated "المادة …:" title
+  // prefixes, duplicated content paragraphs, and English clause keys leaking
+  // into titles (e.g. "المادة الأولى: opening"). Bumped to v2 so contracts
+  // already flagged by the earlier (weaker) repair get re-processed.
+  if (!contract._clauses_repaired_v2) {
     var repaired = Pages._repairContractClauses(contract);
     contract._clauses_repaired_v1 = true;
+    contract._clauses_repaired_v2 = true;
     try { DB.saveContract(projId, contract); } catch(e) {}
   }
 
@@ -9375,26 +9378,53 @@ Pages._renumberClauses = function(clauses) {
    the paragraph list is exactly K identical copies (K>=2) of a base block. */
 Pages._dedupeClauseContent = function(content) {
   if (!content) return content;
-  var paras = content.split(/\n\s*\n/).map(function(p){ return p.trim(); }).filter(function(p){ return p.length; });
-  var n = paras.length;
+  var rawParas = content.split(/\n\s*\n/).map(function(p){ return p.trim(); }).filter(function(p){ return p.length; });
+  var n = rawParas.length;
   if (n < 2) return content;
+  // Normalize for comparison only (collapse internal whitespace) so near-identical
+  // copies — e.g. differing by stray spaces — are still detected as repetitions.
+  var norm = rawParas.map(function(p){ return p.replace(/\s+/g, ' '); });
+  // 1) Whole-block repetition: the paragraph list is K identical copies of a
+  //    base block of length L (catches "P1 P2 P3 P1 P2 P3" → "P1 P2 P3").
   for (var L = 1; L <= n/2; L++) {
     if (n % L !== 0) continue;
     var ok = true;
     for (var i = L; i < n && ok; i++) {
-      if (paras[i] !== paras[i % L]) ok = false;
+      if (norm[i] !== norm[i % L]) ok = false;
     }
-    if (ok) return paras.slice(0, L).join('\n\n');
+    if (ok) return rawParas.slice(0, L).join('\n\n');
   }
+  // 2) Collapse consecutive identical paragraphs (catches "P1 P1 P2 P2 P3 P3").
+  var out = [rawParas[0]];
+  for (var j = 1; j < n; j++) {
+    if (norm[j] !== norm[j-1]) out.push(rawParas[j]);
+  }
+  if (out.length < n) return out.join('\n\n');
   return content;
 };
 
+/* key → canonical {title, baseTitle} across all built-in templates. Used to
+   restore Arabic titles when an English clause key leaked into the title. */
+Pages._contractClauseTitleMap = function() {
+  if (Pages.__clauseTitleMap) return Pages.__clauseTitleMap;
+  var map = {};
+  for (var tk in CONTRACT_TEMPLATES) {
+    (CONTRACT_TEMPLATES[tk].clauses || []).forEach(function(cl) {
+      if (cl.key && !map[cl.key]) map[cl.key] = { title: cl.title || null, baseTitle: cl.baseTitle || null };
+    });
+  }
+  Pages.__clauseTitleMap = map;
+  return map;
+};
+
 /* One-time repair of an existing contract's clauses: fix accumulated title
-   prefixes and de-duplicate repeated content. Idempotent and flagged so it
-   only persists once per contract. Returns true if anything changed. */
+   prefixes, English keys leaked into titles, and de-duplicate repeated content.
+   Idempotent and flagged so it only persists once per contract. Returns true
+   if anything changed. */
 Pages._repairContractClauses = function(c) {
   if (!c || !Array.isArray(c.clauses)) return false;
   var changed = false;
+  var titleMap = Pages._contractClauseTitleMap();
   c.clauses.forEach(function(cl) {
     if (typeof cl.content === 'string') {
       var deduped = Pages._dedupeClauseContent(cl.content);
@@ -9405,6 +9435,19 @@ Pages._repairContractClauses = function(c) {
     if (/^\s*المادة\s+[^:：]*[:：]/.test(cl.title || '')) {
       var rebuilt = cl.title.replace(/^\s*المادة\s+[^:：]*[:：]\s*/, '');
       if (rebuilt !== stripped) changed = true; // multiple prefixes existed
+    }
+    // Restore Arabic title when an English clause key leaked in (e.g. "opening").
+    var canon = cl.key && titleMap[cl.key];
+    if (canon) {
+      if (canon.title) {
+        // Explicit-title clause (e.g. opening "أطراف العقد") — used verbatim.
+        if (cl.title !== canon.title) { cl.title = canon.title; changed = true; }
+      } else if (canon.baseTitle && (stripped === cl.key || stripped === '')) {
+        // Base equals the English key (or empty) → restore the Arabic baseTitle.
+        // Renumbering below fixes the ordinal.
+        cl.title = 'المادة الأولى: ' + canon.baseTitle;
+        changed = true;
+      }
     }
   });
   // Renumber to normalize titles (also fixes the accumulated-prefix case)
@@ -9507,11 +9550,23 @@ Pages.addClauseFromLib = function(projId, contractId, clauseKey) {
   if (!libClause) {
     libClause = {key:clauseKey, baseTitle: libItem ? libItem.title : clauseKey, content:''};
   }
-  var enabledCount = c.clauses.filter(function(x){return x.enabled!==false;}).length;
+  // A clause may carry an explicit (unnumbered) title — e.g. the opening
+  // "أطراف العقد" block — used verbatim. Otherwise number it with baseTitle,
+  // counting only the existing numbered (المادة …:) clauses as ordinal slots.
+  var newTitle;
+  if (libClause.title) {
+    newTitle = libClause.title;
+  } else {
+    var numberedCount = c.clauses.filter(function(x){
+      return x.enabled!==false && /^\s*المادة\s+[^:：]*[:：]/.test(x.title||'');
+    }).length;
+    var baseT = libClause.baseTitle || (libItem && libItem.title) || clauseKey;
+    newTitle = 'المادة '+(CONTRACT_ORDINALS[numberedCount]||(numberedCount+1).toString())+': '+baseT;
+  }
   var newClause = {
     id: DB.uid(),
     key: clauseKey,
-    title: 'المادة '+(CONTRACT_ORDINALS[enabledCount]||(enabledCount+1).toString())+': '+(libClause.baseTitle||libItem&&libItem.title||clauseKey),
+    title: newTitle,
     content: libClause.content||'',
     enabled: true
   };
@@ -9522,34 +9577,10 @@ Pages.addClauseFromLib = function(projId, contractId, clauseKey) {
   Pages._refreshContractClausesPanel(projId, contractId);
 };
 
-Pages.saveClauseContent = function(projId, contractId, clauseIdx, el) {
-  if (Pages._contractPreview) return;
-  // Guard: skip saves triggered by DOM removal (replaceChild detaches the element
-  // and fires a spurious blur — this would re-join fragments from the NEW DOM
-  // producing duplicate content). Only save when the element is still connected.
-  if (el && !el.isConnected) return;
-  var contracts = DB.getContracts(projId);
-  var c = contracts.find(function(x){return x.id===contractId;});
-  if (!c) return;
-  var enabledClauses = c.clauses.filter(function(x){return x.enabled!==false;});
-  var cl = enabledClauses[clauseIdx];
-  if (!cl) return;
-  // Reassemble content from ALL fragments of this clause across pages
-  var fragments = document.querySelectorAll('.clause-body[data-clause-idx="'+clauseIdx+'"]');
-  if (fragments.length > 1) {
-    var parts = [];
-    fragments.forEach(function(f) { parts.push(f.innerText || f.textContent || ''); });
-    cl.content = parts.join('\n\n').replace(/\n{3,}/g, '\n\n').trim();
-  } else {
-    cl.content = el.innerText || el.textContent || '';
-  }
-  c.updated = (new Date()).toISOString().slice(0,10);
-  DB.saveContract(projId, c);
-  // Re-paginate after a brief delay (let the blur complete first)
-  if (fragments.length > 1) {
-    setTimeout(function(){ Pages._refreshContractCanvas(c); }, 50);
-  }
-};
+/* Removed: legacy inline clause-body save. Clause editing now happens only in
+   the text modal (openContractClauseTextEditor → saveContractClauseText), which
+   writes c.clauses[].content directly by id. The old DOM-readback path resolved
+   {{variables}} away and duplicated paragraphs across multi-page fragments. */
 
 /* Save a contract clause's content by clause id (used by the variable picker). */
 Pages.updateContractClauseContentVal = function(projId, contractId, clauseId, val) {
@@ -10965,23 +10996,12 @@ Pages.saveContractNow = function(silent) {
   var contracts = DB.getContracts(Pages._contractProjId);
   var c = contracts.find(function(x){return x.id===Pages._contractId;});
   if (!c) return;
-  var enabledClauses = c.clauses.filter(function(x){return x.enabled!==false;});
-  // Group fragments by clauseIdx and reassemble multi-page splits
-  var fragmentsByIdx = {};
-  document.querySelectorAll('.clause-body[data-clause-idx]').forEach(function(el) {
-    var idx = parseInt(el.getAttribute('data-clause-idx'), 10);
-    if (!fragmentsByIdx[idx]) fragmentsByIdx[idx] = [];
-    fragmentsByIdx[idx].push(el.innerText || el.textContent || '');
-  });
-  Object.keys(fragmentsByIdx).forEach(function(idxStr) {
-    var idx = parseInt(idxStr, 10);
-    var cl = enabledClauses[idx];
-    if (!cl) return;
-    var parts = fragmentsByIdx[idx];
-    cl.content = (parts.length > 1)
-      ? parts.join('\n\n').replace(/\n{3,}/g, '\n\n').trim()
-      : parts[0];
-  });
+  // Clause content is authoritative in c.clauses[].content — written by the
+  // clause text modal (saveContractClauseText) and the add/move/delete handlers.
+  // Do NOT rebuild content from the rendered DOM: reading .clause-body innerText
+  // resolves {{variables}} into their values (losing the placeholders) and
+  // re-joining multi-page fragments accumulated duplicate paragraphs on every
+  // autosave cycle (the 26-page corruption). This is now a lightweight persist.
   c.updated = (new Date()).toISOString().slice(0,10);
   DB.saveContract(Pages._contractProjId, c);
   if (!silent && UI.toast) UI.toast('تم الحفظ');
@@ -11074,11 +11094,17 @@ Pages.duplicateBuiltInTemplate = function(tplKey) {
   var tpl = CONTRACT_TEMPLATES[tplKey];
   if (!tpl) return;
   var today = (new Date()).toISOString().slice(0,10);
-  var clauses = tpl.clauses.map(function(cl, i) {
+  var dupOrd = 0;
+  var clauses = tpl.clauses.map(function(cl) {
+    // Respect an explicit title (e.g. opening "أطراف العقد") — no "المادة"
+    // prefix and no ordinal consumed; otherwise auto-number with baseTitle.
+    var title;
+    if (cl.title) { title = cl.title; }
+    else { title = 'المادة '+(CONTRACT_ORDINALS[dupOrd]||(dupOrd+1).toString())+': '+(cl.baseTitle||cl.key); dupOrd++; }
     return {
       id: DB.uid(),
       key: cl.key,
-      title: 'المادة '+(CONTRACT_ORDINALS[i]||(i+1).toString())+': '+(cl.baseTitle||cl.key),
+      title: title,
       content: cl.content,
       enabled: true
     };
@@ -11108,8 +11134,12 @@ Pages.copyBuiltInTemplate = function(tplKey) {
   var tpl = CONTRACT_TEMPLATES[tplKey];
   if (!tpl) return;
   var today = (new Date()).toISOString().slice(0,10);
-  var clauses = tpl.clauses.map(function(cl, i) {
-    return { id: DB.uid(), key: cl.key, title: 'المادة '+(CONTRACT_ORDINALS[i]||(i+1).toString())+': '+(cl.baseTitle||cl.key), content: cl.content, enabled: true };
+  var copyOrd = 0;
+  var clauses = tpl.clauses.map(function(cl) {
+    var title;
+    if (cl.title) { title = cl.title; }
+    else { title = 'المادة '+(CONTRACT_ORDINALS[copyOrd]||(copyOrd+1).toString())+': '+(cl.baseTitle||cl.key); copyOrd++; }
+    return { id: DB.uid(), key: cl.key, title: title, content: cl.content, enabled: true };
   });
   var newTpl = {
     id: DB.uid(), name: tpl.title + ' (نسخة)', template_type: tplKey,
