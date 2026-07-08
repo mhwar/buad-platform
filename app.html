@@ -2942,6 +2942,18 @@ DB.deleteContract = function(pid, cid) {
   fin.contracts = (fin.contracts||[]).filter(function(x){ return x.id!==cid; });
   DB.saveFin(pid, fin);
 };
+/* Event plan (تخطيط الفعالية) — optional per-project object, stored alongside
+   letters/contracts inside fin so it syncs with the same workspace pipeline.
+   Absent on older projects → tab simply shows its empty state. */
+DB.getEventPlan = function(pid) {
+  var fin = DB.getFin(pid);
+  return fin.eventplan || null;
+};
+DB.saveEventPlan = function(pid, ep) {
+  var fin = DB.getFin(pid);
+  fin.eventplan = ep;
+  DB.saveFin(pid, fin);
+};
 DB.getCustomTemplates = function() {
   try { return JSON.parse(localStorage.getItem('buad2_custom_templates')||'[]'); } catch(e){ return []; }
 };
@@ -5189,11 +5201,13 @@ Pages.render_fin = function(params) {
       '<button class="hero-tab-pill'+(tab==='entries'?' active':'')+'" onclick="Pages.switchFinTab(\'entries\',\''+projId+'\')"><i data-lucide="receipt"></i>سجل المعاملات</button>' +
       '<button class="hero-tab-pill'+(tab==='contracts'?' active':'')+'" onclick="Pages.switchFinTab(\'contracts\',\''+projId+'\')"><i data-lucide="file-text"></i>العقود'+(contracts.length?'<span class="hero-tab-count">'+contracts.length+'</span>':'')+' </button>' +
       '<button class="hero-tab-pill'+(tab==='letters'?' active':'')+'" onclick="Pages.switchFinTab(\'letters\',\''+projId+'\')"><i data-lucide="mail"></i>الخطابات'+(DB.getLetters(projId).length?'<span class="hero-tab-count">'+DB.getLetters(projId).length+'</span>':'')+' </button>' +
+      '<button class="hero-tab-pill'+(tab==='event'?' active':'')+'" onclick="Pages.switchFinTab(\'event\',\''+projId+'\')"><i data-lucide="party-popper"></i>تخطيط الفعالية'+(function(){var ep=DB.getEventPlan(projId);var n=ep?(ep.agenda||[]).length:0;return n?'<span class="hero-tab-count">'+n+'</span>':'';})()+' </button>' +
     '</div>' +
     '<div id="fin-tab-overview" class="tab-content'+(tab==='overview'?' active':'')+'"></div>' +
     '<div id="fin-tab-entries" class="tab-content'+(tab==='entries'?' active':'')+'"></div>' +
     '<div id="fin-tab-contracts" class="tab-content'+(tab==='contracts'?' active':'')+'"></div>' +
-    '<div id="fin-tab-letters" class="tab-content'+(tab==='letters'?' active':'')+'"></div>';
+    '<div id="fin-tab-letters" class="tab-content'+(tab==='letters'?' active':'')+'"></div>' +
+    '<div id="fin-tab-event" class="tab-content'+(tab==='event'?' active':'')+'"></div>';
 
   document.getElementById('top-actions').innerHTML =
     '<button class="btn btn-sm" onclick="Nav.go(\'projects\')" style="display:inline-flex;align-items:center;gap:5px"><i data-lucide="arrow-right"></i>المشاريع</button>';
@@ -5201,6 +5215,8 @@ Pages.render_fin = function(params) {
   Pages._finProjId = projId;
   if (tab==='entries') Pages.renderFinEntries(projId);
   else if (tab==='contracts') Pages.renderFinContracts(projId);
+  else if (tab==='letters') Pages.renderFinLetters(projId);
+  else if (tab==='event') Pages.renderFinEvent(projId);
   else Pages.renderFinOverview(projId);
 };
 
@@ -5210,16 +5226,18 @@ Pages.switchFinTab = function(tab, projId) {
     var match = (tab==='overview' && b.textContent.indexOf('نظرة عامة')>=0) ||
                 (tab==='entries' && b.textContent.indexOf('سجل المعاملات')>=0) ||
                 (tab==='contracts' && b.textContent.indexOf('العقود')>=0) ||
-                (tab==='letters' && b.textContent.indexOf('الخطابات')>=0);
+                (tab==='letters' && b.textContent.indexOf('الخطابات')>=0) ||
+                (tab==='event' && b.textContent.indexOf('تخطيط الفعالية')>=0);
     b.classList.toggle('active', match);
   });
-  ['overview','entries','contracts','letters'].forEach(function(t){
+  ['overview','entries','contracts','letters','event'].forEach(function(t){
     var el = document.getElementById('fin-tab-'+t);
     if (el) el.className = 'tab-content'+(t===tab?' active':'');
   });
   if (tab==='overview') Pages.renderFinOverview(projId);
   else if (tab==='contracts') Pages.renderFinContracts(projId);
   else if (tab==='letters') Pages.renderFinLetters(projId);
+  else if (tab==='event') Pages.renderFinEvent(projId);
   else Pages.renderFinEntries(projId);
 };
 
@@ -5334,6 +5352,473 @@ Pages.deleteLetterConfirm = function(projId, letterId) {
       '<button class="btn btn-sm btn-danger" onclick="DB.deleteLetter(\''+projId+'\',\''+letterId+'\');UI.closeModalForce();Pages.renderFinLetters(\''+projId+'\')">حذف</button>' +
     '</div>'
   );
+};
+
+/* ─────────────────────────────────────────────────────────────
+   EVENT PLANNING (تخطيط الفعالية) — per-project tab
+   agenda + committees/teams + tasks, stored in fin.eventplan
+   ───────────────────────────────────────────────────────────── */
+
+Pages._eventSubTab = 'agenda';
+
+Pages._newEventPlan = function() {
+  return { info:{}, agenda:[], committees:[], tasks:[] };
+};
+
+Pages._eventPlanOf = function(projId) {
+  return DB.getEventPlan(projId) || Pages._newEventPlan();
+};
+
+Pages._AGENDA_TYPES = ['افتتاح','قرآن كريم','كلمة','عرض مرئي','فقرة','جلسة حوارية','ورشة عمل','تكريم','استراحة','ختام','أخرى'];
+
+Pages.renderFinEvent = function(projId) {
+  var ep = Pages._eventPlanOf(projId);
+  var sub = Pages._eventSubTab || 'agenda';
+  var info = ep.info || {};
+
+  function subBtn(k, lbl, icon, count) {
+    return '<button class="hero-tab-pill'+(sub===k?' active':'')+'" onclick="Pages.switchEventSub(\''+k+'\',\''+projId+'\')">'+
+      '<i data-lucide="'+icon+'" style="width:14px;height:14px"></i>'+lbl+
+      (count?'<span class="hero-tab-count">'+count+'</span>':'')+'</button>';
+  }
+
+  var doneTasks = (ep.tasks||[]).filter(function(t){return t.done;}).length;
+
+  var infoCard =
+    '<div class="card" style="padding:16px 20px;margin-bottom:16px">'+
+      '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap">'+
+        '<div style="display:flex;align-items:center;gap:13px">'+
+          '<div style="width:44px;height:44px;border-radius:12px;background:var(--iris-50);color:var(--iris-600);display:flex;align-items:center;justify-content:center;flex-shrink:0"><i data-lucide="party-popper" style="width:20px;height:20px"></i></div>'+
+          '<div>'+
+            '<div style="font-weight:700;font-size:15px;color:var(--fg-1)">'+UI.escHtml(info.name||'فعالية بدون اسم — أدخل التفاصيل')+'</div>'+
+            '<div style="font-size:12.5px;color:var(--fg-3);margin-top:3px;display:flex;gap:14px;flex-wrap:wrap">'+
+              (info.date?'<span><i data-lucide="calendar" style="width:12px;height:12px;vertical-align:-2px"></i> '+UI.escHtml(info.date)+(info.time?' · '+UI.escHtml(info.time):'')+'</span>':'')+
+              (info.venue?'<span><i data-lucide="map-pin" style="width:12px;height:12px;vertical-align:-2px"></i> '+UI.escHtml(info.venue)+'</span>':'')+
+              (info.expected?'<span><i data-lucide="users" style="width:12px;height:12px;vertical-align:-2px"></i> '+UI.escHtml(info.expected)+' مدعو</span>':'')+
+            '</div>'+
+          '</div>'+
+        '</div>'+
+        '<div style="display:flex;gap:6px">'+
+          '<button class="btn btn-sm" onclick="Pages.printEventAgenda(\''+projId+'\')" style="display:inline-flex;align-items:center;gap:5px"><i data-lucide="printer"></i>طباعة</button>'+
+          '<button class="btn btn-primary btn-sm" onclick="Pages.eventInfoModal(\''+projId+'\')" style="display:inline-flex;align-items:center;gap:5px"><i data-lucide="pencil"></i>تفاصيل الفعالية</button>'+
+        '</div>'+
+      '</div>'+
+      (info.notes?'<div style="margin-top:10px;font-size:12.5px;color:var(--fg-2);background:var(--bg-2);border-radius:8px;padding:9px 12px">'+UI.escHtml(info.notes)+'</div>':'')+
+    '</div>';
+
+  var body;
+  if (sub === 'committees') body = Pages._renderEventCommittees(projId, ep);
+  else if (sub === 'tasks') body = Pages._renderEventTasks(projId, ep);
+  else body = Pages._renderEventAgenda(projId, ep);
+
+  document.getElementById('fin-tab-event').innerHTML =
+    infoCard +
+    '<div class="hero-tab-bar" style="margin-bottom:16px">'+
+      subBtn('agenda','الأجندة والفقرات','list-ordered',(ep.agenda||[]).length)+
+      subBtn('committees','اللجان والفرق','users',(ep.committees||[]).length)+
+      subBtn('tasks','المهام','check-square',(ep.tasks||[]).length?doneTasks+'/'+(ep.tasks||[]).length:0)+
+    '</div>'+
+    body;
+  if (typeof lucide !== 'undefined') lucide.createIcons({rootElement: document.getElementById('fin-tab-event')});
+};
+
+Pages.switchEventSub = function(sub, projId) {
+  Pages._eventSubTab = sub;
+  Pages.renderFinEvent(projId);
+};
+
+/* ── Agenda (الأجندة وتوزيع الفقرات) ── */
+Pages._renderEventAgenda = function(projId, ep) {
+  var items = ep.agenda || [];
+  var rows = '';
+  if (!items.length) {
+    rows = '<div class="proj-row-empty" style="margin-bottom:var(--space-4)">'+
+      '<div style="margin-bottom:var(--space-3)"><i data-lucide="list-ordered" style="width:32px;height:32px;opacity:.3"></i></div>'+
+      '<p style="margin-bottom:var(--space-3)">لم تُضف أي فقرة للأجندة بعد — ابدأ ببناء برنامج الفعالية</p>'+
+      '<button class="btn btn-primary btn-sm" onclick="Pages.eventAgendaModal(\''+projId+'\')" style="display:inline-flex;align-items:center;gap:6px"><i data-lucide="plus"></i>إضافة فقرة</button>'+
+      '</div>';
+  } else {
+    rows = items.map(function(it, i) {
+      return '<div class="card" style="padding:13px 16px;margin-bottom:8px;display:flex;align-items:center;gap:13px;flex-wrap:wrap">'+
+        '<div style="min-width:64px;text-align:center;flex-shrink:0">'+
+          '<div style="font-weight:800;font-size:14px;color:var(--iris-600)">'+UI.escHtml(it.time||'—')+'</div>'+
+          (it.dur?'<div style="font-size:11px;color:var(--fg-4)">'+UI.escHtml(it.dur)+' د</div>':'')+
+        '</div>'+
+        '<div style="width:1px;align-self:stretch;background:var(--border)"></div>'+
+        '<div style="flex:1;min-width:170px">'+
+          '<div style="font-weight:700;font-size:14px;color:var(--fg-1)">'+UI.escHtml(it.title||'فقرة')+'</div>'+
+          '<div style="font-size:12px;color:var(--fg-3);margin-top:2px;display:flex;gap:12px;flex-wrap:wrap">'+
+            (it.presenter?'<span><i data-lucide="mic" style="width:11px;height:11px;vertical-align:-1px"></i> '+UI.escHtml(it.presenter)+'</span>':'<span style="color:var(--fg-4)">لم يُحدَّد المقدِّم</span>')+
+            (it.notes?'<span>'+UI.escHtml(it.notes)+'</span>':'')+
+          '</div>'+
+        '</div>'+
+        '<span class="badge indigo sm">'+UI.escHtml(it.type||'فقرة')+'</span>'+
+        '<div style="display:flex;gap:4px;align-items:center">'+
+          '<button class="btn btn-sm" onclick="Pages.moveEventAgendaItem(\''+projId+'\','+i+',-1)" style="padding:4px 8px"'+(i===0?' disabled':'')+'><i data-lucide="chevron-up"></i></button>'+
+          '<button class="btn btn-sm" onclick="Pages.moveEventAgendaItem(\''+projId+'\','+i+',1)" style="padding:4px 8px"'+(i===items.length-1?' disabled':'')+'><i data-lucide="chevron-down"></i></button>'+
+          '<button class="btn btn-sm" onclick="Pages.eventAgendaModal(\''+projId+'\',\''+it.id+'\')" style="padding:4px 10px"><i data-lucide="pencil"></i></button>'+
+          '<button class="btn btn-sm" onclick="Pages.deleteEventAgendaItem(\''+projId+'\',\''+it.id+'\')" style="padding:4px 8px;color:var(--danger-600)"><i data-lucide="trash-2"></i></button>'+
+        '</div>'+
+      '</div>';
+    }).join('');
+  }
+  return '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--space-4)">'+
+      '<div>'+
+        '<h3 style="font-size:var(--font-md);font-weight:700;color:var(--fg-1)">أجندة الفعالية</h3>'+
+        '<div style="font-size:var(--font-xs);color:var(--fg-3);margin-top:2px">'+items.length+' فقرة · رتّب الفقرات ووزّعها على المقدّمين</div>'+
+      '</div>'+
+      '<button class="btn btn-primary btn-sm" onclick="Pages.eventAgendaModal(\''+projId+'\')" style="display:inline-flex;align-items:center;gap:6px"><i data-lucide="plus"></i>فقرة جديدة</button>'+
+    '</div>'+rows;
+};
+
+Pages.eventAgendaModal = function(projId, itemId) {
+  var ep = Pages._eventPlanOf(projId);
+  var it = itemId ? (ep.agenda||[]).find(function(x){return x.id===itemId;}) : null;
+  it = it || {};
+  var typeOpts = Pages._AGENDA_TYPES.map(function(t){
+    return '<option value="'+t+'"'+((it.type||'فقرة')===t?' selected':'')+'>'+t+'</option>';
+  }).join('');
+  UI.openModal(
+    '<div class="modal-header"><h3>'+(itemId?'تعديل الفقرة':'فقرة جديدة')+'</h3><button class="modal-close" onclick="UI.closeModalForce()">×</button></div>'+
+    '<div class="modal-body">'+
+      '<div class="form-group"><label class="field-label">عنوان الفقرة <span style="color:var(--danger)">*</span></label><input id="ev-ag-title" class="field-input" placeholder="مثال: كلمة راعي الحفل" value="'+UI.escHtml(it.title||'')+'"></div>'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">'+
+        '<div class="form-group"><label class="field-label">الوقت</label><input id="ev-ag-time" class="field-input" type="time" value="'+UI.escHtml(it.time||'')+'"></div>'+
+        '<div class="form-group"><label class="field-label">المدة (دقيقة)</label><input id="ev-ag-dur" class="field-input" type="number" min="1" placeholder="10" value="'+UI.escHtml(it.dur||'')+'"></div>'+
+        '<div class="form-group"><label class="field-label">النوع</label><select id="ev-ag-type" class="field-input">'+typeOpts+'</select></div>'+
+      '</div>'+
+      '<div class="form-group"><label class="field-label">المقدِّم / المسؤول</label><input id="ev-ag-presenter" class="field-input" placeholder="اسم مقدّم الفقرة أو الجهة المسؤولة" value="'+UI.escHtml(it.presenter||'')+'"></div>'+
+      '<div class="form-group"><label class="field-label">ملاحظات</label><input id="ev-ag-notes" class="field-input" placeholder="تجهيزات، عرض تقديمي، متطلبات…" value="'+UI.escHtml(it.notes||'')+'"></div>'+
+    '</div>'+
+    '<div class="modal-footer" style="display:flex;gap:var(--space-2);justify-content:flex-end">'+
+      '<button class="btn btn-sm" onclick="UI.closeModalForce()">إلغاء</button>'+
+      '<button class="btn btn-sm btn-primary" onclick="Pages.saveEventAgendaItem(\''+projId+'\','+(itemId?'\''+itemId+'\'':'null')+')">حفظ</button>'+
+    '</div>'
+  );
+};
+
+Pages.saveEventAgendaItem = function(projId, itemId) {
+  var title = (document.getElementById('ev-ag-title').value||'').trim();
+  if (!title) { UI.toast('أدخل عنوان الفقرة','danger'); return; }
+  var ep = Pages._eventPlanOf(projId);
+  if (!ep.agenda) ep.agenda = [];
+  var it = itemId ? ep.agenda.find(function(x){return x.id===itemId;}) : null;
+  if (!it) { it = { id: DB.uid() }; ep.agenda.push(it); }
+  it.title = title;
+  it.time = document.getElementById('ev-ag-time').value;
+  it.dur = document.getElementById('ev-ag-dur').value;
+  it.type = document.getElementById('ev-ag-type').value;
+  it.presenter = (document.getElementById('ev-ag-presenter').value||'').trim();
+  it.notes = (document.getElementById('ev-ag-notes').value||'').trim();
+  ep.agenda.sort(function(a,b){ return (a.time&&b.time) ? a.time.localeCompare(b.time) : 0; });
+  DB.saveEventPlan(projId, ep);
+  UI.closeModalForce();
+  UI.toast('تم الحفظ');
+  Pages.renderFinEvent(projId);
+};
+
+Pages.moveEventAgendaItem = function(projId, i, dir) {
+  var ep = Pages._eventPlanOf(projId);
+  var j = i + dir;
+  if (!ep.agenda || j<0 || j>=ep.agenda.length) return;
+  var t = ep.agenda[i]; ep.agenda[i]=ep.agenda[j]; ep.agenda[j]=t;
+  DB.saveEventPlan(projId, ep);
+  Pages.renderFinEvent(projId);
+};
+
+Pages.deleteEventAgendaItem = function(projId, itemId) {
+  var ep = Pages._eventPlanOf(projId);
+  var it = (ep.agenda||[]).find(function(x){return x.id===itemId;});
+  UI.openModal(
+    '<div class="modal-header"><h3>حذف الفقرة</h3><button class="modal-close" onclick="UI.closeModalForce()">×</button></div>'+
+    '<div class="modal-body"><p style="color:var(--fg-2)">حذف فقرة "<strong>'+UI.escHtml(it?it.title:'')+'</strong>" من الأجندة؟</p></div>'+
+    '<div class="modal-footer" style="display:flex;gap:var(--space-2);justify-content:flex-end">'+
+      '<button class="btn btn-sm" onclick="UI.closeModalForce()">إلغاء</button>'+
+      '<button class="btn btn-sm btn-danger" onclick="Pages._doDeleteEventAgendaItem(\''+projId+'\',\''+itemId+'\')">حذف</button>'+
+    '</div>'
+  );
+};
+Pages._doDeleteEventAgendaItem = function(projId, itemId) {
+  var ep = Pages._eventPlanOf(projId);
+  ep.agenda = (ep.agenda||[]).filter(function(x){return x.id!==itemId;});
+  DB.saveEventPlan(projId, ep);
+  UI.closeModalForce();
+  Pages.renderFinEvent(projId);
+};
+
+/* ── Committees & teams (اللجان والفرق) ── */
+Pages._renderEventCommittees = function(projId, ep) {
+  var coms = ep.committees || [];
+  var cards = '';
+  if (!coms.length) {
+    cards = '<div class="proj-row-empty" style="margin-bottom:var(--space-4)">'+
+      '<div style="margin-bottom:var(--space-3)"><i data-lucide="users" style="width:32px;height:32px;opacity:.3"></i></div>'+
+      '<p style="margin-bottom:var(--space-3)">لم تُشكَّل أي لجنة بعد — أنشئ اللجان ووزّع الأعضاء والمهام</p>'+
+      '<button class="btn btn-primary btn-sm" onclick="Pages.eventCommitteeModal(\''+projId+'\')" style="display:inline-flex;align-items:center;gap:6px"><i data-lucide="plus"></i>إضافة لجنة</button>'+
+      '</div>';
+  } else {
+    cards = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px">'+
+      coms.map(function(c) {
+        var members = (c.members||'').split(/[\n،,]+/).map(function(m){return m.trim();}).filter(Boolean);
+        var openTasks = (ep.tasks||[]).filter(function(t){return t.committee_id===c.id && !t.done;}).length;
+        return '<div class="card" style="padding:16px 18px">'+
+          '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:10px">'+
+            '<div style="display:flex;align-items:center;gap:10px">'+
+              '<div style="width:38px;height:38px;border-radius:10px;background:var(--iris-50);color:var(--iris-600);display:flex;align-items:center;justify-content:center;flex-shrink:0"><i data-lucide="users" style="width:17px;height:17px"></i></div>'+
+              '<div>'+
+                '<div style="font-weight:700;font-size:14px;color:var(--fg-1)">'+UI.escHtml(c.name||'لجنة')+'</div>'+
+                (c.head?'<div style="font-size:12px;color:var(--fg-3)">رئيس اللجنة: '+UI.escHtml(c.head)+(c.phone?' · '+UI.escHtml(c.phone):'')+'</div>':'')+
+              '</div>'+
+            '</div>'+
+            '<div style="display:flex;gap:4px">'+
+              '<button class="btn btn-sm" onclick="Pages.eventCommitteeModal(\''+projId+'\',\''+c.id+'\')" style="padding:4px 9px"><i data-lucide="pencil"></i></button>'+
+              '<button class="btn btn-sm" onclick="Pages.deleteEventCommittee(\''+projId+'\',\''+c.id+'\')" style="padding:4px 8px;color:var(--danger-600)"><i data-lucide="trash-2"></i></button>'+
+            '</div>'+
+          '</div>'+
+          (c.duties?'<div style="font-size:12.5px;color:var(--fg-2);margin-bottom:10px">'+UI.escHtml(c.duties)+'</div>':'')+
+          (members.length?'<div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px">'+members.map(function(m){return '<span class="badge sm" style="background:var(--bg-2);color:var(--fg-2)">'+UI.escHtml(m)+'</span>';}).join('')+'</div>':'')+
+          '<div style="font-size:11.5px;color:var(--fg-4);display:flex;gap:12px">'+
+            '<span>'+members.length+' عضو</span>'+
+            (openTasks?'<span style="color:var(--warn-600,#d97706)">'+openTasks+' مهمة مفتوحة</span>':'')+
+          '</div>'+
+        '</div>';
+      }).join('')+'</div>';
+  }
+  return '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--space-4)">'+
+      '<div>'+
+        '<h3 style="font-size:var(--font-md);font-weight:700;color:var(--fg-1)">اللجان والفرق</h3>'+
+        '<div style="font-size:var(--font-xs);color:var(--fg-3);margin-top:2px">'+coms.length+' لجنة · شكّل الفرق ووزّع المسؤوليات</div>'+
+      '</div>'+
+      '<button class="btn btn-primary btn-sm" onclick="Pages.eventCommitteeModal(\''+projId+'\')" style="display:inline-flex;align-items:center;gap:6px"><i data-lucide="plus"></i>لجنة جديدة</button>'+
+    '</div>'+cards;
+};
+
+Pages.eventCommitteeModal = function(projId, cid) {
+  var ep = Pages._eventPlanOf(projId);
+  var c = cid ? (ep.committees||[]).find(function(x){return x.id===cid;}) : null;
+  c = c || {};
+  UI.openModal(
+    '<div class="modal-header"><h3>'+(cid?'تعديل اللجنة':'لجنة جديدة')+'</h3><button class="modal-close" onclick="UI.closeModalForce()">×</button></div>'+
+    '<div class="modal-body">'+
+      '<div class="form-group"><label class="field-label">اسم اللجنة <span style="color:var(--danger)">*</span></label><input id="ev-cm-name" class="field-input" placeholder="مثال: اللجنة الإعلامية" value="'+UI.escHtml(c.name||'')+'"></div>'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'+
+        '<div class="form-group"><label class="field-label">رئيس اللجنة</label><input id="ev-cm-head" class="field-input" placeholder="الاسم" value="'+UI.escHtml(c.head||'')+'"></div>'+
+        '<div class="form-group"><label class="field-label">رقم التواصل</label><input id="ev-cm-phone" class="field-input" type="tel" placeholder="05xxxxxxxx" value="'+UI.escHtml(c.phone||'')+'"></div>'+
+      '</div>'+
+      '<div class="form-group"><label class="field-label">الأعضاء</label><textarea id="ev-cm-members" class="field-input" rows="3" placeholder="اسم في كل سطر أو مفصولة بفواصل">'+UI.escHtml(c.members||'')+'</textarea></div>'+
+      '<div class="form-group"><label class="field-label">المسؤوليات</label><textarea id="ev-cm-duties" class="field-input" rows="2" placeholder="نطاق عمل اللجنة ومهامها">'+UI.escHtml(c.duties||'')+'</textarea></div>'+
+    '</div>'+
+    '<div class="modal-footer" style="display:flex;gap:var(--space-2);justify-content:flex-end">'+
+      '<button class="btn btn-sm" onclick="UI.closeModalForce()">إلغاء</button>'+
+      '<button class="btn btn-sm btn-primary" onclick="Pages.saveEventCommittee(\''+projId+'\','+(cid?'\''+cid+'\'':'null')+')">حفظ</button>'+
+    '</div>'
+  );
+};
+
+Pages.saveEventCommittee = function(projId, cid) {
+  var name = (document.getElementById('ev-cm-name').value||'').trim();
+  if (!name) { UI.toast('أدخل اسم اللجنة','danger'); return; }
+  var ep = Pages._eventPlanOf(projId);
+  if (!ep.committees) ep.committees = [];
+  var c = cid ? ep.committees.find(function(x){return x.id===cid;}) : null;
+  if (!c) { c = { id: DB.uid() }; ep.committees.push(c); }
+  c.name = name;
+  c.head = (document.getElementById('ev-cm-head').value||'').trim();
+  c.phone = (document.getElementById('ev-cm-phone').value||'').trim();
+  c.members = (document.getElementById('ev-cm-members').value||'').trim();
+  c.duties = (document.getElementById('ev-cm-duties').value||'').trim();
+  DB.saveEventPlan(projId, ep);
+  UI.closeModalForce();
+  UI.toast('تم الحفظ');
+  Pages.renderFinEvent(projId);
+};
+
+Pages.deleteEventCommittee = function(projId, cid) {
+  var ep = Pages._eventPlanOf(projId);
+  var c = (ep.committees||[]).find(function(x){return x.id===cid;});
+  UI.openModal(
+    '<div class="modal-header"><h3>حذف اللجنة</h3><button class="modal-close" onclick="UI.closeModalForce()">×</button></div>'+
+    '<div class="modal-body"><p style="color:var(--fg-2)">حذف "<strong>'+UI.escHtml(c?c.name:'')+'</strong>"؟ ستبقى مهامها بدون لجنة.</p></div>'+
+    '<div class="modal-footer" style="display:flex;gap:var(--space-2);justify-content:flex-end">'+
+      '<button class="btn btn-sm" onclick="UI.closeModalForce()">إلغاء</button>'+
+      '<button class="btn btn-sm btn-danger" onclick="Pages._doDeleteEventCommittee(\''+projId+'\',\''+cid+'\')">حذف</button>'+
+    '</div>'
+  );
+};
+Pages._doDeleteEventCommittee = function(projId, cid) {
+  var ep = Pages._eventPlanOf(projId);
+  ep.committees = (ep.committees||[]).filter(function(x){return x.id!==cid;});
+  (ep.tasks||[]).forEach(function(t){ if(t.committee_id===cid) t.committee_id=''; });
+  DB.saveEventPlan(projId, ep);
+  UI.closeModalForce();
+  Pages.renderFinEvent(projId);
+};
+
+/* ── Tasks (مهام التحضير) ── */
+Pages._renderEventTasks = function(projId, ep) {
+  var tasks = ep.tasks || [];
+  var comName = function(cid) {
+    var c = (ep.committees||[]).find(function(x){return x.id===cid;});
+    return c ? c.name : '';
+  };
+  var rows = '';
+  if (!tasks.length) {
+    rows = '<div class="proj-row-empty" style="margin-bottom:var(--space-4)">'+
+      '<div style="margin-bottom:var(--space-3)"><i data-lucide="check-square" style="width:32px;height:32px;opacity:.3"></i></div>'+
+      '<p style="margin-bottom:var(--space-3)">لا توجد مهام تحضيرية بعد</p>'+
+      '<button class="btn btn-primary btn-sm" onclick="Pages.eventTaskModal(\''+projId+'\')" style="display:inline-flex;align-items:center;gap:6px"><i data-lucide="plus"></i>إضافة مهمة</button>'+
+      '</div>';
+  } else {
+    var sorted = tasks.slice().sort(function(a,b){ return (a.done?1:0)-(b.done?1:0); });
+    rows = sorted.map(function(t) {
+      var overdue = !t.done && t.due && t.due < (new Date()).toISOString().slice(0,10);
+      return '<div class="card" style="padding:11px 15px;margin-bottom:7px;display:flex;align-items:center;gap:12px;'+(t.done?'opacity:.6':'')+'">'+
+        '<input type="checkbox" '+(t.done?'checked':'')+' onchange="Pages.toggleEventTask(\''+projId+'\',\''+t.id+'\')" style="width:17px;height:17px;cursor:pointer;flex-shrink:0">'+
+        '<div style="flex:1;min-width:140px">'+
+          '<div style="font-weight:600;font-size:13.5px;color:var(--fg-1);'+(t.done?'text-decoration:line-through':'')+'">'+UI.escHtml(t.title||'مهمة')+'</div>'+
+          '<div style="font-size:11.5px;color:var(--fg-3);margin-top:1px;display:flex;gap:10px;flex-wrap:wrap">'+
+            (t.assignee?'<span>'+UI.escHtml(t.assignee)+'</span>':'')+
+            (comName(t.committee_id)?'<span class="badge sm" style="background:var(--iris-50);color:var(--iris-600)">'+UI.escHtml(comName(t.committee_id))+'</span>':'')+
+            (t.due?'<span style="'+(overdue?'color:var(--danger-600);font-weight:700':'')+'">'+(overdue?'متأخرة · ':'')+UI.escHtml(t.due)+'</span>':'')+
+          '</div>'+
+        '</div>'+
+        '<button class="btn btn-sm" onclick="Pages.eventTaskModal(\''+projId+'\',\''+t.id+'\')" style="padding:4px 9px"><i data-lucide="pencil"></i></button>'+
+        '<button class="btn btn-sm" onclick="Pages.deleteEventTask(\''+projId+'\',\''+t.id+'\')" style="padding:4px 8px;color:var(--danger-600)"><i data-lucide="trash-2"></i></button>'+
+      '</div>';
+    }).join('');
+  }
+  var done = tasks.filter(function(t){return t.done;}).length;
+  return '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--space-4)">'+
+      '<div>'+
+        '<h3 style="font-size:var(--font-md);font-weight:700;color:var(--fg-1)">مهام التحضير</h3>'+
+        '<div style="font-size:var(--font-xs);color:var(--fg-3);margin-top:2px">'+done+' من '+tasks.length+' مكتملة</div>'+
+      '</div>'+
+      '<button class="btn btn-primary btn-sm" onclick="Pages.eventTaskModal(\''+projId+'\')" style="display:inline-flex;align-items:center;gap:6px"><i data-lucide="plus"></i>مهمة جديدة</button>'+
+    '</div>'+rows;
+};
+
+Pages.eventTaskModal = function(projId, tid) {
+  var ep = Pages._eventPlanOf(projId);
+  var t = tid ? (ep.tasks||[]).find(function(x){return x.id===tid;}) : null;
+  t = t || {};
+  var comOpts = '<option value="">— بدون لجنة —</option>'+(ep.committees||[]).map(function(c){
+    return '<option value="'+c.id+'"'+(t.committee_id===c.id?' selected':'')+'>'+UI.escHtml(c.name)+'</option>';
+  }).join('');
+  UI.openModal(
+    '<div class="modal-header"><h3>'+(tid?'تعديل المهمة':'مهمة جديدة')+'</h3><button class="modal-close" onclick="UI.closeModalForce()">×</button></div>'+
+    '<div class="modal-body">'+
+      '<div class="form-group"><label class="field-label">المهمة <span style="color:var(--danger)">*</span></label><input id="ev-tk-title" class="field-input" placeholder="مثال: حجز القاعة وتجهيز الصوتيات" value="'+UI.escHtml(t.title||'')+'"></div>'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'+
+        '<div class="form-group"><label class="field-label">المسؤول</label><input id="ev-tk-assignee" class="field-input" placeholder="الاسم" value="'+UI.escHtml(t.assignee||'')+'"></div>'+
+        '<div class="form-group"><label class="field-label">تاريخ الاستحقاق</label><input id="ev-tk-due" class="field-input" type="date" value="'+UI.escHtml(t.due||'')+'"></div>'+
+      '</div>'+
+      '<div class="form-group"><label class="field-label">اللجنة</label><select id="ev-tk-com" class="field-input">'+comOpts+'</select></div>'+
+    '</div>'+
+    '<div class="modal-footer" style="display:flex;gap:var(--space-2);justify-content:flex-end">'+
+      '<button class="btn btn-sm" onclick="UI.closeModalForce()">إلغاء</button>'+
+      '<button class="btn btn-sm btn-primary" onclick="Pages.saveEventTask(\''+projId+'\','+(tid?'\''+tid+'\'':'null')+')">حفظ</button>'+
+    '</div>'
+  );
+};
+
+Pages.saveEventTask = function(projId, tid) {
+  var title = (document.getElementById('ev-tk-title').value||'').trim();
+  if (!title) { UI.toast('أدخل عنوان المهمة','danger'); return; }
+  var ep = Pages._eventPlanOf(projId);
+  if (!ep.tasks) ep.tasks = [];
+  var t = tid ? ep.tasks.find(function(x){return x.id===tid;}) : null;
+  if (!t) { t = { id: DB.uid(), done:false }; ep.tasks.push(t); }
+  t.title = title;
+  t.assignee = (document.getElementById('ev-tk-assignee').value||'').trim();
+  t.due = document.getElementById('ev-tk-due').value;
+  t.committee_id = document.getElementById('ev-tk-com').value;
+  DB.saveEventPlan(projId, ep);
+  UI.closeModalForce();
+  UI.toast('تم الحفظ');
+  Pages.renderFinEvent(projId);
+};
+
+Pages.toggleEventTask = function(projId, tid) {
+  var ep = Pages._eventPlanOf(projId);
+  var t = (ep.tasks||[]).find(function(x){return x.id===tid;});
+  if (!t) return;
+  t.done = !t.done;
+  DB.saveEventPlan(projId, ep);
+  Pages.renderFinEvent(projId);
+};
+
+Pages.deleteEventTask = function(projId, tid) {
+  var ep = Pages._eventPlanOf(projId);
+  ep.tasks = (ep.tasks||[]).filter(function(x){return x.id!==tid;});
+  DB.saveEventPlan(projId, ep);
+  Pages.renderFinEvent(projId);
+};
+
+/* ── Event info (تفاصيل الفعالية) ── */
+Pages.eventInfoModal = function(projId) {
+  var ep = Pages._eventPlanOf(projId);
+  var info = ep.info || {};
+  UI.openModal(
+    '<div class="modal-header"><h3>تفاصيل الفعالية</h3><button class="modal-close" onclick="UI.closeModalForce()">×</button></div>'+
+    '<div class="modal-body">'+
+      '<div class="form-group"><label class="field-label">اسم الفعالية / الملتقى</label><input id="ev-in-name" class="field-input" placeholder="مثال: ملتقى العمل التطوعي الأول" value="'+UI.escHtml(info.name||'')+'"></div>'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'+
+        '<div class="form-group"><label class="field-label">التاريخ</label><input id="ev-in-date" class="field-input" type="date" value="'+UI.escHtml(info.date||'')+'"></div>'+
+        '<div class="form-group"><label class="field-label">وقت البدء</label><input id="ev-in-time" class="field-input" type="time" value="'+UI.escHtml(info.time||'')+'"></div>'+
+      '</div>'+
+      '<div style="display:grid;grid-template-columns:2fr 1fr;gap:10px">'+
+        '<div class="form-group"><label class="field-label">المكان / القاعة</label><input id="ev-in-venue" class="field-input" placeholder="المدينة — القاعة" value="'+UI.escHtml(info.venue||'')+'"></div>'+
+        '<div class="form-group"><label class="field-label">عدد المدعوين</label><input id="ev-in-expected" class="field-input" type="number" min="0" placeholder="200" value="'+UI.escHtml(info.expected||'')+'"></div>'+
+      '</div>'+
+      '<div class="form-group"><label class="field-label">ملاحظات عامة</label><textarea id="ev-in-notes" class="field-input" rows="2" placeholder="الجمهور المستهدف، الرعاة، البروتوكول…">'+UI.escHtml(info.notes||'')+'</textarea></div>'+
+    '</div>'+
+    '<div class="modal-footer" style="display:flex;gap:var(--space-2);justify-content:flex-end">'+
+      '<button class="btn btn-sm" onclick="UI.closeModalForce()">إلغاء</button>'+
+      '<button class="btn btn-sm btn-primary" onclick="Pages.saveEventInfo(\''+projId+'\')">حفظ</button>'+
+    '</div>'
+  );
+};
+
+Pages.saveEventInfo = function(projId) {
+  var ep = Pages._eventPlanOf(projId);
+  ep.info = {
+    name: (document.getElementById('ev-in-name').value||'').trim(),
+    date: document.getElementById('ev-in-date').value,
+    time: document.getElementById('ev-in-time').value,
+    venue: (document.getElementById('ev-in-venue').value||'').trim(),
+    expected: document.getElementById('ev-in-expected').value,
+    notes: (document.getElementById('ev-in-notes').value||'').trim()
+  };
+  DB.saveEventPlan(projId, ep);
+  UI.closeModalForce();
+  UI.toast('تم الحفظ');
+  Pages.renderFinEvent(projId);
+};
+
+/* ── Print (طباعة الأجندة واللجان) ── */
+Pages.printEventAgenda = function(projId) {
+  var ep = Pages._eventPlanOf(projId);
+  var info = ep.info || {};
+  var esc = UI.escHtml;
+  var agendaRows = (ep.agenda||[]).map(function(it, i) {
+    return '<tr><td>'+(i+1)+'</td><td>'+esc(it.time||'—')+'</td><td>'+esc(it.dur?it.dur+' د':'—')+'</td><td>'+esc(it.title||'')+'</td><td>'+esc(it.type||'')+'</td><td>'+esc(it.presenter||'—')+'</td></tr>';
+  }).join('');
+  var comRows = (ep.committees||[]).map(function(c) {
+    return '<tr><td>'+esc(c.name||'')+'</td><td>'+esc(c.head||'—')+'</td><td>'+esc((c.members||'').split(/[\n،,]+/).map(function(m){return m.trim();}).filter(Boolean).join('، ')||'—')+'</td><td>'+esc(c.duties||'—')+'</td></tr>';
+  }).join('');
+  var w = window.open('', '_blank');
+  if (!w) { UI.toast('اسمح بالنوافذ المنبثقة للطباعة','danger'); return; }
+  w.document.write(
+    '<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="utf-8"><title>'+esc(info.name||'أجندة الفعالية')+'</title>'+
+    '<style>body{font-family:Tahoma,Arial,sans-serif;padding:28px;color:#111}h1{font-size:20px;margin:0 0 4px}h2{font-size:15px;margin:26px 0 8px;border-bottom:2px solid #333;padding-bottom:4px}.meta{color:#555;font-size:12.5px;margin-bottom:6px}table{width:100%;border-collapse:collapse;font-size:12.5px}th,td{border:1px solid #999;padding:6px 9px;text-align:right}th{background:#f0f0f0}@media print{body{padding:0}}</style></head><body>'+
+    '<h1>'+esc(info.name||'أجندة الفعالية')+'</h1>'+
+    '<div class="meta">'+[info.date, info.time, info.venue, info.expected?info.expected+' مدعو':''].filter(Boolean).map(esc).join(' · ')+'</div>'+
+    '<h2>الأجندة</h2>'+
+    (agendaRows?'<table><tr><th>#</th><th>الوقت</th><th>المدة</th><th>الفقرة</th><th>النوع</th><th>المقدِّم</th></tr>'+agendaRows+'</table>':'<div class="meta">لا توجد فقرات.</div>')+
+    (comRows?'<h2>اللجان والفرق</h2><table><tr><th>اللجنة</th><th>الرئيس</th><th>الأعضاء</th><th>المسؤوليات</th></tr>'+comRows+'</table>':'')+
+    '<script>window.onload=function(){window.print();};<\/script></body></html>'
+  );
+  w.document.close();
 };
 
 /* ─────────────────────────────────────────────────────────────
