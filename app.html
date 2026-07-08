@@ -6127,9 +6127,10 @@ Pages.eventImportExportModal = function(projId) {
   UI.openModal(
     '<div class="modal-header"><h3>استيراد / تصدير خطة الفعالية</h3><button class="modal-close" onclick="UI.closeModalForce()">×</button></div>'+
     '<div style="padding:14px 20px 16px">'+
-      row('upload','استيراد ملف تعبئة','اختر ملف خطة (JSON) لتعبئة الحقول — بدمج أو استبدال','Pages.importEventPlanFile(\''+projId+'\')')+
-      row('download','تصدير نسخة من الخطة','ملف كامل يمكن استيراده في مشروع آخر أو حفظه احتياطياً','Pages.exportEventPlanJson(\''+projId+'\')')+
-      row('file-down','تنزيل قالب التعبئة','قالب جاهز بمثال معبأ — حرّره ثم استورده لتعبئة الخطة دفعة واحدة','Pages.downloadEventPlanTemplate()')+
+      row('upload','استيراد ملف تعبئة','اختر ملف Excel (أو JSON) لتعبئة الحقول — بدمج أو استبدال','Pages.importEventPlanFile(\''+projId+'\')')+
+      row('sheet','تصدير Excel','مصنّف بأوراق عربية لكل قسم — يفتح في Excel ويُشارك مع الفريق','Pages.exportEventPlanXlsx(\''+projId+'\')')+
+      row('file-down','تنزيل قالب Excel للتعبئة','قالب بورقة تعليمات وأمثلة — عبّئه في Excel ثم استورده','Pages.downloadEventPlanTemplateXlsx()')+
+      row('braces','نسخة JSON كاملة','نسخ احتياطي بدقة كاملة — للنقل بين المشاريع','Pages.exportEventPlanJson(\''+projId+'\')')+
     '</div>'
   );
   if (typeof lucide !== 'undefined') setTimeout(function(){ lucide.createIcons(); }, 50);
@@ -6187,34 +6188,274 @@ Pages.downloadEventPlanTemplate = function() {
   UI.toast('نُزِّل القالب — عبّئه ثم استورده');
 };
 
+/* ── Excel (xlsx) support — SheetJS loaded lazily from CDN ── */
+Pages._loadXlsxLib = function() {
+  if (typeof XLSX !== 'undefined') return Promise.resolve();
+  if (Pages._xlsxLoading) return Pages._xlsxLoading;
+  Pages._xlsxLoading = new Promise(function(resolve, reject) {
+    var s = document.createElement('script');
+    s.src = 'https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js';
+    s.onload = function(){ resolve(); };
+    s.onerror = function(){ Pages._xlsxLoading = null; reject(new Error('load failed')); };
+    document.head.appendChild(s);
+  });
+  return Pages._xlsxLoading;
+};
+
+/* Arabic value maps (export) and reverse maps (import) */
+Pages._XL_INV_STATUS = {invited:'مدعو', confirmed:'مؤكد الحضور', declined:'اعتذر'};
+Pages._XL_IMPACT = {high:'عالٍ', medium:'متوسط', low:'منخفض'};
+Pages._xlInvStatusKey = function(v) {
+  v = (v||'').toString().trim();
+  if (/مؤكد/.test(v)) return 'confirmed';
+  if (/اعتذر|رفض/.test(v)) return 'declined';
+  return 'invited';
+};
+Pages._xlImpactKey = function(v) {
+  v = (v||'').toString().trim();
+  if (/عال|مرتفع/.test(v)) return 'high';
+  if (/منخفض|ضعيف/.test(v)) return 'low';
+  return 'medium';
+};
+Pages._xlYes = function(v) { return /نعم|صح|✓|yes|true|1/i.test((v||'').toString().trim()); };
+
+/* build the workbook rows for a plan (shared by export + template) */
+Pages._planToXlsxSheets = function(ep) {
+  var info = ep.info || {}, c = ep.concept || {};
+  var sheets = [];
+  sheets.push(['التعريف', 'aoa', [
+    ['الحقل','القيمة'],
+    ['اسم الفعالية', info.name||''],
+    ['التاريخ', info.date||''],
+    ['وقت البدء', info.time||''],
+    ['المكان', info.venue||''],
+    ['عدد المدعوين', info.expected||''],
+    ['ملاحظات عامة', info.notes||''],
+    ['الفكرة', c.idea||''],
+    ['النبذة التعريفية', c.about||''],
+    ['المستهدفات', c.goals||''],
+    ['المدينة', c.city||''],
+    ['القاعة', c.hall||''],
+    ['رابط الخريطة', c.map||'']
+  ]]);
+  function push(name, rows) { if (rows.length) sheets.push([name, 'json', rows]); }
+  push('المؤشرات', (c.kpis||[]).map(function(k){ return {'المؤشر':k.name||'', 'المستهدف':k.target||'', 'المتحقق':k.actual||''}; }));
+  push('الأجندة', (ep.agenda||[]).map(function(it){
+    var ex = it.extra||{};
+    return {'الوقت':it.time||'', 'المدة (دقيقة)':it.dur||'', 'الفقرة':it.title||'', 'النوع':it.type||'',
+      'المقدِّم/المسؤول':it.presenter||'', 'المتحدثون':ex.speakers||'', 'مدير الجلسة':ex.moderator||'', 'ملاحظات':it.notes||''};
+  }));
+  push('الدعوات الرئيسية', (ep.invites||[]).map(function(v){
+    return {'الاسم':v.name||'', 'الصفة/الجهة':v.org||'', 'الحالة':Pages._XL_INV_STATUS[v.status||'invited'], 'ملاحظات':v.notes||''};
+  }));
+  push('المتحدثون', (ep.speakers||[]).map(function(s){
+    return {'الاسم':s.name||'', 'الصفة':s.title||'', 'محور المشاركة':s.topic||'', 'الجوال':s.phone||'', 'مؤكد':(s.status==='confirmed'?'نعم':'لا')};
+  }));
+  push('الرعاة', (ep.sponsors||[]).map(function(s){
+    return {'الراعي':s.name||'', 'المستوى':s.level||'', 'المساهمة':s.contribution||'', 'جهة الاتصال':s.contact||'', 'ملاحظات':s.notes||''};
+  }));
+  push('اللجان', (ep.committees||[]).map(function(cm){
+    return {'اللجنة':cm.name||'', 'الرئيس':cm.head||'', 'التواصل':cm.phone||'', 'الأعضاء':(cm.members||'').replace(/\n+/g,'، '), 'المسؤوليات':cm.duties||''};
+  }));
+  push('المهام', (ep.tasks||[]).map(function(t){
+    var com = (ep.committees||[]).find(function(x){return x.id===t.committee_id;});
+    return {'المهمة':t.title||'', 'المسؤول':t.assignee||'', 'تاريخ الاستحقاق':t.due||'', 'اللجنة':(com?com.name:''), 'مكتملة':(t.done?'نعم':'لا')};
+  }));
+  push('الميزانية', (ep.budget||[]).map(function(b){
+    return {'البند':b.item||'', 'الفئة':b.cat||'', 'الكمية':b.qty||'', 'تكلفة الوحدة':b.cost||'', 'ملاحظات':b.notes||''};
+  }));
+  push('المخاطر', (ep.risks||[]).map(function(r){
+    return {'الخطر':r.risk||'', 'الأثر':Pages._XL_IMPACT[r.impact||'medium'], 'إجراء التخفيف':r.mitigation||'', 'المسؤول':r.owner||''};
+  }));
+  return sheets;
+};
+
+Pages._buildXlsxWorkbook = function(sheets) {
+  var wb = XLSX.utils.book_new();
+  wb.Workbook = {Views: [{RTL: true}]};
+  sheets.forEach(function(sh) {
+    var ws = sh[1]==='aoa' ? XLSX.utils.aoa_to_sheet(sh[2]) : XLSX.utils.json_to_sheet(sh[2]);
+    var cols = sh[1]==='aoa' ? [{wch:20},{wch:60}] :
+      Object.keys(sh[2][0]||{}).map(function(k){ return {wch: Math.max(14, Math.min(40, k.length+12))}; });
+    ws['!cols'] = cols;
+    XLSX.utils.book_append_sheet(wb, ws, sh[0]);
+  });
+  return wb;
+};
+
+Pages.exportEventPlanXlsx = function(projId) {
+  var ep = Pages._eventPlanOf(projId);
+  Pages._loadXlsxLib().then(function() {
+    var wb = Pages._buildXlsxWorkbook(Pages._planToXlsxSheets(ep));
+    XLSX.writeFile(wb, 'خطة-الفعالية — '+((ep.info&&ep.info.name)||'الفعالية')+'.xlsx');
+    UI.closeModalForce();
+    UI.toast('صُدِّر ملف Excel');
+  }).catch(function(){ UI.toast('تعذّر تحميل مكتبة Excel — تحقق من الاتصال','danger'); });
+};
+
+Pages.downloadEventPlanTemplateXlsx = function() {
+  Pages._loadXlsxLib().then(function() {
+    var example = {
+      info: {name:'ملتقى العمل التطوعي الأول', date:'2026-09-15', time:'16:00', venue:'أبها — قاعة المؤتمرات', expected:'300', notes:''},
+      concept: {idea:'ملتقى يجمع الجمعيات الناشئة لتبادل الخبرات', about:'نبذة تعريفية شاملة عن الفعالية وجمهورها ورسالتها.', goals:'تمكين 50 جمعية ناشئة\nبناء 20 شراكة جديدة', city:'أبها', hall:'قاعة المؤتمرات الكبرى', map:'https://maps.google.com/…',
+        kpis:[{name:'عدد الحضور', target:'300', actual:''}]},
+      agenda: [{time:'16:30', dur:'45', title:'الجلسة الحوارية', type:'جلسة حوارية', presenter:'', notes:'', extra:{speakers:'د. فلان، أ. فلانة', moderator:'أ. فلان'}}],
+      invites: [{name:'معالي أمين المنطقة', org:'الأمانة', status:'invited', notes:''}],
+      speakers: [{name:'د. فلان الفلاني', title:'مستشار التنمية', topic:'مستقبل العمل الأهلي', phone:'05xxxxxxxx', status:'pending'}],
+      sponsors: [{name:'شركة …', level:'ذهبي', contribution:'50,000 ر.س', contact:'', notes:''}],
+      committees: [{name:'اللجنة الإعلامية', head:'', phone:'', members:'عضو 1، عضو 2', duties:'التغطية الإعلامية والتصوير'}],
+      tasks: [{title:'حجز القاعة وتوقيع العقد', assignee:'', due:'2026-08-01', done:false}],
+      budget: [{item:'إيجار القاعة', cat:'قاعة وتجهيزات', qty:'1', cost:'15000', notes:''}],
+      risks: [{risk:'اعتذار المتحدث الرئيسي', impact:'high', mitigation:'متحدث احتياطي مؤكد مسبقاً', owner:'اللجنة التنظيمية'}]
+    };
+    var sheets = Pages._planToXlsxSheets(example);
+    sheets.unshift(['تعليمات', 'aoa', [
+      ['قالب تعبئة خطة الفعالية — منصة بُعد'],
+      [''],
+      ['طريقة الاستخدام:'],
+      ['1. عبّئ الأوراق التالية ببيانات فعاليتك (كل ورقة اختيارية — احذف صفوف الأمثلة).'],
+      ['2. احفظ الملف ثم استورده من زر (استيراد / تصدير) داخل تبويب تخطيط الفعالية.'],
+      ['3. عند الاستيراد اختر «دمج» لتعبئة الفراغات وإلحاق الجديد، أو «استبدال كامل».'],
+      [''],
+      ['القيم المسموحة:'],
+      ['حالة الدعوة', 'مدعو / مؤكد الحضور / اعتذر'],
+      ['أثر الخطر', 'عالٍ / متوسط / منخفض'],
+      ['مؤكد / مكتملة', 'نعم / لا'],
+      ['نوع الفقرة', Pages._AGENDA_TYPES.join(' / ')],
+      ['فئة الميزانية', Pages._BUDGET_CATS.join(' / ')],
+      ['مستوى الرعاية', Pages._SPONSOR_LEVELS.join(' / ')]
+    ]]);
+    var wb = Pages._buildXlsxWorkbook(sheets);
+    XLSX.writeFile(wb, 'قالب-تعبئة-خطة-الفعالية.xlsx');
+    UI.closeModalForce();
+    UI.toast('نُزِّل القالب — عبّئه في Excel ثم استورده');
+  }).catch(function(){ UI.toast('تعذّر تحميل مكتبة Excel — تحقق من الاتصال','danger'); });
+};
+
+/* convert an imported workbook into a plan object */
+Pages._xlsxToPlan = function(wb) {
+  var plan = {};
+  function sheet(name) {
+    var key = Object.keys(wb.Sheets).find(function(n){ return n.trim() === name; });
+    return key ? wb.Sheets[key] : null;
+  }
+  function rows(name) {
+    var ws = sheet(name);
+    if (!ws) return [];
+    return XLSX.utils.sheet_to_json(ws, {raw:false, defval:''}).map(function(r) {
+      var o = {};
+      Object.keys(r).forEach(function(k){ o[k.trim()] = (r[k]==null?'':String(r[k])).trim(); });
+      return o;
+    });
+  }
+  /* التعريف — label/value pairs */
+  var infoWs = sheet('التعريف');
+  if (infoWs) {
+    var pairs = XLSX.utils.sheet_to_json(infoWs, {header:1, raw:false, defval:''});
+    var kv = {};
+    pairs.forEach(function(row){ if (row && row[0]) kv[String(row[0]).trim()] = (row[1]==null?'':String(row[1])).trim(); });
+    plan.info = {name:kv['اسم الفعالية']||'', date:kv['التاريخ']||'', time:kv['وقت البدء']||'', venue:kv['المكان']||'', expected:kv['عدد المدعوين']||'', notes:kv['ملاحظات عامة']||''};
+    plan.concept = {idea:kv['الفكرة']||'', about:kv['النبذة التعريفية']||'', goals:kv['المستهدفات']||'', city:kv['المدينة']||'', hall:kv['القاعة']||'', map:kv['رابط الخريطة']||''};
+  }
+  var kpis = rows('المؤشرات').filter(function(r){return r['المؤشر'];}).map(function(r){
+    return {name:r['المؤشر'], target:r['المستهدف']||'', actual:r['المتحقق']||''};
+  });
+  if (kpis.length) { plan.concept = plan.concept || {}; plan.concept.kpis = kpis; }
+  var ag = rows('الأجندة').filter(function(r){return r['الفقرة'];}).map(function(r){
+    var type = r['النوع'] || 'فقرة';
+    var extra = {};
+    if (r['المتحدثون']) extra.speakers = r['المتحدثون'];
+    if (r['مدير الجلسة']) extra.moderator = r['مدير الجلسة'];
+    return {time:r['الوقت']||'', dur:r['المدة (دقيقة)']||r['المدة']||'', title:r['الفقرة'], type:type, presenter:r['المقدِّم/المسؤول']||r['المقدم']||'', notes:r['ملاحظات']||'', extra:extra};
+  });
+  if (ag.length) plan.agenda = ag;
+  var iv = rows('الدعوات الرئيسية').filter(function(r){return r['الاسم'];}).map(function(r){
+    return {name:r['الاسم'], org:r['الصفة/الجهة']||r['الجهة']||'', status:Pages._xlInvStatusKey(r['الحالة']), notes:r['ملاحظات']||''};
+  });
+  if (iv.length) plan.invites = iv;
+  var sp = rows('المتحدثون').filter(function(r){return r['الاسم'];}).map(function(r){
+    return {name:r['الاسم'], title:r['الصفة']||'', topic:r['محور المشاركة']||'', phone:r['الجوال']||'', status:Pages._xlYes(r['مؤكد'])?'confirmed':'pending'};
+  });
+  if (sp.length) plan.speakers = sp;
+  var sn = rows('الرعاة').filter(function(r){return r['الراعي']||r['الاسم'];}).map(function(r){
+    var lv = (r['المستوى']||'').trim();
+    return {name:r['الراعي']||r['الاسم'], level:Pages._SPONSOR_LEVELS.indexOf(lv)>=0?lv:'شريك', contribution:r['المساهمة']||'', contact:r['جهة الاتصال']||'', notes:r['ملاحظات']||''};
+  });
+  if (sn.length) plan.sponsors = sn;
+  var cm = rows('اللجان').filter(function(r){return r['اللجنة'];}).map(function(r){
+    return {name:r['اللجنة'], head:r['الرئيس']||'', phone:r['التواصل']||'', members:r['الأعضاء']||'', duties:r['المسؤوليات']||''};
+  });
+  if (cm.length) plan.committees = cm;
+  var tk = rows('المهام').filter(function(r){return r['المهمة'];}).map(function(r){
+    return {title:r['المهمة'], assignee:r['المسؤول']||'', due:r['تاريخ الاستحقاق']||'', done:Pages._xlYes(r['مكتملة']), _committee_name:(r['اللجنة']||'').trim()};
+  });
+  if (tk.length) plan.tasks = tk;
+  var bg = rows('الميزانية').filter(function(r){return r['البند'];}).map(function(r){
+    var cat = (r['الفئة']||'').trim();
+    return {item:r['البند'], cat:Pages._BUDGET_CATS.indexOf(cat)>=0?cat:'أخرى', qty:r['الكمية']||'', cost:(r['تكلفة الوحدة']||'').replace(/[^\d.]/g,''), notes:r['ملاحظات']||''};
+  });
+  if (bg.length) plan.budget = bg;
+  var rk = rows('المخاطر').filter(function(r){return r['الخطر'];}).map(function(r){
+    return {risk:r['الخطر'], impact:Pages._xlImpactKey(r['الأثر']), mitigation:r['إجراء التخفيف']||'', owner:r['المسؤول']||''};
+  });
+  if (rk.length) plan.risks = rk;
+  return plan;
+};
+
+Pages._confirmImportModal = function(projId, fileName) {
+  UI.openModal(
+    '<div class="modal-header"><h3>استيراد خطة الفعالية</h3><button class="modal-close" onclick="UI.closeModalForce()">×</button></div>'+
+    '<div class="modal-body"><p style="color:var(--fg-2);font-size:13.5px;line-height:1.8">كيف تريد تطبيق الملف «<strong>'+UI.escHtml(fileName)+'</strong>»؟</p>'+
+    '<ul style="padding-right:20px;color:var(--fg-3);font-size:12.5px;line-height:1.9;margin-top:6px">'+
+      '<li><strong>دمج:</strong> يملأ الحقول الفارغة ويُلحق العناصر الجديدة دون المساس بالموجود.</li>'+
+      '<li><strong>استبدال:</strong> يستبدل الخطة الحالية بالكامل بمحتوى الملف.</li>'+
+    '</ul></div>'+
+    '<div class="modal-footer" style="display:flex;gap:var(--space-2);justify-content:flex-end">'+
+      '<button class="btn btn-sm" onclick="UI.closeModalForce()">إلغاء</button>'+
+      '<button class="btn btn-sm btn-danger" onclick="Pages._applyImportedEventPlan(\''+projId+'\',\'replace\')">استبدال كامل</button>'+
+      '<button class="btn btn-sm btn-primary" onclick="Pages._applyImportedEventPlan(\''+projId+'\',\'merge\')">دمج</button>'+
+    '</div>'
+  );
+};
+
 Pages.importEventPlanFile = function(projId) {
   var inp = document.createElement('input');
   inp.type = 'file';
-  inp.accept = '.json,application/json';
+  inp.accept = '.xlsx,.xls,.json';
   inp.onchange = function() {
     var f = inp.files && inp.files[0];
     if (!f) return;
-    var reader = new FileReader();
-    reader.onload = function() {
-      var data;
-      try { data = JSON.parse(reader.result); } catch(e) { UI.toast('الملف ليس بصيغة JSON صالحة','danger'); return; }
-      if (!data || data._type !== 'buad_event_plan' || !data.plan) { UI.toast('الملف ليس ملف خطة فعالية صالحاً','danger'); return; }
-      Pages._pendingImport = data.plan;
-      UI.openModal(
-        '<div class="modal-header"><h3>استيراد خطة الفعالية</h3><button class="modal-close" onclick="UI.closeModalForce()">×</button></div>'+
-        '<div class="modal-body"><p style="color:var(--fg-2);font-size:13.5px;line-height:1.8">كيف تريد تطبيق الملف «<strong>'+UI.escHtml(f.name)+'</strong>»؟</p>'+
-        '<ul style="padding-right:20px;color:var(--fg-3);font-size:12.5px;line-height:1.9;margin-top:6px">'+
-          '<li><strong>دمج:</strong> يملأ الحقول الفارغة ويُلحق العناصر الجديدة دون المساس بالموجود.</li>'+
-          '<li><strong>استبدال:</strong> يستبدل الخطة الحالية بالكامل بمحتوى الملف.</li>'+
-        '</ul></div>'+
-        '<div class="modal-footer" style="display:flex;gap:var(--space-2);justify-content:flex-end">'+
-          '<button class="btn btn-sm" onclick="UI.closeModalForce()">إلغاء</button>'+
-          '<button class="btn btn-sm btn-danger" onclick="Pages._applyImportedEventPlan(\''+projId+'\',\'replace\')">استبدال كامل</button>'+
-          '<button class="btn btn-sm btn-primary" onclick="Pages._applyImportedEventPlan(\''+projId+'\',\'merge\')">دمج</button>'+
-        '</div>'
-      );
-    };
-    reader.readAsText(f);
+    var name = (f.name||'').toLowerCase();
+    if (/\.(xlsx|xls)$/.test(name)) {
+      Pages._loadXlsxLib().then(function() {
+        var reader = new FileReader();
+        reader.onload = function() {
+          var plan;
+          try {
+            var wb = XLSX.read(reader.result, {type:'array'});
+            plan = Pages._xlsxToPlan(wb);
+          } catch(e) { UI.toast('تعذّرت قراءة ملف Excel','danger'); return; }
+          if (!Object.keys(plan).length) { UI.toast('لم يُعثر على أوراق خطة فعالية في الملف — استخدم قالب التعبئة','danger'); return; }
+          Pages._pendingImport = plan;
+          Pages._confirmImportModal(projId, f.name);
+        };
+        reader.readAsArrayBuffer(f);
+      }).catch(function(){ UI.toast('تعذّر تحميل مكتبة Excel — تحقق من الاتصال','danger'); });
+      return;
+    }
+    if (/\.json$/.test(name)) {
+      var reader = new FileReader();
+      reader.onload = function() {
+        var data;
+        try { data = JSON.parse(reader.result); } catch(e) { UI.toast('الملف ليس بصيغة JSON صالحة','danger'); return; }
+        if (!data || data._type !== 'buad_event_plan' || !data.plan) { UI.toast('الملف ليس ملف خطة فعالية صالحاً','danger'); return; }
+        Pages._pendingImport = data.plan;
+        Pages._confirmImportModal(projId, f.name);
+      };
+      reader.readAsText(f);
+      return;
+    }
+    UI.toast('صيغة غير مدعومة — استخدم Excel أو JSON','danger');
   };
   inp.click();
 };
@@ -6263,6 +6504,13 @@ Pages._applyImportedEventPlan = function(projId, mode) {
       });
     });
   }
+  /* resolve committee links imported by name (Excel) */
+  (ep.tasks||[]).forEach(function(t) {
+    if (!t._committee_name) return;
+    var com = (ep.committees||[]).find(function(x){ return (x.name||'').trim() === t._committee_name; });
+    if (com && !t.committee_id) t.committee_id = com.id;
+    delete t._committee_name;
+  });
   DB.saveEventPlan(projId, ep);
   Pages._pendingImport = null;
   UI.closeModalForce();
