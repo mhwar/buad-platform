@@ -2277,8 +2277,10 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
   .sig-grid{grid-template-columns:1fr}
 }
 
-/* Mobile contract editor — bottom tab bar */
-@media(max-width:768px){
+/* Mobile contract editor — bottom tab bar.
+   Breakpoint matches .contract-sidebar-right's hide rule (900px) so there is
+   no width band where party fields / PDF are unreachable. */
+@media(max-width:900px){
   .contract-editor-page.active{flex-direction:column!important}
   .contract-sidebar-left,.contract-sidebar-right{
     display:none;position:fixed;inset-inline-start:0;inset-inline-end:0;
@@ -2310,7 +2312,7 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
   /* Safari bottom safe area (home indicator) */
   padding-bottom:calc(6px + env(safe-area-inset-bottom,0px));
 }
-@media(max-width:768px){
+@media(max-width:900px){
   .contract-mobile-bar{display:flex}
 }
 .cmb-tab{
