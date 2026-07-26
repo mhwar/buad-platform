@@ -5057,7 +5057,7 @@ Pages.addProjectModal = function(clientId) {
         '<div class="form-group"><label class="field-label">الحالة الحالية</label>' +
           '<select id="proj-status" class="field-input">' +
             '<option value="draft">مسودة</option>' +
-            '<option value="active">جاري التنفيذ</option>' +
+            '<option value="active" selected>جاري التنفيذ</option>' +
             '<option value="completed">مكتمل</option>' +
             '<option value="paused">متوقف</option>' +
             '<option value="cancelled">ملغي</option>' +
@@ -5121,6 +5121,15 @@ Pages.saveProject = function(presetClientId) {
   var projects = DB.getProjects();
   projects.push(proj);
   DB.saveProjects(projects);
+  if (proj._initial_contract_val) {
+    try {
+      var _fin = DB.getFin(proj.id);
+      if (!(parseFloat(_fin.ctrl.contract_value) > 0)) {
+        _fin.ctrl.contract_value = proj._initial_contract_val;
+        DB.saveFin(proj.id, _fin);
+      }
+    } catch(e) {}
+  }
   UI.toast('تم إضافة المشروع','success');
   UI.closeModalForce();
   if (Nav._cur==='projects') Pages.render_projects();
@@ -6196,7 +6205,8 @@ Pages._loadXlsxLib = function() {
   if (Pages._xlsxLoading) return Pages._xlsxLoading;
   Pages._xlsxLoading = new Promise(function(resolve, reject) {
     var s = document.createElement('script');
-    s.src = 'https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js';
+    /* xlsx-js-style: SheetJS 0.18.5 fork with cell styling (bold/fill/borders/numFmt) — same XLSX global/API */
+    s.src = 'https://unpkg.com/xlsx-js-style@1.2.0/dist/xlsx.bundle.js';
     s.onload = function(){ resolve(); };
     s.onerror = function(){ Pages._xlsxLoading = null; reject(new Error('load failed')); };
     document.head.appendChild(s);
@@ -19506,6 +19516,269 @@ Pages._pfCleanSyncArtifacts = function() {
   }
 };
 
+/* نسخ قيمة العقد المدخلة عند إنشاء المشروع إلى ملفه المالي إن كانت فارغة —
+   يصلح المشاريع التي ظهرت بأصفار لأن القيمة بقيت في _initial_contract_val فقط */
+Pages._pfRepairContractValues = function() {
+  var projects = DB.getProjects();
+  projects.forEach(function(p) {
+    var iv = parseFloat(p._initial_contract_val);
+    if (!(iv > 0)) return;
+    try {
+      var fin = DB.getFin(p.id);
+      if (!(parseFloat(fin.ctrl.contract_value) > 0)) {
+        fin.ctrl.contract_value = iv;
+        DB.saveFin(p.id, fin);
+      }
+    } catch(e) {}
+  });
+};
+
+/* بطاقة تنبيه بالمشاريع «مسودة» غير الداخلة في الحسابات — بلا أي تأثير حسابي حتى يفعّلها المستخدم */
+Pages._pfDraftProjectsCard = function(projects) {
+  var drafts = (projects||[]).filter(function(p){ return p.status === 'draft'; });
+  if (!drafts.length) return '';
+  var clients = DB.getClients();
+  var rows = drafts.map(function(p) {
+    var cl = clients.find(function(c){ return c.id === p.client_id; });
+    return '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid #fde8c8">'+
+      '<div style="flex:1;min-width:0">'+
+        '<div style="font-weight:700;font-size:13px;color:var(--fg-1)">'+UI.escHtml(p.name)+'</div>'+
+        '<div style="font-size:11.5px;color:var(--fg-3)">'+(cl?UI.escHtml(cl.name):'')+(p.created?' · أُنشئ '+UI.escHtml(p.created):'')+'</div>'+
+      '</div>'+
+      '<button class="btn btn-sm btn-primary" onclick="Pages.pfActivateProject(\''+p.id+'\')" style="min-width:70px">تفعيل</button>'+
+    '</div>';
+  }).join('');
+  return '<div class="card" style="margin-top:14px;background:#fffbf3;border-color:#fed7aa">'+
+    '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">'+
+      '<i data-lucide="alert-triangle" style="width:16px;height:16px;color:#d97706"></i>'+
+      '<span style="font-weight:700;font-size:13.5px;color:#b45309">'+drafts.length+' مشروع بحالة «مسودة» لا يدخل في حسابات مالية المنصة</span>'+
+    '</div>'+
+    '<div style="font-size:12px;color:var(--fg-3);margin-bottom:6px">فعّل المشروع ليظهر في الجدول أعلاه ويُحتسب ضمن الأرباح والتوزيع.</div>'+
+    rows+
+  '</div>';
+};
+
+Pages.pfActivateProject = function(pid) {
+  var projects = DB.getProjects();
+  var p = projects.find(function(x){ return x.id === pid; });
+  if (!p) return;
+  UI.openModal(
+    '<div class="modal-header"><h3>تفعيل المشروع</h3><button class="modal-close" onclick="UI.closeModalForce()">×</button></div>'+
+    '<div class="modal-body"><p style="color:var(--fg-2);font-size:13.5px;line-height:1.8">تحويل «<strong>'+UI.escHtml(p.name)+'</strong>» إلى «جاري التنفيذ»؟<br><span style="font-size:12px;color:var(--fg-3)">سيدخل المشروع في حسابات مالية المنصة والأرباح المتاحة للتوزيع.</span></p></div>'+
+    '<div class="modal-footer" style="display:flex;gap:var(--space-2);justify-content:flex-end">'+
+      '<button class="btn btn-sm" onclick="UI.closeModalForce()">إلغاء</button>'+
+      '<button class="btn btn-sm btn-primary" onclick="Pages._doPfActivateProject(\''+pid+'\')">تفعيل</button>'+
+    '</div>'
+  );
+};
+Pages._doPfActivateProject = function(pid) {
+  var projects = DB.getProjects();
+  var p = projects.find(function(x){ return x.id === pid; });
+  if (!p) { UI.closeModalForce(); return; }
+  p.status = 'active';
+  DB.saveProjects(projects);
+  UI.closeModalForce();
+  UI.toast('فُعِّل المشروع ودخل في الحسابات','success');
+  Pages.renderPfLedger();
+};
+
+/* ═══ أرشفة Excel للمشاريع المغلقة ═══ */
+Pages.pfArchiveModal = function() {
+  var projects = DB.getProjects();
+  var closed = projects.filter(function(p){ return p.status==='completed' || p.status==='cancelled'; });
+  if (!closed.length) { UI.toast('لا توجد مشاريع مكتملة أو ملغاة للأرشفة'); return; }
+  var clients = DB.getClients();
+  var rows = closed.map(function(p, i) {
+    var cl = clients.find(function(c){ return c.id === p.client_id; });
+    var cancelled = p.status === 'cancelled';
+    return '<label style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--bg-2);cursor:pointer">'+
+      '<input type="checkbox" id="pf-ar-'+i+'" data-pid="'+p.id+'" '+(cancelled?'':'checked')+' style="width:16px;height:16px;flex-shrink:0">'+
+      '<span style="flex:1;min-width:0">'+
+        '<span style="display:block;font-weight:700;font-size:13px;color:var(--fg-1)">'+UI.escHtml(p.name)+'</span>'+
+        '<span style="display:block;font-size:11.5px;color:var(--fg-3)">'+(cl?UI.escHtml(cl.name):'')+'</span>'+
+      '</span>'+
+      '<span class="badge sm" style="background:'+(cancelled?'#fef2f2':'#f0fdf4')+';color:'+(cancelled?'#dc2626':'#16a34a')+';font-weight:700">'+(cancelled?'ملغي':'مكتمل')+'</span>'+
+    '</label>';
+  }).join('');
+  UI.openModal(
+    '<div class="modal-header"><h3>أرشفة Excel — المشاريع المغلقة</h3><button class="modal-close" onclick="UI.closeModalForce()">×</button></div>'+
+    '<div style="padding:12px 20px 4px;max-height:320px;overflow-y:auto">'+rows+'</div>'+
+    '<div style="padding:10px 20px 4px">'+
+      '<div style="font-size:12.5px;font-weight:700;color:var(--fg-2);margin-bottom:7px">طريقة الإخراج:</div>'+
+      '<label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--fg-2);cursor:pointer;margin-bottom:6px">'+
+        '<input type="radio" name="pf-ar-mode" value="one" checked style="width:15px;height:15px">ملف واحد — ورقة ملخص + ورقة لكل مشروع</label>'+
+      '<label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--fg-2);cursor:pointer">'+
+        '<input type="radio" name="pf-ar-mode" value="separate" style="width:15px;height:15px">ملف Excel منفصل لكل مشروع</label>'+
+    '</div>'+
+    '<div class="modal-footer" style="display:flex;gap:var(--space-2);justify-content:flex-end">'+
+      '<button class="btn btn-sm" onclick="UI.closeModalForce()">إلغاء</button>'+
+      '<button class="btn btn-sm btn-primary" onclick="Pages.pfExportArchive()" style="display:inline-flex;align-items:center;gap:5px"><i data-lucide="archive"></i>تصدير الأرشيف</button>'+
+    '</div>'
+  );
+  if (typeof lucide !== 'undefined') setTimeout(function(){ lucide.createIcons(); }, 50);
+};
+
+/* أنماط الخلايا (xlsx-js-style) */
+Pages._xlS = {
+  title:   {font:{bold:true, sz:16, color:{rgb:'FFFFFF'}}, fill:{fgColor:{rgb:'4338CA'}}, alignment:{horizontal:'center', vertical:'center'}},
+  section: {font:{bold:true, sz:12, color:{rgb:'4338CA'}}, fill:{fgColor:{rgb:'EEF0FF'}}, alignment:{horizontal:'right'}},
+  th:      {font:{bold:true, sz:10.5, color:{rgb:'FFFFFF'}}, fill:{fgColor:{rgb:'6366F1'}}, alignment:{horizontal:'center'}, border:{top:{style:'thin'},bottom:{style:'thin'},left:{style:'thin'},right:{style:'thin'}}},
+  lbl:     {font:{bold:true, sz:10.5}, fill:{fgColor:{rgb:'F7F8FC'}}},
+  num:     {numFmt:'#,##0.00', alignment:{horizontal:'left'}},
+  profit:  {font:{bold:true, sz:11, color:{rgb:'166534'}}, fill:{fgColor:{rgb:'F0FDF4'}}, numFmt:'#,##0.00'},
+  total:   {font:{bold:true, sz:11}, fill:{fgColor:{rgb:'EEF0FF'}}, numFmt:'#,##0.00'},
+  cell:    {font:{sz:10.5}, border:{bottom:{style:'thin', color:{rgb:'E5E7EB'}}}}
+};
+
+/* بناء ورقة أرشيف مشروع واحد — تُعيد worksheet جاهزة */
+Pages._projArchiveSheet = function(p) {
+  var clients = DB.getClients();
+  var cl = clients.find(function(c){ return c.id === p.client_id; });
+  var fin = DB.getFin(p.id);
+  var r = FinCalc.calc(p.id);
+  var S = Pages._xlS;
+  var stMap = {completed:'مكتمل', cancelled:'ملغي', active:'جاري التنفيذ', paused:'متوقف', draft:'مسودة'};
+
+  var aoa = [];
+  var styles = [];   /* [row, col, style] */
+  function push(row, rowStyles) {
+    aoa.push(row);
+    if (rowStyles) rowStyles.forEach(function(s){ styles.push([aoa.length-1, s[0], s[1]]); });
+  }
+
+  push([p.name], [[0, S.title]]);
+  push([]);
+  push(['العميل', cl ? cl.name : '—'], [[0, S.lbl]]);
+  push(['نوع المشروع', typeLabel(p.type)], [[0, S.lbl]]);
+  push(['الحالة', stMap[p.status] || p.status], [[0, S.lbl]]);
+  push(['رقم العقد', (fin.ctrl && fin.ctrl.contract_no) || '—'], [[0, S.lbl]]);
+  push(['تاريخ العقد', (fin.ctrl && fin.ctrl.contract_date) || '—'], [[0, S.lbl]]);
+  push(['فترة التنفيذ', (p.start_date||'—')+' ← '+(p.end_date||'—')], [[0, S.lbl]]);
+  push(['تاريخ الأرشفة', (new Date()).toISOString().slice(0,10)], [[0, S.lbl]]);
+  push([]);
+
+  push(['الملخص المالي'], [[0, S.section]]);
+  var sumRows = [
+    ['قيمة العقد الصافية', r.contractNet],
+    ['ضريبة القيمة المضافة', r.vatAmt],
+    ['إجمالي العقد بالضريبة', r.grossTotal],
+    ['ميزانية التنفيذ', r.execAmt],
+    ['التسويق', r.mkt],
+    ['الكاش باك', r.cb],
+    ['إجمالي الإيرادات المسجلة', r.totalIncome],
+    ['إجمالي المصروفات المسجلة', r.totalExpenses],
+    ['إجمالي المنصرف من العقد', r.totalDeductions],
+    ['المتبقي من العقد', r.remaining]
+  ];
+  sumRows.forEach(function(row){ push(row, [[0, S.lbl],[1, S.num]]); });
+  push(['صافي الربح', r.profit], [[0, S.profit],[1, S.profit]]);
+  push([]);
+
+  push(['سجل المعاملات'], [[0, S.section]]);
+  push(['التاريخ','البيان','الفئة','النوع','الحالة','المبلغ (ر.س)'],
+    [0,1,2,3,4,5].map(function(c){ return [c, S.th]; }));
+  var entries = (fin.entries||[]).slice().sort(function(a,b){ return (a.date||'').localeCompare(b.date||''); });
+  var stEnt = {paid:'مدفوع', pending:'معلّق', cancelled:'ملغي'};
+  var totIn = 0, totOut = 0;
+  entries.forEach(function(e) {
+    var amt = Number(e.amount)||0;
+    if (e.status !== 'cancelled') { if (e.type==='income') totIn += amt; else totOut += amt; }
+    push([e.date||'', e.desc||'', catLabel(e.cat), e.type==='income'?'إيراد':'مصروف', stEnt[e.status]||e.status||'', e.type==='income'?amt:-amt],
+      [[0,S.cell],[1,S.cell],[2,S.cell],[3,S.cell],[4,S.cell],[5,Object.assign({},S.cell,{numFmt:'#,##0.00'})]]);
+  });
+  if (!entries.length) push(['لا توجد معاملات مسجلة']);
+  push(['','','','','إجمالي الإيرادات', totIn], [[4,S.total],[5,S.total]]);
+  push(['','','','','إجمالي المصروفات', -totOut], [[4,S.total],[5,S.total]]);
+  push(['','','','','الصافي', totIn-totOut], [[4,S.total],[5,S.total]]);
+
+  var ws = XLSX.utils.aoa_to_sheet(aoa);
+  styles.forEach(function(s) {
+    var addr = XLSX.utils.encode_cell({r:s[0], c:s[1]});
+    if (ws[addr]) ws[addr].s = s[2];
+  });
+  ws['!cols'] = [{wch:14},{wch:38},{wch:16},{wch:10},{wch:12},{wch:16}];
+  ws['!merges'] = [];
+  aoa.forEach(function(row, i) {
+    if (row.length === 1 && row[0] && (row[0] === p.name || row[0] === 'الملخص المالي' || row[0] === 'سجل المعاملات')) {
+      ws['!merges'].push({s:{r:i,c:0}, e:{r:i,c:5}});
+    }
+  });
+  ws['!rows'] = [{hpt:28}];
+  return ws;
+};
+
+Pages._archSheetName = function(name, used) {
+  var n = String(name||'مشروع').replace(/[\\\/\?\*\[\]:]/g,' ').trim().slice(0,28) || 'مشروع';
+  var base = n, i = 2;
+  while (used.indexOf(n) >= 0) { n = base.slice(0,25)+' '+i; i++; }
+  used.push(n);
+  return n;
+};
+
+Pages.pfExportArchive = function() {
+  var ids = [];
+  document.querySelectorAll('[id^="pf-ar-"]').forEach(function(cb){
+    if (cb.checked && cb.getAttribute('data-pid')) ids.push(cb.getAttribute('data-pid'));
+  });
+  if (!ids.length) { UI.toast('اختر مشروعاً واحداً على الأقل','danger'); return; }
+  var modeEl = document.querySelector('input[name="pf-ar-mode"]:checked');
+  var mode = modeEl ? modeEl.value : 'one';
+  var projects = DB.getProjects().filter(function(p){ return ids.indexOf(p.id) >= 0; });
+  var clients = DB.getClients();
+
+  Pages._loadXlsxLib().then(function() {
+    var S = Pages._xlS;
+    if (mode === 'separate') {
+      projects.forEach(function(p, i) {
+        setTimeout(function() {
+          var wb = XLSX.utils.book_new();
+          wb.Workbook = {Views:[{RTL:true}]};
+          XLSX.utils.book_append_sheet(wb, Pages._projArchiveSheet(p), Pages._archSheetName(p.name, []));
+          XLSX.writeFile(wb, 'أرشيف — '+p.name.replace(/[\\\/\?\*\[\]:]/g,' ')+'.xlsx');
+        }, i * 600);
+      });
+      UI.closeModalForce();
+      UI.toast('جارٍ تنزيل '+projects.length+' ملف أرشيف…');
+      return;
+    }
+    /* ملف واحد: ورقة ملخص + ورقة لكل مشروع */
+    var wb = XLSX.utils.book_new();
+    wb.Workbook = {Views:[{RTL:true}]};
+    var sumAoa = [['أرشيف المشاريع المغلقة — منصة بُعد'], [],
+      ['المشروع','العميل','الحالة','قيمة العقد','الإيرادات','المصروفات','صافي الربح','المتبقي']];
+    var sumStyles = [[0,0,S.title]];
+    [0,1,2,3,4,5,6,7].forEach(function(c){ sumStyles.push([2,c,S.th]); });
+    var tot = {cv:0, inc:0, exp:0, pr:0, rem:0};
+    projects.forEach(function(p) {
+      var cl = clients.find(function(c){ return c.id === p.client_id; });
+      var r = FinCalc.calc(p.id);
+      tot.cv += r.grossTotal; tot.inc += r.totalIncome; tot.exp += r.totalExpenses; tot.pr += r.profit; tot.rem += r.remaining;
+      sumAoa.push([p.name, cl?cl.name:'—', p.status==='cancelled'?'ملغي':'مكتمل', r.grossTotal, r.totalIncome, r.totalExpenses, r.profit, r.remaining]);
+      var ri = sumAoa.length-1;
+      [3,4,5,6,7].forEach(function(c){ sumStyles.push([ri,c,S.num]); });
+    });
+    sumAoa.push(['الإجمالي','','', tot.cv, tot.inc, tot.exp, tot.pr, tot.rem]);
+    var tri = sumAoa.length-1;
+    [0,3,4,5,6,7].forEach(function(c){ sumStyles.push([tri,c,S.total]); });
+    var sumWs = XLSX.utils.aoa_to_sheet(sumAoa);
+    sumStyles.forEach(function(s){
+      var addr = XLSX.utils.encode_cell({r:s[0], c:s[1]});
+      if (sumWs[addr]) sumWs[addr].s = s[2];
+    });
+    sumWs['!cols'] = [{wch:32},{wch:22},{wch:10},{wch:14},{wch:14},{wch:14},{wch:14},{wch:14}];
+    sumWs['!merges'] = [{s:{r:0,c:0}, e:{r:0,c:7}}];
+    sumWs['!rows'] = [{hpt:26}];
+    XLSX.utils.book_append_sheet(wb, sumWs, 'الملخص');
+    var used = ['الملخص'];
+    projects.forEach(function(p) {
+      XLSX.utils.book_append_sheet(wb, Pages._projArchiveSheet(p), Pages._archSheetName(p.name, used));
+    });
+    XLSX.writeFile(wb, 'أرشيف المشاريع المغلقة — '+(new Date()).toISOString().slice(0,10)+'.xlsx');
+    UI.closeModalForce();
+    UI.toast('صُدِّر ملف الأرشيف ('+projects.length+' مشروع)');
+  }).catch(function(){ UI.toast('تعذّر تحميل مكتبة Excel — تحقق من الاتصال','danger'); });
+};
+
 /* حساب الأرباح الكاملة: مشاريع (من FinCalc) + خدمات يدوية − مصاريف يدوية */
 Pages._pfCalcFull = function(pf, from, to) {
   function inRange(d){ if(!d) return true; if(from && d<from) return false; if(to && d>to) return false; return true; }
@@ -19593,6 +19866,7 @@ Pages.render_pf = function() {
     return;
   }
   Pages._pfCleanSyncArtifacts();
+  Pages._pfRepairContractValues();
   if (!['overview','ledger','distrib'].includes(Pages._pfTab)) Pages._pfTab = 'overview';
   function tab(id, lbl, icon) {
     return '<button class="hero-tab-pill'+(Pages._pfTab===id?' active':'')+'" onclick="Pages.switchPfTab(\''+id+'\')">'+
@@ -20019,7 +20293,8 @@ Pages.renderPfLedger = function(filter, period) {
     sections = '<div class="card">'+
       '<div class="dash-sec-hdr" style="margin-bottom:var(--space-3)">'+
         '<h3><i data-lucide="briefcase"></i>إيرادات المشاريع والعقود</h3>'+
-        '<div style="display:flex;gap:6px;align-items:center">'+
+        '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">'+
+          '<button class="btn btn-sm btn-ghost" onclick="Pages.pfArchiveModal()" title="تصدير أرشيف Excel للمشاريع المغلقة" style="color:var(--iris-600)"><i data-lucide="archive" style="width:13px;height:13px"></i>أرشفة Excel</button>'+
           '<button class="btn btn-sm btn-ghost" onclick="Pages.printPfReport(\'simple\')" title="طباعة تقرير مبسط"><i data-lucide="printer" style="width:13px;height:13px"></i>مبسّط</button>'+
           '<button class="btn btn-sm btn-ghost" onclick="Pages.printPfReport(\'detailed\')" title="طباعة تقرير مفصل"><i data-lucide="file-text" style="width:13px;height:13px"></i>مفصّل</button>'+
         '</div>'+
@@ -20030,7 +20305,8 @@ Pages.renderPfLedger = function(filter, period) {
           '<tr><td colspan="6" style="text-align:center;padding:32px;color:var(--fg-4)">لا توجد مشاريع نشطة أو مكتملة</td></tr>')+
         '</tbody>'+
       '</table></div>'+
-    '</div>';
+    '</div>'+
+    Pages._pfDraftProjectsCard(projects);
   }
 
   /* ══ SERVICE INCOME ══ */
