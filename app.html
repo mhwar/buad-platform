@@ -19635,29 +19635,62 @@ Pages._projArchiveSheet = function(p) {
   var clients = DB.getClients();
   var cl = clients.find(function(c){ return c.id === p.client_id; });
   var fin = DB.getFin(p.id);
+  var c = fin.ctrl || {};
   var r = FinCalc.calc(p.id);
   var S = Pages._xlS;
   var stMap = {completed:'مكتمل', cancelled:'ملغي', active:'جاري التنفيذ', paused:'متوقف', draft:'مسودة'};
+  var LAST_COL = 7;
+
+  function feeLbl(v, type, base) {
+    if (!(parseFloat(v) > 0)) return '';
+    if (type === 'fixed') return UI.fmt(parseFloat(v)) + ' ر.س ثابت';
+    return (parseFloat(v)||0) + '% ' + (base === 'gross' ? 'من الإجمالي بالضريبة' : 'من الصافي');
+  }
 
   var aoa = [];
   var styles = [];   /* [row, col, style] */
+  var sectionTitles = [p.name];
   function push(row, rowStyles) {
     aoa.push(row);
     if (rowStyles) rowStyles.forEach(function(s){ styles.push([aoa.length-1, s[0], s[1]]); });
   }
+  function section(title) {
+    sectionTitles.push(title);
+    push([title], [[0, S.section]]);
+  }
+  function meta(lbl, val) {
+    if (val === undefined || val === null || val === '') return;
+    push([lbl, val], [[0, S.lbl]]);
+  }
 
+  /* ── header & identity ── */
   push([p.name], [[0, S.title]]);
   push([]);
-  push(['العميل', cl ? cl.name : '—'], [[0, S.lbl]]);
-  push(['نوع المشروع', typeLabel(p.type)], [[0, S.lbl]]);
-  push(['الحالة', stMap[p.status] || p.status], [[0, S.lbl]]);
-  push(['رقم العقد', (fin.ctrl && fin.ctrl.contract_no) || '—'], [[0, S.lbl]]);
-  push(['تاريخ العقد', (fin.ctrl && fin.ctrl.contract_date) || '—'], [[0, S.lbl]]);
-  push(['فترة التنفيذ', (p.start_date||'—')+' ← '+(p.end_date||'—')], [[0, S.lbl]]);
-  push(['تاريخ الأرشفة', (new Date()).toISOString().slice(0,10)], [[0, S.lbl]]);
+  meta('العميل', cl ? cl.name : '—');
+  if (cl && cl.phone) meta('جوال العميل', cl.phone);
+  if (cl && cl.email) meta('بريد العميل', cl.email);
+  meta('نوع المشروع', typeLabel(p.type));
+  meta('الحالة', stMap[p.status] || p.status);
+  if (p.location) meta('الموقع', p.location);
+  meta('رقم العقد', c.contract_no || '—');
+  meta('تاريخ العقد', c.contract_date || '—');
+  meta('فترة التنفيذ', (p.start_date||'—')+' ← '+(p.end_date||'—'));
+  if (p.notes) meta('ملاحظات المشروع', p.notes);
+  meta('تاريخ الأرشفة', (new Date()).toISOString().slice(0,10));
   push([]);
 
-  push(['الملخص المالي'], [[0, S.section]]);
+  /* ── contract settings & deductions (fin.ctrl) ── */
+  section('إعدادات العقد والاستقطاعات');
+  meta('قيمة العقد المدخلة', UI.fmt(parseFloat(c.contract_value)||0)+' ر.س');
+  meta('الضريبة', (parseFloat(c.vat_pct)||0)+'% ('+(c.vat_included ? 'مشمولة في قيمة العقد' : 'تُضاف على قيمة العقد')+') = '+UI.fmt(r.vatAmt)+' ر.س');
+  if (feeLbl(c.exec_v, c.exec_type, c.exec_base)) meta('أتعاب التنفيذ', feeLbl(c.exec_v, c.exec_type, c.exec_base)+' = '+UI.fmt(r.execAmt)+' ر.س');
+  if (feeLbl(c.mkt_v, c.mkt_type, c.mkt_base)) meta('التسويق'+(c.mkt_internal?' (داخلي)':''), feeLbl(c.mkt_v, c.mkt_type, c.mkt_base)+' = '+UI.fmt(r.mkt)+' ر.س');
+  if (feeLbl(c.cb_v, c.cb_type, c.cb_base)) meta('الكاش باك', feeLbl(c.cb_v, c.cb_type, c.cb_base)+' = '+UI.fmt(r.cb)+' ر.س');
+  if (feeLbl(c.cf_v, c.cf_type, c.cf_base)) meta('رسوم إضافية', feeLbl(c.cf_v, c.cf_type, c.cf_base)+' = '+UI.fmt(r.cfAmt)+' ر.س');
+  push([]);
+
+  /* ── financial summary ── */
+  section('الملخص المالي');
   var sumRows = [
     ['قيمة العقد الصافية', r.contractNet],
     ['ضريبة القيمة المضافة', r.vatAmt],
@@ -19674,33 +19707,77 @@ Pages._projArchiveSheet = function(p) {
   push(['صافي الربح', r.profit], [[0, S.profit],[1, S.profit]]);
   push([]);
 
-  push(['سجل المعاملات'], [[0, S.section]]);
-  push(['التاريخ','البيان','الفئة','النوع','الحالة','المبلغ (ر.س)'],
-    [0,1,2,3,4,5].map(function(c){ return [c, S.th]; }));
+  /* ── full transaction ledger ── */
+  section('سجل المعاملات');
+  push(['التاريخ','البيان','الفئة','النوع','الحالة','المبلغ (ر.س)','هامش الربح','ملاحظة'],
+    [0,1,2,3,4,5,6,7].map(function(cc){ return [cc, S.th]; }));
   var entries = (fin.entries||[]).slice().sort(function(a,b){ return (a.date||'').localeCompare(b.date||''); });
   var stEnt = {paid:'مدفوع', pending:'معلّق', cancelled:'ملغي'};
   var totIn = 0, totOut = 0;
   entries.forEach(function(e) {
     var amt = Number(e.amount)||0;
     if (e.status !== 'cancelled') { if (e.type==='income') totIn += amt; else totOut += amt; }
-    push([e.date||'', e.desc||'', catLabel(e.cat), e.type==='income'?'إيراد':'مصروف', stEnt[e.status]||e.status||'', e.type==='income'?amt:-amt],
-      [[0,S.cell],[1,S.cell],[2,S.cell],[3,S.cell],[4,S.cell],[5,Object.assign({},S.cell,{numFmt:'#,##0.00'})]]);
+    var pm = '';
+    if (parseFloat(e.profit_margin) > 0) {
+      pm = (e.profit_margin_type === 'pct') ? (parseFloat(e.profit_margin)+'%') : (UI.fmt(parseFloat(e.profit_margin))+' ر.س');
+    }
+    push([e.date||'', e.desc||'', catLabel(e.cat), e.type==='income'?'إيراد':'مصروف', stEnt[e.status]||e.status||'', e.type==='income'?amt:-amt, pm, e.note||''],
+      [[0,S.cell],[1,S.cell],[2,S.cell],[3,S.cell],[4,S.cell],[5,Object.assign({},S.cell,{numFmt:'#,##0.00'})],[6,S.cell],[7,S.cell]]);
   });
   if (!entries.length) push(['لا توجد معاملات مسجلة']);
   push(['','','','','إجمالي الإيرادات', totIn], [[4,S.total],[5,S.total]]);
   push(['','','','','إجمالي المصروفات', -totOut], [[4,S.total],[5,S.total]]);
   push(['','','','','الصافي', totIn-totOut], [[4,S.total],[5,S.total]]);
 
+  /* ── budget lines ── */
+  var budget = (fin.budget||[]).filter(function(b){ return (b.name||'').trim() || parseFloat(b.amount) > 0; });
+  if (budget.length) {
+    push([]);
+    section('بنود الميزانية');
+    push(['البند','المبلغ (ر.س)','ملاحظة'], [0,1,2].map(function(cc){ return [cc, S.th]; }));
+    budget.forEach(function(b) {
+      push([b.name||'', Number(b.amount)||0, b.note||''],
+        [[0,S.cell],[1,Object.assign({},S.cell,{numFmt:'#,##0.00'})],[2,S.cell]]);
+    });
+    push(['إجمالي الميزانية', r.budgetTotal], [[0,S.total],[1,S.total]]);
+  }
+
+  /* ── project contracts ── */
+  var contracts = fin.contracts || [];
+  if (contracts.length) {
+    push([]);
+    section('عقود المشروع');
+    push(['العقد','الحالة','آخر تحديث'], [0,1,2].map(function(cc){ return [cc, S.th]; }));
+    var cStMap = {draft:'مسودة', review:'قيد المراجعة', approved:'معتمد', final:'معتمد'};
+    contracts.forEach(function(ct) {
+      push([ct.title||'عقد', cStMap[ct.status]||ct.status||'', ct.updated||ct.created||''],
+        [[0,S.cell],[1,S.cell],[2,S.cell]]);
+    });
+  }
+
+  /* ── project letters ── */
+  var letters = fin.letters || [];
+  if (letters.length) {
+    push([]);
+    section('خطابات المشروع');
+    push(['الخطاب','رقم الصادر','إلى','التاريخ','النوع'], [0,1,2,3,4].map(function(cc){ return [cc, S.th]; }));
+    var lType = {cashback:'كاش باك', custom:'مخصص'};
+    letters.forEach(function(l) {
+      push([l.title||'خطاب', l.no||'', l.to||'', l.date||l.created||'', lType[l.type]||l.type||'خطاب'],
+        [[0,S.cell],[1,S.cell],[2,S.cell],[3,S.cell],[4,S.cell]]);
+    });
+  }
+
   var ws = XLSX.utils.aoa_to_sheet(aoa);
   styles.forEach(function(s) {
     var addr = XLSX.utils.encode_cell({r:s[0], c:s[1]});
     if (ws[addr]) ws[addr].s = s[2];
   });
-  ws['!cols'] = [{wch:14},{wch:38},{wch:16},{wch:10},{wch:12},{wch:16}];
+  ws['!cols'] = [{wch:14},{wch:34},{wch:15},{wch:9},{wch:11},{wch:14},{wch:11},{wch:24}];
   ws['!merges'] = [];
   aoa.forEach(function(row, i) {
-    if (row.length === 1 && row[0] && (row[0] === p.name || row[0] === 'الملخص المالي' || row[0] === 'سجل المعاملات')) {
-      ws['!merges'].push({s:{r:i,c:0}, e:{r:i,c:5}});
+    if (row.length === 1 && row[0] && sectionTitles.indexOf(row[0]) >= 0) {
+      ws['!merges'].push({s:{r:i,c:0}, e:{r:i,c:LAST_COL}});
     }
   });
   ws['!rows'] = [{hpt:28}];
