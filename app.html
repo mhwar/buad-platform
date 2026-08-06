@@ -18718,6 +18718,27 @@ Pages._govDetailHtml = function(orgId){
 Pages.govTab = function(tab){ Pages._govCur.tab = tab; Pages.render_governance({orgId:Pages._govCur.orgId}); };
 
 /* ─── 1) لوحة الامتثال ─── */
+/* تنبيه استحقاق المراجعة الدورية */
+Pages._govReviewAlertHtml = function(orgId){
+  var due = Pages._govReviewDue(orgId);
+  if (!due.length) return '';
+  var overdue = due.filter(function(x){ return x.overdue; }).length;
+  var rows = due.map(function(x){
+    return '<div style="display:flex;align-items:center;gap:9px;padding:7px 0;border-bottom:1px solid #fde8c8">'+
+      '<span class="badge sm" style="background:'+(x.overdue?'#fef2f2':'#fff7ed')+';color:'+(x.overdue?'#dc2626':'#d97706')+';font-weight:700">'+(x.overdue?'منقضية':'تستحق قريباً')+'</span>'+
+      '<div style="flex:1;min-width:0"><span style="font-weight:700;font-size:13px;color:var(--fg-1)">'+UI.escHtml(x.doc.title)+'</span>'+
+      '<span style="font-size:11.5px;color:var(--fg-3)"> — مراجعتها '+UI.escHtml(x.date)+'</span></div>'+
+      '<button class="btn btn-sm" onclick="Pages.govNewVersion(\''+orgId+'\',\''+x.doc.id+'\')">إصدار جديد</button>'+
+    '</div>';
+  }).join('');
+  return '<div class="card" style="padding:15px 18px;margin-bottom:16px;background:#fffbf3;border-color:#fed7aa">'+
+    '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">'+
+      '<i data-lucide="calendar-clock" style="width:16px;height:16px;color:#d97706"></i>'+
+      '<span style="font-weight:700;font-size:13.5px;color:#b45309">'+
+        (overdue ? overdue+' وثيقة تجاوزت موعد مراجعتها' : due.length+' وثيقة تستحق المراجعة قريباً')+
+      '</span></div>'+rows+'</div>';
+};
+
 Pages._govDashHtml = function(orgId){
   var g = Pages._govOf(orgId), profile = g.profile||{}, docs = g.docs||[];
   var pct = Pages._govCompleteness(profile);
@@ -18763,6 +18784,7 @@ Pages._govDashHtml = function(orgId){
       stat(approved,'وثيقة معتمدة','#16a34a')+
       stat(gaps.length,'فجوة في الوثائق الأساسية', gaps.length?'#dc2626':'#16a34a')+
     '</div>'+
+    Pages._govReviewAlertHtml(orgId)+
     (pct < 100 ? '<div class="card" style="padding:14px 18px;margin-bottom:16px;background:#fffbf3;border-color:#fed7aa;display:flex;align-items:center;gap:10px;flex-wrap:wrap">'+
       '<i data-lucide="alert-triangle" style="width:16px;height:16px;color:#d97706"></i>'+
       '<span style="flex:1;min-width:180px;font-size:13px;color:#b45309">بيانات الجهة غير مكتملة — ستظهر المتغيرات الناقصة داخل الوثائق بين قوسين [ ].</span>'+
@@ -18783,6 +18805,108 @@ Pages._govDashHtml = function(orgId){
 };
 
 /* ─── 2) بيانات الجهة ─── */
+
+/* ─── بطاقة الهوية البصرية: رفع الشعار بمعاينة وتحكم بالمقاس ─── */
+Pages._govLogoState = null;   /* {orgId, logo, logoW, logoH, touched} — يُطبَّق عند الحفظ */
+
+Pages._govLogoCardHtml = function(orgId, p){
+  var st = (Pages._govLogoState && Pages._govLogoState.orgId === orgId) ? Pages._govLogoState : null;
+  var logo = st ? st.logo : (p.logo || '');
+  var cover = p.logoCoverMM || Pages._GOV_LOGO_DEF.cover;
+  var head  = p.logoHeadMM  || Pages._GOV_LOGO_DEF.head;
+  var prev = logo
+    ? '<img id="gv-logo-img" src="'+UI.escHtml(logo)+'" style="max-width:100%;max-height:100%;object-fit:contain">'
+    : '<span id="gv-logo-img" style="font-size:11.5px;color:var(--fg-4);text-align:center;padding:8px">لا شعار</span>';
+  return '<div class="card" style="padding:20px 22px;margin-bottom:14px">'+
+    '<div style="font-weight:700;font-size:15px;color:var(--fg-1);margin-bottom:4px">الهوية البصرية</div>'+
+    '<div style="font-size:12px;color:var(--fg-3);margin-bottom:14px">الشعار يظهر في غلاف كل وثيقة وفي ترويسة صفحاتها</div>'+
+    '<div style="display:flex;gap:18px;flex-wrap:wrap;align-items:flex-start">'+
+      '<div style="flex-shrink:0">'+
+        '<div id="gv-logo-box" style="width:120px;height:120px;border:1px dashed var(--border);border-radius:12px;'+
+          'background:var(--bg-2);display:flex;align-items:center;justify-content:center;overflow:hidden;margin-bottom:8px">'+prev+'</div>'+
+        '<div style="display:flex;gap:6px">'+
+          '<button class="btn btn-sm btn-primary" onclick="Pages.govPickLogo(\''+orgId+'\')" style="display:inline-flex;align-items:center;gap:5px"><i data-lucide="upload"></i>رفع شعار</button>'+
+          '<button class="btn btn-sm" onclick="Pages.govRemoveLogo(\''+orgId+'\')" style="color:var(--danger-600)" title="إزالة"><i data-lucide="trash-2"></i></button>'+
+        '</div>'+
+        '<div style="font-size:11px;color:var(--fg-4);margin-top:6px;max-width:120px">PNG أو JPG — يُصغَّر تلقائياً</div>'+
+      '</div>'+
+      '<div style="flex:1;min-width:230px">'+
+        '<div class="form-group"><label class="field-label">مقاس الشعار في الغلاف — <span id="gv-cover-val">'+cover+'</span> مم</label>'+
+          '<input id="gv-logo-cover" type="range" min="15" max="60" step="1" value="'+cover+'" oninput="Pages.govLogoSizePreview()" style="width:100%"></div>'+
+        '<div class="form-group"><label class="field-label">مقاس الشعار في الترويسة — <span id="gv-head-val">'+head+'</span> مم</label>'+
+          '<input id="gv-logo-head" type="range" min="6" max="20" step="1" value="'+head+'" oninput="Pages.govLogoSizePreview()" style="width:100%"></div>'+
+        '<div class="form-group"><label class="field-label">أو الصق رابط شعار</label>'+
+          '<input id="gv-logo-url" class="field-input" dir="ltr" placeholder="https://…" value="'+UI.escHtml((logo && logo.indexOf('data:')!==0) ? logo : '')+'"></div>'+
+        '<div class="form-group"><label class="field-label">اللون الأساسي للوثائق</label>'+
+          '<input id="gv-color" class="field-input" type="color" value="'+UI.escHtml(p.color||'#4338ca')+'" style="height:38px;padding:3px"></div>'+
+      '</div>'+
+    '</div>'+
+  '</div>';
+};
+
+Pages.govLogoSizePreview = function(){
+  var cv = document.getElementById('gv-logo-cover'), hd = document.getElementById('gv-logo-head');
+  var cvv = document.getElementById('gv-cover-val'), hdv = document.getElementById('gv-head-val');
+  if (cv && cvv) cvv.textContent = cv.value;
+  if (hd && hdv) hdv.textContent = hd.value;
+};
+
+/* رفع الشعار: قراءة الملف ثم إعادة تحجيمه على canvas قبل التخزين */
+Pages.govPickLogo = function(orgId){
+  var inp = document.createElement('input');
+  inp.type = 'file';
+  inp.accept = 'image/png,image/jpeg,image/webp,image/svg+xml';
+  inp.onchange = function(){
+    var f = inp.files && inp.files[0];
+    if (!f) return;
+    if (f.size > 6 * 1024 * 1024) { UI.toast('حجم الصورة كبير — اختر ملفاً أصغر من 6 ميغابايت','danger'); return; }
+    var reader = new FileReader();
+    reader.onload = function(){
+      Pages._govResizeImage(reader.result, 600, function(res){
+        if (!res) { UI.toast('تعذّرت قراءة الصورة','danger'); return; }
+        Pages._govLogoState = { orgId:orgId, logo:res.dataUrl, logoW:res.w, logoH:res.h, touched:true };
+        var box = document.getElementById('gv-logo-box');
+        if (box) box.innerHTML = '<img id="gv-logo-img" src="'+res.dataUrl+'" style="max-width:100%;max-height:100%;object-fit:contain">';
+        var urlEl = document.getElementById('gv-logo-url');
+        if (urlEl) urlEl.value = '';
+        UI.toast('رُفع الشعار — احفظ بيانات الجهة لتثبيته');
+      });
+    };
+    reader.onerror = function(){ UI.toast('تعذّرت قراءة الملف','danger'); };
+    reader.readAsDataURL(f);
+  };
+  inp.click();
+};
+
+/* إعادة التحجيم مع حفظ نسبة الأبعاد — SVG يُحفظ كما هو */
+Pages._govResizeImage = function(dataUrl, maxSide, cb){
+  if (/^data:image\/svg\+xml/i.test(dataUrl)) { cb({ dataUrl:dataUrl, w:0, h:0 }); return; }
+  var img = new Image();
+  img.onload = function(){
+    var w = img.naturalWidth || img.width, h = img.naturalHeight || img.height;
+    if (!w || !h) { cb(null); return; }
+    var scale = Math.min(1, maxSide / Math.max(w, h));
+    var cw = Math.max(1, Math.round(w * scale)), ch = Math.max(1, Math.round(h * scale));
+    try {
+      var c = document.createElement('canvas');
+      c.width = cw; c.height = ch;
+      c.getContext('2d').drawImage(img, 0, 0, cw, ch);
+      cb({ dataUrl:c.toDataURL('image/png'), w:w, h:h });
+    } catch(e) { cb({ dataUrl:dataUrl, w:w, h:h }); }
+  };
+  img.onerror = function(){ cb(null); };
+  img.src = dataUrl;
+};
+
+Pages.govRemoveLogo = function(orgId){
+  Pages._govLogoState = { orgId:orgId, logo:'', logoW:0, logoH:0, touched:true };
+  var box = document.getElementById('gv-logo-box');
+  if (box) box.innerHTML = '<span id="gv-logo-img" style="font-size:11.5px;color:var(--fg-4);text-align:center;padding:8px">لا شعار</span>';
+  var urlEl = document.getElementById('gv-logo-url');
+  if (urlEl) urlEl.value = '';
+  UI.toast('أُزيل الشعار — احفظ لتثبيت التغيير');
+};
+
 Pages._govProfileHtml = function(orgId){
   var p = Pages._govProfileOf(orgId);
   var fields = GOV_FIELDS.map(function(f){
@@ -18817,16 +18941,7 @@ Pages._govProfileHtml = function(orgId){
       '</div>'+
       '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px">'+fields+'</div>'+
     '</div>'+
-    '<div class="card" style="padding:20px 22px;margin-bottom:14px">'+
-      '<div style="font-weight:700;font-size:15px;color:var(--fg-1);margin-bottom:4px">الهوية البصرية</div>'+
-      '<div style="font-size:12px;color:var(--fg-3);margin-bottom:12px">تظهر في ترويسة كل وثيقة</div>'+
-      '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px">'+
-        '<div class="form-group"><label class="field-label">رابط الشعار (URL أو Data URI)</label>'+
-          '<input id="gv-logo" class="field-input" dir="ltr" placeholder="https://…" value="'+UI.escHtml(p.logo||'')+'"></div>'+
-        '<div class="form-group"><label class="field-label">اللون الأساسي</label>'+
-          '<input id="gv-color" class="field-input" type="color" value="'+UI.escHtml(p.color||'#4338ca')+'" style="height:38px;padding:3px"></div>'+
-      '</div>'+
-    '</div>'+
+    Pages._govLogoCardHtml(orgId, p)+
     '<div class="card" style="padding:20px 22px">'+
       '<div style="font-weight:700;font-size:15px;color:var(--fg-1);margin-bottom:4px">كتلة التوقيعات</div>'+
       '<div style="font-size:12px;color:var(--fg-3);margin-bottom:12px">تُذيَّل بها كل وثيقة</div>'+
@@ -18843,9 +18958,25 @@ Pages.govSaveProfile = function(orgId){
     var el = document.getElementById('gv-'+f.k);
     if (el) p[f.k] = (el.value||'').trim();
   });
-  var lg = document.getElementById('gv-logo'), cl = document.getElementById('gv-color');
-  p.logo  = lg ? (lg.value||'').trim() : '';
+  /* الشعار: ما جُهِّز في الذاكرة (رفع/إزالة) له الأولوية، وإلا الرابط الملصق، وإلا ما كان محفوظاً */
+  var prev = Pages._govProfileOf(orgId);
+  var st = Pages._govLogoState;
+  var lg = document.getElementById('gv-logo-url'), cl = document.getElementById('gv-color');
+  var pastedUrl = lg ? (lg.value||'').trim() : '';
+  if (st && st.orgId === orgId && st.touched) {
+    p.logo = st.logo || '';
+    p.logoW = st.logoW || 0;
+    p.logoH = st.logoH || 0;
+  } else if (pastedUrl && pastedUrl !== prev.logo) {
+    p.logo = pastedUrl; p.logoW = 0; p.logoH = 0;
+  } else {
+    p.logo = prev.logo || ''; p.logoW = prev.logoW || 0; p.logoH = prev.logoH || 0;
+  }
+  var cvEl = document.getElementById('gv-logo-cover'), hdEl = document.getElementById('gv-logo-head');
+  p.logoCoverMM = cvEl ? (parseInt(cvEl.value,10) || Pages._GOV_LOGO_DEF.cover) : (prev.logoCoverMM || Pages._GOV_LOGO_DEF.cover);
+  p.logoHeadMM  = hdEl ? (parseInt(hdEl.value,10) || Pages._GOV_LOGO_DEF.head)  : (prev.logoHeadMM  || Pages._GOV_LOGO_DEF.head);
   p.color = cl ? cl.value : '#4338ca';
+  Pages._govLogoState = null;
   var roles = document.querySelectorAll('.gv-sg-role'), names = document.querySelectorAll('.gv-sg-name'), titles = document.querySelectorAll('.gv-sg-title');
   p.signers = [];
   for (var i=0; i<roles.length; i++){
@@ -18928,6 +19059,10 @@ Pages._govNewDocFromTpl = function(orgId, tpl){
     version: p.version || 'الإصدار الأول',
     decision_no: p.decisionNo || '',
     approve_date: p.approveDate || '',
+    classification: 'internal',
+    scope: '',
+    next_review: p.reviewDate || '',
+    revisions: [],
     articles: tpl.arts.map(function(a){ return { id:DB.uid(), t:a[0], b:a[1], lock:!!a[2] }; }),
     created: (new Date()).toISOString().slice(0,10),
     updated: (new Date()).toISOString().slice(0,10)
@@ -18986,6 +19121,7 @@ Pages._govDocsHtml = function(orgId){
   }
   var rows = docs.map(function(d){
     var st = Pages._GOV_DOC_STATUS[d.status||'draft'] || Pages._GOV_DOC_STATUS.draft;
+    var cls = Pages._GOV_CLASS[d.classification||'internal'] || Pages._GOV_CLASS.internal;
     var miss = Pages._govDocMissing(d, profile).length;
     return '<div class="card" style="padding:13px 16px;margin-bottom:8px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">'+
       '<span class="badge sm" style="background:var(--bg-2);color:var(--fg-2);font-weight:700;flex-shrink:0">'+UI.escHtml(d.code)+'</span>'+
@@ -18996,10 +19132,12 @@ Pages._govDocsHtml = function(orgId){
           (d.approve_date?' · اعتُمدت '+UI.escHtml(d.approve_date):'')+
           (miss?' · <span style="color:#dc2626;font-weight:700">'+miss+' متغيراً ناقصاً</span>':'')+
         '</div></div>'+
+      '<span class="badge sm" style="background:'+cls[1]+';color:'+cls[2]+';font-weight:700" title="تصنيف الوثيقة">'+cls[0]+'</span>'+
       '<button onclick="Pages.govCycleStatus(\''+orgId+'\',\''+d.id+'\')" class="badge sm" style="background:'+st[1]+';color:'+st[2]+';border:none;cursor:pointer;font-family:inherit;font-weight:700" title="اضغط لتغيير الحالة">'+st[0]+'</button>'+
       '<div style="display:flex;gap:4px;align-items:center">'+
         '<button class="btn btn-sm" onclick="Pages.govPreviewDoc(\''+orgId+'\',\''+d.id+'\')" style="padding:4px 9px" title="معاينة"><i data-lucide="eye"></i></button>'+
         '<button class="btn btn-sm" onclick="Pages.govEditDoc(\''+orgId+'\',\''+d.id+'\')" style="padding:4px 9px" title="تحرير المواد"><i data-lucide="pencil"></i></button>'+
+        '<button class="btn btn-sm" onclick="Pages.govNewVersion(\''+orgId+'\',\''+d.id+'\')" style="padding:4px 9px" title="إصدار جديد"><i data-lucide="git-branch"></i></button>'+
         '<button class="btn btn-sm" onclick="Pages.govPrintDoc(\''+orgId+'\',\''+d.id+'\')" style="padding:4px 9px" title="طباعة PDF"><i data-lucide="printer"></i></button>'+
         '<button class="btn btn-sm" onclick="Pages.govExportWord(\''+orgId+'\',\''+d.id+'\')" style="padding:4px 9px" title="تصدير Word"><i data-lucide="file-down"></i></button>'+
         '<button class="btn btn-sm" onclick="Pages.govDeleteDoc(\''+orgId+'\',\''+d.id+'\')" style="padding:4px 8px;color:var(--danger-600)" title="حذف"><i data-lucide="trash-2"></i></button>'+
@@ -19009,7 +19147,10 @@ Pages._govDocsHtml = function(orgId){
   return '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">'+
       '<div><h3 style="font-size:var(--font-md);font-weight:700;color:var(--fg-1)">وثائق الجهة</h3>'+
       '<div style="font-size:var(--font-xs);color:var(--fg-3);margin-top:2px">'+docs.length+' وثيقة — اضغط الشارة لتغيير حالة الاعتماد</div></div>'+
-      '<button class="btn btn-sm" onclick="Pages.govTab(\'lib\')" style="display:inline-flex;align-items:center;gap:6px"><i data-lucide="plus"></i>إضافة من المكتبة</button>'+
+      '<div style="display:flex;gap:6px;flex-wrap:wrap">'+
+        '<button class="btn btn-sm" onclick="Pages.govBuildManual(\''+orgId+'\')" style="display:inline-flex;align-items:center;gap:6px"><i data-lucide="book"></i>تصدير الكل</button>'+
+        '<button class="btn btn-sm btn-primary" onclick="Pages.govTab(\'lib\')" style="display:inline-flex;align-items:center;gap:6px"><i data-lucide="plus"></i>إضافة من المكتبة</button>'+
+      '</div>'+
     '</div>'+rows;
 };
 
@@ -19018,7 +19159,19 @@ Pages.govCycleStatus = function(orgId, docId){
   var d = (g.docs||[]).filter(function(x){ return x.id===docId; })[0]; if(!d) return;
   var order = ['draft','review','approved'];
   d.status = order[(order.indexOf(d.status||'draft')+1) % order.length];
-  if (d.status === 'approved' && !d.approve_date) d.approve_date = (new Date()).toISOString().slice(0,10);
+  if (d.status === 'approved') {
+    if (!d.approve_date) d.approve_date = (new Date()).toISOString().slice(0,10);
+    /* قيد تلقائي في سجل الإصدارات عند الاعتماد — مرة واحدة لكل إصدار */
+    if (!d.revisions) d.revisions = [];
+    var v = d.version || 'الإصدار الأول';
+    if (!d.revisions.some(function(r){ return r.version === v && r.approved; })) {
+      d.revisions.push({
+        version: v, date: d.approve_date, approved: true,
+        note: 'اعتُمدت' + (d.decision_no ? ' بالقرار رقم ('+d.decision_no+')' : ''),
+        by: (d.approver || 'مجلس الإدارة')
+      });
+    }
+  }
   DB.saveGovDoc(orgId, d);
   Pages.render_governance({orgId:orgId});
 };
@@ -19048,6 +19201,14 @@ Pages.govEditDoc = function(orgId, docId){
         '<div class="form-group"><label class="field-label">رقم قرار الاعتماد</label><input id="gv-d-dec" class="field-input" value="'+UI.escHtml(d.decision_no||'')+'"></div>'+
         '<div class="form-group"><label class="field-label">تاريخ الاعتماد</label><input id="gv-d-date" class="field-input" value="'+UI.escHtml(d.approve_date||'')+'" placeholder="1447/01/01هـ"></div>'+
         '<div class="form-group"><label class="field-label">الإصدار</label><input id="gv-d-ver" class="field-input" value="'+UI.escHtml(d.version||'')+'"></div>'+
+      '</div>'+
+      '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:14px">'+
+        '<div class="form-group"><label class="field-label">التصنيف</label><select id="gv-d-cls" class="field-input">'+
+          Object.keys(Pages._GOV_CLASS).map(function(k){
+            return '<option value="'+k+'"'+((d.classification||'internal')===k?' selected':'')+'>'+Pages._GOV_CLASS[k][0]+'</option>';
+          }).join('')+'</select></div>'+
+        '<div class="form-group"><label class="field-label">تاريخ المراجعة القادمة</label><input id="gv-d-rev" class="field-input" value="'+UI.escHtml(d.next_review||'')+'" placeholder="YYYY-MM-DD أو هجري"></div>'+
+        '<div class="form-group" style="grid-column:1/-1"><label class="field-label">نطاق التطبيق</label><input id="gv-d-scope" class="field-input" placeholder="على من تسري هذه الوثيقة" value="'+UI.escHtml(d.scope||'')+'"></div>'+
       '</div>'+
       '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">'+
         '<div><div style="font-weight:700;font-size:13.5px;color:var(--fg-1)">المواد</div>'+
@@ -19103,6 +19264,10 @@ Pages.govSaveDocEdits = function(){
   if (dec) d.decision_no = (dec.value||'').trim();
   if (dt)  d.approve_date = (dt.value||'').trim();
   if (vr)  d.version = (vr.value||'').trim();
+  var clsEl = document.getElementById('gv-d-cls'), revEl = document.getElementById('gv-d-rev'), scEl = document.getElementById('gv-d-scope');
+  if (clsEl) d.classification = clsEl.value;
+  if (revEl) d.next_review = (revEl.value||'').trim();
+  if (scEl)  d.scope = (scEl.value||'').trim();
   var rows = document.querySelectorAll('#gv-arts [data-gart]');
   d.articles = Array.prototype.map.call(rows, function(r){
     return {
@@ -19118,7 +19283,10 @@ Pages.govSaveDocEdits = function(){
   Pages.render_governance({orgId:ctx.orgId});
 };
 
-/* ─── بناء المستند (معاينة / طباعة / Word) ─── */
+/* ═══════════ محرّك المستند الموحّد — معاينة / طباعة / Word من مصدر واحد ═══════════
+   opts.mode: 'screen' (معاينة داخل التطبيق) | 'print' (نافذة طباعة) | 'word' (تصدير .doc)
+   البنية واحدة في الأوضاع الثلاثة، وتختلف آليات فاصل الصفحة والترويسة والشعار فقط. */
+
 Pages._govDocKind = function(title){
   var s = String(title||'');
   if (s.indexOf('لائحة') === 0) return 'لائحة';
@@ -19134,179 +19302,447 @@ Pages._govSigners = function(profile){
     {role:'اعتماد', name:profile.chairman||'', title:'رئيس مجلس الإدارة'}
   ];
 };
-/* جسم المستند (بلا وسوم html/head) — يُستعمل للمعاينة والطباعة وWord */
-Pages._govDocBody = function(docs, profile, opts){
+
+/* تصنيف سرية الوثيقة */
+Pages._GOV_CLASS = {
+  public:       ['عام','#f0fdf4','#16a34a'],
+  internal:     ['داخلي','#eef0ff','#4338ca'],
+  confidential: ['سري','#fef2f2','#dc2626']
+};
+
+/* ─── قياس الشعار: يحفظ نسبة الأبعاد ويلتزم بالارتفاع المطلوب بالمليمتر ─── */
+Pages._GOV_MM = 3.7795;                       /* مليمتر → بكسل عند 96dpi */
+Pages._GOV_LOGO_DEF = { cover:30, head:10 };
+Pages._govLogoBox = function(profile, targetMM, maxWmm){
+  var ar = (profile.logoW && profile.logoH) ? (profile.logoW / profile.logoH) : 1;
+  var hmm = Math.max(4, Math.min(70, targetMM || 10));
+  var wmm = hmm * ar;
+  if (wmm > maxWmm) { wmm = maxWmm; hmm = wmm / ar; }
+  return { w:Math.round(wmm*Pages._GOV_MM), h:Math.round(hmm*Pages._GOV_MM), wmm:+wmm.toFixed(1), hmm:+hmm.toFixed(1) };
+};
+Pages._govCoverLogoBox = function(p){ return Pages._govLogoBox(p, p.logoCoverMM || Pages._GOV_LOGO_DEF.cover, 95); };
+Pages._govHeadLogoBox  = function(p){ return Pages._govLogoBox(p, p.logoHeadMM  || Pages._GOV_LOGO_DEF.head , 50); };
+/* في Word تُشير الصورة إلى جزء MIME باسم logo.png؛ في الشاشة والطباعة تُستخدم الـData-URI مباشرة */
+Pages._govLogoImg = function(profile, box, mode){
+  if (!profile.logo) return '';
+  return mode === 'word'
+    ? '<img src="logo.png" width="'+box.w+'" height="'+box.h+'">'
+    : '<img src="'+UI.escHtml(profile.logo)+'" style="width:'+box.wmm+'mm;height:'+box.hmm+'mm;object-fit:contain">';
+};
+
+/* ─── المحرّك ─── */
+Pages._govBuildDoc = function(orgId, docs, opts){
   opts = opts || {};
-  var mark = !!opts.mark;
-  var brand = profile.color || '#4338ca';
+  var mode = opts.mode || 'screen';
+  var word = mode === 'word';
+  var profile = Pages._govProfileOf(orgId);
   var esc = UI.escHtml;
-  var F = function(k){ return (Pages._govVarMap(profile)[k] || ''); };
+  var mark = mode === 'screen' && opts.mark !== false;
+  var brand = profile.color || '#4338ca';
+  var V = function(k){ return Pages._govVarMap(profile)[k] || ''; };
   var combined = docs.length > 1;
-  var title = opts.title || docs[0].title;
-  var code  = combined ? 'GOV-MN' : docs[0].code;
-  var kind  = combined ? 'دليل' : Pages._govDocKind(docs[0].title);
-  var approver = combined ? 'مجلس الإدارة والجمعية العمومية' : (docs[0].approver||'مجلس الإدارة');
-  var orgName = F('اسم_الجهة') || 'الجهة';
+  var first = docs[0] || {};
+  var title = opts.title || first.title || 'وثيقة';
+  var code  = combined ? 'GOV-MN' : (first.code || '');
+  var kind  = combined ? 'دليل' : Pages._govDocKind(first.title);
+  var approver = combined ? 'مجلس الإدارة والجمعية العمومية' : (first.approver || 'مجلس الإدارة');
+  var ver   = first.version || V('رقم_الإصدار') || 'الإصدار الأول';
+  var appDate = first.approve_date || V('تاريخ_الاعتماد');
+  var decNo   = first.decision_no  || V('رقم_قرار_الاعتماد');
+  var review  = first.next_review  || V('تاريخ_المراجعة_القادمة');
+  var cls = Pages._GOV_CLASS[first.classification || 'internal'] || Pages._GOV_CLASS.internal;
 
-  var logo = profile.logo ? '<div style="text-align:center;margin-bottom:14px"><img src="'+esc(profile.logo)+'" style="max-height:90px;max-width:220px;object-fit:contain"></div>' : '';
+  /* فاصل الصفحة حسب الوضع */
+  var pb = word
+    ? '<br clear="all" style="mso-special-character:line-break;page-break-before:always">'
+    : (mode === 'print' ? '<div class="gpage-break"></div>' : '<div class="gsep"></div>');
 
+  var coverBox = Pages._govCoverLogoBox(profile);
+  var headBox  = Pages._govHeadLogoBox(profile);
+
+  /* ── 1) الغلاف ── */
   var cover =
-    '<div style="text-align:center;padding:30px 0 22px;border-bottom:3px solid '+esc(brand)+';margin-bottom:22px">'+
-      logo+
-      '<div style="font-size:15px;color:#555;margin-bottom:6px">'+esc(orgName)+'</div>'+
-      '<div style="font-size:26px;font-weight:800;color:'+esc(brand)+';margin-bottom:8px">'+esc(title)+'</div>'+
-      '<div style="font-size:13px;color:#777">'+esc(kind)+' · '+esc(code)+'</div>'+
+    '<div class="gcover">'+
+      (profile.logo ? '<p align="center" class="gc-logo">'+Pages._govLogoImg(profile, coverBox, mode)+'</p>' : '')+
+      '<p class="gc-org">'+esc(V('اسم_الجهة') || 'الجهة')+'</p>'+
+      '<p class="gc-sub">'+
+        (V('رقم_الترخيص') ? 'ترخيص رقم ('+esc(V('رقم_الترخيص'))+')' : '')+
+        (V('الجهة_المشرفة') ? ' — '+esc(V('الجهة_المشرفة')) : '')+
+      '</p>'+
+      '<p class="gc-gap">&nbsp;</p>'+
+      '<p class="gc-title">'+esc(title)+'</p>'+
+      '<div class="gc-rule"></div>'+
+      '<p class="gc-gap">&nbsp;</p>'+
+      '<table class="gtbl gc-tbl" align="center">'+
+        '<tr><td class="k">نوع الوثيقة</td><td align="center">'+esc(kind)+'</td></tr>'+
+        '<tr><td class="k">رمز الوثيقة</td><td align="center">'+esc(code)+'</td></tr>'+
+        '<tr><td class="k">الإصدار</td><td align="center">'+esc(ver)+'</td></tr>'+
+        (appDate ? '<tr><td class="k">تاريخ الاعتماد</td><td align="center">'+esc(appDate)+'</td></tr>' : '')+
+        '<tr><td class="k">التصنيف</td><td align="center">'+esc(cls[0])+'</td></tr>'+
+        '<tr><td class="k">جهة الإصدار</td><td align="center">'+esc(V('الجهة_المُصدِرة') || V('جهة_الإعداد') || 'الإدارة التنفيذية')+'</td></tr>'+
+      '</table>'+
     '</div>';
 
-  var metaRows = [
-    ['اسم الجهة', F('اسم_الجهة')],
-    ['رقم الترخيص', F('رقم_الترخيص')],
-    ['الجهة المشرفة', F('الجهة_المشرفة')],
-    ['جهة الاعتماد', approver],
-    ['رقم قرار الاعتماد', (docs[0].decision_no || F('رقم_قرار_الاعتماد'))],
-    ['تاريخ الاعتماد', (docs[0].approve_date || F('تاريخ_الاعتماد'))],
-    ['الإصدار', (docs[0].version || F('رقم_الإصدار') || 'الإصدار الأول')],
-    ['تاريخ المراجعة القادمة', F('تاريخ_المراجعة_القادمة')]
-  ].filter(function(r){ return r[1]; });
-  var meta = '<table class="gov-meta">'+metaRows.map(function(r){
-    return '<tr><td>'+esc(r[0])+'</td><td>'+esc(r[1])+'</td></tr>';
-  }).join('')+'</table>';
-
-  var toc = combined ? '<h3>المحتويات</h3><ol>'+docs.map(function(d){
-    return '<li>'+esc(d.title)+' <span style="color:#888">('+esc(d.code)+')</span></li>';
-  }).join('')+'</ol>' : '';
-
-  var bodies = docs.map(function(d){
-    var head = combined ? '<h2 style="margin-top:26px;color:'+esc(brand)+'">'+esc(d.title)+'</h2>' : '';
-    var arts = (d.articles||[]).map(function(a, i){
-      var no = CONTRACT_ORDINALS[i] ? ('المادة '+CONTRACT_ORDINALS[i]) : ('المادة ('+(i+1)+')');
-      return '<h3 style="color:'+esc(brand)+'">'+esc(no)+(a.t?': '+Pages._govFill(esc(a.t), profile, mark):'')+'</h3>'+
-             Pages._govBodyHtml(a.b, profile, mark);
-    }).join('');
-    return head + arts;
+  /* ── 2) صفحة سجل الاعتماد وضبط الوثيقة ── */
+  var revs = (first.revisions && first.revisions.length) ? first.revisions
+           : [{ version:ver, date:appDate||'', note:'الإصدار الأول', by:V('جهة_الإعداد')||'' }];
+  var revRows = revs.map(function(r){
+    return '<tr align="center"><td>'+esc(r.version||'')+'</td><td>'+esc(r.date||'—')+'</td><td align="right">'+esc(r.note||'—')+'</td><td>'+esc(r.by||'—')+'</td></tr>';
   }).join('');
 
-  var signers = Pages._govSigners(profile);
-  var sign = '<table class="gov-sign"><tr>'+
-      '<th>الدور</th><th>الاسم</th><th>الصفة</th><th>التوقيع</th><th>التاريخ</th></tr>'+
-      signers.map(function(s){
-        return '<tr><td>'+esc(s.role||'')+'</td><td>'+esc(s.name||'')+'</td><td>'+esc(s.title||'')+'</td><td style="height:42px"></td><td></td></tr>';
+  var sg = Pages._govSigners(profile);
+  var approvalPage = pb +
+    '<h1>سجل الاعتماد</h1>'+
+    '<p>اعتُمدت هذه ال'+esc(kind==='دليل'?'وثيقة':kind)+' بموجب قرار '+esc(approver)+' في '+esc(V('اسم_الجهة')||'الجهة')+
+      (decNo ? ' رقم ('+esc(decNo)+')' : '')+
+      (appDate ? ' وتاريخ '+esc(appDate) : '')+
+      '، ويُعمل بها اعتباراً من تاريخ اعتمادها، وتُلغي ما يتعارض معها من قرارات وتعليمات سابقة'+
+      (review ? '، وتُراجع دورياً بما لا يتجاوز '+esc(review) : '، وتُراجع دورياً')+
+      '، أو عند صدور تعديلات نظامية تستوجب ذلك.</p>'+
+    (first.scope ? '<h2>نطاق التطبيق</h2><p>'+esc(first.scope)+'</p>' : '')+
+    '<h1 class="gsec">ضبط الوثيقة</h1>'+
+    '<table class="gtbl">'+
+      '<tr><th>الإصدار</th><th>الرمز</th><th>تاريخ الاعتماد</th><th>جهة الإعداد</th><th>جهة المراجعة</th><th>جهة الاعتماد</th></tr>'+
+      '<tr align="center"><td>'+esc(ver)+'</td><td>'+esc(code)+'</td><td>'+esc(appDate||'—')+'</td>'+
+        '<td>'+esc(V('جهة_الإعداد')||'—')+'</td><td>'+esc(V('جهة_المراجعة')||'—')+'</td><td>'+esc(approver)+'</td></tr>'+
+    '</table>'+
+    '<h1 class="gsec">سجل الإصدارات والتعديلات</h1>'+
+    '<table class="gtbl">'+
+      '<tr><th style="width:70pt">الإصدار</th><th style="width:90pt">التاريخ</th><th>وصف التعديل</th><th style="width:110pt">أعدّه</th></tr>'+
+      revRows+
+    '</table>'+
+    '<h1 class="gsec">المراجعة والاعتماد</h1>'+
+    '<table class="gtbl gsig">'+
+      '<tr><th style="width:32%">الاسم</th><th style="width:30%">المنصب</th><th style="width:16%">الدور</th><th style="width:22%">التوقيع</th></tr>'+
+      sg.map(function(s){
+        return '<tr><td>'+esc(s.name||'')+'</td><td>'+esc(s.title||'')+'</td><td align="center">'+esc(s.role||'')+'</td><td></td></tr>';
       }).join('')+
-    '</table>';
+    '</table>'+
+    '<p class="gstamp">الختم الرسمي للجهة</p>';
 
-  return cover + meta + toc + bodies + sign;
+  /* ── 3) الفهرس (عند التجميع) ── */
+  var toc = '';
+  if (combined) {
+    toc = pb + '<h1>المحتويات</h1><table class="gtbl">'+
+      '<tr><th style="width:40pt">م</th><th>الوثيقة</th><th style="width:80pt">الرمز</th><th style="width:120pt">جهة الاعتماد</th></tr>'+
+      docs.map(function(d,i){
+        return '<tr><td align="center">'+(i+1)+'</td><td>'+esc(d.title)+'</td><td align="center">'+esc(d.code||'')+'</td><td align="center">'+esc(d.approver||'مجلس الإدارة')+'</td></tr>';
+      }).join('')+'</table>';
+  }
+
+  /* ── 4) متن الوثائق ── */
+  var bodies = docs.map(function(d){
+    var k = Pages._govDocKind(d.title);
+    var dVer = d.version || ver;
+    var mini = '<table class="gtbl gmini">'+
+      '<tr><td class="k">الرمز</td><td align="center">'+esc(d.code||'')+'</td><td class="k">النوع</td><td align="center">'+esc(k)+'</td></tr>'+
+      '<tr><td class="k">الإصدار</td><td align="center">'+esc(dVer)+'</td><td class="k">جهة الاعتماد</td><td align="center">'+esc(d.approver||'مجلس الإدارة')+'</td></tr>'+
+      '<tr><td class="k">تاريخ الاعتماد</td><td align="center">'+esc(d.approve_date||appDate||'—')+'</td><td class="k">المراجعة القادمة</td><td align="center">'+esc(d.next_review||review||'—')+'</td></tr>'+
+    '</table>';
+    var arts = (d.articles||[]).map(function(a, i){
+      var no = CONTRACT_ORDINALS[i] ? ('المادة '+CONTRACT_ORDINALS[i]) : ('المادة ('+(i+1)+')');
+      return '<h2>'+esc(no)+(a.t ? ': '+Pages._govFill(esc(a.t), profile, mark) : '')+'</h2>'+
+             Pages._govBodyHtml(a.b, profile, mark);
+    }).join('');
+    return pb + '<h1>'+esc(d.title)+'</h1>' + mini +
+      '<h2 class="gsub">بنود ال'+esc(k)+'</h2>' + arts + '<p class="gend">انتهت</p>';
+  }).join('');
+
+  var content = cover + approvalPage + toc + bodies;
+
+  /* ── الترويسة والتذييل الجاريان ── */
+  var hfHeadTxt = (profile.logo ? Pages._govLogoImg(profile, headBox, mode)+' ' : '') +
+                  esc(V('اسم_الجهة')||'') + (word ? '<span style="mso-tab-count:1"></span> ' : ' — ') + esc(title);
+  var hfFootLeft = esc(code) + (cls ? ' · '+esc(cls[0]) : '');
+  var hfFootRight = esc(ver) + (appDate ? ' — '+esc(appDate) : '');
+
+  if (word) {
+    return '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">'+
+      '<head><meta charset="utf-8"><title>'+esc(title)+'</title>'+
+      '<!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom><w:DoNotOptimizeForBrowser/></w:WordDocument></xml><![endif]-->'+
+      '<style>'+Pages._govDocCss('word', brand)+'</style></head>'+
+      '<body dir="rtl" lang="AR-SA"><div class="Section1">'+content+'</div>'+
+      '<div style="mso-element:header" id="h1"><p class="MsoHeader">'+hfHeadTxt+'</p></div>'+
+      '<div style="mso-element:footer" id="f1"><p class="MsoFooter">'+hfFootLeft+
+        '<span style="mso-tab-count:1"></span> صفحة <span style="mso-field-code:PAGE"></span> من <span style="mso-field-code:NUMPAGES"></span>'+
+        '<span style="mso-tab-count:1"></span> '+hfFootRight+'</p></div>'+
+      '</body></html>';
+  }
+  if (mode === 'print') {
+    return '<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="utf-8"><title>'+esc(title)+'</title>'+
+      '<style>'+Pages._govDocCss('print', brand)+'</style></head><body>'+
+      '<div class="grun-head">'+hfHeadTxt+'</div>'+
+      '<div class="grun-foot"><span>'+hfFootLeft+'</span><span class="gpageno"></span><span>'+hfFootRight+'</span></div>'+
+      '<div class="gdoc">'+content+'</div></body></html>';
+  }
+  /* screen */
+  return '<style>'+Pages._govDocCss('screen', brand)+'</style><div class="gdoc gdoc-screen">'+content+'</div>';
 };
 
+/* CSS المستند — نفس القواعد مع اختلافات كل وضع */
+Pages._govDocCss = function(mode, brand){
+  var common =
+    '.gdoc{direction:rtl;text-align:justify;color:#16211f}'+
+    '.gdoc h1{font-size:17pt;color:'+brand+';margin:0 0 10pt;font-weight:800}'+
+    '.gdoc h1.gsec{margin-top:20pt}'+
+    '.gdoc h2{font-size:14pt;color:'+brand+';margin:14pt 0 4pt;font-weight:700}'+
+    '.gdoc h2.gsub{margin-top:6pt}'+
+    '.gdoc p{margin:0 0 6pt}'+
+    '.gdoc ol{margin:3pt 0 8pt;padding-inline-start:20pt}'+
+    '.gdoc li{margin-bottom:3pt}'+
+    '.gtbl{border-collapse:collapse;width:100%;font-size:11.5pt;margin:6pt 0 12pt}'+
+    '.gtbl td{border:1px solid #bbb;padding:5pt 8pt;vertical-align:middle}'+
+    '.gtbl td.k{background:#f2efe8;font-weight:700;color:'+brand+';width:110pt}'+
+    '.gtbl th{border:1px solid #bbb;padding:5pt 8pt;background:'+brand+';color:#fff;font-size:11pt}'+
+    '.gsig td{height:44pt;vertical-align:middle}'+
+    '.gmini{margin-bottom:12pt}'+
+    '.gc-logo{text-align:center;margin:0 0 10pt}'+
+    '.gc-org{font-size:19pt;font-weight:700;color:'+brand+';text-align:center;margin:0}'+
+    '.gc-sub{font-size:10.5pt;color:#888;text-align:center;margin:2pt 0 0}'+
+    '.gc-gap{margin:26pt 0}'+
+    '.gc-title{font-size:28pt;font-weight:800;color:'+brand+';text-align:center;margin:0}'+
+    '.gc-rule{border-top:3pt solid '+brand+';width:45%;margin:8pt auto 0}'+
+    '.gc-tbl{width:62%}'+
+    '.gend{text-align:center;color:'+brand+';font-weight:700;font-size:14pt;margin-top:18pt}'+
+    '.gstamp{margin-top:14pt;font-size:10.5pt;color:#888}'+
+    '.gov-miss{background:#fde8e4;color:#9b3b2e;border-radius:4px;padding:0 4px}';
+
+  if (mode === 'word') {
+    return '@page Section1{size:21.0cm 29.7cm;margin:2.6cm 2.0cm 2.2cm 2.0cm;'+
+        'mso-header-margin:1.0cm;mso-footer-margin:1.0cm;mso-header:h1;mso-footer:f1;mso-paper-source:0}'+
+      'div.Section1{page:Section1}'+
+      'body{direction:rtl;font-family:"Sakkal Majalla","Traditional Arabic",Arial;font-size:14.0pt;line-height:170%}'+
+      'p.MsoHeader,p.MsoFooter{margin:0;font-size:9pt;color:#777}'+
+      common.replace(/\.gdoc\s?/g, '') +
+      '.gov-miss{background:none;color:inherit}';
+  }
+  if (mode === 'print') {
+    return '@page{size:A4 portrait;margin:24mm 18mm 20mm}'+
+      'body{font-family:"Sakkal Majalla","Traditional Arabic","Segoe UI",Tahoma,Arial,sans-serif;'+
+        'font-size:13.5pt;line-height:1.9;margin:0;counter-reset:gpage}'+
+      common+
+      /* ترويسة وتذييل يتكرران على كل صفحة مطبوعة */
+      '.grun-head{position:fixed;top:-16mm;right:0;left:0;font-size:9pt;color:#777;'+
+        'border-bottom:.5pt solid #ddd;padding-bottom:2mm;display:flex;align-items:center;gap:6px}'+
+      '.grun-head img{height:8mm;object-fit:contain}'+
+      '.grun-foot{position:fixed;bottom:-14mm;right:0;left:0;font-size:9pt;color:#777;'+
+        'border-top:.5pt solid #ddd;padding-top:2mm;display:flex;justify-content:space-between}'+
+      '.gpageno::before{counter-increment:gpage;content:"صفحة " counter(gpage)}'+
+      '.gpage-break{page-break-before:always;height:0}'+
+      /* ضبط الانقسام بين الصفحات */
+      '.gtbl{page-break-inside:avoid}'+
+      '.gsig{page-break-inside:avoid}'+
+      '.gcover{page-break-inside:avoid}'+
+      '.gdoc h1,.gdoc h2{page-break-after:avoid;page-break-inside:avoid}'+
+      '.gdoc p,.gdoc li{orphans:2;widows:2}'+
+      '.gc-gap{margin:22mm 0}';
+  }
+  /* screen */
+  return 'body{}'+common+
+    '.gdoc-screen{background:#fff;max-width:820px;margin:0 auto;padding:30px 36px;'+
+      'border:1px solid var(--border);border-radius:10px;font-size:14px;line-height:2.0}'+
+    '.gdoc-screen h1{font-size:19px}.gdoc-screen h2{font-size:15px}'+
+    '.gdoc-screen .gtbl{font-size:12.5px}'+
+    '.gdoc-screen .gc-title{font-size:26px}.gdoc-screen .gc-org{font-size:18px}'+
+    '.gdoc-screen .gc-gap{margin:22px 0}'+
+    '.gsep{border-top:2px dashed #d8d3c6;margin:26px 0;position:relative}';
+};
+
+/* ─── تغليف MHTML: الشعار كجزء MIME مستقل ليعرضه Word بثبات ─── */
+Pages._govB64Utf8 = function(str){
+  var bytes = new TextEncoder().encode(str), bin = '';
+  for (var i=0; i<bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+  return btoa(bin);
+};
+Pages._govWrap76 = function(s){ return s.replace(/(.{76})/g, '$1\r\n'); };
+Pages._govToMHT = function(html, logoDataUrl){
+  var B = '----=_NextPart_BUAD_GOV_01';
+  var out = 'MIME-Version: 1.0\r\nContent-Type: multipart/related; type="text/html"; boundary="'+B+'"\r\n\r\n';
+  out += '--'+B+'\r\nContent-Location: file:///C:/buad/doc.htm\r\nContent-Transfer-Encoding: base64\r\nContent-Type: text/html; charset="utf-8"\r\n\r\n';
+  out += Pages._govWrap76(Pages._govB64Utf8(html))+'\r\n\r\n';
+  if (logoDataUrl && logoDataUrl.indexOf('data:') === 0) {
+    var mime = (logoDataUrl.match(/^data:([^;]+);/)||[])[1] || 'image/png';
+    var data = logoDataUrl.split(',')[1] || '';
+    out += '--'+B+'\r\nContent-Location: file:///C:/buad/logo.png\r\nContent-Transfer-Encoding: base64\r\nContent-Type: '+mime+'\r\n\r\n';
+    out += Pages._govWrap76(data)+'\r\n\r\n';
+  }
+  out += '--'+B+'--\r\n';
+  return out;
+};
+
+Pages._govDownloadWord = function(orgId, docs, title){
+  var profile = Pages._govProfileOf(orgId);
+  var html = Pages._govBuildDoc(orgId, docs, {mode:'word', title:title});
+  /* الشعار المرفوع (Data-URI) يُغلَّف MHTML؛ الشعار برابط خارجي يُترك كما هو */
+  var useMht = profile.logo && profile.logo.indexOf('data:') === 0;
+  var content = useMht ? Pages._govToMHT(html, profile.logo) : html;
+  var blob = new Blob(['\ufeff'+content], {type:'application/msword'});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = String(title||'وثيقة').replace(/[\\\/:*?"<>|]/g,'-') + '.doc';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(function(){ URL.revokeObjectURL(a.href); }, 2000);
+  UI.toast('نُزِّل ملف Word');
+};
+
+/* الطباعة: تنتظر تحميل الصور قبل فتح مربع الطباعة */
+Pages._govPrintDocs = function(orgId, docs, title){
+  var w = window.open('', '_blank');
+  if (!w) { UI.toast('اسمح بالنوافذ المنبثقة للطباعة','danger'); return; }
+  w.document.write(Pages._govBuildDoc(orgId, docs, {mode:'print', title:title}));
+  w.document.close();
+  var fire = function(){ try { w.focus(); w.print(); } catch(e){} };
+  var imgs = [];
+  try { imgs = Array.prototype.slice.call(w.document.images||[]); } catch(e){}
+  if (!imgs.length) { setTimeout(fire, 120); return; }
+  var left = imgs.length, done = false;
+  var finish = function(){ if (done) return; done = true; setTimeout(fire, 80); };
+  imgs.forEach(function(img){
+    if (img.complete && img.naturalWidth) { if(--left === 0) finish(); return; }
+    img.onload = img.onerror = function(){ if(--left === 0) finish(); };
+  });
+  setTimeout(finish, 3000);   /* مهلة أمان: لا نعلّق الطباعة على صورة عالقة */
+};
+
+Pages.govPrintDoc = function(orgId, docId){
+  var d = (Pages._govOf(orgId).docs||[]).filter(function(x){ return x.id===docId; })[0];
+  if (d) Pages._govPrintDocs(orgId, [d], d.title);
+};
+Pages.govExportWord = function(orgId, docId){
+  var d = (Pages._govOf(orgId).docs||[]).filter(function(x){ return x.id===docId; })[0];
+  if (d) Pages._govDownloadWord(orgId, [d], d.title);
+};
+
+/* ─── المعاينة (مطابقة للمخرَج) ─── */
 Pages.govPreviewTpl = function(orgId, code){
   var tpl = Pages._govTplByCode(code); if(!tpl) return;
-  var doc = Pages._govNewDocFromTpl(orgId, tpl);
-  Pages._govShowPreview(orgId, [doc], tpl.title, code);
+  Pages._govShowPreview(orgId, [Pages._govNewDocFromTpl(orgId, tpl)], tpl.title, code, null);
 };
 Pages.govPreviewDoc = function(orgId, docId){
-  var g = Pages._govOf(orgId);
-  var d = (g.docs||[]).filter(function(x){ return x.id===docId; })[0]; if(!d) return;
+  var d = (Pages._govOf(orgId).docs||[]).filter(function(x){ return x.id===docId; })[0]; if(!d) return;
   Pages._govShowPreview(orgId, [d], d.title, null, docId);
 };
 Pages._govShowPreview = function(orgId, docs, title, tplCode, docId){
-  var profile = Pages._govProfileOf(orgId);
+  Pages._govPrevCtx = {orgId:orgId, docs:docs, title:title, docId:docId, mark:true};
   var actions = docId
     ? '<button class="btn btn-sm" onclick="UI.closeModalForce();Pages.govPrintDoc(\''+orgId+'\',\''+docId+'\')"><i data-lucide="printer"></i>طباعة</button>'+
       '<button class="btn btn-sm" onclick="UI.closeModalForce();Pages.govExportWord(\''+orgId+'\',\''+docId+'\')"><i data-lucide="file-down"></i>Word</button>'
     : (tplCode ? '<button class="btn btn-sm btn-primary" onclick="UI.closeModalForce();Pages.govCreateDoc(\''+orgId+'\',\''+tplCode+'\')"><i data-lucide="plus"></i>إنشاء للجهة</button>' : '');
   UI.openModal(
     '<div class="modal-header"><h3>'+UI.escHtml(title)+'</h3>'+
-      '<div style="display:flex;gap:6px;align-items:center">'+actions+
-      '<button class="modal-close" onclick="UI.closeModalForce()">×</button></div></div>'+
-    '<div style="padding:16px;background:#e9e6de;max-height:72vh;overflow-y:auto">'+
-      '<div class="gov-sheet">'+Pages._govDocBody(docs, profile, {mark:true, title:title})+'</div>'+
+      '<div style="display:flex;gap:6px;align-items:center">'+
+        '<button class="btn btn-sm" onclick="Pages.govTogglePrevMark()" id="gv-mark-btn"><i data-lucide="eye-off"></i>إخفاء الناقص</button>'+
+        actions+
+        '<button class="modal-close" onclick="UI.closeModalForce()">×</button>'+
+      '</div></div>'+
+    '<div style="padding:16px;background:#e9e6de;max-height:72vh;overflow-y:auto" id="gv-prev-body">'+
+      Pages._govBuildDoc(orgId, docs, {mode:'screen', title:title, mark:true})+
     '</div>'
   );
   if (typeof lucide !== 'undefined') setTimeout(function(){ lucide.createIcons(); }, 50);
 };
-
-Pages._govPrintCss = function(){
-  return '@page{size:A4 portrait;margin:18mm 16mm}'+
-    'body{font-family:"Sakkal Majalla","Traditional Arabic","Segoe UI",Tahoma,Arial,sans-serif;direction:rtl;'+
-      'font-size:14pt;line-height:1.95;color:#16211f;margin:0;text-align:justify}'+
-    'h2{font-size:17pt;margin:18pt 0 6pt}'+
-    'h3{font-size:14pt;margin:14pt 0 3pt}'+
-    'p{margin:0 0 6pt}'+
-    'ol{margin:3pt 0 8pt;padding-inline-start:20pt}'+
-    'li{margin-bottom:3pt}'+
-    'img{max-width:100%}'+
-    '.gov-meta{width:100%;border-collapse:collapse;margin:12pt 0 16pt;font-size:11pt}'+
-    '.gov-meta td{border:1px solid #bbb;padding:4pt 7pt}'+
-    '.gov-meta td:nth-child(odd){background:#f4f2ec;font-weight:600;width:32%}'+
-    '.gov-sign{width:100%;border-collapse:collapse;margin-top:22pt;font-size:11pt;page-break-inside:avoid}'+
-    '.gov-sign td,.gov-sign th{border:1px solid #bbb;padding:6pt;text-align:center}'+
-    '.gov-sign th{background:#f4f2ec}'+
-    '.gov-miss{background:none;color:inherit}';
-};
-Pages._govPrintDocs = function(orgId, docs, title){
-  var profile = Pages._govProfileOf(orgId);
-  var w = window.open('', '_blank');
-  if (!w) { UI.toast('اسمح بالنوافذ المنبثقة للطباعة','danger'); return; }
-  w.document.write('<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="utf-8"><title>'+UI.escHtml(title)+'</title>'+
-    '<style>'+Pages._govPrintCss()+'</style></head><body>'+
-    Pages._govDocBody(docs, profile, {mark:false, title:title})+
-    '<scr'+'ipt>window.onload=function(){window.print();};</scr'+'ipt></body></html>');
-  w.document.close();
-};
-Pages.govPrintDoc = function(orgId, docId){
-  var g = Pages._govOf(orgId);
-  var d = (g.docs||[]).filter(function(x){ return x.id===docId; })[0]; if(!d) return;
-  Pages._govPrintDocs(orgId, [d], d.title);
+Pages.govTogglePrevMark = function(){
+  var c = Pages._govPrevCtx; if(!c) return;
+  c.mark = !c.mark;
+  var body = document.getElementById('gv-prev-body');
+  if (body) body.innerHTML = Pages._govBuildDoc(c.orgId, c.docs, {mode:'screen', title:c.title, mark:c.mark});
+  var btn = document.getElementById('gv-mark-btn');
+  if (btn) btn.innerHTML = '<i data-lucide="'+(c.mark?'eye-off':'eye')+'"></i>'+(c.mark?'إخفاء الناقص':'إظهار الناقص');
+  if (typeof lucide !== 'undefined') lucide.createIcons();
 };
 
-/* تصدير Word — مستند HTML بترويسة Word يفتح مباشرة في Microsoft Word */
-Pages._govWordHtml = function(orgId, docs, title){
-  var profile = Pages._govProfileOf(orgId);
-  return '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">'+
-    '<head><meta charset="utf-8"><title>'+UI.escHtml(title)+'</title>'+
-    '<!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom><w:DoNotOptimizeForBrowser/></w:WordDocument></xml><![endif]-->'+
-    '<style>@page Section1{size:21.0cm 29.7cm;margin:2.6cm 2.0cm 2.2cm 2.0cm;mso-paper-source:0}'+
-    'div.Section1{page:Section1}'+
-    'body{direction:rtl;font-family:"Sakkal Majalla","Traditional Arabic",Arial;font-size:14.0pt;line-height:170%}'+
-    Pages._govPrintCss().replace(/@page[^}]+}/,'')+
-    '</style></head><body><div class="Section1">'+
-    Pages._govDocBody(docs, profile, {mark:false, title:title})+
-    '</div></body></html>';
-};
-Pages._govDownloadWord = function(orgId, docs, title){
-  var html = Pages._govWordHtml(orgId, docs, title);
-  var blob = new Blob(['﻿'+html], {type:'application/msword;charset=utf-8'});
-  var a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = String(title).replace(/[\\\/\?\*\[\]:]/g,' ') + '.doc';
-  document.body.appendChild(a); a.click(); document.body.removeChild(a);
-  setTimeout(function(){ URL.revokeObjectURL(a.href); }, 2000);
-  UI.toast('نُزِّل ملف Word');
-};
-Pages.govExportWord = function(orgId, docId){
-  var g = Pages._govOf(orgId);
-  var d = (g.docs||[]).filter(function(x){ return x.id===docId; })[0]; if(!d) return;
-  Pages._govDownloadWord(orgId, [d], d.title);
-};
-
-/* دليل الحوكمة الشامل — كل الوثائق في مستند واحد */
+/* ─── دليل الحوكمة الشامل / تصدير الكل ─── */
 Pages.govBuildManual = function(orgId){
-  var g = Pages._govOf(orgId);
-  var docs = g.docs||[];
+  var docs = Pages._govOf(orgId).docs || [];
   if (!docs.length) { UI.toast('لا توجد وثائق','danger'); return; }
   var name = Pages._govProfileOf(orgId).name || Pages._opOrgName(orgId);
   var title = 'دليل الحوكمة — ' + name;
+  var approved = docs.filter(function(d){ return d.status==='approved'; });
   UI.openModal(
     '<div class="modal-header"><h3>دليل الحوكمة الشامل</h3><button class="modal-close" onclick="UI.closeModalForce()">×</button></div>'+
-    '<div class="modal-body"><p style="color:var(--fg-2);font-size:13.5px;line-height:1.8">يُدمج <strong>'+docs.length+'</strong> وثيقة في مستند واحد بغلاف وفهرس محتويات.</p></div>'+
+    '<div class="modal-body">'+
+      '<p style="color:var(--fg-2);font-size:13.5px;line-height:1.8;margin-bottom:10px">مستند واحد بغلاف وسجل اعتماد وفهرس محتويات يضم الوثائق المختارة.</p>'+
+      '<label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--fg-2);cursor:pointer;margin-bottom:6px">'+
+        '<input type="radio" name="gv-man-scope" value="all" checked style="width:15px;height:15px">كل الوثائق ('+docs.length+')</label>'+
+      '<label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--fg-2);cursor:'+(approved.length?'pointer':'not-allowed')+';opacity:'+(approved.length?'1':'.5')+'">'+
+        '<input type="radio" name="gv-man-scope" value="approved" '+(approved.length?'':'disabled')+' style="width:15px;height:15px">المعتمدة فقط ('+approved.length+')</label>'+
+    '</div>'+
     '<div class="modal-footer" style="display:flex;gap:var(--space-2);justify-content:flex-end">'+
       '<button class="btn btn-sm" onclick="UI.closeModalForce()">إلغاء</button>'+
-      '<button class="btn btn-sm" onclick="UI.closeModalForce();Pages._govPrintDocs(\''+orgId+'\',Pages._govOf(\''+orgId+'\').docs,'+JSON.stringify(title)+')"><i data-lucide="printer"></i>طباعة PDF</button>'+
-      '<button class="btn btn-sm btn-primary" onclick="UI.closeModalForce();Pages._govDownloadWord(\''+orgId+'\',Pages._govOf(\''+orgId+'\').docs,'+JSON.stringify(title)+')"><i data-lucide="file-down"></i>تصدير Word</button>'+
+      '<button class="btn btn-sm" onclick="Pages._govManualOut(\''+orgId+'\',\'print\')"><i data-lucide="printer"></i>طباعة PDF</button>'+
+      '<button class="btn btn-sm btn-primary" onclick="Pages._govManualOut(\''+orgId+'\',\'word\')"><i data-lucide="file-down"></i>تصدير Word</button>'+
     '</div>'
   );
   if (typeof lucide !== 'undefined') setTimeout(function(){ lucide.createIcons(); }, 50);
 };
+Pages._govManualOut = function(orgId, how){
+  var sel = document.querySelector('input[name="gv-man-scope"]:checked');
+  var scope = sel ? sel.value : 'all';
+  var docs = Pages._govOf(orgId).docs || [];
+  if (scope === 'approved') docs = docs.filter(function(d){ return d.status==='approved'; });
+  if (!docs.length) { UI.toast('لا توجد وثائق مطابقة','danger'); return; }
+  var title = 'دليل الحوكمة — ' + (Pages._govProfileOf(orgId).name || Pages._opOrgName(orgId));
+  UI.closeModalForce();
+  if (how === 'word') Pages._govDownloadWord(orgId, docs, title);
+  else Pages._govPrintDocs(orgId, docs, title);
+};
 
+/* ─── إصدار جديد + قيد تلقائي في سجل الإصدارات ─── */
+Pages._govBumpVersion = function(v){
+  var order = ['الإصدار الأول','الإصدار الثاني','الإصدار الثالث','الإصدار الرابع','الإصدار الخامس','الإصدار السادس'];
+  var i = order.indexOf((v||'').trim());
+  if (i >= 0 && i < order.length-1) return order[i+1];
+  var m = String(v||'').match(/(\d+(?:\.\d+)?)/);
+  if (m) return String(v).replace(m[1], (parseFloat(m[1])+1).toString());
+  return 'الإصدار الثاني';
+};
+Pages.govNewVersion = function(orgId, docId){
+  var g = Pages._govOf(orgId);
+  var d = (g.docs||[]).filter(function(x){ return x.id===docId; })[0]; if(!d) return;
+  UI.openModal(
+    '<div class="modal-header"><h3>إصدار جديد</h3><button class="modal-close" onclick="UI.closeModalForce()">×</button></div>'+
+    '<div class="modal-body">'+
+      '<p style="color:var(--fg-2);font-size:13.5px;line-height:1.8">سيُرفع الإصدار من «'+UI.escHtml(d.version||'الإصدار الأول')+'» إلى «'+UI.escHtml(Pages._govBumpVersion(d.version))+'»، وتعود الحالة إلى مسودة، ويُضاف قيد لسجل الإصدارات.</p>'+
+      '<div class="form-group" style="margin-top:10px"><label class="field-label">وصف التعديل <span style="color:var(--danger)">*</span></label>'+
+        '<input id="gv-rev-note" class="field-input" placeholder="مثال: تحديث المادة الخامسة بما يوافق التعديل النظامي"></div>'+
+    '</div>'+
+    '<div class="modal-footer" style="display:flex;gap:var(--space-2);justify-content:flex-end">'+
+      '<button class="btn btn-sm" onclick="UI.closeModalForce()">إلغاء</button>'+
+      '<button class="btn btn-sm btn-primary" onclick="Pages._doGovNewVersion(\''+orgId+'\',\''+docId+'\')">إنشاء الإصدار</button>'+
+    '</div>'
+  );
+};
+Pages._doGovNewVersion = function(orgId, docId){
+  var note = ((document.getElementById('gv-rev-note')||{}).value||'').trim();
+  if (!note) { UI.toast('اكتب وصف التعديل','danger'); return; }
+  var g = Pages._govOf(orgId);
+  var d = (g.docs||[]).filter(function(x){ return x.id===docId; })[0]; if(!d) return;
+  var profile = Pages._govProfileOf(orgId);
+  if (!d.revisions) d.revisions = [];
+  d.version = Pages._govBumpVersion(d.version);
+  d.status = 'draft';
+  d.approve_date = '';
+  d.revisions.push({ version:d.version, date:(new Date()).toISOString().slice(0,10), note:note, by:profile.preparedBy||profile.issuedBy||'' });
+  DB.saveGovDoc(orgId, d);
+  UI.closeModalForce();
+  UI.toast('أُنشئ '+d.version);
+  Pages.render_governance({orgId:orgId});
+};
+
+/* استحقاق المراجعة: منقضٍ أو خلال 60 يوماً — يدعم الميلادي فقط (تواريخ هجرية تُتجاهل) */
+Pages._govReviewDue = function(orgId){
+  var g = Pages._govOf(orgId), profile = g.profile||{};
+  var today = new Date(); today.setHours(0,0,0,0);
+  var soon = new Date(today.getTime() + 60*24*3600*1000);
+  return (g.docs||[]).map(function(d){
+    var raw = (d.next_review || profile.reviewDate || '').trim();
+    var m = raw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (!m) return null;
+    var dt = new Date(+m[1], +m[2]-1, +m[3]);
+    if (dt > soon) return null;
+    return { doc:d, date:raw, overdue: dt < today };
+  }).filter(Boolean);
+};
 
 Pages.render_resources = function(opts) {
   var pg = document.getElementById('pg-resources');
