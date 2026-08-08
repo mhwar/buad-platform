@@ -2467,6 +2467,11 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
         <span class="sb-label">الحوكمة والامتثال</span>
         <span class="sb-badge" id="sb-badge-gov" style="display:none">0</span>
       </a>
+      <a class="sb-item" id="nav-orgsites" onclick="Nav.go('orgsites')">
+        <span class="sb-icon"><i data-lucide="panels-top-left"></i></span>
+        <span class="sb-label">مواقع الجمعيات</span>
+        <span class="sb-badge" id="sb-badge-orgsites" style="display:none">0</span>
+      </a>
       <a class="sb-item" id="nav-resources" onclick="Nav.go('resources')">
         <span class="sb-icon"><i data-lucide="book-open"></i></span>
         <span class="sb-label">الموارد والأدلة</span>
@@ -2540,6 +2545,7 @@ textarea.field-input{min-height:84px;resize:vertical;line-height:var(--lh-normal
     <div id="pg-opplan"   class="page"></div>
     <div id="pg-stratplan" class="page"></div>
     <div id="pg-governance" class="page"></div>
+    <div id="pg-orgsites" class="page"></div>
     <div id="pg-resources" class="page"></div>
     <div id="pg-grants"   class="page"></div>
     <div id="pg-settings" class="page"></div>
@@ -2913,6 +2919,27 @@ DB._toggleOrgWebsite = function(id, enabled) {
     body: JSON.stringify({ enabled: enabled })
   }).then(function(r){ return r.ok; }).catch(function(){ return false; });
 };
+/* ─── Association websites (admin) ─── */
+DB._getOrgSite = function(orgId) {
+  if (!DB._token) return Promise.resolve(null);
+  return fetch('/api/admin/org-website/'+encodeURIComponent(orgId), { headers: DB._apiHeaders() })
+    .then(function(r){ return r.ok ? r.json() : null; })
+    .catch(function(){ return null; });
+};
+/* Partial update: only the keys passed are written, so an admin edit never
+   overwrites content the association is editing in its own portal. */
+DB._saveOrgSite = function(orgId, patch) {
+  if (!DB._token) return Promise.resolve({ ok:false, error:'no_token' });
+  return fetch('/api/admin/org-website/'+encodeURIComponent(orgId), {
+    method: 'PUT',
+    headers: DB._apiHeaders(),
+    body: JSON.stringify(patch || {})
+  }).then(function(r){
+    return r.json().then(function(j){ return Object.assign({ ok:r.ok, status:r.status }, j||{}); })
+      .catch(function(){ return { ok:r.ok, status:r.status }; });
+  }).catch(function(){ return { ok:false, error:'network' }; });
+};
+
 DB._toggleOrgCrm = function(id, enabled) {
   if (!DB._token) return Promise.resolve(false);
   return fetch('/api/orgs/'+id+'/toggle-crm', {
@@ -3510,8 +3537,8 @@ var Nav = {
   updateBreadcrumb: function(page, params) {
     var bc = document.getElementById('breadcrumb');
     if (!bc) return;
-    var icons = {dash:'layout-dashboard', clients:'users', projects:'briefcase', settings:'settings-2', resources:'book-open', grants:'hand-coins', orgs:'calendar-check', opplan:'target', stratplan:'compass', governance:'scale', website:'inbox', services:'layout-grid', site:'globe', pf:'banknote'};
-    var labels = {dash:'الرئيسية', clients:'العملاء', projects:'المشاريع', settings:'الإعدادات', resources:'الموارد والأدلة', grants:'فرص المنح', orgs:'خطة المئة يوم', opplan:'الخطة التشغيلية', stratplan:'الخطة الاستراتيجية', governance:'الحوكمة والامتثال', website:'الطلبات الواردة', services:'الخدمات والأدوات', site:'إدارة الموقع', pf:'مالية المنصة'};
+    var icons = {dash:'layout-dashboard', clients:'users', projects:'briefcase', settings:'settings-2', resources:'book-open', grants:'hand-coins', orgs:'calendar-check', opplan:'target', stratplan:'compass', governance:'scale', orgsites:'panels-top-left', website:'inbox', services:'layout-grid', site:'globe', pf:'banknote'};
+    var labels = {dash:'الرئيسية', clients:'العملاء', projects:'المشاريع', settings:'الإعدادات', resources:'الموارد والأدلة', grants:'فرص المنح', orgs:'خطة المئة يوم', opplan:'الخطة التشغيلية', stratplan:'الخطة الاستراتيجية', governance:'الحوكمة والامتثال', orgsites:'مواقع الجمعيات', website:'الطلبات الواردة', services:'الخدمات والأدوات', site:'إدارة الموقع', pf:'مالية المنصة'};
     function iconHtml(n){ return n ? '<i data-lucide="'+n+'" style="width:14px;height:14px;opacity:.6;flex-shrink:0"></i>' : ''; }
     if (labels[page]) {
       bc.innerHTML = iconHtml(icons[page])+'<span class="bc-page">'+labels[page]+'</span>';
@@ -19744,6 +19771,810 @@ Pages._govReviewDue = function(orgId){
   }).filter(Boolean);
 };
 
+/* ═══════════════════════════════════════════════════════════════
+   ASSOCIATION WEBSITES (مواقع الجمعيات)
+   Admin console over every association's public site: identity,
+   essential content, publishing, custom domain, and the bridge that
+   turns approved governance documents into published site pages.
+   The association's own full builder stays in its portal — this edits
+   the same config partially, so the two never overwrite each other.
+   ═══════════════════════════════════════════════════════════════ */
+
+Pages._osCur = { orgId:null, tab:'overview' };
+Pages._osData = null;      /* the open association's site record */
+Pages._osLoading = false;
+Pages._osIndex = null;     /* {orgId: {published, custom_domain, updated_at, govCount}} for the list */
+
+Pages._osUpdateBadge = function(){
+  var b = document.getElementById('sb-badge-orgsites'); if(!b) return;
+  var n = (Pages._orgs||[]).filter(function(o){ return o.website_enabled; }).length;
+  b.textContent = n; b.style.display = n ? '' : 'none';
+};
+
+/* ─── Page shell ─── */
+Pages.render_orgsites = function(opts){
+  if (opts === undefined) { Pages._osCur.orgId = null; Pages._osData = null; opts = {}; }
+  if (opts && opts.orgId !== undefined && opts.orgId !== Pages._osCur.orgId) {
+    Pages._osCur.orgId = opts.orgId; Pages._osData = null;
+  }
+  if (opts && opts.tab) Pages._osCur.tab = opts.tab;
+  var el = document.getElementById('pg-orgsites'); if(!el) return;
+
+  if (Pages._orgs === null && DB._token && !Pages._opLoadingOrgs){
+    Pages._opLoadingOrgs = true;
+    DB._getOrgs().then(function(list){
+      Pages._orgs = list||[]; Pages._opLoadingOrgs = false;
+      if (Nav._cur === 'orgsites') Pages.render_orgsites({orgId:Pages._osCur.orgId});
+    });
+  }
+
+  /* fetch the open association's site once */
+  if (Pages._osCur.orgId && !Pages._osData && !Pages._osLoading && DB._token) {
+    Pages._osLoading = true;
+    DB._getOrgSite(Pages._osCur.orgId).then(function(d){
+      Pages._osLoading = false;
+      Pages._osData = d || { org_id:Pages._osCur.orgId, config:{}, published:0, custom_domain:'' };
+      if (Nav._cur === 'orgsites') Pages.render_orgsites({orgId:Pages._osCur.orgId});
+    });
+  }
+
+  el.innerHTML = Pages._osStyle() +
+    (Pages._osCur.orgId ? Pages._osDetailHtml(Pages._osCur.orgId) : Pages._osListHtml());
+  if (typeof lucide !== 'undefined') lucide.createIcons({rootElement:el});
+};
+
+Pages._osStyle = function(){
+  return '<style>'+
+    '.os-dns{background:var(--bg-2);border:1px solid var(--border);border-radius:9px;padding:11px 13px;'+
+      'font-family:ui-monospace,Menlo,Consolas,monospace;direction:ltr;text-align:left;font-size:12.5px;'+
+      'display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:7px}'+
+    '.os-step{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--bg-2)}'+
+    '.os-step-n{width:24px;height:24px;border-radius:50%;background:var(--iris-50);color:var(--iris-600);'+
+      'display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;flex-shrink:0}'+
+  '</style>';
+};
+
+Pages._osOrg = function(orgId){
+  return (Pages._orgs||[]).filter(function(o){ return o.id===orgId; })[0] || null;
+};
+Pages._osOrgName = function(orgId){
+  var o = Pages._osOrg(orgId);
+  return o ? o.name : (Pages._opOrgName ? Pages._opOrgName(orgId) : 'جمعية');
+};
+Pages._osPlatformUrl = function(orgId){
+  return window.location.origin + '/org-site?org=' + orgId;
+};
+Pages._osLiveUrl = function(orgId, domain){
+  return domain ? ('https://' + domain) : Pages._osPlatformUrl(orgId);
+};
+
+/* essentials completeness — what a visitor-ready site needs at minimum */
+Pages._OS_ESSENTIALS = [
+  ['brand.name', 'اسم الجمعية'],
+  ['brand.logo_url', 'الشعار'],
+  ['hero.title', 'عنوان الواجهة'],
+  ['about.text', 'نبذة من نحن'],
+  ['contact.phone', 'هاتف التواصل'],
+  ['contact.email', 'بريد التواصل']
+];
+Pages._osGet = function(cfg, path){
+  var parts = String(path).split('.'), cur = cfg || {};
+  for (var i=0; i<parts.length; i++){
+    if (cur === null || typeof cur !== 'object') return '';
+    cur = cur[parts[i]];
+  }
+  if (cur && typeof cur === 'object') return '';
+  return (cur === undefined || cur === null) ? '' : String(cur);
+};
+Pages._osSet = function(cfg, path, val){
+  var parts = String(path).split('.'), cur = cfg;
+  for (var i=0; i<parts.length-1; i++){
+    if (!cur[parts[i]] || typeof cur[parts[i]] !== 'object') cur[parts[i]] = {};
+    cur = cur[parts[i]];
+  }
+  cur[parts[parts.length-1]] = val;
+};
+Pages._osCompleteness = function(cfg){
+  var done = Pages._OS_ESSENTIALS.filter(function(f){ return Pages._osGet(cfg, f[0]).trim(); }).length;
+  return Math.round(done / Pages._OS_ESSENTIALS.length * 100);
+};
+
+/* ─── List of association sites ─── */
+Pages._osListHtml = function(){
+  var orgs = (Pages._orgs||[]).filter(function(o){ return o.website_enabled; });
+  var header = '<div class="page-header"><div><h1>مواقع الجمعيات</h1>'+
+    '<div class="page-header-sub">إدارة مواقع الجمعيات المشتركة — الهوية والمحتوى الأساسي والنشر والدومين، ونشر وثائق الحوكمة على الموقع</div></div></div>';
+
+  if (Pages._orgs === null){
+    return '<div class="op-wrap">'+header+'<div class="card" style="padding:40px;text-align:center;color:var(--fg-3)">جارٍ تحميل الجمعيات…</div></div>';
+  }
+  if (!orgs.length){
+    return '<div class="op-wrap">'+header+
+      '<div class="card" style="text-align:center;padding:48px 24px;color:var(--fg-3)">'+
+      '<div style="width:64px;height:64px;border-radius:16px;background:var(--iris-50);color:var(--iris-600);display:flex;align-items:center;justify-content:center;margin:0 auto 16px"><i data-lucide="panels-top-left" style="width:30px;height:30px"></i></div>'+
+      '<div style="font-size:16px;font-weight:700;color:var(--fg-1);margin-bottom:8px">لا توجد جمعيات مُفعَّل لها الموقع</div>'+
+      '<div style="max-width:470px;margin:0 auto">فعّل «الموقع الإلكتروني» لأي جمعية من خطة المئة يوم (إدارة الأدوات) أو من الخدمات والأدوات، لتظهر هنا.</div>'+
+      '</div></div>';
+  }
+
+  var cards = orgs.map(function(o){
+    var govDocs = (DB.getGov(o.id).docs)||[];
+    var pubGov = govDocs.filter(function(d){ return Pages._osDocPubState(o.id, d) === 'published'; }).length;
+    var logo = o.logo_url
+      ? '<img src="'+UI.escHtml(o.logo_url)+'" style="width:44px;height:44px;border-radius:11px;object-fit:contain;background:var(--bg-2);flex-shrink:0">'
+      : '<div style="width:44px;height:44px;border-radius:11px;background:var(--bg-2);color:var(--fg-3);display:flex;align-items:center;justify-content:center;font-weight:800;flex-shrink:0">'+UI.escHtml((o.name||'ج').charAt(0))+'</div>';
+    return '<div class="card" style="padding:16px">'+
+      '<div style="display:flex;align-items:center;gap:11px;margin-bottom:11px">'+logo+
+        '<div style="flex:1;min-width:0">'+
+          '<div style="font-weight:700;font-size:14px;color:var(--fg-1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+UI.escHtml(o.name||'')+'</div>'+
+          '<div style="font-size:11.5px;color:var(--fg-3)">'+(o.city?UI.escHtml(o.city):'')+(govDocs.length?' · '+pubGov+' من '+govDocs.length+' وثيقة منشورة':'')+'</div>'+
+        '</div></div>'+
+      '<button class="btn btn-sm btn-primary" style="width:100%;justify-content:center" onclick="Nav.go(\'orgsites\',{orgId:\''+o.id+'\'})"><i data-lucide="settings-2"></i>إدارة الموقع</button>'+
+    '</div>';
+  }).join('');
+
+  return '<div class="op-wrap">'+header+
+    '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px">'+cards+'</div></div>';
+};
+
+/* ─── One association ─── */
+Pages._osDetailHtml = function(orgId){
+  var name = Pages._osOrgName(orgId);
+  var d = Pages._osData;
+  if (!d){
+    return '<div class="op-wrap"><div class="card" style="padding:40px;text-align:center;color:var(--fg-3)">جارٍ تحميل بيانات الموقع…</div></div>';
+  }
+  var tab = Pages._osCur.tab || 'overview';
+  function pill(k, lbl, icon, n){
+    return '<button class="hero-tab-pill'+(tab===k?' active':'')+'" onclick="Pages.osTab(\''+k+'\')">'+
+      '<i data-lucide="'+icon+'" style="width:14px;height:14px"></i>'+lbl+
+      (n ? '<span class="hero-tab-count">'+n+'</span>' : '')+'</button>';
+  }
+  var govDocs = (DB.getGov(orgId).docs)||[];
+  var header =
+    '<div class="page-header"><div>'+
+      '<h1>'+UI.escHtml(name)+' — الموقع</h1>'+
+      '<div class="page-header-sub">'+(d.published?'منشور ومرئي للعامة':'مسودة — غير منشور')+'</div>'+
+    '</div>'+
+    '<div style="display:flex;gap:8px;flex-wrap:wrap">'+
+      '<a class="btn btn-sm" href="'+UI.escHtml(Pages._osPlatformUrl(orgId)+'&preview=1')+'" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:5px"><i data-lucide="external-link"></i>معاينة</a>'+
+      '<button class="btn btn-ghost btn-sm" onclick="Nav.go(\'orgsites\')" style="display:inline-flex;align-items:center;gap:5px"><i data-lucide="arrow-right"></i>كل المواقع</button>'+
+    '</div></div>';
+
+  var body;
+  if (tab === 'brand') body = Pages._osBrandHtml(orgId);
+  else if (tab === 'content') body = Pages._osContentHtml(orgId);
+  else if (tab === 'gov') body = Pages._osGovHtml(orgId);
+  else if (tab === 'domain') body = Pages._osDomainHtml(orgId);
+  else body = Pages._osOverviewHtml(orgId);
+
+  return '<div class="op-wrap">'+header+
+    '<div class="hero-tab-bar" style="margin-bottom:18px">'+
+      pill('overview','نظرة عامة','gauge',0)+
+      pill('brand','الهوية','palette',0)+
+      pill('content','المحتوى','layout-list',0)+
+      pill('gov','الحوكمة','scale',govDocs.length)+
+      pill('domain','الدومين','globe',0)+
+    '</div>'+body+'</div>';
+};
+Pages.osTab = function(tab){ Pages._osCur.tab = tab; Pages.render_orgsites({orgId:Pages._osCur.orgId}); };
+
+/* ─── 1) Overview ─── */
+Pages._osOverviewHtml = function(orgId){
+  var d = Pages._osData, cfg = d.config||{};
+  var pct = Pages._osCompleteness(cfg);
+  var missing = Pages._OS_ESSENTIALS.filter(function(f){ return !Pages._osGet(cfg, f[0]).trim(); });
+  var govDocs = (DB.getGov(orgId).docs)||[];
+  var pubGov = govDocs.filter(function(x){ return Pages._osDocPubState(orgId, x) === 'published'; }).length;
+  var secs = cfg.sections||{};
+  var secOn = Object.keys(secs).filter(function(k){ return secs[k]; }).length;
+  var isEmpty = !Object.keys(cfg).length;
+
+  function stat(v, k, col){
+    return '<div class="card" style="padding:16px 18px">'+
+      '<div style="font-size:24px;font-weight:800;color:'+(col||'var(--iris-600)')+';line-height:1.2">'+v+'</div>'+
+      '<div style="font-size:12.5px;color:var(--fg-3);margin-top:2px">'+k+'</div></div>';
+  }
+  var liveUrl = Pages._osLiveUrl(orgId, d.custom_domain);
+
+  return '<div class="card" style="padding:16px 18px;margin-bottom:14px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;'+
+      (d.published?'background:#f0fdf4;border-color:#bbf7d0':'background:var(--bg-2)')+'">'+
+      '<div style="flex:1;min-width:200px">'+
+        '<div style="font-weight:700;font-size:14px;color:'+(d.published?'#16a34a':'var(--fg-2)')+'">'+(d.published?'● منشور ومرئي للعامة':'● مسودة — غير منشور')+'</div>'+
+        '<div style="font-size:12px;color:var(--fg-3);margin-top:2px;direction:ltr;text-align:right">'+UI.escHtml(liveUrl)+'</div>'+
+      '</div>'+
+      '<div style="display:flex;gap:6px;flex-wrap:wrap">'+
+        '<button class="btn btn-sm" onclick="Pages.osCopy(\''+UI.escHtml(liveUrl)+'\')"><i data-lucide="copy"></i>نسخ الرابط</button>'+
+        (d.published
+          ? '<button class="btn btn-sm btn-danger" onclick="Pages.osTogglePublish(false)">إيقاف النشر</button>'
+          : '<button class="btn btn-sm btn-primary" onclick="Pages.osTogglePublish(true)">نشر الموقع</button>')+
+      '</div>'+
+    '</div>'+
+    (isEmpty
+      ? '<div class="card" style="padding:16px 18px;margin-bottom:14px;background:#fffbf3;border-color:#fed7aa;display:flex;align-items:center;gap:11px;flex-wrap:wrap">'+
+        '<i data-lucide="sparkles" style="width:16px;height:16px;color:#d97706"></i>'+
+        '<span style="flex:1;min-width:200px;font-size:13px;color:#b45309">الموقع فارغ تماماً — ابدأ بمحتوى مبدئي يحمل اسم الجمعية وبياناتها، ثم عدّله.</span>'+
+        '<button class="btn btn-sm btn-primary" onclick="Pages.osSeedSite(\''+orgId+'\')">تهيئة موقع مبدئي</button></div>'
+      : '')+
+    '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:16px">'+
+      stat(pct+'%','اكتمال الأساسيات', pct>=80?'#16a34a':pct>=40?'#d97706':'#dc2626')+
+      stat(secOn,'قسماً مفعَّلاً')+
+      stat((cfg.news||[]).length,'خبر / مقال')+
+      stat(pubGov,'وثيقة حوكمة منشورة','#16a34a')+
+    '</div>'+
+    (missing.length
+      ? '<div class="card" style="padding:18px 20px">'+
+        '<div style="display:flex;align-items:center;gap:9px;margin-bottom:10px"><i data-lucide="list-checks" style="width:17px;height:17px;color:var(--iris-600)"></i>'+
+        '<span style="font-weight:700;font-size:14.5px;color:var(--fg-1)">أساسيات ناقصة</span></div>'+
+        missing.map(function(f){
+          return '<div style="display:flex;align-items:center;gap:9px;padding:8px 0;border-bottom:1px solid var(--bg-2)">'+
+            '<i data-lucide="circle" style="width:13px;height:13px;color:#d97706"></i>'+
+            '<span style="flex:1;font-size:13px;color:var(--fg-2)">'+UI.escHtml(f[1])+'</span>'+
+            '<button class="btn btn-sm" onclick="Pages.osTab(\''+(f[0].indexOf('brand')===0?'brand':'content')+'\')">إكمال</button>'+
+          '</div>';
+        }).join('')+
+      '</div>'
+      : '<div class="card" style="padding:20px;text-align:center;color:#16a34a;font-weight:700;font-size:13.5px">كل أساسيات الموقع مكتملة ✓</div>');
+};
+
+Pages.osCopy = function(txt){
+  try {
+    if (navigator.clipboard) navigator.clipboard.writeText(txt);
+    else { var t=document.createElement('textarea'); t.value=txt; document.body.appendChild(t); t.select(); document.execCommand('copy'); document.body.removeChild(t); }
+    UI.toast('نُسخ الرابط');
+  } catch(e){ UI.toast('تعذّر النسخ','danger'); }
+};
+
+Pages.osTogglePublish = function(on){
+  var orgId = Pages._osCur.orgId;
+  DB._saveOrgSite(orgId, { publish: !!on }).then(function(res){
+    if (!res.ok) { UI.toast('تعذّر حفظ حالة النشر','danger'); return; }
+    Pages._osData.published = on ? 1 : 0;
+    UI.toast(on ? 'نُشر الموقع' : 'أُوقف نشر الموقع','success');
+    Pages.render_orgsites({orgId:orgId});
+  });
+};
+
+/* ─── 2) Brand / identity ─── */
+Pages._OS_LAYOUTS = [['national','وطني — متعدد الصفحات'],['classic','كلاسيكي — صفحة واحدة'],['modern','عصري'],['premium','فاخر']];
+Pages._OS_THEMES  = [['navy','#1e2a4a'],['teal','#0d7e6e'],['emerald','#047857'],['royal','#1d4ed8'],['violet','#6d28d9'],['maroon','#9f1239'],['amber','#b45309'],['national','#0A4D5C']];
+
+Pages._osBrandHtml = function(orgId){
+  var cfg = Pages._osData.config||{};
+  var g = Pages._osGet;
+  var logo = g(cfg,'brand.logo_url');
+  var layout = cfg.layout_theme || 'national';
+  var theme = (cfg.brand && cfg.brand.theme) || cfg.theme || 'navy';
+
+  var layoutOpts = Pages._OS_LAYOUTS.map(function(l){
+    return '<option value="'+l[0]+'"'+(layout===l[0]?' selected':'')+'>'+l[1]+'</option>';
+  }).join('');
+  var swatches = Pages._OS_THEMES.map(function(t){
+    return '<button onclick="Pages.osPickTheme(\''+t[0]+'\')" title="'+t[0]+'" data-os-theme="'+t[0]+'" '+
+      'style="width:34px;height:34px;border-radius:9px;background:'+t[1]+';cursor:pointer;'+
+      'border:3px solid '+(theme===t[0]?'var(--iris-600)':'transparent')+'"></button>';
+  }).join('');
+
+  var logoPrev = logo
+    ? '<img id="os-logo-img" src="'+UI.escHtml(logo)+'" style="max-width:100%;max-height:100%;object-fit:contain">'
+    : '<span id="os-logo-img" style="font-size:11.5px;color:var(--fg-4);text-align:center;padding:8px">لا شعار</span>';
+
+  function fld(label, path, ph, hint){
+    return '<div class="form-group"><label class="field-label">'+label+'</label>'+
+      '<input class="field-input" data-os-path="'+path+'" placeholder="'+UI.escHtml(ph||'')+'" value="'+UI.escHtml(g(cfg,path))+'">'+
+      (hint?'<div style="font-size:11px;color:var(--fg-4);margin-top:3px">'+hint+'</div>':'')+'</div>';
+  }
+
+  return '<div class="card" style="padding:20px 22px;margin-bottom:14px">'+
+      '<div style="font-weight:700;font-size:15px;color:var(--fg-1);margin-bottom:4px">هوية الجمعية</div>'+
+      '<div style="font-size:12px;color:var(--fg-3);margin-bottom:14px">تظهر في رأس كل صفحة وفي تذييل الموقع</div>'+
+      '<div style="display:flex;gap:18px;flex-wrap:wrap;align-items:flex-start">'+
+        '<div style="flex-shrink:0">'+
+          '<div id="os-logo-box" style="width:110px;height:110px;border:1px dashed var(--border);border-radius:12px;background:var(--bg-2);display:flex;align-items:center;justify-content:center;overflow:hidden;margin-bottom:8px">'+logoPrev+'</div>'+
+          '<div style="display:flex;gap:6px">'+
+            '<button class="btn btn-sm btn-primary" onclick="Pages.osPickLogo()" style="display:inline-flex;align-items:center;gap:5px"><i data-lucide="upload"></i>رفع</button>'+
+            '<button class="btn btn-sm" onclick="Pages.osRemoveLogo()" style="color:var(--danger-600)" title="إزالة"><i data-lucide="trash-2"></i></button>'+
+          '</div>'+
+        '</div>'+
+        '<div style="flex:1;min-width:240px">'+
+          '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px">'+
+            fld('اسم الجمعية','brand.name','جمعية … الخيرية')+
+            fld('الجملة التعريفية','brand.tagline','معاً نصنع أثراً مستداماً')+
+            fld('رقم الترخيص','brand.license_no','4500')+
+            fld('الجهة المانحة للترخيص','brand.license_body','المركز الوطني لتنمية القطاع غير الربحي')+
+          '</div>'+
+        '</div>'+
+      '</div>'+
+    '</div>'+
+    '<div class="card" style="padding:20px 22px;margin-bottom:14px">'+
+      '<div style="font-weight:700;font-size:15px;color:var(--fg-1);margin-bottom:12px">الشكل والألوان</div>'+
+      '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-bottom:12px">'+
+        '<div class="form-group"><label class="field-label">تصميم الموقع</label>'+
+          '<select class="field-input" data-os-path="layout_theme">'+layoutOpts+'</select></div>'+
+        '<div class="form-group"><label class="field-label">اللون الأساسي</label>'+
+          '<input class="field-input" type="color" data-os-path="brand.primary_color" value="'+UI.escHtml(g(cfg,'brand.primary_color')||'#0d7e6e')+'" style="height:38px;padding:3px"></div>'+
+        '<div class="form-group"><label class="field-label">لون الأزرار</label>'+
+          '<input class="field-input" type="color" data-os-path="brand.button_color" value="'+UI.escHtml(g(cfg,'brand.button_color')||'#b45309')+'" style="height:38px;padding:3px"></div>'+
+      '</div>'+
+      '<div><label class="field-label">لوحة ألوان جاهزة</label>'+
+        '<div id="os-theme-row" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">'+swatches+'</div>'+
+        '<input type="hidden" id="os-theme-val" value="'+UI.escHtml(theme)+'"></div>'+
+    '</div>'+
+    Pages._osSaveBar();
+};
+
+Pages._osSaveBar = function(){
+  return '<div style="text-align:left"><button class="btn btn-primary" onclick="Pages.osSaveFields()" style="display:inline-flex;align-items:center;gap:7px"><i data-lucide="save"></i>حفظ التغييرات</button></div>';
+};
+
+Pages.osPickTheme = function(t){
+  var h = document.getElementById('os-theme-val'); if(h) h.value = t;
+  var row = document.getElementById('os-theme-row');
+  if (row) Array.prototype.forEach.call(row.children, function(b){
+    b.style.borderColor = (b.getAttribute('data-os-theme')===t) ? 'var(--iris-600)' : 'transparent';
+  });
+};
+
+/* Logo upload reuses the governance image downscaler */
+Pages.osPickLogo = function(){
+  var inp = document.createElement('input');
+  inp.type = 'file'; inp.accept = 'image/png,image/jpeg,image/webp,image/svg+xml';
+  inp.onchange = function(){
+    var f = inp.files && inp.files[0]; if(!f) return;
+    if (f.size > 6*1024*1024) { UI.toast('حجم الصورة كبير — اختر ملفاً أصغر من 6 ميغابايت','danger'); return; }
+    var reader = new FileReader();
+    reader.onload = function(){
+      Pages._govResizeImage(reader.result, 500, function(res){
+        if (!res) { UI.toast('تعذّرت قراءة الصورة','danger'); return; }
+        Pages._osLogoPending = res.dataUrl;
+        var box = document.getElementById('os-logo-box');
+        if (box) box.innerHTML = '<img id="os-logo-img" src="'+res.dataUrl+'" style="max-width:100%;max-height:100%;object-fit:contain">';
+        UI.toast('رُفع الشعار — احفظ التغييرات لتثبيته');
+      });
+    };
+    reader.readAsDataURL(f);
+  };
+  inp.click();
+};
+Pages.osRemoveLogo = function(){
+  Pages._osLogoPending = '';
+  var box = document.getElementById('os-logo-box');
+  if (box) box.innerHTML = '<span id="os-logo-img" style="font-size:11.5px;color:var(--fg-4);text-align:center;padding:8px">لا شعار</span>';
+  UI.toast('أُزيل الشعار — احفظ لتثبيت التغيير');
+};
+
+/* Collect every [data-os-path] on screen and merge into the config */
+Pages.osSaveFields = function(){
+  var orgId = Pages._osCur.orgId;
+  var cfg = JSON.parse(JSON.stringify(Pages._osData.config || {}));
+  document.querySelectorAll('[data-os-path]').forEach(function(el){
+    var path = el.getAttribute('data-os-path');
+    var val = (el.type === 'checkbox') ? !!el.checked : (el.value || '');
+    if (typeof val === 'string') val = val.trim();
+    Pages._osSet(cfg, path, val);
+  });
+  var themeEl = document.getElementById('os-theme-val');
+  if (themeEl) { if(!cfg.brand) cfg.brand = {}; cfg.brand.theme = themeEl.value; cfg.theme = themeEl.value; }
+  if (Pages._osLogoPending !== undefined) {
+    if(!cfg.brand) cfg.brand = {};
+    cfg.brand.logo_url = Pages._osLogoPending;
+    Pages._osLogoPending = undefined;
+  }
+  Pages._osPersist(orgId, cfg, 'حُفظت التغييرات');
+};
+
+Pages._osPersist = function(orgId, cfg, msg){
+  DB._saveOrgSite(orgId, { config: cfg }).then(function(res){
+    if (!res.ok) { UI.toast('تعذّر الحفظ — حدّث الصفحة وأعد المحاولة','danger'); return; }
+    Pages._osData.config = cfg;
+    UI.toast(msg || 'حُفظ');
+    Pages.render_orgsites({orgId:orgId});
+  });
+};
+
+/* ─── 3) Essential content ─── */
+Pages._OS_SECTIONS = [
+  ['about','من نحن'],['highlights','مقدّمة وإنفوجرافيك'],['values','الرؤية والقيم'],['stats','الأثر والإنجازات'],
+  ['programs','البرامج والخدمات'],['news','الأخبار والمقالات'],['board','مجلس الإدارة'],
+  ['governance','الحوكمة والشفافية'],['partners','الشركاء'],['faq','الأسئلة الشائعة'],
+  ['donation','بوابة التبرع'],['contact','التواصل']
+];
+
+Pages._osContentHtml = function(orgId){
+  var cfg = Pages._osData.config||{};
+  var g = Pages._osGet;
+  function fld(label, path, ph){
+    return '<div class="form-group"><label class="field-label">'+label+'</label>'+
+      '<input class="field-input" data-os-path="'+path+'" placeholder="'+UI.escHtml(ph||'')+'" value="'+UI.escHtml(g(cfg,path))+'"></div>';
+  }
+  function area(label, path, ph, rows){
+    return '<div class="form-group"><label class="field-label">'+label+'</label>'+
+      '<textarea class="field-input" data-os-path="'+path+'" rows="'+(rows||3)+'" placeholder="'+UI.escHtml(ph||'')+'">'+UI.escHtml(g(cfg,path))+'</textarea></div>';
+  }
+  var secs = cfg.sections||{};
+  var toggles = Pages._OS_SECTIONS.map(function(s){
+    var on = (secs[s[0]] === undefined) ? (s[0] !== 'donation') : !!secs[s[0]];
+    return '<label style="display:flex;align-items:center;gap:8px;padding:7px 10px;border:1px solid var(--border);border-radius:9px;cursor:pointer;font-size:12.5px;color:var(--fg-2)">'+
+      '<input type="checkbox" data-os-path="sections.'+s[0]+'" '+(on?'checked':'')+' style="width:15px;height:15px">'+UI.escHtml(s[1])+'</label>';
+  }).join('');
+
+  return '<div class="card" style="padding:20px 22px;margin-bottom:14px">'+
+      '<div style="font-weight:700;font-size:15px;color:var(--fg-1);margin-bottom:12px">الواجهة الرئيسية</div>'+
+      fld('العنوان الرئيسي','hero.title','عطاؤك أثر يمتد')+
+      area('الوصف تحت العنوان','hero.subtitle','جملة تعريفية قصيرة تشرح رسالة الجمعية',2)+
+      '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px">'+
+        fld('نص الزر الرئيسي','hero.primary_label','تبرّع الآن')+
+        fld('رابط الزر الرئيسي','hero.primary_link','#/donate')+
+      '</div>'+
+    '</div>'+
+    '<div class="card" style="padding:20px 22px;margin-bottom:14px">'+
+      '<div style="font-weight:700;font-size:15px;color:var(--fg-1);margin-bottom:12px">من نحن</div>'+
+      area('نبذة تعريفية','about.text','تأسست الجمعية عام … لخدمة …',4)+
+      '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px">'+
+        area('الرؤية','about.vision','أن نكون …',2)+
+        area('الرسالة','about.mission','تقديم …',2)+
+      '</div>'+
+    '</div>'+
+    '<div class="card" style="padding:20px 22px;margin-bottom:14px">'+
+      '<div style="font-weight:700;font-size:15px;color:var(--fg-1);margin-bottom:12px">بيانات التواصل</div>'+
+      '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px">'+
+        fld('الهاتف','contact.phone','0126000000')+
+        fld('البريد الإلكتروني','contact.email','info@example.org')+
+        fld('العنوان','contact.address','حي … ، المدينة')+
+        fld('واتساب','contact.whatsapp','9665xxxxxxxx')+
+        fld('تويتر / X','contact.twitter','https://x.com/…')+
+        fld('إنستغرام','contact.instagram','https://instagram.com/…')+
+      '</div>'+
+    '</div>'+
+    '<div class="card" style="padding:20px 22px;margin-bottom:14px">'+
+      '<div style="font-weight:700;font-size:15px;color:var(--fg-1);margin-bottom:4px">الأقسام الظاهرة</div>'+
+      '<div style="font-size:12px;color:var(--fg-3);margin-bottom:12px">تحكّم في أي أقسام تظهر للزائر</div>'+
+      '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:8px">'+toggles+'</div>'+
+    '</div>'+
+    Pages._osSaveBar();
+};
+
+/* ─── 4) Governance bridge ─── */
+Pages._osGovSlug = function(code){
+  return 'gov-' + String(code||'doc').toLowerCase().replace(/[^a-z0-9-]+/g,'-').replace(/^-+|-+$/g,'');
+};
+Pages._osGovPage = function(orgId, doc){
+  var pages = (Pages._osData && Pages._osData.config && Pages._osData.config.pages) || [];
+  var slug = Pages._osGovSlug(doc.code);
+  return pages.filter(function(p){ return p.slug === slug; })[0] || null;
+};
+/* 'none' | 'published' | 'stale' (an older version is live) */
+Pages._osDocPubState = function(orgId, doc){
+  var data = (orgId === Pages._osCur.orgId) ? Pages._osData : null;
+  if (!data) return 'none';
+  var pages = (data.config && data.config.pages) || [];
+  var govs  = (data.config && data.config.governance) || [];
+  var slug = Pages._osGovSlug(doc.code);
+  var p = pages.filter(function(x){ return x.slug === slug; })[0];
+  var g = govs.filter(function(x){ return x.code === doc.code; })[0];
+  if (!p && !g) return 'none';
+  var liveVer = (p && p.gov_version) || (g && g.version) || '';
+  if (liveVer && doc.version && liveVer !== doc.version) return 'stale';
+  return 'published';
+};
+
+/* Build the document page body. Everything goes through UI.escHtml because the
+   public renderer injects page bodies as raw HTML. */
+Pages._govSitePageHtml = function(orgId, doc){
+  var profile = Pages._govProfileOf(orgId);
+  var esc = UI.escHtml;
+  var cls = (Pages._GOV_CLASS && Pages._GOV_CLASS[doc.classification||'internal']) || null;
+  var rows = [
+    ['رمز الوثيقة', doc.code],
+    ['الإصدار', doc.version],
+    ['جهة الاعتماد', doc.approver],
+    ['رقم قرار الاعتماد', doc.decision_no],
+    ['تاريخ الاعتماد', doc.approve_date],
+    ['المراجعة القادمة', doc.next_review],
+    ['التصنيف', cls ? cls[0] : '']
+  ].filter(function(r){ return r[1]; });
+
+  var meta = '<table class="gov-doc-meta">'+rows.map(function(r){
+    return '<tr><td>'+esc(r[0])+'</td><td>'+esc(r[1])+'</td></tr>';
+  }).join('')+'</table>';
+
+  var scope = doc.scope ? '<div class="gov-art"><h3>نطاق التطبيق</h3><p>'+esc(doc.scope)+'</p></div>' : '';
+
+  var arts = (doc.articles||[]).map(function(a, i){
+    var no = CONTRACT_ORDINALS[i] ? ('المادة '+CONTRACT_ORDINALS[i]) : ('المادة ('+(i+1)+')');
+    return '<div class="gov-art"><h3>'+esc(no)+(a.t ? ': '+Pages._govFill(esc(a.t), profile, false) : '')+'</h3>'+
+      Pages._govBodyHtml(a.b, profile, false)+'</div>';
+  }).join('');
+
+  return meta + scope + arts;
+};
+
+Pages._osGovHtml = function(orgId){
+  var docs = (DB.getGov(orgId).docs)||[];
+  if (!docs.length){
+    return '<div class="proj-row-empty" style="margin-bottom:var(--space-4)">'+
+      '<div style="margin-bottom:var(--space-3)"><i data-lucide="scale" style="width:32px;height:32px;opacity:.3"></i></div>'+
+      '<p style="margin-bottom:var(--space-3)">لا توجد وثائق حوكمة لهذه الجمعية بعد</p>'+
+      '<button class="btn btn-primary btn-sm" onclick="Nav.go(\'governance\',{orgId:\''+orgId+'\'})" style="display:inline-flex;align-items:center;gap:6px"><i data-lucide="scale"></i>افتح ملف الحوكمة</button>'+
+    '</div>';
+  }
+  var STATE = {
+    none:      ['غير منشورة','var(--bg-2)','var(--fg-2)'],
+    published: ['منشورة','#f0fdf4','#16a34a'],
+    stale:     ['إصدار أقدم منشور','#fff7ed','#d97706']
+  };
+  var approved = docs.filter(function(d){ return d.status==='approved'; });
+  var pendingPublish = approved.filter(function(d){ return Pages._osDocPubState(orgId,d) !== 'published'; }).length;
+
+  var rows = docs.map(function(d){
+    var st = Pages._osDocPubState(orgId, d);
+    var s = STATE[st];
+    var isApproved = d.status === 'approved';
+    var acts = '';
+    if (st === 'none') {
+      acts = '<button class="btn btn-sm btn-primary" onclick="Pages.osPublishDoc(\''+orgId+'\',\''+d.id+'\')">نشر كصفحة</button>'+
+             '<button class="btn btn-sm" onclick="Pages.osLinkPdf(\''+orgId+'\',\''+d.id+'\')" title="ربط ملف PDF خارجي"><i data-lucide="link"></i></button>';
+    } else if (st === 'stale') {
+      acts = '<button class="btn btn-sm btn-primary" onclick="Pages.osPublishDoc(\''+orgId+'\',\''+d.id+'\')">تحديث المنشور</button>'+
+             '<button class="btn btn-sm" onclick="Pages.osUnpublishDoc(\''+orgId+'\',\''+d.id+'\')" style="color:var(--danger-600)"><i data-lucide="x"></i></button>';
+    } else {
+      acts = '<a class="btn btn-sm" href="'+UI.escHtml(Pages._osPlatformUrl(orgId)+'&preview=1#/page/'+Pages._osGovSlug(d.code))+'" target="_blank" rel="noopener" title="عرض على الموقع"><i data-lucide="external-link"></i></a>'+
+             '<button class="btn btn-sm" onclick="Pages.osUnpublishDoc(\''+orgId+'\',\''+d.id+'\')" style="color:var(--danger-600)" title="إلغاء النشر"><i data-lucide="x"></i></button>';
+    }
+    return '<div class="card" style="padding:12px 15px;margin-bottom:8px;display:flex;align-items:center;gap:11px;flex-wrap:wrap">'+
+      '<span class="badge sm" style="background:var(--bg-2);color:var(--fg-2);font-weight:700;flex-shrink:0">'+UI.escHtml(d.code||'')+'</span>'+
+      '<div style="flex:1;min-width:160px">'+
+        '<div style="font-weight:700;font-size:13.5px;color:var(--fg-1)">'+UI.escHtml(d.title||'')+'</div>'+
+        '<div style="font-size:11.5px;color:var(--fg-3)">'+UI.escHtml(d.version||'')+
+          (isApproved?'':' · <span style="color:#d97706">غير معتمدة</span>')+'</div>'+
+      '</div>'+
+      '<span class="badge sm" style="background:'+s[1]+';color:'+s[2]+';font-weight:700">'+s[0]+'</span>'+
+      '<div style="display:flex;gap:5px;align-items:center">'+acts+'</div>'+
+    '</div>';
+  }).join('');
+
+  return '<div class="card" style="padding:15px 18px;margin-bottom:14px;background:var(--iris-50);border-color:var(--iris-200)">'+
+      '<div style="display:flex;align-items:center;gap:11px;flex-wrap:wrap">'+
+        '<i data-lucide="info" style="width:16px;height:16px;color:var(--iris-600)"></i>'+
+        '<span style="flex:1;min-width:220px;font-size:12.5px;color:var(--iris-600);line-height:1.7">'+
+          'النشر كصفحة يضع نص الوثيقة كاملاً في موقع الجمعية — يقرأه الزائر ومحركات البحث، ويحمّله PDF من زر الطباعة. ويمكن بدلاً منه ربط ملف PDF خارجي.</span>'+
+        (pendingPublish
+          ? '<button class="btn btn-sm btn-primary" onclick="Pages.osPublishAllApproved(\''+orgId+'\')">نشر كل المعتمدة ('+pendingPublish+')</button>'
+          : '')+
+      '</div>'+
+    '</div>'+rows;
+};
+
+Pages._osApplyGovPublish = function(orgId, doc, entry, pageBody){
+  var cfg = JSON.parse(JSON.stringify(Pages._osData.config || {}));
+  if (!Array.isArray(cfg.pages)) cfg.pages = [];
+  if (!Array.isArray(cfg.governance)) cfg.governance = [];
+  if (!cfg.sections || typeof cfg.sections !== 'object') cfg.sections = {};
+  cfg.sections.governance = true;
+
+  var slug = Pages._osGovSlug(doc.code);
+
+  /* page (only for the 'page' kind) */
+  cfg.pages = cfg.pages.filter(function(p){ return p.slug !== slug; });
+  if (pageBody !== null) {
+    cfg.pages.push({
+      id: 'gov_'+slug, slug: slug, title: doc.title, body: pageBody,
+      gov_code: doc.code, gov_version: doc.version || ''
+    });
+  }
+
+  /* governance list entry */
+  cfg.governance = cfg.governance.filter(function(x){ return x.code !== doc.code; });
+  cfg.governance.push(entry);
+
+  return cfg;
+};
+
+Pages.osPublishDoc = function(orgId, docId){
+  var doc = ((DB.getGov(orgId).docs)||[]).filter(function(d){ return d.id===docId; })[0];
+  if (!doc) return;
+  var body = Pages._govSitePageHtml(orgId, doc);
+  var entry = {
+    title: doc.title, category: doc.cat || 'وثائق الحوكمة',
+    url: '#/page/'+Pages._osGovSlug(doc.code), kind: 'page',
+    code: doc.code, version: doc.version || '', date: doc.approve_date || ''
+  };
+  var cfg = Pages._osApplyGovPublish(orgId, doc, entry, body);
+  Pages._osPersist(orgId, cfg, 'نُشرت «'+doc.title+'» على الموقع');
+};
+
+Pages.osUnpublishDoc = function(orgId, docId){
+  var doc = ((DB.getGov(orgId).docs)||[]).filter(function(d){ return d.id===docId; })[0];
+  if (!doc) return;
+  var cfg = JSON.parse(JSON.stringify(Pages._osData.config || {}));
+  var slug = Pages._osGovSlug(doc.code);
+  cfg.pages = (cfg.pages||[]).filter(function(p){ return p.slug !== slug; });
+  cfg.governance = (cfg.governance||[]).filter(function(x){ return x.code !== doc.code; });
+  Pages._osPersist(orgId, cfg, 'أُلغي نشر الوثيقة');
+};
+
+Pages.osLinkPdf = function(orgId, docId){
+  var doc = ((DB.getGov(orgId).docs)||[]).filter(function(d){ return d.id===docId; })[0];
+  if (!doc) return;
+  UI.openModal(
+    '<div class="modal-header"><h3>ربط ملف PDF</h3><button class="modal-close" onclick="UI.closeModalForce()">×</button></div>'+
+    '<div class="modal-body">'+
+      '<p style="color:var(--fg-2);font-size:13px;line-height:1.8;margin-bottom:10px">اربط «<strong>'+UI.escHtml(doc.title)+'</strong>» بملف PDF مستضاف خارجياً بدل نشرها كصفحة نصية.</p>'+
+      '<div class="form-group"><label class="field-label">رابط الملف</label>'+
+        '<input id="os-pdf-url" class="field-input" dir="ltr" placeholder="https://…/document.pdf"></div>'+
+    '</div>'+
+    '<div class="modal-footer" style="display:flex;gap:var(--space-2);justify-content:flex-end">'+
+      '<button class="btn btn-sm" onclick="UI.closeModalForce()">إلغاء</button>'+
+      '<button class="btn btn-sm btn-primary" onclick="Pages._doOsLinkPdf(\''+orgId+'\',\''+docId+'\')">ربط</button>'+
+    '</div>'
+  );
+};
+Pages._doOsLinkPdf = function(orgId, docId){
+  var url = ((document.getElementById('os-pdf-url')||{}).value||'').trim();
+  if (!url) { UI.toast('أدخل رابط الملف','danger'); return; }
+  var doc = ((DB.getGov(orgId).docs)||[]).filter(function(d){ return d.id===docId; })[0];
+  if (!doc) return;
+  var entry = {
+    title: doc.title, category: doc.cat || 'وثائق الحوكمة',
+    url: url, kind: 'pdf', code: doc.code,
+    version: doc.version || '', date: doc.approve_date || ''
+  };
+  var cfg = Pages._osApplyGovPublish(orgId, doc, entry, null);
+  UI.closeModalForce();
+  Pages._osPersist(orgId, cfg, 'رُبط ملف الوثيقة');
+};
+
+Pages.osPublishAllApproved = function(orgId){
+  var docs = ((DB.getGov(orgId).docs)||[]).filter(function(d){
+    return d.status==='approved' && Pages._osDocPubState(orgId,d) !== 'published';
+  });
+  if (!docs.length) { UI.toast('لا توجد وثائق معتمدة بحاجة للنشر'); return; }
+  var cfg = JSON.parse(JSON.stringify(Pages._osData.config || {}));
+  Pages._osData.config = cfg;   /* so _osApplyGovPublish accumulates */
+  docs.forEach(function(doc){
+    var body = Pages._govSitePageHtml(orgId, doc);
+    var entry = {
+      title: doc.title, category: doc.cat || 'وثائق الحوكمة',
+      url: '#/page/'+Pages._osGovSlug(doc.code), kind: 'page',
+      code: doc.code, version: doc.version || '', date: doc.approve_date || ''
+    };
+    cfg = Pages._osApplyGovPublish(orgId, doc, entry, body);
+    Pages._osData.config = cfg;
+  });
+  Pages._osPersist(orgId, cfg, 'نُشرت '+docs.length+' وثيقة على الموقع');
+};
+
+/* ─── 5) Domain ─── */
+Pages._osNormalizeDomain = function(raw){
+  var d = String(raw||'').trim().toLowerCase();
+  if (!d) return '';
+  d = d.replace(/^[a-z][a-z0-9+.-]*:\/\//, '');
+  d = d.replace(/^[^@\/]*@/, '');
+  d = d.split('/')[0].split('?')[0].split('#')[0];
+  d = d.split(':')[0];
+  d = d.replace(/^www\./, '').replace(/\.$/, '');
+  if (!/^[a-z0-9-]+(\.[a-z0-9-]+)+$/.test(d)) return '';
+  return d;
+};
+
+Pages._osDomainHtml = function(orgId){
+  var d = Pages._osData;
+  var domain = d.custom_domain || '';
+  var pagesHost = (window.location.hostname.indexOf('.pages.dev') >= 0)
+    ? window.location.hostname : 'buad-platform.pages.dev';
+
+  function dns(type, name, value){
+    return '<div class="os-dns"><span>'+UI.escHtml(type)+' &nbsp; '+UI.escHtml(name)+' &nbsp;→&nbsp; '+UI.escHtml(value)+'</span>'+
+      '<button class="btn btn-sm" onclick="Pages.osCopy(\''+UI.escHtml(value)+'\')" style="flex-shrink:0"><i data-lucide="copy"></i></button></div>';
+  }
+  function step(n, title, body){
+    return '<div class="os-step"><div class="os-step-n">'+n+'</div><div style="flex:1">'+
+      '<div style="font-weight:700;font-size:13px;color:var(--fg-1);margin-bottom:3px">'+title+'</div>'+
+      '<div style="font-size:12.5px;color:var(--fg-3);line-height:1.8">'+body+'</div></div></div>';
+  }
+
+  return '<div class="card" style="padding:20px 22px;margin-bottom:14px">'+
+      '<div style="font-weight:700;font-size:15px;color:var(--fg-1);margin-bottom:4px">النطاق المخصص</div>'+
+      '<div style="font-size:12px;color:var(--fg-3);margin-bottom:14px">اربط نطاق الجمعية ليفتح موقعها مباشرة بدل رابط المنصة</div>'+
+      '<div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap">'+
+        '<div class="form-group" style="flex:1;min-width:220px;margin:0"><label class="field-label">النطاق</label>'+
+          '<input id="os-domain" class="field-input" dir="ltr" placeholder="example.org" value="'+UI.escHtml(domain)+'"></div>'+
+        '<button class="btn btn-primary" onclick="Pages.osSaveDomain()">حفظ النطاق</button>'+
+        (domain ? '<button class="btn" onclick="Pages.osCheckDomain()"><i data-lucide="radar"></i>فحص الربط</button>' : '')+
+      '</div>'+
+      '<div id="os-domain-result" style="margin-top:12px"></div>'+
+    '</div>'+
+    '<div class="card" style="padding:20px 22px;margin-bottom:14px">'+
+      '<div style="font-weight:700;font-size:15px;color:var(--fg-1);margin-bottom:4px">سجلات DNS المطلوبة</div>'+
+      '<div style="font-size:12px;color:var(--fg-3);margin-bottom:12px">تُضاف لدى مزوّد نطاق الجمعية</div>'+
+      dns('CNAME', domain ? ('www.'+domain) : 'www', pagesHost)+
+      dns('CNAME', '@ (أو ALIAS/ANAME للجذر)', pagesHost)+
+      '<div style="font-size:11.5px;color:var(--fg-4);margin-top:8px;line-height:1.8">بعض المزوّدين لا يدعمون CNAME على الجذر — استخدم ALIAS أو ANAME، أو انقل النطاق إلى Cloudflare.</div>'+
+    '</div>'+
+    '<div class="card" style="padding:20px 22px">'+
+      '<div style="font-weight:700;font-size:15px;color:var(--fg-1);margin-bottom:10px">خطوات التفعيل</div>'+
+      step(1,'أضف النطاق هنا واحفظه','يربط النطاق بهذه الجمعية في قاعدة البيانات. النطاق الواحد لا يُربط بأكثر من جمعية.')+
+      step(2,'أضف سجلات DNS أعلاه','لدى مزوّد نطاق الجمعية.')+
+      step(3,'أضف النطاق إلى مشروع Cloudflare Pages','لوحة Cloudflare ← Workers &amp; Pages ← المشروع ← Custom domains ← Set up a domain. هذه خطوة يدوية لمرة واحدة لكل نطاق، وتصدر شهادة SSL تلقائياً.')+
+      step(4,'اضبط متغير البيئة PLATFORM_HOSTS','في إعدادات المشروع، بقيمة نطاقات المنصة نفسها مفصولة بفواصل — مثل <code style="direction:ltr;display:inline-block">buad.sa,www.buad.sa</code>. توجيه النطاقات المخصصة يبقى متوقفاً تماماً حتى يُضبط هذا المتغير، حمايةً لموقع المنصة.')+
+      step(5,'انشر الموقع','من تبويب «نظرة عامة» — النطاق لا يعرض شيئاً ما لم يكن الموقع منشوراً.')+
+    '</div>';
+};
+
+Pages.osSaveDomain = function(){
+  var orgId = Pages._osCur.orgId;
+  var raw = ((document.getElementById('os-domain')||{}).value||'').trim();
+  var norm = raw ? Pages._osNormalizeDomain(raw) : '';
+  if (raw && !norm) { UI.toast('صيغة النطاق غير صحيحة — مثال: example.org','danger'); return; }
+  DB._saveOrgSite(orgId, { custom_domain: norm }).then(function(res){
+    if (res.status === 409) { UI.toast('هذا النطاق مرتبط بجمعية أخرى','danger'); return; }
+    if (!res.ok) { UI.toast('تعذّر حفظ النطاق','danger'); return; }
+    Pages._osData.custom_domain = res.custom_domain !== undefined ? res.custom_domain : norm;
+    UI.toast(norm ? 'حُفظ النطاق' : 'أُزيل النطاق','success');
+    Pages.render_orgsites({orgId:orgId});
+  });
+};
+
+Pages.osCheckDomain = function(){
+  var orgId = Pages._osCur.orgId;
+  var domain = Pages._osData.custom_domain || '';
+  var box = document.getElementById('os-domain-result');
+  if (!domain || !box) return;
+  box.innerHTML = '<div style="font-size:12.5px;color:var(--fg-3)">جارٍ الفحص…</div>';
+  fetch('/api/public/org-site-by-host?host='+encodeURIComponent(domain))
+    .then(function(r){ return r.json().then(function(j){ return {status:r.status, body:j}; }); })
+    .then(function(res){
+      var ok = res.status === 200 && res.body && res.body.org_id === orgId;
+      var msg, col, bg, bd;
+      if (ok) { msg = 'النطاق مرتبط بهذه الجمعية والموقع منشور — يتبقى فقط أن يكون النطاق مضافاً في Cloudflare وسجلات DNS فعّالة.'; col='#16a34a'; bg='#f0fdf4'; bd='#bbf7d0'; }
+      else if (res.body && res.body.error === 'not_published') { msg = 'النطاق مرتبط بالجمعية، لكن الموقع غير منشور — انشره من «نظرة عامة».'; col='#d97706'; bg='#fff7ed'; bd='#fed7aa'; }
+      else if (res.status === 200) { msg = 'هذا النطاق مرتبط بجمعية أخرى.'; col='#dc2626'; bg='#fef2f2'; bd='#fecaca'; }
+      else { msg = 'النطاق غير معروف للخادم — تأكد من حفظه أعلاه.'; col='#dc2626'; bg='#fef2f2'; bd='#fecaca'; }
+      box.innerHTML = '<div style="padding:11px 14px;border-radius:9px;background:'+bg+';border:1px solid '+bd+';color:'+col+';font-size:12.5px;font-weight:600;line-height:1.7">'+msg+'</div>';
+    })
+    .catch(function(){
+      box.innerHTML = '<div style="font-size:12.5px;color:var(--danger-600)">تعذّر الاتصال بالخادم.</div>';
+    });
+};
+
+/* ─── Starter content for an empty site ─── */
+Pages.osSeedSite = function(orgId){
+  var o = Pages._osOrg(orgId) || {};
+  var gp = Pages._govProfileOf ? Pages._govProfileOf(orgId) : {};
+  var name = gp.name || o.name || 'الجمعية';
+  var cfg = {
+    layout_theme: 'national',
+    theme: 'navy',
+    brand: {
+      name: name,
+      tagline: gp.mission || 'معاً نصنع أثراً مستداماً',
+      logo_url: gp.logo || o.logo_url || '',
+      license_no: gp.license || o.license_no || '',
+      license_body: gp.supervisor || 'المركز الوطني لتنمية القطاع غير الربحي',
+      primary_color: gp.color || '#0d7e6e',
+      theme: 'navy'
+    },
+    hero: {
+      title: 'عطاؤك أثر يمتد',
+      subtitle: gp.idea || ('نعمل في ' + (gp.city || o.city || 'المملكة') + ' على خدمة المجتمع وتنمية قدراته.'),
+      primary_label: 'تعرّف علينا', primary_link: '#/about',
+      secondary_label: 'تواصل معنا', secondary_link: '#/contact'
+    },
+    about: {
+      text: gp.about || ('تأسست ' + name + ' لخدمة المجتمع وتنمية قدراته، وتعمل وفق أنظمة القطاع غير الربحي في المملكة العربية السعودية.'),
+      vision: gp.vision || '', mission: gp.mission || ''
+    },
+    contact: {
+      phone: gp.phone || o.phone || '', email: gp.email || o.email || '',
+      address: gp.address || '', map_url: gp.map || ''
+    },
+    seo: { title: name, desc: gp.about || ('الموقع الرسمي لـ' + name) },
+    sections: { about:true, values:true, programs:true, news:true, board:true, governance:true, contact:true, donation:false }
+  };
+  Pages._osPersist(orgId, cfg, 'جُهِّز موقع مبدئي — راجع الهوية والمحتوى');
+};
+
+
 Pages.render_resources = function(opts) {
   var pg = document.getElementById('pg-resources');
   if (!DB._token) {
@@ -23842,6 +24673,7 @@ Pages._initApp = function() {
     DB._getOrgs().then(function(orgs){ Pages._orgs = orgs || []; var b=document.getElementById('sb-badge-orgs'); if(b){ b.textContent=Pages._orgs.length; b.style.display=Pages._orgs.length?'':'none'; } }); // associations badge
     if (Pages._opUpdateBadge) Pages._opUpdateBadge(); // operational-plan badge
     if (Pages._govUpdateBadge) Pages._govUpdateBadge(); // governance badge
+    if (Pages._osUpdateBadge) Pages._osUpdateBadge(); // association-websites badge
   } else {
     doNav();
   }
