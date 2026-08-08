@@ -2919,6 +2919,25 @@ DB._toggleOrgWebsite = function(id, enabled) {
     body: JSON.stringify({ enabled: enabled })
   }).then(function(r){ return r.ok; }).catch(function(){ return false; });
 };
+/* ─── Uploaded files (governance PDFs, images) ─── */
+DB.ASSET_MAX_BYTES = 800 * 1024;   /* mirrors the server ceiling */
+DB._uploadAsset = function(ownerId, filename, mime, base64) {
+  if (!DB._token) return Promise.resolve({ ok:false, error:'no_token' });
+  return fetch('/api/admin/asset', {
+    method: 'POST',
+    headers: DB._apiHeaders(),
+    body: JSON.stringify({ owner_id: ownerId, filename: filename, mime: mime, data: base64 })
+  }).then(function(r){
+    return r.json().then(function(j){ return Object.assign({ ok:r.ok, status:r.status }, j||{}); })
+      .catch(function(){ return { ok:r.ok, status:r.status }; });
+  }).catch(function(){ return { ok:false, error:'network' }; });
+};
+DB._deleteAsset = function(assetId) {
+  if (!DB._token) return Promise.resolve(false);
+  return fetch('/api/admin/asset/'+encodeURIComponent(assetId), { method:'DELETE', headers: DB._apiHeaders() })
+    .then(function(r){ return r.ok; }).catch(function(){ return false; });
+};
+
 /* ─── Association websites (admin) ─── */
 DB._getOrgSite = function(orgId) {
   if (!DB._token) return Promise.resolve(null);
@@ -18679,30 +18698,161 @@ Pages._govStyle = function(){
 };
 
 /* قائمة الجمعيات المفعّلة */
+/* ─── Entity resolution: a governance file belongs to a registered association OR a client ─── */
+Pages._govEntityType = function(id){
+  if ((Pages._orgs||[]).some(function(o){ return o.id === id; })) return 'org';
+  if (DB.getClients().some(function(c){ return c.id === id; })) return 'client';
+  return 'unknown';
+};
+Pages._govEntityName = function(id){
+  var p = Pages._govOf(id).profile || {};
+  if ((p.name||'').trim()) return p.name.trim();
+  var o = (Pages._orgs||[]).filter(function(x){ return x.id === id; })[0];
+  if (o) return o.name;
+  var c = DB.getClients().filter(function(x){ return x.id === id; })[0];
+  if (c) return c.name;
+  return 'جهة';
+};
+Pages._GOV_ENTITY_BADGE = {
+  org:     ['جمعية مشتركة', '#eef0ff', '#4338ca'],
+  client:  ['عميل', '#f0fdf4', '#16a34a'],
+  unknown: ['جهة', 'var(--bg-2)', 'var(--fg-3)']
+};
+
+/* Create a client straight from the governance page and open its file */
+Pages.govNewClientModal = function(){
+  var types = [['association','جمعية'],['company','شركة'],['government','جهة حكومية'],['individual','فرد'],['other','أخرى']];
+  UI.openModal(
+    '<div class="modal-header"><h3>عميل جديد</h3><button class="modal-close" onclick="UI.closeModalForce()">×</button></div>'+
+    '<div class="modal-body">'+
+      '<p style="color:var(--fg-3);font-size:12.5px;line-height:1.7;margin-bottom:12px">يُسجَّل في قائمة العملاء ويُفتح له ملف حوكمة مباشرة.</p>'+
+      '<div class="form-group"><label class="field-label">اسم الجهة <span style="color:var(--danger)">*</span></label>'+
+        '<input id="gvc-name" class="field-input" placeholder="جمعية … الخيرية"></div>'+
+      '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px">'+
+        '<div class="form-group"><label class="field-label">النوع</label><select id="gvc-type" class="field-input">'+
+          types.map(function(t){ return '<option value="'+t[0]+'"'+(t[0]==='association'?' selected':'')+'>'+t[1]+'</option>'; }).join('')+
+        '</select></div>'+
+        '<div class="form-group"><label class="field-label">رقم الترخيص / السجل</label><input id="gvc-regno" class="field-input"></div>'+
+        '<div class="form-group"><label class="field-label">المدينة</label><input id="gvc-city" class="field-input"></div>'+
+        '<div class="form-group"><label class="field-label">الجوال</label><input id="gvc-phone" class="field-input" dir="ltr"></div>'+
+        '<div class="form-group"><label class="field-label">البريد الإلكتروني</label><input id="gvc-email" class="field-input" dir="ltr"></div>'+
+        '<div class="form-group"><label class="field-label">جهة الاتصال</label><input id="gvc-contact" class="field-input"></div>'+
+      '</div>'+
+    '</div>'+
+    '<div class="modal-footer" style="display:flex;gap:var(--space-2);justify-content:flex-end">'+
+      '<button class="btn btn-sm" onclick="UI.closeModalForce()">إلغاء</button>'+
+      '<button class="btn btn-sm btn-primary" onclick="Pages.govCreateClient()">إنشاء وفتح ملف الحوكمة</button>'+
+    '</div>'
+  );
+};
+Pages.govCreateClient = function(){
+  var v = function(id){ var el = document.getElementById(id); return el ? (el.value||'').trim() : ''; };
+  var name = v('gvc-name');
+  if (!name) { UI.toast('أدخل اسم الجهة','danger'); return; }
+  var clients = DB.getClients();
+  var cl = {
+    id: DB.uid(),
+    name: name,
+    type: v('gvc-type') || 'association',
+    reg_no: v('gvc-regno'),
+    city: v('gvc-city'),
+    phone: v('gvc-phone'),
+    email: v('gvc-email'),
+    contact_name: v('gvc-contact'),
+    contact_title: '', tax_no: '', address: '', website: '', notes: '',
+    created: (new Date()).toISOString().slice(0,10)
+  };
+  clients.push(cl);
+  DB.saveClients(clients);
+  DB.setGovEnabled(cl.id, true);
+  /* seed the governance profile from what we already know */
+  var prof = Pages._govProfileOf(cl.id);
+  prof.name = cl.name;
+  if (cl.reg_no) prof.license = cl.reg_no;
+  if (cl.city) prof.city = cl.city;
+  if (cl.phone) prof.phone = cl.phone;
+  if (cl.email) prof.email = cl.email;
+  DB.saveGovProfile(cl.id, prof);
+  UI.closeModalForce();
+  UI.toast('أُنشئ العميل وفُتح ملف حوكمته','success');
+  Pages._govCur.orgId = cl.id; Pages._govCur.tab = 'profile';
+  Nav.go('governance', {orgId: cl.id});
+};
+
+/* Enable governance for an entity that already exists */
+Pages.govAddEntityModal = function(){
+  var enabled = DB.getGovEnabled();
+  var has = function(id){ return enabled.indexOf(id) >= 0 || !!DB.getGovAll()[id]; };
+  var orgs = (Pages._orgs||[]).filter(function(o){ return !has(o.id); });
+  var clients = DB.getClients().filter(function(c){ return !has(c.id); });
+  if (!orgs.length && !clients.length) {
+    UI.toast('كل الجهات المسجّلة لها ملف حوكمة بالفعل');
+    return;
+  }
+  function row(id, name, sub, badge){
+    var b = Pages._GOV_ENTITY_BADGE[badge];
+    return '<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--bg-2)">'+
+      '<div style="flex:1;min-width:0">'+
+        '<div style="font-weight:700;font-size:13px;color:var(--fg-1)">'+UI.escHtml(name)+'</div>'+
+        (sub?'<div style="font-size:11.5px;color:var(--fg-3)">'+UI.escHtml(sub)+'</div>':'')+
+      '</div>'+
+      '<span class="badge sm" style="background:'+b[1]+';color:'+b[2]+';font-weight:700">'+b[0]+'</span>'+
+      '<button class="btn btn-sm btn-primary" onclick="Pages.govEnableEntity(\''+id+'\')">تفعيل</button>'+
+    '</div>';
+  }
+  var body =
+    (orgs.length ? '<div style="font-weight:700;font-size:12.5px;color:var(--fg-2);margin:10px 0 2px">الجمعيات المشتركة</div>'+
+      orgs.map(function(o){ return row(o.id, o.name, o.city||'', 'org'); }).join('') : '')+
+    (clients.length ? '<div style="font-weight:700;font-size:12.5px;color:var(--fg-2);margin:14px 0 2px">العملاء</div>'+
+      clients.map(function(c){ return row(c.id, c.name, c.city||c.email||'', 'client'); }).join('') : '');
+  UI.openModal(
+    '<div class="modal-header"><h3>إضافة جهة لملفات الحوكمة</h3><button class="modal-close" onclick="UI.closeModalForce()">×</button></div>'+
+    '<div style="padding:6px 20px 14px;max-height:60vh;overflow-y:auto">'+body+'</div>'
+  );
+};
+Pages.govEnableEntity = function(id){
+  DB.setGovEnabled(id, true);
+  UI.closeModalForce();
+  UI.toast('فُعّلت الحوكمة للجهة','success');
+  Pages._govCur.orgId = id; Pages._govCur.tab = 'profile';
+  Nav.go('governance', {orgId: id});
+};
+
 Pages._govListHtml = function(){
   var enabled = DB.getGovEnabled().slice();
   Object.keys(DB.getGovAll()).forEach(function(oid){ if(enabled.indexOf(oid)<0) enabled.push(oid); });
   var header = '<div class="page-header"><div><h1>الحوكمة والامتثال</h1>'+
-    '<div class="page-header-sub">مولّد لوائح وسياسات الحوكمة — بيانات الجهة تُدخَل مرة واحدة فتُبنى الوثائق كاملةً بهويتها جاهزة للاعتماد والتوقيع</div></div></div>';
+    '<div class="page-header-sub">مولّد لوائح وسياسات الحوكمة لأي جهة نعمل معها — جمعية مشتركة أو عميل</div></div>'+
+    '<div style="display:flex;gap:8px;flex-wrap:wrap">'+
+      '<button class="btn btn-sm" onclick="Pages.govAddEntityModal()" style="display:inline-flex;align-items:center;gap:5px"><i data-lucide="plus-circle"></i>إضافة جهة قائمة</button>'+
+      '<button class="btn btn-primary btn-sm" onclick="Pages.govNewClientModal()" style="display:inline-flex;align-items:center;gap:5px"><i data-lucide="user-plus"></i>عميل جديد</button>'+
+    '</div></div>';
   if (!enabled.length){
     return '<div class="op-wrap">'+header+
       '<div class="card" style="text-align:center;padding:48px 24px;color:var(--fg-3)">'+
       '<div style="width:64px;height:64px;border-radius:16px;background:var(--iris-50);color:var(--iris-600);display:flex;align-items:center;justify-content:center;margin:0 auto 16px"><i data-lucide="scale" style="width:30px;height:30px"></i></div>'+
-      '<div style="font-size:16px;font-weight:700;color:var(--fg-1);margin-bottom:8px">لا توجد جمعيات مُفعّلة بعد</div>'+
-      '<div style="max-width:480px;margin:0 auto">فعّل «الحوكمة والامتثال» لأي جمعية من صفحة خطة المئة يوم (إدارة الأدوات) أو من الخدمات والأدوات، لتبدأ بناء ملف حوكمتها.</div>'+
+      '<div style="font-size:16px;font-weight:700;color:var(--fg-1);margin-bottom:8px">لا توجد جهات مُفعّلة بعد</div>'+
+      '<div style="max-width:490px;margin:0 auto 16px">ابدأ بإنشاء عميل جديد، أو فعّل الحوكمة لجمعية أو عميل مسجّل لديك.</div>'+
+      '<div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">'+
+        '<button class="btn btn-primary btn-sm" onclick="Pages.govNewClientModal()" style="display:inline-flex;align-items:center;gap:6px"><i data-lucide="user-plus"></i>عميل جديد</button>'+
+        '<button class="btn btn-sm" onclick="Pages.govAddEntityModal()" style="display:inline-flex;align-items:center;gap:6px"><i data-lucide="plus-circle"></i>إضافة جهة قائمة</button>'+
+      '</div>'+
       '</div></div>';
   }
   var reqCount = GOVERNANCE_TEMPLATES.filter(function(t){ return t.required; }).length;
   var cards = enabled.map(function(orgId){
     var g = Pages._govOf(orgId);
-    var name = Pages._opOrgName(orgId);
+    var name = Pages._govEntityName(orgId);
+    var b = Pages._GOV_ENTITY_BADGE[Pages._govEntityType(orgId)];
     var pct = Pages._govCompleteness(g.profile);
     var approved = (g.docs||[]).filter(function(d){ return d.status==='approved'; }).length;
     return '<div class="card" style="padding:16px">'+
       '<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">'+Pages._opRingBox(pct,56)+
         '<div style="flex:1;min-width:0">'+
           '<div style="font-weight:700;font-size:14px;color:var(--fg-1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+UI.escHtml(name)+'</div>'+
-          '<div style="font-size:11px;color:var(--fg-3)">'+(g.docs||[]).length+' وثيقة · '+approved+' معتمدة من '+reqCount+' أساسية</div>'+
+          '<div style="font-size:11px;color:var(--fg-3);margin-top:2px">'+
+            '<span class="badge sm" style="background:'+b[1]+';color:'+b[2]+';font-weight:700">'+b[0]+'</span> '+
+            (g.docs||[]).length+' وثيقة · '+approved+' معتمدة من '+reqCount+' أساسية</div>'+
         '</div></div>'+
       '<button class="btn btn-sm btn-primary" style="width:100%;justify-content:center" onclick="Nav.go(\'governance\',{orgId:\''+orgId+'\'})"><i data-lucide="folder-open"></i>فتح ملف الحوكمة</button>'+
     '</div>';
@@ -18713,7 +18863,7 @@ Pages._govListHtml = function(){
 /* تفاصيل جمعية واحدة */
 Pages._govDetailHtml = function(orgId){
   var g = Pages._govOf(orgId);
-  var name = Pages._opOrgName(orgId);
+  var name = Pages._govEntityName(orgId);
   var tab = Pages._govCur.tab || 'dash';
   function pill(k, lbl, icon, n){
     return '<button class="hero-tab-pill'+(tab===k?' active':'')+'" onclick="Pages.govTab(\''+k+'\')">'+
@@ -18811,6 +18961,14 @@ Pages._govDashHtml = function(orgId){
       stat(approved,'وثيقة معتمدة','#16a34a')+
       stat(gaps.length,'فجوة في الوثائق الأساسية', gaps.length?'#dc2626':'#16a34a')+
     '</div>'+
+    (Pages._govEntityType(orgId) === 'client'
+      ? '<div class="card" style="padding:13px 17px;margin-bottom:14px;background:var(--bg-2);display:flex;align-items:center;gap:10px;flex-wrap:wrap">'+
+        '<i data-lucide="info" style="width:15px;height:15px;color:var(--fg-3)"></i>'+
+        '<span style="flex:1;min-width:220px;font-size:12.5px;color:var(--fg-3);line-height:1.7">'+
+          'ملف حوكمة عميل — التصدير إلى PDF وWord والدليل الشامل يعمل كاملاً. '+
+          'نشر الوثائق على موقع عام متاح للجمعيات المشتركة التي سجّلت في بوابة الجمعيات.</span>'+
+        '</div>'
+      : '')+
     Pages._govReviewAlertHtml(orgId)+
     (pct < 100 ? '<div class="card" style="padding:14px 18px;margin-bottom:16px;background:#fffbf3;border-color:#fed7aa;display:flex;align-items:center;gap:10px;flex-wrap:wrap">'+
       '<i data-lucide="alert-triangle" style="width:16px;height:16px;color:#d97706"></i>'+
@@ -19017,8 +19175,12 @@ Pages.govSaveProfile = function(orgId){
 /* تعبئة ما يمكن من سجل الجمعية المسجّل في المنصة */
 Pages.govFillFromOrg = function(orgId){
   var o = (Pages._orgs||[]).filter(function(x){ return x.id===orgId; })[0];
-  if (!o) { UI.toast('لم يُعثر على سجل الجمعية','danger'); return; }
-  var map = { name:o.name, city:o.city, license:o.license_no, phone:o.phone, email:o.email };
+  var c = DB.getClients().filter(function(x){ return x.id===orgId; })[0];
+  if (!o && !c) { UI.toast('لم يُعثر على سجل الجهة','danger'); return; }
+  var map = o
+    ? { name:o.name, city:o.city, license:o.license_no, phone:o.phone, email:o.email }
+    : { name:c.name, city:c.city, license:c.reg_no, phone:c.phone, email:c.email,
+        address:c.address, website:c.website, ceo:c.contact_name };
   var n = 0;
   Object.keys(map).forEach(function(k){
     var el = document.getElementById('gv-'+k);
@@ -19137,6 +19299,69 @@ Pages._doGovCreateAll = function(orgId){
 /* ─── 4) وثائق الجهة ─── */
 Pages._GOV_DOC_STATUS = {draft:['مسودة','var(--bg-2)','var(--fg-2)'], review:['قيد المراجعة','#fff7ed','#d97706'], approved:['معتمدة','#f0fdf4','#16a34a']};
 
+/* ─── PDF/image attachments on a governance document ─── */
+Pages._govFmtSize = function(bytes){
+  var b = Number(bytes)||0;
+  if (b < 1024) return b + ' بايت';
+  if (b < 1024*1024) return Math.round(b/1024) + ' ك.ب';
+  return (b/1024/1024).toFixed(1) + ' م.ب';
+};
+
+Pages.govUploadAttachment = function(orgId, docId){
+  var inp = document.createElement('input');
+  inp.type = 'file';
+  inp.accept = 'application/pdf,image/png,image/jpeg,image/webp';
+  inp.onchange = function(){
+    var f = inp.files && inp.files[0]; if(!f) return;
+    if (f.size > DB.ASSET_MAX_BYTES) {
+      UI.toast('حجم الملف '+Pages._govFmtSize(f.size)+' يتجاوز الحد ('+Pages._govFmtSize(DB.ASSET_MAX_BYTES)+') — استضف الملف خارجياً واربطه برابط','danger');
+      return;
+    }
+    UI.toast('جارٍ رفع الملف…');
+    var reader = new FileReader();
+    reader.onload = function(){
+      /* ArrayBuffer → base64 in chunks; a single String.fromCharCode.apply on a big
+         array blows the argument limit. */
+      var bytes = new Uint8Array(reader.result), bin = '', CH = 0x8000;
+      for (var i = 0; i < bytes.length; i += CH) {
+        bin += String.fromCharCode.apply(null, bytes.subarray(i, i + CH));
+      }
+      var b64 = btoa(bin);
+      DB._uploadAsset(orgId, f.name, f.type || 'application/pdf', b64).then(function(res){
+        if (res.status === 413) {
+          UI.toast('الملف أكبر من الحد المسموح ('+Pages._govFmtSize(res.max_bytes||DB.ASSET_MAX_BYTES)+')','danger'); return;
+        }
+        if (res.status === 400 && res.error === 'unsupported_type') { UI.toast('نوع الملف غير مدعوم — PDF أو صورة','danger'); return; }
+        if (!res.ok || !res.id) { UI.toast('تعذّر رفع الملف','danger'); return; }
+        var g = Pages._govOf(orgId);
+        var d = (g.docs||[]).filter(function(x){ return x.id===docId; })[0];
+        if (!d) return;
+        var old = d.attachment;
+        d.attachment = { id:res.id, url:res.url, filename:res.filename||f.name, mime:res.mime||f.type, size:res.size||f.size };
+        DB.saveGovDoc(orgId, d);
+        if (old && old.id) DB._deleteAsset(old.id);   /* replace: drop the previous file */
+        UI.toast('رُفع الملف وأُرفق بالوثيقة','success');
+        Pages.render_governance({orgId:orgId});
+      });
+    };
+    reader.onerror = function(){ UI.toast('تعذّرت قراءة الملف','danger'); };
+    reader.readAsArrayBuffer(f);
+  };
+  inp.click();
+};
+
+Pages.govRemoveAttachment = function(orgId, docId){
+  var g = Pages._govOf(orgId);
+  var d = (g.docs||[]).filter(function(x){ return x.id===docId; })[0];
+  if (!d || !d.attachment) return;
+  var assetId = d.attachment.id;
+  d.attachment = null;
+  DB.saveGovDoc(orgId, d);
+  if (assetId) DB._deleteAsset(assetId);
+  UI.toast('أُزيل الملف المرفق');
+  Pages.render_governance({orgId:orgId});
+};
+
 Pages._govDocsHtml = function(orgId){
   var g = Pages._govOf(orgId), profile = g.profile||{}, docs = g.docs||[];
   if (!docs.length){
@@ -19158,13 +19383,23 @@ Pages._govDocsHtml = function(orgId){
           (d.articles||[]).length+' مادة · '+UI.escHtml(d.version||'')+
           (d.approve_date?' · اعتُمدت '+UI.escHtml(d.approve_date):'')+
           (miss?' · <span style="color:#dc2626;font-weight:700">'+miss+' متغيراً ناقصاً</span>':'')+
-        '</div></div>'+
+        '</div>'+
+        (d.attachment && d.attachment.url
+          ? '<div style="font-size:11.5px;margin-top:4px;display:flex;align-items:center;gap:6px;flex-wrap:wrap">'+
+              '<a href="'+UI.escHtml(d.attachment.url)+'" target="_blank" rel="noopener" style="color:var(--iris-600);font-weight:700;display:inline-flex;align-items:center;gap:4px">'+
+                '<i data-lucide="paperclip" style="width:12px;height:12px"></i>'+UI.escHtml(d.attachment.filename||'ملف مرفق')+'</a>'+
+              '<span style="color:var(--fg-4)">'+Pages._govFmtSize(d.attachment.size)+'</span>'+
+              '<button class="btn btn-sm" onclick="Pages.govRemoveAttachment(\''+orgId+'\',\''+d.id+'\')" style="padding:1px 6px;font-size:11px;color:var(--danger-600)">إزالة</button>'+
+            '</div>'
+          : '')+
+      '</div>'+
       '<span class="badge sm" style="background:'+cls[1]+';color:'+cls[2]+';font-weight:700" title="تصنيف الوثيقة">'+cls[0]+'</span>'+
       '<button onclick="Pages.govCycleStatus(\''+orgId+'\',\''+d.id+'\')" class="badge sm" style="background:'+st[1]+';color:'+st[2]+';border:none;cursor:pointer;font-family:inherit;font-weight:700" title="اضغط لتغيير الحالة">'+st[0]+'</button>'+
       '<div style="display:flex;gap:4px;align-items:center">'+
         '<button class="btn btn-sm" onclick="Pages.govPreviewDoc(\''+orgId+'\',\''+d.id+'\')" style="padding:4px 9px" title="معاينة"><i data-lucide="eye"></i></button>'+
         '<button class="btn btn-sm" onclick="Pages.govEditDoc(\''+orgId+'\',\''+d.id+'\')" style="padding:4px 9px" title="تحرير المواد"><i data-lucide="pencil"></i></button>'+
         '<button class="btn btn-sm" onclick="Pages.govNewVersion(\''+orgId+'\',\''+d.id+'\')" style="padding:4px 9px" title="إصدار جديد"><i data-lucide="git-branch"></i></button>'+
+        '<button class="btn btn-sm" onclick="Pages.govUploadAttachment(\''+orgId+'\',\''+d.id+'\')" style="padding:4px 9px'+(d.attachment&&d.attachment.url?';color:var(--iris-600)':'')+'" title="رفع ملف PDF مرفق"><i data-lucide="paperclip"></i></button>'+
         '<button class="btn btn-sm" onclick="Pages.govPrintDoc(\''+orgId+'\',\''+d.id+'\')" style="padding:4px 9px" title="طباعة PDF"><i data-lucide="printer"></i></button>'+
         '<button class="btn btn-sm" onclick="Pages.govExportWord(\''+orgId+'\',\''+d.id+'\')" style="padding:4px 9px" title="تصدير Word"><i data-lucide="file-down"></i></button>'+
         '<button class="btn btn-sm" onclick="Pages.govDeleteDoc(\''+orgId+'\',\''+d.id+'\')" style="padding:4px 8px;color:var(--danger-600)" title="حذف"><i data-lucide="trash-2"></i></button>'+
@@ -19682,7 +19917,7 @@ Pages.govTogglePrevMark = function(){
 Pages.govBuildManual = function(orgId){
   var docs = Pages._govOf(orgId).docs || [];
   if (!docs.length) { UI.toast('لا توجد وثائق','danger'); return; }
-  var name = Pages._govProfileOf(orgId).name || Pages._opOrgName(orgId);
+  var name = Pages._govEntityName(orgId);
   var title = 'دليل الحوكمة — ' + name;
   var approved = docs.filter(function(d){ return d.status==='approved'; });
   UI.openModal(
@@ -19708,7 +19943,7 @@ Pages._govManualOut = function(orgId, how){
   var docs = Pages._govOf(orgId).docs || [];
   if (scope === 'approved') docs = docs.filter(function(d){ return d.status==='approved'; });
   if (!docs.length) { UI.toast('لا توجد وثائق مطابقة','danger'); return; }
-  var title = 'دليل الحوكمة — ' + (Pages._govProfileOf(orgId).name || Pages._opOrgName(orgId));
+  var title = 'دليل الحوكمة — ' + Pages._govEntityName(orgId);
   UI.closeModalForce();
   if (how === 'word') Pages._govDownloadWord(orgId, docs, title);
   else Pages._govPrintDocs(orgId, docs, title);
@@ -19937,7 +20172,10 @@ Pages._osDetailHtml = function(orgId){
       '<div class="page-header-sub">'+(d.published?'منشور ومرئي للعامة':'مسودة — غير منشور')+'</div>'+
     '</div>'+
     '<div style="display:flex;gap:8px;flex-wrap:wrap">'+
-      '<a class="btn btn-sm" href="'+UI.escHtml(Pages._osPlatformUrl(orgId)+'&preview=1')+'" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:5px"><i data-lucide="external-link"></i>معاينة</a>'+
+      '<button class="btn btn-sm" onclick="Pages.osTogglePreview()" style="display:inline-flex;align-items:center;gap:5px"><i data-lucide="monitor-play"></i>'+(Pages._osPreviewOn?'إخفاء المعاينة':'معاينة حيّة')+'</button>'+
+      '<button class="btn btn-sm" onclick="Pages.osExportDesign(\''+orgId+'\')" style="display:inline-flex;align-items:center;gap:5px" title="تصدير تصميم الموقع"><i data-lucide="download"></i>تصدير</button>'+
+      '<button class="btn btn-sm" onclick="Pages.osImportDesign(\''+orgId+'\')" style="display:inline-flex;align-items:center;gap:5px" title="استيراد تصميم"><i data-lucide="upload"></i>استيراد</button>'+
+      '<a class="btn btn-sm" href="'+UI.escHtml(Pages._osPlatformUrl(orgId)+'&preview=1')+'" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:5px"><i data-lucide="external-link"></i>فتح</a>'+
       '<button class="btn btn-ghost btn-sm" onclick="Nav.go(\'orgsites\')" style="display:inline-flex;align-items:center;gap:5px"><i data-lucide="arrow-right"></i>كل المواقع</button>'+
     '</div></div>';
 
@@ -19955,7 +20193,7 @@ Pages._osDetailHtml = function(orgId){
       pill('content','المحتوى','layout-list',0)+
       pill('gov','الحوكمة','scale',govDocs.length)+
       pill('domain','الدومين','globe',0)+
-    '</div>'+body+'</div>';
+    '</div>'+Pages._osPreviewHtml(orgId)+body+'</div>';
 };
 Pages.osTab = function(tab){ Pages._osCur.tab = tab; Pages.render_orgsites({orgId:Pages._osCur.orgId}); };
 
@@ -20180,58 +20418,520 @@ Pages._OS_SECTIONS = [
   ['donation','بوابة التبرع'],['contact','التواصل']
 ];
 
-Pages._osContentHtml = function(orgId){
-  var cfg = Pages._osData.config||{};
-  var g = Pages._osGet;
-  function fld(label, path, ph){
-    return '<div class="form-group"><label class="field-label">'+label+'</label>'+
-      '<input class="field-input" data-os-path="'+path+'" placeholder="'+UI.escHtml(ph||'')+'" value="'+UI.escHtml(g(cfg,path))+'"></div>';
+/* ═══════════ Full site content control ═══════════
+   Every section the public renderer reads is editable here. Scalars ride the
+   existing [data-os-path] sweep; list sections are handled by the generic
+   engine below (osSaveFields can't express arrays, and _osGet deliberately
+   returns '' for objects, so the two never collide).
+
+   Field shapes and image sizes mirror the association portal's builder so both
+   editors write the identical config. Where the portal writes a section heading
+   onto an *array* (config.stats.heading) — which JSON.stringify silently drops —
+   this editor writes the flat key the renderer actually reads (stats_heading). */
+
+Pages._OS_PILLARS = ['التمكين الاقتصادي','التأهيل الأسري','أوقاف بُعد'];
+Pages._OS_STAT_ICONS = ['people','star','heart','award','globe','dollar','calendar','home'];
+Pages._OS_HL_ICONS = ['star','heart','shield','award','users','target','leaf','globe','zap','sun','hand','home'];
+Pages._OS_SLIDE_ICONS = ['award','briefcase','shield','heart','book','users','chart','target'];
+
+/* Each list section: its config key, label, the fields of one item, and how a row is summarised. */
+Pages._OS_LISTS = {
+  'hero.slides': {
+    label:'شرائح الواجهة', icon:'images', title:'title', sub:'eyebrow',
+    fields:[
+      {k:'title', l:'العنوان', t:'text'},
+      {k:'subtitle', l:'الوصف', t:'area'},
+      {k:'eyebrow', l:'السطر العلوي', t:'text'},
+      {k:'eyebrow_icon', l:'أيقونة السطر العلوي', t:'select', opts:Pages._OS_SLIDE_ICONS},
+      {k:'chip_number', l:'الرقم البارز', t:'text'},
+      {k:'chip_label', l:'وصف الرقم', t:'text'},
+      {k:'image_url', l:'الصورة', t:'image', maxW:1600, q:0.82},
+      {k:'primary_label', l:'نص الزر الرئيسي', t:'text'},
+      {k:'primary_link', l:'رابط الزر الرئيسي', t:'text', ltr:true},
+      {k:'secondary_label', l:'نص الزر الثانوي', t:'text'},
+      {k:'secondary_link', l:'رابط الزر الثانوي', t:'text', ltr:true}
+    ]
+  },
+  highlights: {
+    label:'المميزات', icon:'sparkles', title:'title', sub:'metric',
+    fields:[
+      {k:'title', l:'العنوان', t:'text'},
+      {k:'desc', l:'الوصف', t:'area'},
+      {k:'metric', l:'الرقم / المؤشر', t:'text'},
+      {k:'icon', l:'الأيقونة', t:'select', opts:Pages._OS_HL_ICONS}
+    ]
+  },
+  values: {
+    label:'القيم', icon:'gem', title:'title', sub:'desc',
+    fields:[ {k:'title', l:'القيمة', t:'text'}, {k:'desc', l:'الوصف', t:'area'} ]
+  },
+  stats: {
+    label:'الأرقام والأثر', icon:'bar-chart-3', title:'label', sub:'number',
+    fields:[
+      {k:'number', l:'الرقم', t:'text', ltr:true},
+      {k:'label', l:'العنوان', t:'text'},
+      {k:'sub', l:'وصف إضافي', t:'area'},
+      {k:'icon', l:'الأيقونة', t:'select', opts:Pages._OS_STAT_ICONS}
+    ]
+  },
+  programs: {
+    label:'البرامج والخدمات', icon:'layout-grid', title:'title', sub:'pillar',
+    fields:[
+      {k:'title', l:'اسم البرنامج', t:'text'},
+      {k:'desc', l:'الوصف', t:'area'},
+      {k:'pillar', l:'المحور', t:'select', opts:Pages._OS_PILLARS, allowEmpty:'بلا محور'},
+      {k:'image_url', l:'الصورة', t:'image', maxW:1000, q:0.82}
+    ]
+  },
+  news: {
+    label:'الأخبار والمقالات', icon:'newspaper', title:'title', sub:'date',
+    fields:[
+      {k:'title', l:'العنوان', t:'text'},
+      {k:'date', l:'التاريخ', t:'date'},
+      {k:'excerpt', l:'مقتطف', t:'area'},
+      {k:'body', l:'نص الخبر', t:'area', rows:7},
+      {k:'image_url', l:'الصورة', t:'image', maxW:1200, q:0.82}
+    ]
+  },
+  board: {
+    label:'مجلس الإدارة', icon:'users', title:'name', sub:'role',
+    fields:[
+      {k:'name', l:'الاسم', t:'text'},
+      {k:'role', l:'المنصب', t:'text'},
+      {k:'image_url', l:'الصورة', t:'image', maxW:500, q:0.85}
+    ]
+  },
+  partners: {
+    label:'الشركاء والداعمون', icon:'handshake', title:'name', sub:'',
+    fields:[
+      {k:'name', l:'اسم الشريك', t:'text'},
+      {k:'logo_url', l:'الشعار', t:'image', maxW:400, q:0.82, png:true}
+    ]
+  },
+  faq: {
+    label:'الأسئلة الشائعة', icon:'help-circle', title:'q', sub:'a',
+    fields:[ {k:'q', l:'السؤال', t:'text'}, {k:'a', l:'الإجابة', t:'area'} ]
+  },
+  pages: {
+    label:'الصفحات المخصصة', icon:'file-text', title:'title', sub:'slug',
+    fields:[
+      {k:'title', l:'عنوان الصفحة', t:'text'},
+      {k:'slug', l:'المسار (slug)', t:'text', ltr:true, hint:'حروف إنجليزية وأرقام وشرطات — يظهر في الرابط'},
+      {k:'body', l:'المحتوى', t:'area', rows:10, hint:'نص عادي أو HTML'}
+    ]
   }
-  function area(label, path, ph, rows){
-    return '<div class="form-group"><label class="field-label">'+label+'</label>'+
-      '<textarea class="field-input" data-os-path="'+path+'" rows="'+(rows||3)+'" placeholder="'+UI.escHtml(ph||'')+'">'+UI.escHtml(g(cfg,path))+'</textarea></div>';
+};
+
+/* Sub-navigation inside the content tab */
+Pages._OS_PANELS = [
+  ['hero','الواجهة','monitor'],
+  ['about','من نحن','info'],
+  ['highlights','المميزات','sparkles'],
+  ['values','القيم','gem'],
+  ['stats','الأرقام','bar-chart-3'],
+  ['programs','البرامج','layout-grid'],
+  ['news','الأخبار','newspaper'],
+  ['board','المجلس','users'],
+  ['partners','الشركاء','handshake'],
+  ['faq','الأسئلة','help-circle'],
+  ['donation','التبرع','heart-handshake'],
+  ['pages','الصفحات','file-text'],
+  ['contact','التواصل','phone'],
+  ['seo','الظهور بالبحث','search'],
+  ['sections','الأقسام الظاهرة','toggle-left']
+];
+Pages._osPanel = 'hero';
+Pages.osPanel = function(p){ Pages._osPanel = p; Pages.render_orgsites({orgId:Pages._osCur.orgId}); };
+
+/* ─── generic list engine ─── */
+Pages._osListOf = function(cfg, key){
+  if (key.indexOf('.') < 0) return Array.isArray(cfg[key]) ? cfg[key] : [];
+  var parts = key.split('.'), cur = cfg;
+  for (var i=0; i<parts.length; i++){
+    if (!cur || typeof cur !== 'object') return [];
+    cur = cur[parts[i]];
   }
-  var secs = cfg.sections||{};
-  var toggles = Pages._OS_SECTIONS.map(function(s){
-    var on = (secs[s[0]] === undefined) ? (s[0] !== 'donation') : !!secs[s[0]];
-    return '<label style="display:flex;align-items:center;gap:8px;padding:7px 10px;border:1px solid var(--border);border-radius:9px;cursor:pointer;font-size:12.5px;color:var(--fg-2)">'+
-      '<input type="checkbox" data-os-path="sections.'+s[0]+'" '+(on?'checked':'')+' style="width:15px;height:15px">'+UI.escHtml(s[1])+'</label>';
+  return Array.isArray(cur) ? cur : [];
+};
+Pages._osSetList = function(cfg, key, arr){
+  if (key.indexOf('.') < 0) { cfg[key] = arr; return; }
+  var parts = key.split('.'), cur = cfg;
+  for (var i=0; i<parts.length-1; i++){
+    if (!cur[parts[i]] || typeof cur[parts[i]] !== 'object') cur[parts[i]] = {};
+    cur = cur[parts[i]];
+  }
+  cur[parts[parts.length-1]] = arr;
+};
+
+Pages._osListSectionHtml = function(orgId, key){
+  var spec = Pages._OS_LISTS[key];
+  var cfg = Pages._osData.config || {};
+  var items = Pages._osListOf(cfg, key);
+  var rows = items.length ? items.map(function(it, i){
+    var t = (it[spec.title]||'').toString().trim() || '(بلا عنوان)';
+    var s = spec.sub ? (it[spec.sub]||'').toString().trim() : '';
+    var img = '';
+    ['image_url','logo_url'].forEach(function(f){
+      if (!img && it[f]) img = '<img src="'+UI.escHtml(it[f])+'" style="width:38px;height:38px;border-radius:8px;object-fit:cover;background:var(--bg-2);flex-shrink:0">';
+    });
+    return '<div class="card" style="padding:11px 14px;margin-bottom:7px;display:flex;align-items:center;gap:11px;flex-wrap:wrap">'+
+      (img || '<span style="width:26px;height:26px;border-radius:7px;background:var(--bg-2);color:var(--fg-3);display:flex;align-items:center;justify-content:center;font-size:11.5px;font-weight:800;flex-shrink:0">'+(i+1)+'</span>')+
+      '<div style="flex:1;min-width:140px">'+
+        '<div style="font-weight:700;font-size:13.5px;color:var(--fg-1)">'+UI.escHtml(t)+'</div>'+
+        (s?'<div style="font-size:11.5px;color:var(--fg-3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:420px">'+UI.escHtml(s)+'</div>':'')+
+      '</div>'+
+      '<div style="display:flex;gap:4px;align-items:center">'+
+        '<button class="btn btn-sm" onclick="Pages.osMoveItem(\''+key+'\','+i+',-1)" style="padding:3px 7px"'+(i===0?' disabled':'')+'><i data-lucide="chevron-up"></i></button>'+
+        '<button class="btn btn-sm" onclick="Pages.osMoveItem(\''+key+'\','+i+',1)" style="padding:3px 7px"'+(i===items.length-1?' disabled':'')+'><i data-lucide="chevron-down"></i></button>'+
+        '<button class="btn btn-sm" onclick="Pages.osItemModal(\''+key+'\','+i+')" style="padding:4px 9px"><i data-lucide="pencil"></i></button>'+
+        '<button class="btn btn-sm" onclick="Pages.osDeleteItem(\''+key+'\','+i+')" style="padding:4px 8px;color:var(--danger-600)"><i data-lucide="trash-2"></i></button>'+
+      '</div>'+
+    '</div>';
+  }).join('') : '<div style="color:var(--fg-4);font-size:12.5px;text-align:center;padding:18px;background:var(--bg-2);border-radius:10px;margin-bottom:8px">لا توجد عناصر بعد</div>';
+
+  return '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:11px;flex-wrap:wrap;gap:8px">'+
+      '<div style="display:flex;align-items:center;gap:9px">'+
+        '<i data-lucide="'+spec.icon+'" style="width:17px;height:17px;color:var(--iris-600)"></i>'+
+        '<span style="font-weight:700;font-size:14.5px;color:var(--fg-1)">'+spec.label+'</span>'+
+        '<span class="badge sm" style="background:var(--bg-2);color:var(--fg-3)">'+items.length+'</span>'+
+      '</div>'+
+      '<button class="btn btn-primary btn-sm" onclick="Pages.osItemModal(\''+key+'\',-1)" style="display:inline-flex;align-items:center;gap:5px"><i data-lucide="plus"></i>إضافة</button>'+
+    '</div>'+rows;
+};
+
+Pages.osItemModal = function(key, idx){
+  var spec = Pages._OS_LISTS[key];
+  var items = Pages._osListOf(Pages._osData.config||{}, key);
+  var it = (idx >= 0 ? items[idx] : {}) || {};
+  Pages._osItemCtx = { key:key, idx:idx, img:{} };
+  var body = spec.fields.map(function(f){
+    var v = (it[f.k] === undefined || it[f.k] === null) ? '' : String(it[f.k]);
+    var hint = f.hint ? '<div style="font-size:11px;color:var(--fg-4);margin-top:3px">'+f.hint+'</div>' : '';
+    var dir = f.ltr ? ' dir="ltr"' : '';
+    if (f.t === 'area') {
+      return '<div class="form-group"><label class="field-label">'+f.l+'</label>'+
+        '<textarea class="field-input os-if" data-k="'+f.k+'" rows="'+(f.rows||3)+'"'+dir+'>'+UI.escHtml(v)+'</textarea>'+hint+'</div>';
+    }
+    if (f.t === 'select') {
+      var opts = (f.allowEmpty ? '<option value="">'+f.allowEmpty+'</option>' : '') +
+        f.opts.map(function(o){ return '<option value="'+UI.escHtml(o)+'"'+(v===o?' selected':'')+'>'+UI.escHtml(o)+'</option>'; }).join('');
+      return '<div class="form-group"><label class="field-label">'+f.l+'</label>'+
+        '<select class="field-input os-if" data-k="'+f.k+'">'+opts+'</select>'+hint+'</div>';
+    }
+    if (f.t === 'image') {
+      var prev = v
+        ? '<img src="'+UI.escHtml(v)+'" style="max-width:100%;max-height:100%;object-fit:contain">'
+        : '<span style="font-size:11px;color:var(--fg-4)">لا صورة</span>';
+      return '<div class="form-group"><label class="field-label">'+f.l+'</label>'+
+        '<div style="display:flex;gap:11px;align-items:center">'+
+          '<div id="osimg-'+f.k+'" style="width:78px;height:78px;border:1px dashed var(--border);border-radius:10px;background:var(--bg-2);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0">'+prev+'</div>'+
+          '<div style="display:flex;gap:6px;flex-wrap:wrap">'+
+            '<button class="btn btn-sm" onclick="Pages.osPickItemImage(\''+f.k+'\','+(f.maxW||1200)+','+(f.q||0.82)+','+(f.png?'true':'false')+')"><i data-lucide="upload"></i>رفع صورة</button>'+
+            '<button class="btn btn-sm" onclick="Pages.osClearItemImage(\''+f.k+'\')" style="color:var(--danger-600)"><i data-lucide="trash-2"></i></button>'+
+          '</div>'+
+        '</div>'+
+        '<input type="hidden" class="os-if" data-k="'+f.k+'" id="osimgv-'+f.k+'" value="'+UI.escHtml(v)+'">'+hint+'</div>';
+    }
+    var type = f.t === 'date' ? ' type="date"' : '';
+    return '<div class="form-group"><label class="field-label">'+f.l+'</label>'+
+      '<input class="field-input os-if" data-k="'+f.k+'"'+type+dir+' value="'+UI.escHtml(v)+'">'+hint+'</div>';
   }).join('');
 
+  UI.openModal(
+    '<div class="modal-header"><h3>'+(idx>=0?'تعديل':'إضافة')+' — '+spec.label+'</h3><button class="modal-close" onclick="UI.closeModalForce()">×</button></div>'+
+    '<div class="modal-body" style="max-height:66vh;overflow-y:auto">'+body+'</div>'+
+    '<div class="modal-footer" style="display:flex;gap:var(--space-2);justify-content:flex-end">'+
+      '<button class="btn btn-sm" onclick="UI.closeModalForce()">إلغاء</button>'+
+      '<button class="btn btn-sm btn-primary" onclick="Pages.osSaveItem()">حفظ</button>'+
+    '</div>'
+  );
+  if (typeof lucide !== 'undefined') setTimeout(function(){ lucide.createIcons(); }, 50);
+};
+
+Pages.osPickItemImage = function(fieldKey, maxW, q, png){
+  var inp = document.createElement('input');
+  inp.type = 'file'; inp.accept = 'image/*';
+  inp.onchange = function(){
+    var f = inp.files && inp.files[0]; if(!f) return;
+    if (f.size > 10*1024*1024) { UI.toast('حجم الصورة كبير جداً','danger'); return; }
+    var reader = new FileReader();
+    reader.onload = function(){
+      Pages._govResizeImage(reader.result, maxW, function(res){
+        if (!res) { UI.toast('تعذّرت قراءة الصورة','danger'); return; }
+        var box = document.getElementById('osimg-'+fieldKey);
+        var val = document.getElementById('osimgv-'+fieldKey);
+        if (box) box.innerHTML = '<img src="'+res.dataUrl+'" style="max-width:100%;max-height:100%;object-fit:contain">';
+        if (val) val.value = res.dataUrl;
+      });
+    };
+    reader.readAsDataURL(f);
+  };
+  inp.click();
+};
+Pages.osClearItemImage = function(fieldKey){
+  var box = document.getElementById('osimg-'+fieldKey);
+  var val = document.getElementById('osimgv-'+fieldKey);
+  if (box) box.innerHTML = '<span style="font-size:11px;color:var(--fg-4)">لا صورة</span>';
+  if (val) val.value = '';
+};
+
+Pages.osSaveItem = function(){
+  var ctx = Pages._osItemCtx; if(!ctx) return;
+  var orgId = Pages._osCur.orgId;
+  var cfg = JSON.parse(JSON.stringify(Pages._osData.config || {}));
+  var items = Pages._osListOf(cfg, ctx.key).slice();
+  var it = (ctx.idx >= 0 ? Object.assign({}, items[ctx.idx]) : {});
+  document.querySelectorAll('.os-if').forEach(function(el){
+    it[el.getAttribute('data-k')] = (el.value || '').trim();
+  });
+  /* news and custom pages are addressed by id in the renderer */
+  if ((ctx.key === 'news' || ctx.key === 'pages') && !it.id) it.id = DB.uid();
+  if (ctx.key === 'pages' && !it.slug) {
+    it.slug = (it.title||'page').toLowerCase().replace(/[^a-z0-9ء-ي-]+/g,'-').replace(/^-+|-+$/g,'') || ('page-'+DB.uid());
+  }
+  if (ctx.idx >= 0) items[ctx.idx] = it; else items.push(it);
+  Pages._osSetList(cfg, ctx.key, items);
+  /* adding content to a section implies the section should be visible */
+  var secKey = ctx.key.split('.')[0];
+  if (Pages._OS_SECTIONS.some(function(s){ return s[0] === secKey; })) {
+    if (!cfg.sections || typeof cfg.sections !== 'object') cfg.sections = {};
+    if (cfg.sections[secKey] === undefined) cfg.sections[secKey] = true;
+  }
+  UI.closeModalForce();
+  Pages._osPersist(orgId, cfg, 'حُفظ العنصر');
+};
+
+Pages.osMoveItem = function(key, idx, dir){
+  var cfg = JSON.parse(JSON.stringify(Pages._osData.config || {}));
+  var items = Pages._osListOf(cfg, key).slice();
+  var j = idx + dir;
+  if (j < 0 || j >= items.length) return;
+  var tmp = items[idx]; items[idx] = items[j]; items[j] = tmp;
+  Pages._osSetList(cfg, key, items);
+  Pages._osPersist(Pages._osCur.orgId, cfg, 'أُعيد الترتيب');
+};
+
+Pages.osDeleteItem = function(key, idx){
+  var items = Pages._osListOf(Pages._osData.config||{}, key);
+  var spec = Pages._OS_LISTS[key];
+  var name = ((items[idx]||{})[spec.title] || '').toString().trim() || 'هذا العنصر';
+  UI.openModal(
+    '<div class="modal-header"><h3>حذف عنصر</h3><button class="modal-close" onclick="UI.closeModalForce()">×</button></div>'+
+    '<div class="modal-body"><p style="color:var(--fg-2)">حذف «<strong>'+UI.escHtml(name)+'</strong>» من '+spec.label+'؟</p></div>'+
+    '<div class="modal-footer" style="display:flex;gap:var(--space-2);justify-content:flex-end">'+
+      '<button class="btn btn-sm" onclick="UI.closeModalForce()">إلغاء</button>'+
+      '<button class="btn btn-sm btn-danger" onclick="Pages._doOsDeleteItem(\''+key+'\','+idx+')">حذف</button>'+
+    '</div>'
+  );
+};
+Pages._doOsDeleteItem = function(key, idx){
+  var cfg = JSON.parse(JSON.stringify(Pages._osData.config || {}));
+  var items = Pages._osListOf(cfg, key).slice();
+  items.splice(idx, 1);
+  Pages._osSetList(cfg, key, items);
+  UI.closeModalForce();
+  Pages._osPersist(Pages._osCur.orgId, cfg, 'حُذف العنصر');
+};
+
+/* ─── the content tab: sub-nav + the active panel ─── */
+Pages._osContentHtml = function(orgId){
+  var cfg = Pages._osData.config||{};
+  var panel = Pages._osPanel || 'hero';
+  var nav = Pages._OS_PANELS.map(function(p){
+    var count = Pages._OS_LISTS[p[0]] ? Pages._osListOf(cfg, p[0]).length
+              : (p[0]==='hero' ? Pages._osListOf(cfg,'hero.slides').length : 0);
+    return '<button class="hero-tab-pill'+(panel===p[0]?' active':'')+'" onclick="Pages.osPanel(\''+p[0]+'\')">'+
+      '<i data-lucide="'+p[2]+'" style="width:13px;height:13px"></i>'+p[1]+
+      (count?'<span class="hero-tab-count">'+count+'</span>':'')+'</button>';
+  }).join('');
+  var body;
+  if (panel === 'hero') body = Pages._osPanelHero(orgId);
+  else if (panel === 'about') body = Pages._osPanelAbout(orgId);
+  else if (panel === 'donation') body = Pages._osPanelDonation(orgId);
+  else if (panel === 'contact') body = Pages._osPanelContact(orgId);
+  else if (panel === 'seo') body = Pages._osPanelSeo(orgId);
+  else if (panel === 'sections') body = Pages._osPanelSections(orgId);
+  else if (Pages._OS_LISTS[panel]) body = Pages._osPanelList(orgId, panel);
+  else body = '';
+  return '<div class="hero-tab-bar" style="margin-bottom:16px;flex-wrap:wrap">'+nav+'</div>'+body;
+};
+
+/* scalar helpers shared by the panels */
+Pages._osFld = function(cfg, label, path, ph, opts){
+  opts = opts || {};
+  return '<div class="form-group"><label class="field-label">'+label+'</label>'+
+    '<input class="field-input" data-os-path="'+path+'"'+(opts.ltr?' dir="ltr"':'')+(opts.type?' type="'+opts.type+'"':'')+
+    ' placeholder="'+UI.escHtml(ph||'')+'" value="'+UI.escHtml(Pages._osGet(cfg,path))+'">'+
+    (opts.hint?'<div style="font-size:11px;color:var(--fg-4);margin-top:3px">'+opts.hint+'</div>':'')+'</div>';
+};
+Pages._osArea = function(cfg, label, path, ph, rows){
+  return '<div class="form-group"><label class="field-label">'+label+'</label>'+
+    '<textarea class="field-input" data-os-path="'+path+'" rows="'+(rows||3)+'" placeholder="'+UI.escHtml(ph||'')+'">'+
+    UI.escHtml(Pages._osGet(cfg,path))+'</textarea></div>';
+};
+Pages._osSel = function(cfg, label, path, opts, dflt){
+  var cur = Pages._osGet(cfg,path) || dflt || '';
+  return '<div class="form-group"><label class="field-label">'+label+'</label>'+
+    '<select class="field-input" data-os-path="'+path+'">'+
+    opts.map(function(o){ return '<option value="'+UI.escHtml(o[0])+'"'+(cur===o[0]?' selected':'')+'>'+UI.escHtml(o[1])+'</option>'; }).join('')+
+    '</select></div>';
+};
+/* image bound to a scalar config path — staged like the logo, applied on save */
+Pages._osScalarImg = function(cfg, label, path, maxW, q, png, hint){
+  var v = Pages._osGet(cfg, path);
+  var id = path.replace(/[^a-z0-9]/gi,'_');
+  var prev = v ? '<img src="'+UI.escHtml(v)+'" style="max-width:100%;max-height:100%;object-fit:contain">'
+               : '<span style="font-size:11px;color:var(--fg-4)">لا صورة</span>';
+  return '<div class="form-group"><label class="field-label">'+label+'</label>'+
+    '<div style="display:flex;gap:11px;align-items:center">'+
+      '<div id="ossc-'+id+'" style="width:84px;height:60px;border:1px dashed var(--border);border-radius:10px;background:var(--bg-2);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0">'+prev+'</div>'+
+      '<div style="display:flex;gap:6px;flex-wrap:wrap">'+
+        '<button class="btn btn-sm" onclick="Pages.osPickScalarImage(\''+id+'\','+maxW+','+q+','+(png?'true':'false')+')"><i data-lucide="upload"></i>رفع</button>'+
+        '<button class="btn btn-sm" onclick="Pages.osClearScalarImage(\''+id+'\')" style="color:var(--danger-600)"><i data-lucide="trash-2"></i></button>'+
+      '</div></div>'+
+    '<input type="hidden" data-os-path="'+path+'" id="osscv-'+id+'" value="'+UI.escHtml(v)+'">'+
+    (hint?'<div style="font-size:11px;color:var(--fg-4);margin-top:3px">'+hint+'</div>':'')+'</div>';
+};
+Pages.osPickScalarImage = function(id, maxW, q, png){
+  var inp = document.createElement('input');
+  inp.type = 'file'; inp.accept = 'image/*';
+  inp.onchange = function(){
+    var f = inp.files && inp.files[0]; if(!f) return;
+    var reader = new FileReader();
+    reader.onload = function(){
+      Pages._govResizeImage(reader.result, maxW, function(res){
+        if (!res) { UI.toast('تعذّرت قراءة الصورة','danger'); return; }
+        var box = document.getElementById('ossc-'+id), val = document.getElementById('osscv-'+id);
+        if (box) box.innerHTML = '<img src="'+res.dataUrl+'" style="max-width:100%;max-height:100%;object-fit:contain">';
+        if (val) val.value = res.dataUrl;
+      });
+    };
+    reader.readAsDataURL(f);
+  };
+  inp.click();
+};
+Pages.osClearScalarImage = function(id){
+  var box = document.getElementById('ossc-'+id), val = document.getElementById('osscv-'+id);
+  if (box) box.innerHTML = '<span style="font-size:11px;color:var(--fg-4)">لا صورة</span>';
+  if (val) val.value = '';
+};
+Pages._osCard = function(title, inner){
   return '<div class="card" style="padding:20px 22px;margin-bottom:14px">'+
-      '<div style="font-weight:700;font-size:15px;color:var(--fg-1);margin-bottom:12px">الواجهة الرئيسية</div>'+
-      fld('العنوان الرئيسي','hero.title','عطاؤك أثر يمتد')+
-      area('الوصف تحت العنوان','hero.subtitle','جملة تعريفية قصيرة تشرح رسالة الجمعية',2)+
-      '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px">'+
-        fld('نص الزر الرئيسي','hero.primary_label','تبرّع الآن')+
-        fld('رابط الزر الرئيسي','hero.primary_link','#/donate')+
-      '</div>'+
-    '</div>'+
-    '<div class="card" style="padding:20px 22px;margin-bottom:14px">'+
-      '<div style="font-weight:700;font-size:15px;color:var(--fg-1);margin-bottom:12px">من نحن</div>'+
-      area('نبذة تعريفية','about.text','تأسست الجمعية عام … لخدمة …',4)+
-      '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px">'+
-        area('الرؤية','about.vision','أن نكون …',2)+
-        area('الرسالة','about.mission','تقديم …',2)+
-      '</div>'+
-    '</div>'+
-    '<div class="card" style="padding:20px 22px;margin-bottom:14px">'+
-      '<div style="font-weight:700;font-size:15px;color:var(--fg-1);margin-bottom:12px">بيانات التواصل</div>'+
-      '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px">'+
-        fld('الهاتف','contact.phone','0126000000')+
-        fld('البريد الإلكتروني','contact.email','info@example.org')+
-        fld('العنوان','contact.address','حي … ، المدينة')+
-        fld('واتساب','contact.whatsapp','9665xxxxxxxx')+
-        fld('تويتر / X','contact.twitter','https://x.com/…')+
-        fld('إنستغرام','contact.instagram','https://instagram.com/…')+
-      '</div>'+
-    '</div>'+
-    '<div class="card" style="padding:20px 22px;margin-bottom:14px">'+
-      '<div style="font-weight:700;font-size:15px;color:var(--fg-1);margin-bottom:4px">الأقسام الظاهرة</div>'+
-      '<div style="font-size:12px;color:var(--fg-3);margin-bottom:12px">تحكّم في أي أقسام تظهر للزائر</div>'+
-      '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:8px">'+toggles+'</div>'+
-    '</div>'+
-    Pages._osSaveBar();
+    '<div style="font-weight:700;font-size:15px;color:var(--fg-1);margin-bottom:12px">'+title+'</div>'+inner+'</div>';
+};
+Pages._osGrid = function(inner){
+  return '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px">'+inner+'</div>';
+};
+
+Pages._osPanelHero = function(orgId){
+  var c = Pages._osData.config||{};
+  return Pages._osCard('الواجهة الرئيسية',
+      Pages._osFld(c,'العنوان الرئيسي','hero.title','عطاؤك أثر يمتد')+
+      Pages._osArea(c,'الوصف','hero.subtitle','جملة تعريفية قصيرة',2)+
+      Pages._osScalarImg(c,'صورة الخلفية','hero.image_url',1600,0.82,false)+
+      Pages._osGrid(
+        Pages._osSel(c,'ارتفاع الواجهة','hero.style',[['full','كامل الشاشة'],['tall','مرتفع'],['medium','متوسط']],'full')+
+        Pages._osSel(c,'محاذاة النص','hero.text_align',[['center','وسط'],['right','يمين'],['left','يسار']],'center')+
+        Pages._osFld(c,'شفافية الطبقة (0–0.9)','hero.overlay_opacity','0.45',{ltr:true})
+      )+
+      Pages._osGrid(
+        Pages._osFld(c,'نص الزر الرئيسي','hero.primary_label','تبرّع الآن')+
+        Pages._osFld(c,'رابط الزر الرئيسي','hero.primary_link','#/donate',{ltr:true})+
+        Pages._osFld(c,'نص الزر الثانوي','hero.secondary_label','تعرّف علينا')+
+        Pages._osFld(c,'رابط الزر الثانوي','hero.secondary_link','#/about',{ltr:true})
+      )
+    )+
+    Pages._osSaveBar()+
+    '<div style="height:20px"></div>'+
+    Pages._osListSectionHtml(orgId, 'hero.slides');
+};
+
+Pages._osPanelAbout = function(orgId){
+  var c = Pages._osData.config||{};
+  return Pages._osCard('من نحن',
+      Pages._osArea(c,'نبذة تعريفية','about.text','تأسست الجمعية عام … لخدمة …',5)+
+      Pages._osScalarImg(c,'صورة القسم','about.image_url',1200,0.82,false)+
+      Pages._osGrid(
+        Pages._osArea(c,'الرؤية','about.vision','أن نكون …',3)+
+        Pages._osArea(c,'الرسالة','about.mission','تقديم …',3)
+      )
+    )+Pages._osSaveBar();
+};
+
+Pages._osPanelDonation = function(orgId){
+  var c = Pages._osData.config||{};
+  return Pages._osCard('بوابة التبرع',
+      Pages._osFld(c,'العنوان','donation.title','تبرّع الآن')+
+      Pages._osArea(c,'الوصف','donation.desc','ساهم في …',3)+
+      Pages._osGrid(
+        Pages._osFld(c,'رابط التبرع','donation.url','https://ehsan.sa',{ltr:true})+
+        Pages._osFld(c,'رقم الحساب / الآيبان','donation.account','SA00 …',{ltr:true})+
+        Pages._osFld(c,'تكلفة الوحدة','donation.unit_cost','250',{ltr:true, type:'number'})+
+        Pages._osFld(c,'وصف الوحدة','donation.unit_label','حقيبة تدريبية لأسرة')
+      )
+    )+Pages._osSaveBar();
+};
+
+Pages._osPanelContact = function(orgId){
+  var c = Pages._osData.config||{};
+  return Pages._osCard('بيانات التواصل',
+      Pages._osGrid(
+        Pages._osFld(c,'الهاتف','contact.phone','0126000000',{ltr:true})+
+        Pages._osFld(c,'البريد الإلكتروني','contact.email','info@example.org',{ltr:true})+
+        Pages._osFld(c,'العنوان','contact.address','حي … ، المدينة')+
+        Pages._osFld(c,'رابط الخريطة (embed)','contact.map_url','https://www.google.com/maps/embed?…',{ltr:true})+
+        Pages._osFld(c,'واتساب','contact.whatsapp','966500000000',{ltr:true})+
+        Pages._osFld(c,'تويتر / X','contact.twitter','https://x.com/…',{ltr:true})+
+        Pages._osFld(c,'إنستغرام','contact.instagram','https://instagram.com/…',{ltr:true})+
+        Pages._osFld(c,'لينكدإن','contact.linkedin','https://linkedin.com/company/…',{ltr:true})+
+        Pages._osFld(c,'سناب شات','contact.snapchat','https://snapchat.com/add/…',{ltr:true})
+      )
+    )+Pages._osSaveBar();
+};
+
+Pages._osPanelSeo = function(orgId){
+  var c = Pages._osData.config||{};
+  return Pages._osCard('الظهور في محركات البحث',
+      Pages._osFld(c,'عنوان الصفحة (Title)','seo.title','اسم الجمعية | الموقع الرسمي',{hint:'يفضّل ألا يتجاوز 70 حرفاً'})+
+      Pages._osArea(c,'وصف الموقع (Description)','seo.desc','وصف مختصر يظهر في نتائج البحث',3)
+    )+Pages._osSaveBar();
+};
+
+Pages._osPanelSections = function(orgId){
+  var c = Pages._osData.config||{};
+  var secs = c.sections||{};
+  var toggles = Pages._OS_SECTIONS.map(function(s){
+    var on = (secs[s[0]] === undefined) ? (s[0] !== 'donation') : !!secs[s[0]];
+    return '<label style="display:flex;align-items:center;gap:8px;padding:9px 11px;border:1px solid var(--border);border-radius:9px;cursor:pointer;font-size:12.5px;color:var(--fg-2)">'+
+      '<input type="checkbox" data-os-path="sections.'+s[0]+'" '+(on?'checked':'')+' style="width:15px;height:15px">'+UI.escHtml(s[1])+'</label>';
+  }).join('');
+  return Pages._osCard('الأقسام الظاهرة للزائر',
+      '<div style="font-size:12px;color:var(--fg-3);margin:-8px 0 12px">القسم بلا محتوى لا يظهر حتى لو كان مفعّلاً</div>'+
+      '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:8px">'+toggles+'</div>'
+    )+Pages._osSaveBar();
+};
+
+/* list panels carry the section's own heading/style scalars where the renderer expects them */
+Pages._osPanelList = function(orgId, key){
+  var c = Pages._osData.config||{};
+  var head = '';
+  if (key === 'stats') {
+    head = Pages._osCard('إعدادات القسم',
+      Pages._osGrid(
+        Pages._osFld(c,'عنوان القسم','stats_heading','أثرنا بالأرقام')+
+        Pages._osSel(c,'نمط العرض','stats_style',[['cards','بطاقات'],['dark','داكن'],['minimal','مبسّط']],'cards')
+      )+Pages._osSaveBar());
+  } else if (key === 'highlights') {
+    head = Pages._osCard('إعدادات القسم',
+      Pages._osFld(c,'عنوان القسم','highlights_heading','لماذا تختارنا؟')+
+      Pages._osArea(c,'نص تمهيدي','highlights_subtext','',2)+
+      Pages._osSel(c,'نمط العرض','highlights_style',[['grid','شبكة'],['feature','مميز'],['numbered','مرقّم']],'grid')+
+      Pages._osSaveBar());
+  } else if (key === 'pages') {
+    head = '<div class="card" style="padding:13px 16px;margin-bottom:14px;background:var(--iris-50);border-color:var(--iris-200);font-size:12.5px;color:var(--iris-600);line-height:1.7">'+
+      'الصفحة تُفتح على الرابط <code style="direction:ltr;display:inline-block">'+UI.escHtml(Pages._osPlatformUrl(orgId))+'#/page/&lt;المسار&gt;</code> — والصفحات التي تنشرها من تبويب الحوكمة تظهر هنا أيضاً.</div>';
+  }
+  return head + Pages._osListSectionHtml(orgId, key);
 };
 
 /* ─── 4) Governance bridge ─── */
@@ -20278,6 +20978,12 @@ Pages._govSitePageHtml = function(orgId, doc){
     return '<tr><td>'+esc(r[0])+'</td><td>'+esc(r[1])+'</td></tr>';
   }).join('')+'</table>';
 
+  /* an uploaded file rides along with the text page — the reader gets both */
+  var att = (doc.attachment && doc.attachment.url)
+    ? '<p class="gov-doc-file"><a href="'+esc(doc.attachment.url)+'" target="_blank" rel="noopener">'+
+        'تحميل نسخة الوثيقة ('+esc(doc.attachment.filename||'ملف')+')</a></p>'
+    : '';
+
   var scope = doc.scope ? '<div class="gov-art"><h3>نطاق التطبيق</h3><p>'+esc(doc.scope)+'</p></div>' : '';
 
   var arts = (doc.articles||[]).map(function(a, i){
@@ -20286,7 +20992,7 @@ Pages._govSitePageHtml = function(orgId, doc){
       Pages._govBodyHtml(a.b, profile, false)+'</div>';
   }).join('');
 
-  return meta + scope + arts;
+  return meta + att + scope + arts;
 };
 
 Pages._osGovHtml = function(orgId){
@@ -20313,6 +21019,9 @@ Pages._osGovHtml = function(orgId){
     var acts = '';
     if (st === 'none') {
       acts = '<button class="btn btn-sm btn-primary" onclick="Pages.osPublishDoc(\''+orgId+'\',\''+d.id+'\')">نشر كصفحة</button>'+
+             (d.attachment && d.attachment.url
+               ? '<button class="btn btn-sm" onclick="Pages.osPublishDocAsFile(\''+orgId+'\',\''+d.id+'\')" title="نشر الملف المرفق مباشرة"><i data-lucide="file-down"></i></button>'
+               : '')+
              '<button class="btn btn-sm" onclick="Pages.osLinkPdf(\''+orgId+'\',\''+d.id+'\')" title="ربط ملف PDF خارجي"><i data-lucide="link"></i></button>';
     } else if (st === 'stale') {
       acts = '<button class="btn btn-sm btn-primary" onclick="Pages.osPublishDoc(\''+orgId+'\',\''+d.id+'\')">تحديث المنشور</button>'+
@@ -20424,6 +21133,19 @@ Pages._doOsLinkPdf = function(orgId, docId){
   Pages._osPersist(orgId, cfg, 'رُبط ملف الوثيقة');
 };
 
+/* Publish the uploaded file itself as the governance entry (no text page). */
+Pages.osPublishDocAsFile = function(orgId, docId){
+  var doc = ((DB.getGov(orgId).docs)||[]).filter(function(d){ return d.id===docId; })[0];
+  if (!doc || !doc.attachment || !doc.attachment.url) { UI.toast('لا يوجد ملف مرفق بهذه الوثيقة','danger'); return; }
+  var entry = {
+    title: doc.title, category: doc.cat || 'وثائق الحوكمة',
+    url: doc.attachment.url, kind: 'pdf', code: doc.code,
+    version: doc.version || '', date: doc.approve_date || ''
+  };
+  var cfg = Pages._osApplyGovPublish(orgId, doc, entry, null);
+  Pages._osPersist(orgId, cfg, 'نُشر ملف «'+doc.title+'» على الموقع');
+};
+
 Pages.osPublishAllApproved = function(orgId){
   var docs = ((DB.getGov(orgId).docs)||[]).filter(function(d){
     return d.status==='approved' && Pages._osDocPubState(orgId,d) !== 'published';
@@ -20442,6 +21164,139 @@ Pages.osPublishAllApproved = function(orgId){
     Pages._osData.config = cfg;
   });
   Pages._osPersist(orgId, cfg, 'نُشرت '+docs.length+' وثيقة على الموقع');
+};
+
+/* ─── Design export / import + live preview ─── */
+Pages.osExportDesign = function(orgId){
+  var cfg = (Pages._osData && Pages._osData.config) || {};
+  var name = Pages._osGet(cfg,'brand.name') || Pages._osOrgName(orgId);
+  var out = { _type:'buad_org_site', _version:1, config: cfg };
+  var blob = new Blob([JSON.stringify(out, null, 2)], {type:'application/json;charset=utf-8'});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'تصميم-الموقع — '+String(name).replace(/[\\\/:*?"<>|]/g,'-')+'.json';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(function(){ URL.revokeObjectURL(a.href); }, 2000);
+  UI.toast('صُدِّر تصميم الموقع');
+};
+
+Pages.osImportDesign = function(orgId){
+  var inp = document.createElement('input');
+  inp.type = 'file'; inp.accept = '.json,application/json';
+  inp.onchange = function(){
+    var f = inp.files && inp.files[0]; if(!f) return;
+    var reader = new FileReader();
+    reader.onload = function(){
+      var data;
+      try { data = JSON.parse(reader.result); } catch(e){ UI.toast('الملف ليس بصيغة JSON صالحة','danger'); return; }
+      var cfg = (data && data._type === 'buad_org_site') ? data.config : (data && data.config ? data.config : data);
+      if (!cfg || typeof cfg !== 'object' || Array.isArray(cfg)) { UI.toast('الملف ليس تصميم موقع صالحاً','danger'); return; }
+      Pages._osImportPending = cfg;
+      UI.openModal(
+        '<div class="modal-header"><h3>استيراد تصميم الموقع</h3><button class="modal-close" onclick="UI.closeModalForce()">×</button></div>'+
+        '<div class="modal-body"><p style="color:var(--fg-2);font-size:13.5px;line-height:1.8">كيف تريد تطبيق «<strong>'+UI.escHtml(f.name)+'</strong>»؟</p>'+
+        '<ul style="padding-right:20px;color:var(--fg-3);font-size:12.5px;line-height:1.9;margin-top:6px">'+
+          '<li><strong>دمج:</strong> يملأ الحقول الفارغة ويُلحق عناصر القوائم الجديدة دون المساس بالموجود.</li>'+
+          '<li><strong>استبدال:</strong> يستبدل تصميم الموقع بالكامل.</li>'+
+        '</ul></div>'+
+        '<div class="modal-footer" style="display:flex;gap:var(--space-2);justify-content:flex-end">'+
+          '<button class="btn btn-sm" onclick="UI.closeModalForce()">إلغاء</button>'+
+          '<button class="btn btn-sm btn-danger" onclick="Pages._doOsImport(\''+orgId+'\',\'replace\')">استبدال كامل</button>'+
+          '<button class="btn btn-sm btn-primary" onclick="Pages._doOsImport(\''+orgId+'\',\'merge\')">دمج</button>'+
+        '</div>'
+      );
+    };
+    reader.readAsText(f);
+  };
+  inp.click();
+};
+
+/* Merge rule: scalars fill only what is empty; list items append when their key text is new. */
+Pages._osMergeConfig = function(base, incoming){
+  var LIST_KEYS = ['values','stats','programs','news','board','partners','faq','highlights','pages','governance'];
+  var KEY_FIELD = {values:'title', stats:'label', programs:'title', news:'title', board:'name',
+                   partners:'name', faq:'q', highlights:'title', pages:'slug', governance:'title'};
+  var out = JSON.parse(JSON.stringify(base || {}));
+
+  function mergeScalars(dst, src){
+    Object.keys(src || {}).forEach(function(k){
+      var v = src[k];
+      if (Array.isArray(v)) return;                       /* lists handled separately */
+      if (v && typeof v === 'object') {
+        if (!dst[k] || typeof dst[k] !== 'object' || Array.isArray(dst[k])) dst[k] = {};
+        mergeScalars(dst[k], v);
+        return;
+      }
+      if (dst[k] === undefined || dst[k] === null || String(dst[k]).trim() === '') dst[k] = v;
+    });
+  }
+  mergeScalars(out, incoming);
+
+  LIST_KEYS.forEach(function(k){
+    var inc = incoming[k];
+    if (!Array.isArray(inc) || !inc.length) return;
+    if (!Array.isArray(out[k])) out[k] = [];
+    var f = KEY_FIELD[k];
+    var have = out[k].map(function(x){ return ((x&&x[f])||'').toString().trim(); });
+    inc.forEach(function(x){
+      if (!x || typeof x !== 'object') return;
+      var key = ((x[f])||'').toString().trim();
+      if (key && have.indexOf(key) >= 0) return;
+      var copy = Object.assign({}, x);
+      if (k === 'news' || k === 'pages') copy.id = DB.uid();
+      out[k].push(copy);
+      if (key) have.push(key);
+    });
+  });
+
+  /* hero slides live one level down */
+  var incSlides = incoming.hero && incoming.hero.slides;
+  if (Array.isArray(incSlides) && incSlides.length) {
+    if (!out.hero || typeof out.hero !== 'object') out.hero = {};
+    if (!Array.isArray(out.hero.slides)) out.hero.slides = [];
+    var haveT = out.hero.slides.map(function(s){ return ((s&&s.title)||'').trim(); });
+    incSlides.forEach(function(s){
+      if (!s || typeof s !== 'object') return;
+      if ((s.title||'').trim() && haveT.indexOf((s.title||'').trim()) >= 0) return;
+      out.hero.slides.push(Object.assign({}, s));
+    });
+  }
+  return out;
+};
+
+Pages._doOsImport = function(orgId, mode){
+  var inc = Pages._osImportPending;
+  if (!inc) { UI.closeModalForce(); return; }
+  var cfg = (mode === 'replace')
+    ? JSON.parse(JSON.stringify(inc))
+    : Pages._osMergeConfig(Pages._osData.config || {}, inc);
+  Pages._osImportPending = null;
+  UI.closeModalForce();
+  Pages._osPersist(orgId, cfg, mode === 'replace' ? 'استُبدل تصميم الموقع' : 'دُمج التصميم');
+};
+
+Pages.osTogglePreview = function(){
+  Pages._osPreviewOn = !Pages._osPreviewOn;
+  Pages.render_orgsites({orgId:Pages._osCur.orgId});
+};
+Pages.osRefreshPreview = function(){
+  var f = document.getElementById('os-preview-frame');
+  if (f) f.src = f.src;
+};
+Pages._osPreviewHtml = function(orgId){
+  if (!Pages._osPreviewOn) return '';
+  var url = Pages._osPlatformUrl(orgId) + '&preview=1';
+  return '<div class="card" style="padding:0;margin-bottom:14px;overflow:hidden">'+
+    '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 14px;border-bottom:1px solid var(--border);flex-wrap:wrap">'+
+      '<span style="font-weight:700;font-size:13px;color:var(--fg-1)">معاينة حيّة</span>'+
+      '<div style="display:flex;gap:6px">'+
+        '<button class="btn btn-sm" onclick="Pages.osRefreshPreview()"><i data-lucide="refresh-cw"></i>تحديث</button>'+
+        '<a class="btn btn-sm" href="'+UI.escHtml(url)+'" target="_blank" rel="noopener"><i data-lucide="external-link"></i>فتح</a>'+
+        '<button class="btn btn-sm" onclick="Pages.osTogglePreview()"><i data-lucide="x"></i></button>'+
+      '</div>'+
+    '</div>'+
+    '<iframe id="os-preview-frame" src="'+UI.escHtml(url)+'" style="width:100%;height:520px;border:0;display:block;background:#fff"></iframe>'+
+  '</div>';
 };
 
 /* ─── 5) Domain ─── */
