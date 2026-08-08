@@ -17,6 +17,21 @@ function json(data, status) {
   });
 }
 
+/* Normalize a custom domain to a bare, comparable hostname:
+   strips scheme, credentials, port, path and a leading "www.", lowercases the rest.
+   Returns '' for anything that isn't a plausible hostname, so callers can treat '' as "unset". */
+function normalizeDomain(raw) {
+  let d = String(raw || '').trim().toLowerCase();
+  if (!d) return '';
+  d = d.replace(/^[a-z][a-z0-9+.-]*:\/\//, '');   // scheme
+  d = d.replace(/^[^@/]*@/, '');                   // credentials
+  d = d.split('/')[0].split('?')[0].split('#')[0]; // path/query/fragment
+  d = d.split(':')[0];                             // port
+  d = d.replace(/^www\./, '').replace(/\.$/, '');
+  if (!/^[a-z0-9-]+(\.[a-z0-9-]+)+$/.test(d)) return '';
+  return d;
+}
+
 function djb2(s) {
   let h = 5381;
   for (let i = 0; i < s.length; i++) h = ((h << 5) + h) + s.charCodeAt(i);
@@ -136,6 +151,19 @@ export async function onRequest(context) {
       .bind(djb2(newPass), payload.id).run();
     const token = await signJWT({ id: payload.id, name: payload.name, email: payload.email, role: payload.role }, jwtSecret);
     return json({ token, user: { id: payload.id, name: payload.name, email: payload.email, role: payload.role } });
+  }
+
+  /* ─── PUBLIC: GET /api/public/org-site-by-host?host=… ─── resolve a custom domain to its org site.
+        Lets an association point its own domain at the platform: the renderer asks who lives here. */
+  if (path === '/public/org-site-by-host' && method === 'GET') {
+    const host = normalizeDomain(url.searchParams.get('host') || '');
+    if (!host) return json({ error: 'not_found' }, 404);
+    const ws = await db.prepare('SELECT * FROM org_websites WHERE custom_domain = ?').bind(host).first();
+    if (!ws) return json({ error: 'not_found' }, 404);
+    const org = await db.prepare('SELECT id, name, website_enabled FROM orgs WHERE id = ?').bind(ws.org_id).first();
+    if (!org || !org.website_enabled) return json({ error: 'not_found' }, 404);
+    if (!ws.published) return json({ error: 'not_published' }, 404);
+    return json({ org_id: ws.org_id, config: JSON.parse(ws.config || '{}'), published_at: ws.published_at });
   }
 
   /* ─── PUBLIC: GET /api/public/org-site/:orgId ─── published org website data (no auth) */
@@ -445,7 +473,12 @@ export async function onRequest(context) {
     try { body = await request.json(); } catch (e) { return json({ error: 'Bad request' }, 400); }
     const config = JSON.stringify(body.config || {});
     const publish = body.publish ? 1 : 0;
-    const customDomain = (body.custom_domain || '').trim();
+    const customDomain = normalizeDomain(body.custom_domain || '');
+    if (customDomain) {
+      const taken = await db.prepare('SELECT org_id FROM org_websites WHERE custom_domain = ? AND org_id <> ?')
+        .bind(customDomain, orgMe.id).first();
+      if (taken) return json({ error: 'domain_taken' }, 409);
+    }
     const publishedAt = publish ? Math.floor(Date.now() / 1000) : null;
     await db.prepare(
       'INSERT INTO org_websites (org_id, config, published, published_at, custom_domain) VALUES (?, ?, ?, ?, ?) ' +
@@ -1014,7 +1047,9 @@ export async function onRequest(context) {
       'CREATE INDEX IF NOT EXISTS idx_caid_org ON crm_aids(org_id)',
       'CREATE INDEX IF NOT EXISTS idx_caid_ben ON crm_aids(beneficiary_id)',
       'CREATE TABLE IF NOT EXISTS crm_notes (id TEXT PRIMARY KEY, org_id TEXT NOT NULL, beneficiary_id TEXT NOT NULL, request_id TEXT NOT NULL DEFAULT "", type TEXT NOT NULL DEFAULT "note", content TEXT NOT NULL DEFAULT "", created_by TEXT NOT NULL DEFAULT "", created_at INTEGER NOT NULL DEFAULT (unixepoch()))',
-      'CREATE INDEX IF NOT EXISTS idx_cnote_ben ON crm_notes(beneficiary_id)'
+      'CREATE INDEX IF NOT EXISTS idx_cnote_ben ON crm_notes(beneficiary_id)',
+      'CREATE TABLE IF NOT EXISTS org_websites (org_id TEXT PRIMARY KEY, config TEXT NOT NULL DEFAULT \'{}\', published INTEGER NOT NULL DEFAULT 0, published_at INTEGER, custom_domain TEXT NOT NULL DEFAULT \'\', updated_at INTEGER NOT NULL DEFAULT (unixepoch()))',
+      'CREATE UNIQUE INDEX IF NOT EXISTS idx_orgws_domain ON org_websites(custom_domain) WHERE custom_domain <> \'\''
     ];
     const results = [];
     for (const sql of stmts) {
@@ -1022,6 +1057,65 @@ export async function onRequest(context) {
       catch (e) { results.push({ ok: false, sql: sql.slice(0, 60), err: e.message }); }
     }
     return json({ ok: true, results });
+  }
+
+  /* ─── ADMIN: GET /api/admin/org-website/:orgId ─── read any association's site (team admin) */
+  const admOrgSiteGet = path.match(/^\/admin\/org-website\/([^/]+)$/);
+  if (admOrgSiteGet && method === 'GET') {
+    if (me.role !== 'admin') return json({ error: 'Forbidden' }, 403);
+    const orgId = admOrgSiteGet[1];
+    const org = await db.prepare('SELECT id, name, website_enabled FROM orgs WHERE id = ?').bind(orgId).first();
+    if (!org) return json({ error: 'not_found' }, 404);
+    let ws = null;
+    try { ws = await db.prepare('SELECT * FROM org_websites WHERE org_id = ?').bind(orgId).first(); } catch (e) { ws = null; }
+    return json({
+      org_id: orgId, org_name: org.name, website_enabled: org.website_enabled ? 1 : 0,
+      config: ws ? JSON.parse(ws.config || '{}') : {},
+      published: ws ? ws.published : 0,
+      published_at: ws ? ws.published_at : null,
+      custom_domain: ws ? ws.custom_domain : '',
+      updated_at: ws ? ws.updated_at : null
+    });
+  }
+
+  /* ─── ADMIN: PUT /api/admin/org-website/:orgId ─── partial update of any association's site.
+        Only the keys actually sent are written, so an admin edit never wipes the association's own work. */
+  if (admOrgSiteGet && method === 'PUT') {
+    if (me.role !== 'admin') return json({ error: 'Forbidden' }, 403);
+    const orgId = admOrgSiteGet[1];
+    const org = await db.prepare('SELECT id FROM orgs WHERE id = ?').bind(orgId).first();
+    if (!org) return json({ error: 'not_found' }, 404);
+    let body;
+    try { body = await request.json(); } catch (e) { return json({ error: 'Bad request' }, 400); }
+
+    let cur = null;
+    try { cur = await db.prepare('SELECT * FROM org_websites WHERE org_id = ?').bind(orgId).first(); } catch (e) { cur = null; }
+
+    const config = Object.prototype.hasOwnProperty.call(body, 'config')
+      ? JSON.stringify(body.config || {})
+      : (cur ? (cur.config || '{}') : '{}');
+    const publish = Object.prototype.hasOwnProperty.call(body, 'publish')
+      ? (body.publish ? 1 : 0)
+      : (cur ? (cur.published ? 1 : 0) : 0);
+
+    let customDomain = cur ? (cur.custom_domain || '') : '';
+    if (Object.prototype.hasOwnProperty.call(body, 'custom_domain')) {
+      customDomain = normalizeDomain(body.custom_domain || '');
+      if (customDomain) {
+        const taken = await db.prepare('SELECT org_id FROM org_websites WHERE custom_domain = ? AND org_id <> ?')
+          .bind(customDomain, orgId).first();
+        if (taken) return json({ error: 'domain_taken' }, 409);
+      }
+    }
+
+    const publishedAt = publish ? Math.floor(Date.now() / 1000) : null;
+    await db.prepare(
+      'INSERT INTO org_websites (org_id, config, published, published_at, custom_domain) VALUES (?, ?, ?, ?, ?) ' +
+      'ON CONFLICT(org_id) DO UPDATE SET config = excluded.config, published = excluded.published, ' +
+      'published_at = CASE WHEN excluded.published = 1 THEN excluded.published_at ELSE published_at END, ' +
+      'custom_domain = excluded.custom_domain, updated_at = unixepoch()'
+    ).bind(orgId, config, publish, publishedAt, customDomain).run();
+    return json({ ok: true, published: publish, custom_domain: customDomain });
   }
 
   /* ─── GET /api/orgs ─── list registered associations + progress (team) */

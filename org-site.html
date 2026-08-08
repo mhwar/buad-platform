@@ -1211,6 +1211,34 @@ body.theme-national .sec-sub{color:var(--n-ink-3)}
   .n-foot-bottom-inner{flex-direction:column;text-align:center}
   body.theme-national section{padding:52px 0}
 }
+
+/* ── Published governance document pages ── */
+.article-top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.doc-print{display:inline-flex;align-items:center;gap:7px;padding:8px 14px;border-radius:9px;
+  border:1px solid var(--line);background:#fff;color:var(--ink,#1a2330);font-family:inherit;
+  font-size:13px;font-weight:700;cursor:pointer;transition:.15s}
+.doc-print:hover{border-color:var(--accent);color:var(--accent)}
+.gov-article .gov-doc-meta{width:100%;border-collapse:collapse;margin:18px 0 26px;font-size:13.5px}
+.gov-article .gov-doc-meta td{border:1px solid var(--line);padding:7px 11px}
+.gov-article .gov-doc-meta td:nth-child(odd){background:rgba(0,0,0,.03);font-weight:700;width:32%}
+.gov-article .gov-art{margin:22px 0 0}
+.gov-article .gov-art h3{font-size:16px;font-weight:800;margin:0 0 6px;color:var(--accent)}
+.gov-article .gov-art p{margin:0 0 8px;line-height:2}
+.gov-article .gov-art ol{margin:4px 0 10px;padding-inline-start:22px}
+.gov-article .gov-art li{margin-bottom:5px;line-height:1.9}
+
+/* Print / save-as-PDF: keep only the document itself */
+@media print{
+  .no-print,.nav,.site-nav,nav,.foot,footer,.pv-banner,.mmenu,.n-chrome,.n-foot{display:none!important}
+  body{background:#fff!important}
+  .article,.wrap{max-width:none!important;margin:0!important;padding:0!important}
+  .article h1{font-size:20pt;margin:0 0 14pt}
+  .gov-article .gov-art{page-break-inside:auto}
+  .gov-article .gov-art h3{page-break-after:avoid}
+  .gov-article .gov-doc-meta{page-break-inside:avoid}
+  .article-body p,.article-body li{orphans:2;widows:2}
+  a[href^="#"]{text-decoration:none;color:inherit}
+}
 </style>
 </head>
 <body>
@@ -1231,7 +1259,9 @@ function layoutTheme(){ return CFG.layout_theme || 'classic'; }
 /* ── Boot ── */
 (function init(){
   ORGID = getParam('org');
-  if(!ORGID){ stateError('الرابط غير صحيح','لم يُحدَّد معرّف الجمعية في الرابط.'); return; }
+  /* No ?org= — the visitor came through the association's own domain.
+     Ask the API which association lives on this hostname. */
+  if(!ORGID){ stateLoading(); loadByHost(); return; }
   stateLoading();
   if(isPreview()){
     var tk=null; try{ tk=localStorage.getItem('buad_org_jwt'); }catch(e){}
@@ -1245,6 +1275,20 @@ function layoutTheme(){ return CFG.layout_theme || 'classic'; }
   }
   loadPublic();
 })();
+
+/* Resolve the association from the current hostname (custom-domain visitors). */
+function loadByHost(){
+  fetch(API+'/public/org-site-by-host?host='+encodeURIComponent(location.hostname))
+    .then(function(r){
+      if(r.status===404){ return r.json().then(function(j){
+        if(j&&j.error==='not_published') stateError('الموقع لم يُنشر بعد','النطاق مرتبط بالجمعية، لكن الموقع ما زال مسودة. فعّل «نشر الموقع» من بوابة جمعيتك.');
+        else stateError('لا يوجد موقع على هذا النطاق','لم يُربط هذا النطاق بأي جمعية بعد. راجع إعدادات الدومين مع فريق بُعد.');
+        throw 'done'; }); }
+      if(!r.ok) throw 0; return r.json();
+    })
+    .then(function(d){ if(d){ ORGID=d.org_id||null; CFG=d.config||{}; boot(); } })
+    .catch(function(e){ if(e!=='done') stateError('تعذّر تحميل الموقع','حدث خطأ غير متوقع، حاول لاحقاً.'); });
+}
 
 function loadPublic(){
   fetch(API+'/public/org-site/'+encodeURIComponent(ORGID))
@@ -1489,6 +1533,7 @@ function svgFor(name){
   var m={
     'doc':'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>',
     'download':'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>',
+    'arrow':'<line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>',
     'phone':'<path d="M22 16.92v3a2 2 0 0 1-2.18 2A19.79 19.79 0 0 1 2 4.18 2 2 0 0 1 4 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L7.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/>',
     'mail':'<rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/>',
     'pin':'<path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>',
@@ -1599,14 +1644,30 @@ function boardHtml(){
   '</div></section>';
 }
 
+/* A governance entry may be an internal document page ({kind:'page', url:'#/page/…'})
+   or an external file link. Internal pages open in place; files open in a new tab. */
+function govLinkAttrs(d){
+  if(!d.url) return '';
+  var internal = (d.kind==='page') || String(d.url).charAt(0)==='#';
+  return internal ? 'href="'+attr(d.url)+'"' : 'href="'+attr(d.url)+'" target="_blank" rel="noopener"';
+}
+function govMetaLine(d, cat){
+  var bits=[];
+  if(cat) bits.push(esc(cat));
+  if(d.version) bits.push(esc(d.version));
+  if(d.date) bits.push(esc(d.date));
+  return bits.join(' · ');
+}
 function governanceHtml(){
   if(!visible('governance')) return ''; var g=arr('governance').filter(function(x){return x.title;}); if(!g.length) return '';
   var cats={}; g.forEach(function(d){ var c=d.category||'وثائق'; (cats[c]=cats[c]||[]).push(d); });
   var blocks=Object.keys(cats).map(function(cat){
     return '<div class="gov-cat"><div class="gov-cat-title"><span class="b"></span>'+esc(cat)+'</div>'+
       '<div class="gov-grid">'+cats[cat].map(function(d){
-        var a=d.url?'href="'+attr(d.url)+'" target="_blank" rel="noopener"':'';
-        return '<a class="gov-doc" '+a+'><div class="ic">'+svgFor('doc')+'</div><div class="tx"><b>'+esc(d.title)+'</b><span>'+esc(cat)+'</span></div><div class="dl">'+svgFor('download')+'</div></a>';
+        var isPage = (d.kind==='page') || String(d.url||'').charAt(0)==='#';
+        return '<a class="gov-doc" '+govLinkAttrs(d)+'><div class="ic">'+svgFor('doc')+'</div>'+
+          '<div class="tx"><b>'+esc(d.title)+'</b><span>'+govMetaLine(d, cat)+'</span></div>'+
+          '<div class="dl">'+svgFor(isPage?'arrow':'download')+'</div></a>';
       }).join('')+'</div></div>';
   }).join('');
   return '<section id="governance"><div class="wrap"><div class="sec-head"><div class="sec-eyebrow">الشفافية والإفصاح</div><div class="sec-title">الحوكمة والوثائق النظامية</div><div class="sec-sub">التزاماً بالشفافية، نتيح الاطلاع على وثائق الجمعية النظامية وتقاريرها</div></div>'+
@@ -2134,6 +2195,7 @@ function nIc(n){
     sitemap:'<rect x="9" y="2" width="6" height="6" rx="1"/><rect x="2" y="16" width="6" height="6" rx="1"/><rect x="16" y="16" width="6" height="6" rx="1"/><path d="M12 8v4M5 16v-2h14v2"/>',
     award:'<circle cx="12" cy="8" r="6"/><path d="M8.21 13.89 7 22l5-3 5 3-1.21-8.12"/>',
     doc:'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>',
+    arrow:'<line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>',
     chart:'<path d="M3 3v18h18"/><path d="M18 17V9M13 17V5M8 17v-3"/>',
     shield:'<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>',
     usercheck:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="17 11 19 13 23 9"/>',
@@ -2668,10 +2730,12 @@ function renderNatGovernance(){
 }
 function nDocCard(d){
   var has=!!d.url;
-  var attrs=has?' href="'+attr(d.url)+'" target="_blank" rel="noopener"':'';
+  var isPage=(d.kind==='page')||String(d.url||'').charAt(0)==='#';
+  var attrs=has?' '+govLinkAttrs(d):'';
+  var meta=govMetaLine(d, d.category||'وثيقة نظامية');
   return '<a class="n-doc'+(has?'':' is-empty')+'"'+attrs+(has?'':' aria-disabled="true"')+'><div class="ic">'+nIc('doc')+'</div>'+
-    '<div class="tx"><b>'+esc(d.title)+'</b><span>'+esc(d.category||'وثيقة نظامية')+'</span></div>'+
-    '<div class="dl">'+nIc('download')+'</div></a>';
+    '<div class="tx"><b>'+esc(d.title)+'</b><span>'+meta+'</span></div>'+
+    '<div class="dl">'+nIc(isPage?'arrow':'download')+'</div></a>';
 }
 
 /* ── PAGE: programs (برامجنا وأثرنا) ── */
@@ -2903,12 +2967,23 @@ function renderArticle(id){
 }
 
 /* ── Custom page view ── */
+/* A page carrying gov_code is a published governance document — offer a print/PDF action. */
+function pagePrintBtn(p){
+  if(!p || !p.gov_code) return '';
+  return '<button class="doc-print no-print" onclick="window.print()">'+
+    '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">'+
+    '<path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>'+
+    'تحميل PDF</button>';
+}
 function renderPage(slug){
   var p=arr('pages').filter(function(x){return x.slug===slug;})[0];
   if(!p){ location.hash=''; return; }
   document.getElementById('root').innerHTML = navHtml()+
-    '<div class="wrap"><article class="article">'+
-      '<a class="article-back" onclick="location.hash=\'\'"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="m9 18 6-6-6-6"/></svg>الرئيسية</a>'+
+    '<div class="wrap"><article class="article'+(p.gov_code?' gov-article':'')+'">'+
+      '<div class="article-top no-print">'+
+        '<a class="article-back" onclick="location.hash=\'\'"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="m9 18 6-6-6-6"/></svg>الرئيسية</a>'+
+        pagePrintBtn(p)+
+      '</div>'+
       '<h1>'+esc(p.title)+'</h1>'+
       '<div class="article-body">'+pageBodyHtml(p.body)+'</div>'+
     '</article></div>'+footHtml();
