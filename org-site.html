@@ -1221,6 +1221,13 @@ body.theme-national .sec-sub{color:var(--n-ink-3)}
 .gov-article .gov-doc-meta{width:100%;border-collapse:collapse;margin:18px 0 26px;font-size:13.5px}
 .gov-article .gov-doc-meta td{border:1px solid var(--line);padding:7px 11px}
 .gov-article .gov-doc-meta td:nth-child(odd){background:rgba(0,0,0,.03);font-weight:700;width:32%}
+.gov-doc-file{margin:0 0 22px}
+.gov-doc-file a{display:inline-flex;align-items:center;gap:8px;padding:10px 16px;border-radius:9px;
+  background:var(--accent,#0d7e6e);color:#fff;font-weight:700;font-size:13.5px;text-decoration:none}
+.gov-doc-file a:hover{filter:brightness(1.08)}
+.gov-doc-file a::before{content:"";width:15px;height:15px;flex-shrink:0;background:currentColor;
+  -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round'%3E%3Cpath d='M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4'/%3E%3Cpolyline points='7 10 12 15 17 10'/%3E%3Cline x1='12' y1='15' x2='12' y2='3'/%3E%3C/svg%3E") center/contain no-repeat;
+  mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round'%3E%3Cpath d='M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4'/%3E%3Cpolyline points='7 10 12 15 17 10'/%3E%3Cline x1='12' y1='15' x2='12' y2='3'/%3E%3C/svg%3E") center/contain no-repeat}
 .gov-article .gov-art{margin:22px 0 0}
 .gov-article .gov-art h3{font-size:16px;font-weight:800;margin:0 0 6px;color:var(--accent)}
 .gov-article .gov-art p{margin:0 0 8px;line-height:2}
@@ -1236,6 +1243,7 @@ body.theme-national .sec-sub{color:var(--n-ink-3)}
   .gov-article .gov-art{page-break-inside:auto}
   .gov-article .gov-art h3{page-break-after:avoid}
   .gov-article .gov-doc-meta{page-break-inside:avoid}
+  .gov-doc-file{display:none}
   .article-body p,.article-body li{orphans:2;widows:2}
   a[href^="#"]{text-decoration:none;color:inherit}
 }

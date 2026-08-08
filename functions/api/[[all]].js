@@ -17,6 +17,10 @@ function json(data, status) {
   });
 }
 
+/* Uploaded files live base64-encoded in D1 (no object store is bound to this project).
+   Base64 inflates by ~4/3, so the raw ceiling keeps a stored value comfortably small. */
+const ASSET_MAX_BYTES = 800 * 1024;
+
 /* Normalize a custom domain to a bare, comparable hostname:
    strips scheme, credentials, port, path and a leading "www.", lowercases the rest.
    Returns '' for anything that isn't a plausible hostname, so callers can treat '' as "unset". */
@@ -151,6 +155,27 @@ export async function onRequest(context) {
       .bind(djb2(newPass), payload.id).run();
     const token = await signJWT({ id: payload.id, name: payload.name, email: payload.email, role: payload.role }, jwtSecret);
     return json({ token, user: { id: payload.id, name: payload.name, email: payload.email, role: payload.role } });
+  }
+
+  /* ─── PUBLIC: GET /api/public/asset/:id ─── serve an uploaded file (governance PDFs and images).
+        Public because published association sites link to it directly. */
+  const pubAssetMatch = path.match(/^\/public\/asset\/([^/]+)$/);
+  if (pubAssetMatch && method === 'GET') {
+    let row = null;
+    try { row = await db.prepare('SELECT filename, mime, data FROM org_assets WHERE id = ?').bind(pubAssetMatch[1]).first(); }
+    catch (e) { row = null; }
+    if (!row) return json({ error: 'not_found' }, 404);
+    const bin = atob(row.data || '');
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return new Response(bytes, {
+      headers: {
+        'Content-Type': row.mime || 'application/octet-stream',
+        'Content-Disposition': 'inline; filename*=UTF-8\'\'' + encodeURIComponent(row.filename || 'file'),
+        'Cache-Control': 'public, max-age=31536000, immutable',
+        'Access-Control-Allow-Origin': '*',
+      },
+    });
   }
 
   /* ─── PUBLIC: GET /api/public/org-site-by-host?host=… ─── resolve a custom domain to its org site.
@@ -1049,7 +1074,9 @@ export async function onRequest(context) {
       'CREATE TABLE IF NOT EXISTS crm_notes (id TEXT PRIMARY KEY, org_id TEXT NOT NULL, beneficiary_id TEXT NOT NULL, request_id TEXT NOT NULL DEFAULT "", type TEXT NOT NULL DEFAULT "note", content TEXT NOT NULL DEFAULT "", created_by TEXT NOT NULL DEFAULT "", created_at INTEGER NOT NULL DEFAULT (unixepoch()))',
       'CREATE INDEX IF NOT EXISTS idx_cnote_ben ON crm_notes(beneficiary_id)',
       'CREATE TABLE IF NOT EXISTS org_websites (org_id TEXT PRIMARY KEY, config TEXT NOT NULL DEFAULT \'{}\', published INTEGER NOT NULL DEFAULT 0, published_at INTEGER, custom_domain TEXT NOT NULL DEFAULT \'\', updated_at INTEGER NOT NULL DEFAULT (unixepoch()))',
-      'CREATE UNIQUE INDEX IF NOT EXISTS idx_orgws_domain ON org_websites(custom_domain) WHERE custom_domain <> \'\''
+      'CREATE UNIQUE INDEX IF NOT EXISTS idx_orgws_domain ON org_websites(custom_domain) WHERE custom_domain <> \'\'',
+      'CREATE TABLE IF NOT EXISTS org_assets (id TEXT PRIMARY KEY, owner_id TEXT NOT NULL DEFAULT \'\', filename TEXT NOT NULL DEFAULT \'\', mime TEXT NOT NULL DEFAULT \'\', size INTEGER NOT NULL DEFAULT 0, data TEXT NOT NULL DEFAULT \'\', created_at INTEGER NOT NULL DEFAULT (unixepoch()))',
+      'CREATE INDEX IF NOT EXISTS idx_assets_owner ON org_assets(owner_id)'
     ];
     const results = [];
     for (const sql of stmts) {
@@ -1057,6 +1084,40 @@ export async function onRequest(context) {
       catch (e) { results.push({ ok: false, sql: sql.slice(0, 60), err: e.message }); }
     }
     return json({ ok: true, results });
+  }
+
+  /* ─── ADMIN: POST /api/admin/asset ─── upload a file (governance PDF, image).
+        Stored base64 in D1: there is no object store bound to this project, and D1 caps a single
+        value well below a megabyte once base64 inflates it — hence the explicit raw-size ceiling. */
+  if (path === '/admin/asset' && method === 'POST') {
+    if (me.role !== 'admin') return json({ error: 'Forbidden' }, 403);
+    let body;
+    try { body = await request.json(); } catch (e) { return json({ error: 'Bad request' }, 400); }
+    const data = String(body.data || '').replace(/^data:[^,]*,/, '');
+    if (!data) return json({ error: 'no_data' }, 400);
+    const mime = String(body.mime || 'application/octet-stream').toLowerCase();
+    if (mime !== 'application/pdf' && mime.indexOf('image/') !== 0) {
+      return json({ error: 'unsupported_type', allowed: 'application/pdf, image/*' }, 400);
+    }
+    /* base64 → raw byte count without decoding the whole payload */
+    const pad = (data.match(/=+$/) || [''])[0].length;
+    const rawSize = Math.floor(data.length * 3 / 4) - pad;
+    if (rawSize > ASSET_MAX_BYTES) {
+      return json({ error: 'file_too_large', max_bytes: ASSET_MAX_BYTES, size: rawSize }, 413);
+    }
+    const id = 'as_' + djb2(String(Date.now()) + Math.random()) + djb2(data.slice(0, 64));
+    await db.prepare(
+      'INSERT INTO org_assets (id, owner_id, filename, mime, size, data) VALUES (?, ?, ?, ?, ?, ?)'
+    ).bind(id, String(body.owner_id || ''), String(body.filename || 'file'), mime, rawSize, data).run();
+    return json({ ok: true, id, url: '/api/public/asset/' + id, size: rawSize, mime, filename: String(body.filename || 'file') });
+  }
+
+  /* ─── ADMIN: DELETE /api/admin/asset/:id ─── */
+  const admAssetDel = path.match(/^\/admin\/asset\/([^/]+)$/);
+  if (admAssetDel && method === 'DELETE') {
+    if (me.role !== 'admin') return json({ error: 'Forbidden' }, 403);
+    await db.prepare('DELETE FROM org_assets WHERE id = ?').bind(admAssetDel[1]).run();
+    return json({ ok: true });
   }
 
   /* ─── ADMIN: GET /api/admin/org-website/:orgId ─── read any association's site (team admin) */
