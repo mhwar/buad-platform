@@ -23,3 +23,9 @@ export const setPasswordInput = z.object({
   password: z.string().min(8).max(200),
 });
 export type SetPasswordInput = z.infer<typeof setPasswordInput>;
+
+export const changePasswordInput = z.object({
+  current: z.string().min(1).max(200),
+  password: z.string().min(8).max(200),
+});
+export type ChangePasswordInput = z.infer<typeof changePasswordInput>;

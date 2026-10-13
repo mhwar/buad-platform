@@ -134,26 +134,73 @@ describe("login", () => {
     );
   });
 
-  it("first-login users get a setup token, then set a password and are signed in", async () => {
+  it("a pending user cannot log in or obtain a setup token by email alone", async () => {
     const res = await post("/api/auth/login", { email: "new@a.sa", password: "anything" });
-    const body = (await res.json()) as { action: string; setupToken: string };
-    expect(body.action).toBe("setup");
+    expect(res.status).toBe(401);
     expect(res.headers.get("set-cookie")).toBeNull();
+  });
 
-    expect(
-      (await post("/api/auth/setup-password", { setupToken: body.setupToken, password: "short" }))
-        .status,
-    ).toBe(400);
+  it("an admin invite lets a pending user set a password once", async () => {
+    const adminCookie = cookieOf(
+      await post("/api/auth/login", { email: "admin@a.sa", password: "correct-horse" }),
+    );
+    const inv = await post("/api/users/u5/invite", {}, adminCookie);
+    expect(inv.status).toBe(200);
+    const { setupToken } = (await inv.json()) as { setupToken: string };
+
+    expect((await post("/api/auth/setup-password", { setupToken, password: "short" })).status).toBe(
+      400,
+    );
     const done = await post("/api/auth/setup-password", {
-      setupToken: body.setupToken,
+      setupToken,
       password: "a-new-strong-pass",
     });
     expect(done.status).toBe(200);
     expect((await call("/api/me", { headers: { cookie: cookieOf(done) } })).status).toBe(200);
-    // setup token is a different kind from a session token
+    // a setup token is not a session token, and cannot be replayed
     expect(
-      (await call("/api/me", { headers: { authorization: `Bearer ${body.setupToken}` } })).status,
+      (await call("/api/me", { headers: { authorization: `Bearer ${setupToken}` } })).status,
     ).toBe(401);
+    expect(
+      (await post("/api/auth/setup-password", { setupToken, password: "another-strong-one" }))
+        .status,
+    ).toBe(401);
+    expect(
+      (await post("/api/auth/login", { email: "new@a.sa", password: "a-new-strong-pass" })).status,
+    ).toBe(200);
+  });
+
+  it("only same-org admins can invite", async () => {
+    const adminB = cookieOf(
+      await post("/api/auth/login", { email: "admin@b.sa", password: "other-org-pass" }),
+    );
+    expect((await post("/api/users/u5/invite", {}, adminB)).status).toBe(404);
+    const member = cookieOf(
+      await post("/api/auth/login", { email: "member@a.sa", password: "member-pass-1" }),
+    );
+    expect((await post("/api/users/u5/invite", {}, member)).status).toBe(403);
+    expect((await post("/api/users/u5/invite", {})).status).toBe(401);
+  });
+
+  it("changes a password with the current one and revokes old sessions", async () => {
+    const old = cookieOf(
+      await post("/api/auth/login", { email: "member@a.sa", password: "member-pass-1" }),
+    );
+    expect(
+      (await post("/api/auth/change-password", { current: "bad", password: "brand-new-pass" }, old))
+        .status,
+    ).toBe(403);
+    const ok = await post(
+      "/api/auth/change-password",
+      { current: "member-pass-1", password: "brand-new-pass" },
+      old,
+    );
+    expect(ok.status).toBe(200);
+    expect((await call("/api/me", { headers: { cookie: old } })).status).toBe(401);
+    expect((await call("/api/me", { headers: { cookie: cookieOf(ok) } })).status).toBe(200);
+    expect(
+      (await post("/api/auth/login", { email: "member@a.sa", password: "brand-new-pass" })).status,
+    ).toBe(200);
   });
 });
 

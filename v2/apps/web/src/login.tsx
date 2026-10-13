@@ -17,7 +17,10 @@ export function LoginPage() {
   const qc = useQueryClient();
   const navigate = useNavigate();
   const [error, setError] = useState<string | null>(null);
-  const [setupToken, setSetupToken] = useState<string | null>(null);
+  // An admin-issued invite link looks like /login?token=…
+  const [setupToken] = useState<string | null>(() =>
+    new URLSearchParams(window.location.search).get("token"),
+  );
 
   const login = useForm<LoginForm>({ resolver: zodResolver(loginInput) });
   const setup = useForm<SetupForm>();
@@ -33,7 +36,6 @@ export function LoginPage() {
     const body = await res.json();
     if (!res.ok || !("ok" in body) || !body.ok)
       return setError("البريد الإلكتروني أو كلمة المرور غير صحيحة");
-    if ("action" in body && body.action === "setup") return setSetupToken(body.setupToken);
     await done();
   });
 

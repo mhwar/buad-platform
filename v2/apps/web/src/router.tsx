@@ -3,10 +3,12 @@ import {
   createRootRoute,
   createRoute,
   createRouter,
+  Link,
   Outlet,
   redirect,
   useNavigate,
 } from "@tanstack/react-router";
+import { AccountPage } from "./account";
 import { api } from "./api";
 import { LoginPage } from "./login";
 import { queryClient } from "./query-client";
@@ -27,7 +29,9 @@ function Shell() {
         <span className="text-lg font-semibold text-brand">منصة بُعد — الإصدار الثاني</span>
         {me.data && (
           <span className="flex items-center gap-3 text-sm">
-            {me.data.name || me.data.email}
+            <Link to="/account" className="underline">
+              {me.data.name || me.data.email}
+            </Link>
             <button type="button" onClick={logout} className="rounded border px-2 py-1">
               خروج
             </button>
@@ -80,7 +84,19 @@ const loginRoute = createRoute({
   component: LoginPage,
 });
 
-export const router = createRouter({ routeTree: rootRoute.addChildren([indexRoute, loginRoute]) });
+const accountRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/account",
+  beforeLoad: async () => {
+    const me = await queryClient.ensureQueryData(meQuery);
+    if (!me) throw redirect({ to: "/login" });
+  },
+  component: AccountPage,
+});
+
+export const router = createRouter({
+  routeTree: rootRoute.addChildren([indexRoute, loginRoute, accountRoute]),
+});
 
 declare module "@tanstack/react-router" {
   interface Register {

@@ -3,7 +3,7 @@ import type { AuthUser } from "./service";
 
 export const SESSION_COOKIE = "buad_session";
 export const SESSION_TTL = 60 * 60 * 12; // 12h
-const SETUP_TTL = 60 * 15;
+export const INVITE_TTL = 60 * 60 * 24 * 7; // 7 days
 const ALG = "HS256" as const;
 
 const now = () => Math.floor(Date.now() / 1000);
@@ -37,7 +37,7 @@ export const signSession = (secret: string, u: AuthUser) =>
     ALG,
   );
 
-export const signSetup = (secret: string, u: AuthUser) =>
+export const signSetup = (secret: string, u: AuthUser, ttl = INVITE_TTL) =>
   sign(
     {
       sub: u.id,
@@ -45,7 +45,7 @@ export const signSetup = (secret: string, u: AuthUser) =>
       role: u.role,
       v: u.tokenVersion,
       kind: "setup",
-      exp: now() + SETUP_TTL,
+      exp: now() + ttl,
     },
     need(secret),
     ALG,

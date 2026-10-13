@@ -52,3 +52,20 @@ pnpm --filter @buad/migrate plan <v1-snapshot.json> <out-dir>
 ```
 
 استعلامات اللقطة في `tools/migrate/v1-export.sql`. قاعدة v2 على Cloudflare: `buad-v2` (مرتبطة في `apps/api/wrangler.jsonc`، والمخطط الأول مُطبَّق).
+
+## النشر على رابط تجريبي
+
+Worker واحد باسم `buad-v2` يخدم الواجهة والـ API معاً (نفس الأصل، فالكوكي تعمل). الرابط الناتج: `https://buad-v2.<حسابكم>.workers.dev`.
+
+**الخيار أ — من GitHub (موصى به):** أضيفوا ثلاثة أسرار في Settings → Secrets → Actions:
+`CLOUDFLARE_API_TOKEN` (صلاحيات: Workers Scripts:Edit وD1:Edit)، `CLOUDFLARE_ACCOUNT_ID`، `JWT_SECRET` (نص عشوائي ≥ 32 حرفاً)،
+ثم Actions → **v2-deploy** → Run workflow.
+
+**الخيار ب — من جهازكم:** `wrangler login` ثم `wrangler secret put JWT_SECRET` ثم `pnpm deploy` من مجلد `v2`.
+
+**المالك الأول** (أنتم تختارون كلمة المرور، لا تمر بأي أداة أو محادثة):
+```
+BOOTSTRAP_PASSWORD='كلمة-مرور-طويلة' pnpm --filter @buad/migrate bootstrap-owner you@example.com > owner.sql
+cd apps/api && pnpm exec wrangler d1 execute buad-v2 --remote --file ../../owner.sql
+```
+المستخدمون الآخرون يدخلون برابط دعوة يصدره المدير (`POST /api/users/:id/invite`) أو بكلمة مرورهم القديمة بعد الترحيل.

@@ -13,7 +13,8 @@
     "typecheck": "tsc -p .",
     "test": "vitest run",
     "build": "echo \"migrate: run with tsx\"",
-    "plan": "tsx src/cli.ts"
+    "plan": "tsx src/cli.ts",
+    "bootstrap-owner": "tsx src/bootstrap-owner.ts"
   },
   "dependencies": {
     "@buad/schema": "workspace:*"

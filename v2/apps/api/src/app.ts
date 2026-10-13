@@ -1,4 +1,4 @@
-import { healthResponse, loginInput, setPasswordInput } from "@buad/schema";
+import { changePasswordInput, healthResponse, loginInput, setPasswordInput } from "@buad/schema";
 import { users } from "@buad/schema/db";
 import { zValidator } from "@hono/zod-validator";
 import { eq } from "drizzle-orm";
@@ -13,6 +13,14 @@ import { SESSION_COOKIE, SESSION_TTL, signSession, signSetup, verifySetup } from
 export type Env = { APP_VERSION: string; JWT_SECRET: string; DB: Parameters<typeof drizzle>[0] };
 
 export type AppDeps = { getDb?: (env: Env) => Db };
+
+const sessionCookie = {
+  httpOnly: true,
+  secure: true,
+  sameSite: "Strict" as const,
+  path: "/",
+  maxAge: SESSION_TTL,
+};
 
 export function createApp(deps: AppDeps = {}) {
   const getDb = deps.getDb ?? ((env: Env) => drizzle(env.DB) as unknown as Db);
@@ -35,20 +43,7 @@ export function createApp(deps: AppDeps = {}) {
         const res = await login(c.get("db"), email, password);
         if (res.status === "invalid")
           return c.json({ ok: false, error: "invalid_credentials" }, 401);
-        if (res.status === "setup") {
-          return c.json({
-            ok: true,
-            action: "setup",
-            setupToken: await signSetup(c.env.JWT_SECRET, res.user),
-          });
-        }
-        setCookie(c, SESSION_COOKIE, await signSession(c.env.JWT_SECRET, res.user), {
-          httpOnly: true,
-          secure: true,
-          sameSite: "Strict",
-          path: "/",
-          maxAge: SESSION_TTL,
-        });
+        setCookie(c, SESSION_COOKIE, await signSession(c.env.JWT_SECRET, res.user), sessionCookie);
         return c.json({ ok: true, user: publicUser(res.user) });
       })
 
@@ -58,23 +53,45 @@ export function createApp(deps: AppDeps = {}) {
         if (!claims) return c.json({ ok: false, error: "invalid_token" }, 401);
         const db = c.get("db");
         const current = await getUser(db, claims.sub);
-        if (!current) return c.json({ ok: false, error: "invalid_token" }, 401);
+        if (!current || current.tokenVersion !== claims.v)
+          return c.json({ ok: false, error: "invalid_token" }, 401);
         await setPassword(db, claims.sub, password);
         const fresh = await getUser(db, claims.sub);
         if (!fresh) return c.json({ ok: false, error: "invalid_token" }, 401);
-        setCookie(c, SESSION_COOKIE, await signSession(c.env.JWT_SECRET, fresh), {
-          httpOnly: true,
-          secure: true,
-          sameSite: "Strict",
-          path: "/",
-          maxAge: SESSION_TTL,
-        });
+        setCookie(c, SESSION_COOKIE, await signSession(c.env.JWT_SECRET, fresh), sessionCookie);
         return c.json({ ok: true, user: publicUser(fresh) });
       })
 
       .post("/api/auth/logout", (c) => {
         deleteCookie(c, SESSION_COOKIE, { path: "/" });
         return c.json({ ok: true });
+      })
+
+      .post(
+        "/api/auth/change-password",
+        requireAuth,
+        zValidator("json", changePasswordInput),
+        async (c) => {
+          const { current, password } = c.req.valid("json");
+          const db = c.get("db");
+          const me = c.get("user");
+          const check = await login(db, me.email, current);
+          if (check.status !== "ok") return c.json({ ok: false, error: "wrong_password" }, 403);
+          await setPassword(db, me.id, password);
+          const fresh = await getUser(db, me.id);
+          if (!fresh) return c.json({ ok: false, error: "unauthorized" }, 401);
+          setCookie(c, SESSION_COOKIE, await signSession(c.env.JWT_SECRET, fresh), sessionCookie);
+          return c.json({ ok: true });
+        },
+      )
+
+      // Admin-issued invite: the only way a pending user gets to choose a first password.
+      .post("/api/users/:id/invite", requireAuth, requireRole("owner", "admin"), async (c) => {
+        const target = await getUser(c.get("db"), c.req.param("id"));
+        // Same 404 for "missing" and "other org" so ids in other orgs cannot be probed.
+        if (!target || target.orgId !== c.get("user").orgId)
+          return c.json({ ok: false, error: "not_found" }, 404);
+        return c.json({ ok: true, setupToken: await signSetup(c.env.JWT_SECRET, target) });
       })
 
       .get("/api/me", requireAuth, (c) => c.json({ ok: true, user: publicUser(c.get("user")) }))

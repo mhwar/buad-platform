@@ -14,10 +14,7 @@ export type AuthUser = {
   role: string;
   tokenVersion: number;
 };
-export type LoginResult =
-  | { status: "ok"; user: AuthUser }
-  | { status: "setup"; user: AuthUser }
-  | { status: "invalid" };
+export type LoginResult = { status: "ok"; user: AuthUser } | { status: "invalid" };
 
 const normEmail = (e: string) => e.trim().toLowerCase();
 
@@ -40,7 +37,8 @@ export async function login(db: Db, emailIn: string, password: string): Promise<
     role: row.role,
     tokenVersion: row.tokenVersion,
   };
-  if (row.mustChangePass) return { status: "setup", user };
+  // Awaiting first password: only an admin-issued invite token can set one, never a bare email.
+  if (row.mustChangePass) return { status: "invalid" };
 
   if (row.passwordHash) {
     return (await verifyPassword(password, row.passwordHash))

@@ -39,16 +39,17 @@ describe("LoginPage", () => {
     expect(navigate).not.toHaveBeenCalled();
   });
 
-  it("moves to the set-password step for first-login users", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(async () => Response.json({ ok: true, action: "setup", setupToken: "tok" })),
-    );
+  it("shows the set-password form when opened from an invite link", async () => {
+    window.history.pushState({}, "", "/login?token=abc");
+    const post = vi.fn(async () => Response.json({ ok: true, user: { id: "u" } }));
+    vi.stubGlobal("fetch", post);
     renderPage();
-    await userEvent.type(screen.getByLabelText("البريد الإلكتروني"), "new@b.sa");
-    await userEvent.type(screen.getByLabelText("كلمة المرور"), "x");
-    await userEvent.click(screen.getByRole("button", { name: "دخول" }));
-    expect(await screen.findByText("تعيين كلمة المرور")).toBeInTheDocument();
+    expect(screen.getByText("تعيين كلمة المرور")).toBeInTheDocument();
+    await userEvent.type(screen.getByLabelText("كلمة المرور الجديدة"), "a-strong-pass");
+    await userEvent.type(screen.getByLabelText("تأكيد كلمة المرور"), "a-strong-pass");
+    await userEvent.click(screen.getByRole("button", { name: "حفظ ودخول" }));
+    await waitFor(() => expect(navigate).toHaveBeenCalledWith({ to: "/" }));
+    window.history.pushState({}, "", "/");
   });
 
   it("navigates home after a successful login", async () => {
