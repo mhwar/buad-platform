@@ -3,12 +3,22 @@ import {
   index,
   integer,
   primaryKey,
+  real,
   sqliteTable,
   text,
   uniqueIndex,
 } from "drizzle-orm/sqlite-core";
 
-import { CLIENT_TYPES, PROJECT_STATUSES, PROJECT_TYPES } from "./enums";
+import {
+  CATEGORY_TYPES,
+  CLIENT_TYPES,
+  ENTRY_STATUSES,
+  ENTRY_TYPES,
+  FEE_BASES,
+  FEE_TYPES,
+  PROJECT_STATUSES,
+  PROJECT_TYPES,
+} from "./enums";
 
 export { CLIENT_TYPES, PROJECT_STATUSES, PROJECT_TYPES };
 
@@ -163,4 +173,114 @@ export const projects = sqliteTable(
     index("idx_projects_client").on(t.orgId, t.clientId),
     index("idx_projects_status").on(t.orgId, t.status),
   ],
+);
+
+/**
+ * Finance settings of a project (v1 fin.ctrl). One row per project, created on first save.
+ * Fee values are stored as typed: a percentage when *_type = pct, riyals when fixed.
+ */
+const fee = (name: string) => ({
+  v: real(`${name}_v`).notNull().default(0),
+  type: text(`${name}_type`, { enum: FEE_TYPES }).notNull().default("pct"),
+  base: text(`${name}_base`, { enum: FEE_BASES }).notNull().default("net"),
+});
+const exec = fee("exec");
+const mkt = fee("mkt");
+const cb = fee("cb");
+const cf = fee("cf");
+
+export const projectFinance = sqliteTable("project_finance", {
+  projectId: text("project_id")
+    .primaryKey()
+    .references(() => projects.id),
+  orgId: text("org_id")
+    .notNull()
+    .references(() => orgs.id),
+  contractNo: text("contract_no").notNull().default(""),
+  contractDate: text("contract_date").notNull().default(""),
+  contractValue: integer("contract_value_halalas").notNull().default(0),
+  cvLocked: integer("cv_locked", { mode: "boolean" }).notNull().default(false),
+  vatIncluded: integer("vat_included", { mode: "boolean" }).notNull().default(false),
+  vatPct: real("vat_pct").notNull().default(15),
+  execV: exec.v,
+  execType: exec.type,
+  execBase: exec.base,
+  mktV: mkt.v,
+  mktType: mkt.type,
+  mktBase: mkt.base,
+  mktInternal: integer("mkt_internal", { mode: "boolean" }).notNull().default(false),
+  cbV: cb.v,
+  cbType: cb.type,
+  cbBase: cb.base,
+  cfV: cf.v,
+  cfType: cf.type,
+  cfBase: cf.base,
+  /** JSON array of category keys counted as operating expenses; empty = v1 defaults. */
+  opCats: text("op_cats").notNull().default("[]"),
+  /** Optimistic locking: every save must name the version it started from. */
+  version: integer("version").notNull().default(1),
+  createdBy: audit.createdBy,
+  createdAt: audit.createdAt,
+  updatedBy: audit.updatedBy,
+  updatedAt: audit.updatedAt,
+});
+
+export const financeEntries = sqliteTable(
+  "finance_entries",
+  {
+    id: text("id").primaryKey(),
+    orgId: text("org_id")
+      .notNull()
+      .references(() => orgs.id),
+    projectId: text("project_id")
+      .notNull()
+      .references(() => projects.id),
+    date: text("date").notNull().default(""),
+    description: text("description").notNull(),
+    /** Built-in key, `cc:<categoryId>`, or `bdg:<budgetItemId>`. */
+    cat: text("cat").notNull().default("other"),
+    type: text("type", { enum: ENTRY_TYPES }).notNull(),
+    amount: integer("amount_halalas").notNull(),
+    profitMargin: real("profit_margin").notNull().default(0),
+    profitMarginType: text("profit_margin_type", { enum: FEE_TYPES }).notNull().default("pct"),
+    status: text("status", { enum: ENTRY_STATUSES }).notNull().default(""),
+    note: text("note").notNull().default(""),
+    /** "agreement" = registered from the contract («من الاتفاقية»). */
+    source: text("source", { enum: ["manual", "agreement"] })
+      .notNull()
+      .default("manual"),
+    createdBy: audit.createdBy,
+    createdAt: audit.createdAt,
+    updatedBy: audit.updatedBy,
+    updatedAt: audit.updatedAt,
+  },
+  (t) => [index("idx_entries_project").on(t.projectId, t.date)],
+);
+
+export const financeBudgetItems = sqliteTable(
+  "finance_budget_items",
+  {
+    id: text("id").primaryKey(),
+    projectId: text("project_id")
+      .notNull()
+      .references(() => projects.id),
+    name: text("name").notNull().default(""),
+    amount: integer("amount_halalas").notNull().default(0),
+    note: text("note").notNull().default(""),
+    sort: integer("sort").notNull().default(0),
+  },
+  (t) => [index("idx_budget_project").on(t.projectId, t.sort)],
+);
+
+export const financeCategories = sqliteTable(
+  "finance_categories",
+  {
+    id: text("id").primaryKey(),
+    projectId: text("project_id")
+      .notNull()
+      .references(() => projects.id),
+    label: text("label").notNull(),
+    type: text("type", { enum: CATEGORY_TYPES }).notNull().default("expense"),
+  },
+  (t) => [index("idx_categories_project").on(t.projectId)],
 );

@@ -3,9 +3,10 @@ import { getRouteApi, Link, useNavigate } from "@tanstack/react-router";
 import { Lock, Pencil } from "lucide-react";
 import { useState } from "react";
 import { Badge, Button, Card, EmptyState, Info, Menu, Notice, Tabs } from "../../components/ui";
-import { day, fromEpoch, money } from "../../lib/format";
+import { day, fromEpoch } from "../../lib/format";
 import { meQuery } from "../../session";
 import { clientKeys } from "../clients/api";
+import { FinanceHero, FinanceTab } from "../finance/FinanceTab";
 import { label, PROJECT_STATUS_LABELS, PROJECT_TYPE_LABELS, STATUS_TONE } from "../labels";
 import {
   archiveProject,
@@ -21,6 +22,8 @@ const route = getRouteApi("/projects/$id");
 
 export function ProjectPage() {
   const { id } = route.useParams();
+  const { tab = "overview" } = route.useSearch();
+  const nav = route.useNavigate();
   const navigate = useNavigate();
   const qc = useQueryClient();
   const me = useQuery(meQuery).data;
@@ -164,44 +167,68 @@ export function ProjectPage() {
         </div>
       </Card>
 
+      <FinanceHero projectId={p.id} />
+
       <Tabs
         items={[
-          { to: "", label: "نظرة عامة", active: true },
-          { to: "", label: "المالية", active: false, disabled: true },
+          {
+            to: "",
+            label: "نظرة عامة",
+            active: tab === "overview",
+            onClick: () => nav({ search: { tab: "overview" }, replace: true }),
+          },
+          {
+            to: "",
+            label: "المالية",
+            active: tab === "finance",
+            onClick: () => nav({ search: { tab: "finance" }, replace: true }),
+          },
           { to: "", label: "العقود", active: false, disabled: true },
           { to: "", label: "الخطابات", active: false, disabled: true },
         ]}
       />
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
-          <h2 className="mb-4 font-semibold">بيانات المشروع</h2>
-          <dl className="grid gap-4 text-sm sm:grid-cols-2">
-            <Info label="نوع المشروع" value={label(PROJECT_TYPE_LABELS, p.type)} />
-            <Info label="المدينة / الموقع" value={p.location} />
-            <Info label="تاريخ البداية" value={day(p.startDate)} />
-            <Info label="تاريخ الانتهاء المتوقع" value={day(p.endDate)} />
-            <Info label="تاريخ استلام الدفعة المالية" value={day(p.payDate)} />
-            <Info label="الظهور" value={p.visibility === "private" ? "خاص" : "الفريق"} />
-          </dl>
-          {p.notes && (
-            <>
-              <h3 className="mt-6 mb-2 text-sm font-semibold">ملاحظات</h3>
-              <p className="whitespace-pre-wrap text-sm">{p.notes}</p>
-            </>
-          )}
-        </Card>
-        <Card>
-          <h2 className="mb-2 font-semibold">قيمة العقد المتوقعة</h2>
-          <p className="text-3xl font-bold">{money(p.expectedValue)}</p>
-          <p className="mt-4 text-xs text-muted">
-            أُضيف {fromEpoch(p.createdAt)} · آخر تعديل {fromEpoch(p.updatedAt)}
-          </p>
-          <p className="mt-4 rounded-lg bg-brand-soft p-3 text-xs text-brand">
-            المالية والعقود والخطابات تُضاف هنا تباعاً في الوحدات القادمة، مرتبطة بهذا المشروع.
-          </p>
-        </Card>
-      </div>
+      {tab === "finance" ? (
+        <FinanceTab projectId={p.id} canEdit={manager} />
+      ) : (
+        <div className="grid gap-6 lg:grid-cols-3">
+          <Card className="lg:col-span-2">
+            <h2 className="mb-4 font-semibold">بيانات المشروع</h2>
+            <dl className="grid gap-4 text-sm sm:grid-cols-2">
+              <Info label="نوع المشروع" value={label(PROJECT_TYPE_LABELS, p.type)} />
+              <Info label="المدينة / الموقع" value={p.location} />
+              <Info label="تاريخ البداية" value={day(p.startDate)} />
+              <Info label="تاريخ الانتهاء المتوقع" value={day(p.endDate)} />
+              <Info label="تاريخ استلام الدفعة المالية" value={day(p.payDate)} />
+              <Info label="الظهور" value={p.visibility === "private" ? "خاص" : "الفريق"} />
+            </dl>
+            {p.notes && (
+              <>
+                <h3 className="mt-6 mb-2 text-sm font-semibold">ملاحظات</h3>
+                <p className="whitespace-pre-wrap text-sm">{p.notes}</p>
+              </>
+            )}
+          </Card>
+          <Card>
+            <h2 className="mb-2 font-semibold">السجل</h2>
+            <p className="text-sm text-muted">
+              أُضيف {fromEpoch(p.createdAt)}
+              <br />
+              آخر تعديل {fromEpoch(p.updatedAt)}
+            </p>
+            <Button
+              variant="secondary"
+              className="mt-4 w-full"
+              onClick={() => nav({ search: { tab: "finance" }, replace: true })}
+            >
+              فتح المالية
+            </Button>
+            <p className="mt-4 rounded-lg bg-brand-soft p-3 text-xs text-brand">
+              العقود والخطابات تُضاف هنا في الوحدات القادمة، مرتبطة بهذا المشروع.
+            </p>
+          </Card>
+        </div>
+      )}
 
       <ProjectDialog open={editing} onOpenChange={setEditing} existing={q.data} />
     </>

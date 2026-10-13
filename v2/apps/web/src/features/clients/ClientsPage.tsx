@@ -74,7 +74,7 @@ export function ClientsPage() {
         >
           <option value="newest">الأحدث</option>
           <option value="name">الاسم</option>
-          <option value="value">قيمة المشاريع</option>
+          <option value="value">قيمة العقود</option>
         </Select>
         <ViewToggle value={s.view ?? "grid"} onChange={(v) => set({ view: v })} />
       </div>
@@ -177,7 +177,7 @@ function ClientTable({ items }: { items: ClientListItem[] }) {
             <th className="p-3 font-medium">النوع</th>
             <th className="p-3 font-medium">المدينة</th>
             <th className="p-3 font-medium">المشاريع</th>
-            <th className="p-3 font-medium">قيمة المشاريع</th>
+            <th className="p-3 font-medium">قيمة العقود</th>
           </tr>
         </thead>
         <tbody>

@@ -1,6 +1,8 @@
 import { z } from "zod";
 import { CLIENT_TYPES, PROJECT_STATUSES, PROJECT_TYPES } from "./enums";
 
+export { BUILTIN_CATEGORIES } from "./enums";
+
 /*
  * Field definitions WITHOUT defaults. Create schemas add defaults; patch schemas must not
  * (a default inside a partial would silently blank every field the client did not send).

@@ -44,6 +44,7 @@ export type ClientProject = {
   startDate: string;
   endDate: string;
   expectedValue: number;
+  contractTotal: number;
   archivedAt: number | null;
 };
 export type ClientDetail = { client: Client; contacts: Contact[]; projects: ClientProject[] };

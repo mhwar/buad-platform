@@ -57,7 +57,7 @@ export function selectClients(ws: V1Workspace, clientIds: string[] | "all"): V1W
   const fin: V1Workspace["fin"] = {};
   for (const p of projects) {
     const f = ws.fin[String(p.id)];
-    if (f) fin[String(p.id)] = { ctrl: f.ctrl }; // only what this module uses
+    if (f) fin[String(p.id)] = f; // the whole project finance: settings, entries, budget
   }
   return { clients, projects, fin };
 }

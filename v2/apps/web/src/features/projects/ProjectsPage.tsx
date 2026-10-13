@@ -140,7 +140,7 @@ function ProjectCard({ p }: { p: ProjectListItem }) {
             {label(PROJECT_TYPE_LABELS, p.type)}
             {p.startDate && ` · ${day(p.startDate)}`}
           </span>
-          {p.expectedValue > 0 && <span>{money(p.expectedValue)}</span>}
+          {p.contractTotal > 0 && <span>{money(p.contractTotal)}</span>}
         </div>
       </Card>
     </Link>
@@ -158,7 +158,7 @@ function ProjectTable({ items }: { items: ProjectListItem[] }) {
             <th className="p-3 font-medium">الحالة</th>
             <th className="p-3 font-medium">النوع</th>
             <th className="p-3 font-medium">البداية</th>
-            <th className="p-3 font-medium">القيمة المتوقعة</th>
+            <th className="p-3 font-medium">قيمة العقد</th>
           </tr>
         </thead>
         <tbody>
@@ -186,7 +186,7 @@ function ProjectTable({ items }: { items: ProjectListItem[] }) {
               </td>
               <td className="p-3">{label(PROJECT_TYPE_LABELS, p.type)}</td>
               <td className="p-3">{day(p.startDate) || "—"}</td>
-              <td className="p-3">{p.expectedValue ? money(p.expectedValue) : "—"}</td>
+              <td className="p-3">{p.contractTotal ? money(p.contractTotal) : "—"}</td>
             </tr>
           ))}
         </tbody>

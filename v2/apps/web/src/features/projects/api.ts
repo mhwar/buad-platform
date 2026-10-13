@@ -15,12 +15,14 @@ export type ProjectListItem = {
   startDate: string;
   endDate: string;
   expectedValue: number;
+  /** Contract total incl. VAT (halalas), from finance when set up. */
+  contractTotal: number;
   archivedAt: number | null;
   clientId: string;
   clientName: string;
   clientCode: string;
 };
-export type Project = Omit<ProjectListItem, "clientName" | "clientCode"> & {
+export type Project = Omit<ProjectListItem, "clientName" | "clientCode" | "contractTotal"> & {
   ownerId: string;
   payDate: string;
   notes: string;
