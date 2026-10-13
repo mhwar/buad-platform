@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@buad/domain": "workspace:*",
+    "@buad/migrate": "workspace:*",
     "@buad/schema": "workspace:*",
     "drizzle-orm": "^0.45.0",
     "@hono/zod-validator": "^0.7.0",

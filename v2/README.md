@@ -42,3 +42,13 @@ pnpm verify    # فحص + أنواع + اختبارات + بناء (نفس بو�
 - `JWT_SECRET` إلزامي (لا قيمة افتراضية) — يُضبط بـ `wrangler secret put JWT_SECRET`.
 - كل استعلام يُقيَّد بـ `org_id` للمستخدم؛ انظر `GET /api/users` والاختبار `isolates organisations`.
 - مؤجل للإنتاج: تحديد معدل المحاولات (Cloudflare Rate Limiting) على `/api/auth/login`.
+
+## أداة الترحيل (`tools/migrate`)
+
+أحادية الاتجاه: تقرأ ملف لقطة JSON من v1 ولا تتصل بـ v1 إطلاقاً، وتُنتج `import.sql` (آمن للتكرار) و`report.md` (يسرد المرفوض بالاسم).
+
+```
+pnpm --filter @buad/migrate plan <v1-snapshot.json> <out-dir>
+```
+
+استعلامات اللقطة في `tools/migrate/v1-export.sql`. قاعدة v2 على Cloudflare: `buad-v2` (مرتبطة في `apps/api/wrangler.jsonc`، والمخطط الأول مُطبَّق).

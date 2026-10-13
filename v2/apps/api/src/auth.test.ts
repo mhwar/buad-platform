@@ -208,3 +208,48 @@ describe("authorization", () => {
     expect(res.status).toBe(500);
   });
 });
+
+describe("v1 → v2 migration end to end", () => {
+  it("an imported v1 user logs in with the old password and is upgraded", async () => {
+    const { planMigration, toSql } = await import("@buad/migrate");
+    const plan = planMigration({
+      users: [
+        {
+          id: "usr_admin_1",
+          name: "سلطان",
+          email: "sultan.sa41@gmail.com",
+          password_hash: legacyDjb2("123"),
+          role: "admin",
+        },
+      ],
+      orgs: [
+        {
+          id: "org_x",
+          name: "جمعية",
+          email: "assoc@x.sa",
+          password_hash: legacyDjb2("assoc-pass"),
+        },
+      ],
+    });
+    for (const s of toSql(plan)) ctx.sqlite.exec(s);
+
+    const staff = await post("/api/auth/login", {
+      email: "Sultan.SA41@gmail.com",
+      password: "123",
+    });
+    expect(staff.status).toBe(200);
+    const assoc = await post("/api/auth/login", { email: "assoc@x.sa", password: "assoc-pass" });
+    expect(assoc.status).toBe(200);
+    const me = (await (await call("/api/me", { headers: { cookie: cookieOf(assoc) } })).json()) as {
+      user: { orgId: string; role: string };
+    };
+    expect(me.user).toMatchObject({ orgId: "org_x", role: "owner" });
+    expect((await post("/api/auth/login", { email: "assoc@x.sa", password: "wrong" })).status).toBe(
+      401,
+    );
+    // the same login now uses the upgraded hash
+    expect(
+      (await post("/api/auth/login", { email: "sultan.sa41@gmail.com", password: "123" })).status,
+    ).toBe(200);
+  });
+});

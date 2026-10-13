@@ -1,0 +1,28 @@
+{
+  "name": "@buad/migrate",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "bin": {
+    "buad-migrate": "./src/cli.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p .",
+    "test": "vitest run",
+    "build": "echo \"migrate: run with tsx\"",
+    "plan": "tsx src/cli.ts"
+  },
+  "dependencies": {
+    "@buad/schema": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.20.0",
+    "vitest": "^3.2.0",
+    "better-sqlite3": "^13.0.0",
+    "@types/better-sqlite3": "^7.6.0"
+  }
+}
