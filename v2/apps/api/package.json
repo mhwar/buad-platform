@@ -10,14 +10,17 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@buad/schema": "workspace:*",
     "@buad/domain": "workspace:*",
+    "@buad/schema": "workspace:*",
+    "drizzle-orm": "^0.45.0",
     "@hono/zod-validator": "^0.7.0",
     "hono": "^4.9.0",
     "zod": "^4.0.0"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^5.20261006.1",
+    "@types/better-sqlite3": "^9.6.0",
+    "better-sqlite3": "^13.0.3",
     "vitest": "^3.2.0",
     "wrangler": "^4.30.0"
   },

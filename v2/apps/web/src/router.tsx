@@ -1,12 +1,38 @@
-import { useQuery } from "@tanstack/react-query";
-import { createRootRoute, createRoute, createRouter, Outlet } from "@tanstack/react-router";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  createRootRoute,
+  createRoute,
+  createRouter,
+  Outlet,
+  redirect,
+  useNavigate,
+} from "@tanstack/react-router";
 import { api } from "./api";
+import { LoginPage } from "./login";
+import { queryClient } from "./query-client";
+import { meQuery } from "./session";
 
 function Shell() {
+  const me = useQuery(meQuery);
+  const qc = useQueryClient();
+  const navigate = useNavigate();
+  const logout = async () => {
+    await api.api.auth.logout.$post();
+    qc.setQueryData(meQuery.queryKey, null);
+    await navigate({ to: "/login" });
+  };
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
-      <header className="border-b bg-white px-6 py-4 text-lg font-semibold text-brand">
-        منصة بُعد — الإصدار الثاني
+      <header className="flex items-center justify-between border-b bg-white px-6 py-4">
+        <span className="text-lg font-semibold text-brand">منصة بُعد — الإصدار الثاني</span>
+        {me.data && (
+          <span className="flex items-center gap-3 text-sm">
+            {me.data.name || me.data.email}
+            <button type="button" onClick={logout} className="rounded border px-2 py-1">
+              خروج
+            </button>
+          </span>
+        )}
       </header>
       <main className="mx-auto max-w-4xl p-6">
         <Outlet />
@@ -33,9 +59,28 @@ export function Home() {
 }
 
 const rootRoute = createRootRoute({ component: Shell });
-const indexRoute = createRoute({ getParentRoute: () => rootRoute, path: "/", component: Home });
 
-export const router = createRouter({ routeTree: rootRoute.addChildren([indexRoute]) });
+const indexRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/",
+  beforeLoad: async () => {
+    const me = await queryClient.ensureQueryData(meQuery);
+    if (!me) throw redirect({ to: "/login" });
+  },
+  component: Home,
+});
+
+const loginRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/login",
+  beforeLoad: async () => {
+    const me = await queryClient.ensureQueryData(meQuery);
+    if (me) throw redirect({ to: "/" });
+  },
+  component: LoginPage,
+});
+
+export const router = createRouter({ routeTree: rootRoute.addChildren([indexRoute, loginRoute]) });
 
 declare module "@tanstack/react-router" {
   interface Register {
