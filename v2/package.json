@@ -1,0 +1,31 @@
+{
+  "name": "buad-v2",
+  "private": true,
+  "packageManager": "pnpm@10.28.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev:web": "pnpm --filter @buad/web dev",
+    "dev:api": "pnpm --filter @buad/api dev",
+    "build": "pnpm -r build",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r test",
+    "lint": "biome check .",
+    "format": "biome check --write .",
+    "verify": "pnpm lint && pnpm typecheck && pnpm test && pnpm build",
+    "deploy": "pnpm --filter @buad/web build && pnpm --filter @buad/api deploy",
+    "deploy:dry": "pnpm --filter @buad/web build && pnpm --filter @buad/api deploy:dry"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.2.0",
+    "typescript": "~5.9.3"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "workerd",
+      "better-sqlite3"
+    ]
+  }
+}

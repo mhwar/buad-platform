@@ -1,0 +1,19 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "IBM Plex Sans Arabic", "Segoe UI", Tahoma, system-ui, sans-serif;
+  --color-brand: oklch(0.52 0.13 245);
+}
+
+html {
+  font-family: var(--font-sans);
+}
+
+/* Tailwind 4 defaults borders to currentColor; keep them soft. */
+@layer base {
+  *,
+  ::after,
+  ::before {
+    border-color: var(--color-slate-200);
+  }
+}

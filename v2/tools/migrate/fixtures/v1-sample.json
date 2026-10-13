@@ -1,0 +1,60 @@
+{
+  "users": [
+    {
+      "id": "usr_admin_1",
+      "name": "سلطان",
+      "email": "Sultan@Example.com",
+      "password_hash": "375x4r",
+      "role": "admin",
+      "must_change_pass": 0,
+      "created_at": 1700000000
+    },
+    {
+      "id": "usr_2",
+      "name": "موظف",
+      "email": "staff@example.com",
+      "password_hash": "PENDING",
+      "role": "user",
+      "must_change_pass": 1
+    },
+    { "id": "usr_bad", "name": "بلا بريد", "email": "", "password_hash": "x", "role": "user" }
+  ],
+  "orgs": [
+    {
+      "id": "org_a",
+      "name": "جمعية الأمل",
+      "email": "hope@assoc.sa",
+      "password_hash": "375x4r",
+      "contact_name": "أحمد"
+    },
+    { "id": "org_b", "name": "", "contact_name": "", "email": "noname@assoc.sa" },
+    { "id": "org_c", "name": "جمعية النور", "email": "sultan@example.com", "password_hash": "abc" }
+  ],
+  "org_members": [
+    {
+      "id": "mem_1",
+      "org_id": "org_a",
+      "name": "سارة",
+      "email": "sara@assoc.sa",
+      "password_hash": "375x4r",
+      "role": "admin"
+    },
+    {
+      "id": "mem_2",
+      "org_id": "org_a",
+      "name": "خالد",
+      "email": "khaled@assoc.sa",
+      "password_hash": "375x4r",
+      "role": "editor"
+    },
+    {
+      "id": "mem_3",
+      "org_id": "org_zzz",
+      "name": "يتيم",
+      "email": "orphan@assoc.sa",
+      "password_hash": "x",
+      "role": "editor"
+    }
+  ],
+  "workspace": "{\"clients\":[{},{},{}],\"projects\":[{},{}],\"settings\":{\"a\":1,\"b\":2},\"templates\":[]}"
+}
