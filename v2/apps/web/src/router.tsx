@@ -13,6 +13,7 @@ import { z } from "zod";
 import { AccountPage } from "./account";
 import { api } from "./api";
 import { Logo } from "./brand";
+import { UpdateBanner, useServerVersion } from "./components/UpdateBanner";
 import { ClientPage } from "./features/clients/ClientPage";
 import { ClientsPage } from "./features/clients/ClientsPage";
 import { ImportPage } from "./features/import/ImportPage";
@@ -34,11 +35,7 @@ function Shell() {
   const me = useQuery(meQuery);
   const qc = useQueryClient();
   const navigate = useNavigate();
-  const health = useQuery({
-    queryKey: ["health"],
-    queryFn: async () => (await api.api.health.$get()).json(),
-    enabled: !!me.data,
-  });
+  const health = useServerVersion();
   const logout = async () => {
     await api.api.auth.logout.$post();
     qc.clear();
@@ -52,6 +49,7 @@ function Shell() {
   const navActive = "bg-brand-soft font-semibold text-brand";
   return (
     <div className="flex min-h-screen flex-col">
+      <UpdateBanner />
       <header className="sticky top-0 z-20 border-b bg-surface/90 backdrop-blur">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6">
           <Link to="/" aria-label="الرئيسية">
