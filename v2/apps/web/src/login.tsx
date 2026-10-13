@@ -7,7 +7,7 @@ import { useForm } from "react-hook-form";
 import type { z } from "zod";
 import { api } from "./api";
 import { AuthLayout, ErrorNote } from "./brand";
-import { setupStatusQuery } from "./session";
+import { meQuery, setupStatusQuery } from "./session";
 import { button, field } from "./ui";
 
 type LoginForm = z.input<typeof loginInput>;
@@ -27,7 +27,8 @@ export function LoginPage() {
   const setup = useForm<SetupForm>();
 
   const done = async () => {
-    await qc.invalidateQueries({ queryKey: ["me"] });
+    // Always ask the server who is signed in now (never trust a cached "signed out").
+    await qc.fetchQuery({ ...meQuery, staleTime: 0 });
     await navigate({ to: "/" });
   };
 

@@ -21,7 +21,7 @@ export function Home() {
   const clientCount = Object.values(clients.data?.counts ?? {}).reduce((a, b) => a + b, 0);
   const activeValue = (projects.data?.items ?? [])
     .filter((p) => p.status === "active")
-    .reduce((a, p) => a + p.expectedValue, 0);
+    .reduce((a, p) => a + p.contractTotal, 0);
   const recent = (projects.data?.items ?? []).slice(0, 6);
 
   return (
@@ -72,7 +72,7 @@ export function Home() {
         <Stat
           to="/projects"
           icon={<Briefcase className="size-5" />}
-          label="قيمة المشاريع الجارية"
+          label="قيمة عقود المشاريع الجارية"
           value={projects.data ? money(activeValue) : "…"}
         />
       </div>

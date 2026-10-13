@@ -21,3 +21,14 @@ export const isManager = (role: string) => role === "owner" || role === "admin";
 
 /** Escape LIKE wildcards in user search text. */
 export const likeTerm = (q: string) => `%${q.replace(/[\\%_]/g, (m) => `\\${m}`)}%`;
+
+/**
+ * A project's contract total (gross, halalas) for lists and sorting: from its finance settings
+ * when they exist, otherwise the expected value with v1's default VAT (15%, not included).
+ * `p` is the SQL alias/table name of the projects row.
+ */
+export const contractTotalSql = (p: string) =>
+  sql.raw(`COALESCE((SELECT CASE WHEN f.vat_included THEN f.contract_value_halalas
+      ELSE f.contract_value_halalas + CAST(ROUND(f.contract_value_halalas * f.vat_pct / 100.0) AS INTEGER) END
+    FROM project_finance f WHERE f.project_id = ${p}.id),
+    ${p}.expected_value_halalas + CAST(ROUND(${p}.expected_value_halalas * 15 / 100.0) AS INTEGER))`);

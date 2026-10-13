@@ -57,7 +57,7 @@ export function ClientPage() {
   const { client, contacts, projects } = q.data;
   const manager = me?.role === "owner" || me?.role === "admin";
   const live = projects.filter((p) => !p.archivedAt);
-  const totalValue = live.reduce((a, p) => a + p.expectedValue, 0);
+  const totalValue = live.reduce((a, p) => a + p.contractTotal, 0);
   const byStatus = live.reduce<Record<string, number>>(
     (a, p) => ({ ...a, [p.status]: (a[p.status] ?? 0) + 1 }),
     {},
@@ -257,7 +257,7 @@ export function ClientPage() {
           <Card>
             <h2 className="mb-4 font-semibold">ملخص المشاريع</h2>
             <p className="text-3xl font-bold">{live.length}</p>
-            <p className="text-sm text-muted">مشروع · {money(totalValue)} قيمة متوقعة</p>
+            <p className="text-sm text-muted">مشروع · {money(totalValue)} قيمة العقود</p>
             <ul className="mt-4 space-y-2 text-sm">
               {Object.entries(PROJECT_STATUS_LABELS).map(([k, l]) =>
                 byStatus[k] ? (

@@ -1,0 +1,388 @@
+import { fromRiyals, type StoredFinance, summarize } from "@buad/domain";
+import { BUILTIN_CATEGORIES } from "@buad/schema/clients";
+import {
+  financeBudgetItems,
+  financeCategories,
+  financeEntries,
+  projectFinance,
+} from "@buad/schema/db";
+import {
+  AGREEMENT_ITEMS,
+  budgetInput,
+  budgetPatch,
+  categoryInput,
+  ctrlPatch,
+  DEFAULT_CTRL,
+  entryInput,
+  entryPatch,
+} from "@buad/schema/finance";
+import { zValidator } from "@hono/zod-validator";
+import { and, asc, count, desc, eq, max } from "drizzle-orm";
+import { Hono } from "hono";
+import { requireAuth, requireRole, type Vars } from "../auth/middleware";
+import type { Db } from "../auth/service";
+import { newId, nowSec } from "./common";
+import { loadVisible } from "./projects";
+
+type Project = NonNullable<Awaited<ReturnType<typeof loadVisible>>>;
+type Env = { Bindings: { JWT_SECRET: string }; Variables: Vars & { project: Project } };
+const manager = requireRole("owner", "admin");
+const today = () => new Date().toISOString().slice(0, 10);
+
+/** v1 registerContractItem descriptions (app.html L9201). */
+const AGREEMENT_DESC: Record<string, string> = {
+  exec: "أتعاب التنفيذ",
+  cf: "ضريبة القيمة المضافة",
+  mkt: "تسويق",
+  cashback: "كاش باك",
+};
+
+export async function loadFinance(db: Db, project: Pick<Project, "id" | "expectedValue">) {
+  const [row] = await db
+    .select()
+    .from(projectFinance)
+    .where(eq(projectFinance.projectId, project.id))
+    .limit(1);
+  const entries = await db
+    .select()
+    .from(financeEntries)
+    .where(eq(financeEntries.projectId, project.id))
+    .orderBy(desc(financeEntries.date), desc(financeEntries.createdAt));
+  const budget = await db
+    .select()
+    .from(financeBudgetItems)
+    .where(eq(financeBudgetItems.projectId, project.id))
+    .orderBy(asc(financeBudgetItems.sort));
+  const categories = await db
+    .select()
+    .from(financeCategories)
+    .where(eq(financeCategories.projectId, project.id))
+    .orderBy(asc(financeCategories.label));
+  // No row yet: v1 defaults, contract value from the project's expected value. Nothing is written until a save.
+  const ctrl = row
+    ? { ...row, opCats: JSON.parse(row.opCats) as string[] }
+    : {
+        ...DEFAULT_CTRL,
+        contractValue: project.expectedValue,
+        version: 0,
+        updatedAt: null as number | null,
+        updatedBy: "",
+      };
+  const stored: StoredFinance = { ctrl, entries, budget };
+  return {
+    ctrl: {
+      contractNo: ctrl.contractNo,
+      contractDate: ctrl.contractDate,
+      contractValue: ctrl.contractValue,
+      cvLocked: ctrl.cvLocked,
+      vatIncluded: ctrl.vatIncluded,
+      vatPct: ctrl.vatPct,
+      execV: ctrl.execV,
+      execType: ctrl.execType,
+      execBase: ctrl.execBase,
+      mktV: ctrl.mktV,
+      mktType: ctrl.mktType,
+      mktBase: ctrl.mktBase,
+      mktInternal: ctrl.mktInternal,
+      cbV: ctrl.cbV,
+      cbType: ctrl.cbType,
+      cbBase: ctrl.cbBase,
+      cfV: ctrl.cfV,
+      cfType: ctrl.cfType,
+      cfBase: ctrl.cfBase,
+      opCats: ctrl.opCats,
+      version: ctrl.version,
+      updatedAt: ctrl.updatedAt,
+    },
+    entries,
+    budget,
+    categories,
+    summary: summarize(stored),
+  };
+}
+
+async function validCat(db: Db, projectId: string, cat: string) {
+  if ((BUILTIN_CATEGORIES as readonly string[]).includes(cat)) return true;
+  if (cat.startsWith("bdg_")) {
+    const [b] = await db
+      .select({ id: financeBudgetItems.id })
+      .from(financeBudgetItems)
+      .where(
+        and(eq(financeBudgetItems.id, cat.slice(4)), eq(financeBudgetItems.projectId, projectId)),
+      );
+    return !!b;
+  }
+  const [c] = await db
+    .select({ id: financeCategories.id })
+    .from(financeCategories)
+    .where(and(eq(financeCategories.id, cat), eq(financeCategories.projectId, projectId)));
+  return !!c;
+}
+
+async function entryOf(db: Db, projectId: string, id: string) {
+  const [e] = await db
+    .select()
+    .from(financeEntries)
+    .where(and(eq(financeEntries.id, id), eq(financeEntries.projectId, projectId)))
+    .limit(1);
+  return e ?? null;
+}
+
+export const financeApp = new Hono<Env>()
+  .use(requireAuth)
+  // Resolve the project once; invisible or foreign projects are 404 for every finance route.
+  .use(async (c, next) => {
+    const project = await loadVisible(c.get("db"), c.get("user"), c.req.param("projectId") ?? "");
+    if (!project) return c.json({ ok: false, error: "not_found" }, 404);
+    c.set("project", project);
+    await next();
+  })
+
+  .get("/", async (c) => {
+    const project = c.get("project");
+    return c.json({ ok: true, ...(await loadFinance(c.get("db"), project)) });
+  })
+
+  .patch("/ctrl", manager, zValidator("json", ctrlPatch), async (c) => {
+    const db = c.get("db");
+    const me = c.get("user");
+    const project = c.get("project");
+    const { version, contractValue, opCats, ...rest } = c.req.valid("json");
+    const t = nowSec();
+    const [row] = await db
+      .select()
+      .from(projectFinance)
+      .where(eq(projectFinance.projectId, project.id))
+      .limit(1);
+    const currentVersion = row?.version ?? 0;
+    if (version !== currentVersion)
+      return c.json({ ok: false, error: "stale", version: currentVersion }, 409);
+    const locked = rest.cvLocked ?? row?.cvLocked ?? false;
+    if (
+      contractValue !== undefined &&
+      locked &&
+      (row?.contractValue ?? project.expectedValue) !== fromRiyals(contractValue)
+    ) {
+      return c.json({ ok: false, error: "cv_locked" }, 409);
+    }
+    const values = {
+      ...rest,
+      ...(contractValue !== undefined ? { contractValue: fromRiyals(contractValue) } : {}),
+      ...(opCats !== undefined ? { opCats: JSON.stringify(opCats) } : {}),
+      updatedBy: me.id,
+      updatedAt: t,
+    };
+    if (!row) {
+      const inserted = await db
+        .insert(projectFinance)
+        .values({
+          ...DEFAULT_CTRL,
+          opCats: "[]",
+          contractValue: project.expectedValue,
+          ...values,
+          projectId: project.id,
+          orgId: me.orgId,
+          version: 1,
+          createdBy: me.id,
+          createdAt: t,
+        })
+        .onConflictDoNothing()
+        .returning({ version: projectFinance.version });
+      if (!inserted.length) return c.json({ ok: false, error: "stale", version: 1 }, 409);
+    } else {
+      // Only succeeds if nobody saved in between (compare-and-swap on version).
+      const updated = await db
+        .update(projectFinance)
+        .set({ ...values, version: currentVersion + 1 })
+        .where(
+          and(eq(projectFinance.projectId, project.id), eq(projectFinance.version, currentVersion)),
+        )
+        .returning({ version: projectFinance.version });
+      if (!updated.length)
+        return c.json({ ok: false, error: "stale", version: currentVersion + 1 }, 409);
+    }
+    return c.json({ ok: true, ...(await loadFinance(db, project)) });
+  })
+
+  .post("/entries", manager, zValidator("json", entryInput), async (c) => {
+    const db = c.get("db");
+    const me = c.get("user");
+    const project = c.get("project");
+    const v = c.req.valid("json");
+    if (!(await validCat(db, project.id, v.cat)))
+      return c.json({ ok: false, error: "invalid_category" }, 400);
+    const t = nowSec();
+    const id = newId("ent");
+    await db.insert(financeEntries).values({
+      ...v,
+      id,
+      orgId: me.orgId,
+      projectId: project.id,
+      date: v.date || today(),
+      amount: fromRiyals(v.amount),
+      source: "manual",
+      createdBy: me.id,
+      createdAt: t,
+      updatedBy: me.id,
+      updatedAt: t,
+    });
+    return c.json({ ok: true, id, ...(await loadFinance(db, project)) }, 201);
+  })
+
+  .patch("/entries/:entryId", manager, zValidator("json", entryPatch), async (c) => {
+    const db = c.get("db");
+    const me = c.get("user");
+    const project = c.get("project");
+    const e = await entryOf(db, project.id, c.req.param("entryId"));
+    if (!e) return c.json({ ok: false, error: "not_found" }, 404);
+    const { amount, ...v } = c.req.valid("json");
+    if (v.cat !== undefined && !(await validCat(db, project.id, v.cat)))
+      return c.json({ ok: false, error: "invalid_category" }, 400);
+    await db
+      .update(financeEntries)
+      .set({
+        ...v,
+        ...(amount !== undefined ? { amount: fromRiyals(amount) } : {}),
+        updatedBy: me.id,
+        updatedAt: nowSec(),
+      })
+      .where(eq(financeEntries.id, e.id));
+    return c.json({ ok: true, ...(await loadFinance(db, project)) });
+  })
+
+  .delete("/entries/:entryId", manager, async (c) => {
+    const db = c.get("db");
+    const project = c.get("project");
+    const e = await entryOf(db, project.id, c.req.param("entryId"));
+    if (!e) return c.json({ ok: false, error: "not_found" }, 404);
+    await db.delete(financeEntries).where(eq(financeEntries.id, e.id));
+    return c.json({ ok: true, ...(await loadFinance(db, project)) });
+  })
+
+  // «من الاتفاقية»: one click turns a contract item into an entry with the computed amount (once only).
+  .post("/agreement/:item", manager, async (c) => {
+    const db = c.get("db");
+    const me = c.get("user");
+    const project = c.get("project");
+    const item = c.req.param("item");
+    const fin = await loadFinance(db, project);
+    let cat: string;
+    let description: string;
+    let amount: number;
+    if ((AGREEMENT_ITEMS as readonly string[]).includes(item)) {
+      cat = item;
+      description = AGREEMENT_DESC[item] ?? item;
+      const s = fin.summary;
+      amount =
+        item === "exec" ? s.execAmt : item === "cf" ? s.cfAmt : item === "mkt" ? s.mkt : s.cb;
+    } else if (item.startsWith("bdg_")) {
+      const b = fin.budget.find((x) => x.id === item.slice(4));
+      if (!b) return c.json({ ok: false, error: "not_found" }, 404);
+      cat = item;
+      description = b.name;
+      amount = b.amount / 100;
+    } else {
+      return c.json({ ok: false, error: "not_found" }, 404);
+    }
+    const halalas = fromRiyals(amount);
+    if (halalas <= 0) return c.json({ ok: false, error: "zero_amount" }, 400);
+    if (fin.entries.some((e) => e.source === "agreement" && e.cat === cat))
+      return c.json({ ok: false, error: "already_registered" }, 409);
+    const t = nowSec();
+    await db.insert(financeEntries).values({
+      id: newId("ent"),
+      orgId: me.orgId,
+      projectId: project.id,
+      date: today(),
+      description,
+      cat,
+      type: cat === "exec" ? "income" : "expense",
+      amount: halalas,
+      status: "paid",
+      source: "agreement",
+      createdBy: me.id,
+      createdAt: t,
+      updatedBy: me.id,
+      updatedAt: t,
+    });
+    return c.json({ ok: true, ...(await loadFinance(db, project)) }, 201);
+  })
+
+  .post("/budget", manager, zValidator("json", budgetInput), async (c) => {
+    const db = c.get("db");
+    const project = c.get("project");
+    const v = c.req.valid("json");
+    const [m] = await db
+      .select({ n: max(financeBudgetItems.sort) })
+      .from(financeBudgetItems)
+      .where(eq(financeBudgetItems.projectId, project.id));
+    await db.insert(financeBudgetItems).values({
+      id: newId("bud"),
+      projectId: project.id,
+      name: v.name,
+      amount: fromRiyals(v.amount),
+      note: v.note,
+      sort: (m?.n ?? 0) + 1,
+    });
+    return c.json({ ok: true, ...(await loadFinance(db, project)) }, 201);
+  })
+
+  .patch("/budget/:itemId", manager, zValidator("json", budgetPatch), async (c) => {
+    const db = c.get("db");
+    const project = c.get("project");
+    const { amount, ...v } = c.req.valid("json");
+    const res = await db
+      .update(financeBudgetItems)
+      .set({ ...v, ...(amount !== undefined ? { amount: fromRiyals(amount) } : {}) })
+      .where(
+        and(
+          eq(financeBudgetItems.id, c.req.param("itemId")),
+          eq(financeBudgetItems.projectId, project.id),
+        ),
+      )
+      .returning({ id: financeBudgetItems.id });
+    if (!res.length) return c.json({ ok: false, error: "not_found" }, 404);
+    return c.json({ ok: true, ...(await loadFinance(db, project)) });
+  })
+
+  .delete("/budget/:itemId", manager, async (c) => {
+    const db = c.get("db");
+    const project = c.get("project");
+    const res = await db
+      .delete(financeBudgetItems)
+      .where(
+        and(
+          eq(financeBudgetItems.id, c.req.param("itemId")),
+          eq(financeBudgetItems.projectId, project.id),
+        ),
+      )
+      .returning({ id: financeBudgetItems.id });
+    if (!res.length) return c.json({ ok: false, error: "not_found" }, 404);
+    return c.json({ ok: true, ...(await loadFinance(db, project)) });
+  })
+
+  .post("/categories", manager, zValidator("json", categoryInput), async (c) => {
+    const db = c.get("db");
+    const project = c.get("project");
+    const v = c.req.valid("json");
+    const id = `cc_${crypto.randomUUID().slice(0, 8)}`;
+    await db.insert(financeCategories).values({ id, projectId: project.id, ...v });
+    return c.json({ ok: true, id, ...(await loadFinance(db, project)) }, 201);
+  })
+
+  .delete("/categories/:catId", manager, async (c) => {
+    const db = c.get("db");
+    const project = c.get("project");
+    const id = c.req.param("catId");
+    const [used] = await db
+      .select({ n: count() })
+      .from(financeEntries)
+      .where(and(eq(financeEntries.projectId, project.id), eq(financeEntries.cat, id)));
+    if ((used?.n ?? 0) > 0) return c.json({ ok: false, error: "in_use", count: used?.n }, 409);
+    const res = await db
+      .delete(financeCategories)
+      .where(and(eq(financeCategories.id, id), eq(financeCategories.projectId, project.id)))
+      .returning({ id: financeCategories.id });
+    if (!res.length) return c.json({ ok: false, error: "not_found" }, 404);
+    return c.json({ ok: true, ...(await loadFinance(db, project)) });
+  });

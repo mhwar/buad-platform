@@ -17,6 +17,7 @@ import { type Db, getUser, login, setPassword } from "./auth/service";
 import { SESSION_COOKIE, SESSION_TTL, signSession, signSetup, verifySetup } from "./auth/session";
 import { claimOwner, ownerExists, setupEnabled, tokenMatches } from "./auth/setup";
 import { clientsApp } from "./modules/clients";
+import { financeApp } from "./modules/finance";
 import { importApp } from "./modules/importer";
 import { projectsApp } from "./modules/projects";
 
@@ -147,6 +148,7 @@ export function createApp(deps: AppDeps = {}) {
       })
 
       .route("/api/clients", clientsApp)
+      .route("/api/projects/:projectId/finance", financeApp)
       .route("/api/projects", projectsApp)
       .route("/api/import", importApp)
 

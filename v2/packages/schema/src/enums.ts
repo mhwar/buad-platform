@@ -8,3 +8,21 @@ export const CLIENT_TYPES = [
 ] as const;
 export const PROJECT_TYPES = ["training", "consulting", "event", "other"] as const;
 export const PROJECT_STATUSES = ["draft", "active", "completed", "paused", "cancelled"] as const;
+export const FEE_TYPES = ["pct", "fixed"] as const;
+export const FEE_BASES = ["net", "gross"] as const;
+export const ENTRY_TYPES = ["income", "expense"] as const;
+export const ENTRY_STATUSES = ["", "paid", "pending", "cancelled"] as const;
+export const CATEGORY_TYPES = ["expense", "income", "both"] as const;
+/** v1 built-in categories (app.html catLabel L3776). */
+export const BUILTIN_CATEGORIES = [
+  "salary",
+  "logistics",
+  "materials",
+  "other",
+  "exec",
+  "mkt",
+  "cashback",
+  "cf",
+  "vat",
+] as const;
+export const DEFAULT_OP_CATS = ["salary", "logistics", "materials", "other"] as const;

@@ -1,6 +1,14 @@
 import { formatSar, type Halalas } from "@buad/domain";
 
 export const money = (h: number) => formatSar(h as Halalas);
+/** Riyal amounts from calculations (finCalc works in riyals). */
+const sarFmt = new Intl.NumberFormat("ar-SA-u-nu-latn", {
+  style: "currency",
+  currency: "SAR",
+  maximumFractionDigits: 2,
+});
+export const sar = (riyals: number) => sarFmt.format(Number.isFinite(riyals) ? riyals : 0);
+export const pct = (v: number) => `${(Number.isFinite(v) ? v : 0).toFixed(1)}%`;
 
 const dateFmt = new Intl.DateTimeFormat("ar-SA-u-ca-gregory-nu-latn", {
   day: "numeric",

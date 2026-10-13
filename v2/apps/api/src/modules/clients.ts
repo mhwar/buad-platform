@@ -7,7 +7,7 @@ import { Hono } from "hono";
 import type { z } from "zod";
 import { requireAuth, requireRole, type Vars } from "../auth/middleware";
 import type { Db } from "../auth/service";
-import { likeTerm, newId, nextCounter, nowSec } from "./common";
+import { contractTotalSql, likeTerm, newId, nextCounter, nowSec } from "./common";
 import { visibleProjects } from "./projects";
 
 type Env = { Bindings: { JWT_SECRET: string }; Variables: Vars };
@@ -115,7 +115,7 @@ export const clientsApp = new Hono<Env>()
     // Per-client project count and expected value, over the projects this user may see.
     const vis = visibleProjects(me);
     const projectCount = sql<number>`(SELECT count(*) FROM projects p WHERE p.client_id = "clients"."id" AND p.archived_at IS NULL AND ${vis.sqlFor("p")})`;
-    const projectValue = sql<number>`(SELECT coalesce(sum(p.expected_value_halalas), 0) FROM projects p WHERE p.client_id = "clients"."id" AND p.archived_at IS NULL AND ${vis.sqlFor("p")})`;
+    const projectValue = sql<number>`(SELECT coalesce(sum(${contractTotalSql("p")}), 0) FROM projects p WHERE p.client_id = "clients"."id" AND p.archived_at IS NULL AND ${vis.sqlFor("p")})`;
 
     const order =
       q.sort === "name"
@@ -234,6 +234,7 @@ export const clientsApp = new Hono<Env>()
         startDate: projects.startDate,
         endDate: projects.endDate,
         expectedValue: projects.expectedValue,
+        contractTotal: sql<number>`${contractTotalSql("projects")}`,
         archivedAt: projects.archivedAt,
       })
       .from(projects)

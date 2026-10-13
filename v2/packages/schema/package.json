@@ -6,7 +6,8 @@
   "exports": {
     ".": "./src/index.ts",
     "./db": "./src/db.ts",
-    "./clients": "./src/clients.ts"
+    "./clients": "./src/clients.ts",
+    "./finance": "./src/finance.ts"
   },
   "scripts": {
     "typecheck": "tsc -p .",

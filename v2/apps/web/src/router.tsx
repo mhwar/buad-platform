@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import {
   createRootRoute,
   createRoute,
@@ -6,7 +6,6 @@ import {
   Link,
   Outlet,
   redirect,
-  useNavigate,
 } from "@tanstack/react-router";
 import { Briefcase, FileUp, House as Home_, Users } from "lucide-react";
 import { z } from "zod";
@@ -33,14 +32,12 @@ const NAV = [
 
 function Shell() {
   const me = useQuery(meQuery);
-  const qc = useQueryClient();
-  const navigate = useNavigate();
   const health = useServerVersion();
+  // A full page load after logout: nothing of the previous user's data stays in memory,
+  // and the next sign-in starts from a clean state.
   const logout = async () => {
-    await api.api.auth.logout.$post();
-    qc.clear();
-    qc.setQueryData(meQuery.queryKey, null);
-    await navigate({ to: "/login" });
+    await api.api.auth.logout.$post().catch(() => undefined);
+    window.location.assign("/login");
   };
   // Signed out: the page (login) owns the whole screen.
   if (!me.data) return <Outlet />;
@@ -213,6 +210,7 @@ const projectsRoute = createRoute({
 const projectRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/projects/$id",
+  validateSearch: z.object({ tab: z.enum(["overview", "finance"]).optional() }),
   beforeLoad: authed,
   component: ProjectPage,
 });

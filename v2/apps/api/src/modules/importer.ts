@@ -1,7 +1,24 @@
 import { formatCode } from "@buad/domain";
-import { type Issue, parseV1Export, planBusiness } from "@buad/migrate";
-import { clientContacts, clients, legacyMap, projects, users } from "@buad/schema/db";
-import { and, eq, inArray, ne, sql } from "drizzle-orm";
+import {
+  financeParity,
+  type Issue,
+  type Parity,
+  parseV1Export,
+  planBusiness,
+  planFinance,
+} from "@buad/migrate";
+import {
+  clientContacts,
+  clients,
+  financeBudgetItems,
+  financeCategories,
+  financeEntries,
+  legacyMap,
+  projectFinance,
+  projects,
+  users,
+} from "@buad/schema/db";
+import { and, eq, inArray, ne, notLike, or, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { requireAuth, requireRole, type Vars } from "../auth/middleware";
 import type { Db } from "../auth/service";
@@ -234,6 +251,97 @@ export const importApp = new Hono<Env>()
           .onConflictDoNothing(),
       );
     }
+    // ── Finance of each imported project (settings, entries, budget, custom categories).
+    // Replaced from v1 on every import, unless someone already edited it in v2.
+    const finance: (Parity & { name: string })[] = [];
+    let financeSkipped = 0;
+    for (const p of pr) {
+      const raw = ws.fin[p.id];
+      if (!raw || typeof raw !== "object") continue;
+      const editedInV2 =
+        (
+          await db
+            .select({ id: projectFinance.projectId })
+            .from(projectFinance)
+            .where(
+              and(
+                eq(projectFinance.projectId, p.id),
+                notLike(projectFinance.updatedBy, "v1-import%"),
+              ),
+            )
+            .limit(1)
+        ).length > 0 ||
+        (
+          await db
+            .select({ id: financeEntries.id })
+            .from(financeEntries)
+            .where(
+              and(
+                eq(financeEntries.projectId, p.id),
+                or(
+                  notLike(financeEntries.updatedBy, "v1-import%"),
+                  notLike(financeEntries.createdBy, "v1-import%"),
+                ),
+              ),
+            )
+            .limit(1)
+        ).length > 0;
+      if (editedInV2) {
+        financeSkipped++;
+        issues.push({
+          kind: "project",
+          id: p.id,
+          name: p.name,
+          severity: "fixed",
+          reason: "المالية عُدّلت في الإصدار الثاني بعد الاستيراد، فلم تُستبدل",
+        });
+        continue;
+      }
+      const rows = planFinance(p.id, raw);
+      finance.push({ ...financeParity(p.id, raw, rows), name: p.name });
+      const ctrl = {
+        ...rows.ctrl,
+        opCats: JSON.stringify(rows.ctrl.opCats),
+        updatedBy: by,
+        updatedAt: t,
+      };
+      q.push(
+        db.delete(financeEntries).where(eq(financeEntries.projectId, p.id)),
+        db.delete(financeBudgetItems).where(eq(financeBudgetItems.projectId, p.id)),
+        db.delete(financeCategories).where(eq(financeCategories.projectId, p.id)),
+        db
+          .insert(projectFinance)
+          .values({
+            projectId: p.id,
+            orgId: me.orgId,
+            ...ctrl,
+            version: 1,
+            createdBy: by,
+            createdAt: t,
+          })
+          .onConflictDoUpdate({
+            target: projectFinance.projectId,
+            set: { ...ctrl, version: sql`${projectFinance.version} + 1` },
+          }),
+      );
+      for (const k of rows.categories)
+        q.push(db.insert(financeCategories).values({ ...k, projectId: p.id }));
+      for (const b of rows.budget)
+        q.push(db.insert(financeBudgetItems).values({ ...b, projectId: p.id }));
+      for (const e of rows.entries)
+        q.push(
+          db.insert(financeEntries).values({
+            ...e,
+            orgId: me.orgId,
+            projectId: p.id,
+            createdBy: by,
+            createdAt: t,
+            updatedBy: by,
+            updatedAt: t,
+          }),
+        );
+    }
+
     await runAll(db, q as never);
 
     return c.json({
@@ -243,6 +351,7 @@ export const importApp = new Hono<Env>()
         created: pr.filter((p) => !existingProjects.has(p.id)).length,
         updated: pr.filter((p) => existingProjects.has(p.id)).length,
       },
+      finance: { imported: finance.length, skipped: financeSkipped, parity: finance },
       issues,
     });
   });

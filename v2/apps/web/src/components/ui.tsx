@@ -108,7 +108,7 @@ export function SearchBox({
   placeholder: string;
 }) {
   return (
-    <div className="relative flex-1">
+    <div className="relative min-w-[14rem] flex-1">
       <Search className="pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2 text-muted" />
       <input
         type="search"

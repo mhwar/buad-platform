@@ -15,6 +15,13 @@
       "when": 1791925817739,
       "tag": "0001_crazy_black_bird",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1791931544659,
+      "tag": "0002_neat_blockbuster",
+      "breakpoints": true
     }
   ]
 }

@@ -7,6 +7,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { api } from "./api";
 import { AuthLayout, ErrorNote } from "./brand";
+import { meQuery } from "./session";
 import { button, field } from "./ui";
 
 const form = ownerSetupInput
@@ -34,7 +35,8 @@ export function SetupPage() {
     setError(null);
     const res = await api.api.setup.owner.$post({ json });
     if (!res.ok) return setError(messages[res.status] ?? "تعذّر الإعداد، حاولوا مرة أخرى");
-    await qc.invalidateQueries({ queryKey: ["me"] });
+    // Always ask the server who is signed in now (never trust a cached "signed out").
+    await qc.fetchQuery({ ...meQuery, staleTime: 0 });
     await qc.invalidateQueries({ queryKey: ["setup-status"] });
     await navigate({ to: "/" });
   });

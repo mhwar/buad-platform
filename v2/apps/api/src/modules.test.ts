@@ -9,7 +9,7 @@ let ctx: ReturnType<typeof testDb>;
 let app: ReturnType<typeof createApp>;
 const cookies: Record<string, string> = {};
 
-type J = Record<string, any>; // biome-ignore lint/suspicious/noExplicitAny: test helper
+type J = Record<string, any>;
 const req = async (who: string, method: string, path: string, body?: unknown) => {
   const res = await app.request(
     path,
@@ -182,7 +182,9 @@ describe("clients", () => {
     const all = await req("m1", "GET", "/api/clients");
     expect(all.body.counts).toEqual({ company: 1, association: 1 });
     const afq = all.body.items.find((i: J) => i.id === a.body.id);
-    expect(afq).toMatchObject({ projectCount: 2, projectValue: 160050 });
+    // v1 lists show the contract total incl. VAT: with no finance yet, expected value + 15%.
+    // 1500.50 → 150050 + 22508 ; 100 → 10000 + 1500
+    expect(afq).toMatchObject({ projectCount: 2, projectValue: 150050 + 22508 + 10000 + 1500 });
     expect((await req("m1", "GET", "/api/clients?q=جدة")).body.items.map((i: J) => i.name)).toEqual(
       ["شركة الأفق"],
     );

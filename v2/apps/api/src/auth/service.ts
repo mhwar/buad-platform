@@ -3,7 +3,6 @@ import { eq } from "drizzle-orm";
 import type { BaseSQLiteDatabase } from "drizzle-orm/sqlite-core";
 import { hashPassword, legacyDjb2, verifyPassword } from "./password";
 
-// biome-ignore lint/suspicious/noExplicitAny: works for both D1 and better-sqlite3 drivers
 export type Db = BaseSQLiteDatabase<"sync" | "async", any, any>;
 
 export type AuthUser = {

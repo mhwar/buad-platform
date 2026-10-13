@@ -1,12 +1,12 @@
 import { formatCode, fromRiyals } from "@buad/domain";
 import { listQuery, projectInput, projectPatch } from "@buad/schema/clients";
-import { clients, projects } from "@buad/schema/db";
+import { clients, projectFinance, projects } from "@buad/schema/db";
 import { zValidator } from "@hono/zod-validator";
 import { and, asc, count, desc, eq, isNotNull, isNull, or, type SQL, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { requireAuth, requireRole, type Vars } from "../auth/middleware";
 import type { AuthUser, Db } from "../auth/service";
-import { isManager, likeTerm, newId, nextCounter, nowSec } from "./common";
+import { contractTotalSql, isManager, likeTerm, newId, nextCounter, nowSec } from "./common";
 
 type Env = { Bindings: { JWT_SECRET: string }; Variables: Vars };
 
@@ -30,7 +30,7 @@ export function visibleProjects(me: Pick<AuthUser, "id" | "role">): {
   };
 }
 
-async function loadVisible(db: Db, me: AuthUser, id: string) {
+export async function loadVisible(db: Db, me: AuthUser, id: string) {
   const [row] = await db
     .select()
     .from(projects)
@@ -71,11 +71,12 @@ export const projectsApp = new Hono<Env>()
       q.type ? eq(projects.type, q.type as never) : undefined,
       search,
     );
+    const contractTotal = sql<number>`${contractTotalSql("projects")}`;
     const order =
       q.sort === "name"
         ? [asc(projects.name)]
         : q.sort === "value"
-          ? [desc(projects.expectedValue), asc(projects.name)]
+          ? [desc(contractTotal), asc(projects.name)]
           : [desc(projects.createdAt), desc(projects.number)];
     const items = await db
       .select({
@@ -89,6 +90,8 @@ export const projectsApp = new Hono<Env>()
         startDate: projects.startDate,
         endDate: projects.endDate,
         expectedValue: projects.expectedValue,
+        /** Contract total incl. VAT (halalas): finance settings if present, else expected value + 15%. */
+        contractTotal,
         archivedAt: projects.archivedAt,
         clientId: projects.clientId,
         clientName: clients.name,
@@ -163,7 +166,12 @@ export const projectsApp = new Hono<Env>()
       .from(clients)
       .where(eq(clients.id, project.clientId))
       .limit(1);
-    return c.json({ ok: true, project, client: client ?? null });
+    const [fin] = await db
+      .select({ v: projectFinance.version })
+      .from(projectFinance)
+      .where(eq(projectFinance.projectId, project.id))
+      .limit(1);
+    return c.json({ ok: true, project, client: client ?? null, financeExists: !!fin });
   })
 
   .patch("/:id", zValidator("json", projectPatch), async (c) => {

@@ -20,7 +20,6 @@ const backup = {
 let ctx: ReturnType<typeof testDb>;
 let app: ReturnType<typeof createApp>;
 const cookie: Record<string, string> = {};
-// biome-ignore lint/suspicious/noExplicitAny: test helper
 type J = any;
 const call = async (who: string, method: string, path: string, body?: unknown) => {
   const r = await app.request(
@@ -137,5 +136,113 @@ describe("import v1 clients & projects", () => {
     expect(r.body.clients.created).toBe(0);
     expect(r.body.issues.filter((i: J) => /جهة أخرى/.test(i.reason))).toHaveLength(5);
     expect((await call("own", "GET", "/api/clients")).body.items).toEqual([]);
+  });
+});
+
+describe("import v1 finance", () => {
+  const fin1 = {
+    ctrl: {
+      contract_value: 230000,
+      vat_included: true,
+      vat_pct: 15,
+      exec_v: 10,
+      exec_type: "pct",
+      exec_base: "gross",
+      mkt_v: 5,
+      mkt_internal: true,
+      contract_no: "CON-2026-007",
+      custom_cats: [{ id: "cc_trip", label: "سفر", type: "expense" }],
+      op_cats: ["salary", "cc_trip"],
+    },
+    budget: [{ name: "قاعة", amount: 12000, note: "" }],
+    entries: [
+      {
+        id: "a1",
+        date: "2026-02-01",
+        desc: "أتعاب التنفيذ",
+        cat: "exec",
+        type: "income",
+        amount: 23000,
+        note: "من الاتفاقية",
+        status: "paid",
+      },
+      {
+        id: "a2",
+        date: "2026-02-03",
+        desc: "رواتب",
+        cat: "salary",
+        type: "expense",
+        amount: 40000.5,
+        profit_margin: 13.043,
+        profit_margin_type: "pct",
+      },
+      {
+        id: "a3",
+        date: "2026-02-04",
+        desc: "تذاكر",
+        cat: "cc_trip",
+        type: "expense",
+        amount: 3200,
+      },
+      {
+        id: "a4",
+        date: "2026-02-05",
+        desc: "قاعة",
+        cat: "bdg_0",
+        type: "expense",
+        amount: 12000,
+        note: "من الاتفاقية",
+      },
+    ],
+  };
+  const withFin = { ...backup, buad2_fin_p1: JSON.stringify(fin1) };
+
+  it("brings settings, entries, budget and categories, and proves the numbers equal v1", async () => {
+    const r = await call("own", "POST", "/api/import/v1", withFin);
+    expect(r.body.finance.imported).toBe(1); // only p1 has finance in this file
+    expect(r.body.finance.parity.every((p: J) => p.status === "exact")).toBe(true);
+    const f = (await call("own", "GET", "/api/projects/p1/finance")).body;
+    expect(f.ctrl).toMatchObject({
+      contractNo: "CON-2026-007",
+      contractValue: 23000000,
+      vatIncluded: true,
+      mktInternal: true,
+      opCats: ["salary", "cc_trip"],
+    });
+    expect(f.entries).toHaveLength(4);
+    expect(f.entries.find((e: J) => e.description === "قاعة")).toMatchObject({
+      source: "agreement",
+      cat: "bdg_bud_p1_0",
+    });
+    expect(f.categories).toEqual([expect.objectContaining({ id: "cc_trip", label: "سفر" })]);
+    const { finCalc } = await import("@buad/domain");
+    expect(f.summary).toEqual(JSON.parse(JSON.stringify(finCalc(fin1 as never))));
+  });
+
+  it("re-import replaces imported finance, but never overwrites finance edited in v2", async () => {
+    await call("own", "POST", "/api/import/v1", withFin);
+    const changed = { ...fin1, entries: fin1.entries.slice(0, 2) };
+    const again = await call("own", "POST", "/api/import/v1", {
+      ...backup,
+      buad2_fin_p1: JSON.stringify(changed),
+    });
+    expect(again.body.finance.parity.find((p: J) => p.projectId === "p1").status).toBe("exact");
+    expect((await call("own", "GET", "/api/projects/p1/finance")).body.entries).toHaveLength(2);
+
+    await call("own", "POST", "/api/projects/p1/finance/entries", {
+      description: "قيد من v2",
+      type: "expense",
+      amount: 10,
+    });
+    const third = await call("own", "POST", "/api/import/v1", withFin);
+    expect(third.body.finance.skipped).toBe(1);
+    expect(
+      third.body.issues.some((i: J) => i.id === "p1" && /عُدّلت في الإصدار الثاني/.test(i.reason)),
+    ).toBe(true);
+    const entries = (await call("own", "GET", "/api/projects/p1/finance")).body.entries.map(
+      (e: J) => e.description,
+    );
+    expect(entries).toContain("قيد من v2");
+    expect(entries).toHaveLength(3);
   });
 });
