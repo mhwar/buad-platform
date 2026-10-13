@@ -1,3 +1,4 @@
+import type { Business } from "./business";
 import { PLATFORM_ORG_ID, type Plan } from "./plan";
 
 const q = (s: string) => `'${s.replaceAll("'", "''")}'`;
@@ -31,10 +32,17 @@ export function toSql(plan: Plan): string[] {
       `INSERT OR IGNORE INTO legacy_map (kind, legacy_id, new_id) VALUES (${q(u.legacyKind)}, ${q(u.id)}, ${q(u.id)});`,
     );
   }
-  // ── Clients & projects (all v1 workspace data belongs to the platform org).
-  // Data fields refresh on re-run; codes/numbers are fixed at first import and never rewritten.
-  const org = q(PLATFORM_ORG_ID);
-  const b = plan.business;
+  out.push(...businessSql(plan.business, PLATFORM_ORG_ID));
+  return out;
+}
+
+/**
+ * Clients & projects statements for one org.
+ * Data fields refresh on re-run; codes/numbers are fixed at first import and never rewritten.
+ */
+export function businessSql(b: Business, orgId: string): string[] {
+  const out: string[] = [];
+  const org = q(orgId);
   for (const c of b.clients) {
     out.push(
       `INSERT INTO clients (id, org_id, code, name, name_norm, type, email, phone, city, reg_no, tax_no, address, website, notes, logo, created_by, created_at, updated_by, updated_at) VALUES (` +

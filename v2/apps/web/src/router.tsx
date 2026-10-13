@@ -8,13 +8,14 @@ import {
   redirect,
   useNavigate,
 } from "@tanstack/react-router";
-import { Briefcase, House as Home_, Users } from "lucide-react";
+import { Briefcase, FileUp, House as Home_, Users } from "lucide-react";
 import { z } from "zod";
 import { AccountPage } from "./account";
 import { api } from "./api";
 import { Logo } from "./brand";
 import { ClientPage } from "./features/clients/ClientPage";
 import { ClientsPage } from "./features/clients/ClientsPage";
+import { ImportPage } from "./features/import/ImportPage";
 import { ProjectPage } from "./features/projects/ProjectPage";
 import { ProjectsPage } from "./features/projects/ProjectsPage";
 import { Home } from "./home";
@@ -91,6 +92,12 @@ function Shell() {
               {n.label}
             </Link>
           ))}
+          {me.data.role === "owner" && (
+            <Link to="/import" className={navLink} activeProps={{ className: navActive }}>
+              <FileUp className="size-4" />
+              استيراد
+            </Link>
+          )}
         </nav>
       </header>
       <div className="mx-auto flex w-full max-w-7xl flex-1 gap-8 px-4 sm:px-6">
@@ -108,6 +115,15 @@ function Shell() {
                 {n.label}
               </Link>
             ))}
+            {me.data.role === "owner" && (
+              <>
+                <hr className="my-3" />
+                <Link to="/import" className={navLink} activeProps={{ className: navActive }}>
+                  <FileUp className="size-4" />
+                  استيراد من المنصة الحالية
+                </Link>
+              </>
+            )}
           </nav>
         </aside>
         <main className="min-w-0 flex-1 py-6">
@@ -203,6 +219,17 @@ const projectRoute = createRoute({
   component: ProjectPage,
 });
 
+const importRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/import",
+  beforeLoad: async () => {
+    const me = await queryClient.ensureQueryData(meQuery);
+    if (!me) throw redirect({ to: "/login" });
+    if (me.role !== "owner") throw redirect({ to: "/" });
+  },
+  component: ImportPage,
+});
+
 const accountRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/account",
@@ -223,6 +250,7 @@ export const router = createRouter({
     clientRoute,
     projectsRoute,
     projectRoute,
+    importRoute,
   ]),
 });
 

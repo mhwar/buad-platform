@@ -63,6 +63,9 @@ importers:
       '@buad/domain':
         specifier: workspace:*
         version: link:../../packages/domain
+      '@buad/migrate':
+        specifier: workspace:*
+        version: link:../../tools/migrate
       '@buad/schema':
         specifier: workspace:*
         version: link:../../packages/schema
