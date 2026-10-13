@@ -3,7 +3,7 @@ import { CATEGORY_LABELS } from "@buad/schema/finance";
 import { useQueryClient } from "@tanstack/react-query";
 import { Lock, LockOpen, Plus, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { Badge, Button, Card, Field, Input, Notice, Select } from "../../components/ui";
+import { Badge, Button, Field, Input, Notice, Select } from "../../components/ui";
 import { ApiError, sar } from "../../lib/format";
 import { type Ctrl, type Finance, financeApi, financeKey } from "./api";
 import { FEE_ROWS } from "./labels";
@@ -113,9 +113,9 @@ export function ControlCentre({
   };
 
   return (
-    <Card>
+    <section aria-label="إعدادات العقد">
       <div className="mb-4 flex items-center justify-between">
-        <h2 className="font-semibold">مركز التحكم</h2>
+        <h3 className="font-semibold">العقد والضريبة</h3>
         <span className="text-xs text-muted" aria-live="polite">
           {ro
             ? "للاطلاع فقط"
@@ -336,7 +336,7 @@ export function ControlCentre({
             ))}
         </p>
       )}
-    </Card>
+    </section>
   );
 }
 
