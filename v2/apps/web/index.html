@@ -7,6 +7,15 @@
     <meta name="description" content="منصة بُعد لإدارة المشاريع والجمعيات والحوكمة" />
     <link rel="icon" href="/logo-icon.svg" type="image/svg+xml" />
     <title>منصة بُعد</title>
+    <script>
+      // Apply the saved theme before the first paint (no flash of the wrong colours).
+      (function () {
+        var t = "system";
+        try { t = localStorage.getItem("buad-theme") || "system"; } catch (e) {}
+        var dark = t === "dark" || (t === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+        document.documentElement.dataset.theme = dark ? "dark" : "light";
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

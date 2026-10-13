@@ -123,3 +123,49 @@ describe("FinanceStrip", () => {
     expect(within(summary).getByText("المتبقي للتنفيذ")).toBeInTheDocument();
   });
 });
+
+describe("FinanceStrip for projects brought from the current platform", () => {
+  it("says the real finance has not been imported yet, instead of showing defaults as if they were real", async () => {
+    const f = fixture();
+    stubApi({
+      "GET /api/projects/p1/finance": () => ({
+        ...f,
+        entries: [],
+        ctrl: { ...f.ctrl, version: 0 },
+      }),
+    });
+    await renderWithApp(
+      <FinanceStrip
+        projectId="p1"
+        canEdit
+        isOwner
+        fromV1
+        onSettings={() => {}}
+        onRegister={() => {}}
+      />,
+    );
+    expect(await screen.findByText(/لم تُنقل من المنصة الحالية بعد/)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /استيراد المالية/ })).toHaveAttribute(
+      "href",
+      "/import",
+    );
+  });
+
+  it("registers all missing agreement items in one click", async () => {
+    const f = fixture();
+    const calls = stubApi({
+      "GET /api/projects/p1/finance": () => f,
+      "POST /api/projects/p1/finance/agreement-all": () => ({
+        ...f,
+        summary: { ...f.summary, missingItems: [] },
+        registered: ["exec"],
+      }),
+    });
+    await renderWithApp(
+      <FinanceStrip projectId="p1" canEdit onSettings={() => {}} onRegister={() => {}} />,
+    );
+    await userEvent.click(await screen.findByRole("button", { name: "تسجيلها كلها" }));
+    expect(await screen.findByText(/سُجّل 1 بند من الاتفاقية/)).toBeInTheDocument();
+    expect(calls.filter((c) => c.method === "POST")).toHaveLength(1);
+  });
+});

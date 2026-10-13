@@ -287,3 +287,45 @@ describe("finance: entries, budget, categories, agreement", () => {
     expect(r.body.summary.opExpenses).toBe(700);
   });
 });
+
+describe("finance: register all missing agreement items", () => {
+  it("registers every non-zero item once, skips what exists, and clears the missing list", async () => {
+    await call("adm", "PATCH", `${F()}/ctrl`, { version: 0, mktV: 5, cbV: 2, cfV: 0 });
+    await call("adm", "POST", `${F()}/entries`, {
+      description: "تسويق يدوي",
+      type: "expense",
+      cat: "mkt",
+      amount: 10,
+    });
+    const r = await call("adm", "POST", `${F()}/agreement-all`);
+    expect(r.status).toBe(200);
+    expect(r.body.registered).toEqual(["exec", "cashback"]); // mkt already had an entry; cf is zero
+    expect(r.body.summary.missingItems).toEqual([]);
+    expect((await call("adm", "POST", `${F()}/agreement-all`)).body.registered).toEqual([]);
+    expect((await call("m1", "POST", `${F()}/agreement-all`)).status).toBe(403);
+  });
+});
+
+describe("client logos", () => {
+  it("are served as cacheable images to the same org only, and lists carry a URL not the data", async () => {
+    const png = "data:image/png;base64,iVBORw0KGgo=";
+    const c = await call("adm", "POST", "/api/clients", { name: "بشعار", logo: png });
+    const list = (await call("adm", "GET", "/api/clients")).body.items.find(
+      (i: J) => i.id === c.body.id,
+    );
+    expect(list.logo).toBeUndefined();
+    expect(list.logoUrl).toMatch(new RegExp(`^/api/clients/${c.body.id}/logo\\?v=\\d+$`));
+    const res = await app.request(list.logoUrl, { headers: { cookie: cookie.adm ?? "" } }, env);
+    expect(res.status).toBe(200);
+    expect(res.headers.get("content-type")).toBe("image/png");
+    expect(res.headers.get("cache-control")).toContain("immutable");
+    expect(new Uint8Array(await res.arrayBuffer()).slice(0, 4)).toEqual(
+      new Uint8Array([0x89, 0x50, 0x4e, 0x47]),
+    );
+    expect(
+      (await app.request(list.logoUrl, { headers: { cookie: cookie.x ?? "" } }, env)).status,
+    ).toBe(404);
+    const proj = (await call("adm", "GET", "/api/projects")).body.items[0];
+    expect(proj).toHaveProperty("clientLogoUrl");
+  });
+});

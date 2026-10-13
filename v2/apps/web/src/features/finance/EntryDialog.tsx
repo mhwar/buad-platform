@@ -108,6 +108,14 @@ export function EntryDialog({
     apply(await api.deleteEntry(existing.id));
     close(false);
   };
+  const registerAll = async () => {
+    setError(null);
+    try {
+      apply(await api.registerAllAgreement());
+    } catch {
+      setError("تعذّر التسجيل");
+    }
+  };
   const register = async (item: string) => {
     setError(null);
     try {
@@ -155,51 +163,59 @@ export function EntryDialog({
       )}
       {error && <Notice>{error}</Notice>}
       {tab === "agreement" && !existing ? (
-        <table className="w-full text-sm">
-          <thead className="border-b text-right text-xs text-muted">
-            <tr>
-              <th className="p-2 font-medium">البند</th>
-              <th className="p-2 font-medium">المبلغ</th>
-              <th className="p-2 font-medium">النوع</th>
-              <th className="p-2" />
-            </tr>
-          </thead>
-          <tbody>
-            {[
-              ...agreement.map((a) => ({
-                key: a.item,
-                label: a.label,
-                amount: a.amount,
-                kind: a.kind,
-              })),
-              ...budgetCats.map((b) => ({
-                key: `bdg_${b.id}`,
-                label: b.name,
-                amount: b.amount / 100,
-                kind: "مصروف",
-              })),
-            ].map((r) => (
-              <tr key={r.key} className="border-b last:border-0">
-                <td className="p-2">{r.label}</td>
-                <td className="p-2" dir="ltr">
-                  {sar(r.amount)}
-                </td>
-                <td className="p-2">
-                  <Badge tone={r.kind === "دخل" ? "green" : "amber"}>{r.kind}</Badge>
-                </td>
-                <td className="p-2 text-left">
-                  {registered.has(r.key) ? (
-                    <Badge tone="blue">✓ مسجّل</Badge>
-                  ) : (
-                    <Button onClick={() => register(r.key)} disabled={r.amount <= 0}>
-                      تسجيل
-                    </Button>
-                  )}
-                </td>
+        <>
+          {agreement.some((a) => !registered.has(a.item) && a.amount > 0) && (
+            <div className="mb-3 flex items-center justify-between gap-3 rounded-lg bg-brand-soft/60 px-3 py-2 text-sm">
+              <span>سجّلوا كل بنود الاتفاقية غير المسجلة بنقرة واحدة.</span>
+              <Button onClick={registerAll}>تسجيل الكل</Button>
+            </div>
+          )}
+          <table className="w-full text-sm">
+            <thead className="border-b text-right text-xs text-muted">
+              <tr>
+                <th className="p-2 font-medium">البند</th>
+                <th className="p-2 font-medium">المبلغ</th>
+                <th className="p-2 font-medium">النوع</th>
+                <th className="p-2" />
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {[
+                ...agreement.map((a) => ({
+                  key: a.item,
+                  label: a.label,
+                  amount: a.amount,
+                  kind: a.kind,
+                })),
+                ...budgetCats.map((b) => ({
+                  key: `bdg_${b.id}`,
+                  label: b.name,
+                  amount: b.amount / 100,
+                  kind: "مصروف",
+                })),
+              ].map((r) => (
+                <tr key={r.key} className="border-b last:border-0">
+                  <td className="p-2">{r.label}</td>
+                  <td className="p-2" dir="ltr">
+                    {sar(r.amount)}
+                  </td>
+                  <td className="p-2">
+                    <Badge tone={r.kind === "دخل" ? "green" : "amber"}>{r.kind}</Badge>
+                  </td>
+                  <td className="p-2 text-left">
+                    {registered.has(r.key) ? (
+                      <Badge tone="blue">✓ مسجّل</Badge>
+                    ) : (
+                      <Button onClick={() => register(r.key)} disabled={r.amount <= 0}>
+                        تسجيل
+                      </Button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </>
       ) : (
         <form onSubmit={save} className="space-y-4" noValidate>
           <div className="grid gap-4 sm:grid-cols-2">

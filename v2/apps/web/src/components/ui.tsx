@@ -160,24 +160,31 @@ export function Avatar({
 }: {
   name: string;
   logo?: string;
-  size?: "md" | "lg";
+  size?: "xs" | "md" | "lg";
 }) {
-  const s = size === "lg" ? "size-16 text-2xl" : "size-11 text-base";
+  const s =
+    size === "lg"
+      ? "size-16 text-2xl rounded-xl"
+      : size === "xs"
+        ? "size-6 text-[11px] rounded-md"
+        : "size-11 text-base rounded-xl";
   if (logo)
     return (
       <img
         src={logo}
         alt=""
-        className={cx(s, "shrink-0 rounded-xl border bg-white object-contain p-1")}
+        loading="lazy"
+        className={cx(
+          "shrink-0 border bg-white object-contain",
+          size === "xs" ? "p-0.5" : "p-1",
+          s,
+        )}
       />
     );
   return (
     <span
       aria-hidden
-      className={cx(
-        s,
-        "grid shrink-0 place-items-center rounded-xl bg-brand-soft font-bold text-brand",
-      )}
+      className={cx("grid shrink-0 place-items-center bg-brand-soft font-bold text-brand", s)}
     >
       {name.trim().charAt(0) || "؟"}
     </span>
@@ -386,16 +393,25 @@ export function Dialog({
   );
 }
 
-export function Menu({
-  items,
-}: {
-  items: { label: string; onSelect: () => void; danger?: boolean }[];
-}) {
-  if (!items.length) return null;
+export type MenuItem =
+  | {
+      label: string;
+      onSelect: () => void;
+      danger?: boolean;
+      icon?: ReactNode;
+      hint?: string;
+      disabled?: boolean;
+    }
+  | { section: string }
+  | "separator";
+
+/** «⋯» menu: grouped actions with icons; sections and separators keep long menus scannable. */
+export function Menu({ items, label = "المزيد" }: { items: MenuItem[]; label?: string }) {
+  if (!items.some((i) => typeof i === "object" && "label" in i)) return null;
   return (
     <RMenu.Root dir="rtl">
       <RMenu.Trigger asChild>
-        <Button variant="secondary" aria-label="المزيد">
+        <Button variant="secondary" aria-label={label}>
           <MoreHorizontal className="size-4" />
         </Button>
       </RMenu.Trigger>
@@ -403,20 +419,38 @@ export function Menu({
         <RMenu.Content
           align="end"
           sideOffset={6}
-          className="z-50 min-w-44 rounded-xl border bg-surface p-1 shadow-lg"
+          className="z-50 min-w-60 rounded-xl border bg-surface p-1 shadow-lg"
         >
-          {items.map((i) => (
-            <RMenu.Item
-              key={i.label}
-              onSelect={i.onSelect}
-              className={cx(
-                "cursor-pointer rounded-lg px-3 py-2 text-sm outline-none data-[highlighted]:bg-brand-soft",
-                i.danger && "text-red-600",
-              )}
-            >
-              {i.label}
-            </RMenu.Item>
-          ))}
+          {items.map((i, n) =>
+            i === "separator" ? (
+              <RMenu.Separator key={`sep-${n}`} className="my-1 h-px bg-line" />
+            ) : "section" in i ? (
+              <RMenu.Label
+                key={`sec-${i.section}`}
+                className="px-3 pt-2 pb-1 text-[11px] font-semibold text-muted"
+              >
+                {i.section}
+              </RMenu.Label>
+            ) : (
+              <RMenu.Item
+                key={i.label}
+                onSelect={i.onSelect}
+                disabled={i.disabled}
+                className={cx(
+                  "flex cursor-pointer items-start gap-2.5 rounded-lg px-3 py-2 text-sm outline-none data-[disabled]:cursor-not-allowed data-[highlighted]:bg-brand-soft data-[disabled]:opacity-50",
+                  i.danger && "text-red-600",
+                )}
+              >
+                {i.icon && (
+                  <span className="mt-0.5 shrink-0 text-muted [&>svg]:size-4">{i.icon}</span>
+                )}
+                <span>
+                  {i.label}
+                  {i.hint && <span className="block text-xs text-muted">{i.hint}</span>}
+                </span>
+              </RMenu.Item>
+            ),
+          )}
         </RMenu.Content>
       </RMenu.Portal>
     </RMenu.Root>

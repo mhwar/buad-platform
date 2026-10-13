@@ -23,6 +23,7 @@ import { LoginPage } from "./login";
 import { queryClient } from "./query-client";
 import { meQuery, setupStatusQuery } from "./session";
 import { SetupPage } from "./setup";
+import { ThemeToggle } from "./theme";
 
 const NAV = [
   { to: "/", label: "الرئيسية", icon: Home_, exact: true },
@@ -54,6 +55,7 @@ function Shell() {
             <Logo variant="icon" className="h-9 w-auto sm:hidden" />
           </Link>
           <div className="flex items-center gap-3 text-sm">
+            <ThemeToggle />
             <Link
               to="/account"
               className="text-muted hover:text-ink"

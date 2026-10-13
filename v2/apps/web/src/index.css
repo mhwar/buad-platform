@@ -6,6 +6,10 @@
 @import "@fontsource/ibm-plex-sans-arabic/latin-400.css";
 @import "@fontsource/ibm-plex-sans-arabic/latin-600.css";
 
+/* Dark mode is chosen by the user (light / dark / follow the device) and applied as
+   <html data-theme="dark">, so `dark:` utilities follow that choice, not only the OS. */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
 /* Identity: logo navy is the brand; v1's teal (hue 185) is the accent. */
 @theme {
   --font-sans: "IBM Plex Sans Arabic", "Segoe UI", Tahoma, system-ui, sans-serif;
@@ -21,20 +25,19 @@
 }
 
 :root {
-  color-scheme: light dark;
+  color-scheme: light;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-brand: oklch(0.72 0.12 265);
-    --color-brand-strong: oklch(0.8 0.1 265);
-    --color-brand-soft: oklch(0.26 0.05 265);
-    --color-surface: oklch(0.2 0.02 265);
-    --color-canvas: oklch(0.15 0.015 265);
-    --color-ink: oklch(0.95 0.005 265);
-    --color-muted: oklch(0.72 0.015 265);
-    --color-line: oklch(0.3 0.02 265);
-  }
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --color-brand: oklch(0.72 0.12 265);
+  --color-brand-strong: oklch(0.8 0.1 265);
+  --color-brand-soft: oklch(0.26 0.05 265);
+  --color-surface: oklch(0.2 0.02 265);
+  --color-canvas: oklch(0.15 0.015 265);
+  --color-ink: oklch(0.95 0.005 265);
+  --color-muted: oklch(0.72 0.015 265);
+  --color-line: oklch(0.3 0.02 265);
 }
 
 @layer base {
@@ -58,8 +61,6 @@
 .logo-on-dark {
   filter: brightness(0) invert(1);
 }
-@media (prefers-color-scheme: dark) {
-  .logo-adaptive {
-    filter: brightness(0) invert(1);
-  }
+[data-theme="dark"] .logo-adaptive {
+  filter: brightness(0) invert(1);
 }

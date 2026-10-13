@@ -1,6 +1,7 @@
 import { ENTRY_STATUS_LABELS } from "@buad/schema/finance";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertTriangle, Download, Plus, Settings2, Trash2 } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { AlertTriangle, FileUp, Plus, Settings2, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Badge, Button, Card, Input, Pills, SearchBox, Sheet } from "../../components/ui";
 import { day, pct, sar } from "../../lib/format";
@@ -26,19 +27,43 @@ export function FinanceStrip({
   canEdit,
   onSettings,
   onRegister,
+  fromV1 = false,
+  isOwner = false,
 }: {
   projectId: string;
   canEdit: boolean;
   onSettings: () => void;
   onRegister: () => void;
+  /** Project came from the current platform: its real finance may still be waiting to be imported. */
+  fromV1?: boolean;
+  isOwner?: boolean;
 }) {
   const q = useFinance(projectId);
+  const qc = useQueryClient();
+  const [busy, setBusy] = useState(false);
+  const [done, setDone] = useState<string | null>(null);
   if (q.isPending) return <Card className="mb-6 h-36 animate-pulse" aria-busy />;
   if (!q.data) return null;
   const { summary: s, ctrl } = q.data;
   const margin = s.grossTotal ? (s.profit / s.grossTotal) * 100 : 0;
   const spent = s.grossTotal ? (s.totalDeductions / s.grossTotal) * 100 : 0;
   const notSetUp = ctrl.version === 0;
+  // A v1 project with untouched default finance: its real entries have not been imported yet.
+  const awaitingImport = fromV1 && notSetUp && q.data.entries.length === 0;
+  const registerAll = async () => {
+    setBusy(true);
+    try {
+      const res = await financeApi(projectId).registerAllAgreement();
+      qc.setQueryData(financeKey(projectId), res);
+      setDone(
+        res.registered.length
+          ? `سُجّل ${res.registered.length} بند من الاتفاقية`
+          : "لا بنود بقيمة لتسجيلها",
+      );
+    } finally {
+      setBusy(false);
+    }
+  };
   return (
     <Card className="mb-6 p-0">
       <div className="grid grid-cols-2 divide-line sm:grid-cols-4 sm:divide-x sm:divide-x-reverse">
@@ -81,7 +106,27 @@ export function FinanceStrip({
           />
         </div>
       </div>
-      {notSetUp && canEdit ? (
+      {awaitingImport ? (
+        <div
+          role="status"
+          className="flex flex-wrap items-center justify-between gap-3 border-t bg-brand-soft/60 px-5 py-3 text-sm"
+        >
+          <span>
+            <b>مالية هذا المشروع لم تُنقل من المنصة الحالية بعد.</b> الأرقام أعلاه افتراضية وليست
+            أرقامه الحقيقية.
+          </span>
+          {isOwner ? (
+            <Link
+              to="/import"
+              className="inline-flex items-center gap-2 rounded-lg bg-brand px-3.5 py-2 text-sm font-semibold text-white dark:text-canvas"
+            >
+              <FileUp className="size-4" /> استيراد المالية
+            </Link>
+          ) : (
+            <span className="text-muted">يستطيع مالك المنصة نقلها من صفحة الاستيراد.</span>
+          )}
+        </div>
+      ) : notSetUp && canEdit ? (
         <div className="flex flex-wrap items-center justify-between gap-3 border-t bg-brand-soft/60 px-5 py-3 text-sm">
           <span>
             هذه الأرقام من القيم الافتراضية (ضريبة 15٪، أتعاب تنفيذ 10٪). اضبطوا شروط العقد لتكون
@@ -91,20 +136,32 @@ export function FinanceStrip({
             <Settings2 className="size-4" /> إعداد العقد
           </Button>
         </div>
+      ) : s.missingItems.length > 0 ? (
+        <div
+          role="status"
+          className="flex flex-wrap items-center gap-2 border-t bg-amber-50 px-5 py-2.5 text-sm text-amber-800 dark:bg-amber-950/60 dark:text-amber-300"
+        >
+          <AlertTriangle className="size-4 shrink-0" />
+          <span className="flex-1">لم تُسجَّل بعد: {s.missingItems.join("، ")}</span>
+          {canEdit && (
+            <span className="flex gap-2">
+              <Button onClick={registerAll} disabled={busy} className="px-3 py-1.5">
+                {busy ? "جارٍ التسجيل…" : "تسجيلها كلها"}
+              </Button>
+              <Button variant="ghost" onClick={onRegister} className="px-3 py-1.5">
+                مراجعة
+              </Button>
+            </span>
+          )}
+        </div>
       ) : (
-        s.missingItems.length > 0 && (
-          <div
+        done && (
+          <p
             role="status"
-            className="flex flex-wrap items-center gap-2 border-t bg-amber-50 px-5 py-2.5 text-sm text-amber-800 dark:bg-amber-950/60 dark:text-amber-300"
+            className="border-t bg-emerald-50 px-5 py-2.5 text-sm text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300"
           >
-            <AlertTriangle className="size-4 shrink-0" />
-            <span>لم تُسجَّل بعد: {s.missingItems.join("، ")}</span>
-            {canEdit && (
-              <button type="button" className="font-semibold underline" onClick={onRegister}>
-                تسجيلها الآن
-              </button>
-            )}
-          </div>
+            ✓ {done}
+          </p>
         )
       )}
     </Card>
@@ -413,25 +470,8 @@ export function Transactions({
 
   return (
     <Card className="p-0">
-      <div className="flex flex-wrap items-center justify-between gap-3 px-5 pt-5">
-        <h2 className="font-semibold">سجل المعاملات</h2>
-        <div className="flex gap-2">
-          <Button
-            variant="secondary"
-            onClick={() => exportCsv(fin, label)}
-            disabled={!fin.entries.length}
-            aria-label="تصدير Excel"
-          >
-            <Download className="size-4" />
-            <span className="hidden sm:inline">Excel</span>
-          </Button>
-          {canEdit && (
-            <Button onClick={() => setAdding("new")}>
-              <Plus className="size-4" /> قيد جديد
-            </Button>
-          )}
-        </div>
-      </div>
+      {/* «قيد جديد» and Excel export live in the page header and its menu (one place each). */}
+      <h2 className="px-5 pt-5 font-semibold">سجل المعاملات</h2>
       <div className="flex flex-wrap items-center gap-3 px-5 py-4">
         <Pills<"income" | "expense">
           value={filter}
@@ -596,7 +636,10 @@ export function toCsv(fin: Finance, label: (cat: string) => string): string {
   return `﻿${[head.map(esc).join(","), ...lines].join("\r\n")}`;
 }
 
-function exportCsv(fin: Finance, label: (cat: string) => string) {
+export function exportCsv(
+  fin: Finance,
+  label: (cat: string) => string = (c) => catLabel(c, fin.categories, fin.budget),
+) {
   const url = URL.createObjectURL(
     new Blob([toCsv(fin, label)], { type: "text/csv;charset=utf-8" }),
   );

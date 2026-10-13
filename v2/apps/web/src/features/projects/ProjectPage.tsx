@@ -1,22 +1,41 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getRouteApi, Link, useNavigate } from "@tanstack/react-router";
 import {
+  Archive,
+  ArchiveRestore,
   CalendarDays,
+  Download,
+  FileCheck2,
   FileText,
+  Link2,
   ListChecks,
   Lock,
   MapPin,
   Pencil,
+  Plus,
   Settings2,
+  Trash2,
   Wallet,
 } from "lucide-react";
 import { type ReactNode, useState } from "react";
-import { BadgeMenu, Button, Card, EmptyState, Menu, Notice, Segmented } from "../../components/ui";
+import {
+  Avatar,
+  BadgeMenu,
+  Button,
+  Card,
+  EmptyState,
+  Menu,
+  type MenuItem,
+  Notice,
+  Segmented,
+} from "../../components/ui";
 import { day, fromEpoch } from "../../lib/format";
 import { meQuery } from "../../session";
 import { clientKeys } from "../clients/api";
+import { type Finance, financeKey } from "../finance/api";
 import {
   ContractSummary,
+  exportCsv,
   FinanceSettings,
   FinanceStrip,
   Transactions,
@@ -104,19 +123,61 @@ export function ProjectPage() {
       setError("تعذّر تغيير الحالة");
     }
   };
-  const menu = [
-    { label: "تعديل بيانات المشروع", onSelect: () => setEditing(true) },
+  const copyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href.split("?")[0] ?? "");
+      setError(null);
+    } catch {
+      setError("تعذّر نسخ الرابط");
+    }
+  };
+  const exportEntries = () => {
+    const fin = qc.getQueryData<Finance>(financeKey(p.id));
+    if (fin) exportCsv(fin);
+  };
+  const menu: MenuItem[] = [
+    { section: "المشروع" },
+    { label: "تعديل بيانات المشروع", icon: <Pencil />, onSelect: () => setEditing(true) },
+    { label: "نسخ رابط المشروع", icon: <Link2 />, onSelect: copyLink },
+    { section: "المالية" },
+    {
+      label: manager ? "إعدادات العقد والميزانية" : "شروط العقد والميزانية",
+      hint: manager ? "القيمة، الضريبة، الأتعاب، التصنيفات" : "للاطلاع",
+      icon: <Settings2 />,
+      onSelect: () => setSettings(true),
+    },
+    ...(manager
+      ? [
+          {
+            label: "تسجيل بنود الاتفاقية",
+            icon: <FileCheck2 />,
+            onSelect: () => setAdding("agreement"),
+          },
+        ]
+      : []),
+    { label: "تصدير المعاملات (Excel)", icon: <Download />, onSelect: exportEntries },
+    ...(manager || me?.role === "owner" ? (["separator"] as MenuItem[]) : []),
     ...(manager
       ? [
           p.archivedAt
-            ? { label: "استعادة المشروع", onSelect: () => act(() => archiveProject(p.id, true)) }
-            : { label: "أرشفة المشروع", onSelect: () => act(() => archiveProject(p.id)) },
+            ? {
+                label: "استعادة المشروع",
+                icon: <ArchiveRestore />,
+                onSelect: () => act(() => archiveProject(p.id, true)),
+              }
+            : {
+                label: "أرشفة المشروع",
+                icon: <Archive />,
+                hint: "يُخفى ويمكن استعادته",
+                onSelect: () => act(() => archiveProject(p.id)),
+              },
         ]
       : []),
     ...(me?.role === "owner"
       ? [
           {
             label: "حذف نهائي",
+            icon: <Trash2 />,
             danger: true,
             onSelect: () => {
               if (confirm(`حذف «${p.name}» نهائياً؟ لا يمكن التراجع.`))
@@ -170,17 +231,18 @@ export function ProjectPage() {
               </span>
             )}
           </div>
+          {client && (
+            <Link
+              to="/clients/$id"
+              params={{ id: client.id }}
+              className="mt-2 inline-flex items-center gap-2 text-sm font-medium text-brand hover:underline"
+            >
+              <Avatar name={client.name} logo={client.logoUrl} size="xs" />
+              {client.name}
+            </Link>
+          )}
           <p className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted">
             <span dir="ltr">{p.number}</span>
-            {client && (
-              <Link
-                to="/clients/$id"
-                params={{ id: client.id }}
-                className="font-medium text-brand hover:underline"
-              >
-                {client.name}
-              </Link>
-            )}
             <span>{label(PROJECT_TYPE_LABELS, p.type)}</span>
             {(p.startDate || p.endDate) && (
               <span className="inline-flex items-center gap-1">
@@ -191,24 +253,20 @@ export function ProjectPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="secondary" onClick={() => setSettings(true)} aria-label="إعدادات العقد">
-            <Settings2 className="size-4" />
-            <span className="hidden sm:inline">إعدادات العقد</span>
-          </Button>
-          <Button
-            variant="secondary"
-            onClick={() => setEditing(true)}
-            aria-label="تعديل بيانات المشروع"
-          >
-            <Pencil className="size-4" />
-          </Button>
-          <Menu items={menu} />
+          {manager && section === "finance" && !p.archivedAt && (
+            <Button onClick={() => setAdding("new")}>
+              <Plus className="size-4" /> قيد جديد
+            </Button>
+          )}
+          <Menu items={menu} label="إجراءات المشروع" />
         </div>
       </header>
 
       <FinanceStrip
         projectId={p.id}
         canEdit={manager}
+        isOwner={me?.role === "owner"}
+        fromV1={p.createdBy.startsWith("v1-import") && !q.data.financeImported}
         onSettings={() => setSettings(true)}
         onRegister={() => setAdding("agreement")}
       />

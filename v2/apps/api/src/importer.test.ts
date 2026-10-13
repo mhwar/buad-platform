@@ -246,3 +246,19 @@ describe("import v1 finance", () => {
     expect(entries).toHaveLength(3);
   });
 });
+
+describe("finance import marker", () => {
+  it("marks every imported project's finance as imported, even when v1 had no finance for it", async () => {
+    await call("own", "POST", "/api/import/v1", backup); // file has finance only for p1
+    expect((await call("own", "GET", "/api/projects/p1")).body.financeImported).toBe(true);
+    expect((await call("own", "GET", "/api/projects/p3")).body.financeImported).toBe(true);
+    const mine = await call("own", "POST", "/api/clients", { name: "عميل جديد" });
+    const p = await call("own", "POST", "/api/projects", {
+      clientId: mine.body.id,
+      name: "مشروع v2",
+    });
+    expect((await call("own", "GET", `/api/projects/${p.body.id}`)).body.financeImported).toBe(
+      false,
+    );
+  });
+});

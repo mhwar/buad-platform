@@ -12,13 +12,16 @@ export type ClientListItem = {
   city: string;
   email: string;
   phone: string;
-  logo: string;
+  /** Cached image URL ("" when the client has no logo). */
+  logoUrl: string;
   createdAt: number;
   archivedAt: number | null;
   projectCount: number;
   projectValue: number;
 };
-export type Client = Omit<ClientListItem, "projectCount" | "projectValue"> & {
+export type Client = Omit<ClientListItem, "projectCount" | "projectValue" | "logoUrl"> & {
+  /** The logo itself (data URL), needed by the edit form. */
+  logo: string;
   regNo: string;
   taxNo: string;
   address: string;
