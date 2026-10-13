@@ -1,12 +1,13 @@
 import { loginInput, setPasswordInput } from "@buad/schema";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "@tanstack/react-router";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import type { z } from "zod";
 import { api } from "./api";
-import { Logo } from "./brand";
+import { AuthLayout, ErrorNote } from "./brand";
+import { setupStatusQuery } from "./session";
 import { button, field } from "./ui";
 
 type LoginForm = z.input<typeof loginInput>;
@@ -21,6 +22,7 @@ export function LoginPage() {
     new URLSearchParams(window.location.search).get("token"),
   );
 
+  const needsSetup = useQuery(setupStatusQuery).data === true;
   const login = useForm<LoginForm>({ resolver: zodResolver(loginInput) });
   const setup = useForm<SetupForm>();
 
@@ -49,90 +51,69 @@ export function LoginPage() {
   });
 
   return (
-    <div className="grid min-h-screen grid-rows-[auto_1fr] lg:grid-cols-2 lg:grid-rows-1">
-      <aside className="relative flex flex-col justify-between overflow-hidden bg-[#00197d] px-6 py-6 text-white lg:p-12">
-        <Logo tone="light" className="h-14 w-auto self-start lg:h-28" />
-        <div className="hidden max-w-md lg:block">
-          <p className="text-3xl font-bold leading-snug">
-            منصة واحدة لإدارة مشاريعكم وجمعياتكم وحوكمتكم
-          </p>
-          <p className="mt-4 text-white/70">بُعد التمكين</p>
-        </div>
-        <Logo
-          variant="icon"
-          tone="light"
-          className="pointer-events-none absolute -bottom-28 -right-28 hidden h-[30rem] w-auto opacity-[0.08] lg:block"
-        />
-      </aside>
-      <main className="flex items-center justify-center p-6">
-        <div className="w-full max-w-sm">
-          <h1 className="mb-6 text-2xl font-bold">
-            {setupToken ? "تعيين كلمة المرور" : "تسجيل الدخول"}
-          </h1>
-          {error && (
-            <p
-              role="alert"
-              className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950 dark:text-red-200"
-            >
-              {error}
-            </p>
-          )}
-          {setupToken ? (
-            <form onSubmit={onSetup} className="space-y-4" noValidate>
-              <label className="block text-sm">
-                كلمة المرور الجديدة
-                <input
-                  type="password"
-                  autoComplete="new-password"
-                  className={field}
-                  {...setup.register("password")}
-                />
-              </label>
-              <label className="block text-sm">
-                تأكيد كلمة المرور
-                <input
-                  type="password"
-                  autoComplete="new-password"
-                  className={field}
-                  {...setup.register("confirm")}
-                />
-              </label>
-              <button type="submit" className={button} disabled={setup.formState.isSubmitting}>
-                حفظ ودخول
-              </button>
-            </form>
-          ) : (
-            <form onSubmit={onLogin} className="space-y-4" noValidate>
-              <label className="block text-sm">
-                البريد الإلكتروني
-                <input
-                  type="email"
-                  autoComplete="username"
-                  dir="ltr"
-                  className={field}
-                  {...login.register("email")}
-                />
-                {login.formState.errors.email && (
-                  <span className="text-xs text-red-600">أدخل بريداً إلكترونياً صحيحاً</span>
-                )}
-              </label>
-              <label className="block text-sm">
-                كلمة المرور
-                <input
-                  type="password"
-                  autoComplete="current-password"
-                  dir="ltr"
-                  className={field}
-                  {...login.register("password")}
-                />
-              </label>
-              <button type="submit" className={button} disabled={login.formState.isSubmitting}>
-                دخول
-              </button>
-            </form>
-          )}
-        </div>
-      </main>
-    </div>
+    <AuthLayout title={setupToken ? "تعيين كلمة المرور" : "تسجيل الدخول"}>
+      {error && <ErrorNote>{error}</ErrorNote>}
+      {setupToken ? (
+        <form onSubmit={onSetup} className="space-y-4" noValidate>
+          <label className="block text-sm">
+            كلمة المرور الجديدة
+            <input
+              type="password"
+              autoComplete="new-password"
+              className={field}
+              {...setup.register("password")}
+            />
+          </label>
+          <label className="block text-sm">
+            تأكيد كلمة المرور
+            <input
+              type="password"
+              autoComplete="new-password"
+              className={field}
+              {...setup.register("confirm")}
+            />
+          </label>
+          <button type="submit" className={button} disabled={setup.formState.isSubmitting}>
+            حفظ ودخول
+          </button>
+        </form>
+      ) : (
+        <form onSubmit={onLogin} className="space-y-4" noValidate>
+          <label className="block text-sm">
+            البريد الإلكتروني
+            <input
+              type="email"
+              autoComplete="username"
+              dir="ltr"
+              className={field}
+              {...login.register("email")}
+            />
+            {login.formState.errors.email && (
+              <span className="text-xs text-red-600">أدخل بريداً إلكترونياً صحيحاً</span>
+            )}
+          </label>
+          <label className="block text-sm">
+            كلمة المرور
+            <input
+              type="password"
+              autoComplete="current-password"
+              dir="ltr"
+              className={field}
+              {...login.register("password")}
+            />
+          </label>
+          <button type="submit" className={button} disabled={login.formState.isSubmitting}>
+            دخول
+          </button>
+        </form>
+      )}
+      {needsSetup && !setupToken && (
+        <p className="mt-6 text-center text-sm">
+          <Link to="/setup" className="text-brand underline">
+            إعداد أول مرة: إنشاء حساب المالك
+          </Link>
+        </p>
+      )}
+    </AuthLayout>
   );
 }

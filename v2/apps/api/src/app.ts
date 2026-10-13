@@ -1,4 +1,10 @@
-import { changePasswordInput, healthResponse, loginInput, setPasswordInput } from "@buad/schema";
+import {
+  changePasswordInput,
+  healthResponse,
+  loginInput,
+  ownerSetupInput,
+  setPasswordInput,
+} from "@buad/schema";
 import { users } from "@buad/schema/db";
 import { zValidator } from "@hono/zod-validator";
 import { eq } from "drizzle-orm";
@@ -9,8 +15,15 @@ import { secureHeaders } from "hono/secure-headers";
 import { requireAuth, requireRole, type Vars } from "./auth/middleware";
 import { type Db, getUser, login, setPassword } from "./auth/service";
 import { SESSION_COOKIE, SESSION_TTL, signSession, signSetup, verifySetup } from "./auth/session";
+import { claimOwner, ownerExists, setupEnabled, tokenMatches } from "./auth/setup";
 
-export type Env = { APP_VERSION: string; JWT_SECRET: string; DB: Parameters<typeof drizzle>[0] };
+export type Env = {
+  APP_VERSION: string;
+  JWT_SECRET: string;
+  /** Optional. Enables the one-time /setup flow that creates the first owner. */
+  OWNER_SETUP_TOKEN?: string;
+  DB: Parameters<typeof drizzle>[0];
+};
 
 export type AppDeps = { getDb?: (env: Env) => Db };
 
@@ -37,6 +50,30 @@ export function createApp(deps: AppDeps = {}) {
           healthResponse.parse({ ok: true, service: "buad-v2-api", version: c.env.APP_VERSION }),
         ),
       )
+
+      // One-time first-owner setup. Invisible (404) unless OWNER_SETUP_TOKEN is configured.
+      .get("/api/setup/status", async (c) => {
+        const needsSetup =
+          setupEnabled(c.env.OWNER_SETUP_TOKEN) && !(await ownerExists(c.get("db")));
+        return c.json({ ok: true, needsSetup });
+      })
+
+      .post("/api/setup/owner", zValidator("json", ownerSetupInput), async (c) => {
+        const expected = c.env.OWNER_SETUP_TOKEN;
+        if (!setupEnabled(expected)) return c.json({ ok: false, error: "not_found" }, 404);
+        const input = c.req.valid("json");
+        if (!(await tokenMatches(input.token, expected))) {
+          return c.json({ ok: false, error: "invalid_token" }, 403);
+        }
+        const db = c.get("db");
+        if (await ownerExists(db)) return c.json({ ok: false, error: "already_set_up" }, 409);
+        const claim = await claimOwner(db, input);
+        if (!claim.ok) return c.json({ ok: false, error: "already_set_up" }, 409);
+        const user = await getUser(db, claim.userId);
+        if (!user) return c.json({ ok: false, error: "internal_error" }, 500);
+        setCookie(c, SESSION_COOKIE, await signSession(c.env.JWT_SECRET, user), sessionCookie);
+        return c.json({ ok: true, user: publicUser(user) });
+      })
 
       .post("/api/auth/login", zValidator("json", loginInput), async (c) => {
         const { email, password } = c.req.valid("json");

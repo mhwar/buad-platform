@@ -13,7 +13,8 @@ import { api } from "./api";
 import { Logo } from "./brand";
 import { LoginPage } from "./login";
 import { queryClient } from "./query-client";
-import { meQuery } from "./session";
+import { meQuery, setupStatusQuery } from "./session";
+import { SetupPage } from "./setup";
 import { card } from "./ui";
 
 function Shell() {
@@ -102,6 +103,17 @@ const loginRoute = createRoute({
   component: LoginPage,
 });
 
+const setupRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/setup",
+  beforeLoad: async () => {
+    // Only reachable while the one-time setup is available; otherwise it does not exist.
+    const needs = await queryClient.fetchQuery({ ...setupStatusQuery, staleTime: 0 });
+    if (!needs) throw redirect({ to: "/login" });
+  },
+  component: SetupPage,
+});
+
 const accountRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/account",
@@ -113,7 +125,7 @@ const accountRoute = createRoute({
 });
 
 export const router = createRouter({
-  routeTree: rootRoute.addChildren([indexRoute, loginRoute, accountRoute]),
+  routeTree: rootRoute.addChildren([indexRoute, loginRoute, setupRoute, accountRoute]),
 });
 
 declare module "@tanstack/react-router" {

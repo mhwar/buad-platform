@@ -29,3 +29,11 @@ export const changePasswordInput = z.object({
   password: z.string().min(8).max(200),
 });
 export type ChangePasswordInput = z.infer<typeof changePasswordInput>;
+
+export const ownerSetupInput = z.object({
+  token: z.string().min(1).max(500),
+  name: z.string().trim().min(1).max(100),
+  email: emailField,
+  password: z.string().min(12).max(200),
+});
+export type OwnerSetupInput = z.infer<typeof ownerSetupInput>;
