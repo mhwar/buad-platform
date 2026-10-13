@@ -17,3 +17,42 @@ export function Logo({ variant = "full", tone = "adaptive", className = "" }: Pr
     />
   );
 }
+
+/** Shared frame for signed-out pages (login, first-time setup): brand panel + content. */
+export function AuthLayout({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="grid min-h-screen grid-rows-[auto_1fr] lg:grid-cols-2 lg:grid-rows-1">
+      <aside className="relative flex flex-col justify-between overflow-hidden bg-[#00197d] px-6 py-6 text-white lg:p-12">
+        <Logo tone="light" className="h-14 w-auto self-start lg:h-28" />
+        <div className="hidden max-w-md lg:block">
+          <p className="text-3xl font-bold leading-snug">
+            منصة واحدة لإدارة مشاريعكم وجمعياتكم وحوكمتكم
+          </p>
+          <p className="mt-4 text-white/70">بُعد التمكين</p>
+        </div>
+        <Logo
+          variant="icon"
+          tone="light"
+          className="pointer-events-none absolute -bottom-28 -right-28 hidden h-[30rem] w-auto opacity-[0.08] lg:block"
+        />
+      </aside>
+      <main className="flex items-center justify-center p-6">
+        <div className="w-full max-w-sm">
+          <h1 className="mb-6 text-2xl font-bold">{title}</h1>
+          {children}
+        </div>
+      </main>
+    </div>
+  );
+}
+
+export function ErrorNote({ children }: { children: React.ReactNode }) {
+  return (
+    <p
+      role="alert"
+      className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950 dark:text-red-200"
+    >
+      {children}
+    </p>
+  );
+}

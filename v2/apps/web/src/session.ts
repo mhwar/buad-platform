@@ -15,3 +15,15 @@ export const meQuery = queryOptions({
   staleTime: 60_000,
   retry: false,
 });
+
+/** True only while the one-time first-owner setup is available. */
+export const setupStatusQuery = queryOptions({
+  queryKey: ["setup-status"],
+  queryFn: async (): Promise<boolean> => {
+    const res = await api.api.setup.status.$get();
+    if (!res.ok) return false;
+    return (await res.json()).needsSetup === true;
+  },
+  staleTime: 30_000,
+  retry: false,
+});
