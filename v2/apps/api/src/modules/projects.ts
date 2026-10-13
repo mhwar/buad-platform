@@ -1,12 +1,20 @@
 import { formatCode, fromRiyals } from "@buad/domain";
 import { listQuery, projectInput, projectPatch } from "@buad/schema/clients";
-import { clients, projectFinance, projects } from "@buad/schema/db";
+import { clients, legacyMap, projectFinance, projects } from "@buad/schema/db";
 import { zValidator } from "@hono/zod-validator";
 import { and, asc, count, desc, eq, isNotNull, isNull, or, type SQL, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { requireAuth, requireRole, type Vars } from "../auth/middleware";
 import type { AuthUser, Db } from "../auth/service";
-import { contractTotalSql, isManager, likeTerm, newId, nextCounter, nowSec } from "./common";
+import {
+  contractTotalSql,
+  isManager,
+  likeTerm,
+  logoUrlSql,
+  newId,
+  nextCounter,
+  nowSec,
+} from "./common";
 
 type Env = { Bindings: { JWT_SECRET: string }; Variables: Vars };
 
@@ -95,6 +103,7 @@ export const projectsApp = new Hono<Env>()
         archivedAt: projects.archivedAt,
         clientId: projects.clientId,
         clientName: clients.name,
+        clientLogoUrl: sql<string>`${logoUrlSql("clients")}`,
         clientCode: clients.code,
       })
       .from(projects)
@@ -162,6 +171,7 @@ export const projectsApp = new Hono<Env>()
         name: clients.name,
         type: clients.type,
         archivedAt: clients.archivedAt,
+        logoUrl: sql<string>`${logoUrlSql("clients")}`,
       })
       .from(clients)
       .where(eq(clients.id, project.clientId))
@@ -171,7 +181,18 @@ export const projectsApp = new Hono<Env>()
       .from(projectFinance)
       .where(eq(projectFinance.projectId, project.id))
       .limit(1);
-    return c.json({ ok: true, project, client: client ?? null, financeExists: !!fin });
+    const [imported] = await db
+      .select({ id: legacyMap.newId })
+      .from(legacyMap)
+      .where(and(eq(legacyMap.kind, "finance"), eq(legacyMap.legacyId, project.id)))
+      .limit(1);
+    return c.json({
+      ok: true,
+      project,
+      client: client ?? null,
+      financeExists: !!fin,
+      financeImported: !!imported,
+    });
   })
 
   .patch("/:id", zValidator("json", projectPatch), async (c) => {

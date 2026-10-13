@@ -32,3 +32,9 @@ export const contractTotalSql = (p: string) =>
       ELSE f.contract_value_halalas + CAST(ROUND(f.contract_value_halalas * f.vat_pct / 100.0) AS INTEGER) END
     FROM project_finance f WHERE f.project_id = ${p}.id),
     ${p}.expected_value_halalas + CAST(ROUND(${p}.expected_value_halalas * 15 / 100.0) AS INTEGER))`);
+
+/** URL of a client's logo (versioned by updated_at so browsers can cache it forever), or "". */
+export const logoUrlSql = (c: string) =>
+  sql.raw(
+    `CASE WHEN ${c}.logo <> '' THEN '/api/clients/' || ${c}.id || '/logo?v=' || ${c}.updated_at ELSE '' END`,
+  );

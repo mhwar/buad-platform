@@ -7,7 +7,7 @@ import { Hono } from "hono";
 import type { z } from "zod";
 import { requireAuth, requireRole, type Vars } from "../auth/middleware";
 import type { Db } from "../auth/service";
-import { contractTotalSql, likeTerm, newId, nextCounter, nowSec } from "./common";
+import { contractTotalSql, likeTerm, logoUrlSql, newId, nextCounter, nowSec } from "./common";
 import { visibleProjects } from "./projects";
 
 type Env = { Bindings: { JWT_SECRET: string }; Variables: Vars };
@@ -133,7 +133,7 @@ export const clientsApp = new Hono<Env>()
         city: clients.city,
         email: clients.email,
         phone: clients.phone,
-        logo: clients.logo,
+        logoUrl: sql<string>`${logoUrlSql("clients")}`,
         createdAt: clients.createdAt,
         archivedAt: clients.archivedAt,
         projectCount,
@@ -211,6 +211,27 @@ export const clientsApp = new Hono<Env>()
     const contacts = contactRows(id, v);
     if (contacts.length) await db.insert(clientContacts).values(contacts);
     return c.json({ ok: true, id, code }, 201);
+  })
+
+  // The logo as an image. Lists reference this URL instead of carrying base64 data.
+  .get("/:id/logo", async (c) => {
+    const [row] = await c
+      .get("db")
+      .select({ logo: clients.logo })
+      .from(clients)
+      .where(and(eq(clients.id, c.req.param("id")), eq(clients.orgId, c.get("user").orgId)))
+      .limit(1);
+    const m = /^data:(image\/(?:png|jpeg|webp|svg\+xml));base64,(.+)$/.exec(row?.logo ?? "");
+    if (!m) return c.json({ ok: false, error: "not_found" }, 404);
+    const bytes = Uint8Array.from(atob(m[2] ?? ""), (ch) => ch.charCodeAt(0));
+    return c.body(bytes, 200, {
+      "Content-Type": m[1] ?? "application/octet-stream",
+      // Versioned URL (?v=updated_at): safe to cache for a long time.
+      "Cache-Control": "private, max-age=31536000, immutable",
+      // An SVG opened directly must not be able to run script.
+      "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'; sandbox",
+      "X-Content-Type-Options": "nosniff",
+    });
   })
 
   .get("/:id", async (c) => {

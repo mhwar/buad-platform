@@ -3,6 +3,7 @@ import { getRouteApi, Link } from "@tanstack/react-router";
 import { Lock, Plus } from "lucide-react";
 import { useDeferredValue, useState } from "react";
 import {
+  Avatar,
   Badge,
   Button,
   Card,
@@ -134,7 +135,10 @@ function ProjectCard({ p }: { p: ProjectListItem }) {
           </span>
         </div>
         <p className="mt-3 font-semibold">{p.name}</p>
-        <p className="text-sm text-muted">{p.clientName}</p>
+        <p className="mt-1 flex items-center gap-1.5 text-sm text-muted">
+          <Avatar name={p.clientName} logo={p.clientLogoUrl} size="xs" />
+          <span className="truncate">{p.clientName}</span>
+        </p>
         <div className="mt-auto flex items-center justify-between border-t pt-3 text-sm">
           <span className="text-muted">
             {label(PROJECT_TYPE_LABELS, p.type)}
@@ -177,7 +181,12 @@ function ProjectTable({ items }: { items: ProjectListItem[] }) {
                 </div>
               </td>
               <td className="p-3">
-                <Link to="/clients/$id" params={{ id: p.clientId }} className="hover:text-brand">
+                <Link
+                  to="/clients/$id"
+                  params={{ id: p.clientId }}
+                  className="inline-flex items-center gap-1.5 hover:text-brand"
+                >
+                  <Avatar name={p.clientName} logo={p.clientLogoUrl} size="xs" />
                   {p.clientName}
                 </Link>
               </td>

@@ -1,3 +1,5 @@
+import { ThemeToggle } from "./theme";
+
 /** The one place the logo is defined. Files live in /public and come from v1's /assets, unchanged. */
 type Props = {
   variant?: "full" | "icon";
@@ -36,7 +38,10 @@ export function AuthLayout({ title, children }: { title: string; children: React
           className="pointer-events-none absolute -bottom-28 -right-28 hidden h-[30rem] w-auto opacity-[0.08] lg:block"
         />
       </aside>
-      <main className="flex items-center justify-center p-6">
+      <main className="relative flex items-center justify-center p-6">
+        <div className="absolute top-4 left-4">
+          <ThemeToggle />
+        </div>
         <div className="w-full max-w-sm">
           <h1 className="mb-6 text-2xl font-bold">{title}</h1>
           {children}

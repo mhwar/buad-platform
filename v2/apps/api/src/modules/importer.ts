@@ -256,6 +256,13 @@ export const importApp = new Hono<Env>()
     const finance: (Parity & { name: string })[] = [];
     let financeSkipped = 0;
     for (const p of pr) {
+      // Remember that this project's finance has been through the import, even when v1 had none.
+      q.push(
+        db
+          .insert(legacyMap)
+          .values({ kind: "finance", legacyId: p.id, newId: p.id })
+          .onConflictDoNothing(),
+      );
       const raw = ws.fin[p.id];
       if (!raw || typeof raw !== "object") continue;
       const editedInV2 =

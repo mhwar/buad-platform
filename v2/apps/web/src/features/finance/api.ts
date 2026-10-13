@@ -75,6 +75,8 @@ export const financeApi = (projectId: string) => ({
     send("PATCH", `${base(projectId)}/entries/${id}`, e),
   deleteEntry: (id: string) => send("DELETE", `${base(projectId)}/entries/${id}`),
   registerAgreement: (item: string) => send("POST", `${base(projectId)}/agreement/${item}`),
+  registerAllAgreement: () =>
+    send("POST", `${base(projectId)}/agreement-all`) as Promise<Finance & { registered: string[] }>,
   addBudget: (b: { name: string; amount: number; note?: string }) =>
     send("POST", `${base(projectId)}/budget`, b),
   updateBudget: (id: string, b: Partial<{ name: string; amount: number; note: string }>) =>

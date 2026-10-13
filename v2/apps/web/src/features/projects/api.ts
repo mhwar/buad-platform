@@ -21,8 +21,13 @@ export type ProjectListItem = {
   clientId: string;
   clientName: string;
   clientCode: string;
+  clientLogoUrl: string;
 };
-export type Project = Omit<ProjectListItem, "clientName" | "clientCode" | "contractTotal"> & {
+export type Project = Omit<
+  ProjectListItem,
+  "clientName" | "clientCode" | "contractTotal" | "clientLogoUrl"
+> & {
+  createdBy: string;
   ownerId: string;
   payDate: string;
   notes: string;
@@ -37,7 +42,11 @@ export type ProjectDetail = {
     name: string;
     type: string;
     archivedAt: number | null;
+    logoUrl: string;
   } | null;
+  financeExists?: boolean;
+  /** The project's finance went through a finance-aware import (even if v1 had none). */
+  financeImported?: boolean;
 };
 export type ProjectFilters = {
   q?: string;

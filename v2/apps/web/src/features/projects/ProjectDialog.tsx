@@ -173,6 +173,11 @@ export function ProjectDialog({
           <Field
             label="قيمة العقد المتوقعة (ر.س)"
             error={e.expectedValue ? "أدخلوا رقماً صحيحاً" : undefined}
+            hint={
+              existing?.financeExists
+                ? "تُدار الآن من «إعدادات العقد والميزانية»"
+                : "قبل الضريبة؛ تصبح قيمة العقد في المالية"
+            }
           >
             <Input
               type="number"
@@ -180,6 +185,7 @@ export function ProjectDialog({
               min={0}
               step="0.01"
               dir="ltr"
+              disabled={existing?.financeExists}
               {...f.register("expectedValue")}
             />
           </Field>

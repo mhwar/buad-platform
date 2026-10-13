@@ -145,7 +145,7 @@ function ClientCard({ c }: { c: ClientListItem }) {
     <Link to="/clients/$id" params={{ id: c.id }} className="group block">
       <Card className="h-full transition group-hover:border-brand group-hover:shadow-md">
         <div className="flex items-start gap-3">
-          <Avatar name={c.name} logo={c.logo} />
+          <Avatar name={c.name} logo={c.logoUrl} />
           <div className="min-w-0 flex-1">
             <p className="truncate font-semibold">{c.name}</p>
             <p className="text-xs text-muted" dir="ltr">
@@ -189,7 +189,7 @@ function ClientTable({ items }: { items: ClientListItem[] }) {
                   params={{ id: c.id }}
                   className="flex items-center gap-2 font-semibold hover:text-brand"
                 >
-                  <Avatar name={c.name} logo={c.logo} />
+                  <Avatar name={c.name} logo={c.logoUrl} />
                   {c.name}
                 </Link>
               </td>

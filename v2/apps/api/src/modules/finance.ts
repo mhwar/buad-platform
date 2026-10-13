@@ -262,50 +262,30 @@ export const financeApp = new Hono<Env>()
   // «من الاتفاقية»: one click turns a contract item into an entry with the computed amount (once only).
   .post("/agreement/:item", manager, async (c) => {
     const db = c.get("db");
-    const me = c.get("user");
     const project = c.get("project");
-    const item = c.req.param("item");
     const fin = await loadFinance(db, project);
-    let cat: string;
-    let description: string;
-    let amount: number;
-    if ((AGREEMENT_ITEMS as readonly string[]).includes(item)) {
-      cat = item;
-      description = AGREEMENT_DESC[item] ?? item;
-      const s = fin.summary;
-      amount =
-        item === "exec" ? s.execAmt : item === "cf" ? s.cfAmt : item === "mkt" ? s.mkt : s.cb;
-    } else if (item.startsWith("bdg_")) {
-      const b = fin.budget.find((x) => x.id === item.slice(4));
-      if (!b) return c.json({ ok: false, error: "not_found" }, 404);
-      cat = item;
-      description = b.name;
-      amount = b.amount / 100;
-    } else {
-      return c.json({ ok: false, error: "not_found" }, 404);
-    }
-    const halalas = fromRiyals(amount);
-    if (halalas <= 0) return c.json({ ok: false, error: "zero_amount" }, 400);
-    if (fin.entries.some((e) => e.source === "agreement" && e.cat === cat))
-      return c.json({ ok: false, error: "already_registered" }, 409);
-    const t = nowSec();
-    await db.insert(financeEntries).values({
-      id: newId("ent"),
-      orgId: me.orgId,
-      projectId: project.id,
-      date: today(),
-      description,
-      cat,
-      type: cat === "exec" ? "income" : "expense",
-      amount: halalas,
-      status: "paid",
-      source: "agreement",
-      createdBy: me.id,
-      createdAt: t,
-      updatedBy: me.id,
-      updatedAt: t,
-    });
+    const r = await registerAgreement(db, c.get("user"), project.id, fin, c.req.param("item"));
+    if (r !== "ok")
+      return c.json(
+        { ok: false, error: r },
+        r === "not_found" ? 404 : r === "already_registered" ? 409 : 400,
+      );
     return c.json({ ok: true, ...(await loadFinance(db, project)) }, 201);
+  })
+
+  // Register every contract item that still has no entry (v1's «لم تُسجَّل بعد» list) in one go.
+  .post("/agreement-all", manager, async (c) => {
+    const db = c.get("db");
+    const project = c.get("project");
+    const fin = await loadFinance(db, project);
+    const registered: string[] = [];
+    for (const item of AGREEMENT_ITEMS) {
+      // v1 counts an item as registered when any entry uses its category.
+      if (fin.entries.some((e) => e.cat === item)) continue;
+      if ((await registerAgreement(db, c.get("user"), project.id, fin, item)) === "ok")
+        registered.push(item);
+    }
+    return c.json({ ok: true, registered, ...(await loadFinance(db, project)) });
   })
 
   .post("/budget", manager, zValidator("json", budgetInput), async (c) => {
@@ -386,3 +366,53 @@ export const financeApp = new Hono<Env>()
     if (!res.length) return c.json({ ok: false, error: "not_found" }, 404);
     return c.json({ ok: true, ...(await loadFinance(db, project)) });
   });
+
+type FinanceView = Awaited<ReturnType<typeof loadFinance>>;
+
+async function registerAgreement(
+  db: Db,
+  me: { id: string; orgId: string },
+  projectId: string,
+  fin: FinanceView,
+  item: string,
+): Promise<"ok" | "not_found" | "zero_amount" | "already_registered"> {
+  let cat: string;
+  let description: string;
+  let amount: number;
+  if ((AGREEMENT_ITEMS as readonly string[]).includes(item)) {
+    cat = item;
+    description = AGREEMENT_DESC[item] ?? item;
+    const s = fin.summary;
+    amount = item === "exec" ? s.execAmt : item === "cf" ? s.cfAmt : item === "mkt" ? s.mkt : s.cb;
+  } else if (item.startsWith("bdg_")) {
+    const b = fin.budget.find((x) => x.id === item.slice(4));
+    if (!b) return "not_found";
+    cat = item;
+    description = b.name;
+    amount = b.amount / 100;
+  } else {
+    return "not_found";
+  }
+  const halalas = fromRiyals(amount);
+  if (halalas <= 0) return "zero_amount";
+  if (fin.entries.some((e) => e.source === "agreement" && e.cat === cat))
+    return "already_registered";
+  const t = nowSec();
+  await db.insert(financeEntries).values({
+    id: newId("ent"),
+    orgId: me.orgId,
+    projectId,
+    date: today(),
+    description,
+    cat,
+    type: cat === "exec" ? "income" : "expense",
+    amount: halalas,
+    status: "paid",
+    source: "agreement",
+    createdBy: me.id,
+    createdAt: t,
+    updatedBy: me.id,
+    updatedAt: t,
+  });
+  return "ok";
+}
