@@ -4,9 +4,9 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import type { z } from "zod";
 import { api } from "./api";
+import { button, card, field } from "./ui";
 
 type Form = z.input<typeof changePasswordInput>;
-const field = "w-full rounded-md border border-slate-300 px-3 py-2 outline-none focus:border-brand";
 
 export function AccountPage() {
   const form = useForm<Form>({ resolver: zodResolver(changePasswordInput) });
@@ -25,7 +25,7 @@ export function AccountPage() {
   });
 
   return (
-    <section className="max-w-sm rounded-lg border bg-white p-6">
+    <section className={`max-w-sm ${card}`}>
       <h1 className="mb-4 text-xl font-bold">تغيير كلمة المرور</h1>
       {msg && (
         <p
@@ -35,7 +35,7 @@ export function AccountPage() {
           {msg.text}
         </p>
       )}
-      <form onSubmit={submit} className="space-y-3" noValidate>
+      <form onSubmit={submit} className="space-y-4" noValidate>
         <label className="block text-sm">
           كلمة المرور الحالية
           <input
@@ -59,11 +59,7 @@ export function AccountPage() {
             <span className="text-xs text-red-600">8 أحرف على الأقل</span>
           )}
         </label>
-        <button
-          type="submit"
-          disabled={form.formState.isSubmitting}
-          className="w-full rounded-md bg-brand px-3 py-2 font-semibold text-white disabled:opacity-60"
-        >
+        <button type="submit" disabled={form.formState.isSubmitting} className={button}>
           حفظ
         </button>
       </form>

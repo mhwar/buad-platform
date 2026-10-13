@@ -10,9 +10,11 @@ import {
 } from "@tanstack/react-router";
 import { AccountPage } from "./account";
 import { api } from "./api";
+import { Logo } from "./brand";
 import { LoginPage } from "./login";
 import { queryClient } from "./query-client";
 import { meQuery } from "./session";
+import { card } from "./ui";
 
 function Shell() {
   const me = useQuery(meQuery);
@@ -23,24 +25,40 @@ function Shell() {
     qc.setQueryData(meQuery.queryKey, null);
     await navigate({ to: "/login" });
   };
+  // Signed out: the page (login) owns the whole screen.
+  if (!me.data) return <Outlet />;
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900">
-      <header className="flex items-center justify-between border-b bg-white px-6 py-4">
-        <span className="text-lg font-semibold text-brand">منصة بُعد — الإصدار الثاني</span>
-        {me.data && (
-          <span className="flex items-center gap-3 text-sm">
-            <Link to="/account" className="underline">
+    <div className="flex min-h-screen flex-col">
+      <header className="sticky top-0 z-10 border-b bg-surface/90 backdrop-blur">
+        <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-3">
+          <Link to="/" aria-label="الرئيسية">
+            <Logo className="hidden h-12 w-auto sm:block" />
+            <Logo variant="icon" className="h-10 w-auto sm:hidden" />
+          </Link>
+          <nav className="flex items-center gap-4 text-sm">
+            <Link
+              to="/account"
+              className="text-muted hover:text-ink"
+              activeProps={{ className: "font-semibold text-ink" }}
+            >
               {me.data.name || me.data.email}
             </Link>
-            <button type="button" onClick={logout} className="rounded border px-2 py-1">
+            <button
+              type="button"
+              onClick={logout}
+              className="rounded-lg border px-3 py-1.5 text-muted transition hover:text-ink"
+            >
               خروج
             </button>
-          </span>
-        )}
+          </nav>
+        </div>
       </header>
-      <main className="mx-auto max-w-4xl p-6">
+      <main className="mx-auto w-full max-w-5xl flex-1 p-6">
         <Outlet />
       </main>
+      <footer className="border-t py-4 text-center text-xs text-muted">
+        بُعد التمكين · الإصدار الثاني
+      </footer>
     </div>
   );
 }
@@ -51,9 +69,9 @@ export function Home() {
     queryFn: async () => (await api.api.health.$get()).json(),
   });
   return (
-    <section className="rounded-lg border bg-white p-6">
+    <section className={card}>
       <h1 className="mb-2 text-xl font-bold">الأساس جاهز</h1>
-      <p className="text-slate-600" data-testid="status">
+      <p className="text-muted" data-testid="status">
         {health.isPending && "جارٍ فحص الخادم…"}
         {health.isError && "الخادم غير متاح"}
         {health.data && `الخادم يعمل — الإصدار ${health.data.version}`}
