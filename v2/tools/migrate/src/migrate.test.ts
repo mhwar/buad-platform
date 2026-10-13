@@ -9,6 +9,7 @@ const fixture = JSON.parse(readFileSync(join(__dirname, "../fixtures/v1-sample.j
 
 function freshDb() {
   const db = new Database(":memory:");
+  db.pragma("foreign_keys = ON");
   const dir = join(__dirname, "../../../apps/api/migrations");
   for (const f of readdirSync(dir)
     .filter((f) => f.endsWith(".sql"))

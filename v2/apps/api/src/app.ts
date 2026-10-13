@@ -16,6 +16,8 @@ import { requireAuth, requireRole, type Vars } from "./auth/middleware";
 import { type Db, getUser, login, setPassword } from "./auth/service";
 import { SESSION_COOKIE, SESSION_TTL, signSession, signSetup, verifySetup } from "./auth/session";
 import { claimOwner, ownerExists, setupEnabled, tokenMatches } from "./auth/setup";
+import { clientsApp } from "./modules/clients";
+import { projectsApp } from "./modules/projects";
 
 export type Env = {
   APP_VERSION: string;
@@ -142,6 +144,9 @@ export function createApp(deps: AppDeps = {}) {
           .where(eq(users.orgId, c.get("user").orgId));
         return c.json({ ok: true, users: rows });
       })
+
+      .route("/api/clients", clientsApp)
+      .route("/api/projects", projectsApp)
 
       .onError((err, c) => {
         console.error(err);

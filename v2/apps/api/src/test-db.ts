@@ -7,6 +7,7 @@ import type { Db } from "./auth/service";
 /** A fresh in-memory SQLite with the real generated migrations applied. */
 export function testDb() {
   const sqlite = new Database(":memory:");
+  sqlite.pragma("foreign_keys = ON"); // D1 enforces foreign keys; tests must too
   const dir = join(__dirname, "../migrations");
   for (const f of readdirSync(dir)
     .filter((f) => f.endsWith(".sql"))

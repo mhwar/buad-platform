@@ -1,3 +1,4 @@
+import { type Business, planBusiness } from "./business";
 import type { V1Member, V1Org, V1Snapshot, V1User } from "./v1";
 
 export const PLATFORM_ORG_ID = "org_platform";
@@ -31,6 +32,7 @@ export interface Plan {
   users: UserRow[];
   rejects: Reject[];
   inventory: Record<string, number | string>;
+  business: Business;
 }
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -169,7 +171,13 @@ export function planMigration(v1: V1Snapshot): Plan {
     });
   }
 
-  return { orgs, users, rejects, inventory: inventory(v1.workspace) };
+  return {
+    orgs,
+    users,
+    rejects,
+    inventory: inventory(v1.workspace),
+    business: planBusiness(parseWorkspace(v1.workspace)),
+  };
 }
 
 /** What the workspace blob contains. Counted now, converted module by module in later phases. */
@@ -189,4 +197,17 @@ function inventory(ws: V1Snapshot["workspace"]): Record<string, number | string>
     else if (v && typeof v === "object") out[k] = `${Object.keys(v).length} مفتاح`;
   }
   return out;
+}
+
+function parseWorkspace(ws: V1Snapshot["workspace"]): Record<string, unknown> {
+  if (!ws) return {};
+  if (typeof ws === "string") {
+    try {
+      const d = JSON.parse(ws);
+      return d && typeof d === "object" ? d : {};
+    } catch {
+      return {};
+    }
+  }
+  return ws;
 }

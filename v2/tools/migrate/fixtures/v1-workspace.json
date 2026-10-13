@@ -1,0 +1,87 @@
+{
+  "clients": [
+    {
+      "id": "c2",
+      "name": "جمعية البر",
+      "type": "association",
+      "reg_no": "111",
+      "tax_no": "300111",
+      "contact_name": "أحمد",
+      "contact_title": "الرئيس",
+      "notes": "عميل قديم",
+      "created": "2025-03-01"
+    },
+    {
+      "id": "c1",
+      "name": "شركة الأفق",
+      "type": "company",
+      "email": "INFO@ufuq.sa",
+      "city": "الرياض",
+      "created": "2025-01-15",
+      "logo": "data:image/png;base64,iVBORw0KGgo="
+    },
+    {
+      "id": "c3",
+      "name": "جمعية من المئة يوم",
+      "source": "100day",
+      "contact": "سارة",
+      "note": "أُنشئ من خطة المئة يوم",
+      "created": "2025-05-10"
+    },
+    { "id": "c4", "name": "مكرر السجل", "reg_no": "111", "type": "weird", "created": "2025-06-01" },
+    { "id": "c5", "name": "", "created": "2025-06-02" },
+    {
+      "id": "c6",
+      "name": "شعار ضخم",
+      "logo": "data:image/bmp;base64,AAAA",
+      "created": "2025-07-01"
+    }
+  ],
+  "projects": [
+    {
+      "id": "p1",
+      "client_id": "c1",
+      "name": "برنامج تدريبي",
+      "type": "training",
+      "status": "active",
+      "owner_id": "usr_admin_1",
+      "start_date": "2025-02-01",
+      "end_date": "2025-03-01",
+      "created": "2025-02-01",
+      "notes": "أ",
+      "note": "ب"
+    },
+    {
+      "id": "p2",
+      "client_id": "c2",
+      "name": "فعالية",
+      "type": "event",
+      "status": "completed",
+      "visibility": "private",
+      "created": "2026-01-10",
+      "_initial_contract_val": "5000"
+    },
+    {
+      "id": "p3",
+      "client_id": "c1",
+      "name": "استشارة",
+      "type": "consulting",
+      "status": "paused",
+      "created": "2025-04-01",
+      "start_date": "2025-05-01",
+      "end_date": "2025-04-01"
+    },
+    { "id": "p4", "client_id": "ghost", "name": "يتيم", "created": "2025-04-02" },
+    {
+      "id": "p5",
+      "client_id": "c1",
+      "name": "بحالة غريبة",
+      "status": "done",
+      "created": "2025-08-01"
+    }
+  ],
+  "fin": {
+    "p1": { "ctrl": { "contract_value": "115,000.50" } },
+    "p2": { "ctrl": {} }
+  }
+}
