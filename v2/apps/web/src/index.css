@@ -8,3 +8,12 @@
 html {
   font-family: var(--font-sans);
 }
+
+/* Tailwind 4 defaults borders to currentColor; keep them soft. */
+@layer base {
+  *,
+  ::after,
+  ::before {
+    border-color: var(--color-slate-200);
+  }
+}
