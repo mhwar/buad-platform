@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { Briefcase, Plus, Users } from "lucide-react";
+import { Briefcase, FileUp, Plus, Users } from "lucide-react";
 import { useState } from "react";
 import { Badge, Button, Card, EmptyState, PageHeader } from "./components/ui";
 import { clientsQuery } from "./features/clients/api";
@@ -40,6 +40,22 @@ export function Home() {
           </>
         }
       />
+      {me?.role === "owner" && clients.data && clientCount === 0 && (
+        <Card className="mb-6 flex flex-wrap items-center justify-between gap-4 border-brand bg-brand-soft">
+          <div>
+            <p className="font-semibold">ابدؤوا بنقل عملائكم من المنصة الحالية</p>
+            <p className="mt-1 text-sm text-muted">
+              اختاروا عميلاً أو أكثر بكامل بياناته ومشاريعه، ثم أضيفوا البقية تدريجياً.
+            </p>
+          </div>
+          <Link
+            to="/import"
+            className="inline-flex items-center gap-2 rounded-lg bg-brand px-3.5 py-2 text-sm font-semibold text-white dark:text-canvas"
+          >
+            <FileUp className="size-4" /> استيراد من المنصة الحالية
+          </Link>
+        </Card>
+      )}
       <div className="mb-8 grid gap-4 sm:grid-cols-3">
         <Stat
           to="/clients"

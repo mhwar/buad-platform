@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { getRouteApi, Link } from "@tanstack/react-router";
-import { Plus } from "lucide-react";
+import { FileUp, Plus } from "lucide-react";
 import { useDeferredValue, useState } from "react";
 import {
   Avatar,
@@ -15,6 +15,7 @@ import {
   ViewToggle,
 } from "../../components/ui";
 import { money } from "../../lib/format";
+import { meQuery } from "../../session";
 import { CLIENT_TYPE_LABELS, label } from "../labels";
 import { type ClientListItem, type ClientType, clientsQuery } from "./api";
 import { ClientDialog } from "./ClientDialog";
@@ -31,6 +32,15 @@ export function ClientsPage() {
     clientsQuery({ q, type: s.type, sort: s.sort, archived: s.archived ? "1" : "0" }),
   );
   const [adding, setAdding] = useState(false);
+  const owner = useQuery(meQuery).data?.role === "owner";
+  const importLink = owner && (
+    <Link
+      to="/import"
+      className="inline-flex items-center gap-2 rounded-lg border bg-surface px-3.5 py-2 text-sm font-semibold transition hover:bg-brand-soft"
+    >
+      <FileUp className="size-4" /> استيراد من المنصة الحالية
+    </Link>
+  );
   const counts = list.data?.counts ?? {};
   const total = Object.values(counts).reduce((a, b) => a + b, 0);
   const items = list.data?.items ?? [];
@@ -42,9 +52,12 @@ export function ClientsPage() {
         title={s.archived ? "العملاء المؤرشفون" : "العملاء"}
         subtitle={list.data ? `${total} عميل` : " "}
         actions={
-          <Button onClick={() => setAdding(true)}>
-            <Plus className="size-4" /> عميل جديد
-          </Button>
+          <>
+            {importLink}
+            <Button onClick={() => setAdding(true)}>
+              <Plus className="size-4" /> عميل جديد
+            </Button>
+          </>
         }
       />
       <div className="mb-4 flex flex-wrap items-center gap-3">
@@ -102,11 +115,14 @@ export function ClientsPage() {
         ) : (
           <EmptyState
             title="لا يوجد عملاء بعد"
-            text="ابدؤوا بتسجيل أول عميل، ثم أضيفوا مشاريعه من صفحته."
+            text="سجّلوا أول عميل ثم أضيفوا مشاريعه من صفحته، أو انقلوا عملاءكم من المنصة الحالية."
             action={
-              <Button onClick={() => setAdding(true)}>
-                <Plus className="size-4" /> عميل جديد
-              </Button>
+              <div className="flex flex-wrap justify-center gap-2">
+                {importLink}
+                <Button onClick={() => setAdding(true)}>
+                  <Plus className="size-4" /> عميل جديد
+                </Button>
+              </div>
             }
           />
         )

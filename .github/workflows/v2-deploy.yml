@@ -32,6 +32,9 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm verify
       - run: pnpm --filter @buad/web build
+        env:
+          # Lets an open browser notice a newer deploy and offer to reload.
+          VITE_APP_VERSION: ${{ github.sha }}
       - name: Apply database migrations
         working-directory: v2/apps/api
         run: pnpm exec wrangler d1 migrations apply buad-v2 --remote
@@ -54,7 +57,7 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       - name: Deploy
         working-directory: v2/apps/api
-        run: pnpm exec wrangler deploy
+        run: pnpm exec wrangler deploy --var "APP_VERSION:${GITHUB_SHA::7}"
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
