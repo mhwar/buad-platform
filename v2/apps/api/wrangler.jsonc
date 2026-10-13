@@ -1,0 +1,10 @@
+{
+  "name": "buad-v2-api",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-09-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "vars": { "APP_VERSION": "0.0.0" }
+  // Bindings are added in Phase 1 once the Cloudflare connector is authorised:
+  // "d1_databases": [{ "binding": "DB", "database_name": "buad-v2", "database_id": "<id>" }],
+  // "r2_buckets":  [{ "binding": "FILES", "bucket_name": "buad-v2-files" }]
+}

@@ -1,0 +1,10 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "IBM Plex Sans Arabic", "Segoe UI", Tahoma, system-ui, sans-serif;
+  --color-brand: oklch(0.52 0.13 245);
+}
+
+html {
+  font-family: var(--font-sans);
+}

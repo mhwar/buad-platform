@@ -1,0 +1,7 @@
+{
+  "files": { "includes": ["**", "!**/dist", "!**/node_modules", "!**/.wrangler"] },
+  "formatter": { "indentStyle": "space", "indentWidth": 2, "lineWidth": 100 },
+  "linter": { "enabled": true, "rules": { "preset": "none" } },
+  "css": { "parser": { "tailwindDirectives": true } },
+  "javascript": { "formatter": { "quoteStyle": "double" } }
+}

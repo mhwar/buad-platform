@@ -1,0 +1,28 @@
+{
+  "name": "@buad/api",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "build": "wrangler deploy --dry-run --outdir dist",
+    "typecheck": "tsc -p .",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@buad/schema": "workspace:*",
+    "@buad/domain": "workspace:*",
+    "@hono/zod-validator": "^0.7.0",
+    "hono": "^4.9.0",
+    "zod": "^4.0.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20261006.1",
+    "vitest": "^3.2.0",
+    "wrangler": "^4.30.0"
+  },
+  "exports": {
+    ".": "./src/index.ts",
+    "./app": "./src/app.ts"
+  }
+}

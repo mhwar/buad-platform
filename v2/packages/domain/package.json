@@ -1,0 +1,17 @@
+{
+  "name": "@buad/domain",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p .",
+    "test": "vitest run",
+    "build": "echo \"domain: consumed from source\""
+  },
+  "devDependencies": {
+    "vitest": "^3.2.0"
+  }
+}
