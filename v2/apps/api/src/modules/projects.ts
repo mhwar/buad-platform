@@ -1,0 +1,240 @@
+import { formatCode, fromRiyals } from "@buad/domain";
+import { listQuery, projectInput, projectPatch } from "@buad/schema/clients";
+import { clients, projects } from "@buad/schema/db";
+import { zValidator } from "@hono/zod-validator";
+import { and, asc, count, desc, eq, isNotNull, isNull, or, type SQL, sql } from "drizzle-orm";
+import { Hono } from "hono";
+import { requireAuth, requireRole, type Vars } from "../auth/middleware";
+import type { AuthUser, Db } from "../auth/service";
+import { isManager, likeTerm, newId, nextCounter, nowSec } from "./common";
+
+type Env = { Bindings: { JWT_SECRET: string }; Variables: Vars };
+
+/**
+ * v1 rule (app.html getProjectsForUser): managers see everything; others see their own
+ * projects, team projects, and projects with no owner.
+ */
+export function visibleProjects(me: Pick<AuthUser, "id" | "role">): {
+  where: SQL | undefined;
+  sqlFor: (alias: string) => SQL;
+} {
+  if (isManager(me.role)) return { where: undefined, sqlFor: () => sql`1 = 1` };
+  return {
+    where: or(
+      eq(projects.ownerId, me.id),
+      eq(projects.visibility, "team"),
+      eq(projects.ownerId, ""),
+    ),
+    sqlFor: (a) =>
+      sql`(${sql.raw(a)}.owner_id = ${me.id} OR ${sql.raw(a)}.visibility = 'team' OR ${sql.raw(a)}.owner_id = '')`,
+  };
+}
+
+async function loadVisible(db: Db, me: AuthUser, id: string) {
+  const [row] = await db
+    .select()
+    .from(projects)
+    .where(and(eq(projects.id, id), eq(projects.orgId, me.orgId), visibleProjects(me).where))
+    .limit(1);
+  return row ?? null;
+}
+
+async function liveClient(db: Db, orgId: string, clientId: string) {
+  const [row] = await db
+    .select({ id: clients.id, archivedAt: clients.archivedAt })
+    .from(clients)
+    .where(and(eq(clients.id, clientId), eq(clients.orgId, orgId)))
+    .limit(1);
+  return row ?? null;
+}
+
+export const projectsApp = new Hono<Env>()
+  .use(requireAuth)
+
+  .get("/", zValidator("query", listQuery), async (c) => {
+    const db = c.get("db");
+    const me = c.get("user");
+    const q = c.req.valid("query");
+    const live = q.archived === "1" ? isNotNull(projects.archivedAt) : isNull(projects.archivedAt);
+    const search = q.q
+      ? or(
+          sql`${projects.name} LIKE ${likeTerm(q.q)} ESCAPE '\\'`,
+          sql`${projects.number} LIKE ${likeTerm(q.q)} ESCAPE '\\'`,
+          sql`${clients.name} LIKE ${likeTerm(q.q)} ESCAPE '\\'`,
+        )
+      : undefined;
+    const base = and(
+      eq(projects.orgId, me.orgId),
+      live,
+      visibleProjects(me).where,
+      q.clientId ? eq(projects.clientId, q.clientId) : undefined,
+      q.type ? eq(projects.type, q.type as never) : undefined,
+      search,
+    );
+    const order =
+      q.sort === "name"
+        ? [asc(projects.name)]
+        : q.sort === "value"
+          ? [desc(projects.expectedValue), asc(projects.name)]
+          : [desc(projects.createdAt), desc(projects.number)];
+    const items = await db
+      .select({
+        id: projects.id,
+        number: projects.number,
+        name: projects.name,
+        type: projects.type,
+        status: projects.status,
+        visibility: projects.visibility,
+        location: projects.location,
+        startDate: projects.startDate,
+        endDate: projects.endDate,
+        expectedValue: projects.expectedValue,
+        archivedAt: projects.archivedAt,
+        clientId: projects.clientId,
+        clientName: clients.name,
+        clientCode: clients.code,
+      })
+      .from(projects)
+      .innerJoin(clients, eq(clients.id, projects.clientId))
+      .where(and(base, q.status ? eq(projects.status, q.status as never) : undefined))
+      .orderBy(...order)
+      .limit(1000);
+    const byStatus = await db
+      .select({ status: projects.status, n: count() })
+      .from(projects)
+      .innerJoin(clients, eq(clients.id, projects.clientId))
+      .where(base)
+      .groupBy(projects.status);
+    return c.json({
+      ok: true,
+      items,
+      counts: Object.fromEntries(byStatus.map((r) => [r.status, r.n])) as Record<string, number>,
+    });
+  })
+
+  .post("/", zValidator("json", projectInput), async (c) => {
+    const db = c.get("db");
+    const me = c.get("user");
+    const v = c.req.valid("json");
+    const client = await liveClient(db, me.orgId, v.clientId);
+    if (!client) return c.json({ ok: false, error: "client_not_found" }, 404);
+    if (client.archivedAt) return c.json({ ok: false, error: "client_archived" }, 409);
+    const year = new Date().getUTCFullYear();
+    const number = formatCode("PRJ", await nextCounter(db, me.orgId, "project", year), year);
+    const id = newId("prj");
+    const t = nowSec();
+    await db.insert(projects).values({
+      id,
+      orgId: me.orgId,
+      clientId: v.clientId,
+      number,
+      name: v.name,
+      type: v.type,
+      status: v.status,
+      ownerId: me.id,
+      visibility: v.visibility,
+      location: v.location,
+      startDate: v.startDate,
+      endDate: v.endDate,
+      payDate: v.payDate,
+      expectedValue: fromRiyals(v.expectedValue),
+      notes: v.notes,
+      createdBy: me.id,
+      createdAt: t,
+      updatedBy: me.id,
+      updatedAt: t,
+    });
+    return c.json({ ok: true, id, number }, 201);
+  })
+
+  .get("/:id", async (c) => {
+    const db = c.get("db");
+    const me = c.get("user");
+    const project = await loadVisible(db, me, c.req.param("id"));
+    if (!project) return c.json({ ok: false, error: "not_found" }, 404);
+    const [client] = await db
+      .select({
+        id: clients.id,
+        code: clients.code,
+        name: clients.name,
+        type: clients.type,
+        archivedAt: clients.archivedAt,
+      })
+      .from(clients)
+      .where(eq(clients.id, project.clientId))
+      .limit(1);
+    return c.json({ ok: true, project, client: client ?? null });
+  })
+
+  .patch("/:id", zValidator("json", projectPatch), async (c) => {
+    const db = c.get("db");
+    const me = c.get("user");
+    const current = await loadVisible(db, me, c.req.param("id"));
+    if (!current) return c.json({ ok: false, error: "not_found" }, 404);
+    const v = c.req.valid("json");
+    if (
+      v.visibility !== undefined &&
+      v.visibility !== current.visibility &&
+      current.ownerId !== me.id &&
+      !isManager(me.role)
+    ) {
+      return c.json({ ok: false, error: "forbidden" }, 403);
+    }
+    if (v.clientId !== undefined && v.clientId !== current.clientId) {
+      const client = await liveClient(db, me.orgId, v.clientId);
+      if (!client) return c.json({ ok: false, error: "client_not_found" }, 404);
+      if (client.archivedAt) return c.json({ ok: false, error: "client_archived" }, 409);
+    }
+    const start = v.startDate ?? current.startDate;
+    const end = v.endDate ?? current.endDate;
+    if (start && end && end < start) return c.json({ ok: false, error: "end_before_start" }, 400);
+    const { expectedValue, ...rest } = v;
+    await db
+      .update(projects)
+      .set({
+        ...rest,
+        ...(expectedValue !== undefined ? { expectedValue: fromRiyals(expectedValue) } : {}),
+        updatedBy: me.id,
+        updatedAt: nowSec(),
+      })
+      .where(eq(projects.id, current.id));
+    return c.json({ ok: true });
+  })
+
+  .post("/:id/archive", requireRole("owner", "admin"), async (c) => {
+    const db = c.get("db");
+    const me = c.get("user");
+    const p = await loadVisible(db, me, c.req.param("id"));
+    if (!p) return c.json({ ok: false, error: "not_found" }, 404);
+    if (!p.archivedAt) {
+      const t = nowSec();
+      await db
+        .update(projects)
+        .set({ archivedAt: t, archivedWith: "", updatedBy: me.id, updatedAt: t })
+        .where(eq(projects.id, p.id));
+    }
+    return c.json({ ok: true });
+  })
+
+  .post("/:id/restore", requireRole("owner", "admin"), async (c) => {
+    const db = c.get("db");
+    const me = c.get("user");
+    const p = await loadVisible(db, me, c.req.param("id"));
+    if (!p) return c.json({ ok: false, error: "not_found" }, 404);
+    const client = await liveClient(db, me.orgId, p.clientId);
+    if (client?.archivedAt) return c.json({ ok: false, error: "client_archived" }, 409);
+    await db
+      .update(projects)
+      .set({ archivedAt: null, archivedWith: "", updatedBy: me.id, updatedAt: nowSec() })
+      .where(eq(projects.id, p.id));
+    return c.json({ ok: true });
+  })
+
+  .delete("/:id", requireRole("owner"), async (c) => {
+    const db = c.get("db");
+    const me = c.get("user");
+    const p = await loadVisible(db, me, c.req.param("id"));
+    if (!p) return c.json({ ok: false, error: "not_found" }, 404);
+    await db.delete(projects).where(eq(projects.id, p.id));
+    return c.json({ ok: true });
+  });

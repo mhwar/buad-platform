@@ -17,7 +17,8 @@
     "bootstrap-owner": "tsx src/bootstrap-owner.ts"
   },
   "dependencies": {
-    "@buad/schema": "workspace:*"
+    "@buad/schema": "workspace:*",
+    "@buad/domain": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

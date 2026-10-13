@@ -45,5 +45,6 @@ export const allocate = (total: Halalas, weights: number[]): Halalas[] => {
   return floors.map(halalas);
 };
 
-const nf = new Intl.NumberFormat("ar-SA", { style: "currency", currency: "SAR" });
+// Latin digits, matching dates and the rest of the UI.
+const nf = new Intl.NumberFormat("ar-SA-u-nu-latn", { style: "currency", currency: "SAR" });
 export const formatSar = (h: Halalas): string => nf.format(toRiyals(h));

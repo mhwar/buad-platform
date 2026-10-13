@@ -1,21 +1,33 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen } from "@testing-library/react";
+import { screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { Home } from "./router";
+import { Home } from "./home";
+import { renderWithApp, stubApi } from "./test-utils";
 
 afterEach(() => vi.unstubAllGlobals());
 
 describe("Home", () => {
-  it("shows the server version once health resolves", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(async () => Response.json({ ok: true, service: "buad-v2-api", version: "9.9.9" })),
-    );
-    render(
-      <QueryClientProvider client={new QueryClient()}>
-        <Home />
-      </QueryClientProvider>,
-    );
-    expect(await screen.findByText(/الإصدار 9\.9\.9/)).toBeInTheDocument();
+  it("summarises clients and active projects", async () => {
+    stubApi({
+      "GET /api/me": () => ({ ok: true, user: { id: "u", name: "سلطان", role: "owner" } }),
+      "GET /api/clients": () => ({ items: [], counts: { company: 2, association: 1 } }),
+      "GET /api/projects": () => ({
+        items: [
+          {
+            id: "p1",
+            name: "برنامج",
+            clientName: "الأفق",
+            status: "active",
+            expectedValue: 150000,
+          },
+          { id: "p2", name: "قديم", clientName: "البر", status: "completed", expectedValue: 99900 },
+        ],
+        counts: { active: 1, completed: 1 },
+      }),
+    });
+    await renderWithApp(<Home />);
+    expect(await screen.findByText("أهلاً سلطان")).toBeInTheDocument();
+    expect(await screen.findByText("3")).toBeInTheDocument(); // clients
+    expect(screen.getByText("برنامج")).toBeInTheDocument();
+    expect(screen.getByText(/1,500\.00|١٬٥٠٠/)).toBeInTheDocument(); // only the active project's value
   });
 });

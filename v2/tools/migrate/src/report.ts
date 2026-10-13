@@ -39,5 +39,28 @@ export function toReport(plan: Plan): string {
     for (const [k, v] of inv) lines.push(`| ${k} | ${v} |`);
     lines.push("");
   }
+  const b = plan.business;
+  const rejected = b.issues.filter((i) => i.severity === "rejected");
+  const fixed = b.issues.filter((i) => i.severity === "fixed");
+  lines.push(
+    "## العملاء والمشاريع",
+    "",
+    `- عملاء سيُنقلون: **${b.clients.length}** (بأرقام CL-0001 … حسب تاريخ الإنشاء)`,
+    `- مفوّضون بالتوقيع: **${b.contacts.length}**`,
+    `- مشاريع ستُنقل: **${b.projects.length}**`,
+    `- مرفوض: **${rejected.length}** · نُقل مع تصحيح: **${fixed.length}**`,
+    "",
+  );
+  const kindAr2 = { client: "عميل", project: "مشروع" } as const;
+  for (const [title, list] of [
+    ["## المرفوض من العملاء والمشاريع", rejected],
+    ["## نُقل مع تصحيح", fixed],
+  ] as const) {
+    if (!list.length) continue;
+    lines.push(title, "", "| النوع | المعرّف | الاسم | السبب |", "|---|---|---|---|");
+    for (const i of list)
+      lines.push(`| ${kindAr2[i.kind]} | ${i.id} | ${i.name || "—"} | ${i.reason} |`);
+    lines.push("");
+  }
   return lines.join("\n");
 }
