@@ -1,7 +1,7 @@
 import * as RDialog from "@radix-ui/react-dialog";
 import * as RMenu from "@radix-ui/react-dropdown-menu";
 import { Link } from "@tanstack/react-router";
-import { LayoutGrid, List, MoreHorizontal, Search, X } from "lucide-react";
+import { ChevronDown, LayoutGrid, List, MoreHorizontal, Search, X } from "lucide-react";
 import {
   type ComponentProps,
   cloneElement,
@@ -424,3 +424,147 @@ export function Menu({
 }
 
 export { cx, Link };
+
+/**
+ * Side sheet (Radix dialog): slides in from the inline-end edge on desktop, full screen on phones.
+ * Used for settings that are set up once and only revisited, so they do not take page space.
+ */
+export function Sheet({
+  open,
+  onOpenChange,
+  title,
+  description,
+  children,
+  footer,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  title: string;
+  description?: string;
+  children: ReactNode;
+  footer?: ReactNode;
+}) {
+  return (
+    <RDialog.Root open={open} onOpenChange={onOpenChange}>
+      <RDialog.Portal>
+        <RDialog.Overlay className="fixed inset-0 z-40 bg-black/30 backdrop-blur-[1px]" />
+        <RDialog.Content
+          dir="rtl"
+          aria-describedby={undefined}
+          className="fixed inset-y-0 left-0 z-50 flex w-full flex-col border-r bg-surface shadow-2xl sm:max-w-xl"
+        >
+          <div className="flex items-start justify-between gap-4 border-b px-6 py-4">
+            <div>
+              <RDialog.Title className="text-lg font-bold">{title}</RDialog.Title>
+              {description && <p className="mt-0.5 text-sm text-muted">{description}</p>}
+            </div>
+            <RDialog.Close className="rounded-md p-1 text-muted hover:text-ink" aria-label="إغلاق">
+              <X className="size-5" />
+            </RDialog.Close>
+          </div>
+          <div className="flex-1 overflow-y-auto px-6 py-5">{children}</div>
+          {footer && <div className="border-t px-6 py-3">{footer}</div>}
+        </RDialog.Content>
+      </RDialog.Portal>
+    </RDialog.Root>
+  );
+}
+
+/** Compact section switcher: a few sections instead of a growing row of tabs. */
+export function Segmented<T extends string>({
+  value,
+  onChange,
+  items,
+  label,
+}: {
+  value: T;
+  onChange: (v: T) => void;
+  items: { value: T; label: string; hint?: string; soon?: boolean; icon?: ReactNode }[];
+  label: string;
+}) {
+  return (
+    <div
+      role="tablist"
+      aria-label={label}
+      className="inline-flex w-full gap-1 overflow-x-auto rounded-xl border bg-surface p-1 sm:w-auto"
+    >
+      {items.map((i) => (
+        <button
+          key={i.value}
+          type="button"
+          role="tab"
+          aria-selected={value === i.value}
+          title={i.hint}
+          onClick={() => onChange(i.value)}
+          className={cx(
+            "inline-flex flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg px-2.5 py-2 text-sm transition sm:flex-none sm:gap-2 sm:px-4",
+            value === i.value
+              ? "bg-brand text-white shadow-sm dark:text-canvas"
+              : "text-muted hover:bg-brand-soft hover:text-ink",
+          )}
+        >
+          {i.icon}
+          {i.label}
+          {i.soon && (
+            <span
+              className={cx(
+                "rounded px-1.5 text-[10px]",
+                value === i.value ? "bg-white/20" : "bg-slate-100 dark:bg-slate-800",
+              )}
+            >
+              قريباً
+            </span>
+          )}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/** A badge that opens a small menu of choices (e.g. project status). */
+export function BadgeMenu({
+  tone,
+  label,
+  options,
+  onSelect,
+  disabled,
+}: {
+  tone: Tone;
+  label: string;
+  options: { value: string; label: string; tone: Tone }[];
+  onSelect: (v: string) => void;
+  disabled?: boolean;
+}) {
+  if (disabled) return <Badge tone={tone}>{label}</Badge>;
+  return (
+    <RMenu.Root dir="rtl">
+      <RMenu.Trigger
+        className={cx(
+          "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium outline-none ring-accent focus-visible:ring-2",
+          tones[tone],
+        )}
+        aria-label={`الحالة: ${label} — تغيير`}
+      >
+        {label}
+        <ChevronDown className="size-3" />
+      </RMenu.Trigger>
+      <RMenu.Portal>
+        <RMenu.Content
+          align="start"
+          sideOffset={6}
+          className="z-50 min-w-40 rounded-xl border bg-surface p-1 shadow-lg"
+        >
+          {options.map((o) => (
+            <RMenu.Item
+              key={o.value}
+              onSelect={() => onSelect(o.value)}
+              className="cursor-pointer rounded-lg px-2 py-1.5 outline-none data-[highlighted]:bg-brand-soft"
+            >
+              <Badge tone={o.tone}>{o.label}</Badge>
+            </RMenu.Item>
+          ))}
+        </RMenu.Content>
+      </RMenu.Portal>
+    </RMenu.Root>
+  );
+}

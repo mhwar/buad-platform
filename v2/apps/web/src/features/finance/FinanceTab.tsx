@@ -1,31 +1,60 @@
 import { ENTRY_STATUS_LABELS } from "@buad/schema/finance";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertTriangle, Download, Plus, Trash2 } from "lucide-react";
+import { AlertTriangle, Download, Plus, Settings2, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
-import { Badge, Button, Card, EmptyState, Input, Pills, SearchBox } from "../../components/ui";
+import { Badge, Button, Card, Input, Pills, SearchBox, Sheet } from "../../components/ui";
 import { day, pct, sar } from "../../lib/format";
 import { type Entry, type Finance, financeApi, financeKey, financeQuery } from "./api";
 import { ControlCentre } from "./ControlCentre";
 import { EntryDialog } from "./EntryDialog";
 import { catLabel } from "./labels";
 
-/** Hero numbers shown on top of the project page (v1 render_fin hero, L5765). */
-export function FinanceHero({ projectId }: { projectId: string }) {
-  const q = useQuery(financeQuery(projectId));
+/* ─────────────────────────────────────────────────────────────────────────────
+ * Project finance, laid out by how often each part is used:
+ *  - FinanceStrip     the four numbers people look at first, plus what still needs registering
+ *  - Transactions     the daily work (main column)
+ *  - ContractSummary  how the contract value breaks down (side column, always visible)
+ *  - FinanceSettings  contract terms, fees and budget: set once, so they live in a side sheet
+ * ──────────────────────────────────────────────────────────────────────────── */
+
+export function useFinance(projectId: string) {
+  return useQuery(financeQuery(projectId));
+}
+
+export function FinanceStrip({
+  projectId,
+  canEdit,
+  onSettings,
+  onRegister,
+}: {
+  projectId: string;
+  canEdit: boolean;
+  onSettings: () => void;
+  onRegister: () => void;
+}) {
+  const q = useFinance(projectId);
+  if (q.isPending) return <Card className="mb-6 h-36 animate-pulse" aria-busy />;
   if (!q.data) return null;
-  const s = q.data.summary;
+  const { summary: s, ctrl } = q.data;
   const margin = s.grossTotal ? (s.profit / s.grossTotal) * 100 : 0;
-  const spent = s.grossTotal ? Math.min(100, (s.totalDeductions / s.grossTotal) * 100) : 0;
+  const spent = s.grossTotal ? (s.totalDeductions / s.grossTotal) * 100 : 0;
+  const notSetUp = ctrl.version === 0;
   return (
-    <Card className="mb-6">
-      <div className="grid gap-4 sm:grid-cols-4">
-        <Stat label="قيمة العقد الإجمالية" value={sar(s.grossTotal)} />
+    <Card className="mb-6 p-0">
+      <div className="grid grid-cols-2 divide-line sm:grid-cols-4 sm:divide-x sm:divide-x-reverse">
+        <Stat
+          label="قيمة العقد الإجمالية"
+          value={sar(s.grossTotal)}
+          sub={ctrl.vatIncluded ? "شاملة الضريبة" : `+ ضريبة ${ctrl.vatPct}%`}
+          onClick={onSettings}
+          action="إعدادات العقد"
+        />
         <Stat label="صافي الربح" value={sar(s.profit)} tone="good" />
         <Stat
           label="المتبقي من العقد"
           value={sar(s.remaining)}
           tone={s.remaining < 0 ? "bad" : undefined}
-          note={s.remaining < 0 ? "▲ تجاوز" : undefined}
+          sub={s.remaining < 0 ? "▲ تجاوز قيمة العقد" : undefined}
         />
         <Stat
           label="هامش الربح"
@@ -33,10 +62,10 @@ export function FinanceHero({ projectId }: { projectId: string }) {
           tone={margin >= 20 ? "good" : margin >= 0 ? "warn" : "bad"}
         />
       </div>
-      <div className="mt-4">
-        <div className="mb-1 flex justify-between text-xs text-muted">
-          <span>إجمالي المصروف: {sar(s.totalDeductions)}</span>
-          <span>{pct(spent)} من قيمة العقد</span>
+      <div className="border-t px-5 py-3">
+        <div className="mb-1.5 flex justify-between text-xs text-muted">
+          <span>إجمالي المصروف من العقد: {sar(s.totalDeductions)}</span>
+          <span>{pct(spent)}</span>
         </div>
         <div
           className="h-2 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700"
@@ -44,14 +73,40 @@ export function FinanceHero({ projectId }: { projectId: string }) {
           aria-valuenow={Math.round(spent)}
           aria-valuemin={0}
           aria-valuemax={100}
-          aria-label="نسبة الصرف"
+          aria-label="نسبة الصرف من قيمة العقد"
         >
           <div
-            className={`h-full rounded-full ${spent > 90 ? "bg-red-500" : spent > 70 ? "bg-amber-500" : "bg-accent"}`}
-            style={{ width: `${spent}%` }}
+            className={`h-full rounded-full transition-all ${spent > 90 ? "bg-red-500" : spent > 70 ? "bg-amber-500" : "bg-accent"}`}
+            style={{ width: `${Math.min(100, spent)}%` }}
           />
         </div>
       </div>
+      {notSetUp && canEdit ? (
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t bg-brand-soft/60 px-5 py-3 text-sm">
+          <span>
+            هذه الأرقام من القيم الافتراضية (ضريبة 15٪، أتعاب تنفيذ 10٪). اضبطوا شروط العقد لتكون
+            دقيقة.
+          </span>
+          <Button onClick={onSettings}>
+            <Settings2 className="size-4" /> إعداد العقد
+          </Button>
+        </div>
+      ) : (
+        s.missingItems.length > 0 && (
+          <div
+            role="status"
+            className="flex flex-wrap items-center gap-2 border-t bg-amber-50 px-5 py-2.5 text-sm text-amber-800 dark:bg-amber-950/60 dark:text-amber-300"
+          >
+            <AlertTriangle className="size-4 shrink-0" />
+            <span>لم تُسجَّل بعد: {s.missingItems.join("، ")}</span>
+            {canEdit && (
+              <button type="button" className="font-semibold underline" onClick={onRegister}>
+                تسجيلها الآن
+              </button>
+            )}
+          </div>
+        )
+      )}
     </Card>
   );
 }
@@ -59,13 +114,17 @@ export function FinanceHero({ projectId }: { projectId: string }) {
 function Stat({
   label,
   value,
+  sub,
   tone,
-  note,
+  onClick,
+  action,
 }: {
   label: string;
   value: string;
+  sub?: string;
   tone?: "good" | "warn" | "bad";
-  note?: string;
+  onClick?: () => void;
+  action?: string;
 }) {
   const color =
     tone === "good"
@@ -75,99 +134,119 @@ function Stat({
         : tone === "bad"
           ? "text-red-600"
           : "";
-  return (
-    <div>
+  const body = (
+    <>
       <p className="text-xs text-muted">{label}</p>
-      <p className={`mt-1 text-xl font-bold ${color}`} dir="ltr">
+      <p className={`mt-1 text-lg font-bold tracking-tight sm:text-xl ${color}`} dir="ltr">
         {value}
       </p>
-      {note && <p className="text-xs text-red-600">{note}</p>}
-    </div>
+      {sub && (
+        <p className={`mt-0.5 text-xs ${tone === "bad" ? "text-red-600" : "text-muted"}`}>{sub}</p>
+      )}
+    </>
+  );
+  return onClick ? (
+    <button
+      type="button"
+      onClick={onClick}
+      title={action}
+      className="group px-5 py-4 text-right transition hover:bg-brand-soft/50"
+    >
+      {body}
+    </button>
+  ) : (
+    <div className="px-4 py-4 sm:px-5">{body}</div>
   );
 }
 
-export function FinanceTab({ projectId, canEdit }: { projectId: string; canEdit: boolean }) {
-  const q = useQuery(financeQuery(projectId));
-  if (q.isPending) return <p className="text-muted">جارٍ تحميل المالية…</p>;
-  if (q.isError || !q.data)
-    return (
-      <EmptyState
-        title="تعذّر تحميل المالية"
-        action={<Button onClick={() => q.refetch()}>إعادة المحاولة</Button>}
-      />
-    );
-  const fin = q.data;
-  return (
-    <div className="space-y-6">
-      <Summary fin={fin} />
-      <div className="grid items-start gap-6 xl:grid-cols-[1.2fr_1fr]">
-        <ControlCentre projectId={projectId} fin={fin} canEdit={canEdit} />
-        <Budget projectId={projectId} fin={fin} canEdit={canEdit} />
-      </div>
-      <Entries projectId={projectId} fin={fin} canEdit={canEdit} />
-    </div>
-  );
-}
-
-function Summary({ fin }: { fin: Finance }) {
-  const s = fin.summary;
-  const parts = [
-    { label: "أتعاب التنفيذ", v: s.execAmt },
-    { label: "التسويق", v: s.mkt },
-    { label: "كاش باك", v: s.cb },
-    { label: "رسوم إضافية", v: s.cfAmt },
-  ].filter((p) => p.v > 0);
+/** The contract value, step by step down to what is left (v1 calc trail + summary in one place). */
+export function ContractSummary({
+  projectId,
+  onSettings,
+  canEdit,
+}: {
+  projectId: string;
+  onSettings: () => void;
+  canEdit: boolean;
+}) {
+  const q = useFinance(projectId);
+  if (!q.data) return null;
+  const { summary: s, ctrl, budget } = q.data;
+  const budgetTotal = budget.reduce((a, b) => a + b.amount, 0) / 100;
   const maxBar = Math.max(s.totalIncome, s.totalExpenses, 1);
+  const Row = ({
+    sign,
+    label,
+    v,
+    strong,
+    tone,
+  }: {
+    sign?: string;
+    label: string;
+    v: number;
+    strong?: boolean;
+    tone?: "neg" | "pos";
+  }) => (
+    <li
+      className={`flex items-baseline justify-between gap-3 py-1 ${strong ? "font-semibold" : ""}`}
+    >
+      <span className="min-w-0">
+        <span className="inline-block w-3.5 text-muted">{sign}</span>
+        {label}
+      </span>
+      <span
+        dir="ltr"
+        className={`shrink-0 ${tone === "neg" ? "text-red-600" : tone === "pos" ? "text-emerald-700 dark:text-emerald-400" : ""} ${v < 0 ? "text-red-600" : ""}`}
+      >
+        {sar(v)}
+      </span>
+    </li>
+  );
   return (
-    <div className="grid gap-6 lg:grid-cols-3">
-      <Card className="lg:col-span-2">
-        <h2 className="mb-4 font-semibold">الملخص المالي</h2>
-        <div className="grid gap-4 sm:grid-cols-3">
-          <Kpi label="قيمة العقد الكاملة" v={s.grossTotal} />
-          <Kpi label="إجمالي المصروف" v={s.totalDeductions} />
-          <Kpi label="المتبقي من العقد" v={s.remaining} />
-          <Kpi
-            label="المتاح للتنفيذ"
-            v={s.available}
-            hint={`بعد الالتزامات ${sar(s.obligations)}`}
+    <Card>
+      <div className="mb-3 flex items-center justify-between">
+        <h2 className="font-semibold">ملخص العقد</h2>
+        <Button variant="ghost" onClick={onSettings} className="px-2 py-1 text-xs">
+          <Settings2 className="size-3.5" /> {canEdit ? "الإعدادات" : "التفاصيل"}
+        </Button>
+      </div>
+      {(ctrl.contractNo || ctrl.contractDate) && (
+        <p className="mb-3 text-xs text-muted">
+          {ctrl.contractNo && <span dir="ltr">{ctrl.contractNo}</span>}
+          {ctrl.contractNo && ctrl.contractDate && " · "}
+          {ctrl.contractDate && day(ctrl.contractDate)}
+        </p>
+      )}
+      <ul className="text-sm">
+        <Row label="قيمة العقد" v={s.grossTotal} strong />
+        {s.execAmt > 0 && <Row sign="−" label="أتعاب التنفيذ" v={s.execAmt} tone="neg" />}
+        {s.mkt > 0 && (
+          <Row
+            sign="−"
+            label={ctrl.mktInternal ? "التسويق (داخلي)" : "التسويق"}
+            v={s.mkt}
+            tone="neg"
           />
-          <Kpi
-            label="المتبقي للتنفيذ"
-            v={s.remainingExec}
-            hint={`المصاريف التشغيلية ${sar(s.opExpenses)}`}
-          />
-          <Kpi label="صافي الربح" v={s.profit} />
-        </div>
-      </Card>
-      <Card>
-        <h2 className="mb-4 font-semibold">توزيع قيمة العقد</h2>
-        <ul className="space-y-1.5 text-sm">
-          <li className="flex justify-between font-semibold">
-            <span>قيمة العقد</span>
-            <span dir="ltr">{sar(s.grossTotal)}</span>
-          </li>
-          {parts.map((p) => (
-            <li key={p.label} className="flex justify-between text-red-600">
-              <span>− {p.label}</span>
-              <span dir="ltr">{sar(p.v)}</span>
-            </li>
-          ))}
-          <li className="flex justify-between border-t pt-1.5 font-semibold">
-            <span>= المتاح للتنفيذ</span>
-            <span dir="ltr">{sar(s.available)}</span>
-          </li>
-        </ul>
-        <h3 className="mt-5 mb-2 text-sm font-semibold">الدخل مقابل المصاريف</h3>
+        )}
+        {s.cb > 0 && <Row sign="−" label="كاش باك" v={s.cb} tone="neg" />}
+        {s.cfAmt > 0 && <Row sign="−" label="رسوم إضافية" v={s.cfAmt} tone="neg" />}
+        <li className="my-1.5 border-t" />
+        <Row sign="=" label="المتاح للتنفيذ" v={s.available} strong />
+        <Row sign="−" label="المصاريف التشغيلية" v={s.opExpenses} tone="neg" />
+        <li className="my-1.5 border-t" />
+        <Row sign="=" label="المتبقي للتنفيذ" v={s.remainingExec} strong tone="pos" />
+      </ul>
+      <div className="mt-5 space-y-2.5 text-xs">
         {[
           { label: "الدخل المسجّل", v: s.totalIncome, cls: "bg-emerald-500" },
-          { label: "إجمالي المصاريف", v: s.totalExpenses, cls: "bg-red-500" },
+          { label: "المصاريف", v: s.totalExpenses, cls: "bg-red-500" },
         ].map((b) => (
-          <div key={b.label} className="mb-2 text-xs">
+          <div key={b.label}>
             <div className="mb-1 flex justify-between">
               <span className="text-muted">{b.label}</span>
               <span dir="ltr">{sar(b.v)}</span>
             </div>
-            <div className="h-2 rounded-full bg-slate-200 dark:bg-slate-700">
+            <div className="h-1.5 rounded-full bg-slate-200 dark:bg-slate-700">
               <div
                 className={`h-full rounded-full ${b.cls}`}
                 style={{ width: `${(b.v / maxBar) * 100}%` }}
@@ -175,20 +254,44 @@ function Summary({ fin }: { fin: Finance }) {
             </div>
           </div>
         ))}
-      </Card>
-    </div>
+        {budget.length > 0 && (
+          <p className="flex justify-between border-t pt-2.5">
+            <span className="text-muted">الميزانية المخططة ({budget.length} بند)</span>
+            <span dir="ltr">{sar(budgetTotal)}</span>
+          </p>
+        )}
+      </div>
+    </Card>
   );
 }
 
-function Kpi({ label, v, hint }: { label: string; v: number; hint?: string }) {
+/** Contract terms, fees, categories and budget, in a side sheet: set once, revisited rarely. */
+export function FinanceSettings({
+  projectId,
+  open,
+  onOpenChange,
+  canEdit,
+}: {
+  projectId: string;
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  canEdit: boolean;
+}) {
+  const q = useFinance(projectId);
   return (
-    <div className="rounded-xl border p-3">
-      <p className="text-xs text-muted">{label}</p>
-      <p className={`mt-1 text-lg font-bold ${v < 0 ? "text-red-600" : ""}`} dir="ltr">
-        {sar(v)}
-      </p>
-      {hint && <p className="mt-0.5 text-[11px] text-muted">{hint}</p>}
-    </div>
+    <Sheet
+      open={open}
+      onOpenChange={onOpenChange}
+      title="إعدادات العقد والميزانية"
+      description={canEdit ? "تُحفظ التعديلات تلقائياً" : "للاطلاع فقط"}
+    >
+      {q.data && (
+        <div className="space-y-8">
+          <ControlCentre projectId={projectId} fin={q.data} canEdit={canEdit} />
+          <Budget projectId={projectId} fin={q.data} canEdit={canEdit} />
+        </div>
+      )}
+    </Sheet>
   );
 }
 
@@ -206,9 +309,9 @@ function Budget({
   const apply = (res: Finance) => qc.setQueryData(financeKey(projectId), res);
   const total = fin.budget.reduce((a, b) => a + b.amount, 0) / 100;
   return (
-    <Card>
-      <div className="mb-4 flex items-center justify-between">
-        <h2 className="font-semibold">الميزانية المخططة</h2>
+    <section aria-label="الميزانية المخططة" className="border-t pt-6">
+      <div className="mb-3 flex items-center justify-between">
+        <h3 className="font-semibold">الميزانية المخططة</h3>
         {canEdit && (
           <Button
             variant="secondary"
@@ -220,7 +323,7 @@ function Budget({
       </div>
       {fin.budget.length === 0 ? (
         <p className="text-sm text-muted">
-          لا توجد بنود. البنود المخططة يمكن تسجيلها لاحقاً كمصروف «من الاتفاقية».
+          لا توجد بنود. يمكن تسجيل أي بند لاحقاً كمصروف «من الاتفاقية».
         </p>
       ) : (
         <div className="space-y-2">
@@ -245,7 +348,7 @@ function Budget({
                 defaultValue={b.amount / 100}
                 disabled={!canEdit}
                 onBlur={async (e) =>
-                  Number(e.target.value) * 100 !== b.amount &&
+                  Math.round(Number(e.target.value) * 100) !== b.amount &&
                   apply(await api.updateBudget(b.id, { amount: Number(e.target.value) || 0 }))
                 }
               />
@@ -264,55 +367,63 @@ function Budget({
           ))}
         </div>
       )}
-      <div className="mt-4 flex justify-between border-t pt-3 text-sm font-semibold">
+      <p className="mt-3 flex justify-between border-t pt-3 text-sm font-semibold">
         <span>الإجمالي المخطط</span>
         <span dir="ltr">{sar(total)}</span>
-      </div>
-    </Card>
+      </p>
+    </section>
   );
 }
 
-function Entries({
+/** Daily work: the transactions ledger. */
+export function Transactions({
   projectId,
-  fin,
   canEdit,
+  adding,
+  setAdding,
 }: {
   projectId: string;
-  fin: Finance;
   canEdit: boolean;
+  adding: "new" | "agreement" | null;
+  setAdding: (v: "new" | "agreement" | null) => void;
 }) {
+  const q = useFinance(projectId);
   const [filter, setFilter] = useState<"" | "income" | "expense">("");
-  const [q, setQ] = useState("");
-  const [adding, setAdding] = useState<"new" | "agreement" | null>(null);
+  const [search, setSearch] = useState("");
   const [editing, setEditing] = useState<Entry | null>(null);
-  const label = (cat: string) => catLabel(cat, fin.categories, fin.budget);
+  const fin = q.data;
+  const label = (cat: string) => (fin ? catLabel(cat, fin.categories, fin.budget) : cat);
   const rows = useMemo(
     () =>
-      fin.entries
+      (fin?.entries ?? [])
         .filter((e) => !filter || e.type === filter)
-        .filter((e) => !q || `${e.description} ${label(e.cat)} ${e.note}`.includes(q))
+        .filter((e) => !search || `${e.description} ${label(e.cat)} ${e.note}`.includes(search))
         .sort((a, b) => b.date.localeCompare(a.date)),
-    [fin, filter, q],
+    [fin, filter, search],
   );
+  if (q.isPending) return <Card className="h-64 animate-pulse" aria-busy />;
+  if (!fin) return <Card>تعذّر تحميل المعاملات</Card>;
   const inc = rows.filter((e) => e.type === "income").reduce((a, e) => a + e.amount, 0) / 100;
   const exp = rows.filter((e) => e.type === "expense").reduce((a, e) => a + e.amount, 0) / 100;
-  const counts = {
+  const n = {
     all: fin.entries.length,
     income: fin.entries.filter((e) => e.type === "income").length,
     expense: fin.entries.filter((e) => e.type === "expense").length,
   };
 
   return (
-    <Card>
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+    <Card className="p-0">
+      <div className="flex flex-wrap items-center justify-between gap-3 px-5 pt-5">
         <h2 className="font-semibold">سجل المعاملات</h2>
         <div className="flex gap-2">
           <Button
             variant="secondary"
             onClick={() => exportCsv(fin, label)}
             disabled={!fin.entries.length}
+            aria-label="تصدير Excel"
           >
-            <Download className="size-4" /> Excel
+            <Download className="size-4" />
+            <span className="hidden sm:inline">Excel</span>
           </Button>
           {canEdit && (
             <Button onClick={() => setAdding("new")}>
@@ -321,88 +432,106 @@ function Entries({
           )}
         </div>
       </div>
-      {fin.summary.missingItems.length > 0 && (
-        <div
-          role="alert"
-          className="mb-4 flex flex-wrap items-center gap-2 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:bg-amber-950 dark:text-amber-300"
-        >
-          <AlertTriangle className="size-4" />
-          لم تُسجَّل بعد: {fin.summary.missingItems.join("، ")}
-          {canEdit && (
-            <button
-              type="button"
-              className="font-semibold underline"
-              onClick={() => setAdding("agreement")}
-            >
-              تسجيل الآن
-            </button>
-          )}
-        </div>
-      )}
-      <div className="mb-4 flex flex-wrap items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3 px-5 py-4">
         <Pills<"income" | "expense">
           value={filter}
           onChange={setFilter}
           items={[
-            { value: "", label: "الكل", count: counts.all },
-            { value: "income", label: "دخل", count: counts.income },
-            { value: "expense", label: "مصروف", count: counts.expense },
+            { value: "", label: "الكل", count: n.all },
+            { value: "income", label: "دخل", count: n.income },
+            { value: "expense", label: "مصروف", count: n.expense },
           ]}
         />
-        <SearchBox value={q} onChange={setQ} placeholder="بحث في البيان أو التصنيف أو الملاحظة" />
+        <SearchBox
+          value={search}
+          onChange={setSearch}
+          placeholder="بحث في البيان أو التصنيف أو الملاحظة"
+        />
       </div>
       {rows.length === 0 ? (
-        <p className="py-8 text-center text-sm text-muted">
-          {fin.entries.length ? "لا نتائج" : "لا توجد قيود بعد"}
-        </p>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="border-b text-right text-xs text-muted">
-              <tr>
-                <th className="p-2 font-medium">التاريخ</th>
-                <th className="p-2 font-medium">البيان</th>
-                <th className="p-2 font-medium">التصنيف</th>
-                <th className="p-2 font-medium">الحالة</th>
-                <th className="p-2 text-left font-medium">المبلغ</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((e) => (
-                <tr
-                  key={e.id}
-                  className={`border-b last:border-0 ${canEdit ? "cursor-pointer hover:bg-brand-soft/50" : ""}`}
-                  onClick={() => canEdit && setEditing(e)}
-                  onKeyDown={(k) => canEdit && k.key === "Enter" && setEditing(e)}
-                  tabIndex={canEdit ? 0 : undefined}
-                >
-                  <td className="whitespace-nowrap p-2 text-muted">{day(e.date)}</td>
-                  <td className="p-2">
-                    {e.description} {e.source === "agreement" && <Badge tone="blue">اتفاقية</Badge>}
-                    {e.note && <span className="block text-xs text-muted">{e.note}</span>}
-                  </td>
-                  <td className="p-2">{label(e.cat)}</td>
-                  <td className="p-2 text-xs">{ENTRY_STATUS_LABELS[e.status]}</td>
-                  <td
-                    className={`whitespace-nowrap p-2 text-left font-medium ${e.type === "income" ? "text-emerald-700 dark:text-emerald-400" : "text-red-600"}`}
-                    dir="ltr"
-                  >
-                    {e.type === "income" ? "+" : "−"}
-                    {sar(e.amount / 100)}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="px-5 pb-10 pt-4 text-center">
+          <p className="text-sm text-muted">
+            {fin.entries.length ? "لا نتائج مطابقة" : "لا توجد قيود بعد"}
+          </p>
+          {!fin.entries.length && canEdit && (
+            <div className="mt-4 flex justify-center gap-2">
+              <Button variant="secondary" onClick={() => setAdding("agreement")}>
+                تسجيل بنود الاتفاقية
+              </Button>
+              <Button onClick={() => setAdding("new")}>
+                <Plus className="size-4" /> قيد جديد
+              </Button>
+            </div>
+          )}
         </div>
+      ) : (
+        <>
+          {/* Phones: cards. Larger screens: a table. */}
+          <ul className="divide-y border-t sm:hidden">
+            {rows.map((e) => (
+              <li key={e.id}>
+                <button
+                  type="button"
+                  disabled={!canEdit}
+                  onClick={() => setEditing(e)}
+                  className="flex w-full items-start justify-between gap-3 px-5 py-3 text-right disabled:cursor-default"
+                >
+                  <span className="min-w-0">
+                    <span className="block truncate font-medium">{e.description}</span>
+                    <span className="text-xs text-muted">
+                      {day(e.date)} · {label(e.cat)}
+                      {e.source === "agreement" && " · اتفاقية"}
+                    </span>
+                  </span>
+                  <Amount e={e} />
+                </button>
+              </li>
+            ))}
+          </ul>
+          <div className="hidden overflow-x-auto border-t sm:block">
+            <table className="w-full text-sm">
+              <thead className="text-right text-xs text-muted">
+                <tr className="border-b">
+                  <th className="px-5 py-2 font-medium">التاريخ</th>
+                  <th className="px-2 py-2 font-medium">البيان</th>
+                  <th className="px-2 py-2 font-medium">التصنيف</th>
+                  <th className="px-2 py-2 font-medium">الحالة</th>
+                  <th className="px-5 py-2 text-left font-medium">المبلغ</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((e) => (
+                  <tr
+                    key={e.id}
+                    className={`border-b last:border-0 ${canEdit ? "cursor-pointer hover:bg-brand-soft/50 focus-visible:bg-brand-soft/50" : ""}`}
+                    onClick={() => canEdit && setEditing(e)}
+                    onKeyDown={(k) => canEdit && k.key === "Enter" && setEditing(e)}
+                    tabIndex={canEdit ? 0 : undefined}
+                  >
+                    <td className="whitespace-nowrap px-5 py-2.5 text-muted">{day(e.date)}</td>
+                    <td className="px-2 py-2.5">
+                      {e.description}{" "}
+                      {e.source === "agreement" && <Badge tone="blue">اتفاقية</Badge>}
+                      {e.note && <span className="block text-xs text-muted">{e.note}</span>}
+                    </td>
+                    <td className="px-2 py-2.5">{label(e.cat)}</td>
+                    <td className="px-2 py-2.5 text-xs">{ENTRY_STATUS_LABELS[e.status]}</td>
+                    <td className="px-5 py-2.5 text-left">
+                      <Amount e={e} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div className="flex flex-wrap justify-between gap-2 border-t px-5 py-3 text-sm">
+            <span className="text-muted">{rows.length} عملية</span>
+            <span>
+              دخل <b dir="ltr">{sar(inc)}</b> · مصروف <b dir="ltr">{sar(exp)}</b>
+            </span>
+          </div>
+        </>
       )}
-      <div className="mt-4 flex flex-wrap justify-between gap-2 border-t pt-3 text-sm">
-        <span className="text-muted">{rows.length} عملية</span>
-        <span>
-          دخل <b dir="ltr">{sar(inc)}</b> · مصروف <b dir="ltr">{sar(exp)}</b> · إجمالي المصروف من
-          العقد <b dir="ltr">{sar(inc + exp)}</b>
-        </span>
-      </div>
       {adding && (
         <EntryDialog
           open
@@ -422,6 +551,18 @@ function Entries({
         />
       )}
     </Card>
+  );
+}
+
+function Amount({ e }: { e: Entry }) {
+  return (
+    <span
+      className={`whitespace-nowrap font-medium ${e.type === "income" ? "text-emerald-700 dark:text-emerald-400" : "text-red-600"}`}
+      dir="ltr"
+    >
+      {e.type === "income" ? "+" : "−"}
+      {sar(e.amount / 100)}
+    </span>
   );
 }
 

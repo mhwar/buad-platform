@@ -210,7 +210,11 @@ const projectsRoute = createRoute({
 const projectRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/projects/$id",
-  validateSearch: z.object({ tab: z.enum(["overview", "finance"]).optional() }),
+  // ?view= picks the section; the old ?tab= links keep working (they land on finance).
+  validateSearch: z.object({
+    view: z.enum(["finance", "documents", "execution"]).optional(),
+    tab: z.string().optional(),
+  }),
   beforeLoad: authed,
   component: ProjectPage,
 });
