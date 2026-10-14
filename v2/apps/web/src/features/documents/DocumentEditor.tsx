@@ -283,8 +283,12 @@ export function DocumentEditor() {
     if (!fresh) return;
     setNotice({ tone: "blue", text: "جارٍ تجهيز الملف…" });
     try {
-      await (kind === "pdf" ? exportPdf(fresh) : exportWord(fresh));
-      setNotice(null);
+      const got = kind === "pdf" ? await exportPdf(fresh) : await exportWord(fresh);
+      setNotice(
+        got === "image"
+          ? { tone: "amber", text: "نُزّل الملف بجودة الصورة لأن خدمة PDF غير متاحة مؤقتاً." }
+          : null,
+      );
     } catch {
       setNotice({ tone: "red", text: "تعذّر تجهيز الملف" });
     }

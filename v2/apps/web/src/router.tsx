@@ -17,6 +17,7 @@ import { UpdateBanner, useServerVersion } from "./components/UpdateBanner";
 import { ClientPage } from "./features/clients/ClientPage";
 import { ClientsPage } from "./features/clients/ClientsPage";
 import { StatementPage } from "./features/clients/StatementPage";
+import { PrintDocumentPage } from "./features/documents/DocumentActions";
 import { DocumentEditor } from "./features/documents/DocumentEditor";
 import { DocumentsPage } from "./features/documents/DocumentsPage";
 import { PublicDocumentPage } from "./features/documents/PublicDocument";
@@ -40,8 +41,11 @@ const NAV = [
 ] as const;
 
 function Shell() {
-  const isShareLink = useRouterState({ select: (s) => s.location.pathname.startsWith("/s/") });
-  const me = useQuery({ ...meQuery, enabled: !isShareLink });
+  // Pages that stand alone (no app chrome): a shared document, or a page prepared for PDF.
+  const isShareLink = useRouterState({
+    select: (s) => /^\/(s|print)\//.test(s.location.pathname),
+  });
+  const me = useQuery(meQuery);
   const health = useServerVersion();
   // A full page load after logout: nothing of the previous user's data stays in memory,
   // and the next sign-in starts from a clean state.
@@ -237,6 +241,16 @@ const shareRoute = createRoute({
   component: PublicDocumentPage,
 });
 
+const printDocumentRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/print/documents/$docId",
+  beforeLoad: authed,
+  component: function PrintDocument() {
+    const { docId } = printDocumentRoute.useParams();
+    return <PrintDocumentPage docId={docId} />;
+  },
+});
+
 const documentsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/documents",
@@ -320,6 +334,7 @@ export const router = createRouter({
     documentsRoute,
     documentRoute,
     shareRoute,
+    printDocumentRoute,
     settingsRoute.addChildren([settingsIndexRoute, orgRoute, importRoute, accountRoute]),
     legacyImportRoute,
     legacyAccountRoute,

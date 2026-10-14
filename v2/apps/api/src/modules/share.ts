@@ -11,6 +11,7 @@ import { assetResponse, type FileStore } from "./assets";
 import { newId, nowSec } from "./common";
 import { buildContext, loadDoc } from "./documents";
 import { ASSET_FIELDS, loadOrgProfile } from "./org";
+import { type BrowserBinding, pdfResponse, renderPdf } from "./pdf";
 
 /* ─────────────────────────────────────────────────────────────────────────────
  * Share links: an approved document sent to someone outside the platform.
@@ -19,7 +20,10 @@ import { ASSET_FIELDS, loadOrgProfile } from "./org";
  *  - it expires (7 or 30 days) and can be revoked; views are counted
  * ──────────────────────────────────────────────────────────────────────────── */
 
-type Env = { Bindings: { JWT_SECRET: string; FILES?: FileStore }; Variables: Vars };
+type Env = {
+  Bindings: { JWT_SECRET: string; FILES?: FileStore; BROWSER?: BrowserBinding };
+  Variables: Vars;
+};
 
 const b64url = (bytes: Uint8Array) =>
   btoa(String.fromCharCode(...bytes))
@@ -185,10 +189,12 @@ export const publicShareApp = new Hono<Env>()
       .where(eq(documents.id, share.documentId))
       .limit(1);
     if (!ver || !row) return c.json({ ok: false, error: "not_found" }, 404);
-    await db
-      .update(documentShares)
-      .set({ views: sql`${documentShares.views} + 1`, lastViewedAt: nowSec() })
-      .where(eq(documentShares.id, share.id));
+    // The PDF renderer opens the page too; that is not a view by the recipient.
+    if (c.req.query("render") !== "1")
+      await db
+        .update(documentShares)
+        .set({ views: sql`${documentShares.views} + 1`, lastViewedAt: nowSec() })
+        .where(eq(documentShares.id, share.id));
     const snap = await approvedView(db, share.orgId, share.documentId, ver.snapshot);
     const org = await loadOrgProfile(db, share.orgId);
     const base = `/api/public/s/${token}/assets/`;
@@ -204,6 +210,26 @@ export const publicShareApp = new Hono<Env>()
       approvedAt: ver.approvedAt,
       expiresAt: share.expiresAt,
     });
+  })
+
+  // A vector PDF of the shared document, rendered from the share page itself (no session).
+  .post("/:token/pdf", async (c) => {
+    const db = c.get("db");
+    const token = c.req.param("token");
+    const share = await liveShare(db, token);
+    if (!share) return c.json({ ok: false, error: "not_found" }, 404);
+    if (!c.env.BROWSER) return c.json({ ok: false, error: "pdf_unavailable" }, 503);
+    const [row] = await db
+      .select({ number: documents.number })
+      .from(documents)
+      .where(eq(documents.id, share.documentId))
+      .limit(1);
+    try {
+      const url = new URL(`/s/${token}?render=1`, c.req.url).toString();
+      return pdfResponse(await renderPdf(c.env.BROWSER, url), row?.number ?? "document");
+    } catch {
+      return c.json({ ok: false, error: "pdf_unavailable" }, 503);
+    }
   })
 
   // Only images that this document (as approved) or its organisation's letterhead use.

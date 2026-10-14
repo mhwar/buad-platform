@@ -1,4 +1,4 @@
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import {
   Check,
@@ -66,13 +66,14 @@ export function renderOffscreen(
   });
 }
 
+/** «تنزيل PDF»: vector from the server, or the off-screen capture if that is unavailable. */
 export async function exportPdf(detail: DocDetail) {
-  const { root, done } = await renderOffscreen(detail);
-  try {
-    await downloadPdf(root, fileBase(detail.document));
-  } finally {
-    done();
-  }
+  return downloadPdf({
+    endpoint: "/api/pdf",
+    body: { path: `/print/documents/${detail.document.id}`, name: fileBase(detail.document) },
+    name: fileBase(detail.document),
+    pages: () => renderOffscreen(detail),
+  });
 }
 
 export async function exportWord(detail: DocDetail) {
@@ -136,7 +137,11 @@ export function useDocumentActions(manager: boolean) {
         label: "تنزيل PDF",
         hint: "بمقاس A4 كما يظهر",
         icon: <FileDown />,
-        onSelect: () => run("تجهيز ملف PDF", async () => exportPdf(await detail(d.id))),
+        onSelect: () =>
+          run("تجهيز ملف PDF", async () => {
+            if ((await exportPdf(await detail(d.id))) === "image")
+              setError("نُزّل الملف بجودة الصورة لأن خدمة PDF غير متاحة مؤقتاً.");
+          }),
       },
       {
         label: "تصدير Word",
@@ -231,4 +236,25 @@ export function useDocumentActions(manager: boolean) {
   };
   const dialog = sending ? <SendDialog detail={sending} onClose={() => setSending(null)} /> : null;
   return { items, busy, error, dialog };
+}
+
+/** `/print/documents/:id`: the document alone, as printed (used by the PDF renderer). */
+export function PrintDocumentPage({ docId }: { docId: string }) {
+  const q = useQuery(documentQuery(docId));
+  if (!q.data) return null;
+  const d = q.data.document;
+  return (
+    <div className="print-root">
+      <DocumentView
+        kind={d.kind}
+        number={d.number}
+        title={d.title}
+        content={d.content}
+        layout={d.layout}
+        values={q.data.values}
+        org={q.data.org}
+        outgoing={outgoingRef(q.data)}
+      />
+    </div>
+  );
 }

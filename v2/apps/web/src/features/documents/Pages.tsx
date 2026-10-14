@@ -122,14 +122,21 @@ export function PagedSheets({
     const heights = Array.from(els, (e) => e.offsetHeight);
     const rep = m.querySelector<HTMLElement>("[data-repeat]")?.offsetHeight ?? 0;
     const next = paginate(blocks, heights, avail, rep);
-    if (!same(next, pages)) setPages(next);
-    else if (onReady) {
+    if (!same(next, pages)) {
+      r.removeAttribute("data-ready");
+      setPages(next);
+    } else {
+      // Stable split + images loaded + fonts ready = final pages. `data-ready` tells the PDF
+      // renderer (and tests) that the pages can be printed now.
       const imgs = Array.from(r.querySelectorAll("img"));
       const sig = `${next.map((p) => p.join()).join("|")}#${blocks.length}`;
       if (imgs.every((i) => i.complete) && readyFor.current !== sig) {
         readyFor.current = sig;
         const fonts = (document as Document & { fonts?: FontFaceSet }).fonts;
-        (fonts?.ready ?? Promise.resolve()).then(() => onReady(r));
+        (fonts?.ready ?? Promise.resolve()).then(() => {
+          r.setAttribute("data-ready", "");
+          onReady?.(r);
+        });
       }
     }
   });

@@ -18,7 +18,13 @@ export function PublicDocumentPage() {
   const { token } = route.useParams();
   const q = useQuery({
     queryKey: ["public-share", token],
-    queryFn: async () => ok<PublicDocument>(await fetch(`/api/public/s/${token}`)),
+    // `render=1`: opened by the PDF renderer, not a view by the recipient.
+    queryFn: async () =>
+      ok<PublicDocument>(
+        await fetch(
+          `/api/public/s/${token}${window.location.search.includes("render=1") ? "?render=1" : ""}`,
+        ),
+      ),
     retry: false,
     staleTime: Number.POSITIVE_INFINITY,
   });
@@ -63,7 +69,12 @@ export function PublicDocumentPage() {
                 if (!pages.current) return;
                 setBusy(true);
                 try {
-                  await downloadPdf(pages.current, name);
+                  const root = pages.current;
+                  await downloadPdf({
+                    endpoint: `/api/public/s/${token}/pdf`,
+                    name,
+                    pages: async () => ({ root }),
+                  });
                 } finally {
                   setBusy(false);
                 }
