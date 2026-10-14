@@ -181,3 +181,25 @@ export const quarterQuery = (year: number, q: number) =>
     queryFn: () => send<QuarterData>("GET", `${B}/quarter?year=${year}&q=${q}`),
     placeholderData: (prev) => prev,
   });
+
+export type ReceiptProposal = {
+  projectId: string;
+  number: string;
+  name: string;
+  clientName: string;
+  status: string;
+  gross: number;
+  contractDate: string;
+  suggestion: {
+    date: string;
+    source: string;
+    basis: string;
+    quarter: string;
+    warnings: ("future" | "before_contract" | "near_quarter_edge")[];
+  } | null;
+};
+export const receiptProposalsQuery = queryOptions({
+  queryKey: [...companyKeys.all, "receipt-proposals"],
+  queryFn: async () =>
+    (await send<{ items: ReceiptProposal[] }>("GET", `${B}/receipt-suggestions`)).items,
+});

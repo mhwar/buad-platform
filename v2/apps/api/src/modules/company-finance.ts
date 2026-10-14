@@ -9,15 +9,18 @@ import {
   periodLabel,
   QUARTER_NAMES,
   quarterDistributable,
+  quarterLabelOf,
   quarterRange,
   quarterView,
   type RealizedProject,
   type ReceiptLite,
   realizedProfit,
+  receiptWarnings,
   receivedUpTo,
   retainedTotals,
   splitDistribution,
   splitShares,
+  suggestReceipt,
 } from "@buad/domain";
 import { companyEntryInput, distributionInput, partnerInput } from "@buad/schema/company";
 import {
@@ -335,6 +338,54 @@ export const companyFinanceApp = new Hono<Env>()
       });
     },
   )
+
+  // ── Proposed receipts: a date and amount worked out from the old platform's data, for a
+  //    person to verify and approve. Nothing is stored until they do. ───────────────────
+  .get("/receipt-suggestions", async (c) => {
+    const db = c.get("db");
+    const orgId = c.get("user").orgId;
+    const rows = await db
+      .select({ p: projects, clientName: clients.name })
+      .from(projects)
+      .innerJoin(clients, eq(clients.id, projects.clientId))
+      .where(and(eq(projects.orgId, orgId), isNull(projects.archivedAt)))
+      .orderBy(asc(projects.number));
+    const today = new Date().toISOString().slice(0, 10);
+    const items = [];
+    for (const { p, clientName } of rows) {
+      if (p.status === "draft") continue;
+      const fin = await loadFinance(db, p);
+      const gross = fin.summary.grossTotal;
+      if (gross <= 0 || fin.receipts.length) continue;
+      const execIncome = fin.entries
+        .filter(
+          (e) => e.cat === "exec" && e.type === "income" && e.status !== "cancelled" && e.date,
+        )
+        .map((e) => e.date)
+        .sort()[0];
+      const sug = suggestReceipt({
+        payDate: p.payDate,
+        execIncomeDate: execIncome,
+        contractDate: fin.ctrl.contractDate,
+        startDate: p.startDate,
+      });
+      items.push({
+        projectId: p.id,
+        number: p.number,
+        name: p.name,
+        clientName,
+        status: p.status,
+        gross: Math.round(gross * 100) / 100,
+        contractDate: fin.ctrl.contractDate,
+        suggestion: sug && {
+          ...sug,
+          quarter: quarterLabelOf(sug.date),
+          warnings: receiptWarnings(sug.date, fin.ctrl.contractDate, today),
+        },
+      });
+    }
+    return c.json({ ok: true, items });
+  })
 
   // ── Company income and expenses ─────────────────────────────────────────
   .get(

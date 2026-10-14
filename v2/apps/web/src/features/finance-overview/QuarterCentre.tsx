@@ -4,9 +4,9 @@ import { AlertTriangle, PieChart, Wallet } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Badge, Button, Card, EmptyState, Select } from "../../components/ui";
 import { sar } from "../../lib/format";
-import { ReceiptDialog } from "../finance/Receipts";
 import { type QuarterFlag, type QuarterRow, quarterQuery } from "./company-api";
 import { DistributionWizard } from "./PartnersTab";
+import { ReceiptProposals } from "./ReceiptProposals";
 import { Tile } from "./Tile";
 
 const FLAG: Record<QuarterFlag, { text: string; tone: "amber" | "red" | "gray" }> = {
@@ -31,7 +31,6 @@ export function QuarterCentre() {
   const d = useQuery(quarterQuery(year, q));
   const [selected, setSelected] = useState<string[] | null>(null);
   const [wizard, setWizard] = useState(false);
-  const [receiptFor, setReceiptFor] = useState<QuarterRow | null>(null);
   // A different quarter starts from its own default selection.
   // biome-ignore lint/correctness/useExhaustiveDependencies: reset on period change
   useEffect(() => setSelected(null), [year, q]);
@@ -89,9 +88,6 @@ export function QuarterCentre() {
     .reduce((s, r) => s + r.available, 0);
   const total = positive + v.totals.carried + v.company.income - v.company.expenses;
   const active = v.rows.filter((r) => r.receivedToDate !== 0 || r.distributed !== 0);
-  const waiting = v.rows.filter(
-    (r) => r.flags.includes("no_receipts") && r.gross > 0 && r.status !== "draft",
-  );
 
   return (
     <div className="space-y-6">
@@ -209,29 +205,7 @@ export function QuarterCentre() {
       </Card>
 
       <div className="grid gap-6 xl:grid-cols-2">
-        <Card>
-          <h2 className="mb-1 flex items-center gap-2 font-semibold">
-            <Wallet className="size-4" /> بانتظار تسجيل الاستلام
-          </h2>
-          <p className="mb-3 text-xs text-muted">مشاريع لها قيمة عقد ولم يُسجَّل لها أي مبلغ مستلم.</p>
-          {waiting.length === 0 ? (
-            <p className="text-sm text-muted">لا شيء ✓</p>
-          ) : (
-            <ul className="divide-y rounded-lg border text-sm">
-              {waiting.map((r) => (
-                <li key={r.id} className="flex items-center justify-between gap-2 p-2.5">
-                  <span>
-                    {r.name}
-                    <span className="block text-xs text-muted">قيمة العقد {sar(r.gross)}</span>
-                  </span>
-                  <Button variant="secondary" onClick={() => setReceiptFor(r)}>
-                    سجّل استلاماً
-                  </Button>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Card>
+        <ReceiptProposals />
         <Card>
           <h2 className="mb-1 flex items-center gap-2 font-semibold">
             <AlertTriangle className="size-4 text-amber-600" /> قبل التوزيع
@@ -253,14 +227,6 @@ export function QuarterCentre() {
         <DistributionWizard
           onClose={() => setWizard(false)}
           preset={{ year, q, projectIds: chosen, label: v.label }}
-        />
-      )}
-      {receiptFor && (
-        <ReceiptDialog
-          projectId={receiptFor.id}
-          receipt={null}
-          remaining={receiptFor.gross}
-          onClose={() => setReceiptFor(null)}
         />
       )}
     </div>
