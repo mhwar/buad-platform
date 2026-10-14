@@ -7,6 +7,7 @@ import { Badge, Button, Notice, PageHeader, Tabs } from "../../components/ui";
 import { ApiError, ago, ok } from "../../lib/format";
 import { uploadImage } from "../org/OrgSettings";
 import { sendJson } from "../products/products-api";
+import { useFontStatus } from "../site/font-status";
 import { type EditorTab, siteHealth } from "./health";
 import {
   FormTab,
@@ -67,6 +68,7 @@ function Editor({ data }: { data: Draft }) {
   const nav = useNavigate();
   const tab = (useSearch({ strict: false }) as { tab?: EditorTab }).tab ?? "overview";
   const overview = useQuery(overviewQuery).data;
+  const fonts = useFontStatus();
   const [c, setC] = useState<SiteContent>(data.content);
   const [busy, setBusy] = useState<"" | "save" | "publish" | "unpublish" | "logo">("");
   const [msg, setMsg] = useState<{ tone: "red" | "amber" | "blue"; text: string } | null>(null);
@@ -135,6 +137,7 @@ function Editor({ data }: { data: Draft }) {
     isPublished: data.isPublished,
     changedSections: overview?.changedSections ?? [],
     staleRequests: overview?.requests.stale ?? 0,
+    fonts,
   });
   const issues = health.filter((h) => !h.ok).length;
   const props = { c, patch, busy, pickLogo };

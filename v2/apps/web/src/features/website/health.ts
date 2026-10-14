@@ -26,6 +26,8 @@ export type HealthContext = {
   isPublished: boolean;
   changedSections: string[];
   staleRequests: number;
+  /** Whether the thmanyah fonts loaded in this browser (null while checking). */
+  fonts?: { serif: boolean; sans: boolean } | null;
 };
 
 const between = (n: number, a: number, b: number) => n >= a && n <= b;
@@ -103,6 +105,13 @@ export function siteHealth(c: SiteContent, ctx: HealthContext): HealthItem[] {
       ok: between(c.seo.description.trim().length, 80, 160),
       hint: "الأطول يُقتطع في نتائج البحث",
       tab: "seo",
+    },
+    {
+      key: "fonts",
+      label: "خط ثمانية محمّل في هذا المتصفح",
+      ok: !ctx.fonts || (ctx.fonts.serif && ctx.fonts.sans),
+      hint: "لم يُحمَّل الخط، فتظهر خطوط بديلة. أعد تحميل الصفحة أو تواصل معي.",
+      tab: "overview",
     },
     {
       key: "published",

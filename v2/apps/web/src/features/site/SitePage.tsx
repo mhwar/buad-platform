@@ -5,6 +5,7 @@ import { ArrowLeft, Check, X } from "lucide-react";
 import { useState } from "react";
 import { Icon } from "../products/icons";
 import { ContactBand, SiteChrome, useLightTheme } from "./chrome";
+import { fontLine, useFontStatus } from "./font-status";
 import { RequestDialog } from "./RequestDialog";
 import { interestForm, type RequestTarget, siteHomeQuery } from "./site-api";
 
@@ -19,7 +20,8 @@ const NavLinks = (show: Record<string, boolean>, hasProducts: boolean) =>
 
 /** The public home page: the published site (or, for signed-in managers, `?preview=1` = the draft). */
 export function SitePage() {
-  const { preview } = useSearch({ strict: false }) as { preview?: boolean };
+  const { preview, fonts } = useSearch({ strict: false }) as { preview?: boolean; fonts?: boolean };
+  const fontStatus = useFontStatus();
   const q = useQuery(siteHomeQuery(!!preview));
   const published = q.data?.published ? q.data : null;
   useLightTheme(published?.site.seo.title || published?.site.brand.name);
@@ -69,10 +71,29 @@ export function SitePage() {
             fontSize: 14,
           }}
         >
-          معاينة المسودة: لا يراها الزوار قبل النشر ·{" "}
+          معاينة المسودة: لا يراها الزوار قبل النشر · {fontLine(fontStatus)} ·{" "}
           <Link to="/website" style={{ textDecoration: "underline" }}>
             العودة إلى إدارة الموقع
           </Link>
+        </div>
+      )}
+      {fonts && !preview && (
+        <div
+          role="status"
+          style={{
+            position: "fixed",
+            insetInline: 12,
+            bottom: 12,
+            zIndex: 60,
+            background: "#12142b",
+            color: "#fff",
+            padding: "10px 14px",
+            borderRadius: 12,
+            textAlign: "center",
+            fontSize: 14,
+          }}
+        >
+          {fontLine(fontStatus)}
         </div>
       )}
       <SiteChrome

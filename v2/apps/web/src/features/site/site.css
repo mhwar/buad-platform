@@ -34,6 +34,21 @@
   src: url("./fonts/thmanyahsans-Black.woff2") format("woff2");
 }
 
+@font-face {
+  font-family: "Thmanyah Serif Display";
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+  src: url("./fonts/thmanyahserifdisplay-Bold.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Thmanyah Serif Display";
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+  src: url("./fonts/thmanyahserifdisplay-Black.woff2") format("woff2");
+}
+
 /* The public website: always light, independent of the app theme (explicit colours only). */
 .site-root {
   --accent: #5b3fe0;
@@ -48,6 +63,8 @@
   color: var(--ink);
   font-family: "Thmanyah Sans", "IBM Plex Sans Arabic", Tahoma, sans-serif;
   --head: "Thmanyah Sans", "IBM Plex Sans Arabic", Tahoma, sans-serif;
+  /* Display headings use thmanyah's signature serif; everything else stays Sans. */
+  --display: "Thmanyah Serif Display", "Thmanyah Sans", "IBM Plex Sans Arabic", Tahoma, serif;
   padding: 12px clamp(16px, 4vw, 32px) 0;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
@@ -95,8 +112,12 @@
   margin: 0;
   font-family: var(--head);
 }
+.site-root .h1,
+.site-root .h2 {
+  font-family: var(--display);
+}
 .site-root .h1 {
-  font-weight: 800;
+  font-weight: 700;
   font-size: clamp(34px, 5.6vw, 72px);
   /* Arabic display type needs air between lines: tall ascenders and dots must not touch. */
   line-height: 1.5;
@@ -104,7 +125,7 @@
   white-space: pre-line;
 }
 .site-root .h2 {
-  font-weight: 800;
+  font-weight: 700;
   font-size: clamp(26px, 3.4vw, 42px);
   line-height: 1.55;
   text-wrap: balance;
