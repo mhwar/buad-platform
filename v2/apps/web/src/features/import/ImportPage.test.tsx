@@ -65,3 +65,54 @@ describe("ImportPage", () => {
     expect(calls.filter((c) => c.method === "POST")).toEqual([]);
   });
 });
+
+describe("company finance in the chosen file", () => {
+  const fileWith = (extra: Record<string, string>) =>
+    new File(
+      [
+        JSON.stringify({
+          buad2_clients: JSON.stringify(ws.clients),
+          buad2_projects: JSON.stringify(ws.projects),
+          ...extra,
+        }),
+      ],
+      "buad_backup.json",
+      { type: "application/json" },
+    );
+  const pick = async (f: File) => {
+    stubApi({ "GET /api/clients": () => ({ items: [], counts: {} }) });
+    await renderWithApp(<ImportPage />);
+    await userEvent.upload(screen.getByLabelText(/اختاروا ملف التصدير/), f);
+  };
+
+  it("says when the file has none, with the steps to export it", async () => {
+    await pick(fileWith({}));
+    expect(await screen.findByText(/غير موجودة في هذا الملف/)).toBeInTheDocument();
+    expect(screen.getByText(/سجّلوا الخروج ثم الدخول/)).toBeInTheDocument();
+  });
+
+  it("tells v1 sync leftovers apart", async () => {
+    await pick(
+      fileWith({
+        buad2_pf: JSON.stringify({
+          income: [{ id: "a", category: "project_fee", amount: 9, desc: "x" }],
+        }),
+      }),
+    );
+    expect(await screen.findByText(/قيد مزامنة قديم/)).toBeInTheDocument();
+  });
+
+  it("shows what will come along when it is there", async () => {
+    await pick(
+      fileWith({
+        buad2_pf: JSON.stringify({
+          income: [{ id: "a", category: "consulting", amount: 100, desc: "x" }],
+          partners: [{ id: "p", name: "أ", share_pct: 100 }],
+          distributions: [],
+        }),
+      }),
+    );
+    expect(await screen.findByText(/مالية الشركة في الملف:/)).toBeInTheDocument();
+    expect(screen.getByText(/1 شريك/)).toBeInTheDocument();
+  });
+});

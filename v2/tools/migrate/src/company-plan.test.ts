@@ -89,4 +89,15 @@ describe("v1 company finance → v2", () => {
     });
     expect(planCompany(undefined).entries).toEqual([]);
   });
+
+  it("tells a missing company finance apart from one with only v1 sync leftovers", () => {
+    expect(planCompany(undefined)).toMatchObject({ present: false, legacyOnly: false });
+    expect(
+      planCompany({
+        income: [{ id: "x", category: "project_fee", amount: 5, desc: "s" }],
+        partners: [],
+      }),
+    ).toMatchObject({ present: true, legacyOnly: true, skipped: 1 });
+    expect(planCompany(PF)).toMatchObject({ present: true, legacyOnly: false });
+  });
 });

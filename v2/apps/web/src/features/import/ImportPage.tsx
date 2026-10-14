@@ -1,3 +1,4 @@
+import { planCompany } from "@buad/migrate/company-plan";
 import {
   type ClientPreview,
   parseV1Export,
@@ -54,6 +55,8 @@ type Result = {
     partners: number;
     distributions: number;
     skipped: number;
+    present: boolean;
+    legacyOnly: boolean;
     totals: { income: number; expenses: number; distributed: number; retained: number };
   };
   issues: Issue[];
@@ -215,6 +218,7 @@ export function ImportPage() {
               </Button>
             </div>
           </Card>
+          <CompanyInFile ws={ws} />
           <p className="mb-3 text-sm text-muted">
             رُتّب العملاء حسب ملاءمتهم للتجربة: اكتمال البيانات، وعدد المشاريع، وتنوّع حالاتها، ووجود
             قيم عقود. المقترَحون محدَّدون مسبقاً.
@@ -355,6 +359,15 @@ function ResultView({ r, onAgain }: { r: Result; onAgain: () => void }) {
         </div>
       </Card>
       {r.finance && r.finance.parity.length > 0 && <ParityView f={r.finance} />}
+      {r.company && r.company.entries + r.company.partners + r.company.distributions === 0 && (
+        <Notice tone="amber">
+          مالية الشركة والشركاء: لم يُنقل شيء —{" "}
+          {r.company.present
+            ? `الملف فيه فقط ${r.company.skipped} قيد مزامنة قديم مرتبط بالمشاريع، ولا شركاء ولا توزيعات.`
+            : "الملف لا يحتوي مالية الشركة."}{" "}
+          راجعوا خطوات التصدير الظاهرة عند اختيار الملف.
+        </Notice>
+      )}
       {r.company && r.company.entries + r.company.partners + r.company.distributions > 0 && (
         <Card className="mb-4">
           <h2 className="mb-1 font-semibold">مالية الشركة والشركاء</h2>
@@ -479,5 +492,43 @@ function ParityView({ f }: { f: NonNullable<Result["finance"]> }) {
         </ul>
       )}
     </Card>
+  );
+}
+
+/**
+ * What the chosen file holds of v1 «مالية المنصة» (buad2_pf), before importing — so a file
+ * exported from a browser that never loaded it is caught here, with the way to fix it.
+ */
+function CompanyInFile({ ws }: { ws: V1Workspace }) {
+  const c = useMemo(() => planCompany(ws.pf), [ws]);
+  const has = c.entries.length + c.partners.length + c.distributions.length > 0;
+  if (has)
+    return (
+      <Notice tone="blue">
+        <b>مالية الشركة في الملف:</b> {c.entries.length} قيد (إيرادات {sar(c.totals.income / 100)} ·
+        مصروفات {sar(c.totals.expenses / 100)})، {c.partners.length} شريك، {c.distributions.length}{" "}
+        توزيع (وُزّع {sar(c.totals.distributed / 100)}). تُنقل مع أي استيراد، ولا تتكرر عند إعادته.
+      </Notice>
+    );
+  return (
+    <Notice tone="amber">
+      <b>مالية الشركة (الشركاء والتوزيعات) غير موجودة في هذا الملف</b>
+      {c.legacyOnly
+        ? ` — فيه فقط ${c.skipped} قيد مزامنة قديم مرتبط بالمشاريع، وهذه لا تُنقل.`
+        : " — المفتاح buad2_pf غير موجود فيه."}
+      <span className="mt-2 block">
+        زر «تصدير البيانات» في المنصة الحالية يحفظ ما في المتصفح الذي ضغطه فقط. لتصدير ملف كامل:
+      </span>
+      <ol className="mt-1 list-decimal ps-5">
+        <li>
+          افتحوا المنصة الحالية، وسجّلوا الخروج ثم الدخول من جديد (يجلب مالية الشركة من خادمها).
+        </li>
+        <li>افتحوا «مالية المنصة» وتأكدوا أن الشركاء والتوزيعات ظاهرة.</li>
+        <li>«الإعدادات ← تصدير البيانات»، ثم ارفعوا الملف الجديد هنا.</li>
+      </ol>
+      <span className="mt-1 block text-xs">
+        إن لم تظهر في «مالية المنصة» نفسها بعد الدخول، فلا توجد بيانات شركة محفوظة على خادمها.
+      </span>
+    </Notice>
   );
 }
