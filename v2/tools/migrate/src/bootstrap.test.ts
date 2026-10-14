@@ -30,4 +30,4 @@ it("bootstrap-owner emits SQL the API can verify, and never prints the password"
   };
   expect(row).toMatchObject({ email: "owner@example.com", role: "owner" });
   expect(row.h.startsWith("pbkdf2$100000$")).toBe(true);
-});
+}, 30_000); // spawns a separate Node process: slow on shared CI runners
