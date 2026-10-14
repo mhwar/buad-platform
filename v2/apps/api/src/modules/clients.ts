@@ -67,7 +67,7 @@ async function findHardDuplicate(
   };
 }
 
-async function findSimilarName(db: Db, orgId: string, nameNorm: string, selfId?: string) {
+export async function findSimilarName(db: Db, orgId: string, nameNorm: string, selfId?: string) {
   const [row] = await db
     .select({ id: clients.id, code: clients.code, name: clients.name })
     .from(clients)
@@ -104,6 +104,38 @@ function contactRows(
     rows.push({ id: newId("con"), clientId, ...c, isSignatory: false });
   }
   return rows;
+}
+
+/** Inserts a client (after the caller has run its duplicate checks) with its contacts. */
+export async function insertClient(db: Db, me: { id: string; orgId: string }, v: Input) {
+  const nameNorm = normalizeName(v.name);
+  const id = newId("cli");
+  const code = formatCode("CL", await nextCounter(db, me.orgId, "client"));
+  const t = nowSec();
+  await db.insert(clients).values({
+    id,
+    orgId: me.orgId,
+    code,
+    name: v.name,
+    nameNorm,
+    type: v.type,
+    email: v.email,
+    phone: v.phone,
+    city: v.city,
+    regNo: v.regNo,
+    taxNo: v.taxNo,
+    address: v.address,
+    website: v.website,
+    notes: v.notes,
+    logo: v.logo,
+    createdBy: me.id,
+    createdAt: t,
+    updatedBy: me.id,
+    updatedAt: t,
+  });
+  const contacts = contactRows(id, v);
+  if (contacts.length) await db.insert(clientContacts).values(contacts);
+  return { id, code };
 }
 
 async function loadClient(db: Db, orgId: string, id: string) {
@@ -220,32 +252,7 @@ export const clientsApp = new Hono<Env>()
       const similar = await findSimilarName(db, me.orgId, nameNorm);
       if (similar) return c.json({ ok: false, error: "similar_name", similar }, 409);
     }
-    const id = newId("cli");
-    const code = formatCode("CL", await nextCounter(db, me.orgId, "client"));
-    const t = nowSec();
-    await db.insert(clients).values({
-      id,
-      orgId: me.orgId,
-      code,
-      name: v.name,
-      nameNorm,
-      type: v.type,
-      email: v.email,
-      phone: v.phone,
-      city: v.city,
-      regNo: v.regNo,
-      taxNo: v.taxNo,
-      address: v.address,
-      website: v.website,
-      notes: v.notes,
-      logo: v.logo,
-      createdBy: me.id,
-      createdAt: t,
-      updatedBy: me.id,
-      updatedAt: t,
-    });
-    const contacts = contactRows(id, v);
-    if (contacts.length) await db.insert(clientContacts).values(contacts);
+    const { id, code } = await insertClient(db, me, v);
     return c.json({ ok: true, id, code }, 201);
   })
 

@@ -4,6 +4,7 @@ import { clients, legacyMap, projectFinance, projects } from "@buad/schema/db";
 import { zValidator } from "@hono/zod-validator";
 import { and, asc, count, desc, eq, isNotNull, isNull, or, type SQL, sql } from "drizzle-orm";
 import { Hono } from "hono";
+import type { z } from "zod";
 import { requireAuth, requireRole, type Vars } from "../auth/middleware";
 import type { AuthUser, Db } from "../auth/service";
 import {
@@ -47,13 +48,47 @@ export async function loadVisible(db: Db, me: AuthUser, id: string) {
   return row ?? null;
 }
 
-async function liveClient(db: Db, orgId: string, clientId: string) {
+export async function liveClient(db: Db, orgId: string, clientId: string) {
   const [row] = await db
     .select({ id: clients.id, archivedAt: clients.archivedAt })
     .from(clients)
     .where(and(eq(clients.id, clientId), eq(clients.orgId, orgId)))
     .limit(1);
   return row ?? null;
+}
+
+/** Inserts a project for a client the caller has already checked. */
+export async function insertProject(
+  db: Db,
+  me: { id: string; orgId: string },
+  v: z.output<typeof projectInput>,
+) {
+  const year = new Date().getUTCFullYear();
+  const number = formatCode("PRJ", await nextCounter(db, me.orgId, "project", year), year);
+  const id = newId("prj");
+  const t = nowSec();
+  await db.insert(projects).values({
+    id,
+    orgId: me.orgId,
+    clientId: v.clientId,
+    number,
+    name: v.name,
+    type: v.type,
+    status: v.status,
+    ownerId: me.id,
+    visibility: v.visibility,
+    location: v.location,
+    startDate: v.startDate,
+    endDate: v.endDate,
+    payDate: v.payDate,
+    expectedValue: fromRiyals(v.expectedValue),
+    notes: v.notes,
+    createdBy: me.id,
+    createdAt: t,
+    updatedBy: me.id,
+    updatedAt: t,
+  });
+  return { id, number };
 }
 
 export const projectsApp = new Hono<Env>()
@@ -131,31 +166,7 @@ export const projectsApp = new Hono<Env>()
     const client = await liveClient(db, me.orgId, v.clientId);
     if (!client) return c.json({ ok: false, error: "client_not_found" }, 404);
     if (client.archivedAt) return c.json({ ok: false, error: "client_archived" }, 409);
-    const year = new Date().getUTCFullYear();
-    const number = formatCode("PRJ", await nextCounter(db, me.orgId, "project", year), year);
-    const id = newId("prj");
-    const t = nowSec();
-    await db.insert(projects).values({
-      id,
-      orgId: me.orgId,
-      clientId: v.clientId,
-      number,
-      name: v.name,
-      type: v.type,
-      status: v.status,
-      ownerId: me.id,
-      visibility: v.visibility,
-      location: v.location,
-      startDate: v.startDate,
-      endDate: v.endDate,
-      payDate: v.payDate,
-      expectedValue: fromRiyals(v.expectedValue),
-      notes: v.notes,
-      createdBy: me.id,
-      createdAt: t,
-      updatedBy: me.id,
-      updatedAt: t,
-    });
+    const { id, number } = await insertProject(db, me, v);
     return c.json({ ok: true, id, number }, 201);
   })
 
