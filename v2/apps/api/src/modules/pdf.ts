@@ -22,6 +22,7 @@ const ALLOWED = [
   /^\/print\/documents\/[\w-]+$/,
   /^\/clients\/[\w-]+\/statement$/,
   /^\/finance\/report(\?[\w=&%.-]*)?$/,
+  /^\/print\/finance\/[\w-]+(\?mode=(client|detailed))?$/,
 ];
 export const isPrintable = (path: string) => ALLOWED.some((r) => r.test(path));
 
@@ -61,7 +62,7 @@ export async function renderPdf(
     await page.waitForSelector(".print-root .doc-pages[data-ready]", { timeout: 25_000 });
     const pdf = await page.pdf({ preferCSSPageSize: true, printBackground: true });
     await page.close();
-    return pdf;
+    return new Uint8Array(pdf);
   } finally {
     // Keep the browser alive for the next PDF; only drop our connection.
     browser.disconnect();

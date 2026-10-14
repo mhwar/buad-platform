@@ -21,6 +21,7 @@ import { PrintDocumentPage } from "./features/documents/DocumentActions";
 import { DocumentEditor } from "./features/documents/DocumentEditor";
 import { DocumentsPage } from "./features/documents/DocumentsPage";
 import { PublicDocumentPage } from "./features/documents/PublicDocument";
+import { ProjectFinanceReport } from "./features/finance/ProjectFinanceReport";
 import { FinancePage } from "./features/finance-overview/FinancePage";
 import { ReportPage } from "./features/finance-overview/ReportPage";
 import { ImportPage } from "./features/import/ImportPage";
@@ -285,6 +286,25 @@ const financeReportRoute = createRoute({
   component: ReportPage,
 });
 
+const printFinanceRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/print/finance/$projectId",
+  validateSearch: z.object({ mode: z.enum(["client", "detailed"]).optional() }),
+  beforeLoad: authed,
+  component: function PrintFinance() {
+    const { projectId } = printFinanceRoute.useParams();
+    const { mode = "client" } = printFinanceRoute.useSearch();
+    const navigate = printFinanceRoute.useNavigate();
+    return (
+      <ProjectFinanceReport
+        projectId={projectId}
+        mode={mode}
+        onMode={(m) => navigate({ search: { mode: m }, replace: true })}
+      />
+    );
+  },
+});
+
 const documentsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/documents",
@@ -371,6 +391,7 @@ export const router = createRouter({
     financeReportRoute,
     shareRoute,
     printDocumentRoute,
+    printFinanceRoute,
     settingsRoute.addChildren([settingsIndexRoute, orgRoute, importRoute, accountRoute]),
     legacyImportRoute,
     legacyAccountRoute,

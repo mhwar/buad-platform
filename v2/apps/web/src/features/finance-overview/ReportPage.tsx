@@ -9,9 +9,16 @@ import { type Block, PagedSheets } from "../documents/Pages";
 import { PdfButton } from "../documents/PdfButton";
 import { type Period, periodQs, type Report, reportQuery } from "./api";
 import { monthLabel } from "./charts";
+import {
+  type CompanyOverview,
+  companyOverviewQuery,
+  type Distribution,
+  distributionsQuery,
+} from "./company-api";
+import { section } from "./report-blocks";
 
 const route = getRouteApi("/finance/report");
-const SHEET_STYLE = {
+export const SHEET_STYLE = {
   "--doc-fs": "10pt",
   "--doc-lh": 1.6,
   "--doc-mx": "1.6cm",
@@ -27,7 +34,10 @@ export function ReportPage() {
   const s = route.useSearch();
   const period: Period = { from: s.from, to: s.to };
   const q = useQuery(reportQuery(period));
-  if (q.isPending)
+  const co = useQuery(companyOverviewQuery(period));
+  const dists = useQuery(distributionsQuery);
+  // Every section must be in before the pages are measured (the PDF waits for them).
+  if (q.isPending || co.isPending || dists.isPending)
     return <div className="h-96 animate-pulse rounded-2xl bg-slate-200 dark:bg-slate-800" />;
   if (q.isError || !q.data)
     return (
@@ -69,7 +79,7 @@ export function ReportPage() {
             style={SHEET_STYLE}
             header={r.org.urls.headerAsset}
             footer={r.org.urls.footerAsset}
-            blocks={reportBlocks(r, period)}
+            blocks={reportBlocks(r, period, co.data, dists.data)}
           />
         </FitToWidth>
       </div>
@@ -77,84 +87,18 @@ export function ReportPage() {
   );
 }
 
-/** One table row as its own block; fixed column widths keep the rows of a section aligned. */
-function Row({
-  widths,
-  cells,
-  head,
-  total,
-}: {
-  widths: number[];
-  cells: ReactNode[];
-  head?: boolean;
-  total?: boolean;
-}) {
-  return (
-    <table className={`st-table ${head ? "" : "st-cont"} ${total ? "st-totals" : ""}`}>
-      <colgroup>
-        {widths.map((w, i) => (
-          // biome-ignore lint/suspicious/noArrayIndexKey: fixed columns
-          <col key={i} style={{ width: `${w}%` }} />
-        ))}
-      </colgroup>
-      {head ? (
-        <thead>
-          <tr>
-            {cells.map((c, i) => (
-              // biome-ignore lint/suspicious/noArrayIndexKey: fixed columns
-              <th key={i}>{c}</th>
-            ))}
-          </tr>
-        </thead>
-      ) : (
-        <tbody>
-          <tr>
-            {cells.map((c, i) => (
-              // biome-ignore lint/suspicious/noArrayIndexKey: fixed columns
-              <td key={i} className={i > 0 ? "st-num" : undefined}>
-                {c}
-              </td>
-            ))}
-          </tr>
-        </tbody>
-      )}
-    </table>
-  );
-}
-
-function section(
-  key: string,
-  title: string,
-  widths: number[],
-  head: string[],
-  rows: ReactNode[][],
-  total?: ReactNode[],
+function reportBlocks(
+  r: Report,
+  period: Period,
+  company?: CompanyOverview,
+  dists?: Distribution[],
 ): Block[] {
-  if (rows.length === 0)
-    return [
-      { key: `${key}-h`, keepWithNext: true, node: <h2 className="doc-clause-title">{title}</h2> },
-      { key: `${key}-none`, node: <p className="st-note">لا بيانات في هذه الفترة.</p> },
-    ];
-  return [
-    { key: `${key}-h`, keepWithNext: true, node: <h2 className="doc-clause-title">{title}</h2> },
-    { key: `${key}-head`, keepWithNext: true, node: <Row widths={widths} cells={head} head /> },
-    ...rows.map((cells, i) => ({
-      key: `${key}-${i}`,
-      node: <Row widths={widths} cells={cells} />,
-    })),
-    ...(total
-      ? [
-          {
-            key: `${key}-total`,
-            keepWithPrev: true,
-            node: <Row widths={widths} cells={total} total />,
-          },
-        ]
-      : []),
-  ];
-}
-
-function reportBlocks(r: Report, period: Period): Block[] {
+  // Distributions completed within the period (v1 printPfReport).
+  const inPeriod = (dists ?? []).filter((d) => {
+    if (d.status !== "completed" || !d.completedAt) return false;
+    const day = new Date(d.completedAt * 1000).toISOString().slice(0, 10);
+    return (!period.from || day >= period.from) && (!period.to || day <= period.to);
+  });
   const t = r.totals;
   return [
     {
@@ -261,6 +205,36 @@ function reportBlocks(r: Report, period: Period): Block[] {
       r.projects.filter((p) => p.vat > 0).map((p) => [p.name, sar(p.net), sar(p.vat)]),
       ["الإجمالي", sar(t.net), sar(t.vat)],
     ),
+    ...(company
+      ? section(
+          "co",
+          "مالية الشركة",
+          [60, 40],
+          ["البند", "المبلغ"],
+          [
+            ["أرباح المشاريع", sar(company.calc.projectProfit)],
+            ["إيرادات الخدمات", sar(company.calc.serviceIncome)],
+            ["مصروفات الشركة", sar(company.calc.companyExpenses)],
+            ["صافي ربح الشركة", sar(company.calc.netProfit)],
+            ["المتاح للتوزيع (كل الفترات)", sar(company.allTime.available)],
+            ["المحتجز (تشغيل/تطوير/احتياطي)", sar(company.retained.total)],
+          ],
+        )
+      : []),
+    ...(company
+      ? section(
+          "dst",
+          "توزيعات الأرباح المعتمدة في الفترة",
+          [40, 20, 20, 20],
+          ["التوزيع", "الموزَّع", "المحتجز", "الشركاء"],
+          inPeriod.map((d) => [
+            d.periodLabel || "توزيع",
+            sar(d.distributed),
+            sar(d.retained),
+            d.shares.map((x) => `${x.partnerName} ${sar(x.amount)}`).join("، "),
+          ]),
+        )
+      : []),
     {
       key: "note",
       node: (
