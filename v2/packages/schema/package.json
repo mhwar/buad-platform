@@ -13,6 +13,7 @@
     "./company": "./src/company.ts",
     "./products": "./src/products.ts",
     "./team": "./src/team.ts",
+    "./plans": "./src/plans.ts",
     "./blueprints": "./src/blueprints.ts",
     "./site": "./src/site.ts"
   },

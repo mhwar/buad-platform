@@ -754,3 +754,127 @@ export const auditLog = sqliteTable(
     index("idx_audit_entity").on(t.orgId, t.entity, t.entityId),
   ],
 );
+
+/** A planning cycle: a multi-year strategic plan or a one-year operational plan. */
+export const planCycles = sqliteTable(
+  "plan_cycles",
+  {
+    id: text("id").primaryKey(),
+    orgId: text("org_id")
+      .notNull()
+      .references(() => orgs.id),
+    kind: text("kind", { enum: ["strategic", "operational"] }).notNull(),
+    name: text("name").notNull(),
+    startDate: text("start_date").notNull().default(""),
+    endDate: text("end_date").notNull().default(""),
+    vision: text("vision").notNull().default(""),
+    mission: text("mission").notNull().default(""),
+    /** JSON array of strings. */
+    values: text("values").notNull().default("[]"),
+    /** An operational cycle may follow a strategic one. */
+    parentCycleId: text("parent_cycle_id").notNull().default(""),
+    status: text("status", { enum: ["draft", "active", "closed"] })
+      .notNull()
+      .default("draft"),
+    version: integer("version").notNull().default(1),
+    createdBy: text("created_by").notNull().default(""),
+    createdAt: integer("created_at").notNull().default(now),
+    updatedAt: integer("updated_at").notNull().default(now),
+  },
+  (t) => [index("idx_plan_cycles_org").on(t.orgId, t.kind)],
+);
+
+export const planObjectives = sqliteTable(
+  "plan_objectives",
+  {
+    id: text("id").primaryKey(),
+    orgId: text("org_id")
+      .notNull()
+      .references(() => orgs.id),
+    cycleId: text("cycle_id")
+      .notNull()
+      .references(() => planCycles.id, { onDelete: "cascade" }),
+    /** For operational objectives: the strategic objective it serves. */
+    parentId: text("parent_id").notNull().default(""),
+    title: text("title").notNull(),
+    description: text("description").notNull().default(""),
+    ownerId: text("owner_id").notNull().default(""),
+    /** 0 = the whole cycle; 1–4 = a quarter of the operational year. */
+    quarter: integer("quarter").notNull().default(0),
+    weight: integer("weight").notNull().default(1),
+    budgetHalalas: integer("budget_halalas").notNull().default(0),
+    sort: integer("sort").notNull().default(0),
+    updatedAt: integer("updated_at").notNull().default(now),
+  },
+  (t) => [index("idx_plan_obj_cycle").on(t.cycleId)],
+);
+
+export const planIndicators = sqliteTable(
+  "plan_indicators",
+  {
+    id: text("id").primaryKey(),
+    orgId: text("org_id")
+      .notNull()
+      .references(() => orgs.id),
+    objectiveId: text("objective_id")
+      .notNull()
+      .references(() => planObjectives.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    unit: text("unit").notNull().default(""),
+    baseline: real("baseline").notNull().default(0),
+    target: real("target").notNull().default(0),
+    /** Entered by hand when the source is «manual». */
+    current: real("current").notNull().default(0),
+    /** "manual" or "platform:<metric>". */
+    source: text("source").notNull().default("manual"),
+    /** Whether a higher or a lower value is better. */
+    direction: text("direction", { enum: ["up", "down"] })
+      .notNull()
+      .default("up"),
+  },
+  (t) => [index("idx_plan_ind_obj").on(t.objectiveId)],
+);
+
+export const planInitiatives = sqliteTable(
+  "plan_initiatives",
+  {
+    id: text("id").primaryKey(),
+    orgId: text("org_id")
+      .notNull()
+      .references(() => orgs.id),
+    objectiveId: text("objective_id")
+      .notNull()
+      .references(() => planObjectives.id, { onDelete: "cascade" }),
+    title: text("title").notNull(),
+    ownerId: text("owner_id").notNull().default(""),
+    startDate: text("start_date").notNull().default(""),
+    dueDate: text("due_date").notNull().default(""),
+    budgetHalalas: integer("budget_halalas").notNull().default(0),
+    status: text("status", { enum: ["todo", "doing", "blocked", "done"] })
+      .notNull()
+      .default("todo"),
+    projectId: text("project_id").notNull().default(""),
+    productId: text("product_id").notNull().default(""),
+  },
+  (t) => [index("idx_plan_init_obj").on(t.objectiveId)],
+);
+
+/** A quarterly review of an objective, with the numbers frozen at that moment. */
+export const planReviews = sqliteTable(
+  "plan_reviews",
+  {
+    id: text("id").primaryKey(),
+    orgId: text("org_id")
+      .notNull()
+      .references(() => orgs.id),
+    objectiveId: text("objective_id")
+      .notNull()
+      .references(() => planObjectives.id, { onDelete: "cascade" }),
+    quarter: integer("quarter").notNull().default(0),
+    note: text("note").notNull().default(""),
+    snapshot: text("snapshot").notNull().default("{}"),
+    createdBy: text("created_by").notNull().default(""),
+    createdAt: integer("created_at").notNull().default(now),
+  },
+  (t) => [index("idx_plan_rev_obj").on(t.objectiveId)],
+);

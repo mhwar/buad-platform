@@ -4,6 +4,7 @@ export * from "./finance-adapter";
 export * from "./fincalc";
 export * from "./money";
 export * from "./permissions";
+export * from "./plans";
 export * from "./pricing";
 export * from "./product-stats";
 export * from "./realized";

@@ -32,6 +32,7 @@ import { MoreHeader } from "./features/more/MoreHeader";
 import { MoreIndex } from "./features/more/MoreIndex";
 import { inHub } from "./features/more/tabs";
 import { OrgSettingsPage } from "./features/org/OrgSettings";
+import { PlansPage } from "./features/plans/PlansPage";
 import { ProductBrochurePage, PublicBrochurePage } from "./features/products/BrochurePages";
 import { ProductBuilderPage } from "./features/products/ProductBuilder";
 import { ProductsPage } from "./features/products/ProductsPage";
@@ -446,6 +447,12 @@ const moreRoute = createRoute({
   beforeLoad: authed,
   component: MoreIndex,
 });
+const plansRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/more/plans",
+  beforeLoad: needs("plans.view"),
+  component: PlansPage,
+});
 const moreSoonRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/more/soon/$key",
@@ -491,6 +498,7 @@ export const router = createRouter({
     indexRoute,
     moreRoute,
     moreSoonRoute,
+    plansRoute,
     teamRoute,
     activityRoute,
     legacyTeamRoute,
