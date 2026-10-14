@@ -82,11 +82,12 @@ export const sendJson = (url: string, method: string, body?: unknown) =>
     body: body === undefined ? undefined : JSON.stringify(body),
   });
 
-export type RequestStatus = "new" | "contacted" | "quoted" | "won" | "lost";
+export type RequestStatus = "new" | "contacted" | "quoted" | "negotiating" | "won" | "lost";
 export const REQUEST_LABEL: Record<RequestStatus, string> = {
   new: "جديد",
   contacted: "تم التواصل",
   quoted: "عُرض عليه سعر",
+  negotiating: "تفاوض",
   won: "تم التعاقد",
   lost: "لم يكتمل",
 };
@@ -106,6 +107,11 @@ export type ProductRequest = {
   notes: string;
   clientId: string;
   projectId: string;
+  ownerId: string;
+  followUpAt: string;
+  value: number;
+  lostReason: string;
+  updatedAt: number;
   createdAt: number;
   /** Registered for a «coming soon» product (not a quote request). */
   interest: boolean;

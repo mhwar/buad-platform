@@ -7,7 +7,14 @@ import { z } from "zod";
  * ──────────────────────────────────────────────────────────────────────────── */
 
 export const PRODUCT_STATUSES = ["draft", "published", "archived"] as const;
-export const REQUEST_STATUSES = ["new", "contacted", "quoted", "won", "lost"] as const;
+export const REQUEST_STATUSES = [
+  "new",
+  "contacted",
+  "quoted",
+  "negotiating",
+  "won",
+  "lost",
+] as const;
 
 /** A small whitelist: content stores a name, the UI draws the glyph. */
 export const PRODUCT_ICONS = [
@@ -192,5 +199,10 @@ export const requestPatch = z
   .object({
     status: z.enum(REQUEST_STATUSES),
     notes: z.string().trim().max(2000),
+    ownerId: z.string().max(60),
+    followUpAt: z.union([z.literal(""), z.string().regex(/^\d{4}-\d{2}-\d{2}$/)]),
+    /** The expected deal value in riyals. */
+    value: z.number().min(0).max(1_000_000_000),
+    lostReason: z.string().trim().max(300),
   })
   .partial();

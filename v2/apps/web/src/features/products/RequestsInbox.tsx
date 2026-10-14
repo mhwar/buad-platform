@@ -32,6 +32,7 @@ const TONE: Record<RequestStatus, "blue" | "amber" | "green" | "gray" | "red"> =
   new: "blue",
   contacted: "amber",
   quoted: "amber",
+  negotiating: "amber",
   won: "green",
   lost: "gray",
 };

@@ -39,6 +39,8 @@ import { ProductBuilderPage } from "./features/products/ProductBuilder";
 import { ProductsPage } from "./features/products/ProductsPage";
 import { ProjectPage } from "./features/projects/ProjectPage";
 import { ProjectsPage } from "./features/projects/ProjectsPage";
+import { QuotePrintPage } from "./features/sales/QuotePrint";
+import { SalesPage } from "./features/sales/SalesPage";
 import { SettingsLayout } from "./features/settings/SettingsLayout";
 import { ProductPublicPage } from "./features/site/ProductPublicPage";
 import { SitePage } from "./features/site/SitePage";
@@ -465,6 +467,21 @@ const tasksRoute = createRoute({
   beforeLoad: needs("tasks.view"),
   component: TasksPage,
 });
+const salesRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/more/sales",
+  beforeLoad: needs("sales.view"),
+  component: SalesPage,
+});
+const printQuoteRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/print/quotes/$id",
+  beforeLoad: needs("sales.view"),
+  component: function PrintQuote() {
+    const { id } = printQuoteRoute.useParams();
+    return <QuotePrintPage id={id} />;
+  },
+});
 const moreSoonRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/more/soon/$key",
@@ -512,6 +529,8 @@ export const router = createRouter({
     moreSoonRoute,
     plansRoute,
     tasksRoute,
+    salesRoute,
+    printQuoteRoute,
     teamRoute,
     activityRoute,
     legacyTeamRoute,

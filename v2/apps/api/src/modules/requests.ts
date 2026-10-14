@@ -42,6 +42,11 @@ export const shapeRequest = (r: Row) => ({
   notes: r.notes,
   clientId: r.clientId,
   projectId: r.projectId,
+  ownerId: r.ownerId,
+  followUpAt: r.followUpAt,
+  value: r.valueHalalas / 100,
+  lostReason: r.lostReason,
+  updatedAt: r.updatedAt,
   createdAt: r.createdAt,
 });
 
@@ -123,12 +128,17 @@ export const requestsApp = new Hono<Env>()
   })
 
   .patch("/:id", zValidator("json", requestPatch), async (c) => {
-    const v = c.req.valid("json");
+    const { value, ...v } = c.req.valid("json");
     const me = c.get("user");
     const upd = await c
       .get("db")
       .update(productRequests)
-      .set({ ...v, updatedBy: me.id, updatedAt: nowSec() })
+      .set({
+        ...v,
+        ...(value !== undefined ? { valueHalalas: Math.round(value * 100) } : {}),
+        updatedBy: me.id,
+        updatedAt: nowSec(),
+      })
       .where(and(eq(productRequests.id, c.req.param("id")), eq(productRequests.orgId, me.orgId)))
       .returning({ id: productRequests.id });
     return upd.length ? c.json({ ok: true }) : c.json({ ok: false, error: "not_found" }, 404);

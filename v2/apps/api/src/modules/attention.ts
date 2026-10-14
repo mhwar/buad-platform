@@ -11,7 +11,7 @@ import {
   tasks,
   users,
 } from "@buad/schema/db";
-import { and, eq, isNull, lt, ne, sql } from "drizzle-orm";
+import { and, eq, inArray, isNull, lt, ne, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { requireAuth, type Vars } from "../auth/middleware";
 import { nowSec } from "./common";
@@ -46,6 +46,26 @@ export const attentionApp = new Hono<{ Variables: Vars }>().use(requireAuth).get
           ),
         ),
     );
+    const due = await count(
+      db
+        .select({ n: sql<number>`count(*)` })
+        .from(productRequests)
+        .where(
+          and(
+            eq(productRequests.orgId, me.orgId),
+            inArray(productRequests.status, ["new", "contacted", "quoted", "negotiating"]),
+            ne(productRequests.followUpAt, ""),
+            lt(productRequests.followUpAt, today),
+          ),
+        ),
+    );
+    add({
+      key: "followups",
+      tone: "warn",
+      title: "متابعات مبيعات حان موعدها",
+      count: due,
+      link: "/more/sales",
+    });
     add({
       key: "requests",
       tone: "warn",

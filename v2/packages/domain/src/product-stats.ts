@@ -125,7 +125,7 @@ export function productStats(input: {
     total: requests.length,
     new: count("new"),
     contacted: count("contacted"),
-    quoted: count("quoted"),
+    quoted: count("quoted") + count("negotiating"),
     won,
     lost: count("lost"),
     conversionPct: pct(won, requests.length),
