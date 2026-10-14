@@ -7,6 +7,7 @@ export * from "./permissions";
 export * from "./plans";
 export * from "./pricing";
 export * from "./product-stats";
+export * from "./quotes";
 export * from "./realized";
 export * from "./receipts";
 export * from "./templates/v1-templates";

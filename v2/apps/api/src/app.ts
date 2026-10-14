@@ -31,6 +31,7 @@ import { type BrowserBinding, pdfApp } from "./modules/pdf";
 import { plansApp } from "./modules/plans";
 import { productsApp } from "./modules/products";
 import { projectsApp } from "./modules/projects";
+import { quotesApp } from "./modules/quotes";
 import { requestsApp } from "./modules/requests";
 import { documentSharesApp, publicShareApp } from "./modules/share";
 import { siteApp } from "./modules/site";
@@ -178,6 +179,7 @@ export function createApp(deps: AppDeps = {}) {
 
       .route("/api/attention", attentionApp)
       .route("/api/notifications", notificationsApp)
+      .route("/api/quotes", quotesApp)
       .route("/api/tasks", tasksApp)
       .route("/api/plans", plansApp)
       .route("/api/team", teamApp)

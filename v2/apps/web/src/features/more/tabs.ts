@@ -75,19 +75,13 @@ export const MORE_TABS: MoreTab[] = [
   {
     key: "sales",
     label: "المبيعات",
-    to: soon("sales"),
+    to: "/more/sales",
     icon: ShoppingCart,
     group: "work",
-    soon: true,
     perm: "sales.view",
     desc: "مسار العميل المحتمل من الطلب إلى العقد: متابعة، عرض سعر، تفاوض، مشروع.",
     when: "عند وصول طلب جديد أو متابعة العروض المرسلة.",
-    will: [
-      "لوحة مراحل: جديد، تواصل، عرض سعر، تفاوض، مكسوب، خسارة مع سبب الخسارة.",
-      "عروض أسعار برقم متسلسل وملف PDF على ترويسة الجهة.",
-      "تذكيرات المتابعة وقمع التحويل حسب الخدمة والمصدر.",
-    ],
-    match: at("/more/soon/sales"),
+    match: at("/more/sales"),
   },
   {
     key: "receivables",

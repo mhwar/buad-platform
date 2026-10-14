@@ -15,6 +15,7 @@
     "./team": "./src/team.ts",
     "./plans": "./src/plans.ts",
     "./tasks": "./src/tasks.ts",
+    "./quotes": "./src/quotes.ts",
     "./blueprints": "./src/blueprints.ts",
     "./site": "./src/site.ts"
   },

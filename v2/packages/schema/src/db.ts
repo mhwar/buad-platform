@@ -657,6 +657,11 @@ export const productRequests = sqliteTable(
     notes: text("notes").notNull().default(""),
     clientId: text("client_id").notNull().default(""),
     projectId: text("project_id").notNull().default(""),
+    /** Sales follow-up: who owns the lead, when to chase it, what it is worth, why it was lost. */
+    ownerId: text("owner_id").notNull().default(""),
+    followUpAt: text("follow_up_at").notNull().default(""),
+    valueHalalas: integer("value_halalas").notNull().default(0),
+    lostReason: text("lost_reason").notNull().default(""),
     /** Hash of (ip, org, day): only used to limit abuse, never shown. */
     ipHash: text("ip_hash").notNull().default(""),
     createdAt: integer("created_at").notNull().default(now),
@@ -980,4 +985,40 @@ export const timeEntries = sqliteTable(
     createdAt: integer("created_at").notNull().default(now),
   },
   (t) => [index("idx_time_task").on(t.taskId), index("idx_time_project").on(t.projectId)],
+);
+
+/** «عرض سعر»: a priced offer sent to a prospect or client. Prices only: never costs or margins. */
+export const quotes = sqliteTable(
+  "quotes",
+  {
+    id: text("id").primaryKey(),
+    orgId: text("org_id")
+      .notNull()
+      .references(() => orgs.id),
+    number: text("number").notNull(),
+    requestId: text("request_id").notNull().default(""),
+    clientId: text("client_id").notNull().default(""),
+    /** Who it is addressed to, kept as typed so it survives the client being renamed or absent. */
+    recipient: text("recipient").notNull().default(""),
+    entity: text("entity").notNull().default(""),
+    title: text("title").notNull(),
+    /** JSON: [{ label, qty, unitHalalas }]. */
+    items: text("items").notNull().default("[]"),
+    discountHalalas: integer("discount_halalas").notNull().default(0),
+    vatPct: real("vat_pct").notNull().default(15),
+    validUntil: text("valid_until").notNull().default(""),
+    terms: text("terms").notNull().default(""),
+    status: text("status", { enum: ["draft", "sent", "accepted", "rejected"] })
+      .notNull()
+      .default("draft"),
+    version: integer("version").notNull().default(1),
+    createdBy: text("created_by").notNull().default(""),
+    createdAt: integer("created_at").notNull().default(now),
+    updatedAt: integer("updated_at").notNull().default(now),
+  },
+  (t) => [
+    uniqueIndex("uq_quotes_number").on(t.orgId, t.number),
+    index("idx_quotes_org").on(t.orgId, t.status),
+    index("idx_quotes_request").on(t.requestId),
+  ],
 );
