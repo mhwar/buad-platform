@@ -589,3 +589,52 @@ describe("publish history, overview and product order", () => {
     expect(p.site.form).toMatchObject({ submitLabel: "إرسال الطلب", showEntity: true });
   });
 });
+
+describe("service profile (brochure) PDF", () => {
+  it("is offered only for a published, listed product that allows it", async () => {
+    await call("adm", "POST", `${S}/publish`);
+    // nothing published yet / unknown
+    expect((await call("", "POST", `${PUB}/products/patient-transport/brochure`)).status).toBe(404);
+    const id = await publishedProduct();
+    // no browser in tests: a valid request cannot render, and says so
+    expect((await call("", "POST", `${PUB}/products/patient-transport/brochure`)).status).toBe(503);
+    // switched off by the owner
+    const g = (await call("adm", "GET", `/api/products/${id}`)).body.product;
+    await call("adm", "PATCH", `/api/products/${id}`, {
+      version: g.version,
+      content: { ...g.content, brochure: false },
+    });
+    expect((await call("", "POST", `${PUB}/products/patient-transport/brochure`)).status).toBe(404);
+  });
+
+  it("serves the cached PDF without rendering again, keyed by product version and site publish", async () => {
+    await call("adm", "POST", `${S}/publish`);
+    const id = await publishedProduct();
+    const g = (await call("adm", "GET", `/api/products/${id}`)).body.product;
+    const at = (await call("adm", "GET", `${S}/draft`)).body.publishedAt;
+    blobs.set(
+      `brochures/org_platform/${id}-v${g.version}-s${at}.pdf`,
+      new TextEncoder().encode("%PDF-cached"),
+    );
+    const r = await app.request(
+      `${PUB}/products/patient-transport/brochure`,
+      { method: "POST" },
+      env,
+    );
+    expect(r.status).toBe(200);
+    expect(r.headers.get("content-type")).toBe("application/pdf");
+    expect(r.headers.get("content-disposition")).toContain("patient-transport-profile.pdf");
+    expect(await r.text()).toBe("%PDF-cached");
+    // editing the product changes the key, so a stale file is never served
+    await call("adm", "PATCH", `/api/products/${id}`, { version: g.version, tagline: "جديد" });
+    expect((await call("", "POST", `${PUB}/products/patient-transport/brochure`)).status).toBe(503);
+  });
+
+  it("the brochure never carries pricing: public content has no costs", async () => {
+    await call("adm", "POST", `${S}/publish`);
+    await publishedProduct();
+    const raw = JSON.stringify((await call("", "GET", `${PUB}/products/patient-transport`)).body);
+    expect(raw).not.toContain("pricing");
+    expect(raw).toContain('"brochure":true');
+  });
+});

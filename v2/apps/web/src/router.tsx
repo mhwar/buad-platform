@@ -36,6 +36,7 @@ import { ReportPage } from "./features/finance-overview/ReportPage";
 import { VatReportPage } from "./features/finance-overview/VatReportPage";
 import { ImportPage } from "./features/import/ImportPage";
 import { OrgSettingsPage } from "./features/org/OrgSettings";
+import { ProductBrochurePage, PublicBrochurePage } from "./features/products/BrochurePages";
 import { ProductBuilderPage } from "./features/products/ProductBuilder";
 import { ProductsPage } from "./features/products/ProductsPage";
 import { ProjectPage } from "./features/projects/ProjectPage";
@@ -325,6 +326,23 @@ const siteProductRoute = createRoute({
   path: "/site/p/$slug",
   component: ProductPublicPage,
 });
+const siteBrochureRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/site/p/$slug/brochure",
+  component: function SiteBrochure() {
+    const { slug } = siteBrochureRoute.useParams();
+    return <PublicBrochurePage slug={slug} />;
+  },
+});
+const printProductRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/print/products/$id",
+  beforeLoad: managerOnly,
+  component: function PrintProduct() {
+    const { id } = printProductRoute.useParams();
+    return <ProductBrochurePage id={id} />;
+  },
+});
 const productsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/products",
@@ -471,6 +489,8 @@ export const router = createRouter({
     websiteRoute,
     siteRoute,
     siteProductRoute,
+    siteBrochureRoute,
+    printProductRoute,
     shareRoute,
     printDocumentRoute,
     printFinanceRoute,

@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getRouteApi, Link } from "@tanstack/react-router";
 import { ArrowLeft, Check } from "lucide-react";
 import { useState } from "react";
+import { downloadPublicBrochure } from "../products/BrochurePages";
 import { Icon } from "../products/icons";
 import { ContactBand, SiteChrome, useLightTheme } from "./chrome";
 import { RequestDialog } from "./RequestDialog";
@@ -22,6 +23,8 @@ export function ProductPublicPage() {
   const { slug } = route.useParams();
   const q = useQuery(siteProductQuery(slug));
   const [open, setOpen] = useState(false);
+  const [pdfBusy, setPdfBusy] = useState(false);
+  const [pdfFailed, setPdfFailed] = useState(false);
   useLightTheme(q.data ? `${q.data.product.name} | ${q.data.site.brand.name}` : undefined);
 
   if (q.isPending)
@@ -78,7 +81,28 @@ export function ProductPublicPage() {
               ))}
             </div>
           )}
-          <div className="btns">{cta}</div>
+          <div className="btns">
+            {cta}
+            {c.brochure && (
+              <button
+                type="button"
+                className="btn white"
+                disabled={pdfBusy}
+                onClick={async () => {
+                  setPdfBusy(true);
+                  setPdfFailed(!(await downloadPublicBrochure(product.slug)));
+                  setPdfBusy(false);
+                }}
+              >
+                {pdfBusy ? "جارٍ التجهيز…" : "حمّل الملف التعريفي (PDF)"}
+              </button>
+            )}
+          </div>
+          {pdfFailed && (
+            <p className="err" role="alert">
+              تعذّر تجهيز الملف الآن. حاول لاحقاً أو تواصل معنا.
+            </p>
+          )}
         </section>
 
         {c.problems.length > 0 && (

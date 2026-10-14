@@ -104,6 +104,8 @@ export const productContent = z.object({
     6,
   ),
   intake: list(intakeQuestion, 12),
+  /** Offer the service profile (PDF) for download on the public product page. */
+  brochure: z.boolean().default(true),
   faq: list(z.object({ q: str(200), a: str(900) }), 12),
 });
 export type ProductContent = z.infer<typeof productContent>;

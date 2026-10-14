@@ -8,6 +8,7 @@ import type { Db } from "../auth/service";
 import { PLATFORM_ORG_ID } from "../auth/setup";
 import { assetResponse, type FileStore } from "./assets";
 import { newId, nowSec } from "./common";
+import { type BrowserBinding, pdfResponse, renderPdf } from "./pdf";
 import { contentOf, listedProducts } from "./products";
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -17,7 +18,10 @@ import { contentOf, listedProducts } from "./products";
  * The deployment has one organisation, so its id is the platform org.
  * ──────────────────────────────────────────────────────────────────────────── */
 
-type Env = { Bindings: { JWT_SECRET: string; FILES?: FileStore }; Variables: { db: Db } };
+type Env = {
+  Bindings: { JWT_SECRET: string; FILES?: FileStore; BROWSER?: BrowserBinding };
+  Variables: { db: Db };
+};
 const ORG = PLATFORM_ORG_ID;
 
 const PER_IP_HOUR = 5;
@@ -103,6 +107,36 @@ export const publicSiteApp = new Hono<Env>()
       logoUrl: logoUrl(site.brand.logoAsset),
       product: publicProduct(prod),
     });
+  })
+
+  // The service profile PDF: rendered once per (product version, published site) and kept in R2,
+  // so repeated downloads cost nothing and cannot exhaust the browser quota.
+  .post("/products/:slug/brochure", async (c) => {
+    c.header("Cache-Control", "no-store");
+    const db = c.get("db");
+    const slug = c.req.param("slug");
+    const site = await publishedSite(db);
+    const prod = (await listedProducts(db, ORG)).find((p) => p.slug === slug);
+    if (!site || !prod || contentOf(prod).brochure === false)
+      return c.json({ ok: false, error: "not_found" }, 404);
+    const [st] = await db
+      .select({ at: siteSettings.publishedAt })
+      .from(siteSettings)
+      .where(eq(siteSettings.orgId, ORG))
+      .limit(1);
+    const key = `brochures/${ORG}/${prod.id}-v${prod.version}-s${st?.at ?? 0}.pdf`;
+    const name = `${slug}-profile`;
+    const cached = c.env.FILES ? await c.env.FILES.get(key) : null;
+    if (cached) return pdfResponse(new Uint8Array(await cached.arrayBuffer()), name);
+    if (!c.env.BROWSER) return c.json({ ok: false, error: "pdf_unavailable" }, 503);
+    try {
+      const url = new URL(`/site/p/${slug}/brochure?render=1`, c.req.url).toString();
+      const pdf = await renderPdf(c.env.BROWSER, url);
+      await c.env.FILES?.put(key, pdf, { httpMetadata: { contentType: "application/pdf" } });
+      return pdfResponse(pdf, name);
+    } catch {
+      return c.json({ ok: false, error: "pdf_unavailable" }, 503);
+    }
   })
 
   // Only images the published site actually uses (brand logo, entity logos).

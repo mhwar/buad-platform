@@ -23,6 +23,7 @@ const ALLOWED = [
   /^\/clients\/[\w-]+\/statement$/,
   /^\/finance\/report(\?[\w=&%.-]*)?$/,
   /^\/finance\/vat\/report(\?[\w=&%.-]*)?$/,
+  /^\/print\/products\/[\w-]+$/,
   /^\/print\/finance\/[\w-]+(\?mode=(client|detailed))?$/,
 ];
 export const isPrintable = (path: string) => ALLOWED.some((r) => r.test(path));
@@ -60,7 +61,9 @@ export async function renderPdf(
     // hidden in print). page.pdf() then prints those finished pages.
     await page.setViewport({ width: 1200, height: 1600 });
     await page.goto(url, { waitUntil: "networkidle0", timeout: 30_000 });
-    await page.waitForSelector(".print-root .doc-pages[data-ready]", { timeout: 25_000 });
+    await page.waitForSelector(".print-root .doc-pages[data-ready], [data-pdf-ready]", {
+      timeout: 25_000,
+    });
     const pdf = await page.pdf({ preferCSSPageSize: true, printBackground: true });
     await page.close();
     return new Uint8Array(pdf);
