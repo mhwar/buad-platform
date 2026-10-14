@@ -7,3 +7,4 @@ export * from "./realized";
 export * from "./receipts";
 export * from "./templates/v1-templates";
 export * from "./text";
+export * from "./vat";

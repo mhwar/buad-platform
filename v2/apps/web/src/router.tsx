@@ -24,6 +24,7 @@ import { PublicDocumentPage } from "./features/documents/PublicDocument";
 import { ProjectFinanceReport } from "./features/finance/ProjectFinanceReport";
 import { FinancePage } from "./features/finance-overview/FinancePage";
 import { ReportPage } from "./features/finance-overview/ReportPage";
+import { VatReportPage } from "./features/finance-overview/VatReportPage";
 import { ImportPage } from "./features/import/ImportPage";
 import { OrgSettingsPage } from "./features/org/OrgSettings";
 import { ProjectPage } from "./features/projects/ProjectPage";
@@ -277,10 +278,20 @@ const financeRoute = createRoute({
     q: z.coerce.number().int().min(1).max(4).optional(),
     client: z.string().optional(),
     status: z.string().optional(),
-    tab: z.enum(["projects", "quarter", "company", "partners"]).optional(),
+    tab: z.enum(["projects", "quarter", "vat", "company", "partners"]).optional(),
   }),
   beforeLoad: managerOnly,
   component: FinancePage,
+});
+const vatReportRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/finance/vat/report",
+  validateSearch: z.object({
+    year: z.coerce.number().int().min(2000).max(2100).catch(new Date().getFullYear()),
+    q: z.coerce.number().int().min(1).max(4).catch(1),
+  }),
+  beforeLoad: managerOnly,
+  component: VatReportPage,
 });
 const financeReportRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -393,6 +404,7 @@ export const router = createRouter({
     documentRoute,
     financeRoute,
     financeReportRoute,
+    vatReportRoute,
     shareRoute,
     printDocumentRoute,
     printFinanceRoute,
