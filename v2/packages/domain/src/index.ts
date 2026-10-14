@@ -4,6 +4,7 @@ export * from "./finance-adapter";
 export * from "./fincalc";
 export * from "./money";
 export * from "./pricing";
+export * from "./product-stats";
 export * from "./realized";
 export * from "./receipts";
 export * from "./templates/v1-templates";

@@ -18,6 +18,7 @@ import {
 } from "../../components/ui";
 import { ApiError, ok } from "../../lib/format";
 import { IconSelect, LinesField, Repeater, TitleTextList, uid } from "./editors";
+import { PerformancePanel } from "./PerformancePanel";
 import { PricingPanel } from "./PricingPanel";
 import { type Product, productQuery, STATUS_LABEL, sendJson } from "./products-api";
 
@@ -26,6 +27,7 @@ const STEPS = [
   { key: "identity", label: "التعريف" },
   { key: "packages", label: "الباقات" },
   { key: "pricing", label: "التكلفة والتسعير" },
+  { key: "performance", label: "الأداء" },
   { key: "intake", label: "الاستبيان" },
   { key: "content", label: "التشغيل والمحتوى" },
   { key: "publish", label: "النشر" },
@@ -172,20 +174,23 @@ function Builder({ product }: { product: Product }) {
           onChange={(pricing) => patch({ pricing })}
         />
       )}
+      {step === "performance" && <PerformancePanel product={product} />}
       {step === "intake" && <Intake d={d} patchContent={patchContent} />}
       {step === "content" && <ContentSections d={d} patchContent={patchContent} />}
       {step === "publish" && <Publish product={product} d={d} patch={patch} dirty={dirty} />}
 
-      <div className="fixed inset-x-0 bottom-0 z-30 border-t bg-surface/95 backdrop-blur">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
-          <span className="text-sm text-muted">
-            {dirty ? "تغييرات غير محفوظة" : "كل التغييرات محفوظة"}
-          </span>
-          <Button onClick={save} disabled={!dirty || busy || blank(d.name)}>
-            {busy ? "جارٍ الحفظ…" : "حفظ"}
-          </Button>
+      {step !== "performance" && (
+        <div className="fixed inset-x-0 bottom-0 z-30 border-t bg-surface/95 backdrop-blur">
+          <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
+            <span className="text-sm text-muted">
+              {dirty ? "تغييرات غير محفوظة" : "كل التغييرات محفوظة"}
+            </span>
+            <Button onClick={save} disabled={!dirty || busy || blank(d.name)}>
+              {busy ? "جارٍ الحفظ…" : "حفظ"}
+            </Button>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

@@ -22,10 +22,15 @@ export type ProjectListItem = {
   clientName: string;
   clientCode: string;
   clientLogoUrl: string;
+  /** The service and package the project was contracted on ("" = none). */
+  productId: string;
+  productName: string;
+  packageId: string;
+  packageName: string;
 };
 export type Project = Omit<
   ProjectListItem,
-  "clientName" | "clientCode" | "contractTotal" | "clientLogoUrl"
+  "clientName" | "clientCode" | "contractTotal" | "clientLogoUrl" | "productName"
 > & {
   createdBy: string;
   ownerId: string;
@@ -36,6 +41,12 @@ export type Project = Omit<
 };
 export type ProjectDetail = {
   project: Project;
+  service: {
+    productId: string;
+    productName: string;
+    packageId: string;
+    packageName: string;
+  } | null;
   client: {
     id: string;
     code: string;
@@ -52,6 +63,8 @@ export type ProjectFilters = {
   q?: string;
   status?: string;
   clientId?: string;
+  /** A product id, or "none" for projects without a service. */
+  product?: string;
   sort?: "newest" | "name" | "value";
   archived?: "0" | "1";
 };
@@ -74,6 +87,7 @@ export const projectsQuery = (f: ProjectFilters) =>
             ...(f.q ? { q: f.q } : {}),
             ...(f.status ? { status: f.status } : {}),
             ...(f.clientId ? { clientId: f.clientId } : {}),
+            ...(f.product ? { product: f.product } : {}),
           },
         }),
       ),

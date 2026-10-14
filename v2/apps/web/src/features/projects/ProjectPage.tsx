@@ -93,7 +93,7 @@ export function ProjectPage() {
       />
     );
 
-  const { project: p, client } = q.data;
+  const { project: p, client, service } = q.data;
   const manager = me?.role === "owner" || me?.role === "admin";
   const refresh = () =>
     Promise.all([
@@ -273,6 +273,17 @@ export function ProjectPage() {
           <p className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted">
             <span dir="ltr">{p.number}</span>
             <span>{label(PROJECT_TYPE_LABELS, p.type)}</span>
+            {service && (
+              <Link
+                to="/projects"
+                search={{ product: service.productId }}
+                className="rounded-full bg-brand-soft px-2.5 py-0.5 text-xs font-medium text-brand hover:underline"
+                title="مشاريع هذه الخدمة"
+              >
+                {service.productName}
+                {service.packageName && ` · ${service.packageName}`}
+              </Link>
+            )}
             {(p.startDate || p.endDate) && (
               <span className="inline-flex items-center gap-1">
                 <CalendarDays className="size-3.5" />
@@ -363,6 +374,12 @@ export function ProjectPage() {
             </div>
             <dl className="space-y-2.5 text-sm">
               <Detail label="النوع" value={label(PROJECT_TYPE_LABELS, p.type)} />
+              {service && (
+                <Detail
+                  label="الخدمة"
+                  value={`${service.productName}${service.packageName ? ` · ${service.packageName}` : ""}`}
+                />
+              )}
               <Detail label="الموقع" value={p.location} icon={<MapPin className="size-3.5" />} />
               <Detail label="البداية" value={day(p.startDate)} />
               <Detail label="الانتهاء المتوقع" value={day(p.endDate)} />

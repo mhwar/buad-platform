@@ -92,6 +92,9 @@ const projectFields = {
   /** Riyals as typed by the user; stored as integer halalas. */
   expectedValue: z.coerce.number().min(0).max(1e12),
   notes: str(5000),
+  /** The service (product) and package this project was contracted on; both optional. */
+  productId: z.string().max(60),
+  packageId: z.string().max(40),
 };
 
 export const projectInput = z
@@ -106,6 +109,8 @@ export const projectInput = z
     payDate: date.default(""),
     expectedValue: projectFields.expectedValue.default(0),
     notes: str(5000).default(""),
+    productId: projectFields.productId.default(""),
+    packageId: projectFields.packageId.default(""),
   })
   .refine((p) => !p.startDate || !p.endDate || p.endDate >= p.startDate, {
     path: ["endDate"],
@@ -119,6 +124,7 @@ export const listQuery = z.object({
   type: z.string().optional(),
   status: z.string().optional(),
   clientId: z.string().optional(),
+  product: z.string().max(60).optional(),
   sort: z.enum(["newest", "name", "value"]).default("newest"),
   archived: z.enum(["0", "1"]).default("0"),
 });
