@@ -17,6 +17,7 @@ import { type Db, getUser, login, setPassword } from "./auth/service";
 import { SESSION_COOKIE, SESSION_TTL, signSession, signSetup, verifySetup } from "./auth/session";
 import { claimOwner, ownerExists, setupEnabled, tokenMatches } from "./auth/setup";
 import { assetsApp, type FileStore } from "./modules/assets";
+import { attentionApp } from "./modules/attention";
 import { auditApp, auditTrail } from "./modules/audit";
 import { clientsApp } from "./modules/clients";
 import { companyFinanceApp } from "./modules/company-finance";
@@ -24,6 +25,7 @@ import { documentsApp, projectDocumentsApp } from "./modules/documents";
 import { financeApp } from "./modules/finance";
 import { financeOverviewApp } from "./modules/finance-overview";
 import { importApp } from "./modules/importer";
+import { notificationsApp } from "./modules/notifications";
 import { orgApp } from "./modules/org";
 import { type BrowserBinding, pdfApp } from "./modules/pdf";
 import { plansApp } from "./modules/plans";
@@ -173,6 +175,8 @@ export function createApp(deps: AppDeps = {}) {
         return c.json({ ok: true, users: rows });
       })
 
+      .route("/api/attention", attentionApp)
+      .route("/api/notifications", notificationsApp)
       .route("/api/plans", plansApp)
       .route("/api/team", teamApp)
       .route("/api/audit", auditApp)

@@ -878,3 +878,27 @@ export const planReviews = sqliteTable(
   },
   (t) => [index("idx_plan_rev_obj").on(t.objectiveId)],
 );
+
+/** In-app notifications for one person. `dedupeKey` stops the same event notifying twice. */
+export const notifications = sqliteTable(
+  "notifications",
+  {
+    id: text("id").primaryKey(),
+    orgId: text("org_id")
+      .notNull()
+      .references(() => orgs.id),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    kind: text("kind").notNull(),
+    title: text("title").notNull(),
+    link: text("link").notNull().default(""),
+    dedupeKey: text("dedupe_key").notNull().default(""),
+    readAt: integer("read_at").notNull().default(0),
+    createdAt: integer("created_at").notNull().default(now),
+  },
+  (t) => [
+    index("idx_notif_user").on(t.userId, t.readAt, t.createdAt),
+    uniqueIndex("uq_notif_dedupe").on(t.userId, t.dedupeKey).where(sql`dedupe_key <> ''`),
+  ],
+);

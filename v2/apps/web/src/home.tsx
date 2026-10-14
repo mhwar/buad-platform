@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Badge, Button, Card, EmptyState, PageHeader } from "./components/ui";
 import { clientsQuery } from "./features/clients/api";
 import { ClientDialog } from "./features/clients/ClientDialog";
+import { AttentionPanel } from "./features/home/AttentionPanel";
 import { label, PROJECT_STATUS_LABELS, STATUS_TONE } from "./features/labels";
 import { projectsQuery } from "./features/projects/api";
 import { ProjectDialog } from "./features/projects/ProjectDialog";
@@ -56,6 +57,7 @@ export function Home() {
           </Link>
         </Card>
       )}
+      <AttentionPanel />
       <div className="mb-8 grid gap-4 sm:grid-cols-3">
         <Stat
           to="/clients"
