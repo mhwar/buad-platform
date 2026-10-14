@@ -7,7 +7,7 @@ import {
   Outlet,
   redirect,
 } from "@tanstack/react-router";
-import { Briefcase, House as Home_, Settings, Users } from "lucide-react";
+import { Briefcase, Files, House as Home_, Settings, Users } from "lucide-react";
 import { z } from "zod";
 import { AccountPage } from "./account";
 import { api } from "./api";
@@ -16,6 +16,7 @@ import { UpdateBanner, useServerVersion } from "./components/UpdateBanner";
 import { ClientPage } from "./features/clients/ClientPage";
 import { ClientsPage } from "./features/clients/ClientsPage";
 import { DocumentEditor } from "./features/documents/DocumentEditor";
+import { DocumentsPage } from "./features/documents/DocumentsPage";
 import { ImportPage } from "./features/import/ImportPage";
 import { OrgSettingsPage } from "./features/org/OrgSettings";
 import { ProjectPage } from "./features/projects/ProjectPage";
@@ -32,6 +33,7 @@ const NAV = [
   { to: "/", label: "الرئيسية", icon: Home_, exact: true },
   { to: "/clients", label: "العملاء", icon: Users, exact: false },
   { to: "/projects", label: "المشاريع", icon: Briefcase, exact: false },
+  { to: "/documents", label: "المستندات", icon: Files, exact: false },
 ] as const;
 
 function Shell() {
@@ -218,6 +220,19 @@ const projectRoute = createRoute({
   component: ProjectPage,
 });
 
+const documentsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/documents",
+  validateSearch: z.object({
+    q: z.string().optional(),
+    kind: z.enum(["contract", "letter"]).optional(),
+    status: z.enum(["draft", "review", "approved"]).optional(),
+    view: z.enum(["outgoing"]).optional(),
+  }),
+  beforeLoad: authed,
+  component: DocumentsPage,
+});
+
 const documentRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/projects/$id/documents/$docId",
@@ -284,6 +299,7 @@ export const router = createRouter({
     clientRoute,
     projectsRoute,
     projectRoute,
+    documentsRoute,
     documentRoute,
     settingsRoute.addChildren([settingsIndexRoute, orgRoute, importRoute, accountRoute]),
     legacyImportRoute,

@@ -376,10 +376,15 @@ export const documents = sqliteTable(
     version: integer("version").notNull().default(1),
     approvedBy: text("approved_by").notNull().default(""),
     approvedAt: integer("approved_at"),
+    /** Outgoing (صادر) register number, given on request after approval; never reused. */
+    outgoingNo: text("outgoing_no").notNull().default(""),
+    outgoingAt: integer("outgoing_at"),
+    outgoingBy: text("outgoing_by").notNull().default(""),
     ...audit,
   },
   (t) => [
     uniqueIndex("uq_documents_number").on(t.orgId, t.number),
+    uniqueIndex("uq_documents_outgoing").on(t.orgId, t.outgoingNo).where(sql`outgoing_no <> ''`),
     index("idx_documents_project").on(t.projectId, t.kind),
   ],
 );

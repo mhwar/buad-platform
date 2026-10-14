@@ -64,6 +64,9 @@ export function DocumentsSection({ projectId, canEdit }: { projectId: string; ca
                     {fromEpoch(d.updatedAt)}
                   </span>
                 </span>
+                {d.outgoingNo && (
+                  <span className="hidden text-xs text-brand sm:inline">{d.outgoingNo}</span>
+                )}
                 <Badge tone={STATUS_TONE[d.status]}>{DOC_STATUS_LABELS[d.status]}</Badge>
               </Link>
             </li>

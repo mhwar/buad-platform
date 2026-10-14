@@ -24,6 +24,7 @@ import {
   Printer,
   RotateCcw,
   Send,
+  Stamp,
   Trash2,
   Undo2,
 } from "lucide-react";
@@ -222,7 +223,8 @@ export function DocumentEditor() {
       <div className="h-96 animate-pulse rounded-2xl bg-slate-200 dark:bg-slate-800" aria-busy />
     );
   if (q.isError || !q.data) return <Notice>المستند غير موجود</Notice>;
-  const { document: doc, auto, org, versions } = q.data;
+  const { document: doc, auto, org, versions, project } = q.data;
+  const outgoingRef = doc.outgoingNo ? `${doc.outgoingNo} / ${project.number}` : "";
   const locked = doc.status === "approved" || !manager;
 
   const setVar = (k: string, value: string) =>
@@ -243,6 +245,21 @@ export function DocumentEditor() {
       await qc.invalidateQueries({ queryKey: docKeys.list(projectId) });
     } catch {
       setNotice({ tone: "red", text: "تعذّر تغيير الحالة" });
+    }
+  };
+  const registerOutgoing = async () => {
+    if (
+      !confirm(
+        "سيُعطى المستند رقم صادر من سجل الجهة، ويظهر في المطبوع. الرقم نهائي ولا يُعاد استخدامه. متابعة؟",
+      )
+    )
+      return;
+    try {
+      await docApi.outgoing(docId);
+      await qc.invalidateQueries({ queryKey: docKeys.detail(docId) });
+      await qc.invalidateQueries({ queryKey: ["documents"] });
+    } catch {
+      setNotice({ tone: "red", text: "تعذّر تسجيل الصادر" });
     }
   };
   const print = async () => {
@@ -312,6 +329,11 @@ export function DocumentEditor() {
             <span className="text-sm text-muted" dir="ltr">
               {draft.number}
             </span>
+            {outgoingRef && (
+              <Badge tone="blue">
+                صادر: <span dir="rtl">{outgoingRef}</span>
+              </Badge>
+            )}
           </div>
           <p className="mt-0.5 text-xs text-muted" aria-live="polite">
             {!manager
@@ -343,6 +365,11 @@ export function DocumentEditor() {
               <Check className="size-4" /> اعتماد
             </Button>
           )}
+          {manager && doc.status === "approved" && !doc.outgoingNo && (
+            <Button onClick={registerOutgoing}>
+              <Stamp className="size-4" /> تسجيل صادر
+            </Button>
+          )}
           {manager && doc.status === "approved" && (
             <Button variant="secondary" onClick={() => moveStatus("draft")}>
               <RotateCcw className="size-4" /> إعادة فتح للتعديل
@@ -370,6 +397,7 @@ export function DocumentEditor() {
               org={org}
               editing={!locked}
               approved={doc.status === "approved"}
+              outgoing={outgoingRef}
             />
           </FitToWidth>
         </div>

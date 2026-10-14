@@ -223,3 +223,81 @@ describe("letters", () => {
     expect(d.values.cashback_amount_words.value).toBe("ثلاثة آلاف ومئتان وخمسون");
   });
 });
+
+describe("outgoing register (الصادر)", () => {
+  const approve = async (id: string) => {
+    await call("adm", "POST", `/api/documents/${id}/status`, { to: "review", version: 1 });
+    await call("adm", "POST", `/api/documents/${id}/status`, { to: "approved", version: 2 });
+  };
+
+  it("numbers only approved documents, once, in one org-wide sequence", async () => {
+    const a = (await call("adm", "POST", D(), { kind: "contract", template: "service" })).body.id;
+    const b = (await call("adm", "POST", D(), { kind: "letter", template: "cashback" })).body.id;
+    expect((await call("adm", "POST", `/api/documents/${a}/outgoing`)).body.error).toBe(
+      "not_approved",
+    );
+    await approve(a);
+    await approve(b);
+    expect((await call("m1", "POST", `/api/documents/${a}/outgoing`)).status).toBe(403);
+    expect((await call("x", "POST", `/api/documents/${a}/outgoing`)).status).toBe(404);
+    const first = await call("adm", "POST", `/api/documents/${a}/outgoing`);
+    expect(first.status).toBe(201);
+    expect(first.body.outgoingNo).toMatch(/^ص-\d{4}-0001$/);
+    const again = await call("adm", "POST", `/api/documents/${a}/outgoing`);
+    expect(again.body).toMatchObject({ outgoingNo: first.body.outgoingNo, created: false });
+    const second = await call("adm", "POST", `/api/documents/${b}/outgoing`);
+    expect(second.body.outgoingNo).toMatch(/^ص-\d{4}-0002$/);
+    // Reopening keeps the number: it belongs to what was issued.
+    await call("adm", "POST", `/api/documents/${a}/status`, { to: "draft", version: 3 });
+    const d = (await call("adm", "GET", `/api/documents/${a}`)).body;
+    expect(d.document.outgoingNo).toBe(first.body.outgoingNo);
+    expect(d.project.number).toMatch(/^PRJ-/);
+    // A copy starts without one.
+    const dup = (await call("adm", "POST", `/api/documents/${a}/duplicate`)).body.id;
+    expect((await call("adm", "GET", `/api/documents/${dup}`)).body.document.outgoingNo).toBe("");
+  });
+
+  it("parallel requests still give one number per document", async () => {
+    const a = (await call("adm", "POST", D(), { kind: "letter", template: "custom" })).body.id;
+    await approve(a);
+    const rs = await Promise.all(
+      [1, 2, 3].map(() => call("adm", "POST", `/api/documents/${a}/outgoing`)),
+    );
+    expect(new Set(rs.map((r) => r.body.outgoingNo)).size).toBe(1);
+  });
+
+  it("lists every visible document across projects, with filters", async () => {
+    const a = (await call("adm", "POST", D(), { kind: "contract", template: "service" })).body.id;
+    await call("adm", "POST", D(), { kind: "letter", template: "cashback" });
+    await approve(a);
+    await call("adm", "POST", `/api/documents/${a}/outgoing`);
+    const c2 = (await call("adm", "POST", "/api/clients", { name: "جمعية خبرة" })).body.id;
+    const hidden = (
+      await call("adm", "POST", "/api/projects", {
+        clientId: c2,
+        name: "مشروع خاص",
+        expectedValue: 1000,
+        visibility: "private",
+      })
+    ).body.id;
+    await call("adm", "POST", `/api/projects/${hidden}/documents`, {
+      kind: "letter",
+      template: "custom",
+      title: "خطاب سري",
+    });
+
+    const all = (await call("adm", "GET", "/api/documents")).body;
+    expect(all.items).toHaveLength(3);
+    expect(all.outgoingCount).toBe(1);
+    expect(all.items[0]).toHaveProperty("projectNumber");
+    expect(all.items.find((i: J) => i.id === a).clientName).toBe("جمعية أجيالنا");
+    const mine = (await call("m1", "GET", "/api/documents")).body;
+    expect(mine.items.map((i: J) => i.title)).not.toContain("خطاب سري");
+    const out = (await call("adm", "GET", "/api/documents?outgoing=1")).body.items;
+    expect(out.map((i: J) => i.id)).toEqual([a]);
+    expect((await call("adm", "GET", "/api/documents?kind=letter")).body.items).toHaveLength(2);
+    expect((await call("adm", "GET", "/api/documents?q=خبرة")).body.items).toHaveLength(1);
+    expect((await call("adm", "GET", `/api/documents?clientId=${c2}`)).body.items).toHaveLength(1);
+    expect((await call("x", "GET", "/api/documents")).body.items).toHaveLength(0);
+  });
+});

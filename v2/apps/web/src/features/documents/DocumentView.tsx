@@ -59,6 +59,8 @@ type Props = {
   /** Editing: show variables as chips and empty ones as amber placeholders. */
   editing?: boolean;
   approved?: boolean;
+  /** Outgoing register reference («ص-2026-0015 / PRJ-2026-0003»), once registered. */
+  outgoing?: string;
 };
 
 function Text({ text, values, editing }: { text: string; values: Resolved; editing?: boolean }) {
@@ -161,9 +163,14 @@ export function DocumentView(props: Props) {
   );
 }
 
-function Contract({ title, content, layout: l, values, editing, org }: Props) {
+function Contract({ title, content, layout: l, values, editing, org, outgoing }: Props) {
   return (
     <>
+      {outgoing && (
+        <p className="doc-outgoing">
+          رقم الصادر: <span dir="rtl">{outgoing}</span>
+        </p>
+      )}
       <h1 className="doc-title" style={{ fontSize: `${l.titleSize}pt` }}>
         {title}
       </h1>
@@ -244,13 +251,15 @@ function SignatureBlock({
   );
 }
 
-function Letter({ number, title, content, layout: l, values, editing, org }: Props) {
+function Letter({ number, title, content, layout: l, values, editing, org, outgoing }: Props) {
   const body = content[0]?.content ?? "";
   const date = v(values, "letter_date");
   return (
     <div className="doc-letter">
       <div className="doc-letter-meta">
-        <span>الرقم: {number}</span>
+        <span>
+          الرقم: <span dir="rtl">{outgoing || number}</span>
+        </span>
         <span>
           التاريخ: {date ? date.split("-").reverse().join("/") : "—"}
           {values.today_hijri && date && <> الموافق {hijriOf(values)} هـ</>}
