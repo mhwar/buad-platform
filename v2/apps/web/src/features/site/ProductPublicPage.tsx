@@ -357,7 +357,7 @@ export function ProductPublicPage() {
           onRequest={() => setOpen(true)}
         />
       </SiteChrome>
-      <RequestDialog target={target} open={open} onClose={() => setOpen(false)} />
+      <RequestDialog form={site.form} target={target} open={open} onClose={() => setOpen(false)} />
     </>
   );
 }

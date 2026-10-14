@@ -98,6 +98,7 @@ export const publicSiteApp = new Hono<Env>()
         contact: site.contact,
         seo: site.seo,
         cta: site.cta,
+        form: site.form,
       },
       logoUrl: logoUrl(site.brand.logoAsset),
       product: publicProduct(prod),

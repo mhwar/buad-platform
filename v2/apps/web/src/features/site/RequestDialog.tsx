@@ -1,3 +1,4 @@
+import type { SiteContent } from "@buad/schema/site";
 import { useEffect, useRef, useState } from "react";
 import { ApiError, ok } from "../../lib/format";
 import type { RequestTarget } from "./site-api";
@@ -10,15 +11,26 @@ const ERRORS: Record<string, string> = {
 };
 
 /** «اطلب عرضاً»: the public form. Answers the product's intake questions; lands in «الطلبات». */
+const text = (v: string | undefined, d: string) => (v?.trim() ? v : d);
+
 export function RequestDialog({
   target,
   open,
   onClose,
+  form,
 }: {
   target: RequestTarget;
   open: boolean;
   onClose: () => void;
+  /** Wording and optional fields from the site settings. */
+  form?: SiteContent["form"];
 }) {
+  const title = text(form?.title, "اطلب عرضاً");
+  const submitLabel = text(form?.submitLabel, "إرسال الطلب");
+  const success = text(form?.successMessage, "شكراً لك. سنتواصل معك قريباً بنموذج التنفيذ المناسب.");
+  const showEntity = form?.showEntity ?? true;
+  const showEmail = form?.showEmail ?? true;
+  const showMessage = form?.showMessage ?? true;
   const [f, setF] = useState({
     name: "",
     entity: "",
@@ -78,7 +90,7 @@ export function RequestDialog({
           }}
         >
           <h2 className="h3" id="rq-title">
-            {done ? "وصلنا طلبك" : target ? `اطلب عرضاً: ${target.name}` : "اطلب عرضاً"}
+            {done ? "وصلنا طلبك" : target ? `${title}: ${target.name}` : title}
           </h2>
           <button
             type="button"
@@ -92,13 +104,14 @@ export function RequestDialog({
         </div>
         {done ? (
           <div className="list">
-            <p className="body">شكراً لك. سنتواصل معك قريباً بنموذج التنفيذ المناسب.</p>
+            <p className="body">{success}</p>
             <button type="button" className="btn primary" onClick={onClose}>
               إغلاق
             </button>
           </div>
         ) : (
           <form onSubmit={submit} className="list" noValidate>
+            {form?.intro && <p className="body">{form.intro}</p>}
             <label className="fld">
               الاسم
               <input
@@ -109,10 +122,12 @@ export function RequestDialog({
                 autoComplete="name"
               />
             </label>
-            <label className="fld">
-              الجهة
-              <input value={f.entity} onChange={set("entity")} autoComplete="organization" />
-            </label>
+            {showEntity && (
+              <label className="fld">
+                الجهة
+                <input value={f.entity} onChange={set("entity")} autoComplete="organization" />
+              </label>
+            )}
             <div className="g2">
               <label className="fld">
                 الجوال
@@ -124,16 +139,18 @@ export function RequestDialog({
                   autoComplete="tel"
                 />
               </label>
-              <label className="fld">
-                البريد الإلكتروني
-                <input
-                  type="email"
-                  dir="ltr"
-                  value={f.email}
-                  onChange={set("email")}
-                  autoComplete="email"
-                />
-              </label>
+              {showEmail && (
+                <label className="fld">
+                  البريد الإلكتروني
+                  <input
+                    type="email"
+                    dir="ltr"
+                    value={f.email}
+                    onChange={set("email")}
+                    autoComplete="email"
+                  />
+                </label>
+              )}
             </div>
             {target?.intake.map((q) => (
               <div key={q.key} className="fld">
@@ -188,10 +205,12 @@ export function RequestDialog({
                 )}
               </div>
             ))}
-            <label className="fld">
-              ملاحظات
-              <textarea rows={3} value={f.message} onChange={set("message")} />
-            </label>
+            {showMessage && (
+              <label className="fld">
+                ملاحظات
+                <textarea rows={3} value={f.message} onChange={set("message")} />
+              </label>
+            )}
             {/* Honeypot: invisible to people, tempting to bots. */}
             <div className="hp" aria-hidden="true">
               <label>
@@ -214,7 +233,7 @@ export function RequestDialog({
               className="btn primary"
               disabled={busy || f.name.trim().length < 2}
             >
-              {busy ? "جارٍ الإرسال…" : "إرسال الطلب"}
+              {busy ? "جارٍ الإرسال…" : submitLabel}
             </button>
           </form>
         )}

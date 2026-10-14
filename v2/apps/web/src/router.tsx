@@ -335,6 +335,11 @@ const productsRoute = createRoute({
 const websiteRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/website",
+  validateSearch: z.object({
+    tab: z
+      .enum(["overview", "identity", "home", "services", "works", "form", "seo", "history"])
+      .optional(),
+  }),
   beforeLoad: managerOnly,
   component: WebsiteEditorPage,
 });
