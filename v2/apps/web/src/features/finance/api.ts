@@ -44,11 +44,16 @@ export type Entry = {
 };
 export type BudgetItem = { id: string; name: string; amount: number; note: string; sort: number };
 export type Category = { id: string; label: string; type: "expense" | "income" | "both" };
+/** Money received from the client (halalas; negative = refund). */
+export type Receipt = { id: string; date: string; amount: number; note: string };
 export type Finance = {
   ctrl: Ctrl;
   entries: Entry[];
   budget: BudgetItem[];
   categories: Category[];
+  receipts: Receipt[];
+  /** Riyals received so far. */
+  received: number;
   summary: ReturnType<typeof summarize>;
 };
 
@@ -75,6 +80,11 @@ export const financeApi = (projectId: string) => ({
     send("PATCH", `${base(projectId)}/entries/${id}`, e),
   markUnsetStatus: (status: "paid" | "pending") =>
     send("POST", `${base(projectId)}/entries/bulk-status`, { status }),
+  addReceipt: (r: { date: string; amount: number; note?: string }) =>
+    send("POST", `${base(projectId)}/receipts`, r),
+  updateReceipt: (id: string, r: { date: string; amount: number; note?: string }) =>
+    send("PATCH", `${base(projectId)}/receipts/${id}`, r),
+  deleteReceipt: (id: string) => send("DELETE", `${base(projectId)}/receipts/${id}`),
   deleteEntry: (id: string) => send("DELETE", `${base(projectId)}/entries/${id}`),
   registerAgreement: (item: string) => send("POST", `${base(projectId)}/agreement/${item}`),
   registerAllAgreement: () =>

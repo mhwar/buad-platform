@@ -172,6 +172,9 @@ describe("مالية الشركة", () => {
   it("a single project's profit can be distributed on its own", async () => {
     await setupProject("completed");
     await call("adm", "POST", `${C}/partners`, { name: "أ", sharePct: 100 });
+    // Profit counts once the money is received: the whole contract here.
+    const gross = (await call("adm", "GET", F())).body.summary.grossTotal;
+    await call("adm", "POST", `${F()}/receipts`, { date: "2026-05-01", amount: gross });
     const pre = (
       await call("adm", "POST", `${C}/distributions/preview`, {
         mode: "project",
@@ -191,5 +194,62 @@ describe("مالية الشركة", () => {
       })
     ).body;
     expect((await call("adm", "DELETE", `${C}/distributions/${d.id}`)).status).toBe(200);
+  });
+
+  it("quarter centre: realized by receipts, distributed once, carried when overpaid", async () => {
+    await setupProject();
+    await call("adm", "POST", `${C}/partners`, { name: "أ", sharePct: 60 });
+    await call("adm", "POST", `${C}/partners`, { name: "ب", sharePct: 40 });
+    const fin = (await call("adm", "GET", F())).body.summary;
+    const half = Math.round((fin.grossTotal / 2) * 100) / 100;
+    expect(
+      (await call("m1", "POST", `${F()}/receipts`, { date: "2026-08-10", amount: half })).status,
+    ).toBe(403);
+    await call("adm", "POST", `${F()}/receipts`, { date: "2026-08-10", amount: half });
+    await call("adm", "POST", `${F()}/receipts`, { date: "2026-11-05", amount: half });
+    expect((await call("adm", "GET", F())).body.received).toBeCloseTo(fin.grossTotal, 2);
+
+    const q3 = (await call("adm", "GET", `${C}/quarter?year=2026&q=3`)).body;
+    expect(q3.label).toBe("الربع الثالث 2026");
+    expect(q3.rows[0].realizedInPeriod).toBeCloseTo(fin.profit / 2, 2);
+    expect(q3.defaultSelected).toEqual([pid]);
+    expect(q3.totals.available).toBeCloseTo(
+      q3.rows.reduce((s: number, r: J) => s + r.available, 0),
+      2,
+    );
+
+    const body = {
+      mode: "quarter",
+      year: 2026,
+      q: 3,
+      projectIds: [pid],
+      pct: 100,
+      status: "completed",
+    };
+    const d1 = await call("adm", "POST", `${C}/distributions`, body);
+    expect(d1.status).toBe(201);
+    // The same quarter again: nothing left of that project.
+    expect((await call("adm", "POST", `${C}/distributions`, body)).body.error).toBe(
+      "nothing_to_distribute",
+    );
+    // Q4 holds only the second half.
+    const q4 = (await call("adm", "GET", `${C}/quarter?year=2026&q=4`)).body;
+    expect(q4.rows[0].available).toBeCloseTo(fin.profit / 2, 2);
+
+    // A draft that becomes stale (another distribution paid the project) cannot be completed.
+    const draft = (
+      await call("adm", "POST", `${C}/distributions`, { ...body, q: 4, status: "draft" })
+    ).body.id;
+    await call("adm", "POST", `${C}/distributions`, { ...body, q: 4, status: "completed" });
+    expect((await call("adm", "POST", `${C}/distributions/${draft}/complete`)).body.error).toBe(
+      "stale_draft",
+    );
+
+    // Profit falls after everything was paid (fee lowered) → negative, carried into the next one.
+    const v = (await call("adm", "GET", F())).body.ctrl.version;
+    await call("adm", "PATCH", `${F()}/ctrl`, { version: v, execV: 5 });
+    const after = (await call("adm", "GET", `${C}/quarter?year=2026&q=4`)).body;
+    expect(after.rows[0].flags).toContain("over_distributed");
+    expect(after.totals.carried).toBeLessThan(0);
   });
 });

@@ -52,7 +52,15 @@ function fixture(): Finance {
     },
   ];
   const budget = [{ id: "b1", name: "قاعة", amount: 500000, note: "", sort: 1 }];
-  return { ctrl, entries, budget, categories: [], summary: summarize({ ctrl, entries, budget }) };
+  return {
+    ctrl,
+    entries,
+    budget,
+    categories: [],
+    receipts: [],
+    received: 0,
+    summary: summarize({ ctrl, entries, budget }),
+  };
 }
 
 describe("FinanceTab", () => {

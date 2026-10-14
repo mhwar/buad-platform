@@ -68,17 +68,23 @@ export function companyCalc(
   };
 }
 
-/** What can still be distributed: all-time net profit − completed distributions (v1). */
+/** What can still be distributed: all-time net profit − completed distributions − retained. */
 export function distributable(
   projects: ProjectProfitLite[],
   entries: CompanyEntryLite[],
   dists: DistributionLite[],
 ) {
   const all = companyCalc(projects, entries);
-  const distributed = dists
-    .filter((d) => d.status === "completed")
-    .reduce((s, d) => s + d.distributed, 0);
-  return { ...all, distributed: r2(distributed), available: r2(all.netProfit - distributed) };
+  const done = dists.filter((d) => d.status === "completed");
+  const distributed = done.reduce((s, d) => s + d.distributed, 0);
+  // Retained parts go to their purpose (ops/dev/reserve) for good: never distributed again.
+  const retained = done.reduce((s, d) => s + d.retained, 0);
+  return {
+    ...all,
+    distributed: r2(distributed),
+    retained: r2(retained),
+    available: r2(all.netProfit - distributed - retained),
+  };
 }
 
 /** Kept back from completed distributions, by purpose (تشغيل / تطوير / احتياطي). */

@@ -36,7 +36,10 @@ export const partnerInput = z.object({
 
 export const distributionInput = z.object({
   /** "period": company profit still available; "project": one project's profit. */
-  mode: z.enum(["period", "project"]).default("period"),
+  mode: z.enum(["period", "project", "quarter"]).default("period"),
+  /** mode "quarter": the quarter whose realized profit is distributed. */
+  year: z.coerce.number().int().min(2000).max(2100).optional(),
+  q: z.coerce.number().int().min(1).max(4).optional(),
   periodType: z.enum(["q1", "q2", "q3", "q4", "annual", "custom", "project"]).default("custom"),
   from: date,
   to: date,
@@ -68,3 +71,12 @@ export const RETAINED_LABELS: Record<string, string> = {
   reserve: "احتياطي",
 };
 export { COMPANY_EXPENSE_CATS, COMPANY_INCOME_CATS, RETAINED_CATS } from "./enums";
+
+/** Money received from the client for a project (negative = refund). Riyals as typed. */
+export const receiptInput = z.object({
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  amount: z.coerce
+    .number()
+    .refine((n) => n !== 0 && Math.abs(n) <= 1e10, { message: "invalid_amount" }),
+  note: z.string().trim().max(500).default(""),
+});

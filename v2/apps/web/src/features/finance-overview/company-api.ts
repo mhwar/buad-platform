@@ -131,3 +131,53 @@ export const companyApi = {
   completeDistribution: (id: string) => send("POST", `${B}/distributions/${id}/complete`),
   removeDistribution: (id: string) => send("DELETE", `${B}/distributions/${id}`),
 };
+
+export type QuarterFlag =
+  | "no_receipts"
+  | "over_distributed"
+  | "estimate"
+  | "pending_expenses"
+  | "cancelled"
+  | "inactive";
+export type QuarterRow = {
+  id: string;
+  number: string;
+  name: string;
+  clientName: string;
+  status: string;
+  profit: number;
+  gross: number;
+  receivedInPeriod: number;
+  receivedToDate: number;
+  realizedInPeriod: number;
+  realizedToDate: number;
+  distributed: number;
+  available: number;
+  pendingExpenses: number;
+  flags: QuarterFlag[];
+};
+export type QuarterData = {
+  year: number;
+  q: number;
+  from: string;
+  to: string;
+  label: string;
+  rows: QuarterRow[];
+  totals: {
+    receivedInPeriod: number;
+    realizedInPeriod: number;
+    available: number;
+    positive: number;
+    carried: number;
+  };
+  company: { income: number; expenses: number };
+  retained: { ops: number; dev: number; reserve: number; total: number };
+  partnersPct: number;
+  defaultSelected: string[];
+};
+export const quarterQuery = (year: number, q: number) =>
+  queryOptions({
+    queryKey: [...companyKeys.all, "quarter", year, q],
+    queryFn: () => send<QuarterData>("GET", `${B}/quarter?year=${year}&q=${q}`),
+    placeholderData: (prev) => prev,
+  });

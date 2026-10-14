@@ -1,4 +1,3 @@
-import { periodLabel, periodRange } from "@buad/domain";
 import { RETAINED_LABELS } from "@buad/schema/company";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { CheckCircle2, PieChart, Plus, Trash2, Users } from "lucide-react";
@@ -28,7 +27,7 @@ export function PartnersTab() {
             <PieChart className="size-4" /> توزيعات الأرباح
           </h2>
           <Button onClick={() => setWizard(true)}>
-            <Plus className="size-4" /> توزيع جديد
+            <Plus className="size-4" /> توزيع ربح مشروع
           </Button>
         </div>
         <Distributions />
@@ -258,17 +257,18 @@ function DistributionDetail({ d, onChanged }: { d: Distribution; onChanged: () =
   );
 }
 
-type PType = "q1" | "q2" | "q3" | "q4" | "annual" | "custom";
-
 /** v1 «توزيع جديد»: 1) period and projects (or one project), 2) percent → shares and what is kept. */
-function DistributionWizard({ onClose }: { onClose: () => void }) {
+export function DistributionWizard({
+  onClose,
+  preset,
+}: {
+  onClose: () => void;
+  /** From «توزيع الربع»: distribute this quarter's chosen projects (skips step 1). */
+  preset?: { year: number; q: number; projectIds: string[]; label: string };
+}) {
   const qc = useQueryClient();
-  const nowQ = `q${Math.floor(new Date().getMonth() / 3) + 1}` as PType;
-  const [step, setStep] = useState(1);
-  const [mode, setMode] = useState<"period" | "project">("period");
-  const [ptype, setPtype] = useState<PType>(nowQ);
-  const [range, setRange] = useState(periodRange(nowQ));
-  const [label, setLabel] = useState("");
+  const [step, setStep] = useState(preset ? 2 : 1);
+  const mode: "quarter" | "project" = preset ? "quarter" : "project";
   const [projectId, setProjectId] = useState("");
   const [pct, setPct] = useState(100);
   const [retainedCategory, setRetained] = useState<"ops" | "dev" | "reserve">("reserve");
@@ -276,16 +276,13 @@ function DistributionWizard({ onClose }: { onClose: () => void }) {
   const [err, setErr] = useState("");
   const o = useQuery(companyOverviewQuery({}));
   const earning = (o.data?.projects ?? []).filter((p) => p.earning);
-  const [picked, setPicked] = useState<string[] | null>(null);
-  const projectIds = picked ?? earning.map((p) => p.id);
 
   const input = {
     mode,
-    periodType: mode === "project" ? ("project" as const) : ptype,
-    from: range.from,
-    to: range.to,
-    label: label || (mode === "period" ? periodLabel(ptype, range.from, range.to) : ""),
-    projectIds,
+    periodType: "project" as const,
+    ...(preset ? { year: preset.year, q: preset.q } : {}),
+    label: preset?.label ?? "",
+    projectIds: preset?.projectIds ?? [],
     projectId,
     pct,
     retainedCategory,
@@ -326,111 +323,20 @@ function DistributionWizard({ onClose }: { onClose: () => void }) {
       {err && <Notice>{err}</Notice>}
       {step === 1 ? (
         <div className="space-y-4">
-          <div className="flex gap-2">
-            <Button
-              variant={mode === "period" ? "primary" : "secondary"}
-              onClick={() => setMode("period")}
-            >
-              أرباح فترة
-            </Button>
-            <Button
-              variant={mode === "project" ? "primary" : "secondary"}
-              onClick={() => setMode("project")}
-            >
-              أرباح مشروع واحد
-            </Button>
-          </div>
-          {mode === "period" ? (
-            <>
-              <div className="grid gap-4 sm:grid-cols-3">
-                <Field label="الفترة">
-                  <Select
-                    value={ptype}
-                    onChange={(e) => {
-                      const v = e.target.value as PType;
-                      setPtype(v);
-                      if (v !== "custom") setRange(periodRange(v));
-                    }}
-                  >
-                    <option value="q1">الربع الأول</option>
-                    <option value="q2">الربع الثاني</option>
-                    <option value="q3">الربع الثالث</option>
-                    <option value="q4">الربع الرابع</option>
-                    <option value="annual">السنة كاملة</option>
-                    <option value="custom">فترة مخصصة</option>
-                  </Select>
-                </Field>
-                <Field label="من">
-                  <Input
-                    type="date"
-                    value={range.from}
-                    onChange={(e) => {
-                      setPtype("custom");
-                      setRange((r) => ({ ...r, from: e.target.value }));
-                    }}
-                  />
-                </Field>
-                <Field label="إلى">
-                  <Input
-                    type="date"
-                    value={range.to}
-                    onChange={(e) => {
-                      setPtype("custom");
-                      setRange((r) => ({ ...r, to: e.target.value }));
-                    }}
-                  />
-                </Field>
-              </div>
-              <Field
-                label="اسم التوزيع"
-                hint={`افتراضياً: ${periodLabel(ptype, range.from, range.to)}`}
-              >
-                <Input value={label} onChange={(e) => setLabel(e.target.value)} />
-              </Field>
-              <div>
-                <p className="mb-2 text-sm font-medium">المشاريع المشمولة</p>
-                <div className="max-h-48 space-y-1 overflow-y-auto rounded-lg border p-2 text-sm">
-                  {earning.map((p) => (
-                    <label
-                      key={p.id}
-                      className="flex items-center justify-between gap-2 rounded px-2 py-1 hover:bg-brand-soft/50"
-                    >
-                      <span className="flex items-center gap-2">
-                        <input
-                          type="checkbox"
-                          checked={projectIds.includes(p.id)}
-                          onChange={(e) =>
-                            setPicked(
-                              e.target.checked
-                                ? [...projectIds, p.id]
-                                : projectIds.filter((x) => x !== p.id),
-                            )
-                          }
-                        />
-                        {p.name}
-                      </span>
-                      <span className="text-xs text-muted">ربح {sar(p.profit)}</span>
-                    </label>
-                  ))}
-                </div>
-                <p className="mt-1 text-xs text-muted">
-                  المبلغ المتاح = صافي ربح الشركة لكل الفترات ناقص ما سبق توزيعه (كما في المنصة
-                  الحالية).
-                </p>
-              </div>
-            </>
-          ) : (
-            <Field label="المشروع">
-              <Select value={projectId} onChange={(e) => setProjectId(e.target.value)}>
-                <option value="">اختاروا المشروع…</option>
-                {earning.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name} — ربح {sar(p.profit)}
-                  </option>
-                ))}
-              </Select>
-            </Field>
-          )}
+          <p className="text-sm text-muted">
+            لتوزيع أرباح ربع كامل استخدموا تبويب «توزيع الربع». هنا توزيع ما تحقق من ربح مشروع واحد
+            ولم يُوزَّع بعد.
+          </p>
+          <Field label="المشروع">
+            <Select value={projectId} onChange={(e) => setProjectId(e.target.value)}>
+              <option value="">اختاروا المشروع…</option>
+              {earning.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name} — ربح {sar(p.profit)}
+                </option>
+              ))}
+            </Select>
+          </Field>
           <div className="flex justify-end">
             <Button disabled={mode === "project" && !projectId} onClick={() => setStep(2)}>
               التالي
