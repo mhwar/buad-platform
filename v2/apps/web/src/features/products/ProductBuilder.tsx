@@ -177,7 +177,9 @@ function Builder({ product }: { product: Product }) {
       {step === "performance" && <PerformancePanel product={product} />}
       {step === "intake" && <Intake d={d} patchContent={patchContent} />}
       {step === "content" && <ContentSections d={d} patchContent={patchContent} />}
-      {step === "publish" && <Publish product={product} d={d} patch={patch} dirty={dirty} />}
+      {step === "publish" && (
+        <Publish product={product} d={d} patch={patch} patchContent={patchContent} dirty={dirty} />
+      )}
 
       {step !== "performance" && (
         <div className="fixed inset-x-0 bottom-0 z-30 border-t bg-surface/95 backdrop-blur">
@@ -556,11 +558,13 @@ function Publish({
   product,
   d,
   patch,
+  patchContent,
   dirty,
 }: {
   product: Product;
   d: Draft;
   patch: (p: Partial<Draft>) => void;
+  patchContent: (p: Partial<ProductContent>) => void;
   dirty: boolean;
 }) {
   const missing = product.readiness.filter((r) => !r.ok);
@@ -618,6 +622,31 @@ function Publish({
         <p className="text-xs text-muted">
           التكاليف والهوامش لا تظهر أبداً للعامة، وصفحة المنتج تعرض المحتوى فقط.
         </p>
+      </Card>
+      <Card className="space-y-3 p-5 lg:col-span-2">
+        <h3 className="font-bold">الملف التعريفي بالخدمة (PDF)</h3>
+        <p className="text-sm text-muted">
+          يُبنى تلقائياً من محتوى المنتج على شرائح 16:9 بهوية الموقع، ولا يحمل أي تكلفة أو سعر.
+        </p>
+        <div className="flex flex-wrap items-center gap-3">
+          <Link
+            to="/print/products/$id"
+            params={{ id: product.id }}
+            target="_blank"
+            className="rounded-lg border px-3 py-2 text-sm font-semibold hover:bg-brand-soft"
+          >
+            معاينة وتنزيل الملف
+          </Link>
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={d.content.brochure}
+              onChange={(e) => patchContent({ brochure: e.target.checked })}
+            />
+            إتاحته للتنزيل من صفحة الخدمة في الموقع
+          </label>
+        </div>
+        {dirty && <p className="text-xs text-muted">احفظ تغييراتك ليعكسها الملف.</p>}
       </Card>
     </div>
   );
