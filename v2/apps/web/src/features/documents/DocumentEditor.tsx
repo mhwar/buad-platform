@@ -838,12 +838,12 @@ function FormatPanel({
         <Toggle
           k="showHeader"
           label="ترويسة الجهة أعلى كل صفحة"
-          hint={orgUrls.headerAsset ? undefined : "لم تُرفع ترويسة في إعدادات الجهة"}
+          hint={orgUrls.headerAsset ? undefined : "لم تُرفع ترويسة في بيانات الجهة"}
         />
         <Toggle
           k="showFooter"
           label="تذييل الجهة أسفل كل صفحة"
-          hint={orgUrls.footerAsset ? undefined : "لم يُرفع تذييل في إعدادات الجهة"}
+          hint={orgUrls.footerAsset ? undefined : "لم يُرفع تذييل في بيانات الجهة"}
         />
         <Toggle k="showSignatures" label="خانة التوقيعات" />
         <Toggle
@@ -873,7 +873,7 @@ function FormatPanel({
         <p className="text-xs text-muted">
           الصور تُدار من{" "}
           <Link to="/settings/org" className="text-brand underline">
-            إعدادات الجهة
+            الإعدادات › بيانات الجهة
           </Link>
           .
         </p>

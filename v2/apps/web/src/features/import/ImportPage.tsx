@@ -359,7 +359,7 @@ function ResultView({ r, onAgain }: { r: Result; onAgain: () => void }) {
           {r.documents.adoptedLetterhead.length > 0 && (
             <p className="mt-1 text-xs text-muted">
               لم تكن للجهة ترويسة أو ختم، فاعتُمد الأكثر استخداماً في عقود المنصة الحالية. يمكن تغييره
-              من «إعدادات الجهة».
+              من «الإعدادات › بيانات الجهة».
             </p>
           )}
           {r.documents.withCover > 0 && (

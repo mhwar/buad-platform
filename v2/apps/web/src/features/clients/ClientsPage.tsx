@@ -35,7 +35,7 @@ export function ClientsPage() {
   const owner = useQuery(meQuery).data?.role === "owner";
   const importLink = owner && (
     <Link
-      to="/import"
+      to="/settings/import"
       className="inline-flex items-center gap-2 rounded-lg border bg-surface px-3.5 py-2 text-sm font-semibold transition hover:bg-brand-soft"
     >
       <FileUp className="size-4" /> استيراد من المنصة الحالية

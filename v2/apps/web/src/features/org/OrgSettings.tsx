@@ -139,7 +139,7 @@ export function OrgSettingsPage() {
 
   return (
     <>
-      <PageHeader title="إعدادات الجهة" subtitle="هوية مؤسستكم في كل عقد وخطاب: تُضبط مرة واحدة" />
+      <PageHeader title="بيانات الجهة" subtitle="هوية مؤسستكم في كل عقد وخطاب: تُضبط مرة واحدة" />
       {notice && <Notice tone={notice.tone}>{notice.text}</Notice>}
       {!canEdit && <Notice tone="amber">للاطلاع فقط. التعديل للمالك والمدراء.</Notice>}
       <form
