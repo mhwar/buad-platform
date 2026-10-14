@@ -114,21 +114,55 @@ export function DocumentView(props: Props) {
   const p = { ...props, org };
   const { layout: l, values } = p;
   const header = l.showHeader && org.urls.headerAsset;
-  const footer = l.showFooter && (org.urls.footerAsset || l.footerLabel);
   const style = {
     "--doc-fs": `${l.fontSize}pt`,
     "--doc-lh": l.lineHeight,
     "--doc-mx": `${l.marginX}cm`,
   } as React.CSSProperties;
   return (
-    <article className="doc-sheet" style={style} dir="rtl" aria-label={p.title}>
-      {p.approved && <div className="doc-watermark-approved">معتمد</div>}
+    <Paper
+      title={p.title}
+      style={style}
+      watermark={p.approved ? "معتمد" : ""}
+      header={header ? org.urls.headerAsset : ""}
+      footer={l.showFooter ? org.urls.footerAsset : ""}
+      footerLabel={l.showFooter ? l.footerLabel : ""}
+    >
+      {p.kind === "contract" ? <Contract {...p} /> : <Letter {...p} />}
+    </Paper>
+  );
+}
+
+/**
+ * An A4 sheet on the letterhead. It is a table so <thead>/<tfoot> repeat the header and
+ * footer bands on every printed page. Shared by documents and reports (e.g. statements).
+ */
+export function Paper({
+  title,
+  style,
+  watermark,
+  header,
+  footer,
+  footerLabel,
+  children,
+}: {
+  title: string;
+  style?: React.CSSProperties;
+  watermark?: string;
+  header?: string;
+  footer?: string;
+  footerLabel?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <article className="doc-sheet" style={style} dir="rtl" aria-label={title}>
+      {watermark && <div className="doc-watermark-approved">{watermark}</div>}
       <table className="doc-table">
         <thead>
           <tr>
             <td>
               {header ? (
-                <img src={org.urls.headerAsset} alt="" className="doc-band" />
+                <img src={header} alt="" className="doc-band" />
               ) : (
                 <div className="doc-band-space" />
               )}
@@ -138,12 +172,10 @@ export function DocumentView(props: Props) {
         <tfoot>
           <tr>
             <td>
-              {footer ? (
+              {footer || footerLabel ? (
                 <div className="doc-footer">
-                  {org.urls.footerAsset && l.showFooter && (
-                    <img src={org.urls.footerAsset} alt="" className="doc-band" />
-                  )}
-                  {l.footerLabel && <span className="doc-footer-label">{l.footerLabel}</span>}
+                  {footer && <img src={footer} alt="" className="doc-band" />}
+                  {footerLabel && <span className="doc-footer-label">{footerLabel}</span>}
                 </div>
               ) : (
                 <div className="doc-band-space" />
@@ -153,9 +185,7 @@ export function DocumentView(props: Props) {
         </tfoot>
         <tbody>
           <tr>
-            <td className="doc-body">
-              {p.kind === "contract" ? <Contract {...p} /> : <Letter {...p} />}
-            </td>
+            <td className="doc-body">{children}</td>
           </tr>
         </tbody>
       </table>

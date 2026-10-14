@@ -185,6 +185,51 @@
   color: #6b7280;
   width: 6cm;
 }
+/* Statement of account (كشف حساب) */
+.st-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 1cm;
+  margin-bottom: 0.5cm;
+  font-size: 0.95em;
+}
+.st-meta p {
+  margin: 0.05cm 0;
+}
+.st-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9em;
+}
+.st-table th,
+.st-table td {
+  border: 1px solid #d1d5db;
+  padding: 0.12cm 0.18cm;
+  text-align: right;
+  vertical-align: top;
+}
+.st-table thead th {
+  background: #eef2f9;
+  font-weight: 700;
+}
+.st-table tfoot td {
+  background: #f3f4f6;
+  font-weight: 700;
+}
+.st-table .st-num {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.st-sub {
+  display: block;
+  color: #6b7280;
+  font-size: 0.85em;
+}
+.st-note {
+  margin-top: 0.4cm;
+  font-size: 0.8em;
+  color: #6b7280;
+}
 .doc-outgoing {
   font-size: 0.85em;
   color: #374151;

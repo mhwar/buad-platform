@@ -35,3 +35,37 @@ export async function ok<T>(res: Response): Promise<T> {
   if (!res.ok) throw new ApiError(res.status, body);
   return body as T;
 }
+
+const relFmt = new Intl.RelativeTimeFormat("ar", { numeric: "auto" });
+/** Epoch seconds → «منذ 3 أيام», «أمس», «الآن». */
+export const ago = (s: number | null, now = Date.now()) => {
+  if (!s) return "";
+  const diff = Math.round(s - now / 1000);
+  const steps: [Intl.RelativeTimeFormatUnit, number][] = [
+    ["year", 31536000],
+    ["month", 2592000],
+    ["week", 604800],
+    ["day", 86400],
+    ["hour", 3600],
+    ["minute", 60],
+  ];
+  for (const [unit, sec] of steps)
+    if (Math.abs(diff) >= sec) return relFmt.format(Math.round(diff / sec), unit);
+  return "الآن";
+};
+
+/** Saudi mobile → WhatsApp number (9665…); "" when it does not look like a mobile. */
+export const whatsapp = (phone: string) => {
+  let d = phone.replace(/\D/g, "");
+  if (d.startsWith("00")) d = d.slice(2);
+  if (d.startsWith("05") && d.length === 10) d = `966${d.slice(1)}`;
+  else if (d.startsWith("5") && d.length === 9) d = `966${d}`;
+  return /^9665\d{8}$/.test(d) ? d : "";
+};
+
+const compactFmt = new Intl.NumberFormat("ar-SA-u-nu-latn", {
+  notation: "compact",
+  maximumFractionDigits: 1,
+});
+/** Halalas → «30 ألف ر.س» / «1.2 مليون ر.س», for tight spaces like cards. */
+export const moneyShort = (h: number) => `${compactFmt.format(Math.round(h / 100))} ر.س`;

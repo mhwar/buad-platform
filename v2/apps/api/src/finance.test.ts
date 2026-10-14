@@ -329,3 +329,54 @@ describe("client logos", () => {
     expect(proj).toHaveProperty("clientLogoUrl");
   });
 });
+
+describe("client statement and card data", () => {
+  it("sums each visible project's finance, and hides private projects from members", async () => {
+    await call("adm", "PATCH", `${F()}/ctrl`, {
+      version: 0,
+      contractValue: 115000,
+      vatIncluded: true,
+    });
+    await call("adm", "POST", `${F()}/entries`, {
+      description: "رواتب",
+      type: "expense",
+      cat: "salary",
+      amount: 10000,
+    });
+    const clientId = (await call("adm", "GET", `/api/projects/${pid}`)).body.project.clientId;
+    const other = (
+      await call("adm", "POST", "/api/projects", {
+        clientId,
+        name: "خاص",
+        expectedValue: 50000,
+        visibility: "private",
+      })
+    ).body.id;
+    const st = (await call("adm", "GET", `/api/clients/${clientId}/statement`)).body;
+    expect(st.items).toHaveLength(2);
+    const main = st.items.find((i: J) => i.id === pid);
+    const fin = (await call("adm", "GET", F())).body.summary;
+    expect(main.hasFinance).toBe(true);
+    expect(main.gross).toBeCloseTo(fin.grossTotal, 2);
+    expect(main.vat).toBeCloseTo(fin.vatAmt, 2);
+    expect(main.spent).toBeCloseTo(fin.totalSpent, 2);
+    expect(main.spent).toBe(10000);
+    expect(main.gross).toBe(115000);
+    expect(st.items.find((i: J) => i.id === other).hasFinance).toBe(false);
+    expect(st.totals.gross).toBe(st.items.reduce((a: number, i: J) => a + i.gross, 0));
+    const forMember = (await call("m1", "GET", `/api/clients/${clientId}/statement`)).body;
+    expect(forMember.items.map((i: J) => i.id)).toEqual([pid]);
+    expect((await call("x", "GET", `/api/clients/${clientId}/statement`)).status).toBe(404);
+
+    await call("adm", "POST", `/api/projects/${pid}/documents`, {
+      kind: "letter",
+      template: "custom",
+    });
+    const card = (await call("adm", "GET", "/api/clients")).body.items[0];
+    expect(card.recentProjects.map((p: J) => p.name).sort()).toEqual(["خاص", "مشروع"]);
+    expect(card.documentsCount).toBe(1);
+    expect(card.lastActivity).toBeGreaterThan(0);
+    const memberCard = (await call("m1", "GET", "/api/clients")).body.items[0];
+    expect(memberCard.recentProjects.map((p: J) => p.name)).toEqual(["مشروع"]);
+  });
+});

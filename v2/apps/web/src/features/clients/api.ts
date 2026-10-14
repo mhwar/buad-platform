@@ -18,8 +18,15 @@ export type ClientListItem = {
   archivedAt: number | null;
   projectCount: number;
   projectValue: number;
+  /** Up to three most recently touched live projects. */
+  recentProjects: { id: string; name: string }[];
+  documentsCount: number;
+  lastActivity: number | null;
 };
-export type Client = Omit<ClientListItem, "projectCount" | "projectValue" | "logoUrl"> & {
+export type Client = Omit<
+  ClientListItem,
+  "projectCount" | "projectValue" | "logoUrl" | "recentProjects" | "documentsCount" | "lastActivity"
+> & {
   /** The logo itself (data URL), needed by the edit form. */
   logo: string;
   regNo: string;
@@ -62,7 +69,48 @@ export const clientKeys = {
   all: ["clients"] as const,
   list: (f: ClientFilters) => ["clients", "list", f] as const,
   detail: (id: string) => ["clients", "detail", id] as const,
+  statement: (id: string) => ["clients", "statement", id] as const,
 };
+
+/** Amounts in riyals. */
+export type StatementLine = {
+  id: string;
+  number: string;
+  name: string;
+  status: string;
+  startDate: string;
+  endDate: string;
+  hasFinance: boolean;
+  contractNo: string;
+  contractNet: number;
+  vat: number;
+  gross: number;
+  spent: number;
+  income: number;
+  remaining: number;
+};
+export type Statement = {
+  client: {
+    id: string;
+    code: string;
+    name: string;
+    regNo: string;
+    taxNo: string;
+    address: string;
+    city: string;
+    phone: string;
+    email: string;
+  };
+  org: { name: string; reg: string; tax: string; urls: Record<string, string> };
+  items: StatementLine[];
+  totals: Record<"contractNet" | "vat" | "gross" | "spent" | "income" | "remaining", number>;
+  generatedAt: number;
+};
+export const statementQuery = (id: string) =>
+  queryOptions({
+    queryKey: clientKeys.statement(id),
+    queryFn: async () => ok<Statement>(await fetch(`/api/clients/${id}/statement`)),
+  });
 
 export const clientsQuery = (f: ClientFilters) =>
   queryOptions({
