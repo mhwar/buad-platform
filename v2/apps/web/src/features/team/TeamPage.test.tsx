@@ -3,7 +3,6 @@ import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { meUser, renderWithApp, stubApi } from "../../test-utils";
-import { SettingsLayout } from "../settings/SettingsLayout";
 import { TeamPage } from "./TeamPage";
 
 afterEach(() => vi.unstubAllGlobals());
@@ -99,21 +98,5 @@ describe("TeamPage", () => {
     await userEvent.click(await screen.findByRole("button", { name: /المالك/ }));
     expect(await screen.findByText(/دور المالك ثابت/)).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "حفظ الدور" })).toBeNull();
-  });
-});
-
-describe("settings navigation by permission", () => {
-  it("shows team and activity to those who may, hides them from members", async () => {
-    stubApi(base("owner"));
-    await renderWithApp(<SettingsLayout />);
-    expect(await screen.findByRole("link", { name: /الفريق والصلاحيات/ })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /سجل النشاط/ })).toBeInTheDocument();
-  });
-  it("members see neither", async () => {
-    stubApi(base("member"));
-    await renderWithApp(<SettingsLayout />);
-    await screen.findByRole("link", { name: /حسابي/ });
-    expect(screen.queryByRole("link", { name: /الفريق والصلاحيات/ })).toBeNull();
-    expect(screen.queryByRole("link", { name: /سجل النشاط/ })).toBeNull();
   });
 });

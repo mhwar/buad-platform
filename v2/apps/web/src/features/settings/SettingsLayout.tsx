@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link, Outlet } from "@tanstack/react-router";
-import { Building2, FileUp, History, KeyRound, ShieldCheck } from "lucide-react";
+import { Building2, FileUp, KeyRound } from "lucide-react";
 import { meQuery } from "../../session";
 
 const ITEMS = [
@@ -11,20 +11,6 @@ const ITEMS = [
     hint: "نقل العملاء والمشاريع من المنصة الحالية",
     icon: FileUp,
     perm: "import.run",
-  },
-  {
-    to: "/settings/team",
-    label: "الفريق والصلاحيات",
-    hint: "المستخدمون والأدوار",
-    icon: ShieldCheck,
-    perm: "team.view",
-  },
-  {
-    to: "/settings/activity",
-    label: "سجل النشاط",
-    hint: "من غيّر ماذا ومتى",
-    icon: History,
-    perm: "audit.view",
   },
   { to: "/settings/account", label: "حسابي", hint: "كلمة المرور", icon: KeyRound },
 ] as const;

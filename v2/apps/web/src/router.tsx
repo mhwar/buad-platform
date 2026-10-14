@@ -8,21 +8,12 @@ import {
   redirect,
   useRouterState,
 } from "@tanstack/react-router";
-import {
-  Briefcase,
-  Files,
-  Globe,
-  House as Home_,
-  Landmark,
-  Package,
-  Settings,
-  Users,
-} from "lucide-react";
+import { Briefcase, House as Home_, Landmark, Menu, Users } from "lucide-react";
 import { z } from "zod";
 import { AccountPage } from "./account";
 import { api } from "./api";
 import { Logo } from "./brand";
-import { MobileTabBar } from "./components/MobileTabBar";
+import { isNavActive, MobileTabBar } from "./components/MobileTabBar";
 import { UpdateBanner, useServerVersion } from "./components/UpdateBanner";
 import { ClientPage } from "./features/clients/ClientPage";
 import { ClientsPage } from "./features/clients/ClientsPage";
@@ -36,6 +27,10 @@ import { FinancePage } from "./features/finance-overview/FinancePage";
 import { ReportPage } from "./features/finance-overview/ReportPage";
 import { VatReportPage } from "./features/finance-overview/VatReportPage";
 import { ImportPage } from "./features/import/ImportPage";
+import { ComingSoon } from "./features/more/ComingSoon";
+import { MoreHeader } from "./features/more/MoreHeader";
+import { MoreIndex } from "./features/more/MoreIndex";
+import { inHub } from "./features/more/tabs";
 import { OrgSettingsPage } from "./features/org/OrgSettings";
 import { ProductBrochurePage, PublicBrochurePage } from "./features/products/BrochurePages";
 import { ProductBuilderPage } from "./features/products/ProductBuilder";
@@ -59,16 +54,8 @@ const NAV = [
   { to: "/", label: "الرئيسية", icon: Home_, exact: true },
   { to: "/clients", label: "العملاء", icon: Users, exact: false },
   { to: "/projects", label: "المشاريع", icon: Briefcase, exact: false },
-  { to: "/documents", label: "المستندات", icon: Files, exact: false },
   { to: "/finance", label: "المالية", icon: Landmark, exact: false, perm: "treasury.view" },
-  {
-    to: "/products",
-    label: "المنتجات والخدمات",
-    icon: Package,
-    exact: false,
-    perm: "products.view",
-  },
-  { to: "/website", label: "الموقع", icon: Globe, exact: false, perm: "site.view" },
+  { to: "/more", label: "المزيد", icon: Menu, exact: false, also: inHub },
 ] as const;
 
 function Shell() {
@@ -78,6 +65,7 @@ function Shell() {
   });
   const me = useQuery(meQuery);
   const health = useServerVersion();
+  const path = useRouterState({ select: (s) => s.location.pathname });
   // A full page load after logout: nothing of the previous user's data stays in memory,
   // and the next sign-in starts from a clean state.
   const logout = async () => {
@@ -87,7 +75,7 @@ function Shell() {
   // Signed out (login), or a document opened from a share link: the page owns the whole screen.
   if (!me.data || isShareLink) return <Outlet />;
   const perms = me.data.perms;
-  const manager = perms.includes("treasury.view");
+  const hub = inHub(path);
   const nav = NAV.filter((n) => !("perm" in n) || perms.includes(n.perm));
   const navLink =
     "flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-muted transition hover:bg-brand-soft hover:text-ink";
@@ -127,35 +115,21 @@ function Shell() {
               <Link
                 key={n.to}
                 to={n.to}
-                activeOptions={{ exact: n.exact }}
-                className={navLink}
-                activeProps={{ className: navActive }}
+                aria-current={isNavActive(path, n) ? "page" : undefined}
+                className={`${navLink} ${isNavActive(path, n) ? navActive : ""}`}
               >
                 <n.icon className="size-4" />
                 {n.label}
               </Link>
             ))}
-            <hr className="my-3" />
-            <Link to="/settings" className={navLink} activeProps={{ className: navActive }}>
-              <Settings className="size-4" />
-              الإعدادات
-            </Link>
           </nav>
         </aside>
         <main className="min-w-0 flex-1 py-6 pb-28 lg:pb-6">
+          {hub && <MoreHeader />}
           <Outlet />
         </main>
       </div>
-      <MobileTabBar
-        nav={nav}
-        primary={
-          manager
-            ? ["/", "/clients", "/projects", "/finance"]
-            : ["/", "/clients", "/projects", "/documents"]
-        }
-        userName={me.data.name || me.data.email}
-        onLogout={logout}
-      />
+      <MobileTabBar nav={nav} />
       <footer className="mb-16 border-t py-4 text-center text-xs text-muted lg:mb-0">
         بُعد التمكين · الإصدار الثاني ·{" "}
         <span data-testid="status">
@@ -449,14 +423,14 @@ const importRoute = createRoute({
   component: ImportPage,
 });
 const teamRoute = createRoute({
-  getParentRoute: () => settingsRoute,
-  path: "/team",
+  getParentRoute: () => rootRoute,
+  path: "/more/team",
   beforeLoad: needs("team.view"),
   component: TeamPage,
 });
 const activityRoute = createRoute({
-  getParentRoute: () => settingsRoute,
-  path: "/activity",
+  getParentRoute: () => rootRoute,
+  path: "/more/activity",
   beforeLoad: needs("audit.view"),
   component: ActivityPage,
 });
@@ -464,6 +438,36 @@ const accountRoute = createRoute({
   getParentRoute: () => settingsRoute,
   path: "/account",
   component: AccountPage,
+});
+
+const moreRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/more",
+  beforeLoad: authed,
+  component: MoreIndex,
+});
+const moreSoonRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/more/soon/$key",
+  beforeLoad: authed,
+  component: function MoreSoon() {
+    const { key } = moreSoonRoute.useParams();
+    return <ComingSoon tabKey={key} />;
+  },
+});
+const legacyTeamRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/settings/team",
+  beforeLoad: () => {
+    throw redirect({ to: "/more/team" });
+  },
+});
+const legacyActivityRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/settings/activity",
+  beforeLoad: () => {
+    throw redirect({ to: "/more/activity" });
+  },
 });
 
 // Old addresses keep working.
@@ -485,6 +489,12 @@ const legacyAccountRoute = createRoute({
 export const router = createRouter({
   routeTree: rootRoute.addChildren([
     indexRoute,
+    moreRoute,
+    moreSoonRoute,
+    teamRoute,
+    activityRoute,
+    legacyTeamRoute,
+    legacyActivityRoute,
     loginRoute,
     setupRoute,
     clientsRoute,
