@@ -27,7 +27,11 @@ import { orgApp } from "./modules/org";
 import { type BrowserBinding, pdfApp } from "./modules/pdf";
 import { productsApp } from "./modules/products";
 import { projectsApp } from "./modules/projects";
+import { requestsApp } from "./modules/requests";
 import { documentSharesApp, publicShareApp } from "./modules/share";
+import { siteApp } from "./modules/site";
+import { siteMeta } from "./modules/site-meta";
+import { publicSiteApp } from "./modules/site-public";
 import { vatApp } from "./modules/vat";
 
 export type Env = {
@@ -37,6 +41,8 @@ export type Env = {
   OWNER_SETUP_TOKEN?: string;
   /** R2 bucket for uploaded files (logos, stamps, letterheads). */
   FILES?: FileStore;
+  /** Static assets (the web app); used to serve /site pages with link-preview meta tags. */
+  ASSETS?: { fetch: (req: Request) => Promise<Response> };
   /** Cloudflare Browser Run, for vector PDFs. */
   BROWSER?: BrowserBinding;
   DB: Parameters<typeof drizzle>[0];
@@ -62,6 +68,9 @@ export function createApp(deps: AppDeps = {}) {
         c.set("db", getDb(c.env));
         await next();
       })
+      // Public website pages: the SPA shell with link-preview tags from the published site.
+      .get("/site", siteMeta)
+      .get("/site/*", siteMeta)
       .get("/api/health", (c) =>
         c.json(
           healthResponse.parse({ ok: true, service: "buad-v2-api", version: c.env.APP_VERSION }),
@@ -166,11 +175,14 @@ export function createApp(deps: AppDeps = {}) {
       .route("/api/documents/:docId/shares", documentSharesApp)
       .route("/api/documents", documentsApp)
       .route("/api/public/s", publicShareApp)
+      .route("/api/public/site", publicSiteApp)
       .route("/api/pdf", pdfApp)
       .route("/api/finance/vat", vatApp)
       .route("/api/finance/company", companyFinanceApp)
       .route("/api/finance", financeOverviewApp)
       .route("/api/products", productsApp)
+      .route("/api/product-requests", requestsApp)
+      .route("/api/site", siteApp)
       .route("/api/projects", projectsApp)
       .route("/api/import", importApp)
       .route("/api/assets", assetsApp)

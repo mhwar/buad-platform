@@ -81,3 +81,40 @@ export const sendJson = (url: string, method: string, body?: unknown) =>
     headers: { "content-type": "application/json" },
     body: body === undefined ? undefined : JSON.stringify(body),
   });
+
+export type RequestStatus = "new" | "contacted" | "quoted" | "won" | "lost";
+export const REQUEST_LABEL: Record<RequestStatus, string> = {
+  new: "جديد",
+  contacted: "تم التواصل",
+  quoted: "عُرض عليه سعر",
+  won: "تم التعاقد",
+  lost: "لم يكتمل",
+};
+export type ProductRequest = {
+  id: string;
+  productId: string;
+  productName: string;
+  source: "site" | "manual";
+  status: RequestStatus;
+  name: string;
+  entity: string;
+  phone: string;
+  email: string;
+  message: string;
+  answers: Record<string, string>;
+  quote: Record<string, unknown>;
+  notes: string;
+  clientId: string;
+  projectId: string;
+  createdAt: number;
+};
+export type RequestsData = {
+  requests: ProductRequest[];
+  counts: Partial<Record<RequestStatus, number>>;
+};
+export const requestsQuery = (status: RequestStatus | "") =>
+  queryOptions({
+    queryKey: ["product-requests", status],
+    queryFn: async () =>
+      ok<RequestsData>(await fetch(`/api/product-requests${status ? `?status=${status}` : ""}`)),
+  });
