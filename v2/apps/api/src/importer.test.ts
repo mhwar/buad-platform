@@ -216,7 +216,8 @@ describe("import v1 finance", () => {
     });
     expect(f.categories).toEqual([expect.objectContaining({ id: "cc_trip", label: "سفر" })]);
     const { finCalc } = await import("@buad/domain");
-    expect(f.summary).toEqual(JSON.parse(JSON.stringify(finCalc(fin1 as never))));
+    // Same v1 numbers; v2 also reports what is still pending, apart.
+    expect(f.summary).toMatchObject(JSON.parse(JSON.stringify(finCalc(fin1 as never))));
   });
 
   it("re-import replaces imported finance, but never overwrites finance edited in v2", async () => {

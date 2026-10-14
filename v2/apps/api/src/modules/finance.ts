@@ -19,6 +19,7 @@ import {
 import { zValidator } from "@hono/zod-validator";
 import { and, asc, count, desc, eq, max } from "drizzle-orm";
 import { Hono } from "hono";
+import { z } from "zod";
 import { requireAuth, requireRole, type Vars } from "../auth/middleware";
 import type { Db } from "../auth/service";
 import { newId, nowSec } from "./common";
@@ -204,6 +205,24 @@ export const financeApp = new Hono<Env>()
     return c.json({ ok: true, ...(await loadFinance(db, project)) });
   })
 
+  // Entries imported without a status (v1 allowed none): mark them all at once.
+  .post(
+    "/entries/bulk-status",
+    manager,
+    zValidator("json", z.object({ status: z.enum(["paid", "pending"]) })),
+    async (c) => {
+      const db = c.get("db");
+      const me = c.get("user");
+      const project = c.get("project");
+      const { status } = c.req.valid("json");
+      await db
+        .update(financeEntries)
+        .set({ status, updatedBy: me.id, updatedAt: nowSec() })
+        .where(and(eq(financeEntries.projectId, project.id), eq(financeEntries.status, "")));
+      return c.json({ ok: true, ...(await loadFinance(db, project)) });
+    },
+  )
+
   .post("/entries", manager, zValidator("json", entryInput), async (c) => {
     const db = c.get("db");
     const me = c.get("user");
@@ -281,7 +300,7 @@ export const financeApp = new Hono<Env>()
     const registered: string[] = [];
     for (const item of AGREEMENT_ITEMS) {
       // v1 counts an item as registered when any entry uses its category.
-      if (fin.entries.some((e) => e.cat === item)) continue;
+      if (fin.entries.some((e) => e.cat === item && e.status !== "cancelled")) continue;
       if ((await registerAgreement(db, c.get("user"), project.id, fin, item)) === "ok")
         registered.push(item);
     }
@@ -395,7 +414,8 @@ async function registerAgreement(
   }
   const halalas = fromRiyals(amount);
   if (halalas <= 0) return "zero_amount";
-  if (fin.entries.some((e) => e.source === "agreement" && e.cat === cat))
+  // Registered = any live (not cancelled) entry in that category — the same rule as «تسجيل الكل».
+  if (fin.entries.some((e) => e.cat === cat && e.status !== "cancelled"))
     return "already_registered";
   const t = nowSec();
   await db.insert(financeEntries).values({

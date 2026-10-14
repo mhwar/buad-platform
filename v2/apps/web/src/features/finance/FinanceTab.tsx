@@ -89,7 +89,15 @@ export function FinanceStrip({
       </div>
       <div className="border-t px-5 py-3">
         <div className="mb-1.5 flex justify-between text-xs text-muted">
-          <span>إجمالي المصروف من العقد: {sar(s.totalDeductions)}</span>
+          <span>
+            إجمالي المصروف من العقد: {sar(s.totalDeductions)}
+            {s.pendingExpenses > 0 && (
+              <span className="text-amber-700 dark:text-amber-300">
+                {" "}
+                · منها معلّق غير مدفوع: {sar(s.pendingExpenses)}
+              </span>
+            )}
+          </span>
           <span>{pct(spent)}</span>
         </div>
         <div
@@ -460,8 +468,10 @@ export function Transactions({
   );
   if (q.isPending) return <Card className="h-64 animate-pulse" aria-busy />;
   if (!fin) return <Card>تعذّر تحميل المعاملات</Card>;
-  const inc = rows.filter((e) => e.type === "income").reduce((a, e) => a + e.amount, 0) / 100;
-  const exp = rows.filter((e) => e.type === "expense").reduce((a, e) => a + e.amount, 0) / 100;
+  // Cancelled entries stay visible but never count.
+  const live = rows.filter((e) => e.status !== "cancelled");
+  const inc = live.filter((e) => e.type === "income").reduce((a, e) => a + e.amount, 0) / 100;
+  const exp = live.filter((e) => e.type === "expense").reduce((a, e) => a + e.amount, 0) / 100;
   const n = {
     all: fin.entries.length,
     income: fin.entries.filter((e) => e.type === "income").length,
@@ -517,10 +527,16 @@ export function Transactions({
                   className="flex w-full items-start justify-between gap-3 px-5 py-3 text-right disabled:cursor-default"
                 >
                   <span className="min-w-0">
-                    <span className="block truncate font-medium">{e.description}</span>
+                    <span
+                      className={`block truncate font-medium ${e.status === "cancelled" ? "text-muted line-through" : ""}`}
+                    >
+                      {e.description}
+                    </span>
                     <span className="text-xs text-muted">
                       {day(e.date)} · {label(e.cat)}
                       {e.source === "agreement" && " · اتفاقية"}
+                      {e.status === "cancelled" && " · ملغى، لا يُحتسب"}
+                      {e.status === "pending" && " · معلّق"}
                     </span>
                   </span>
                   <Amount e={e} />
@@ -543,19 +559,31 @@ export function Transactions({
                 {rows.map((e) => (
                   <tr
                     key={e.id}
-                    className={`border-b last:border-0 ${canEdit ? "cursor-pointer hover:bg-brand-soft/50 focus-visible:bg-brand-soft/50" : ""}`}
+                    className={`border-b last:border-0 ${canEdit ? "cursor-pointer hover:bg-brand-soft/50 focus-visible:bg-brand-soft/50" : ""} ${e.status === "cancelled" ? "text-muted" : ""}`}
                     onClick={() => canEdit && setEditing(e)}
                     onKeyDown={(k) => canEdit && k.key === "Enter" && setEditing(e)}
                     tabIndex={canEdit ? 0 : undefined}
                   >
                     <td className="whitespace-nowrap px-5 py-2.5 text-muted">{day(e.date)}</td>
                     <td className="px-2 py-2.5">
-                      {e.description}{" "}
+                      <span className={e.status === "cancelled" ? "line-through" : undefined}>
+                        {e.description}
+                      </span>{" "}
                       {e.source === "agreement" && <Badge tone="blue">اتفاقية</Badge>}
                       {e.note && <span className="block text-xs text-muted">{e.note}</span>}
                     </td>
                     <td className="px-2 py-2.5">{label(e.cat)}</td>
-                    <td className="px-2 py-2.5 text-xs">{ENTRY_STATUS_LABELS[e.status]}</td>
+                    <td className="px-2 py-2.5 text-xs">
+                      {e.status === "pending" ? (
+                        <Badge tone="amber">{ENTRY_STATUS_LABELS.pending}</Badge>
+                      ) : e.status === "cancelled" ? (
+                        <span title="لا يُحتسب في أرقام المشروع">
+                          {ENTRY_STATUS_LABELS.cancelled} · لا يُحتسب
+                        </span>
+                      ) : (
+                        ENTRY_STATUS_LABELS[e.status] || "—"
+                      )}
+                    </td>
                     <td className="px-5 py-2.5 text-left">
                       <Amount e={e} />
                     </td>

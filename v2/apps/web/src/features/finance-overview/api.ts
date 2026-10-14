@@ -52,6 +52,14 @@ export type Overview = {
     }[];
     unregistered: { projectId: string; projectName: string; item: string; amount: number }[];
   };
+  quality: {
+    projectId: string;
+    number: string;
+    name: string;
+    missingContractDate: boolean;
+    ctrlVersion: number;
+    entriesWithoutStatus: number;
+  }[];
 };
 export type Report = Overview & {
   org: { name: string; reg: string; tax: string; urls: Record<string, string> };

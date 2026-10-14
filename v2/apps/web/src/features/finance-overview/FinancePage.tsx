@@ -1,9 +1,10 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getRouteApi, Link } from "@tanstack/react-router";
 import { AlertTriangle, FileBarChart2 } from "lucide-react";
 import { useState } from "react";
 import { Badge, Button, Card, EmptyState, Input, PageHeader, Pills } from "../../components/ui";
 import { day, pct, sar } from "../../lib/format";
+import { financeApi } from "../finance/api";
 import { label, PROJECT_STATUS_LABELS } from "../labels";
 import {
   type Overview,
@@ -141,6 +142,7 @@ function Dashboard({
   const obligations = data.obligations.pending.length + data.obligations.unregistered.length;
   return (
     <div className="space-y-6">
+      {data.quality.length > 0 && <QualityCard items={data.quality} />}
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <Tile
           title="قيمة العقود (شامل الضريبة)"
@@ -293,5 +295,104 @@ function ProjectRow({ p }: { p: OverviewProject }) {
         {sar(p.remaining)}
       </td>
     </tr>
+  );
+}
+
+/** «بيانات ناقصة»: what to complete so periods and statuses are right — fixable in place. */
+function QualityCard({ items }: { items: Overview["quality"] }) {
+  const qc = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const dates = items.filter((i) => i.missingContractDate).length;
+  const statuses = items.reduce((a, i) => a + i.entriesWithoutStatus, 0);
+  const refresh = () => qc.invalidateQueries({ queryKey: ["finance-overview"] });
+  return (
+    <Card className="border-amber-300 bg-amber-50/60 dark:border-amber-800 dark:bg-amber-950/30">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-start gap-2">
+          <AlertTriangle className="mt-0.5 size-4 shrink-0 text-amber-600" />
+          <div>
+            <p className="font-semibold">بيانات ناقصة تؤثر على دقة الأرقام</p>
+            <p className="text-xs text-muted">
+              {dates > 0 && `${dates} مشروع بلا تاريخ عقد (تُستخدم تواريخ بديلة لتحديد الفترة)`}
+              {dates > 0 && statuses > 0 && " · "}
+              {statuses > 0 && `${statuses} قيد بلا حالة (مدفوع/معلّق)`}
+            </p>
+          </div>
+        </div>
+        <Button variant="secondary" onClick={() => setOpen((o) => !o)}>
+          {open ? "إخفاء" : "إكمال الآن"}
+        </Button>
+      </div>
+      {open && (
+        <ul className="mt-4 divide-y rounded-lg border bg-surface text-sm">
+          {items.map((i) => (
+            <QualityRow key={i.projectId} item={i} onDone={refresh} />
+          ))}
+        </ul>
+      )}
+    </Card>
+  );
+}
+
+function QualityRow({
+  item: i,
+  onDone,
+}: {
+  item: Overview["quality"][number];
+  onDone: () => void;
+}) {
+  const [date, setDate] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+  const api = financeApi(i.projectId);
+  const run = async (fn: () => Promise<unknown>) => {
+    setBusy(true);
+    setErr("");
+    try {
+      await fn();
+      onDone();
+    } catch {
+      setErr("تعذّر الحفظ");
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <li className="flex flex-wrap items-center gap-3 p-3">
+      <span className="min-w-0 flex-1">
+        <FinanceLink id={i.projectId} name={i.name} />
+        <span className="block text-xs text-muted" dir="ltr">
+          {i.number}
+        </span>
+      </span>
+      {i.missingContractDate && (
+        <span className="flex items-center gap-2">
+          <Input
+            type="date"
+            aria-label={`تاريخ عقد ${i.name}`}
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+            className="w-auto"
+          />
+          <Button
+            variant="secondary"
+            disabled={!date || busy}
+            onClick={() => run(() => api.saveCtrl({ version: i.ctrlVersion, contractDate: date }))}
+          >
+            حفظ تاريخ العقد
+          </Button>
+        </span>
+      )}
+      {i.entriesWithoutStatus > 0 && (
+        <Button
+          variant="secondary"
+          disabled={busy}
+          onClick={() => run(() => api.markUnsetStatus("paid"))}
+        >
+          اعتبار {i.entriesWithoutStatus} قيد مدفوعة
+        </Button>
+      )}
+      {err && <span className="text-xs text-red-600">{err}</span>}
+    </li>
   );
 }

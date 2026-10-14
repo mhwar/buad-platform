@@ -1,4 +1,4 @@
-import type { FinResult } from "@buad/domain";
+import type { summarize } from "@buad/domain";
 import type { CtrlPatch, EntryInput } from "@buad/schema/finance";
 import { queryOptions } from "@tanstack/react-query";
 import { ok } from "../../lib/format";
@@ -49,7 +49,7 @@ export type Finance = {
   entries: Entry[];
   budget: BudgetItem[];
   categories: Category[];
-  summary: FinResult;
+  summary: ReturnType<typeof summarize>;
 };
 
 export const financeKey = (projectId: string) => ["finance", projectId] as const;
@@ -73,6 +73,8 @@ export const financeApi = (projectId: string) => ({
   addEntry: (e: EntryInput) => send("POST", `${base(projectId)}/entries`, e),
   updateEntry: (id: string, e: Partial<EntryInput>) =>
     send("PATCH", `${base(projectId)}/entries/${id}`, e),
+  markUnsetStatus: (status: "paid" | "pending") =>
+    send("POST", `${base(projectId)}/entries/bulk-status`, { status }),
   deleteEntry: (id: string) => send("DELETE", `${base(projectId)}/entries/${id}`),
   registerAgreement: (item: string) => send("POST", `${base(projectId)}/agreement/${item}`),
   registerAllAgreement: () =>
