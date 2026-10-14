@@ -305,3 +305,123 @@ describe("requests inbox", () => {
     expect((await call("adm", "POST", REQ, { name: "بلا وسيلة" })).status).toBe(400);
   });
 });
+
+describe("pricing a request and converting it", () => {
+  const newRequest = async () => {
+    const id = await publishedProduct();
+    const r = await call("adm", "POST", REQ, {
+      name: "هند",
+      entity: "جمعية النور",
+      phone: "0522222222",
+      productSlug: "patient-transport",
+      message: "نحتاج عرضاً",
+    });
+    return { productId: id, id: r.body.id as string };
+  };
+
+  it("prices from the product's private model, computed on the server", async () => {
+    const { productId, id } = await newRequest();
+    const q = await call("adm", "PUT", `${REQ}/${id}/quote`, {
+      productId,
+      packageId: "full",
+      times: 2,
+    });
+    expect(q.status).toBe(200);
+    // 2 × (7 trips + 3 nights) × 1,234.56 = 24,691.20 cost; 37% margin → 39,192.38; VAT 15% → 5,878.86
+    expect(q.body.quote).toMatchObject({
+      packageName: "الباقة المتكاملة",
+      cost: 24691.2,
+      price: 39192.38,
+      vat: 5878.86,
+      total: 45071.24,
+      profit: 14501.18,
+      marginPct: 37,
+    });
+    const r = (await call("adm", "GET", REQ)).body.requests[0];
+    expect(r.status).toBe("quoted");
+    expect(r.quote.price).toBe(39192.38);
+  });
+
+  it("refuses to price when costs are missing, and unknown packages or products", async () => {
+    const id = (await call("adm", "POST", "/api/products/from-blueprint/project-delivery")).body.id;
+    const req = (await call("adm", "POST", REQ, { name: "سعد", phone: "0533333333" })).body.id;
+    const missing = await call("adm", "PUT", `${REQ}/${req}/quote`, {
+      productId: id,
+      packageId: "fixed-package",
+      times: 1,
+    });
+    expect(missing.status).toBe(400);
+    expect(missing.body.error).toBe("quote_incomplete");
+    expect(
+      (
+        await call("adm", "PUT", `${REQ}/${req}/quote`, {
+          productId: id,
+          packageId: "zzz",
+          times: 1,
+        })
+      ).status,
+    ).toBe(404);
+    expect(
+      (
+        await call("adm", "PUT", `${REQ}/${req}/quote`, {
+          productId: "prd_x",
+          packageId: "a",
+          times: 1,
+        })
+      ).status,
+    ).toBe(404);
+    expect(
+      (await call("m1", "PUT", `${REQ}/${req}/quote`, { productId: id, packageId: "a", times: 1 }))
+        .status,
+    ).toBe(403);
+    expect(
+      (await call("x", "PUT", `${REQ}/${req}/quote`, { productId: id, packageId: "a", times: 1 }))
+        .status,
+    ).toBe(404);
+  });
+
+  it("creates the client and a draft project carrying the quoted price, once", async () => {
+    const { productId, id } = await newRequest();
+    await call("adm", "PUT", `${REQ}/${id}/quote`, { productId, packageId: "full", times: 2 });
+    const done = await call("adm", "POST", `${REQ}/${id}/convert`, {});
+    expect(done.status).toBe(201);
+    const { clientId, projectId } = done.body;
+
+    const client = (await call("adm", "GET", `/api/clients/${clientId}`)).body;
+    expect(client.client.name).toBe("جمعية النور");
+    expect(client.client.type).toBe("association");
+    const proj = (await call("adm", "GET", `/api/projects/${projectId}`)).body.project;
+    expect(proj.status).toBe("draft");
+    expect(proj.clientId).toBe(clientId);
+    expect(proj.name).toContain("جمعية النور");
+    expect(proj.expectedValue).toBe(3919238); // halalas
+
+    const r = (await call("adm", "GET", REQ)).body.requests[0];
+    expect(r).toMatchObject({ status: "won", clientId, projectId });
+    expect((await call("adm", "POST", `${REQ}/${id}/convert`, {})).body.error).toBe(
+      "already_converted",
+    );
+  });
+
+  it("warns about a similar client, and can link an existing one instead", async () => {
+    await call("adm", "POST", "/api/clients", { name: "جمعية النور" });
+    const { id } = await newRequest();
+    const warn = await call("adm", "POST", `${REQ}/${id}/convert`, {});
+    expect(warn.status).toBe(409);
+    expect(warn.body.error).toBe("similar_name");
+    const existing = warn.body.similar.id;
+    const linked = await call("adm", "POST", `${REQ}/${id}/convert`, { clientId: existing });
+    expect(linked.status).toBe(201);
+    expect(linked.body.clientId).toBe(existing);
+  });
+
+  it("cannot link another org's client, and members cannot convert", async () => {
+    const { id } = await newRequest();
+    const other = (await call("x", "POST", "/api/clients", { name: "عميل آخر" })).body.id;
+    expect((await call("adm", "POST", `${REQ}/${id}/convert`, { clientId: other })).status).toBe(
+      404,
+    );
+    expect((await call("m1", "POST", `${REQ}/${id}/convert`, {})).status).toBe(403);
+    expect((await call("x", "POST", `${REQ}/${id}/convert`, {})).status).toBe(404);
+  });
+});
