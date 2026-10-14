@@ -79,4 +79,6 @@ export const receiptInput = z.object({
     .number()
     .refine((n) => n !== 0 && Math.abs(n) <= 1e10, { message: "invalid_amount" }),
   note: z.string().trim().max(500).default(""),
+  /** Where the date came from (kept with the approval). */
+  basis: z.string().trim().max(200).default(""),
 });

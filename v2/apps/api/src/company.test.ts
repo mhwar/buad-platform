@@ -252,4 +252,54 @@ describe("مالية الشركة", () => {
     expect(after.rows[0].flags).toContain("over_distributed");
     expect(after.totals.carried).toBeLessThan(0);
   });
+
+  it("proposes receipts from existing data, stores nothing, and approving records who and why", async () => {
+    await call("adm", "PATCH", `${F()}/ctrl`, {
+      version: 0,
+      contractValue: 100000,
+      execV: 10,
+      contractDate: "2026-06-01",
+    });
+    // v1's «تاريخ الاستلام» wins over every other date.
+    await call("adm", "PATCH", `/api/projects/${pid}`, { payDate: "2026-09-30", status: "active" });
+    const sug = (await call("adm", "GET", `${C}/receipt-suggestions`)).body.items;
+    expect(sug).toHaveLength(1);
+    expect(sug[0].suggestion).toMatchObject({
+      date: "2026-09-30",
+      source: "pay_date",
+      quarter: "الربع الثالث 2026",
+      warnings: ["near_quarter_edge"],
+    });
+    expect(sug[0].gross).toBeGreaterThan(0);
+    // Nothing is counted or stored until someone approves it.
+    expect((await call("adm", "GET", F())).body.receipts).toHaveLength(0);
+    expect(
+      (await call("adm", "GET", `${C}/quarter?year=2026&q=3`)).body.totals.realizedInPeriod,
+    ).toBe(0);
+
+    expect((await call("m1", "GET", `${C}/receipt-suggestions`)).status).toBe(403);
+    const gross = sug[0].gross;
+    // The approver may move the date: it is the date that decides the quarter.
+    const r = (
+      await call("adm", "POST", `${F()}/receipts`, {
+        date: "2026-10-02",
+        amount: gross,
+        basis: sug[0].suggestion.basis,
+      })
+    ).body;
+    expect(r.receipts[0]).toMatchObject({
+      date: "2026-10-02",
+      approvedBy: "adm",
+      basis: "من «تاريخ الاستلام» المسجّل في المنصة القديمة",
+    });
+    expect(r.receipts[0].approvedAt).toBeGreaterThan(0);
+    // Approved: it left the proposals, and it counts in the quarter it really belongs to.
+    expect((await call("adm", "GET", `${C}/receipt-suggestions`)).body.items).toHaveLength(0);
+    expect(
+      (await call("adm", "GET", `${C}/quarter?year=2026&q=3`)).body.totals.realizedInPeriod,
+    ).toBe(0);
+    expect(
+      (await call("adm", "GET", `${C}/quarter?year=2026&q=4`)).body.totals.realizedInPeriod,
+    ).toBeGreaterThan(0);
+  });
 });

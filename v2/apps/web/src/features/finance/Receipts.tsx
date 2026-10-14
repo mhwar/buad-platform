@@ -1,8 +1,9 @@
+import { quarterLabelOf, receiptWarnings } from "@buad/domain";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus, Trash2, Wallet } from "lucide-react";
 import { useState } from "react";
 import { Button, Card, Dialog, Field, Input, Notice } from "../../components/ui";
-import { day, sar, today } from "../../lib/format";
+import { day, fromEpoch, sar, today } from "../../lib/format";
 import { financeApi, financeKey, financeQuery, type Receipt } from "./api";
 
 /**
@@ -55,8 +56,17 @@ export function ReceiptsCard({ projectId, canEdit }: { projectId: string; canEdi
                 className="flex w-full items-center justify-between gap-2 p-2.5 text-right hover:bg-brand-soft/50 disabled:cursor-default"
               >
                 <span>
-                  {day(r.date)}
+                  {day(r.date)}{" "}
+                  <span className="rounded-full bg-brand-soft px-2 py-0.5 text-[11px] text-brand">
+                    {quarterLabelOf(r.date)}
+                  </span>
                   {r.note && <span className="block text-xs text-muted">{r.note}</span>}
+                  {r.approvedAt && (
+                    <span className="block text-[11px] text-muted">
+                      اعتُمد {fromEpoch(r.approvedAt)}
+                      {r.basis && ` · ${r.basis}`}
+                    </span>
+                  )}
                 </span>
                 <b className={r.amount < 0 ? "text-red-600 dark:text-red-400" : ""}>
                   {r.amount < 0 ? "استرجاع " : ""}
@@ -72,6 +82,7 @@ export function ReceiptsCard({ projectId, canEdit }: { projectId: string; canEdi
           projectId={projectId}
           receipt={editing === "new" ? null : editing}
           remaining={Math.max(0, gross - f.received)}
+          contractDate={f.ctrl.contractDate}
           onClose={() => setEditing(null)}
         />
       )}
@@ -79,26 +90,39 @@ export function ReceiptsCard({ projectId, canEdit }: { projectId: string; canEdi
   );
 }
 
+const WARNING: Record<string, string> = {
+  future: "التاريخ في المستقبل",
+  before_contract: "التاريخ قبل تاريخ العقد",
+  near_quarter_edge: "قريب من حدّ الربع: تأكدوا من اليوم لأنه يحدد الربع",
+};
+
+/** Verify and approve a receipt: the date decides the quarter, so it is shown while you type. */
 export function ReceiptDialog({
   projectId,
   receipt,
   remaining,
   onClose,
+  suggestion,
+  contractDate = "",
 }: {
   projectId: string;
   receipt: Receipt | null;
   remaining: number;
   onClose: () => void;
+  /** A proposal being approved: prefills the date and keeps where it came from. */
+  suggestion?: { date: string; basis: string };
+  contractDate?: string;
 }) {
   const qc = useQueryClient();
   const api = financeApi(projectId);
-  const [date, setDate] = useState(receipt?.date ?? today());
+  const [date, setDate] = useState(receipt?.date ?? suggestion?.date ?? today());
   const [amount, setAmount] = useState(
     receipt ? String(Math.abs(receipt.amount) / 100) : remaining ? String(remaining) : "",
   );
   const [refund, setRefund] = useState((receipt?.amount ?? 1) < 0);
   const [note, setNote] = useState(receipt?.note ?? "");
   const [err, setErr] = useState("");
+  const warnings = date ? receiptWarnings(date, contractDate, today()) : [];
   const done = (fin: unknown) => {
     qc.setQueryData(financeKey(projectId), fin);
     qc.invalidateQueries({ queryKey: ["company-finance"] });
@@ -116,6 +140,19 @@ export function ReceiptDialog({
         <Field label="تاريخ وصوله للبنك" hint="يحدد ربع السنة الذي يتحقق فيه ربحه">
           <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
         </Field>
+        <div className="sm:col-span-2" aria-live="polite">
+          {date && (
+            <p className="rounded-lg bg-brand-soft px-3 py-2 text-sm">
+              يقع هذا الاستلام في <b>{quarterLabelOf(date)}</b>
+              {suggestion && <span className="block text-xs text-muted">{suggestion.basis}</span>}
+            </p>
+          )}
+          {warnings.map((w) => (
+            <p key={w} className="mt-1 text-xs text-amber-700 dark:text-amber-300">
+              ⚠ {WARNING[w]}
+            </p>
+          ))}
+        </div>
         <Field label="المبلغ (ر.س)">
           <Input
             type="number"
@@ -155,7 +192,12 @@ export function ReceiptDialog({
           onClick={async () => {
             const n = Number(amount);
             if (!date || !(n > 0)) return setErr("أدخلوا التاريخ والمبلغ");
-            const body = { date, amount: refund ? -n : n, note };
+            const body = {
+              date,
+              amount: refund ? -n : n,
+              note,
+              basis: suggestion?.basis ?? receipt?.basis ?? "",
+            };
             try {
               done(
                 receipt ? await api.updateReceipt(receipt.id, body) : await api.addReceipt(body),
@@ -165,7 +207,7 @@ export function ReceiptDialog({
             }
           }}
         >
-          حفظ
+          {suggestion ? "اعتماد الاستلام" : "حفظ"}
         </Button>
       </div>
     </Dialog>

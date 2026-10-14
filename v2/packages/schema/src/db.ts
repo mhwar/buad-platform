@@ -536,6 +536,11 @@ export const projectReceipts = sqliteTable(
     date: text("date").notNull(),
     amount: integer("amount_halalas").notNull(),
     note: text("note").notNull().default(""),
+    /** Where the date came from (e.g. «من تاريخ الاستلام في المنصة القديمة»), kept with the approval. */
+    basis: text("basis").notNull().default(""),
+    /** A receipt exists only once someone verified and approved it. */
+    approvedBy: text("approved_by").notNull().default(""),
+    approvedAt: integer("approved_at"),
     ...audit,
   },
   (t) => [index("idx_receipts_project").on(t.projectId, t.date)],

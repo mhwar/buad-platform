@@ -25,7 +25,6 @@ import {
 } from "../../components/ui";
 import { day, pct, sar } from "../../lib/format";
 import { financeApi } from "../finance/api";
-import { ReceiptDialog } from "../finance/Receipts";
 import { label, PROJECT_STATUS_LABELS } from "../labels";
 import {
   type Overview,
@@ -408,7 +407,6 @@ function QualityRow({
   item: Overview["quality"][number];
   onDone: () => void;
 }) {
-  const [receipt, setReceipt] = useState(false);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
   const api = financeApi(i.projectId);
@@ -433,20 +431,13 @@ function QualityRow({
         </span>
       </span>
       {i.missingReceipts && (
-        <Button variant="secondary" disabled={busy} onClick={() => setReceipt(true)}>
-          سجّل ما استُلم ({sar(i.gross)})
-        </Button>
-      )}
-      {receipt && (
-        <ReceiptDialog
-          projectId={i.projectId}
-          receipt={null}
-          remaining={i.gross}
-          onClose={() => {
-            setReceipt(false);
-            onDone();
-          }}
-        />
+        <Link
+          to="/finance"
+          search={{ tab: "quarter" }}
+          className="inline-flex items-center rounded-lg border bg-surface px-3 py-2 text-sm font-semibold transition hover:bg-brand-soft"
+        >
+          راجعوا مقترح الاستلام واعتمدوه
+        </Link>
       )}
       {i.entriesWithoutStatus > 0 && (
         <Button

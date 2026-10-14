@@ -45,7 +45,15 @@ export type Entry = {
 export type BudgetItem = { id: string; name: string; amount: number; note: string; sort: number };
 export type Category = { id: string; label: string; type: "expense" | "income" | "both" };
 /** Money received from the client (halalas; negative = refund). */
-export type Receipt = { id: string; date: string; amount: number; note: string };
+export type Receipt = {
+  id: string;
+  date: string;
+  amount: number;
+  note: string;
+  basis: string;
+  approvedBy: string;
+  approvedAt: number | null;
+};
 export type Finance = {
   ctrl: Ctrl;
   entries: Entry[];
@@ -80,7 +88,7 @@ export const financeApi = (projectId: string) => ({
     send("PATCH", `${base(projectId)}/entries/${id}`, e),
   markUnsetStatus: (status: "paid" | "pending") =>
     send("POST", `${base(projectId)}/entries/bulk-status`, { status }),
-  addReceipt: (r: { date: string; amount: number; note?: string }) =>
+  addReceipt: (r: { date: string; amount: number; note?: string; basis?: string }) =>
     send("POST", `${base(projectId)}/receipts`, r),
   updateReceipt: (id: string, r: { date: string; amount: number; note?: string }) =>
     send("PATCH", `${base(projectId)}/receipts/${id}`, r),

@@ -330,6 +330,10 @@ export const financeApp = new Hono<Env>()
       date: v.date,
       amount: Math.sign(v.amount) * fromRiyals(Math.abs(v.amount)),
       note: v.note,
+      basis: v.basis,
+      // Saving a receipt is the verification: who approved it, and when, stays with it.
+      approvedBy: me.id,
+      approvedAt: nowSec(),
       createdBy: me.id,
       updatedBy: me.id,
     });
