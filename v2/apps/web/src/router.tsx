@@ -26,6 +26,7 @@ import { ProjectFinanceReport } from "./features/finance/ProjectFinanceReport";
 import { FinancePage } from "./features/finance-overview/FinancePage";
 import { ReportPage } from "./features/finance-overview/ReportPage";
 import { VatReportPage } from "./features/finance-overview/VatReportPage";
+import { NotificationBell } from "./features/home/NotificationBell";
 import { ImportPage } from "./features/import/ImportPage";
 import { ComingSoon } from "./features/more/ComingSoon";
 import { MoreHeader } from "./features/more/MoreHeader";
@@ -90,22 +91,25 @@ function Shell() {
             <Logo className="hidden h-11 w-auto sm:block" />
             <Logo variant="icon" className="h-9 w-auto sm:hidden" />
           </Link>
-          <div className="hidden items-center gap-3 text-sm lg:flex">
-            <ThemeToggle />
-            <Link
-              to="/settings/account"
-              className="text-muted hover:text-ink"
-              activeProps={{ className: "font-semibold text-ink" }}
-            >
-              {me.data.name || me.data.email}
-            </Link>
-            <button
-              type="button"
-              onClick={logout}
-              className="rounded-lg border px-3 py-1.5 text-muted transition hover:text-ink"
-            >
-              خروج
-            </button>
+          <div className="flex items-center gap-2">
+            <NotificationBell />
+            <div className="hidden items-center gap-3 text-sm lg:flex">
+              <ThemeToggle />
+              <Link
+                to="/settings/account"
+                className="text-muted hover:text-ink"
+                activeProps={{ className: "font-semibold text-ink" }}
+              >
+                {me.data.name || me.data.email}
+              </Link>
+              <button
+                type="button"
+                onClick={logout}
+                className="rounded-lg border px-3 py-1.5 text-muted transition hover:text-ink"
+              >
+                خروج
+              </button>
+            </div>
           </div>
         </div>
       </header>

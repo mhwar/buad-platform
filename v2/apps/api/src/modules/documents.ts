@@ -25,6 +25,7 @@ import { requireAuth, requirePerm, type Vars } from "../auth/middleware";
 import type { AuthUser, Db } from "../auth/service";
 import { likeTerm, logoUrlSql, newId, nextCounter, nowSec } from "./common";
 import { loadFinance } from "./finance";
+import { notify, usersWithPerm } from "./notifications";
 import { loadOrgProfile } from "./org";
 import { loadVisible, visibleProjects } from "./projects";
 
@@ -424,6 +425,18 @@ export const documentsApp = new Hono<Env>()
       .returning({ v: documents.version });
     if (!upd.length) return c.json({ ok: false, error: "stale" }, 409);
     const [fresh] = await db.select().from(documents).where(eq(documents.id, doc.id)).limit(1);
+    if (to === "review")
+      await notify(
+        db,
+        me.orgId,
+        (await usersWithPerm(db, me.orgId, "documents.edit", me.id)).map((u) => u.id),
+        {
+          kind: "approval",
+          title: `طلب اعتماد: ${doc.title || doc.number}`,
+          link: `/projects/${doc.projectId}/documents/${doc.id}`,
+          dedupeKey: `review:${doc.id}:${doc.version}`,
+        },
+      );
     return c.json({ ok: true, ...(await view(db, me, fresh!, found.project)) });
   })
 

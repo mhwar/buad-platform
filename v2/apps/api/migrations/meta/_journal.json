@@ -113,6 +113,13 @@
       "when": 1792019507442,
       "tag": "0015_lean_lyja",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "6",
+      "when": 1792020133317,
+      "tag": "0016_wise_iron_monger",
+      "breakpoints": true
     }
   ]
 }
