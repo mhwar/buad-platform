@@ -8,6 +8,7 @@ import {
   productRequests,
   products,
   projects,
+  tasks,
   users,
 } from "@buad/schema/db";
 import { and, eq, isNull, lt, ne, sql } from "drizzle-orm";
@@ -119,6 +120,29 @@ export const attentionApp = new Hono<{ Variables: Vars }>().use(requireAuth).get
       title: "حركات مالية معلّقة تنتظر السداد",
       count: n,
       link: "/finance",
+    });
+  }
+  if (can("tasks.view")) {
+    const n = await count(
+      db
+        .select({ n: sql<number>`count(*)` })
+        .from(tasks)
+        .where(
+          and(
+            eq(tasks.orgId, me.orgId),
+            eq(tasks.assigneeId, me.id),
+            ne(tasks.status, "done"),
+            ne(tasks.dueDate, ""),
+            lt(tasks.dueDate, today),
+          ),
+        ),
+    );
+    add({
+      key: "tasks",
+      tone: "warn",
+      title: "مهام مسندة إليك تجاوزت موعدها",
+      count: n,
+      link: "/more/tasks?mine=1",
     });
   }
   if (can("plans.view")) {

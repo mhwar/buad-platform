@@ -902,3 +902,82 @@ export const notifications = sqliteTable(
     uniqueIndex("uq_notif_dedupe").on(t.userId, t.dedupeKey).where(sql`dedupe_key <> ''`),
   ],
 );
+
+/** A unit of work: on a project, for a plan initiative, or the company's own. */
+export const tasks = sqliteTable(
+  "tasks",
+  {
+    id: text("id").primaryKey(),
+    orgId: text("org_id")
+      .notNull()
+      .references(() => orgs.id),
+    projectId: text("project_id").notNull().default(""),
+    stageId: text("stage_id").notNull().default(""),
+    initiativeId: text("initiative_id").notNull().default(""),
+    title: text("title").notNull(),
+    description: text("description").notNull().default(""),
+    assigneeId: text("assignee_id").notNull().default(""),
+    status: text("status", { enum: ["todo", "doing", "blocked", "done"] })
+      .notNull()
+      .default("todo"),
+    priority: text("priority", { enum: ["low", "normal", "high"] })
+      .notNull()
+      .default("normal"),
+    startDate: text("start_date").notNull().default(""),
+    dueDate: text("due_date").notNull().default(""),
+    doneAt: integer("done_at").notNull().default(0),
+    createdBy: text("created_by").notNull().default(""),
+    createdAt: integer("created_at").notNull().default(now),
+    updatedAt: integer("updated_at").notNull().default(now),
+  },
+  (t) => [
+    index("idx_tasks_org").on(t.orgId, t.status),
+    index("idx_tasks_project").on(t.projectId),
+    index("idx_tasks_assignee").on(t.assigneeId, t.status),
+  ],
+);
+
+/** The phases of a project's delivery, optionally copied from the linked service's workflow. */
+export const projectStages = sqliteTable(
+  "project_stages",
+  {
+    id: text("id").primaryKey(),
+    orgId: text("org_id")
+      .notNull()
+      .references(() => orgs.id),
+    projectId: text("project_id")
+      .notNull()
+      .references(() => projects.id, { onDelete: "cascade" }),
+    title: text("title").notNull(),
+    status: text("status", { enum: ["todo", "doing", "done"] })
+      .notNull()
+      .default("todo"),
+    dueDate: text("due_date").notNull().default(""),
+    sort: integer("sort").notNull().default(0),
+    source: text("source", { enum: ["manual", "product"] })
+      .notNull()
+      .default("manual"),
+  },
+  (t) => [index("idx_stages_project").on(t.projectId, t.sort)],
+);
+
+/** Hours spent, for the real cost of time on a project. Shown, never added to the project's finance. */
+export const timeEntries = sqliteTable(
+  "time_entries",
+  {
+    id: text("id").primaryKey(),
+    orgId: text("org_id")
+      .notNull()
+      .references(() => orgs.id),
+    taskId: text("task_id")
+      .notNull()
+      .references(() => tasks.id, { onDelete: "cascade" }),
+    projectId: text("project_id").notNull().default(""),
+    userId: text("user_id").notNull(),
+    date: text("date").notNull(),
+    minutes: integer("minutes").notNull(),
+    note: text("note").notNull().default(""),
+    createdAt: integer("created_at").notNull().default(now),
+  },
+  (t) => [index("idx_time_task").on(t.taskId), index("idx_time_project").on(t.projectId)],
+);

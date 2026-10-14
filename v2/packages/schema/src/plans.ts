@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { patchOf } from "./patch";
 
 const date = z.union([z.literal(""), z.string().regex(/^\d{4}-\d{2}-\d{2}$/)]);
 const text = (max: number) => z.string().trim().max(max);
@@ -26,7 +27,7 @@ export const cyclePatch = z
   .partial()
   .required({ version: true });
 
-export const objectiveInput = z.object({
+const objectiveShape = {
   cycleId: z.string().max(60),
   parentId: z.string().max(60).default(""),
   title: text(200).min(1),
@@ -36,10 +37,12 @@ export const objectiveInput = z.object({
   weight: z.number().int().min(1).max(10).default(1),
   /** Riyals. */
   budget: z.number().min(0).max(1_000_000_000).default(0),
-});
-export const objectivePatch = objectiveInput.omit({ cycleId: true }).partial();
+};
+export const objectiveInput = z.object(objectiveShape);
+const { cycleId: _cycle, ...objectivePatchShape } = objectiveShape;
+export const objectivePatch = patchOf(objectivePatchShape);
 
-export const indicatorInput = z.object({
+const indicatorShape = {
   name: text(160).min(1),
   unit: text(30).default(""),
   baseline: z.number().default(0),
@@ -51,10 +54,11 @@ export const indicatorInput = z.object({
     .regex(/^(manual|platform:[a-z_]+)$/)
     .default("manual"),
   direction: z.enum(["up", "down"]).default("up"),
-});
-export const indicatorPatch = indicatorInput.partial();
+};
+export const indicatorInput = z.object(indicatorShape);
+export const indicatorPatch = patchOf(indicatorShape);
 
-export const initiativeInput = z.object({
+const initiativeShape = {
   title: text(200).min(1),
   ownerId: z.string().max(60).default(""),
   startDate: date.default(""),
@@ -63,8 +67,9 @@ export const initiativeInput = z.object({
   status: z.enum(["todo", "doing", "blocked", "done"]).default("todo"),
   projectId: z.string().max(60).default(""),
   productId: z.string().max(60).default(""),
-});
-export const initiativePatch = initiativeInput.partial();
+};
+export const initiativeInput = z.object(initiativeShape);
+export const initiativePatch = patchOf(initiativeShape);
 
 export const reviewInput = z.object({
   quarter: z.number().int().min(0).max(4).default(0),

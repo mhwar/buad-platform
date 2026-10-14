@@ -42,6 +42,7 @@ import { ProjectsPage } from "./features/projects/ProjectsPage";
 import { SettingsLayout } from "./features/settings/SettingsLayout";
 import { ProductPublicPage } from "./features/site/ProductPublicPage";
 import { SitePage } from "./features/site/SitePage";
+import { TasksPage } from "./features/tasks/TasksPage";
 import { ActivityPage } from "./features/team/ActivityPage";
 import { TeamPage } from "./features/team/TeamPage";
 import { WebsiteEditorPage } from "./features/website/WebsiteEditor";
@@ -457,6 +458,13 @@ const plansRoute = createRoute({
   beforeLoad: needs("plans.view"),
   component: PlansPage,
 });
+const tasksRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/more/tasks",
+  validateSearch: z.object({ mine: z.string().optional() }),
+  beforeLoad: needs("tasks.view"),
+  component: TasksPage,
+});
 const moreSoonRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/more/soon/$key",
@@ -503,6 +511,7 @@ export const router = createRouter({
     moreRoute,
     moreSoonRoute,
     plansRoute,
+    tasksRoute,
     teamRoute,
     activityRoute,
     legacyTeamRoute,

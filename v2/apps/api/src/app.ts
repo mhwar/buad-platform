@@ -36,6 +36,7 @@ import { documentSharesApp, publicShareApp } from "./modules/share";
 import { siteApp } from "./modules/site";
 import { siteMeta } from "./modules/site-meta";
 import { publicSiteApp } from "./modules/site-public";
+import { tasksApp } from "./modules/tasks";
 import { teamApp } from "./modules/team";
 import { vatApp } from "./modules/vat";
 
@@ -177,6 +178,7 @@ export function createApp(deps: AppDeps = {}) {
 
       .route("/api/attention", attentionApp)
       .route("/api/notifications", notificationsApp)
+      .route("/api/tasks", tasksApp)
       .route("/api/plans", plansApp)
       .route("/api/team", teamApp)
       .route("/api/audit", auditApp)
