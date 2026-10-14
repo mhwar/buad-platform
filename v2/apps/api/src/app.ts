@@ -26,6 +26,7 @@ import { financeOverviewApp } from "./modules/finance-overview";
 import { importApp } from "./modules/importer";
 import { orgApp } from "./modules/org";
 import { type BrowserBinding, pdfApp } from "./modules/pdf";
+import { plansApp } from "./modules/plans";
 import { productsApp } from "./modules/products";
 import { projectsApp } from "./modules/projects";
 import { requestsApp } from "./modules/requests";
@@ -172,6 +173,7 @@ export function createApp(deps: AppDeps = {}) {
         return c.json({ ok: true, users: rows });
       })
 
+      .route("/api/plans", plansApp)
       .route("/api/team", teamApp)
       .route("/api/audit", auditApp)
       .route("/api/clients", clientsApp)
