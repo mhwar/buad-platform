@@ -43,6 +43,7 @@ export function EntryDialog({
   fin,
   existing,
   startTab = "new",
+  projectName,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
@@ -50,6 +51,8 @@ export function EntryDialog({
   fin: Finance;
   existing?: Entry;
   startTab?: "new" | "agreement";
+  /** Shown in the title when the dialog is opened away from the project (e.g. from a client card). */
+  projectName?: string;
 }) {
   const qc = useQueryClient();
   const api = financeApi(projectId);
@@ -145,7 +148,9 @@ export function EntryDialog({
     <Dialog
       open={open}
       onOpenChange={close}
-      title={existing ? "تعديل القيد" : "إضافة قيد مالي"}
+      title={
+        (existing ? "تعديل القيد" : "إضافة قيد مالي") + (projectName ? ` · ${projectName}` : "")
+      }
       wide
     >
       {!existing && (

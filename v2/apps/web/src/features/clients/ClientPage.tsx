@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getRouteApi, Link, useNavigate } from "@tanstack/react-router";
-import { Pencil, Plus } from "lucide-react";
+import { FileSpreadsheet, Pencil, Plus, ReceiptText } from "lucide-react";
 import { useState } from "react";
 import {
   Avatar,
@@ -10,6 +10,7 @@ import {
   EmptyState,
   Info,
   Menu,
+  type MenuItem,
   Notice,
   Tabs,
 } from "../../components/ui";
@@ -25,6 +26,7 @@ import {
 import { projectKeys } from "../projects/api";
 import { ProjectDialog } from "../projects/ProjectDialog";
 import { archiveClient, clientKeys, clientQuery, deleteClient } from "./api";
+import { AddEntry } from "./ClientActions";
 import { ClientDialog } from "./ClientDialog";
 
 const route = getRouteApi("/clients/$id");
@@ -39,6 +41,7 @@ export function ClientPage() {
   const q = useQuery(clientQuery(id));
   const [editing, setEditing] = useState(false);
   const [addingProject, setAddingProject] = useState(false);
+  const [addingEntry, setAddingEntry] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   if (q.isPending) return <p className="text-muted">جارٍ التحميل…</p>;
@@ -85,7 +88,18 @@ export function ClientPage() {
     }
   };
 
-  const menu = [
+  const menu: MenuItem[] = [
+    ...(manager && !client.archivedAt && live.length > 0
+      ? [
+          {
+            label: "إضافة قيد مالي",
+            hint: "لأحد مشاريع العميل",
+            icon: <ReceiptText />,
+            onSelect: () => setAddingEntry(true),
+          },
+          "separator" as const,
+        ]
+      : []),
     ...(manager
       ? [
           client.archivedAt
@@ -147,7 +161,7 @@ export function ClientPage() {
             {client.city && <span>{client.city}</span>}
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Button variant="secondary" onClick={() => setEditing(true)}>
             <Pencil className="size-4" /> تعديل
           </Button>
@@ -156,6 +170,13 @@ export function ClientPage() {
               <Plus className="size-4" /> مشروع جديد
             </Button>
           )}
+          <Link
+            to="/clients/$id/statement"
+            params={{ id: client.id }}
+            className="inline-flex items-center gap-2 rounded-lg border bg-surface px-3.5 py-2 text-sm font-semibold transition hover:bg-brand-soft"
+          >
+            <FileSpreadsheet className="size-4" /> كشف حساب
+          </Link>
           <Menu items={menu} />
         </div>
       </Card>
@@ -308,6 +329,13 @@ export function ClientPage() {
 
       <ClientDialog open={editing} onOpenChange={setEditing} existing={q.data} />
       <ProjectDialog open={addingProject} onOpenChange={setAddingProject} clientId={client.id} />
+      {addingEntry && (
+        <AddEntry
+          clientId={client.id}
+          clientName={client.name}
+          onClose={() => setAddingEntry(false)}
+        />
+      )}
     </>
   );
 }

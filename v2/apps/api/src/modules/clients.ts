@@ -8,10 +8,29 @@ import type { z } from "zod";
 import { requireAuth, requireRole, type Vars } from "../auth/middleware";
 import type { Db } from "../auth/service";
 import { contractTotalSql, likeTerm, logoUrlSql, newId, nextCounter, nowSec } from "./common";
+import { loadFinance } from "./finance";
+import { loadOrgProfile } from "./org";
 import { visibleProjects } from "./projects";
 
 type Env = { Bindings: { JWT_SECRET: string }; Variables: Vars };
 type Input = z.output<typeof clientInput>;
+const r2 = (n: number) => Math.round(n * 100) / 100;
+type StatementLine = {
+  id: string;
+  number: string;
+  name: string;
+  status: string;
+  startDate: string;
+  endDate: string;
+  hasFinance: boolean;
+  contractNo: string;
+  contractNet: number;
+  vat: number;
+  gross: number;
+  spent: number;
+  income: number;
+  remaining: number;
+};
 
 /** CR / VAT numbers must be unique in the org (archived clients included). */
 async function findHardDuplicate(
@@ -116,6 +135,13 @@ export const clientsApp = new Hono<Env>()
     const vis = visibleProjects(me);
     const projectCount = sql<number>`(SELECT count(*) FROM projects p WHERE p.client_id = "clients"."id" AND p.archived_at IS NULL AND ${vis.sqlFor("p")})`;
     const projectValue = sql<number>`(SELECT coalesce(sum(${contractTotalSql("p")}), 0) FROM projects p WHERE p.client_id = "clients"."id" AND p.archived_at IS NULL AND ${vis.sqlFor("p")})`;
+    const liveVisible = sql`p.client_id = "clients"."id" AND p.archived_at IS NULL AND ${vis.sqlFor("p")}`;
+    // Up to three most recently touched projects, for the card.
+    const recentProjects = sql<string>`(SELECT coalesce(json_group_array(json_object('id', x.id, 'name', x.name)), '[]') FROM (SELECT p.id, p.name FROM projects p WHERE ${liveVisible} ORDER BY p.updated_at DESC LIMIT 3) x)`;
+    const documentsCount = sql<number>`(SELECT count(*) FROM documents d JOIN projects p ON p.id = d.project_id WHERE ${liveVisible})`;
+    const lastActivity = sql<
+      number | null
+    >`(SELECT max(p.updated_at) FROM projects p WHERE ${liveVisible})`;
 
     const order =
       q.sort === "name"
@@ -138,6 +164,10 @@ export const clientsApp = new Hono<Env>()
         archivedAt: clients.archivedAt,
         projectCount,
         projectValue,
+        recentProjects,
+        documentsCount,
+        lastActivity,
+        updatedAt: clients.updatedAt,
       })
       .from(clients)
       .where(and(base, typeFilter))
@@ -155,6 +185,9 @@ export const clientsApp = new Hono<Env>()
         ...i,
         projectCount: Number(i.projectCount),
         projectValue: Number(i.projectValue),
+        recentProjects: JSON.parse(i.recentProjects || "[]") as { id: string; name: string }[],
+        documentsCount: Number(i.documentsCount),
+        lastActivity: Math.max(Number(i.lastActivity ?? 0), i.updatedAt ?? 0) || null,
       })),
       counts: Object.fromEntries(byType.map((r) => [r.type, r.n])) as Record<string, number>,
     });
@@ -262,6 +295,75 @@ export const clientsApp = new Hono<Env>()
       .where(and(eq(projects.orgId, me.orgId), eq(projects.clientId, client.id), vis.where))
       .orderBy(desc(projects.createdAt));
     return c.json({ ok: true, client, contacts, projects: rows });
+  })
+
+  // Statement of account (amounts in riyals, to the halala): every visible project of the client with its contract and spending position.
+  .get("/:id/statement", async (c) => {
+    const db = c.get("db");
+    const me = c.get("user");
+    const client = await loadClient(db, me.orgId, c.req.param("id"));
+    if (!client) return c.json({ ok: false, error: "not_found" }, 404);
+    const rows = await db
+      .select()
+      .from(projects)
+      .where(
+        and(
+          eq(projects.orgId, me.orgId),
+          eq(projects.clientId, client.id),
+          isNull(projects.archivedAt),
+          visibleProjects(me).where,
+        ),
+      )
+      .orderBy(asc(projects.createdAt));
+    const items: StatementLine[] = [];
+    for (const p of rows) {
+      const fin = await loadFinance(db, p);
+      const s = fin.summary;
+      items.push({
+        id: p.id,
+        number: p.number,
+        name: p.name,
+        status: p.status,
+        startDate: p.startDate,
+        endDate: p.endDate,
+        hasFinance: fin.ctrl.version > 0 || fin.entries.length > 0,
+        contractNo: fin.ctrl.contractNo,
+        contractNet: r2(s.contractNet),
+        vat: r2(s.vatAmt),
+        gross: r2(s.grossTotal),
+        spent: r2(s.totalSpent),
+        income: r2(s.totalIncome),
+        remaining: r2(s.remainingFromGross),
+      });
+    }
+    const sum = (k: "contractNet" | "vat" | "gross" | "spent" | "income" | "remaining") =>
+      r2(items.reduce((a, i) => a + i[k], 0));
+    const org = await loadOrgProfile(db, me.orgId);
+    return c.json({
+      ok: true,
+      client: {
+        id: client.id,
+        code: client.code,
+        name: client.name,
+        regNo: client.regNo,
+        taxNo: client.taxNo,
+        address: client.address,
+        city: client.city,
+        phone: client.phone,
+        email: client.email,
+      },
+      org: { name: org.name, reg: org.reg, tax: org.tax, urls: org.urls },
+      items,
+      totals: {
+        contractNet: sum("contractNet"),
+        vat: sum("vat"),
+        gross: sum("gross"),
+        spent: sum("spent"),
+        income: sum("income"),
+        remaining: sum("remaining"),
+      },
+      generatedAt: nowSec(),
+    });
   })
 
   .patch("/:id", zValidator("json", clientPatch), async (c) => {

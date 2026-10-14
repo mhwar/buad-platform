@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { getRouteApi, Link } from "@tanstack/react-router";
-import { FileUp, Plus } from "lucide-react";
+import { FileUp, Mail, MapPin, MessageCircle, Phone, Plus } from "lucide-react";
 import { useDeferredValue, useState } from "react";
 import {
   Avatar,
@@ -8,16 +8,18 @@ import {
   Button,
   Card,
   EmptyState,
+  Menu,
   PageHeader,
   Pills,
   SearchBox,
   Select,
   ViewToggle,
 } from "../../components/ui";
-import { money } from "../../lib/format";
+import { ago, money, moneyShort, whatsapp } from "../../lib/format";
 import { meQuery } from "../../session";
 import { CLIENT_TYPE_LABELS, label } from "../labels";
 import { type ClientListItem, type ClientType, clientsQuery } from "./api";
+import { useClientActions } from "./ClientActions";
 import { ClientDialog } from "./ClientDialog";
 
 const route = getRouteApi("/clients");
@@ -32,7 +34,9 @@ export function ClientsPage() {
     clientsQuery({ q, type: s.type, sort: s.sort, archived: s.archived ? "1" : "0" }),
   );
   const [adding, setAdding] = useState(false);
-  const owner = useQuery(meQuery).data?.role === "owner";
+  const role = useQuery(meQuery).data?.role;
+  const owner = role === "owner";
+  const manager = owner || role === "admin";
   const importLink = owner && (
     <Link
       to="/settings/import"
@@ -129,7 +133,7 @@ export function ClientsPage() {
       ) : (s.view ?? "grid") === "grid" ? (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {items.map((c) => (
-            <ClientCard key={c.id} c={c} />
+            <ClientCard key={c.id} c={c} manager={manager} />
           ))}
         </div>
       ) : (
@@ -140,29 +144,111 @@ export function ClientsPage() {
   );
 }
 
-function ClientCard({ c }: { c: ClientListItem }) {
+function ClientCard({ c, manager }: { c: ClientListItem; manager: boolean }) {
+  const { items, dialogs } = useClientActions({
+    id: c.id,
+    name: c.name,
+    archived: !!c.archivedAt,
+    manager,
+    hasProjects: c.projectCount > 0,
+  });
+  const wa = whatsapp(c.phone);
+  const chip =
+    "relative z-10 inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs text-muted transition hover:border-brand hover:text-brand";
   return (
-    <Link to="/clients/$id" params={{ id: c.id }} className="group block">
-      <Card className="h-full transition group-hover:border-brand group-hover:shadow-md">
-        <div className="flex items-start gap-3">
-          <Avatar name={c.name} logo={c.logoUrl} />
-          <div className="min-w-0 flex-1">
-            <p className="truncate font-semibold">{c.name}</p>
-            <p className="text-xs text-muted" dir="ltr">
-              {c.code}
-            </p>
-          </div>
-          <Badge>{label(CLIENT_TYPE_LABELS, c.type)}</Badge>
+    <Card className="group relative flex h-full flex-col gap-4 transition hover:border-brand hover:shadow-md">
+      <div className="flex items-start gap-3">
+        <Avatar name={c.name} logo={c.logoUrl} />
+        <div className="min-w-0 flex-1">
+          {/* The whole card opens the client; actions sit above this link. */}
+          <Link
+            to="/clients/$id"
+            params={{ id: c.id }}
+            className="block truncate font-semibold after:absolute after:inset-0 after:rounded-2xl group-hover:text-brand"
+          >
+            {c.name}
+          </Link>
+          <p className="mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-muted">
+            <span dir="ltr">{c.code}</span>
+            <Badge>{label(CLIENT_TYPE_LABELS, c.type)}</Badge>
+          </p>
         </div>
-        <div className="mt-4 flex items-center justify-between border-t pt-3 text-sm">
-          <span className="text-muted">{c.city || "—"}</span>
-          <span>
-            {c.projectCount} {c.projectCount === 1 ? "مشروع" : "مشاريع"}
-            {c.projectValue > 0 && <span className="text-muted"> · {money(c.projectValue)}</span>}
-          </span>
+        <div className="relative z-10">
+          <Menu items={items} label={`إجراءات ${c.name}`} />
         </div>
-      </Card>
-    </Link>
+      </div>
+
+      {(c.city || c.phone || c.email) && (
+        <div className="flex flex-wrap items-center gap-1.5">
+          {c.city && (
+            <span className="inline-flex items-center gap-1 text-xs text-muted">
+              <MapPin className="size-3.5" />
+              {c.city}
+            </span>
+          )}
+          {c.phone && (
+            <a href={`tel:${c.phone}`} className={chip} aria-label={`اتصال ${c.phone}`}>
+              <Phone className="size-3.5" /> <span dir="ltr">{c.phone}</span>
+            </a>
+          )}
+          {wa && (
+            <a
+              href={`https://wa.me/${wa}`}
+              target="_blank"
+              rel="noreferrer noopener"
+              className={chip}
+              aria-label="واتساب"
+            >
+              <MessageCircle className="size-3.5" /> واتساب
+            </a>
+          )}
+          {c.email && (
+            <a href={`mailto:${c.email}`} className={chip} aria-label={`بريد ${c.email}`}>
+              <Mail className="size-3.5" /> بريد
+            </a>
+          )}
+        </div>
+      )}
+
+      {c.recentProjects.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {c.recentProjects.map((p) => (
+            <Link
+              key={p.id}
+              to="/projects/$id"
+              params={{ id: p.id }}
+              className="relative z-10 max-w-full truncate rounded-md bg-brand-soft px-2 py-0.5 text-xs text-brand hover:underline"
+            >
+              {p.name}
+            </Link>
+          ))}
+          {c.projectCount > c.recentProjects.length && (
+            <span className="px-1 text-xs text-muted">
+              +{c.projectCount - c.recentProjects.length}
+            </span>
+          )}
+        </div>
+      )}
+
+      <dl className="mt-auto grid grid-cols-3 gap-2 border-t pt-3 text-center">
+        <Stat label="المشاريع" value={String(c.projectCount)} />
+        <Stat label="قيمة العقود" value={c.projectValue > 0 ? moneyShort(c.projectValue) : "—"} />
+        <Stat label="المستندات" value={String(c.documentsCount)} />
+      </dl>
+      {c.lastActivity && (
+        <p className="-mt-2 text-center text-[11px] text-muted">آخر نشاط {ago(c.lastActivity)}</p>
+      )}
+      {dialogs}
+    </Card>
+  );
+}
+
+function Stat({ label: l, value }: { label: string; value: string }) {
+  return (
+    <div className="min-w-0">
+      <dt className="text-[11px] text-muted">{l}</dt>
+      <dd className="truncate text-sm font-semibold">{value}</dd>
+    </div>
   );
 }
 
