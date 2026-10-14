@@ -47,6 +47,12 @@ describe("siteHealth", () => {
     );
   });
 
+  it("flags fonts that did not load, but not while checking", () => {
+    expect(by(DEFAULT_SITE, { ...ctx, fonts: null }).fonts?.ok).toBe(true);
+    expect(by(DEFAULT_SITE, { ...ctx, fonts: { serif: true, sans: true } }).fonts?.ok).toBe(true);
+    expect(by(DEFAULT_SITE, { ...ctx, fonts: { serif: false, sans: true } }).fonts?.ok).toBe(false);
+  });
+
   it("search snippet lengths", () => {
     const c = { ...DEFAULT_SITE, seo: { title: "قصير", description: "قصير" } };
     expect(by(c)["seo-title"]?.ok).toBe(false);

@@ -318,7 +318,10 @@ const vatReportRoute = createRoute({
 const siteRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/site",
-  validateSearch: z.object({ preview: z.coerce.boolean().optional() }),
+  validateSearch: z.object({
+    preview: z.coerce.boolean().optional(),
+    fonts: z.coerce.boolean().optional(),
+  }),
   component: SitePage,
 });
 const siteProductRoute = createRoute({
