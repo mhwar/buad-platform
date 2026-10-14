@@ -521,3 +521,39 @@ export const distributionShares = sqliteTable(
   },
   (t) => [index("idx_distribution_shares").on(t.distributionId)],
 );
+
+/** Money received from the client for a project (instalments; a negative amount is a refund). */
+export const projectReceipts = sqliteTable(
+  "project_receipts",
+  {
+    id: text("id").primaryKey(),
+    orgId: text("org_id")
+      .notNull()
+      .references(() => orgs.id),
+    projectId: text("project_id")
+      .notNull()
+      .references(() => projects.id),
+    date: text("date").notNull(),
+    amount: integer("amount_halalas").notNull(),
+    note: text("note").notNull().default(""),
+    ...audit,
+  },
+  (t) => [index("idx_receipts_project").on(t.projectId, t.date)],
+);
+
+/** How much of each project's profit a completed distribution paid out (never twice). */
+export const distributionProjects = sqliteTable(
+  "distribution_projects",
+  {
+    id: text("id").primaryKey(),
+    distributionId: text("distribution_id")
+      .notNull()
+      .references(() => distributions.id),
+    projectId: text("project_id").notNull(),
+    amount: integer("amount_halalas").notNull(),
+  },
+  (t) => [
+    index("idx_distribution_projects_d").on(t.distributionId),
+    index("idx_distribution_projects_p").on(t.projectId),
+  ],
+);

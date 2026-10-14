@@ -58,7 +58,8 @@ describe("company finance (v1 «مالية المنصة»)", () => {
     ];
     expect(distributable(projects, entries, dists)).toMatchObject({
       distributed: 8500,
-      available: 7000,
+      retained: 1200,
+      available: 5800, // retained parts are never distributed again
     });
     expect(retainedTotals(dists)).toEqual({ ops: 0, dev: 1000, reserve: 200, total: 1200 });
   });

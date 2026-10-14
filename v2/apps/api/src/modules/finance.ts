@@ -1,10 +1,12 @@
 import { fromRiyals, type StoredFinance, summarize } from "@buad/domain";
 import { BUILTIN_CATEGORIES } from "@buad/schema/clients";
+import { receiptInput } from "@buad/schema/company";
 import {
   financeBudgetItems,
   financeCategories,
   financeEntries,
   projectFinance,
+  projectReceipts,
 } from "@buad/schema/db";
 import {
   AGREEMENT_ITEMS,
@@ -59,6 +61,11 @@ export async function loadFinance(db: Db, project: Pick<Project, "id" | "expecte
     .from(financeCategories)
     .where(eq(financeCategories.projectId, project.id))
     .orderBy(asc(financeCategories.label));
+  const receipts = await db
+    .select()
+    .from(projectReceipts)
+    .where(eq(projectReceipts.projectId, project.id))
+    .orderBy(asc(projectReceipts.date), asc(projectReceipts.createdAt));
   // No row yet: v1 defaults, contract value from the project's expected value. Nothing is written until a save.
   const ctrl = row
     ? { ...row, opCats: JSON.parse(row.opCats) as string[] }
@@ -98,6 +105,9 @@ export async function loadFinance(db: Db, project: Pick<Project, "id" | "expecte
     entries,
     budget,
     categories,
+    receipts,
+    /** Money received from the client so far (riyals). */
+    received: receipts.reduce((s, r) => s + r.amount, 0) / 100,
     summary: summarize(stored),
   };
 }
@@ -305,6 +315,62 @@ export const financeApp = new Hono<Env>()
         registered.push(item);
     }
     return c.json({ ok: true, registered, ...(await loadFinance(db, project)) });
+  })
+
+  // ── Money received from the client (instalments; negative = refund) ─────────
+  .post("/receipts", manager, zValidator("json", receiptInput), async (c) => {
+    const db = c.get("db");
+    const me = c.get("user");
+    const project = c.get("project");
+    const v = c.req.valid("json");
+    await db.insert(projectReceipts).values({
+      id: newId("rcp"),
+      orgId: me.orgId,
+      projectId: project.id,
+      date: v.date,
+      amount: Math.sign(v.amount) * fromRiyals(Math.abs(v.amount)),
+      note: v.note,
+      createdBy: me.id,
+      updatedBy: me.id,
+    });
+    return c.json({ ok: true, ...(await loadFinance(db, project)) }, 201);
+  })
+  .patch("/receipts/:receiptId", manager, zValidator("json", receiptInput), async (c) => {
+    const db = c.get("db");
+    const me = c.get("user");
+    const project = c.get("project");
+    const v = c.req.valid("json");
+    const upd = await db
+      .update(projectReceipts)
+      .set({
+        date: v.date,
+        amount: Math.sign(v.amount) * fromRiyals(Math.abs(v.amount)),
+        note: v.note,
+        updatedBy: me.id,
+        updatedAt: nowSec(),
+      })
+      .where(
+        and(
+          eq(projectReceipts.id, c.req.param("receiptId")),
+          eq(projectReceipts.projectId, project.id),
+        ),
+      )
+      .returning({ id: projectReceipts.id });
+    if (!upd.length) return c.json({ ok: false, error: "not_found" }, 404);
+    return c.json({ ok: true, ...(await loadFinance(db, project)) });
+  })
+  .delete("/receipts/:receiptId", manager, async (c) => {
+    const db = c.get("db");
+    const project = c.get("project");
+    await db
+      .delete(projectReceipts)
+      .where(
+        and(
+          eq(projectReceipts.id, c.req.param("receiptId")),
+          eq(projectReceipts.projectId, project.id),
+        ),
+      );
+    return c.json({ ok: true, ...(await loadFinance(db, project)) });
   })
 
   .post("/budget", manager, zValidator("json", budgetInput), async (c) => {

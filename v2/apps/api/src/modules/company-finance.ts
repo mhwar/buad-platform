@@ -7,6 +7,14 @@ import {
   fromRiyals,
   type ProjectProfitLite,
   periodLabel,
+  QUARTER_NAMES,
+  quarterDistributable,
+  quarterRange,
+  quarterView,
+  type RealizedProject,
+  type ReceiptLite,
+  realizedProfit,
+  receivedUpTo,
   retainedTotals,
   splitDistribution,
   splitShares,
@@ -15,9 +23,11 @@ import { companyEntryInput, distributionInput, partnerInput } from "@buad/schema
 import {
   clients,
   companyEntries,
+  distributionProjects,
   distributionShares,
   distributions,
   partners,
+  projectReceipts,
   projects,
 } from "@buad/schema/db";
 import { zValidator } from "@hono/zod-validator";
@@ -56,7 +66,8 @@ export async function projectFigures(db: Db, orgId: string) {
     .innerJoin(clients, eq(clients.id, projects.clientId))
     .where(and(eq(projects.orgId, orgId), isNull(projects.archivedAt)))
     .orderBy(asc(projects.number));
-  const out: (ProjectProfitLite & { number: string; name: string; clientName: string })[] = [];
+  const out: (ProjectProfitLite &
+    RealizedProject & { number: string; name: string; clientName: string })[] = [];
   for (const { p, clientName } of rows) {
     const fin = await loadFinance(db, p);
     out.push({
@@ -68,6 +79,10 @@ export async function projectFigures(db: Db, orgId: string) {
       profit: fin.summary.profit,
       remainingExec: fin.summary.remainingExec,
       date: projectDate(p, fin),
+      gross: fin.summary.grossTotal,
+      hasFinance: fin.ctrl.version > 0 || fin.entries.length > 0,
+      unregistered: fin.summary.missingItems.length > 0,
+      pendingExpenses: fin.summary.pendingExpenses,
     });
   }
   return out;
@@ -102,6 +117,50 @@ async function livePartners(db: Db, orgId: string) {
     .orderBy(desc(partners.sharePct), asc(partners.name));
 }
 
+async function orgReceipts(db: Db, orgId: string): Promise<ReceiptLite[]> {
+  const rows = await db
+    .select({
+      projectId: projectReceipts.projectId,
+      date: projectReceipts.date,
+      amount: projectReceipts.amount,
+    })
+    .from(projectReceipts)
+    .where(eq(projectReceipts.orgId, orgId));
+  return rows.map((r) => ({ ...r, amount: riyals(r.amount) }));
+}
+
+/** What completed distributions already paid out of each project (riyals). */
+async function distributedByProject(db: Db, orgId: string) {
+  const rows = await db
+    .select({ projectId: distributionProjects.projectId, amount: distributionProjects.amount })
+    .from(distributionProjects)
+    .innerJoin(distributions, eq(distributions.id, distributionProjects.distributionId))
+    .where(and(eq(distributions.orgId, orgId), eq(distributions.status, "completed")));
+  const out: Record<string, number> = {};
+  for (const r of rows) out[r.projectId] = (out[r.projectId] ?? 0) + riyals(r.amount);
+  return out;
+}
+
+/** The quarter centre: realized profit per project, the quarter's company result, warnings. */
+export async function quarterData(db: Db, orgId: string, year: number, q: number) {
+  const { from, to } = quarterRange(year, q);
+  const figs = await projectFigures(db, orgId);
+  const receipts = await orgReceipts(db, orgId);
+  const paid = await distributedByProject(db, orgId);
+  const view = quarterView(figs, receipts, paid, from, to);
+  const entries = (await liveEntries(db, orgId)).map(lite);
+  const company = companyCalc([], entries, from, to);
+  return {
+    year,
+    q,
+    from,
+    to,
+    label: `${QUARTER_NAMES[q]} ${year}`,
+    ...view,
+    company: { income: company.serviceIncome, expenses: company.companyExpenses },
+  };
+}
+
 /** The amounts a distribution would have now (also what is saved: the server decides). */
 async function computeDistribution(
   db: Db,
@@ -115,12 +174,34 @@ async function computeDistribution(
   let grossIncome: number;
   let grossExpenses: number;
   let label = input.label;
-  if (input.mode === "project") {
+  let perProject: { projectId: string; amount: number }[] = [];
+  let range = { from: input.from, to: input.to };
+  if (input.mode === "quarter") {
+    if (!input.year || !input.q) return null;
+    const qd = await quarterData(db, orgId, input.year, input.q);
+    const d = quarterDistributable(
+      qd.rows,
+      input.projectIds,
+      qd.company.income,
+      qd.company.expenses,
+    );
+    net = d.total;
+    grossIncome = d.projects + qd.company.income;
+    grossExpenses = qd.company.expenses - d.carried;
+    perProject = d.perProject;
+    label ||= qd.label;
+    range = { from: qd.from, to: qd.to };
+  } else if (input.mode === "project") {
+    // One project's realized profit that was not distributed yet (never twice).
     const p = figs.find((f) => f.id === input.projectId);
     if (!p) return null;
-    net = Math.max(0, p.profit);
+    const receipts = await orgReceipts(db, orgId);
+    const paid = (await distributedByProject(db, orgId))[p.id] ?? 0;
+    const realized = realizedProfit(p.profit, p.gross, receivedUpTo(receipts, p.id));
+    net = Math.max(0, realized - paid);
     grossIncome = net;
     grossExpenses = 0;
+    perProject = net > 0 ? [{ projectId: p.id, amount: net }] : [];
     label ||= `أرباح مشروع: ${p.name}`;
   } else {
     const d = distributable(figs, entries, dists.map(distLite));
@@ -134,8 +215,10 @@ async function computeDistribution(
   const people = await livePartners(db, orgId);
   return {
     label,
-    grossIncome: fromRiyals(grossIncome),
-    grossExpenses: fromRiyals(grossExpenses),
+    range,
+    perProject,
+    grossIncome: fromRiyals(Math.max(0, grossIncome)),
+    grossExpenses: fromRiyals(Math.max(0, grossExpenses)),
     netProfit: netH,
     distributed,
     retained,
@@ -222,6 +305,36 @@ export const companyFinanceApp = new Hono<Env>()
       partnersPct: ps.reduce((s, p) => s + p.sharePct, 0),
     });
   })
+
+  // ── «توزيع الربع»: realized profit of a quarter, per project ─────────────────
+  .get(
+    "/quarter",
+    zValidator(
+      "query",
+      z.object({
+        year: z.coerce.number().int().min(2000).max(2100),
+        q: z.coerce.number().int().min(1).max(4),
+      }),
+    ),
+    async (c) => {
+      const db = c.get("db");
+      const orgId = c.get("user").orgId;
+      const { year, q } = c.req.valid("query");
+      const d = await quarterData(db, orgId, year, q);
+      const dists = (
+        await db.select().from(distributions).where(eq(distributions.orgId, orgId))
+      ).map(distLite);
+      const ps = await livePartners(db, orgId);
+      return c.json({
+        ok: true,
+        ...d,
+        retained: retainedTotals(dists),
+        partnersPct: ps.reduce((s, p) => s + p.sharePct, 0),
+        // Chosen by default: projects with profit realized and not yet distributed.
+        defaultSelected: d.rows.filter((r) => r.available > 0).map((r) => r.id),
+      });
+    },
+  )
 
   // ── Company income and expenses ─────────────────────────────────────────
   .get(
@@ -399,10 +512,11 @@ export const companyFinanceApp = new Hono<Env>()
       await db.insert(distributions).values({
         id,
         orgId: me.orgId,
-        periodType: v.mode === "project" ? "project" : v.periodType,
+        periodType:
+          v.mode === "project" ? "project" : v.mode === "quarter" ? `q${v.q}` : v.periodType,
         periodLabel: r.label,
-        fromDate: v.from,
-        toDate: v.to,
+        fromDate: r.range.from,
+        toDate: r.range.to,
         grossIncome: r.grossIncome,
         grossExpenses: r.grossExpenses,
         netProfit: r.netProfit,
@@ -410,7 +524,9 @@ export const companyFinanceApp = new Hono<Env>()
         distributedAmount: r.distributed,
         retainedAmount: r.retained,
         retainedCategory: r.retained > 0 ? v.retainedCategory : null,
-        projectIds: JSON.stringify(v.mode === "project" ? [v.projectId] : v.projectIds),
+        projectIds: JSON.stringify(
+          v.mode === "project" ? [v.projectId] : r.perProject.map((x) => x.projectId),
+        ),
         projectId: v.mode === "project" ? v.projectId : "",
         status: v.status,
         note: v.note,
@@ -420,6 +536,16 @@ export const companyFinanceApp = new Hono<Env>()
         updatedBy: me.id,
         updatedAt: t,
       });
+      // What this distribution takes out of each project's realized profit.
+      if (r.perProject.length)
+        await db.insert(distributionProjects).values(
+          r.perProject.map((x) => ({
+            id: newId("dpr"),
+            distributionId: id,
+            projectId: x.projectId,
+            amount: Math.sign(x.amount) * fromRiyals(Math.abs(x.amount)),
+          })),
+        );
       if (r.shares.length)
         await db.insert(distributionShares).values(
           r.shares.map((s) => ({
@@ -434,11 +560,30 @@ export const companyFinanceApp = new Hono<Env>()
       return c.json({ ok: true, id }, 201);
     },
   )
-  // A draft is confirmed as it was prepared; completed ones are frozen.
+  // A draft is confirmed as it was prepared; completed ones are frozen. A draft whose
+  // projects were paid by another distribution meanwhile is refused (never pay twice).
   .post("/distributions/:id/complete", async (c) => {
     const me = c.get("user");
-    const upd = await c
-      .get("db")
+    const db = c.get("db");
+    const mine = await db
+      .select({ projectId: distributionProjects.projectId, amount: distributionProjects.amount })
+      .from(distributionProjects)
+      .where(eq(distributionProjects.distributionId, c.req.param("id")));
+    if (mine.length) {
+      const receipts = await orgReceipts(db, me.orgId);
+      const paid = await distributedByProject(db, me.orgId);
+      const figs = await projectFigures(db, me.orgId);
+      for (const m of mine) {
+        if (m.amount <= 0) continue;
+        const f = figs.find((x) => x.id === m.projectId);
+        const left = f
+          ? realizedProfit(f.profit, f.gross, receivedUpTo(receipts, f.id)) - (paid[f.id] ?? 0)
+          : 0;
+        if (riyals(m.amount) - left > 0.01)
+          return c.json({ ok: false, error: "stale_draft", projectId: m.projectId }, 409);
+      }
+    }
+    const upd = await db
       .update(distributions)
       .set({ status: "completed", completedAt: nowSec(), updatedBy: me.id, updatedAt: nowSec() })
       .where(
@@ -462,6 +607,7 @@ export const companyFinanceApp = new Hono<Env>()
     if (!d) return c.json({ ok: false, error: "not_found" }, 404);
     if (d.status !== "draft") return c.json({ ok: false, error: "completed_locked" }, 409);
     await db.delete(distributionShares).where(eq(distributionShares.distributionId, d.id));
+    await db.delete(distributionProjects).where(eq(distributionProjects.distributionId, d.id));
     await db.delete(distributions).where(eq(distributions.id, d.id));
     return c.json({ ok: true });
   });
