@@ -12,11 +12,12 @@ import { drizzle } from "drizzle-orm/d1";
 import { Hono } from "hono";
 import { deleteCookie, setCookie } from "hono/cookie";
 import { secureHeaders } from "hono/secure-headers";
-import { requireAuth, requireRole, type Vars } from "./auth/middleware";
+import { requireAuth, requirePerm, type Vars } from "./auth/middleware";
 import { type Db, getUser, login, setPassword } from "./auth/service";
 import { SESSION_COOKIE, SESSION_TTL, signSession, signSetup, verifySetup } from "./auth/session";
 import { claimOwner, ownerExists, setupEnabled, tokenMatches } from "./auth/setup";
 import { assetsApp, type FileStore } from "./modules/assets";
+import { auditApp, auditTrail } from "./modules/audit";
 import { clientsApp } from "./modules/clients";
 import { companyFinanceApp } from "./modules/company-finance";
 import { documentsApp, projectDocumentsApp } from "./modules/documents";
@@ -32,6 +33,7 @@ import { documentSharesApp, publicShareApp } from "./modules/share";
 import { siteApp } from "./modules/site";
 import { siteMeta } from "./modules/site-meta";
 import { publicSiteApp } from "./modules/site-public";
+import { teamApp } from "./modules/team";
 import { vatApp } from "./modules/vat";
 
 export type Env = {
@@ -68,6 +70,7 @@ export function createApp(deps: AppDeps = {}) {
         c.set("db", getDb(c.env));
         await next();
       })
+      .use("/api/*", auditTrail)
       // Public website pages: the SPA shell with link-preview tags from the published site.
       .get("/site", siteMeta)
       .get("/site/*", siteMeta)
@@ -149,7 +152,7 @@ export function createApp(deps: AppDeps = {}) {
       )
 
       // Admin-issued invite: the only way a pending user gets to choose a first password.
-      .post("/api/users/:id/invite", requireAuth, requireRole("owner", "admin"), async (c) => {
+      .post("/api/users/:id/invite", requireAuth, requirePerm("team.manage"), async (c) => {
         const target = await getUser(c.get("db"), c.req.param("id"));
         // Same 404 for "missing" and "other org" so ids in other orgs cannot be probed.
         if (!target || target.orgId !== c.get("user").orgId)
@@ -160,7 +163,7 @@ export function createApp(deps: AppDeps = {}) {
       .get("/api/me", requireAuth, (c) => c.json({ ok: true, user: publicUser(c.get("user")) }))
 
       // Every query below is scoped by the caller's org — the pattern all future routes follow.
-      .get("/api/users", requireAuth, requireRole("owner", "admin"), async (c) => {
+      .get("/api/users", requireAuth, requirePerm("team.view"), async (c) => {
         const rows = await c
           .get("db")
           .select({ id: users.id, email: users.email, name: users.name, role: users.role })
@@ -169,6 +172,8 @@ export function createApp(deps: AppDeps = {}) {
         return c.json({ ok: true, users: rows });
       })
 
+      .route("/api/team", teamApp)
+      .route("/api/audit", auditApp)
       .route("/api/clients", clientsApp)
       .route("/api/projects/:projectId/finance", financeApp)
       .route("/api/projects/:projectId/documents", projectDocumentsApp)
@@ -202,12 +207,18 @@ const publicUser = (u: {
   email: string;
   name: string;
   role: string;
+  roleKey?: string;
+  perms?: string[];
+  scopes?: Record<string, string>;
 }) => ({
   id: u.id,
   orgId: u.orgId,
   email: u.email,
   name: u.name,
   role: u.role,
+  roleKey: u.roleKey ?? "",
+  perms: u.perms ?? [],
+  scopes: u.scopes ?? {},
 });
 
 export const app = createApp();

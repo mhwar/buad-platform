@@ -58,7 +58,7 @@ export function ClientPage() {
     );
 
   const { client, contacts, projects } = q.data;
-  const manager = me?.role === "owner" || me?.role === "admin";
+  const manager = !!me?.perms.includes("clients.archive");
   const live = projects.filter((p) => !p.archivedAt);
   const totalValue = live.reduce((a, p) => a + p.contractTotal, 0);
   const byStatus = live.reduce<Record<string, number>>(
@@ -120,7 +120,7 @@ export function ClientPage() {
               },
         ]
       : []),
-    ...(me?.role === "owner" && projects.length === 0
+    ...(me?.perms.includes("clients.delete") && projects.length === 0
       ? [
           {
             label: "حذف نهائي",

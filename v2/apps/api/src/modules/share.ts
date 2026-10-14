@@ -5,7 +5,7 @@ import { zValidator } from "@hono/zod-validator";
 import { and, desc, eq, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { z } from "zod";
-import { requireAuth, requireRole, type Vars } from "../auth/middleware";
+import { requireAuth, requirePerm, type Vars } from "../auth/middleware";
 import type { Db } from "../auth/service";
 import { assetResponse, type FileStore } from "./assets";
 import { newId, nowSec } from "./common";
@@ -43,7 +43,7 @@ const createShare = z.object({
 
 export const documentSharesApp = new Hono<Env>()
   .use(requireAuth)
-  .use(requireRole("owner", "admin"))
+  .use(requirePerm("documents.share"))
 
   .get("/", async (c) => {
     const db = c.get("db");

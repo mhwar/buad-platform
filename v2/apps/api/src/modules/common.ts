@@ -17,8 +17,6 @@ export const newId = (prefix: string) =>
 
 export const nowSec = () => Math.floor(Date.now() / 1000);
 
-export const isManager = (role: string) => role === "owner" || role === "admin";
-
 /** Escape LIKE wildcards in user search text. */
 export const likeTerm = (q: string) => `%${q.replace(/[\\%_]/g, (m) => `\\${m}`)}%`;
 

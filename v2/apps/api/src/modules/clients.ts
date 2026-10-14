@@ -5,7 +5,7 @@ import { zValidator } from "@hono/zod-validator";
 import { and, asc, count, desc, eq, isNotNull, isNull, ne, or, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import type { z } from "zod";
-import { requireAuth, requireRole, type Vars } from "../auth/middleware";
+import { requireAuth, requirePerm, requireRW, type Vars } from "../auth/middleware";
 import type { Db } from "../auth/service";
 import { contractTotalSql, likeTerm, logoUrlSql, newId, nextCounter, nowSec } from "./common";
 import { loadFinance } from "./finance";
@@ -149,6 +149,7 @@ async function loadClient(db: Db, orgId: string, id: string) {
 
 export const clientsApp = new Hono<Env>()
   .use(requireAuth)
+  .use(requireRW("clients.view", "clients.edit"))
 
   .get("/", zValidator("query", listQuery), async (c) => {
     const db = c.get("db");
@@ -451,7 +452,7 @@ export const clientsApp = new Hono<Env>()
   })
 
   // Archiving a client archives its live projects with the SAME timestamp, so restore brings back exactly those.
-  .post("/:id/archive", requireRole("owner", "admin"), async (c) => {
+  .post("/:id/archive", requirePerm("clients.archive"), async (c) => {
     const db = c.get("db");
     const me = c.get("user");
     const client = await loadClient(db, me.orgId, c.req.param("id"));
@@ -469,7 +470,7 @@ export const clientsApp = new Hono<Env>()
     return c.json({ ok: true });
   })
 
-  .post("/:id/restore", requireRole("owner", "admin"), async (c) => {
+  .post("/:id/restore", requirePerm("clients.archive"), async (c) => {
     const db = c.get("db");
     const me = c.get("user");
     const client = await loadClient(db, me.orgId, c.req.param("id"));
@@ -488,7 +489,7 @@ export const clientsApp = new Hono<Env>()
   })
 
   // Permanent delete: owner only, and only a client that never had projects.
-  .delete("/:id", requireRole("owner"), async (c) => {
+  .delete("/:id", requirePerm("clients.delete"), async (c) => {
     const db = c.get("db");
     const me = c.get("user");
     const client = await loadClient(db, me.orgId, c.req.param("id"));

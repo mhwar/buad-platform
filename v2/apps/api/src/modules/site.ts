@@ -16,7 +16,7 @@ import {
 import { zValidator } from "@hono/zod-validator";
 import { and, desc, eq, gte, inArray, notInArray, sql } from "drizzle-orm";
 import { Hono } from "hono";
-import { requireAuth, requireRole, type Vars } from "../auth/middleware";
+import { requireAuth, requireRW, type Vars } from "../auth/middleware";
 import type { Db } from "../auth/service";
 import { newId, nowSec } from "./common";
 import { siteHomePayload } from "./site-public";
@@ -53,7 +53,7 @@ export async function loadSite(db: Db, orgId: string) {
 
 export const siteApp = new Hono<Env>()
   .use(requireAuth)
-  .use(requireRole("owner", "admin"))
+  .use(requireRW("site.view", "site.edit"))
 
   .get("/draft", async (c) => {
     const s = await loadSite(c.get("db"), c.get("user").orgId);

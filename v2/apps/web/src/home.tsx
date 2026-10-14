@@ -40,7 +40,7 @@ export function Home() {
           </>
         }
       />
-      {me?.role === "owner" && clients.data && clientCount === 0 && (
+      {me?.perms.includes("import.run") && clients.data && clientCount === 0 && (
         <Card className="mb-6 flex flex-wrap items-center justify-between gap-4 border-brand bg-brand-soft">
           <div>
             <p className="font-semibold">ابدؤوا بنقل عملائكم من المنصة الحالية</p>

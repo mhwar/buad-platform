@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link, Outlet } from "@tanstack/react-router";
-import { Building2, FileUp, KeyRound } from "lucide-react";
+import { Building2, FileUp, History, KeyRound, ShieldCheck } from "lucide-react";
 import { meQuery } from "../../session";
 
 const ITEMS = [
@@ -10,15 +10,29 @@ const ITEMS = [
     label: "استيراد البيانات",
     hint: "نقل العملاء والمشاريع من المنصة الحالية",
     icon: FileUp,
-    ownerOnly: true,
+    perm: "import.run",
+  },
+  {
+    to: "/settings/team",
+    label: "الفريق والصلاحيات",
+    hint: "المستخدمون والأدوار",
+    icon: ShieldCheck,
+    perm: "team.view",
+  },
+  {
+    to: "/settings/activity",
+    label: "سجل النشاط",
+    hint: "من غيّر ماذا ومتى",
+    icon: History,
+    perm: "audit.view",
   },
   { to: "/settings/account", label: "حسابي", hint: "كلمة المرور", icon: KeyRound },
 ] as const;
 
 /** «الإعدادات»: one home for organisation-wide options, each a sub-page. */
 export function SettingsLayout() {
-  const role = useQuery(meQuery).data?.role;
-  const items = ITEMS.filter((i) => !("ownerOnly" in i) || role === "owner");
+  const perms = useQuery(meQuery).data?.perms ?? [];
+  const items = ITEMS.filter((i) => !("perm" in i) || perms.includes(i.perm));
   const link =
     "flex shrink-0 items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-muted transition hover:bg-brand-soft hover:text-ink";
   const active = "bg-brand-soft font-semibold text-brand";

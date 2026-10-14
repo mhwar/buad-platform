@@ -31,7 +31,7 @@ import {
 import { layoutSchema } from "@buad/schema/documents";
 import { and, eq, inArray, ne, notLike, or, sql } from "drizzle-orm";
 import { Hono } from "hono";
-import { requireAuth, requireRole, type Vars } from "../auth/middleware";
+import { requireAuth, requirePerm, type Vars } from "../auth/middleware";
 import type { Db } from "../auth/service";
 import { type FileStore, storeAsset } from "./assets";
 import { nowSec } from "./common";
@@ -73,7 +73,7 @@ const chunks = <T>(xs: T[], n = 90) =>
 
 export const importApp = new Hono<Env>()
   .use(requireAuth)
-  .use(requireRole("owner"))
+  .use(requirePerm("import.run"))
 
   /**
    * Import v1 clients and their projects into the caller's org.

@@ -34,9 +34,9 @@ export function ClientsPage() {
     clientsQuery({ q, type: s.type, sort: s.sort, archived: s.archived ? "1" : "0" }),
   );
   const [adding, setAdding] = useState(false);
-  const role = useQuery(meQuery).data?.role;
-  const owner = role === "owner";
-  const manager = owner || role === "admin";
+  const me = useQuery(meQuery).data;
+  const owner = !!me?.perms.includes("import.run");
+  const manager = !!me?.perms.includes("clients.archive");
   const importLink = owner && (
     <Link
       to="/settings/import"

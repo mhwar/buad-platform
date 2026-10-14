@@ -63,7 +63,7 @@ const IMAGES: { key: ImageField; label: string; hint: string; wide?: boolean }[]
 export function OrgSettingsPage() {
   const qc = useQueryClient();
   const me = useQuery(meQuery).data;
-  const canEdit = me?.role === "owner" || me?.role === "admin";
+  const canEdit = !!me?.perms.includes("org.edit");
   const q = useQuery(orgProfileQuery);
   const f = useForm<Form>({ resolver: zodResolver(formSchema) });
   const [notice, setNotice] = useState<{ tone: "red" | "amber"; text: string } | null>(null);

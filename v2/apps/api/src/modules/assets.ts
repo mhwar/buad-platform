@@ -2,7 +2,7 @@ import { assets } from "@buad/schema/db";
 import { ASSET_MIME, MAX_ASSET_BYTES } from "@buad/schema/org";
 import { and, eq } from "drizzle-orm";
 import { Hono } from "hono";
-import { requireAuth, requireRole, type Vars } from "../auth/middleware";
+import { requireAuth, requirePerm, type Vars } from "../auth/middleware";
 import type { Db } from "../auth/service";
 import { newId, nowSec } from "./common";
 
@@ -84,7 +84,7 @@ export const assetsApp = new Hono<Env>()
   .use(requireAuth)
 
   // Upload: raw image bytes in the body (no base64 round-trip).
-  .post("/", requireRole("owner", "admin"), async (c) => {
+  .post("/", requirePerm("assets.edit"), async (c) => {
     if (!c.env.FILES) return c.json({ ok: false, error: "storage_unavailable" }, 503);
     const len = Number(c.req.header("content-length") ?? 0);
     if (len > MAX_ASSET_BYTES) return c.json({ ok: false, error: "too_large" }, 413);

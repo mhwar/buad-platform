@@ -1,3 +1,4 @@
+import { effectiveRoleKey, resolveRole } from "@buad/domain";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   createMemoryHistory,
@@ -45,4 +46,21 @@ export function stubApi(routes: Record<string, Handler>) {
   });
   vi.stubGlobal("fetch", fetchMock);
   return calls;
+}
+
+/** A signed-in user as /api/me returns it, with the permissions of a legacy role or a role key. */
+export function meUser(roleOrKey: string, extra: Record<string, unknown> = {}) {
+  const key = effectiveRoleKey(roleOrKey.includes("-") ? roleOrKey : "", roleOrKey);
+  const role = resolveRole(roleOrKey.includes("-") ? roleOrKey : key, [])!;
+  return {
+    id: "u1",
+    orgId: "o1",
+    name: "س",
+    email: "a@b.c",
+    role: roleOrKey.includes("-") ? "member" : roleOrKey,
+    roleKey: role.key,
+    perms: role.perms,
+    scopes: role.scopes,
+    ...extra,
+  };
 }

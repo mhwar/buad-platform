@@ -82,7 +82,7 @@ export function ProjectDialog({
   const e = f.formState.errors;
   // Linking a project to a service and package is for managers (who can see the products).
   const me = useQuery(meQuery).data;
-  const manager = me?.role === "owner" || me?.role === "admin";
+  const manager = !!me?.perms.includes("products.view");
   const products = useQuery({ ...productsQuery, enabled: open && manager });
   const productId = f.watch("productId") ?? "";
   const product = useQuery({ ...productQuery(productId), enabled: open && manager && !!productId });

@@ -4,7 +4,7 @@ import { zValidator } from "@hono/zod-validator";
 import { and, asc, eq, isNull } from "drizzle-orm";
 import { Hono } from "hono";
 import { z } from "zod";
-import { requireAuth, requireRole, type Vars } from "../auth/middleware";
+import { requireAuth, requireRW, type Vars } from "../auth/middleware";
 import type { Db } from "../auth/service";
 import { loadFinance } from "./finance";
 import { loadOrgProfile } from "./org";
@@ -272,7 +272,7 @@ export async function financeOverview(
 
 export const financeOverviewApp = new Hono<Env>()
   .use(requireAuth)
-  .use(requireRole("owner", "admin"))
+  .use(requireRW("treasury.view", "treasury.edit"))
   .get("/overview", zValidator("query", periodQuery), async (c) => {
     const { from, to, client, status } = c.req.valid("query");
     return c.json({
