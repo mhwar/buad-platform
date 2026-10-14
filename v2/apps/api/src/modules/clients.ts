@@ -30,6 +30,9 @@ type StatementLine = {
   spent: number;
   income: number;
   remaining: number;
+  /** Money received from the client, and what the client still owes on the contract. */
+  received: number;
+  owed: number;
 };
 
 /** CR / VAT numbers must be unique in the org (archived clients included). */
@@ -334,10 +337,13 @@ export const clientsApp = new Hono<Env>()
         spent: r2(s.totalSpent),
         income: r2(s.totalIncome),
         remaining: r2(s.remainingFromGross),
+        received: r2(fin.received),
+        owed: r2(Math.max(0, s.grossTotal - fin.received)),
       });
     }
-    const sum = (k: "contractNet" | "vat" | "gross" | "spent" | "income" | "remaining") =>
-      r2(items.reduce((a, i) => a + i[k], 0));
+    const sum = (
+      k: "contractNet" | "vat" | "gross" | "spent" | "income" | "remaining" | "received" | "owed",
+    ) => r2(items.reduce((a, i) => a + i[k], 0));
     const org = await loadOrgProfile(db, me.orgId);
     return c.json({
       ok: true,
@@ -361,6 +367,8 @@ export const clientsApp = new Hono<Env>()
         spent: sum("spent"),
         income: sum("income"),
         remaining: sum("remaining"),
+        received: sum("received"),
+        owed: sum("owed"),
       },
       generatedAt: nowSec(),
     });

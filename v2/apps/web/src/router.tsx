@@ -272,7 +272,11 @@ const financeRoute = createRoute({
   path: "/finance",
   validateSearch: z.object({
     ...periodSearch,
-    preset: z.enum(["all", "year", "last", "custom"]).optional(),
+    preset: z.enum(["all", "year", "last", "quarter", "custom"]).optional(),
+    year: z.coerce.number().int().min(2000).max(2100).optional(),
+    q: z.coerce.number().int().min(1).max(4).optional(),
+    client: z.string().optional(),
+    status: z.string().optional(),
     tab: z.enum(["projects", "quarter", "company", "partners"]).optional(),
   }),
   beforeLoad: managerOnly,

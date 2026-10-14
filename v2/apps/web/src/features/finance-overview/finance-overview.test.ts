@@ -28,6 +28,7 @@ describe("finance overview helpers", () => {
           withoutFinance: 0,
           pending: 0,
           unregistered: 0,
+          received: 0,
         },
         projects: [
           {

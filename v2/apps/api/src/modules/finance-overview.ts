@@ -25,7 +25,12 @@ const iso = z
   .string()
   .regex(/^\d{4}-\d{2}-\d{2}$/)
   .optional();
-const periodQuery = z.object({ from: iso, to: iso });
+const periodQuery = z.object({
+  from: iso,
+  to: iso,
+  client: z.string().max(64).optional(),
+  status: z.string().max(20).optional(),
+});
 /** With no period everything counts; with one, an undated item cannot be placed in it. */
 const inRange = (d: string, from?: string, to?: string) =>
   (!from && !to) || (!!d && (!from || d >= from) && (!to || d <= to));
@@ -39,18 +44,30 @@ const AGREEMENT = [
 ] as const;
 
 /**
- * A project's date in time: money received (v1 «تاريخ الاستلام»), else the contract, else the
- * start, else its first entry. Never the date it was created or imported.
+ * A project's date in time: its first receipt from the client, else v1's received date, else
+ * the contract, else the start, else its first entry. Never the date it was created or imported.
  */
 export function projectDate(
   p: { payDate: string; startDate: string },
-  fin: { ctrl: { contractDate: string }; entries: { date: string }[] },
+  fin: {
+    ctrl: { contractDate: string };
+    entries: { date: string }[];
+    receipts?: { date: string }[];
+  },
 ) {
-  const firstEntry = fin.entries
-    .map((e) => e.date)
-    .filter(Boolean)
-    .sort()[0];
-  return p.payDate || fin.ctrl.contractDate || p.startDate || firstEntry || "";
+  const first = (xs: { date: string }[] = []) =>
+    xs
+      .map((e) => e.date)
+      .filter(Boolean)
+      .sort()[0];
+  return (
+    first(fin.receipts) ||
+    p.payDate ||
+    fin.ctrl.contractDate ||
+    p.startDate ||
+    first(fin.entries) ||
+    ""
+  );
 }
 
 type ProjectRow = {
@@ -72,7 +89,13 @@ type ProjectRow = {
   remaining: number;
 };
 
-export async function financeOverview(db: Db, orgId: string, from?: string, to?: string) {
+export async function financeOverview(
+  db: Db,
+  orgId: string,
+  from?: string,
+  to?: string,
+  filter: { clientId?: string; status?: string } = {},
+) {
   const rows = await db
     .select({ p: projects, clientName: clients.name })
     .from(projects)
@@ -85,10 +108,12 @@ export async function financeOverview(db: Db, orgId: string, from?: string, to?:
     projectId: string;
     number: string;
     name: string;
-    missingContractDate: boolean;
-    ctrlVersion: number;
+    /** A contract value but nothing received yet: its period cannot be known. */
+    missingReceipts: boolean;
+    gross: number;
     entriesWithoutStatus: number;
   }[] = [];
+  let received = 0;
   const months = new Map<string, { expense: number; income: number }>();
   const cats = new Map<string, number>();
   const pending: {
@@ -103,20 +128,27 @@ export async function financeOverview(db: Db, orgId: string, from?: string, to?:
     [];
 
   for (const { p, clientName } of rows) {
+    if (filter.clientId && p.clientId !== filter.clientId) continue;
+    if (filter.status && p.status !== filter.status) continue;
     const fin = await loadFinance(db, p);
     const s = fin.summary;
     const hasFinance = fin.ctrl.version > 0 || fin.entries.length > 0;
     const date = projectDate(p, fin);
     const noStatus = fin.entries.filter((e) => e.status === "").length;
-    if (!fin.ctrl.contractDate || noStatus)
+    const missingReceipts = s.grossTotal > 0 && !fin.receipts.length && p.status !== "draft";
+    if (missingReceipts || noStatus)
       quality.push({
         projectId: p.id,
         number: p.number,
         name: p.name,
-        missingContractDate: !fin.ctrl.contractDate,
-        ctrlVersion: fin.ctrl.version,
+        missingReceipts,
+        gross: r2(s.grossTotal),
         entriesWithoutStatus: noStatus,
       });
+    // Money received from clients in the period, by the day it reached the bank.
+    received += fin.receipts
+      .filter((r) => inRange(r.date, from, to))
+      .reduce((a, r) => a + r.amount / 100, 0);
 
     // Entries by their own date (cancelled ones never count).
     for (const e of fin.entries) {
@@ -146,7 +178,9 @@ export async function financeOverview(db: Db, orgId: string, from?: string, to?:
         });
     }
 
-    if (!inRange(date, from, to)) continue;
+    // In the period by its date, or because money came in from it during the period.
+    const paidInPeriod = (from || to) && fin.receipts.some((r) => inRange(r.date, from, to));
+    if (!inRange(date, from, to) && !paidInPeriod) continue;
     const registered = new Set(fin.entries.map((e) => e.cat));
     if (hasFinance)
       for (const a of AGREEMENT) {
@@ -194,6 +228,7 @@ export async function financeOverview(db: Db, orgId: string, from?: string, to?:
     withoutFinance: list.filter((x) => !x.hasFinance).length,
     pending: r2(pending.reduce((a, x) => a + x.amount, 0)),
     unregistered: r2(unregistered.reduce((a, x) => a + x.amount, 0)),
+    received: r2(received),
   };
   totals.margin = totals.gross ? r2((totals.profit / totals.gross) * 100) : 0;
 
@@ -239,10 +274,13 @@ export const financeOverviewApp = new Hono<Env>()
   .use(requireAuth)
   .use(requireRole("owner", "admin"))
   .get("/overview", zValidator("query", periodQuery), async (c) => {
-    const { from, to } = c.req.valid("query");
+    const { from, to, client, status } = c.req.valid("query");
     return c.json({
       ok: true,
-      ...(await financeOverview(c.get("db"), c.get("user").orgId, from, to)),
+      ...(await financeOverview(c.get("db"), c.get("user").orgId, from, to, {
+        clientId: client,
+        status,
+      })),
     });
   })
   .get("/report", zValidator("query", periodQuery), async (c) => {
