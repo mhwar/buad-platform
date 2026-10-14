@@ -36,6 +36,12 @@ function fixture(): Finance {
       status: "paid",
       note: "",
       source: "manual",
+      taxInvoice: false,
+      vatAmount: 0,
+      supplierName: "",
+      supplierVatNo: "",
+      invoiceNo: "",
+      invoiceDate: "",
     },
     {
       id: "e2",
@@ -49,6 +55,12 @@ function fixture(): Finance {
       status: "",
       note: "",
       source: "agreement",
+      taxInvoice: false,
+      vatAmount: 0,
+      supplierName: "",
+      supplierVatNo: "",
+      invoiceNo: "",
+      invoiceDate: "",
     },
   ];
   const budget = [{ id: "b1", name: "قاعة", amount: 500000, note: "", sort: 1 }];

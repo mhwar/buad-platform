@@ -1,6 +1,6 @@
 import { CATEGORY_LABELS, entryInput, VAT_EXTRACT_PCT } from "@buad/schema/finance";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import type { z } from "zod";
@@ -16,7 +16,9 @@ import {
   Textarea,
 } from "../../components/ui";
 import { ApiError, sar, today } from "../../lib/format";
+import { vatSettingsQuery } from "../finance-overview/vat-api";
 import { type Entry, type Finance, financeApi, financeKey } from "./api";
+import { type TaxInvoiceForm, TaxInvoiceSection } from "./TaxInvoiceSection";
 
 type Form = z.input<typeof entryInput>;
 const BUILTIN = [
@@ -83,6 +85,20 @@ export function EntryDialog({
       };
   const f = useForm<Form>({ resolver: zodResolver(entryInput), values: defaults });
   const [hasProfit, setHasProfit] = useState(!!existing?.profitMargin);
+  // «له فاتورة ضريبية»: independent of the profit margin above (the old 13.043% option).
+  const [ti, setTi] = useState<TaxInvoiceForm | null>(
+    existing?.taxInvoice
+      ? {
+          vatAmount: String(existing.vatAmount / 100),
+          vatEdited: true,
+          supplierName: existing.supplierName,
+          supplierVatNo: existing.supplierVatNo,
+          invoiceNo: existing.invoiceNo,
+          invoiceDate: existing.invoiceDate,
+        }
+      : null,
+  );
+  const rate = useQuery(vatSettingsQuery).data?.rate ?? 15;
   const type = f.watch("type");
   const e = f.formState.errors;
 
@@ -98,7 +114,19 @@ export function EntryDialog({
 
   const save = f.handleSubmit(async (v) => {
     setError(null);
-    const body = { ...v, profitMargin: hasProfit ? v.profitMargin : 0 };
+    const taxInvoice =
+      v.type === "expense" && ti
+        ? {
+            vatAmount: ti.vatEdited ? Number(ti.vatAmount) || 0 : undefined,
+            supplierName: ti.supplierName,
+            supplierVatNo: ti.supplierVatNo,
+            invoiceNo: ti.invoiceNo,
+            invoiceDate: ti.invoiceDate || v.date || "",
+          }
+        : existing?.taxInvoice
+          ? null // removed
+          : undefined;
+    const body = { ...v, profitMargin: hasProfit ? v.profitMargin : 0, taxInvoice };
     try {
       apply(existing ? await api.updateEntry(existing.id, body) : await api.addEntry(body));
       close(false);
@@ -330,6 +358,14 @@ export function EntryDialog({
               </div>
             )}
           </div>
+          {type === "expense" && (
+            <TaxInvoiceSection
+              value={ti}
+              onChange={setTi}
+              amount={Number(f.watch("amount")) || 0}
+              rate={rate}
+            />
+          )}
           <Field label="ملاحظة">
             <Textarea rows={2} {...f.register("note")} />
           </Field>

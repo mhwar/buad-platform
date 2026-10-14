@@ -1,10 +1,11 @@
-import { fromRiyals, type StoredFinance, summarize } from "@buad/domain";
+import { fromRiyals, type StoredFinance, summarize, vatOfGrossHalalas } from "@buad/domain";
 import { BUILTIN_CATEGORIES } from "@buad/schema/clients";
 import { receiptInput } from "@buad/schema/company";
 import {
   financeBudgetItems,
   financeCategories,
   financeEntries,
+  orgVatSettings,
   projectFinance,
   projectReceipts,
 } from "@buad/schema/db";
@@ -17,6 +18,7 @@ import {
   DEFAULT_CTRL,
   entryInput,
   entryPatch,
+  type taxInvoiceInput,
 } from "@buad/schema/finance";
 import { zValidator } from "@hono/zod-validator";
 import { and, asc, count, desc, eq, max } from "drizzle-orm";
@@ -39,6 +41,42 @@ const AGREEMENT_DESC: Record<string, string> = {
   mkt: "تسويق",
   cashback: "كاش باك",
 };
+
+/** The organisation's VAT rate for new purchases (15% until set). */
+export async function loadVatRate(db: Db, orgId: string) {
+  const [row] = await db
+    .select({ rate: orgVatSettings.rate })
+    .from(orgVatSettings)
+    .where(eq(orgVatSettings.orgId, orgId))
+    .limit(1);
+  return row?.rate ?? 15;
+}
+
+type TaxInvoice = NonNullable<z.output<typeof taxInvoiceInput>>;
+/** The columns that hold an entry's tax invoice (all cleared when there is none). */
+function taxInvoiceColumns(ti: TaxInvoice | null | undefined, amountHalalas: number, rate: number) {
+  if (!ti)
+    return {
+      taxInvoice: false,
+      vatAmount: 0,
+      supplierName: "",
+      supplierVatNo: "",
+      invoiceNo: "",
+      invoiceDate: "",
+    };
+  return {
+    taxInvoice: true,
+    // Worked out once and kept: a later change of the rate never rewrites a registered invoice.
+    vatAmount:
+      ti.vatAmount !== undefined
+        ? Math.min(fromRiyals(ti.vatAmount), amountHalalas)
+        : vatOfGrossHalalas(amountHalalas, rate),
+    supplierName: ti.supplierName,
+    supplierVatNo: ti.supplierVatNo,
+    invoiceNo: ti.invoiceNo,
+    invoiceDate: ti.invoiceDate,
+  };
+}
 
 export async function loadFinance(db: Db, project: Pick<Project, "id" | "expectedValue">) {
   const [row] = await db
@@ -237,13 +275,17 @@ export const financeApp = new Hono<Env>()
     const db = c.get("db");
     const me = c.get("user");
     const project = c.get("project");
-    const v = c.req.valid("json");
+    const { taxInvoice, ...v } = c.req.valid("json");
     if (!(await validCat(db, project.id, v.cat)))
       return c.json({ ok: false, error: "invalid_category" }, 400);
+    // A tax invoice belongs to a purchase (an expense).
+    if (taxInvoice && v.type !== "expense")
+      return c.json({ ok: false, error: "tax_invoice_on_expense_only" }, 400);
     const t = nowSec();
     const id = newId("ent");
     await db.insert(financeEntries).values({
       ...v,
+      ...taxInvoiceColumns(taxInvoice, fromRiyals(v.amount), await loadVatRate(db, me.orgId)),
       id,
       orgId: me.orgId,
       projectId: project.id,
@@ -264,13 +306,26 @@ export const financeApp = new Hono<Env>()
     const project = c.get("project");
     const e = await entryOf(db, project.id, c.req.param("entryId"));
     if (!e) return c.json({ ok: false, error: "not_found" }, 404);
-    const { amount, ...v } = c.req.valid("json");
+    const { amount, taxInvoice, ...v } = c.req.valid("json");
     if (v.cat !== undefined && !(await validCat(db, project.id, v.cat)))
       return c.json({ ok: false, error: "invalid_category" }, 400);
+    const type = v.type ?? e.type;
+    if (taxInvoice && type !== "expense")
+      return c.json({ ok: false, error: "tax_invoice_on_expense_only" }, 400);
+    // `taxInvoice` absent = leave as is; null = remove; an object = register or update.
+    const ti =
+      taxInvoice !== undefined || type !== "expense"
+        ? taxInvoiceColumns(
+            type === "expense" ? taxInvoice : null,
+            amount !== undefined ? fromRiyals(amount) : e.amount,
+            await loadVatRate(db, me.orgId),
+          )
+        : {};
     await db
       .update(financeEntries)
       .set({
         ...v,
+        ...ti,
         ...(amount !== undefined ? { amount: fromRiyals(amount) } : {}),
         updatedBy: me.id,
         updatedAt: nowSec(),

@@ -27,6 +27,7 @@ import { orgApp } from "./modules/org";
 import { type BrowserBinding, pdfApp } from "./modules/pdf";
 import { projectsApp } from "./modules/projects";
 import { documentSharesApp, publicShareApp } from "./modules/share";
+import { vatApp } from "./modules/vat";
 
 export type Env = {
   APP_VERSION: string;
@@ -165,6 +166,7 @@ export function createApp(deps: AppDeps = {}) {
       .route("/api/documents", documentsApp)
       .route("/api/public/s", publicShareApp)
       .route("/api/pdf", pdfApp)
+      .route("/api/finance/vat", vatApp)
       .route("/api/finance/company", companyFinanceApp)
       .route("/api/finance", financeOverviewApp)
       .route("/api/projects", projectsApp)

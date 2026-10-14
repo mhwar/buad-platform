@@ -6,6 +6,7 @@ import {
   Building2,
   FileBarChart2,
   FileSpreadsheet,
+  Percent,
   PieChart,
   Users,
 } from "lucide-react";
@@ -41,10 +42,11 @@ import { PartnersTab } from "./PartnersTab";
 import { PeriodPicker } from "./PeriodPicker";
 import { QuarterCentre } from "./QuarterCentre";
 import { Tile } from "./Tile";
+import { VatTab } from "./VatTab";
 
 const route = getRouteApi("/finance");
 type SortKey = "profit" | "margin" | "gross";
-type Tab = "projects" | "quarter" | "company" | "partners";
+type Tab = "projects" | "quarter" | "vat" | "company" | "partners";
 
 /** «المالية»: the organisation's money at a glance, then the detail behind every number. */
 export function FinancePage() {
@@ -92,7 +94,7 @@ export function FinancePage() {
         subtitle="عقود الجهة وأرباحها ومصروفاتها والتزاماتها، ومالية الشركة والشركاء"
         actions={reportLink}
       />
-      <div className="mb-4 max-w-2xl">
+      <div className="mb-4 max-w-3xl">
         <Segmented<Tab>
           label="أقسام المالية"
           value={tab}
@@ -100,13 +102,14 @@ export function FinancePage() {
           items={[
             { value: "projects", label: "المشاريع", icon: <Briefcase className="size-4" /> },
             { value: "quarter", label: "توزيع الربع", icon: <PieChart className="size-4" /> },
+            { value: "vat", label: "الضريبة", icon: <Percent className="size-4" /> },
             { value: "company", label: "الشركة", icon: <Building2 className="size-4" /> },
             { value: "partners", label: "الشركاء والتوزيع", icon: <Users className="size-4" /> },
           ]}
         />
       </div>
       <div
-        className={`mb-6 flex flex-wrap items-center gap-3 ${tab === "partners" || tab === "quarter" ? "hidden" : ""}`}
+        className={`mb-6 flex flex-wrap items-center gap-3 ${tab === "partners" || tab === "quarter" || tab === "vat" ? "hidden" : ""}`}
       >
         <PeriodPicker
           value={choice}
@@ -145,7 +148,9 @@ export function FinancePage() {
       </div>
 
       {archive && <ArchiveDialog onClose={() => setArchive(false)} />}
-      {tab === "quarter" ? (
+      {tab === "vat" ? (
+        <VatTab />
+      ) : tab === "quarter" ? (
         <QuarterCentre />
       ) : tab === "company" ? (
         <CompanyTab period={period} />

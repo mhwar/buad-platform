@@ -41,6 +41,14 @@ export type Entry = {
   status: "" | "paid" | "pending" | "cancelled";
   note: string;
   source: "manual" | "agreement";
+  /** A purchase with a tax invoice (its VAT is in the VAT report). */
+  taxInvoice: boolean;
+  /** halalas */
+  vatAmount: number;
+  supplierName: string;
+  supplierVatNo: string;
+  invoiceNo: string;
+  invoiceDate: string;
 };
 export type BudgetItem = { id: string; name: string; amount: number; note: string; sort: number };
 export type Category = { id: string; label: string; type: "expense" | "income" | "both" };

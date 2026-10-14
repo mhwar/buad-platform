@@ -309,6 +309,7 @@ describe("vector PDF", () => {
     expect(isPrintable("/clients/cl_1/statement")).toBe(true);
     expect(isPrintable("/finance/report?from=2026-01-01&to=2026-12-31")).toBe(true);
     expect(isPrintable("/print/finance/prj_1?mode=detailed")).toBe(true);
+    expect(isPrintable("/finance/vat/report?year=2026&q=3")).toBe(true);
     expect(isPrintable("/print/finance/prj_1?mode=evil")).toBe(false);
     for (const bad of [
       "https://evil.example/",

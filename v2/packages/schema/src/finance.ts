@@ -64,6 +64,19 @@ export const DEFAULT_CTRL: Omit<Ctrl, "contractValue"> = {
   opCats: [],
 };
 
+/**
+ * A purchase's tax invoice. `vatAmount` is optional: left out, the VAT is worked out from the
+ * entry's amount (taken to include VAT) at the organisation's rate and then stored.
+ */
+export const taxInvoiceInput = z.object({
+  vatAmount: z.coerce.number().min(0).max(1e12).optional(),
+  supplierName: z.string().trim().max(200).default(""),
+  supplierVatNo: z.string().trim().max(20).default(""),
+  invoiceNo: z.string().trim().max(60).default(""),
+  invoiceDate: date.default(""),
+});
+export type TaxInvoiceInput = z.input<typeof taxInvoiceInput>;
+
 const entryFields = {
   date,
   description: z.string().trim().min(1, "required").max(300),
@@ -83,9 +96,13 @@ export const entryInput = z.object({
   profitMarginType: entryFields.profitMarginType.default("pct"),
   status: entryFields.status.default(""),
   note: entryFields.note.default(""),
+  /** null/absent = no tax invoice. */
+  taxInvoice: taxInvoiceInput.nullable().optional(),
 });
 export type EntryInput = z.input<typeof entryInput>;
-export const entryPatch = z.object(entryFields).partial();
+export const entryPatch = z
+  .object({ ...entryFields, taxInvoice: taxInvoiceInput.nullable() })
+  .partial();
 
 export const budgetInput = z.object({
   name: z.string().trim().max(200).default(""),

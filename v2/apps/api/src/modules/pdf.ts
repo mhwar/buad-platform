@@ -22,6 +22,7 @@ const ALLOWED = [
   /^\/print\/documents\/[\w-]+$/,
   /^\/clients\/[\w-]+\/statement$/,
   /^\/finance\/report(\?[\w=&%.-]*)?$/,
+  /^\/finance\/vat\/report(\?[\w=&%.-]*)?$/,
   /^\/print\/finance\/[\w-]+(\?mode=(client|detailed))?$/,
 ];
 export const isPrintable = (path: string) => ALLOWED.some((r) => r.test(path));

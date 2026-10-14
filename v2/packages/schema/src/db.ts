@@ -247,6 +247,16 @@ export const financeEntries = sqliteTable(
     profitMarginType: text("profit_margin_type", { enum: FEE_TYPES }).notNull().default("pct"),
     status: text("status", { enum: ENTRY_STATUSES }).notNull().default(""),
     note: text("note").notNull().default(""),
+    /**
+     * Purchase with a tax invoice: the VAT in it is claimable and appears in the VAT report.
+     * Independent of profit_margin (the old «استخراج 13.043%» button), which is left alone.
+     */
+    taxInvoice: integer("tax_invoice", { mode: "boolean" }).notNull().default(false),
+    vatAmount: integer("vat_amount_halalas").notNull().default(0),
+    supplierName: text("supplier_name").notNull().default(""),
+    supplierVatNo: text("supplier_vat_no").notNull().default(""),
+    invoiceNo: text("invoice_no").notNull().default(""),
+    invoiceDate: text("invoice_date").notNull().default(""),
     /** "agreement" = registered from the contract («من الاتفاقية»). */
     source: text("source", { enum: ["manual", "agreement"] })
       .notNull()
@@ -562,3 +572,17 @@ export const distributionProjects = sqliteTable(
     index("idx_distribution_projects_p").on(t.projectId),
   ],
 );
+
+/** The organisation's VAT settings (rate for new purchases, reporting period). */
+export const orgVatSettings = sqliteTable("org_vat_settings", {
+  orgId: text("org_id")
+    .primaryKey()
+    .references(() => orgs.id),
+  /** Percent. Applied to NEW purchases only: stored VAT never changes when it is edited. */
+  rate: real("rate").notNull().default(15),
+  period: text("period", { enum: ["quarterly", "monthly"] })
+    .notNull()
+    .default("quarterly"),
+  updatedBy: text("updated_by").notNull().default(""),
+  updatedAt: integer("updated_at").notNull().default(now),
+});

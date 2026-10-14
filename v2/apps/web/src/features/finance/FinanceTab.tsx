@@ -555,6 +555,7 @@ export function Transactions({
                     <span className="text-xs text-muted">
                       {day(e.date)} · {label(e.cat)}
                       {e.source === "agreement" && " · اتفاقية"}
+                      {e.taxInvoice && " · فاتورة ضريبية"}
                       {e.status === "cancelled" && " · ملغى، لا يُحتسب"}
                       {e.status === "pending" && " · معلّق"}
                     </span>
@@ -590,6 +591,7 @@ export function Transactions({
                         {e.description}
                       </span>{" "}
                       {e.source === "agreement" && <Badge tone="blue">اتفاقية</Badge>}
+                      {e.taxInvoice && <Badge tone="green">فاتورة ضريبية</Badge>}
                       {e.note && <span className="block text-xs text-muted">{e.note}</span>}
                     </td>
                     <td className="px-2 py-2.5">{label(e.cat)}</td>
