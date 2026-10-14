@@ -1,7 +1,13 @@
 import { assets, siteSettings } from "@buad/schema/db";
-import { DEFAULT_SITE, type SiteContent, siteContent, sitePatch } from "@buad/schema/site";
+import {
+  DEFAULT_SITE,
+  type SiteContent,
+  siteAssetIds,
+  siteContent,
+  sitePatch,
+} from "@buad/schema/site";
 import { zValidator } from "@hono/zod-validator";
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { Hono } from "hono";
 import { requireAuth, requireRole, type Vars } from "../auth/middleware";
 import type { Db } from "../auth/service";
@@ -65,13 +71,14 @@ export const siteApp = new Hono<Env>()
     const { version, content } = c.req.valid("json");
     const db = c.get("db");
     const me = c.get("user");
-    if (content.brand.logoAsset) {
-      const [a] = await db
+    // Every image the site uses must be one of this organisation's own assets.
+    const ids = [...new Set(siteAssetIds(content))];
+    if (ids.length) {
+      const own = await db
         .select({ id: assets.id })
         .from(assets)
-        .where(and(eq(assets.id, content.brand.logoAsset), eq(assets.orgId, me.orgId)))
-        .limit(1);
-      if (!a) return c.json({ ok: false, error: "invalid_asset" }, 400);
+        .where(and(eq(assets.orgId, me.orgId), inArray(assets.id, ids)));
+      if (own.length !== ids.length) return c.json({ ok: false, error: "invalid_asset" }, 400);
     }
     const cur = await loadSite(db, me.orgId);
     if (version !== cur.version)

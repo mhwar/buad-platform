@@ -112,7 +112,7 @@ export function ContactBand({
     <section id="contact" className="sec">
       <div className="cta">
         <img src={logoWhite} alt="" style={{ width: 96, height: 69, objectFit: "contain" }} />
-        <h2 className="h2" style={{ fontSize: "clamp(28px,4.4vw,52px)", lineHeight: 1.25 }}>
+        <h2 className="h2" style={{ fontSize: "clamp(28px,4.4vw,52px)" }}>
           {title}
         </h2>
         {lead && <p className="lead">{lead}</p>}
