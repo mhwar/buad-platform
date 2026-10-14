@@ -150,7 +150,7 @@ export function DocumentEditor() {
   const navigate = useNavigate();
   const me = useQuery(meQuery).data;
   const q = useQuery(documentQuery(docId));
-  const manager = me?.role === "owner" || me?.role === "admin";
+  const manager = !!me?.perms.includes("documents.edit");
   const [draft, setDraft] = useState<Draft | null>(null);
   const [panel, setPanel] = useState<Panel>("data");
   const [saveState, setSaveState] = useState<"idle" | "pending" | "saving" | "saved">("idle");

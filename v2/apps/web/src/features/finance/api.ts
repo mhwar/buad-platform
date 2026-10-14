@@ -63,6 +63,8 @@ export type Receipt = {
   approvedAt: number | null;
 };
 export type Finance = {
+  /** True when the viewer's role may not see profit: those figures arrive as zero. */
+  profitHidden?: boolean;
   ctrl: Ctrl;
   entries: Entry[];
   budget: BudgetItem[];

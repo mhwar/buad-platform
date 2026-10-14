@@ -1,7 +1,7 @@
 import { screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { stubApi } from "../../test-utils";
+import { meUser, stubApi } from "../../test-utils";
 import type { ClientListItem, Statement } from "./api";
 import { ClientsPage } from "./ClientsPage";
 import { statementCsv } from "./StatementPage";
@@ -28,7 +28,7 @@ const item: ClientListItem = {
   documentsCount: 3,
   lastActivity: Math.floor(Date.now() / 1000) - 86400 * 2,
 };
-const me = (role: string) => () => ({ user: { id: "u", name: "س", email: "s@a.sa", role } });
+const me = (role: string) => () => ({ user: meUser(role) });
 
 async function render(role: string) {
   stubApi({

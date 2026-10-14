@@ -24,14 +24,14 @@ import { zValidator } from "@hono/zod-validator";
 import { and, asc, count, desc, eq, max } from "drizzle-orm";
 import { Hono } from "hono";
 import { z } from "zod";
-import { requireAuth, requireRole, type Vars } from "../auth/middleware";
+import { requireAuth, requirePerm, requireRW, type Vars } from "../auth/middleware";
 import type { Db } from "../auth/service";
 import { newId, nowSec } from "./common";
 import { loadVisible } from "./projects";
 
 type Project = NonNullable<Awaited<ReturnType<typeof loadVisible>>>;
 type Env = { Bindings: { JWT_SECRET: string }; Variables: Vars & { project: Project } };
-const manager = requireRole("owner", "admin");
+const manager = requirePerm("finance.edit");
 const today = () => new Date().toISOString().slice(0, 10);
 
 /** v1 registerContractItem descriptions (app.html L9201). */
@@ -179,6 +179,7 @@ async function entryOf(db: Db, projectId: string, id: string) {
 
 export const financeApp = new Hono<Env>()
   .use(requireAuth)
+  .use(requireRW("finance.view", "finance.edit"))
   // Resolve the project once; invisible or foreign projects are 404 for every finance route.
   .use(async (c, next) => {
     const project = await loadVisible(c.get("db"), c.get("user"), c.req.param("projectId") ?? "");
@@ -189,7 +190,18 @@ export const financeApp = new Hono<Env>()
 
   .get("/", async (c) => {
     const project = c.get("project");
-    return c.json({ ok: true, ...(await loadFinance(c.get("db"), project)) });
+    const data = await loadFinance(c.get("db"), project);
+    // Without «إظهار الأرباح» the person sees amounts but not what the company earns on them.
+    if (!c.get("user").perms.includes("finance.profit")) {
+      return c.json({
+        ok: true,
+        ...data,
+        entries: data.entries.map((e) => ({ ...e, profitMargin: 0 })),
+        summary: { ...data.summary, profit: 0, profitMargins: [] },
+        profitHidden: true,
+      });
+    }
+    return c.json({ ok: true, ...data, profitHidden: false });
   })
 
   .patch("/ctrl", manager, zValidator("json", ctrlPatch), async (c) => {

@@ -1,7 +1,16 @@
-import { queryOptions } from "@tanstack/react-query";
+import { queryOptions, useQuery } from "@tanstack/react-query";
 import { api } from "./api";
 
-export type Me = { id: string; orgId: string; email: string; name: string; role: string };
+export type Me = {
+  id: string;
+  orgId: string;
+  email: string;
+  name: string;
+  role: string;
+  roleKey: string;
+  perms: string[];
+  scopes: Record<string, string>;
+};
 
 /** The current user, or null when signed out. */
 export const meQuery = queryOptions({
@@ -27,3 +36,9 @@ export const setupStatusQuery = queryOptions({
   staleTime: 30_000,
   retry: false,
 });
+
+/** `can("finance.edit")`: whether the signed-in person's role grants it (false while loading). */
+export function useCan() {
+  const perms = useQuery(meQuery).data?.perms;
+  return (perm: string) => !!perms?.includes(perm);
+}

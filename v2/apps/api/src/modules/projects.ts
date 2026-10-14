@@ -5,38 +5,40 @@ import { zValidator } from "@hono/zod-validator";
 import { and, asc, count, desc, eq, isNotNull, isNull, or, type SQL, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import type { z } from "zod";
-import { requireAuth, requireRole, type Vars } from "../auth/middleware";
+import { requireAuth, requirePerm, requireRW, type Vars } from "../auth/middleware";
 import type { AuthUser, Db } from "../auth/service";
-import {
-  contractTotalSql,
-  isManager,
-  likeTerm,
-  logoUrlSql,
-  newId,
-  nextCounter,
-  nowSec,
-} from "./common";
+import { contractTotalSql, likeTerm, logoUrlSql, newId, nextCounter, nowSec } from "./common";
 import { resolveServiceLink } from "./service-link";
 
 type Env = { Bindings: { JWT_SECRET: string }; Variables: Vars };
 
 /**
- * v1 rule (app.html getProjectsForUser): managers see everything; others see their own
- * projects, team projects, and projects with no owner.
+ * Which projects a person sees, by the scope of their role:
+ * «all» everything; «team» (v1's rule) their own, team-visible and ownerless projects;
+ * «mine» only their own. Being added to a project's members always shows it.
  */
-export function visibleProjects(me: Pick<AuthUser, "id" | "role">): {
+export function visibleProjects(me: Pick<AuthUser, "id" | "scopes">): {
   where: SQL | undefined;
   sqlFor: (alias: string) => SQL;
 } {
-  if (isManager(me.role)) return { where: undefined, sqlFor: () => sql`1 = 1` };
+  const scope = me.scopes.projects ?? "team";
+  if (scope === "all") return { where: undefined, sqlFor: () => sql`1 = 1` };
+  const member = (id: SQL) =>
+    sql`EXISTS (SELECT 1 FROM project_members pm WHERE pm.project_id = ${id} AND pm.user_id = ${me.id})`;
+  if (scope === "mine")
+    return {
+      where: or(eq(projects.ownerId, me.id), member(sql`${projects.id}`)),
+      sqlFor: (a) => sql`(${sql.raw(a)}.owner_id = ${me.id} OR ${member(sql.raw(`${a}.id`))})`,
+    };
   return {
     where: or(
       eq(projects.ownerId, me.id),
       eq(projects.visibility, "team"),
       eq(projects.ownerId, ""),
+      member(sql`${projects.id}`),
     ),
     sqlFor: (a) =>
-      sql`(${sql.raw(a)}.owner_id = ${me.id} OR ${sql.raw(a)}.visibility = 'team' OR ${sql.raw(a)}.owner_id = '')`,
+      sql`(${sql.raw(a)}.owner_id = ${me.id} OR ${sql.raw(a)}.visibility = 'team' OR ${sql.raw(a)}.owner_id = '' OR ${member(sql.raw(`${a}.id`))})`,
   };
 }
 
@@ -102,6 +104,7 @@ export async function insertProject(
 
 export const projectsApp = new Hono<Env>()
   .use(requireAuth)
+  .use(requireRW("projects.view", "projects.edit"))
 
   .get("/", zValidator("query", listQuery), async (c) => {
     const db = c.get("db");
@@ -252,7 +255,7 @@ export const projectsApp = new Hono<Env>()
       v.visibility !== undefined &&
       v.visibility !== current.visibility &&
       current.ownerId !== me.id &&
-      !isManager(me.role)
+      me.scopes.projects !== "all"
     ) {
       return c.json({ ok: false, error: "forbidden" }, 403);
     }
@@ -295,7 +298,7 @@ export const projectsApp = new Hono<Env>()
     return c.json({ ok: true });
   })
 
-  .post("/:id/archive", requireRole("owner", "admin"), async (c) => {
+  .post("/:id/archive", requirePerm("projects.archive"), async (c) => {
     const db = c.get("db");
     const me = c.get("user");
     const p = await loadVisible(db, me, c.req.param("id"));
@@ -310,7 +313,7 @@ export const projectsApp = new Hono<Env>()
     return c.json({ ok: true });
   })
 
-  .post("/:id/restore", requireRole("owner", "admin"), async (c) => {
+  .post("/:id/restore", requirePerm("projects.archive"), async (c) => {
     const db = c.get("db");
     const me = c.get("user");
     const p = await loadVisible(db, me, c.req.param("id"));
@@ -324,7 +327,7 @@ export const projectsApp = new Hono<Env>()
     return c.json({ ok: true });
   })
 
-  .delete("/:id", requireRole("owner"), async (c) => {
+  .delete("/:id", requirePerm("projects.delete"), async (c) => {
     const db = c.get("db");
     const me = c.get("user");
     const p = await loadVisible(db, me, c.req.param("id"));

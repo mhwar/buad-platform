@@ -19,7 +19,7 @@ import { zValidator } from "@hono/zod-validator";
 import { and, asc, eq, isNull, ne, type SQL } from "drizzle-orm";
 import { Hono } from "hono";
 import { z } from "zod";
-import { requireAuth, requireRole, type Vars } from "../auth/middleware";
+import { requireAuth, requireRW, type Vars } from "../auth/middleware";
 import type { Db } from "../auth/service";
 import { newId, nowSec } from "./common";
 import { loadFinance, loadVatRate } from "./finance";
@@ -191,7 +191,7 @@ const autoSlug = (name: string) =>
 
 export const productsApp = new Hono<Env>()
   .use(requireAuth)
-  .use(requireRole("owner", "admin"))
+  .use(requireRW("products.view", "products.edit"))
 
   .get("/", async (c) => {
     const db = c.get("db");

@@ -1,10 +1,10 @@
 import { screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { renderWithApp, stubApi } from "../../test-utils";
+import { meUser, renderWithApp, stubApi } from "../../test-utils";
 import { SettingsLayout } from "./SettingsLayout";
 
 afterEach(() => vi.unstubAllGlobals());
-const me = (role: string) => () => ({ user: { id: "u1", name: "س", email: "a@b.c", role } });
+const me = (role: string) => () => ({ user: meUser(role) });
 
 describe("SettingsLayout", () => {
   it("shows the import option to the owner", async () => {

@@ -5,7 +5,7 @@ import { zValidator } from "@hono/zod-validator";
 import { and, asc, eq, isNull } from "drizzle-orm";
 import { Hono } from "hono";
 import { z } from "zod";
-import { requireAuth, requireRole, type Vars } from "../auth/middleware";
+import { requireAuth, requireRW, type Vars } from "../auth/middleware";
 import type { Db } from "../auth/service";
 import { nowSec } from "./common";
 import { loadFinance, loadVatRate } from "./finance";
@@ -181,7 +181,7 @@ export async function vatReport(db: Db, orgId: string, from: string, to: string,
 
 export const vatApp = new Hono<Env>()
   .use(requireAuth)
-  .use(requireRole("owner", "admin"))
+  .use(requireRW("vat.view", "vat.edit"))
 
   .get("/settings", async (c) => {
     const db = c.get("db");

@@ -36,8 +36,8 @@ export function DocumentsPage() {
     navigate({ search: (prev) => ({ ...prev, ...patch }), replace: true });
   const q = useDeferredValue(s.q ?? "");
   const outgoing = s.view === "outgoing";
-  const role = useQuery(meQuery).data?.role;
-  const actions = useDocumentActions(role === "owner" || role === "admin");
+  const me = useQuery(meQuery).data;
+  const actions = useDocumentActions(!!me?.perms.includes("documents.edit"));
   const reg = useQuery(
     registerQuery({
       q: q || undefined,

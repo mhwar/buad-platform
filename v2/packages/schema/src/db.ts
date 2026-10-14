@@ -52,6 +52,11 @@ export const users = sqliteTable(
     role: text("role", { enum: ["owner", "admin", "member"] })
       .notNull()
       .default("member"),
+    /** A role key from the permission registry or `org_roles`; "" = derived from the legacy `role`. */
+    roleKey: text("role_key").notNull().default(""),
+    /** A deactivated account cannot sign in; its history stays. */
+    active: integer("active", { mode: "boolean" }).notNull().default(true),
+    lastLoginAt: integer("last_login_at").notNull().default(0),
     createdAt: integer("created_at").notNull().default(now),
   },
   (t) => [index("idx_users_org").on(t.orgId)],
@@ -692,4 +697,60 @@ export const sitePublishes = sqliteTable(
     publishedBy: text("published_by").notNull().default(""),
   },
   (t) => [index("idx_site_publishes_org").on(t.orgId, t.publishedAt)],
+);
+
+/** An organisation's edit of a ready-made role, or a role it created. Defaults live in code. */
+export const orgRoles = sqliteTable(
+  "org_roles",
+  {
+    orgId: text("org_id")
+      .notNull()
+      .references(() => orgs.id),
+    key: text("key").notNull(),
+    name: text("name").notNull(),
+    description: text("description").notNull().default(""),
+    perms: text("perms").notNull().default("[]"),
+    scopes: text("scopes").notNull().default("{}"),
+    updatedBy: text("updated_by").notNull().default(""),
+    updatedAt: integer("updated_at").notNull().default(now),
+  },
+  (t) => [primaryKey({ columns: [t.orgId, t.key] })],
+);
+
+/** Who is on a project, so «مشاريعي» scopes can include it. */
+export const projectMembers = sqliteTable(
+  "project_members",
+  {
+    projectId: text("project_id")
+      .notNull()
+      .references(() => projects.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    addedAt: integer("added_at").notNull().default(now),
+  },
+  (t) => [primaryKey({ columns: [t.projectId, t.userId] }), index("idx_pm_user").on(t.userId)],
+);
+
+/** Who did what and when. Names are copied so the trail survives renames and deactivation. */
+export const auditLog = sqliteTable(
+  "audit_log",
+  {
+    id: text("id").primaryKey(),
+    orgId: text("org_id")
+      .notNull()
+      .references(() => orgs.id),
+    at: integer("at").notNull().default(now),
+    userId: text("user_id").notNull().default(""),
+    userName: text("user_name").notNull().default(""),
+    entity: text("entity").notNull(),
+    entityId: text("entity_id").notNull().default(""),
+    action: text("action").notNull(),
+    summary: text("summary").notNull().default(""),
+    detail: text("detail").notNull().default("{}"),
+  },
+  (t) => [
+    index("idx_audit_org_at").on(t.orgId, t.at),
+    index("idx_audit_entity").on(t.orgId, t.entity, t.entityId),
+  ],
 );

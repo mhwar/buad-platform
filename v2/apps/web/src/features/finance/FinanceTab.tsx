@@ -75,7 +75,11 @@ export function FinanceStrip({
           onClick={onSettings}
           action="إعدادات العقد"
         />
-        <Stat label="صافي الربح" value={sar(s.profit)} tone="good" />
+        <Stat
+          label="صافي الربح"
+          value={q.data.profitHidden ? "مخفي" : sar(s.profit)}
+          tone={q.data.profitHidden ? undefined : "good"}
+        />
         <Stat
           label="المتبقي من العقد"
           value={sar(s.remaining)}
@@ -84,8 +88,10 @@ export function FinanceStrip({
         />
         <Stat
           label="هامش الربح"
-          value={pct(margin)}
-          tone={margin >= 20 ? "good" : margin >= 0 ? "warn" : "bad"}
+          value={q.data.profitHidden ? "مخفي" : pct(margin)}
+          tone={
+            q.data.profitHidden ? undefined : margin >= 20 ? "good" : margin >= 0 ? "warn" : "bad"
+          }
         />
       </div>
       <div className="border-t px-5 py-3">

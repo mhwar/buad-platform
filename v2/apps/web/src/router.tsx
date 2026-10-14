@@ -45,6 +45,8 @@ import { ProjectsPage } from "./features/projects/ProjectsPage";
 import { SettingsLayout } from "./features/settings/SettingsLayout";
 import { ProductPublicPage } from "./features/site/ProductPublicPage";
 import { SitePage } from "./features/site/SitePage";
+import { ActivityPage } from "./features/team/ActivityPage";
+import { TeamPage } from "./features/team/TeamPage";
 import { WebsiteEditorPage } from "./features/website/WebsiteEditor";
 import { Home } from "./home";
 import { LoginPage } from "./login";
@@ -58,9 +60,15 @@ const NAV = [
   { to: "/clients", label: "العملاء", icon: Users, exact: false },
   { to: "/projects", label: "المشاريع", icon: Briefcase, exact: false },
   { to: "/documents", label: "المستندات", icon: Files, exact: false },
-  { to: "/finance", label: "المالية", icon: Landmark, exact: false, managerOnly: true },
-  { to: "/products", label: "المنتجات والخدمات", icon: Package, exact: false, managerOnly: true },
-  { to: "/website", label: "الموقع", icon: Globe, exact: false, managerOnly: true },
+  { to: "/finance", label: "المالية", icon: Landmark, exact: false, perm: "treasury.view" },
+  {
+    to: "/products",
+    label: "المنتجات والخدمات",
+    icon: Package,
+    exact: false,
+    perm: "products.view",
+  },
+  { to: "/website", label: "الموقع", icon: Globe, exact: false, perm: "site.view" },
 ] as const;
 
 function Shell() {
@@ -78,8 +86,9 @@ function Shell() {
   };
   // Signed out (login), or a document opened from a share link: the page owns the whole screen.
   if (!me.data || isShareLink) return <Outlet />;
-  const manager = me.data.role === "owner" || me.data.role === "admin";
-  const nav = NAV.filter((n) => !("managerOnly" in n) || manager);
+  const perms = me.data.perms;
+  const manager = perms.includes("treasury.view");
+  const nav = NAV.filter((n) => !("perm" in n) || perms.includes(n.perm));
   const navLink =
     "flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-muted transition hover:bg-brand-soft hover:text-ink";
   const navActive = "bg-brand-soft font-semibold text-brand";
@@ -269,10 +278,10 @@ const printDocumentRoute = createRoute({
 });
 
 /** Finance across the organisation: owner and managers only. */
-const managerOnly = async () => {
+const needs = (perm: string) => async () => {
   const me = await queryClient.ensureQueryData(meQuery);
   if (!me) throw redirect({ to: "/login" });
-  if (me.role !== "owner" && me.role !== "admin") throw redirect({ to: "/" });
+  if (!me.perms.includes(perm)) throw redirect({ to: "/" });
 };
 const periodSearch = {
   from: z.string().optional(),
@@ -290,7 +299,7 @@ const financeRoute = createRoute({
     status: z.string().optional(),
     tab: z.enum(["projects", "quarter", "vat", "company", "partners"]).optional(),
   }),
-  beforeLoad: managerOnly,
+  beforeLoad: needs("treasury.view"),
   component: FinancePage,
 });
 const vatReportRoute = createRoute({
@@ -300,7 +309,7 @@ const vatReportRoute = createRoute({
     year: z.coerce.number().int().min(2000).max(2100).catch(new Date().getFullYear()),
     q: z.coerce.number().int().min(1).max(4).catch(1),
   }),
-  beforeLoad: managerOnly,
+  beforeLoad: needs("vat.view"),
   component: VatReportPage,
 });
 // Public website (no sign-in; the page owns the whole screen).
@@ -329,7 +338,7 @@ const siteBrochureRoute = createRoute({
 const printProductRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/print/products/$id",
-  beforeLoad: managerOnly,
+  beforeLoad: needs("products.view"),
   component: function PrintProduct() {
     const { id } = printProductRoute.useParams();
     return <ProductBrochurePage id={id} />;
@@ -339,7 +348,7 @@ const productsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/products",
   validateSearch: z.object({ tab: z.enum(["products", "overview", "requests"]).optional() }),
-  beforeLoad: managerOnly,
+  beforeLoad: needs("products.view"),
   component: ProductsPage,
 });
 const websiteRoute = createRoute({
@@ -350,7 +359,7 @@ const websiteRoute = createRoute({
       .enum(["overview", "identity", "home", "services", "works", "form", "seo", "history"])
       .optional(),
   }),
-  beforeLoad: managerOnly,
+  beforeLoad: needs("site.view"),
   component: WebsiteEditorPage,
 });
 const productRoute = createRoute({
@@ -361,14 +370,14 @@ const productRoute = createRoute({
       .enum(["identity", "packages", "pricing", "performance", "intake", "content", "publish"])
       .optional(),
   }),
-  beforeLoad: managerOnly,
+  beforeLoad: needs("products.view"),
   component: ProductBuilderPage,
 });
 const financeReportRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/finance/report",
   validateSearch: z.object(periodSearch),
-  beforeLoad: managerOnly,
+  beforeLoad: needs("treasury.view"),
   component: ReportPage,
 });
 
@@ -435,9 +444,21 @@ const importRoute = createRoute({
   path: "/import",
   beforeLoad: async () => {
     const me = await queryClient.ensureQueryData(meQuery);
-    if (me?.role !== "owner") throw redirect({ to: "/settings/org" });
+    if (!me?.perms.includes("import.run")) throw redirect({ to: "/settings/org" });
   },
   component: ImportPage,
+});
+const teamRoute = createRoute({
+  getParentRoute: () => settingsRoute,
+  path: "/team",
+  beforeLoad: needs("team.view"),
+  component: TeamPage,
+});
+const activityRoute = createRoute({
+  getParentRoute: () => settingsRoute,
+  path: "/activity",
+  beforeLoad: needs("audit.view"),
+  component: ActivityPage,
 });
 const accountRoute = createRoute({
   getParentRoute: () => settingsRoute,
@@ -486,7 +507,14 @@ export const router = createRouter({
     shareRoute,
     printDocumentRoute,
     printFinanceRoute,
-    settingsRoute.addChildren([settingsIndexRoute, orgRoute, importRoute, accountRoute]),
+    settingsRoute.addChildren([
+      settingsIndexRoute,
+      orgRoute,
+      importRoute,
+      teamRoute,
+      activityRoute,
+      accountRoute,
+    ]),
     legacyImportRoute,
     legacyAccountRoute,
   ]),

@@ -16,6 +16,7 @@ import {
   Plus,
   Settings2,
   Trash2,
+  Users,
   Wallet,
 } from "lucide-react";
 import { type ReactNode, useState } from "react";
@@ -44,6 +45,7 @@ import {
 } from "../finance/FinanceTab";
 import { ReceiptsCard } from "../finance/Receipts";
 import { label, PROJECT_STATUS_LABELS, PROJECT_TYPE_LABELS, STATUS_TONE } from "../labels";
+import { ProjectMembers } from "../team/ProjectMembers";
 import {
   archiveProject,
   deleteProject,
@@ -76,6 +78,7 @@ export function ProjectPage() {
   const q = useQuery(projectQuery(id));
   const [editing, setEditing] = useState(false);
   const [settings, setSettings] = useState(false);
+  const [members, setMembers] = useState(false);
   const [adding, setAdding] = useState<"new" | "agreement" | null>(null);
   const [error, setError] = useState<string | null>(null);
   const section: Section = search.view ?? "finance";
@@ -94,7 +97,10 @@ export function ProjectPage() {
     );
 
   const { project: p, client, service } = q.data;
-  const manager = me?.role === "owner" || me?.role === "admin";
+  const manager = !!me?.perms.includes("finance.edit");
+  const canDelete = !!me?.perms.includes("projects.delete");
+  const canArchive = !!me?.perms.includes("projects.archive");
+  const canTeam = !!me?.perms.includes("team.view") && !!me?.perms.includes("projects.edit");
   const refresh = () =>
     Promise.all([
       qc.invalidateQueries({ queryKey: projectKeys.all }),
@@ -142,6 +148,9 @@ export function ProjectPage() {
     { section: "المشروع" },
     { label: "تعديل بيانات المشروع", icon: <Pencil />, onSelect: () => setEditing(true) },
     { label: "نسخ رابط المشروع", icon: <Link2 />, onSelect: copyLink },
+    ...(canTeam
+      ? [{ label: "فريق المشروع", icon: <Users />, onSelect: () => setMembers(true) }]
+      : []),
     { section: "المالية" },
     {
       label: manager ? "إعدادات العقد والميزانية" : "شروط العقد والميزانية",
@@ -185,8 +194,8 @@ export function ProjectPage() {
         ]
       : []),
     { label: "تصدير المعاملات (Excel)", icon: <Download />, onSelect: exportEntries },
-    ...(manager || me?.role === "owner" ? (["separator"] as MenuItem[]) : []),
-    ...(manager
+    ...(canArchive || canDelete ? (["separator"] as MenuItem[]) : []),
+    ...(canArchive
       ? [
           p.archivedAt
             ? {
@@ -202,7 +211,7 @@ export function ProjectPage() {
               },
         ]
       : []),
-    ...(me?.role === "owner"
+    ...(canDelete
       ? [
           {
             label: "حذف نهائي",
@@ -305,7 +314,7 @@ export function ProjectPage() {
       <FinanceStrip
         projectId={p.id}
         canEdit={manager}
-        isOwner={me?.role === "owner"}
+        isOwner={canDelete}
         fromV1={p.createdBy.startsWith("v1-import") && !q.data.financeImported}
         onSettings={() => setSettings(true)}
         onRegister={() => setAdding("agreement")}
@@ -403,6 +412,7 @@ export function ProjectPage() {
         canEdit={manager}
       />
       <ProjectDialog open={editing} onOpenChange={setEditing} existing={q.data} />
+      <ProjectMembers projectId={p.id} open={members} onClose={() => setMembers(false)} />
     </>
   );
 }

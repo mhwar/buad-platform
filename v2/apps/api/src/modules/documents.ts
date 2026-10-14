@@ -21,7 +21,7 @@ import { zValidator } from "@hono/zod-validator";
 import { and, count, desc, eq, isNotNull, ne, or, type SQL, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { z } from "zod";
-import { requireAuth, requireRole, type Vars } from "../auth/middleware";
+import { requireAuth, requirePerm, type Vars } from "../auth/middleware";
 import type { AuthUser, Db } from "../auth/service";
 import { likeTerm, logoUrlSql, newId, nextCounter, nowSec } from "./common";
 import { loadFinance } from "./finance";
@@ -29,7 +29,7 @@ import { loadOrgProfile } from "./org";
 import { loadVisible, visibleProjects } from "./projects";
 
 type Env = { Bindings: { JWT_SECRET: string }; Variables: Vars };
-const manager = requireRole("owner", "admin");
+const manager = requirePerm("documents.edit");
 const today = () => new Date().toISOString().slice(0, 10);
 const registerQuery = z.object({
   q: z.string().max(100).optional(),
@@ -156,6 +156,7 @@ async function view(
 
 export const projectDocumentsApp = new Hono<Env>()
   .use(requireAuth)
+  .use(requirePerm("documents.view"))
   .get("/", async (c) => {
     const db = c.get("db");
     const me = c.get("user");
@@ -258,6 +259,7 @@ export const projectDocumentsApp = new Hono<Env>()
 
 export const documentsApp = new Hono<Env>()
   .use(requireAuth)
+  .use(requirePerm("documents.view"))
   .get("/templates", (c) =>
     c.json({
       ok: true,

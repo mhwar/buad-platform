@@ -1,14 +1,14 @@
 import { screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { Home } from "./home";
-import { renderWithApp, stubApi } from "./test-utils";
+import { meUser, renderWithApp, stubApi } from "./test-utils";
 
 afterEach(() => vi.unstubAllGlobals());
 
 describe("Home", () => {
   it("summarises clients and active projects", async () => {
     stubApi({
-      "GET /api/me": () => ({ ok: true, user: { id: "u", name: "سلطان", role: "owner" } }),
+      "GET /api/me": () => ({ ok: true, user: meUser("owner", { name: "سلطان" }) }),
       "GET /api/clients": () => ({ items: [], counts: { company: 2, association: 1 } }),
       "GET /api/projects": () => ({
         items: [

@@ -134,7 +134,7 @@ export function budgetRows(f: Finance) {
 
 function reportBlocks(f: Finance, p: ProjectDetail, orgName: string, mode: ReportMode): Block[] {
   const s = f.summary;
-  const detailed = mode === "detailed";
+  const detailed = mode === "detailed" && !f.profitHidden;
   const margin = s.grossTotal ? (s.profit / s.grossTotal) * 100 : 0;
   const entries = [...f.entries].sort((a, b) => a.date.localeCompare(b.date));
   const intro: Block = {
@@ -269,7 +269,7 @@ function downloadCsv(f: Finance, p: ProjectDetail, mode: ReportMode) {
     ["الضريبة", s.vatAmt],
     ["إجمالي المصروف", s.totalDeductions],
     ["المتبقي", s.remainingFromGross],
-    ...(mode === "detailed" ? [["صافي الربح", s.profit]] : []),
+    ...(mode === "detailed" && !f.profitHidden ? [["صافي الربح", s.profit]] : []),
     [],
     ["التاريخ", "البيان", "التصنيف", "النوع", "الحالة", "المبلغ"],
     ...f.entries.map((e) => [
