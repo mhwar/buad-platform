@@ -5,6 +5,7 @@ import {
   ArchiveRestore,
   CalendarDays,
   Download,
+  FileBarChart2,
   FileCheck2,
   FileText,
   Link2,
@@ -153,6 +154,32 @@ export function ProjectPage() {
             label: "تسجيل بنود الاتفاقية",
             icon: <FileCheck2 />,
             onSelect: () => setAdding("agreement"),
+          },
+        ]
+      : []),
+    {
+      label: "التقرير المالي للعميل",
+      hint: "كشف المعاملات · PDF",
+      icon: <FileText />,
+      onSelect: () =>
+        navigate({
+          to: "/print/finance/$projectId",
+          params: { projectId: p.id },
+          search: { mode: "client" },
+        }),
+    },
+    ...(manager
+      ? [
+          {
+            label: "التقرير المالي التفصيلي",
+            hint: "الأرباح، تقرير الاتفاقية، الميزانية",
+            icon: <FileBarChart2 />,
+            onSelect: () =>
+              navigate({
+                to: "/print/finance/$projectId",
+                params: { projectId: p.id },
+                search: { mode: "detailed" },
+              }),
           },
         ]
       : []),

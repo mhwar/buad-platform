@@ -9,6 +9,7 @@ import { type Entry, type Finance, financeApi, financeKey, financeQuery } from "
 import { ControlCentre } from "./ControlCentre";
 import { EntryDialog } from "./EntryDialog";
 import { catLabel } from "./labels";
+import { budgetRows } from "./ProjectFinanceReport";
 
 /* ─────────────────────────────────────────────────────────────────────────────
  * Project finance, laid out by how often each part is used:
@@ -373,6 +374,7 @@ function Budget({
   const api = financeApi(projectId);
   const apply = (res: Finance) => qc.setQueryData(financeKey(projectId), res);
   const total = fin.budget.reduce((a, b) => a + b.amount, 0) / 100;
+  const actual = budgetRows(fin);
   return (
     <section aria-label="الميزانية المخططة" className="border-t pt-6">
       <div className="mb-3 flex items-center justify-between">
@@ -392,8 +394,11 @@ function Budget({
         </p>
       ) : (
         <div className="space-y-2">
-          {fin.budget.map((b) => (
-            <div key={b.id} className="grid grid-cols-[1.4fr_1fr_auto] items-center gap-2">
+          {fin.budget.map((b, i) => (
+            <div
+              key={b.id}
+              className="grid grid-cols-[1.4fr_1fr_auto] items-center gap-x-2 gap-y-1"
+            >
               <Input
                 aria-label="البند"
                 placeholder="البند"
@@ -421,13 +426,28 @@ function Budget({
                 <Button
                   variant="ghost"
                   aria-label={`حذف ${b.name || "البند"}`}
-                  onClick={async () => apply(await api.deleteBudget(b.id))}
+                  onClick={async () => {
+                    const used = (actual[i]?.actual ?? 0) > 0;
+                    if (
+                      used &&
+                      !confirm("على هذا البند قيود مسجّلة؛ ستبقى القيود لكن دون ربطها بالبند. حذف؟")
+                    )
+                      return;
+                    apply(await api.deleteBudget(b.id));
+                  }}
                 >
                   <Trash2 className="size-4" />
                 </Button>
               ) : (
                 <span />
               )}
+              {/* Planned vs actual (entries registered on this item). */}
+              <p
+                className={`col-span-3 text-xs ${(actual[i]?.diff ?? 0) < 0 ? "text-red-600 dark:text-red-400" : "text-muted"}`}
+              >
+                صُرف {sar(actual[i]?.actual ?? 0)} من {sar(b.amount / 100)}
+                {(actual[i]?.diff ?? 0) < 0 && " · تجاوز المخطط"}
+              </p>
             </div>
           ))}
         </div>

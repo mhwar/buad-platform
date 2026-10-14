@@ -1,13 +1,22 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getRouteApi, Link } from "@tanstack/react-router";
-import { AlertTriangle, Briefcase, Building2, FileBarChart2, Users } from "lucide-react";
+import {
+  AlertTriangle,
+  Briefcase,
+  Building2,
+  FileBarChart2,
+  FileSpreadsheet,
+  Users,
+} from "lucide-react";
 import { useState } from "react";
 import {
   Badge,
   Button,
   Card,
+  Dialog,
   EmptyState,
   Input,
+  Notice,
   PageHeader,
   Pills,
   Segmented,
@@ -22,6 +31,7 @@ import {
   type Period,
   presetPeriod,
 } from "./api";
+import { downloadArchive } from "./archive";
 import { CompanyTab } from "./CompanyTab";
 import { MonthlyBars, RankBars } from "./charts";
 import { PartnersTab } from "./PartnersTab";
@@ -44,14 +54,20 @@ export function FinancePage() {
     navigate({ search: (prev) => ({ ...prev, ...patch }), replace: true });
   const [sort, setSort] = useState<SortKey>("profit");
 
+  const [archive, setArchive] = useState(false);
   const reportLink = (
-    <Link
-      to="/finance/report"
-      search={{ from: period.from, to: period.to }}
-      className="inline-flex items-center gap-2 rounded-lg bg-brand px-3.5 py-2 text-sm font-semibold text-white transition hover:bg-brand-strong dark:text-canvas"
-    >
-      <FileBarChart2 className="size-4" /> التقرير المالي
-    </Link>
+    <>
+      <Button variant="secondary" onClick={() => setArchive(true)}>
+        <FileSpreadsheet className="size-4" /> أرشيف Excel
+      </Button>
+      <Link
+        to="/finance/report"
+        search={{ from: period.from, to: period.to }}
+        className="inline-flex items-center gap-2 rounded-lg bg-brand px-3.5 py-2 text-sm font-semibold text-white transition hover:bg-brand-strong dark:text-canvas"
+      >
+        <FileBarChart2 className="size-4" /> التقرير المالي
+      </Link>
+    </>
   );
 
   return (
@@ -107,6 +123,7 @@ export function FinancePage() {
         )}
       </div>
 
+      {archive && <ArchiveDialog onClose={() => setArchive(false)} />}
       {tab === "company" ? (
         <CompanyTab period={period} />
       ) : tab === "partners" ? (
@@ -396,5 +413,64 @@ function QualityRow({
       )}
       {err && <span className="text-xs text-red-600">{err}</span>}
     </li>
+  );
+}
+
+/** «أرشيف Excel»: choose projects (finished ones by default) → one .xlsx workbook. */
+function ArchiveDialog({ onClose }: { onClose: () => void }) {
+  const q = useQuery(overviewQuery({}));
+  const all = q.data?.projects ?? [];
+  const [picked, setPicked] = useState<string[] | null>(null);
+  const chosen =
+    picked ??
+    all.filter((p) => p.status === "completed" || p.status === "cancelled").map((p) => p.id);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()} title="أرشيف Excel للمشاريع">
+      <p className="mb-3 text-sm text-muted">
+        ملف واحد: ورقة ملخص، ثم ورقة لكل مشروع فيها العقد وتقرير الاتفاقية وكل المعاملات.
+      </p>
+      {err && <Notice>{err}</Notice>}
+      <div className="max-h-72 space-y-1 overflow-y-auto rounded-lg border p-2 text-sm">
+        {all.map((p) => (
+          <label
+            key={p.id}
+            className="flex items-center justify-between gap-2 rounded px-2 py-1 hover:bg-brand-soft/50"
+          >
+            <span className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={chosen.includes(p.id)}
+                onChange={(e) =>
+                  setPicked(e.target.checked ? [...chosen, p.id] : chosen.filter((x) => x !== p.id))
+                }
+              />
+              {p.name}
+            </span>
+            <span className="text-xs text-muted">{label(PROJECT_STATUS_LABELS, p.status)}</span>
+          </label>
+        ))}
+      </div>
+      <div className="mt-4 flex justify-end">
+        <Button
+          disabled={!chosen.length || busy}
+          onClick={async () => {
+            setBusy(true);
+            setErr("");
+            try {
+              await downloadArchive(all.filter((p) => chosen.includes(p.id)));
+              onClose();
+            } catch {
+              setErr("تعذّر تجهيز الملف");
+            } finally {
+              setBusy(false);
+            }
+          }}
+        >
+          {busy ? "جارٍ التجهيز…" : `تنزيل (${chosen.length} مشروع)`}
+        </Button>
+      </div>
+    </Dialog>
   );
 }
