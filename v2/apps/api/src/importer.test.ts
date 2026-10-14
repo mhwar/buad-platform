@@ -341,6 +341,21 @@ describe("import v1 contracts and letters", () => {
     expect((await withFiles("GET", "/api/org/profile")).body.profile.urls.headerAsset).toMatch(
       /^\/api\/assets\/ast_/,
     );
+
+    // Approved in v1 → can be sent; the link shows it numbered and filled, with its letterhead.
+    const share = await withFiles("POST", `/api/documents/${k1.id}/shares`, { days: 7 });
+    expect(share.status).toBe(201);
+    const pub = await withFiles("GET", `/api/public${share.body.path}`);
+    expect(pub.body.document.content[0].title).toBe("المادة الأولى: موضوع العقد");
+    expect(pub.body.values.party_b_name.value).toBe("شركة الأفق");
+    expect(pub.body.values.contract_no.value).toBe(detail.values.contract_no.value);
+    const header = pub.body.document.layout.headerAsset;
+    expect(header).toMatch(/^ast_/);
+    const img = await app.request(`/api/public${share.body.path}/assets/${header}`, {}, {
+      ...env,
+      FILES: files,
+    } as unknown as Env);
+    expect(img.status).toBe(200);
   });
 
   it("re-import is idempotent and never overwrites a document edited in v2", async () => {

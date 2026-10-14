@@ -6,6 +6,7 @@ import {
   Link,
   Outlet,
   redirect,
+  useRouterState,
 } from "@tanstack/react-router";
 import { Briefcase, Files, House as Home_, Settings, Users } from "lucide-react";
 import { z } from "zod";
@@ -18,6 +19,7 @@ import { ClientsPage } from "./features/clients/ClientsPage";
 import { StatementPage } from "./features/clients/StatementPage";
 import { DocumentEditor } from "./features/documents/DocumentEditor";
 import { DocumentsPage } from "./features/documents/DocumentsPage";
+import { PublicDocumentPage } from "./features/documents/PublicDocument";
 import { ImportPage } from "./features/import/ImportPage";
 import { OrgSettingsPage } from "./features/org/OrgSettings";
 import { ProjectPage } from "./features/projects/ProjectPage";
@@ -38,7 +40,8 @@ const NAV = [
 ] as const;
 
 function Shell() {
-  const me = useQuery(meQuery);
+  const isShareLink = useRouterState({ select: (s) => s.location.pathname.startsWith("/s/") });
+  const me = useQuery({ ...meQuery, enabled: !isShareLink });
   const health = useServerVersion();
   // A full page load after logout: nothing of the previous user's data stays in memory,
   // and the next sign-in starts from a clean state.
@@ -46,8 +49,8 @@ function Shell() {
     await api.api.auth.logout.$post().catch(() => undefined);
     window.location.assign("/login");
   };
-  // Signed out: the page (login) owns the whole screen.
-  if (!me.data) return <Outlet />;
+  // Signed out (login), or a document opened from a share link: the page owns the whole screen.
+  if (!me.data || isShareLink) return <Outlet />;
   const navLink =
     "flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-muted transition hover:bg-brand-soft hover:text-ink";
   const navActive = "bg-brand-soft font-semibold text-brand";
@@ -227,6 +230,13 @@ const projectRoute = createRoute({
   component: ProjectPage,
 });
 
+// Public: a document sent by link (no sign-in; the token is the permission).
+const shareRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/s/$token",
+  component: PublicDocumentPage,
+});
+
 const documentsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/documents",
@@ -309,6 +319,7 @@ export const router = createRouter({
     projectRoute,
     documentsRoute,
     documentRoute,
+    shareRoute,
     settingsRoute.addChildren([settingsIndexRoute, orgRoute, importRoute, accountRoute]),
     legacyImportRoute,
     legacyAccountRoute,

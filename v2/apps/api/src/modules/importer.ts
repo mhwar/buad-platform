@@ -477,7 +477,11 @@ export const importApp = new Hono<Env>()
                 id: `dv_${d.id}`,
                 documentId: d.id,
                 version: 1,
-                snapshot: JSON.stringify({ document: { ...d, number }, importedFromV1: true }),
+                // Marker only: the stored row is the approved content (see share.ts approvedView).
+                snapshot: JSON.stringify({
+                  document: { id: d.id, projectId: p.id, kind: d.kind, number, title: d.title },
+                  importedFromV1: true,
+                }),
                 approvedBy: by,
                 approvedAt: d.updatedAt ?? t,
               })

@@ -42,7 +42,7 @@ const registerQuery = z.object({
 const BUILTIN_CONTRACTS = Object.keys(CONTRACT_TEMPLATES) as (keyof typeof CONTRACT_TEMPLATES)[];
 
 /** Everything a document can draw on, gathered once per request. */
-async function buildContext(
+export async function buildContext(
   db: Db,
   project: NonNullable<Awaited<ReturnType<typeof loadVisible>>>,
   orgId: string,
@@ -111,7 +111,7 @@ function parse(doc: typeof documents.$inferSelect) {
   };
 }
 
-async function loadDoc(db: Db, me: AuthUser, id: string) {
+export async function loadDoc(db: Db, me: AuthUser, id: string) {
   const [doc] = await db
     .select()
     .from(documents)

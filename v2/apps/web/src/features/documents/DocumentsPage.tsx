@@ -103,6 +103,7 @@ export function DocumentsPage() {
         />
       </div>
 
+      {actions.dialog}
       {actions.busy && <Notice tone="blue">جارٍ {actions.busy}…</Notice>}
       {actions.error && <Notice>{actions.error}</Notice>}
       {reg.isPending ? (

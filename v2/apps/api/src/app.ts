@@ -23,6 +23,7 @@ import { financeApp } from "./modules/finance";
 import { importApp } from "./modules/importer";
 import { orgApp } from "./modules/org";
 import { projectsApp } from "./modules/projects";
+import { documentSharesApp, publicShareApp } from "./modules/share";
 
 export type Env = {
   APP_VERSION: string;
@@ -155,7 +156,9 @@ export function createApp(deps: AppDeps = {}) {
       .route("/api/clients", clientsApp)
       .route("/api/projects/:projectId/finance", financeApp)
       .route("/api/projects/:projectId/documents", projectDocumentsApp)
+      .route("/api/documents/:docId/shares", documentSharesApp)
       .route("/api/documents", documentsApp)
+      .route("/api/public/s", publicShareApp)
       .route("/api/projects", projectsApp)
       .route("/api/import", importApp)
       .route("/api/assets", assetsApp)

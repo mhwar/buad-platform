@@ -404,3 +404,32 @@ export const documentVersions = sqliteTable(
   },
   (t) => [index("idx_versions_document").on(t.documentId)],
 );
+
+/**
+ * A link that lets someone outside the platform open one approved document (read-only, with
+ * download). Only the token's hash is kept; the link expires and can be revoked.
+ */
+export const documentShares = sqliteTable(
+  "document_shares",
+  {
+    id: text("id").primaryKey(),
+    orgId: text("org_id")
+      .notNull()
+      .references(() => orgs.id),
+    documentId: text("document_id")
+      .notNull()
+      .references(() => documents.id),
+    tokenHash: text("token_hash").notNull(),
+    channel: text("channel").notNull().default(""),
+    createdBy: text("created_by").notNull(),
+    createdAt: integer("created_at").notNull(),
+    expiresAt: integer("expires_at").notNull(),
+    revokedAt: integer("revoked_at"),
+    views: integer("views").notNull().default(0),
+    lastViewedAt: integer("last_viewed_at"),
+  },
+  (t) => [
+    uniqueIndex("uq_document_shares_token").on(t.tokenHash),
+    index("idx_document_shares_document").on(t.documentId),
+  ],
+);

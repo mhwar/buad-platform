@@ -73,6 +73,24 @@ export type DocDetail = {
   };
   versions: { version: number; approvedBy: string; approvedAt: number }[];
 };
+export type Share = {
+  id: string;
+  channel: string;
+  createdAt: number;
+  expiresAt: number;
+  revokedAt: number | null;
+  views: number;
+  lastViewedAt: number | null;
+};
+/** What a share link shows: the approved version, read-only. */
+export type PublicDocument = {
+  document: Pick<DocDetail["document"], "kind" | "number" | "title" | "content" | "layout">;
+  values: Resolved;
+  org: DocDetail["org"];
+  outgoing: string;
+  approvedAt: number;
+  expiresAt: number;
+};
 export type Templates = {
   contracts: { key: string; title: string; clauses: number }[];
   letters: { key: string; title: string }[];
@@ -135,6 +153,14 @@ export const docApi = {
     ok<{ outgoingNo: string; created: boolean }>(
       await fetch(`/api/documents/${id}/outgoing`, json("POST")),
     ),
+  shares: async (id: string) =>
+    (await ok<{ items: Share[] }>(await fetch(`/api/documents/${id}/shares`))).items,
+  share: async (id: string, days: 7 | 30, channel: "whatsapp" | "email" | "link") =>
+    ok<{ path: string; expiresAt: number }>(
+      await fetch(`/api/documents/${id}/shares`, json("POST", { days, channel })),
+    ),
+  revokeShare: async (id: string, shareId: string) =>
+    ok<{ ok: true }>(await fetch(`/api/documents/${id}/shares/${shareId}`, json("DELETE"))),
   remove: async (id: string) =>
     ok<{ ok: true }>(await fetch(`/api/documents/${id}`, json("DELETE"))),
 };

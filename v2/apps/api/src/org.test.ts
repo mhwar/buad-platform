@@ -173,3 +173,90 @@ describe("organisation profile", () => {
     expect(ok.body.profile.urls.signatureAsset).toBe("");
   });
 });
+
+describe("share links (إرسال)", () => {
+  const setup = async () => {
+    const header = (await call("adm", "POST", "/api/assets", undefined, PNG)).body.id;
+    const other = (await call("x", "POST", "/api/assets", undefined, SVG)).body.id;
+    await call("adm", "PATCH", "/api/org/profile", { version: 0, headerAsset: header });
+    const cl = (await call("adm", "POST", "/api/clients", { name: "جمعية" })).body.id;
+    const pid = (
+      await call("adm", "POST", "/api/projects", { clientId: cl, name: "م", expectedValue: 1000 })
+    ).body.id;
+    const id = (
+      await call("adm", "POST", `/api/projects/${pid}/documents`, {
+        kind: "letter",
+        template: "custom",
+        title: "خطاب",
+      })
+    ).body.id;
+    return { header, other, id };
+  };
+  const approve = async (id: string) => {
+    await call("adm", "POST", `/api/documents/${id}/status`, { to: "review", version: 1 });
+    await call("adm", "POST", `/api/documents/${id}/status`, { to: "approved", version: 2 });
+  };
+  const open = (path: string) => app.request(path, {}, env);
+
+  it("only approved documents, only managers; the link works without login", async () => {
+    const { id, header, other } = await setup();
+    expect((await call("adm", "POST", `/api/documents/${id}/shares`, { days: 7 })).body.error).toBe(
+      "not_approved",
+    );
+    await approve(id);
+    expect((await call("m1", "POST", `/api/documents/${id}/shares`, {})).status).toBe(403);
+    expect((await call("x", "POST", `/api/documents/${id}/shares`, {})).status).toBe(404);
+    const s = await call("adm", "POST", `/api/documents/${id}/shares`, {
+      days: 7,
+      channel: "whatsapp",
+    });
+    expect(s.status).toBe(201);
+    expect(s.body.path).toMatch(/^\/s\/[\w-]{43}$/);
+    const token = s.body.path.slice(3);
+
+    const pub = await open(`/api/public/s/${token}`);
+    expect(pub.status).toBe(200);
+    expect(pub.headers.get("cache-control")).toBe("no-store");
+    expect(pub.headers.get("x-robots-tag")).toContain("noindex");
+    const body = (await pub.json()) as J;
+    expect(body.document.title).toBe("خطاب");
+    expect(body.org.urls.headerAsset).toBe(`/api/public/s/${token}/assets/${header}`);
+    // Its letterhead loads; anything else (even another org's real asset) does not.
+    expect((await open(body.org.urls.headerAsset)).status).toBe(200);
+    expect((await open(`/api/public/s/${token}/assets/${other}`)).status).toBe(404);
+
+    const list = (await call("adm", "GET", `/api/documents/${id}/shares`)).body.items;
+    expect(list).toHaveLength(1);
+    expect(list[0]).toMatchObject({ channel: "whatsapp", views: 1 });
+    expect(JSON.stringify(list)).not.toContain(token); // the token is never stored or listed
+  });
+
+  it("shows the approved version even after reopening; revoke and expiry close it", async () => {
+    const { id } = await setup();
+    await approve(id);
+    const token = (await call("adm", "POST", `/api/documents/${id}/shares`, {})).body.path.slice(3);
+    await call("adm", "POST", `/api/documents/${id}/status`, { to: "draft", version: 3 });
+    await call("adm", "PATCH", `/api/documents/${id}`, { version: 4, title: "مسودة جديدة" });
+    expect(((await (await open(`/api/public/s/${token}`)).json()) as J).document.title).toBe(
+      "خطاب",
+    );
+
+    const share = (await call("adm", "GET", `/api/documents/${id}/shares`)).body.items[0];
+    await call("adm", "DELETE", `/api/documents/${id}/shares/${share.id}`);
+    expect((await open(`/api/public/s/${token}`)).status).toBe(404);
+    expect(
+      (await open("/api/public/s/not-a-real-token-but-long-enough-to-look-real-xx")).status,
+    ).toBe(404);
+
+    await approve2(id);
+    const t2 = (await call("adm", "POST", `/api/documents/${id}/shares`, { days: 30 })).body;
+    expect(t2.expiresAt - Math.floor(Date.now() / 1000)).toBeGreaterThan(29 * 86400);
+    ctx.sqlite.prepare("UPDATE document_shares SET expires_at = 1 WHERE revoked_at IS NULL").run();
+    expect((await open(`/api/public/s/${t2.path.slice(3)}`)).status).toBe(404);
+  });
+
+  const approve2 = async (id: string) => {
+    const v = (await call("adm", "GET", `/api/documents/${id}`)).body.document.version;
+    await call("adm", "POST", `/api/documents/${id}/status`, { to: "approved", version: v });
+  };
+});

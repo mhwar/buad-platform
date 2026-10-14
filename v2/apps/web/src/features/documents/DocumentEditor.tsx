@@ -26,6 +26,7 @@ import {
   Printer,
   RotateCcw,
   Send,
+  Share2,
   Stamp,
   Trash2,
   Undo2,
@@ -52,6 +53,7 @@ import { exportPdf, exportWord } from "./DocumentActions";
 import { STATUS_TONE } from "./DocumentsSection";
 import { DocumentView, VAR_LABELS } from "./DocumentView";
 import { FitToWidth } from "./FitToWidth";
+import { SendDialog } from "./SendDialog";
 
 const route = getRouteApi("/projects/$id/documents/$docId");
 type Panel = "data" | "content" | "format";
@@ -152,6 +154,7 @@ export function DocumentEditor() {
   const [draft, setDraft] = useState<Draft | null>(null);
   const [panel, setPanel] = useState<Panel>("data");
   const [saveState, setSaveState] = useState<"idle" | "pending" | "saving" | "saved">("idle");
+  const [sending, setSending] = useState(false);
   const [notice, setNotice] = useState<{ tone: "red" | "amber" | "blue"; text: string } | null>(
     null,
   );
@@ -397,6 +400,11 @@ export function DocumentEditor() {
               <Check className="size-4" /> اعتماد
             </Button>
           )}
+          {manager && doc.status === "approved" && (
+            <Button variant="secondary" onClick={() => setSending(true)}>
+              <Share2 className="size-4" /> إرسال
+            </Button>
+          )}
           {manager && doc.status === "approved" && !doc.outgoingNo && (
             <Button onClick={registerOutgoing}>
               <Stamp className="size-4" /> تسجيل صادر
@@ -414,6 +422,7 @@ export function DocumentEditor() {
         </div>
       </div>
       {notice && <Notice tone={notice.tone}>{notice.text}</Notice>}
+      {sending && q.data && <SendDialog detail={q.data} onClose={() => setSending(false)} />}
 
       <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_24rem]">
         {/* ── Preview (also what prints) ───────────────────── */}
