@@ -163,7 +163,8 @@ export const productPatch = z
     version: z.number().int().min(1),
     name: z.string().trim().min(1).max(120),
     slug,
-    tagline: str(240),
+    // No default here: an update that omits the tagline must keep it.
+    tagline: z.string().trim().max(240),
     status: z.enum(PRODUCT_STATUSES),
     showOnSite: z.boolean(),
     content: productContent,

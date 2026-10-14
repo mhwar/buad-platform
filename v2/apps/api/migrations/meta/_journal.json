@@ -120,6 +120,13 @@
       "when": 1792020133317,
       "tag": "0016_wise_iron_monger",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "6",
+      "when": 1792020544528,
+      "tag": "0017_fair_talkback",
+      "breakpoints": true
     }
   ]
 }

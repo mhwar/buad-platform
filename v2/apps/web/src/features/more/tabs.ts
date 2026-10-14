@@ -64,18 +64,13 @@ export const MORE_TABS: MoreTab[] = [
   {
     key: "tasks",
     label: "المهام",
-    to: soon("tasks"),
+    to: "/more/tasks",
     icon: ListChecks,
     group: "work",
-    soon: true,
     desc: "مهام الفريق ومراحل تنفيذ كل مشروع ومن المسؤول عنها وموعدها.",
     when: "يومياً: لمعرفة ما عليك وما تأخّر.",
-    will: [
-      "مراحل المشروع تُولَّد من «آلية العمل» في الخدمة المرتبطة.",
-      "إسناد المهام للفريق وتنبيههم، وحالات: قيد التنفيذ، معلّقة، منجزة.",
-      "ساعات العمل لحساب تكلفة الوقت الحقيقية لكل مشروع.",
-    ],
-    match: at("/more/soon/tasks"),
+    perm: "tasks.view",
+    match: at("/more/tasks"),
   },
   {
     key: "sales",

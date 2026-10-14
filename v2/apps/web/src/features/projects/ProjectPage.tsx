@@ -45,6 +45,7 @@ import {
 } from "../finance/FinanceTab";
 import { ReceiptsCard } from "../finance/Receipts";
 import { label, PROJECT_STATUS_LABELS, PROJECT_TYPE_LABELS, STATUS_TONE } from "../labels";
+import { ExecutionTab } from "../tasks/ExecutionTab";
 import { ProjectMembers } from "../team/ProjectMembers";
 import {
   archiveProject,
@@ -341,8 +342,7 @@ export function ProjectPage() {
                 value: "execution",
                 label: "التنفيذ",
                 icon: <ListChecks className="size-4" />,
-                soon: true,
-                hint: "المهام وتخطيط الفعالية",
+                hint: "المراحل والمهام والوقت",
               },
             ]}
           />
@@ -356,10 +356,7 @@ export function ProjectPage() {
           ) : section === "documents" ? (
             <DocumentsSection projectId={p.id} canEdit={manager} />
           ) : (
-            <Upcoming
-              title="التنفيذ"
-              text="مهام المشروع وتخطيط الفعالية (البرنامج واللجان) مرتبطة بالمواعيد والمسؤولين."
-            />
+            <ExecutionTab projectId={p.id} />
           )}
         </div>
 
@@ -432,15 +429,6 @@ function Detail({ label, value, icon }: { label: string; value: string; icon?: R
         )}
       </dd>
     </div>
-  );
-}
-
-function Upcoming({ title, text }: { title: string; text: string }) {
-  return (
-    <Card className="border-dashed py-12 text-center">
-      <p className="font-semibold">{title} — قريباً</p>
-      <p className="mx-auto mt-2 max-w-md text-sm text-muted">{text}</p>
-    </Card>
   );
 }
 

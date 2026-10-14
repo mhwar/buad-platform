@@ -69,3 +69,22 @@ describe("blueprints", () => {
       for (const p of b.content.proof) expect(allowed.has(p.title)).toBe(true);
   });
 });
+
+describe("patch schemas never reset omitted fields", () => {
+  it("productPatch keeps the tagline when it is not sent", async () => {
+    const { productPatch } = await import("./products");
+    expect(productPatch.parse({ version: 2, status: "published" })).toEqual({
+      version: 2,
+      status: "published",
+    });
+  });
+  it("plan and task patches carry only what was sent", async () => {
+    const { objectivePatch, initiativePatch, indicatorPatch } = await import("./plans");
+    const { taskPatch, stagePatch } = await import("./tasks");
+    expect(objectivePatch.parse({ title: "ع" })).toEqual({ title: "ع" });
+    expect(initiativePatch.parse({ status: "done" })).toEqual({ status: "done" });
+    expect(indicatorPatch.parse({ current: 5 })).toEqual({ current: 5 });
+    expect(taskPatch.parse({ status: "done" })).toEqual({ status: "done" });
+    expect(stagePatch.parse({ status: "doing" })).toEqual({ status: "doing" });
+  });
+});
