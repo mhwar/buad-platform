@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link, useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { Plus, Sparkles } from "lucide-react";
 import { useState } from "react";
 import {
@@ -12,6 +12,7 @@ import {
   Input,
   Notice,
   PageHeader,
+  Tabs,
 } from "../../components/ui";
 import { ago, ok } from "../../lib/format";
 import {
@@ -19,9 +20,11 @@ import {
   blueprintsQuery,
   type ProductListItem,
   productsQuery,
+  requestsQuery,
   STATUS_LABEL,
   sendJson,
 } from "./products-api";
+import { RequestsInbox } from "./RequestsInbox";
 
 const STATUS_TONE = { draft: "gray", published: "green", archived: "amber" } as const;
 
@@ -29,6 +32,9 @@ const STATUS_TONE = { draft: "gray", published: "green", archived: "amber" } as 
 export function ProductsPage() {
   const qc = useQueryClient();
   const navigate = useNavigate();
+  const search = useSearch({ strict: false }) as { tab?: "products" | "requests" };
+  const tab = search.tab ?? "products";
+  const newCount = useQuery(requestsQuery("")).data?.counts.new ?? 0;
   const products = useQuery(productsQuery);
   const blueprints = useQuery(blueprintsQuery);
   const [creating, setCreating] = useState(false);
@@ -71,44 +77,68 @@ export function ProductsPage() {
           </Button>
         }
       />
+      <Tabs
+        items={[
+          {
+            to: "",
+            label: "المنتجات",
+            active: tab === "products",
+            onClick: () =>
+              navigate({ to: "/products", search: { tab: "products" }, replace: true }),
+          },
+          {
+            to: "",
+            label: newCount ? `الطلبات (${newCount} جديد)` : "الطلبات",
+            active: tab === "requests",
+            onClick: () =>
+              navigate({ to: "/products", search: { tab: "requests" }, replace: true }),
+          },
+        ]}
+      />
       {error && <Notice>{error}</Notice>}
-      {products.isError && <Notice>تعذّر تحميل المنتجات</Notice>}
-
-      {products.isPending ? (
-        <div className="h-40 animate-pulse rounded-2xl bg-slate-200 dark:bg-slate-800" />
-      ) : list.length === 0 ? (
-        <EmptyState
-          title="لا توجد منتجات بعد"
-          text="ابدأ من أحد القوالب الجاهزة أدناه، أو أنشئ منتجاً فارغاً."
-        />
+      {tab === "requests" ? (
+        <RequestsInbox products={list} />
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {list.map((p) => (
-            <ProductCard key={p.id} p={p} />
-          ))}
-        </div>
-      )}
+        <>
+          {products.isError && <Notice>تعذّر تحميل المنتجات</Notice>}
 
-      {available.length > 0 && (
-        <section className="mt-10">
-          <h2 className="mb-1 flex items-center gap-2 text-lg font-bold">
-            <Sparkles className="size-5 text-brand" /> قوالب جاهزة
-          </h2>
-          <p className="mb-4 text-sm text-muted">
-            كل قالب يحمل المحتوى والباقات والاستبيان ومراحل التشغيل. التكاليف تبدأ فارغة: أدخل
-            تكاليفك الفعلية ليُحسب السعر.
-          </p>
-          <div className="grid gap-4 sm:grid-cols-2">
-            {available.map((b) => (
-              <BlueprintCard
-                key={b.key}
-                b={b}
-                busy={fromBlueprint.isPending && fromBlueprint.variables === b.key}
-                onStart={() => fromBlueprint.mutate(b.key)}
-              />
-            ))}
-          </div>
-        </section>
+          {products.isPending ? (
+            <div className="h-40 animate-pulse rounded-2xl bg-slate-200 dark:bg-slate-800" />
+          ) : list.length === 0 ? (
+            <EmptyState
+              title="لا توجد منتجات بعد"
+              text="ابدأ من أحد القوالب الجاهزة أدناه، أو أنشئ منتجاً فارغاً."
+            />
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              {list.map((p) => (
+                <ProductCard key={p.id} p={p} />
+              ))}
+            </div>
+          )}
+
+          {available.length > 0 && (
+            <section className="mt-10">
+              <h2 className="mb-1 flex items-center gap-2 text-lg font-bold">
+                <Sparkles className="size-5 text-brand" /> قوالب جاهزة
+              </h2>
+              <p className="mb-4 text-sm text-muted">
+                كل قالب يحمل المحتوى والباقات والاستبيان ومراحل التشغيل. التكاليف تبدأ فارغة: أدخل
+                تكاليفك الفعلية ليُحسب السعر.
+              </p>
+              <div className="grid gap-4 sm:grid-cols-2">
+                {available.map((b) => (
+                  <BlueprintCard
+                    key={b.key}
+                    b={b}
+                    busy={fromBlueprint.isPending && fromBlueprint.variables === b.key}
+                    onStart={() => fromBlueprint.mutate(b.key)}
+                  />
+                ))}
+              </div>
+            </section>
+          )}
+        </>
       )}
 
       <Dialog open={creating} onOpenChange={setCreating} title="منتج جديد">

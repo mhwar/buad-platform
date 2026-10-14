@@ -12,7 +12,8 @@
     "./documents": "./src/documents.ts",
     "./company": "./src/company.ts",
     "./products": "./src/products.ts",
-    "./blueprints": "./src/blueprints.ts"
+    "./blueprints": "./src/blueprints.ts",
+    "./site": "./src/site.ts"
   },
   "scripts": {
     "typecheck": "tsc -p .",

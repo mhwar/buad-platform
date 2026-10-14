@@ -20,7 +20,7 @@ import {
   PROJECT_TYPES,
   RETAINED_CATS,
 } from "./enums";
-import { PRODUCT_STATUSES } from "./products";
+import { PRODUCT_STATUSES, REQUEST_STATUSES } from "./products";
 
 export { CLIENT_TYPES, PROJECT_STATUSES, PROJECT_TYPES };
 
@@ -619,3 +619,57 @@ export const products = sqliteTable(
     index("idx_products_org").on(t.orgId, t.status),
   ],
 );
+
+/** Quote requests: from the public website form, or logged by staff (e.g. from a WhatsApp chat). */
+export const productRequests = sqliteTable(
+  "product_requests",
+  {
+    id: text("id").primaryKey(),
+    orgId: text("org_id")
+      .notNull()
+      .references(() => orgs.id),
+    productId: text("product_id").notNull().default(""),
+    /** The product's name when the request came in (it may be renamed later). */
+    productName: text("product_name").notNull().default(""),
+    source: text("source", { enum: ["site", "manual"] })
+      .notNull()
+      .default("site"),
+    status: text("status", { enum: REQUEST_STATUSES }).notNull().default("new"),
+    name: text("name").notNull(),
+    entity: text("entity").notNull().default(""),
+    phone: text("phone").notNull().default(""),
+    email: text("email").notNull().default(""),
+    message: text("message").notNull().default(""),
+    /** JSON: { question label: answer } captured with the labels asked at the time. */
+    answers: text("answers").notNull().default("{}"),
+    /** JSON snapshot of the priced offer attached by staff (filled in a later step). */
+    quote: text("quote").notNull().default("{}"),
+    notes: text("notes").notNull().default(""),
+    clientId: text("client_id").notNull().default(""),
+    projectId: text("project_id").notNull().default(""),
+    /** Hash of (ip, org, day): only used to limit abuse, never shown. */
+    ipHash: text("ip_hash").notNull().default(""),
+    createdAt: integer("created_at").notNull().default(now),
+    updatedBy: text("updated_by").notNull().default(""),
+    updatedAt: integer("updated_at").notNull().default(now),
+  },
+  (t) => [
+    index("idx_requests_org").on(t.orgId, t.status, t.createdAt),
+    index("idx_requests_ip").on(t.ipHash, t.createdAt),
+  ],
+);
+
+/** The public website: an editable draft and the last published snapshot (what visitors see). */
+export const siteSettings = sqliteTable("site_settings", {
+  orgId: text("org_id")
+    .primaryKey()
+    .references(() => orgs.id),
+  draft: text("draft").notNull().default("{}"),
+  /** "" until first published. */
+  published: text("published").notNull().default(""),
+  publishedAt: integer("published_at").notNull().default(0),
+  publishedBy: text("published_by").notNull().default(""),
+  version: integer("version").notNull().default(1),
+  updatedBy: text("updated_by").notNull().default(""),
+  updatedAt: integer("updated_at").notNull().default(now),
+});

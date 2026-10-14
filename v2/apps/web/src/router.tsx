@@ -8,7 +8,16 @@ import {
   redirect,
   useRouterState,
 } from "@tanstack/react-router";
-import { Briefcase, Files, House as Home_, Landmark, Package, Settings, Users } from "lucide-react";
+import {
+  Briefcase,
+  Files,
+  Globe,
+  House as Home_,
+  Landmark,
+  Package,
+  Settings,
+  Users,
+} from "lucide-react";
 import { z } from "zod";
 import { AccountPage } from "./account";
 import { api } from "./api";
@@ -32,6 +41,9 @@ import { ProductsPage } from "./features/products/ProductsPage";
 import { ProjectPage } from "./features/projects/ProjectPage";
 import { ProjectsPage } from "./features/projects/ProjectsPage";
 import { SettingsLayout } from "./features/settings/SettingsLayout";
+import { ProductPublicPage } from "./features/site/ProductPublicPage";
+import { SitePage } from "./features/site/SitePage";
+import { WebsiteEditorPage } from "./features/website/WebsiteEditor";
 import { Home } from "./home";
 import { LoginPage } from "./login";
 import { queryClient } from "./query-client";
@@ -46,12 +58,13 @@ const NAV = [
   { to: "/documents", label: "المستندات", icon: Files, exact: false },
   { to: "/finance", label: "المالية", icon: Landmark, exact: false, managerOnly: true },
   { to: "/products", label: "المنتجات والخدمات", icon: Package, exact: false, managerOnly: true },
+  { to: "/website", label: "الموقع", icon: Globe, exact: false, managerOnly: true },
 ] as const;
 
 function Shell() {
   // Pages that stand alone (no app chrome): a shared document, or a page prepared for PDF.
   const isShareLink = useRouterState({
-    select: (s) => /^\/(s|print)\//.test(s.location.pathname),
+    select: (s) => /^\/(s|print|site)(\/|$)/.test(s.location.pathname),
   });
   const me = useQuery(meQuery);
   const health = useServerVersion();
@@ -296,11 +309,30 @@ const vatReportRoute = createRoute({
   beforeLoad: managerOnly,
   component: VatReportPage,
 });
+// Public website (no sign-in; the page owns the whole screen).
+const siteRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/site",
+  validateSearch: z.object({ preview: z.coerce.boolean().optional() }),
+  component: SitePage,
+});
+const siteProductRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/site/p/$slug",
+  component: ProductPublicPage,
+});
 const productsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/products",
+  validateSearch: z.object({ tab: z.enum(["products", "requests"]).optional() }),
   beforeLoad: managerOnly,
   component: ProductsPage,
+});
+const websiteRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/website",
+  beforeLoad: managerOnly,
+  component: WebsiteEditorPage,
 });
 const productRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -425,6 +457,9 @@ export const router = createRouter({
     vatReportRoute,
     productsRoute,
     productRoute,
+    websiteRoute,
+    siteRoute,
+    siteProductRoute,
     shareRoute,
     printDocumentRoute,
     printFinanceRoute,

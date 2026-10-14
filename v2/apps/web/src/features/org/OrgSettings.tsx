@@ -23,7 +23,7 @@ export const orgProfileQuery = queryOptions({
   staleTime: 5 * 60_000,
 });
 
-async function uploadImage(file: File): Promise<{ id: string; url: string }> {
+export async function uploadImage(file: File): Promise<{ id: string; url: string }> {
   return ok(
     await fetch("/api/assets", {
       method: "POST",
