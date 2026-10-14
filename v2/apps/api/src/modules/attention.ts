@@ -3,6 +3,7 @@ import {
   documents,
   financeEntries,
   orgProfile,
+  paymentSchedule,
   planCycles,
   planInitiatives,
   productRequests,
@@ -140,6 +141,27 @@ export const attentionApp = new Hono<{ Variables: Vars }>().use(requireAuth).get
       title: "حركات مالية معلّقة تنتظر السداد",
       count: n,
       link: "/finance",
+    });
+  }
+  if (can("treasury.view")) {
+    const n = await count(
+      db
+        .select({ n: sql<number>`count(*)` })
+        .from(paymentSchedule)
+        .where(
+          and(
+            eq(paymentSchedule.orgId, me.orgId),
+            eq(paymentSchedule.status, "pending"),
+            lt(paymentSchedule.dueDate, today),
+          ),
+        ),
+    );
+    add({
+      key: "instalments",
+      tone: "warn",
+      title: "دفعات عملاء تجاوزت موعد استحقاقها",
+      count: n,
+      link: "/more/receivables",
     });
   }
   if (can("tasks.view")) {

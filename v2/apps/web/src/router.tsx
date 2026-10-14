@@ -39,6 +39,7 @@ import { ProductBuilderPage } from "./features/products/ProductBuilder";
 import { ProductsPage } from "./features/products/ProductsPage";
 import { ProjectPage } from "./features/projects/ProjectPage";
 import { ProjectsPage } from "./features/projects/ProjectsPage";
+import { ReceivablesPage } from "./features/receivables/ReceivablesPage";
 import { QuotePrintPage } from "./features/sales/QuotePrint";
 import { SalesPage } from "./features/sales/SalesPage";
 import { SettingsLayout } from "./features/settings/SettingsLayout";
@@ -482,6 +483,12 @@ const printQuoteRoute = createRoute({
     return <QuotePrintPage id={id} />;
   },
 });
+const receivablesRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/more/receivables",
+  beforeLoad: needs("treasury.view"),
+  component: ReceivablesPage,
+});
 const moreSoonRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/more/soon/$key",
@@ -530,6 +537,7 @@ export const router = createRouter({
     plansRoute,
     tasksRoute,
     salesRoute,
+    receivablesRoute,
     printQuoteRoute,
     teamRoute,
     activityRoute,

@@ -45,6 +45,7 @@ import {
 } from "../finance/FinanceTab";
 import { ReceiptsCard } from "../finance/Receipts";
 import { label, PROJECT_STATUS_LABELS, PROJECT_TYPE_LABELS, STATUS_TONE } from "../labels";
+import { ScheduleCard } from "../receivables/ScheduleCard";
 import { ExecutionTab } from "../tasks/ExecutionTab";
 import { ProjectMembers } from "../team/ProjectMembers";
 import {
@@ -367,6 +368,7 @@ export function ProjectPage() {
             onSettings={() => setSettings(true)}
           />
           <ReceiptsCard projectId={p.id} canEdit={manager} />
+          <ScheduleCard projectId={p.id} canEdit={manager} />
           <Card>
             <div className="mb-3 flex items-center justify-between">
               <h2 className="font-semibold">بيانات المشروع</h2>
