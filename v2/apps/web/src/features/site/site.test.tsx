@@ -76,3 +76,63 @@ describe("RequestDialog", () => {
     await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent("طلبات كثيرة"));
   });
 });
+
+describe("a coming-soon product", () => {
+  const erp = {
+    slug: "erp-platform",
+    name: "منصة بُعد ERP",
+    tagline: "",
+    hero: { eyebrow: "قريباً", title: "إدارة جهتك كلها", subtitle: "وصف", tags: [] },
+    packages: 0,
+    comingSoon: true,
+    intake: [
+      {
+        key: "client_type",
+        label: "من أنتم؟",
+        type: "select",
+        options: ["جمعية أهلية", "شركة"],
+        required: true,
+      },
+      {
+        key: "wish",
+        label: "ما الذي تتمنون؟",
+        type: "multi",
+        options: ["المالية", "المستندات"],
+        required: false,
+      },
+    ],
+  };
+
+  it("the home page says «قريباً» and offers to register interest, with tap chips", async () => {
+    const calls = stubApi({
+      "GET /api/public/site": () => ({
+        ok: true,
+        published: true,
+        site: DEFAULT_SITE,
+        logoUrl: "/site/logo.png",
+        products: [erp],
+      }),
+      "POST /api/public/site/requests": () => [201, { ok: true }],
+    });
+    await renderWithApp(<SitePage />);
+    const cta = await screen.findByRole("button", { name: "سجّل اهتمامك" });
+    expect(screen.getAllByText(/قريباً/).length).toBeGreaterThan(0);
+    expect(screen.queryByRole("button", { name: "اطلب عرضاً" })).not.toBeNull(); // the page-level contact button stays
+    fireEvent.click(cta);
+    expect(await screen.findByRole("dialog")).toHaveTextContent("سجّل اهتمامك");
+    // single choice and multi choice render as chips, not a dropdown
+    fireEvent.click(screen.getByLabelText("جمعية أهلية"));
+    fireEvent.click(screen.getByLabelText("المالية"));
+    fireEvent.click(screen.getByLabelText("المستندات"));
+    fireEvent.change(screen.getByLabelText("الاسم"), { target: { value: "ليلى" } });
+    fireEvent.change(screen.getByLabelText("الجوال"), { target: { value: "0551234567" } });
+    fireEvent.click(screen.getByRole("button", { name: "سجّل اهتمامي" }));
+    expect(
+      await screen.findByText("سجّلنا اهتمامك. سنتواصل معك أولاً عند الإطلاق."),
+    ).toBeInTheDocument();
+    expect(calls.find((c) => c.method === "POST")?.body).toMatchObject({
+      productSlug: "erp-platform",
+      answers: { client_type: "جمعية أهلية", wish: "المالية، المستندات" },
+    });
+  });
+});

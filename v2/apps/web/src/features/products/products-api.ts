@@ -107,6 +107,8 @@ export type ProductRequest = {
   clientId: string;
   projectId: string;
   createdAt: number;
+  /** Registered for a «coming soon» product (not a quote request). */
+  interest: boolean;
 };
 export type RequestsData = {
   requests: ProductRequest[];

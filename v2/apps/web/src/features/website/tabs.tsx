@@ -392,7 +392,7 @@ export function ServicesTab({ c, patch }: TabProps) {
           )}
         />
       </Section>
-      <ProductsPanel />
+      <ProductsPanel c={c} patch={patch} />
     </div>
   );
 }
@@ -483,7 +483,7 @@ export function WorksTab({ c, patch }: TabProps) {
 }
 
 /** Which products the site shows, and in what order. */
-function ProductsPanel() {
+function ProductsPanel({ c, patch }: { c: SiteContent; patch: Patch }) {
   const qc = useQueryClient();
   const q = useQuery(productsQuery);
   const list = q.data ?? [];
@@ -556,6 +556,27 @@ function ProductsPanel() {
                   </Badge>
                 </span>
               </span>
+              {!c.services.items.some((x) => x.productSlug === p.slug) && (
+                <Button
+                  variant="ghost"
+                  onClick={() =>
+                    patch("services", {
+                      items: [
+                        ...c.services.items,
+                        {
+                          title: p.name,
+                          text: p.tagline,
+                          icon: "briefcase",
+                          productSlug: p.slug,
+                          featured: false,
+                        },
+                      ],
+                    })
+                  }
+                >
+                  إضافة بطاقة في الموقع
+                </Button>
+              )}
               <label className="flex items-center gap-2">
                 <input
                   type="checkbox"

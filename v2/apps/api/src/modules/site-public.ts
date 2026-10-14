@@ -71,6 +71,7 @@ export async function siteHomePayload(db: Db, site: SiteContent) {
         hero: pc.hero,
         packages: pc.packages.length,
         intake: pc.intake,
+        comingSoon: pc.comingSoon,
       };
     }),
   };

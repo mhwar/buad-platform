@@ -62,6 +62,14 @@ describe("blueprints", () => {
     expect(r.body.blueprints.map((b: J) => b.key)).toEqual([
       "patient-transport",
       "project-delivery",
+      "operations-outsourcing",
+      "tech-solutions",
+      "logistics",
+      "marketing-comms",
+      "events-forums",
+      "extended-programs",
+      "supply-sponsorship",
+      "erp-platform",
     ]);
     expect(r.body.blueprints.every((b: J) => b.productId === null)).toBe(true);
     expect((await call("adm", "GET", P)).body.products).toEqual([]);
@@ -165,5 +173,43 @@ describe("access", () => {
     );
     // The other org can create the same blueprint independently.
     expect((await call("x", "POST", `${P}/from-blueprint/project-delivery`)).status).toBe(201);
+  });
+});
+
+describe("seeding the other services as drafts", () => {
+  it("creates every missing blueprint as a draft, never listed, and is idempotent", async () => {
+    await call("adm", "POST", `${P}/from-blueprint/patient-transport`);
+    const a = await call("adm", "POST", `${P}/seed-blueprints`);
+    expect(a.status).toBe(200);
+    expect(a.body.created).toHaveLength(9);
+    expect(a.body.existing).toBe(1);
+    const list = (await call("adm", "GET", P)).body.products;
+    expect(list).toHaveLength(10);
+    expect(list.every((p: J) => p.showOnSite === false)).toBe(true);
+    // the one made earlier is untouched, the rest are drafts
+    expect(list.filter((p: J) => p.status === "draft")).toHaveLength(10);
+    const b = await call("adm", "POST", `${P}/seed-blueprints`);
+    expect(b.body.created).toEqual([]);
+    expect(b.body.existing).toBe(10);
+    expect((await call("adm", "GET", P)).body.products).toHaveLength(10);
+  });
+
+  it("the ERP draft is coming soon, has no packages, and readiness does not ask for them", async () => {
+    await call("adm", "POST", `${P}/seed-blueprints`);
+    const erp = (await call("adm", "GET", P)).body.products.find(
+      (p: J) => p.slug === "erp-platform",
+    );
+    const g = (await call("adm", "GET", `${P}/${erp.id}`)).body.product;
+    expect(g.content.comingSoon).toBe(true);
+    expect(g.content.packages).toEqual([]);
+    expect(g.readiness.find((r: J) => r.key === "packages").ok).toBe(true);
+    expect(g.readiness.find((r: J) => r.key === "costs").ok).toBe(true);
+  });
+
+  it("is for managers only and stays inside the organisation", async () => {
+    expect((await call("m1", "POST", `${P}/seed-blueprints`)).status).toBe(403);
+    await call("adm", "POST", `${P}/seed-blueprints`);
+    expect((await call("x", "GET", P)).body.products).toEqual([]);
+    expect((await call("x", "POST", `${P}/seed-blueprints`)).body.created).toHaveLength(10);
   });
 });

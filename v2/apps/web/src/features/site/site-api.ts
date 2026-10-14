@@ -10,6 +10,7 @@ export type SiteProductCard = {
   hero: ProductContent["hero"];
   packages: number;
   intake: IntakeQuestion[];
+  comingSoon: boolean;
 };
 export type SiteHome =
   | { published: false }
@@ -38,7 +39,21 @@ export const siteProductQuery = (slug: string) =>
     staleTime: 30_000,
   });
 
-export type RequestTarget = { slug: string; name: string; intake: IntakeQuestion[] } | null;
+export type RequestTarget = {
+  slug: string;
+  name: string;
+  intake: IntakeQuestion[];
+  comingSoon?: boolean;
+} | null;
+
+/** The request form's wording for a coming-soon product: registering interest, not asking for a quote. */
+export const interestForm = (form: SiteContent["form"]): SiteContent["form"] => ({
+  ...form,
+  title: "سجّل اهتمامك",
+  intro: "أجب بضغطات سريعة، ونخبرك أولاً عند الإطلاق ونبني معك ما تحتاجه.",
+  submitLabel: "سجّل اهتمامي",
+  successMessage: "سجّلنا اهتمامك. سنتواصل معك أولاً عند الإطلاق.",
+});
 
 export const waLink = (digits: string, text = "") =>
   `https://wa.me/${digits.replace(/\D/g, "")}${text ? `?text=${encodeURIComponent(text)}` : ""}`;

@@ -562,13 +562,36 @@
   gap: 8px;
 }
 .site-root .opts label {
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-weight: 400;
-  padding: 8px 12px;
+  font-weight: 500;
+  padding: 10px 16px;
   border: 1px solid #cfd0da;
   border-radius: 999px;
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    color 0.15s,
+    border-color 0.15s;
+}
+/* The native control is visually hidden but stays focusable: the chip itself shows the state. */
+.site-root .opts label input {
+  position: absolute;
+  opacity: 0;
+  width: 1px !important;
+  height: 1px;
+  pointer-events: none;
+}
+.site-root .opts label:has(input:checked) {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+.site-root .opts label:has(input:focus-visible) {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
 }
 .site-root .err {
   color: #b4441e;

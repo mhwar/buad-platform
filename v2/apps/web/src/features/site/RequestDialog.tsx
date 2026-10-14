@@ -158,7 +158,21 @@ export function RequestDialog({
                   {q.label}
                   {q.required && " *"}
                 </span>
-                {q.type === "select" ? (
+                {q.type === "select" && q.options.length <= 7 ? (
+                  <div className="opts" role="radiogroup" aria-labelledby={`q-${q.key}`}>
+                    {q.options.map((o) => (
+                      <label key={o}>
+                        <input
+                          type="radio"
+                          name={`q-${q.key}`}
+                          checked={answers[q.key] === o}
+                          onChange={() => setAnswers((a) => ({ ...a, [q.key]: o }))}
+                        />
+                        {o}
+                      </label>
+                    ))}
+                  </div>
+                ) : q.type === "select" ? (
                   <select
                     aria-labelledby={`q-${q.key}`}
                     value={answers[q.key] ?? ""}

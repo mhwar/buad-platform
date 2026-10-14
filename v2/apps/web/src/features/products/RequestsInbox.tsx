@@ -118,7 +118,10 @@ function RequestCard({
             {r.source === "site" ? "من الموقع" : "يدوي"}
           </p>
         </div>
-        <Badge tone={TONE[r.status]}>{REQUEST_LABEL[r.status]}</Badge>
+        <span className="flex gap-1.5">
+          {r.interest && <Badge tone="blue">تسجيل اهتمام</Badge>}
+          <Badge tone={TONE[r.status]}>{REQUEST_LABEL[r.status]}</Badge>
+        </span>
       </div>
       <div className="flex flex-wrap gap-2 text-sm">
         {r.phone && (

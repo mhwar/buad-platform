@@ -1,4 +1,7 @@
-import { type PricingModel, type ProductContent, pricingModel, productContent } from "./products";
+import { type Blueprint, defineBlueprint as parse } from "./blueprint-util";
+import { MORE_BLUEPRINTS } from "./blueprints-more";
+
+export type { Blueprint };
 
 /* ─────────────────────────────────────────────────────────────────────────────
  * Ready-made products, built from the org's own service profile and website brief. They carry
@@ -6,28 +9,6 @@ import { type PricingModel, type ProductContent, pricingModel, productContent } 
  * because prices must come from the owner's real costs, never from a template.
  * A blueprint is only turned into a product when the owner asks for it.
  * ──────────────────────────────────────────────────────────────────────────── */
-
-export type Blueprint = {
-  key: string;
-  slug: string;
-  name: string;
-  tagline: string;
-  content: ProductContent;
-  pricing: PricingModel;
-};
-
-const parse = (b: {
-  key: string;
-  slug: string;
-  name: string;
-  tagline: string;
-  content: unknown;
-  pricing: unknown;
-}): Blueprint => ({
-  ...b,
-  content: productContent.parse(b.content),
-  pricing: pricingModel.parse(b.pricing),
-});
 
 const patientTransport = parse({
   key: "patient-transport",
@@ -535,5 +516,5 @@ const projectDelivery = parse({
   },
 });
 
-export const BLUEPRINTS: Blueprint[] = [patientTransport, projectDelivery];
+export const BLUEPRINTS: Blueprint[] = [patientTransport, projectDelivery, ...MORE_BLUEPRINTS];
 export const blueprintByKey = (key: string) => BLUEPRINTS.find((b) => b.key === key);

@@ -137,6 +137,36 @@ const plannedOf = (row: Row) => {
   return plannedMargin(pr.method, pr.value);
 };
 
+/** Makes the product from a blueprint as a draft, unless the org already has that slug. */
+async function createFromBlueprint(
+  db: Db,
+  me: { id: string; orgId: string },
+  bp: NonNullable<ReturnType<typeof blueprintByKey>>,
+) {
+  const [have] = await db
+    .select({ id: products.id })
+    .from(products)
+    .where(and(eq(products.orgId, me.orgId), eq(products.slug, bp.slug)))
+    .limit(1);
+  if (have) return { id: have.id, created: false };
+  const id = newId("prd");
+  const t = nowSec();
+  await db.insert(products).values({
+    id,
+    orgId: me.orgId,
+    slug: bp.slug,
+    name: bp.name,
+    tagline: bp.tagline,
+    content: JSON.stringify(bp.content),
+    pricing: JSON.stringify(bp.pricing),
+    createdBy: me.id,
+    updatedBy: me.id,
+    createdAt: t,
+    updatedAt: t,
+  });
+  return { id, created: true };
+}
+
 async function slugFor(db: Db, orgId: string, wanted: string): Promise<string> {
   const base = wanted || "product";
   for (let i = 0; i < 50; i++) {
@@ -297,30 +327,20 @@ export const productsApp = new Hono<Env>()
   .post("/from-blueprint/:key", async (c) => {
     const bp = blueprintByKey(c.req.param("key"));
     if (!bp) return c.json({ ok: false, error: "not_found" }, 404);
+    const r = await createFromBlueprint(c.get("db"), c.get("user"), bp);
+    return c.json({ ok: true, id: r.id, created: r.created }, r.created ? 201 : 200);
+  })
+
+  // Every blueprint the org does not have yet, as DRAFTS (never listed on the site). Idempotent.
+  .post("/seed-blueprints", async (c) => {
     const db = c.get("db");
     const me = c.get("user");
-    const [have] = await db
-      .select({ id: products.id })
-      .from(products)
-      .where(and(eq(products.orgId, me.orgId), eq(products.slug, bp.slug)))
-      .limit(1);
-    if (have) return c.json({ ok: true, id: have.id, created: false });
-    const id = newId("prd");
-    const t = nowSec();
-    await db.insert(products).values({
-      id,
-      orgId: me.orgId,
-      slug: bp.slug,
-      name: bp.name,
-      tagline: bp.tagline,
-      content: JSON.stringify(bp.content),
-      pricing: JSON.stringify(bp.pricing),
-      createdBy: me.id,
-      updatedBy: me.id,
-      createdAt: t,
-      updatedAt: t,
-    });
-    return c.json({ ok: true, id, created: true }, 201);
+    const created: string[] = [];
+    for (const bp of BLUEPRINTS) {
+      const r = await createFromBlueprint(db, me, bp);
+      if (r.created) created.push(bp.key);
+    }
+    return c.json({ ok: true, created, existing: BLUEPRINTS.length - created.length });
   })
 
   .post("/", zValidator("json", productCreate), async (c) => {

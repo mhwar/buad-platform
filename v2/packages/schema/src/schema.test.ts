@@ -14,7 +14,19 @@ describe("schemas", () => {
 describe("blueprints", () => {
   it("are valid, internally consistent and carry no invented prices", async () => {
     const { BLUEPRINTS } = await import("./blueprints");
-    expect(BLUEPRINTS.map((b) => b.key)).toEqual(["patient-transport", "project-delivery"]);
+    expect(BLUEPRINTS.map((b) => b.key)).toEqual([
+      "patient-transport",
+      "project-delivery",
+      "operations-outsourcing",
+      "tech-solutions",
+      "logistics",
+      "marketing-comms",
+      "events-forums",
+      "extended-programs",
+      "supply-sponsorship",
+      "erp-platform",
+    ]);
+    expect(new Set(BLUEPRINTS.map((b) => b.slug)).size).toBe(BLUEPRINTS.length);
     for (const b of BLUEPRINTS) {
       const pkgIds = b.content.packages.map((p) => p.id);
       expect(new Set(pkgIds).size).toBe(pkgIds.length);
@@ -25,7 +37,35 @@ describe("blueprints", () => {
         b.pricing.packages.every((p) => Object.keys(p.qty).length === 0 && p.fixedPrice === 0),
       ).toBe(true);
       expect(b.content.intake.length).toBeGreaterThan(0);
-      expect(b.content.process.length).toBeGreaterThanOrEqual(3);
+      // every select/multi question has options; keys are unique
+      for (const q of b.content.intake)
+        if (q.type === "select" || q.type === "multi") expect(q.options.length).toBeGreaterThan(1);
+      const keys = b.content.intake.map((q) => q.key);
+      expect(new Set(keys).size).toBe(keys.length);
+      if (!b.content.comingSoon) expect(b.content.process.length).toBeGreaterThanOrEqual(3);
     }
+  });
+
+  it("only the ERP platform is «coming soon», without a brochure or packages", async () => {
+    const { BLUEPRINTS } = await import("./blueprints");
+    const soon = BLUEPRINTS.filter((b) => b.content.comingSoon);
+    expect(soon.map((b) => b.key)).toEqual(["erp-platform"]);
+    expect(soon[0]?.content.brochure).toBe(false);
+    expect(soon[0]?.content.packages).toEqual([]);
+    // the easy interest form: tap-based questions about who they are, pain points and wishes
+    const types = Object.fromEntries((soon[0]?.content.intake ?? []).map((q) => [q.key, q.type]));
+    expect(types).toMatchObject({
+      client_type: "select",
+      org_kind: "select",
+      pain: "multi",
+      wish: "multi",
+    });
+  });
+
+  it("reuses only the cases the org itself published (no invented proof)", async () => {
+    const { BLUEPRINTS } = await import("./blueprints");
+    const allowed = new Set(["مشروع رساء", "ملتقى الصيادلة", "أكاديمية ق", "الكفالة التعليمية"]);
+    for (const b of BLUEPRINTS)
+      for (const p of b.content.proof) expect(allowed.has(p.title)).toBe(true);
   });
 });

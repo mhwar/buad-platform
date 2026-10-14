@@ -106,6 +106,8 @@ export const productContent = z.object({
   intake: list(intakeQuestion, 12),
   /** Offer the service profile (PDF) for download on the public product page. */
   brochure: z.boolean().default(true),
+  /** Not launched yet: shown as «قريباً» and collects interest instead of quote requests. */
+  comingSoon: z.boolean().default(false),
   faq: list(z.object({ q: str(200), a: str(900) }), 12),
 });
 export type ProductContent = z.infer<typeof productContent>;
