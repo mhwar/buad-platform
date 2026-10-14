@@ -51,7 +51,7 @@ export function PeriodPicker({
               role="tab"
               aria-selected={q === n}
               onClick={() => onChange({ preset, year, q: n })}
-              className={`rounded-md px-3 py-1.5 text-sm ${q === n ? "bg-brand text-white dark:text-canvas" : "text-muted hover:text-ink"}`}
+              className={`min-h-10 min-w-11 rounded-md px-3 py-1.5 text-sm sm:min-h-0 sm:min-w-0 ${q === n ? "bg-brand text-white dark:text-canvas" : "text-muted hover:text-ink"}`}
             >
               ر{n}
             </button>

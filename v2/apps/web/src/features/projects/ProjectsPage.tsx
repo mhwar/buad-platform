@@ -78,7 +78,7 @@ export function ProjectsPage() {
           aria-label="الترتيب"
           value={s.sort ?? "newest"}
           onChange={(e) => set({ sort: e.target.value as typeof s.sort })}
-          className="w-auto"
+          className="w-auto flex-1 sm:flex-none"
         >
           <option value="newest">الأحدث</option>
           <option value="name">الاسم</option>
@@ -102,7 +102,7 @@ export function ProjectsPage() {
         <button
           type="button"
           onClick={() => set({ archived: s.archived ? undefined : true })}
-          className="text-sm text-muted underline hover:text-ink"
+          className="inline-flex min-h-11 items-center text-sm text-muted underline hover:text-ink sm:min-h-0"
         >
           {s.archived ? "عرض المشاريع الحالية" : "عرض المؤرشف"}
         </button>
