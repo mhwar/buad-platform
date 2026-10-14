@@ -1,10 +1,11 @@
 import { fireEvent, screen, within } from "@testing-library/react";
-import { Briefcase, Files, House, Landmark, Users } from "lucide-react";
+import { Briefcase, House, Landmark, Menu, Users } from "lucide-react";
 import { useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { inHub } from "../features/more/tabs";
 import { renderWithApp } from "../test-utils";
 import { FilterBar, type FilterField } from "./FilterBar";
-import { MobileTabBar } from "./MobileTabBar";
+import { isNavActive, MobileTabBar } from "./MobileTabBar";
 import { StepNav } from "./StepNav";
 
 afterEach(() => vi.unstubAllGlobals());
@@ -13,40 +14,32 @@ const NAV = [
   { to: "/", label: "الرئيسية", icon: House, exact: true },
   { to: "/clients", label: "العملاء", icon: Users, exact: false },
   { to: "/projects", label: "المشاريع", icon: Briefcase, exact: false },
-  { to: "/documents", label: "المستندات", icon: Files, exact: false },
   { to: "/finance", label: "المالية", icon: Landmark, exact: false },
+  { to: "/more", label: "المزيد", icon: Menu, exact: false, also: inHub },
 ];
 
 describe("MobileTabBar", () => {
-  it("shows the primary sections in the bar and everything else under «المزيد»", async () => {
-    const onLogout = vi.fn();
-    await renderWithApp(
-      <MobileTabBar
-        nav={NAV}
-        primary={["/", "/clients", "/projects", "/finance"]}
-        userName="سلطان"
-        onLogout={onLogout}
-      />,
-    );
+  it("shows five sections; «المزيد» is a link to the hub, not a sheet", async () => {
+    await renderWithApp(<MobileTabBar nav={NAV} />);
     const bar = screen.getByRole("navigation", { name: "التنقل الرئيسي" });
     expect(
       within(bar)
         .getAllByRole("link")
         .map((l) => l.textContent),
-    ).toEqual(["الرئيسية", "العملاء", "المشاريع", "المالية"]);
-    expect(within(bar).queryByText("المستندات")).toBeNull();
+    ).toEqual(["الرئيسية", "العملاء", "المشاريع", "المالية", "المزيد"]);
     expect(within(bar).getByRole("link", { name: "الرئيسية" })).toHaveAttribute(
       "aria-current",
       "page",
     );
+    expect(within(bar).getByRole("link", { name: "المزيد" })).toHaveAttribute("href", "/more");
+  });
 
-    fireEvent.click(within(bar).getByRole("button", { name: "المزيد" }));
-    const sheet = await screen.findByRole("dialog");
-    expect(within(sheet).getByRole("link", { name: "المستندات" })).toBeInTheDocument();
-    expect(within(sheet).getByRole("link", { name: "الإعدادات" })).toBeInTheDocument();
-    expect(within(sheet).getByRole("link", { name: /حسابي/ })).toHaveTextContent("سلطان");
-    fireEvent.click(within(sheet).getByRole("button", { name: "خروج" }));
-    expect(onLogout).toHaveBeenCalled();
+  it("pages inside the hub keep «المزيد» highlighted", () => {
+    expect(isNavActive("/documents", NAV[4]!)).toBe(true);
+    expect(isNavActive("/more/team", NAV[4]!)).toBe(true);
+    expect(isNavActive("/settings/account", NAV[4]!)).toBe(true);
+    expect(isNavActive("/products/prd_1", NAV[4]!)).toBe(false);
+    expect(isNavActive("/projects/p1", NAV[2]!)).toBe(true);
   });
 });
 
