@@ -153,6 +153,8 @@ export function resolveVariables(stored: Record<string, string>, ctx: DocContext
     source: "finance",
   };
   out.cashback_amount_words = { value: cb ? numberToArabicWords(cb) : "", source: "computed" };
+  if (stored.letter_date)
+    out.letter_date_hijri = { value: toHijri(stored.letter_date), source: "computed" };
   out.today_gregorian = { value: formatGregorian(ctx.today), source: "computed" };
   out.today_hijri = { value: toHijri(ctx.today), source: "computed" };
   return out;
@@ -276,4 +278,30 @@ export function numberToArabicWords(n: number): string {
   }
   if (x) parts.push(under1000(x));
   return parts.join(" و");
+}
+
+/** Numbered clause titles like v1 (_renumberClauses): only clauses with a baseTitle are numbered. */
+export function renumberClauses<T extends { title: string; baseTitle: string }>(
+  clauses: T[],
+  ordinals: readonly string[],
+): T[] {
+  let n = 0;
+  return clauses.map((c) => {
+    if (!c.baseTitle) return c;
+    const ord = ordinals[n] ?? String(n + 1);
+    n++;
+    return { ...c, title: `المادة ${ord}: ${c.baseTitle}` };
+  });
+}
+
+/**
+ * v1's cashback letter never said how much (it had no variables). When the project has a
+ * cashback amount, the v2 letter states it, in figures and in words, from finance.
+ */
+export function cashbackBody(v1Body: string, hasAmount: boolean): string {
+  if (!hasAmount) return v1Body;
+  return v1Body.replace(
+    "صرف مبلغ (كاش باك) للجمعية من إجمالي قيمة العقد",
+    "صرف مبلغ (كاش باك) للجمعية قدره {{cashback_amount}} ريال ({{cashback_amount_words}} ريال) من إجمالي قيمة العقد",
+  );
 }

@@ -64,3 +64,220 @@
 [data-theme="dark"] .logo-adaptive {
   filter: brightness(0) invert(1);
 }
+
+/* ── Documents: an A4 sheet that looks the same on screen and on paper ─────── */
+.doc-sheet {
+  position: relative;
+  width: 210mm;
+  min-height: 297mm;
+  margin-inline: auto;
+  background: #fff;
+  color: #111827;
+  box-shadow:
+    0 1px 3px rgb(0 0 0 / 0.08),
+    0 8px 24px rgb(0 0 0 / 0.06);
+  font-size: var(--doc-fs, 13pt);
+  line-height: var(--doc-lh, 1.9);
+}
+.doc-table {
+  width: 100%;
+  /* A table's height acts as a minimum: the body row stretches so the footer sits at the page bottom. */
+  height: 297mm;
+  border-collapse: collapse;
+}
+.doc-table tbody td {
+  height: 100%;
+}
+.doc-table td {
+  padding: 0;
+  vertical-align: top;
+}
+.doc-band {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.doc-band-space {
+  height: 1.6cm;
+}
+.doc-body {
+  padding: 0.6cm var(--doc-mx, 2.2cm) 0.8cm !important;
+}
+.doc-footer {
+  position: relative;
+}
+.doc-footer-label {
+  display: block;
+  text-align: center;
+  font-size: 9pt;
+  color: #6b7280;
+  padding: 2mm 0;
+}
+.doc-title {
+  text-align: center;
+  font-weight: 700;
+  margin: 0.2cm 0 0.6cm;
+}
+.doc-clause {
+  margin-bottom: 0.35cm;
+}
+.doc-clause-title {
+  font-weight: 700;
+  margin: 0.3cm 0 0.15cm;
+  break-after: avoid;
+}
+.doc-p {
+  margin: 0 0 0.25cm;
+  text-align: justify;
+  orphans: 3;
+  widows: 3;
+}
+.doc-page-break {
+  break-before: page;
+}
+.doc-var {
+  background: oklch(0.95 0.03 265);
+  border-radius: 3px;
+  padding: 0 2px;
+}
+.doc-var-empty {
+  background: #fef3c7;
+  color: #92400e;
+  font-size: 0.85em;
+  padding: 0 4px;
+}
+.doc-signatures {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1cm;
+  margin-top: 1cm;
+  break-inside: avoid;
+}
+.doc-sign p {
+  margin: 0;
+}
+.doc-sign-heading {
+  font-weight: 700;
+  margin-bottom: 0.15cm !important;
+}
+.doc-sign-area {
+  position: relative;
+  height: 2.6cm;
+}
+.doc-sign-img {
+  position: absolute;
+  inset-inline-start: 0;
+  bottom: 0.2cm;
+  max-height: 2cm;
+  max-width: 5cm;
+}
+.doc-stamp-img {
+  position: absolute;
+  inset-inline-start: 2.5cm;
+  bottom: 0;
+  max-height: 2.5cm;
+  opacity: 0.9;
+}
+.doc-sign-line {
+  border-top: 1px solid #9ca3af;
+  padding-top: 0.1cm;
+  font-size: 0.85em;
+  color: #6b7280;
+  width: 6cm;
+}
+.doc-letter-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9em;
+  color: #374151;
+  margin-bottom: 0.6cm;
+}
+.doc-letter-to {
+  font-weight: 700;
+}
+.doc-letter-subject {
+  text-align: center;
+  font-weight: 700;
+  text-decoration: underline;
+  margin: 0.4cm 0;
+}
+.doc-letter-sign {
+  margin-top: 0.8cm;
+  margin-inline-start: auto;
+  width: 7cm;
+  text-align: center;
+  break-inside: avoid;
+}
+.doc-letter-sign p {
+  margin: 0;
+}
+.doc-watermark-approved {
+  position: absolute;
+  top: 1.2cm;
+  inset-inline-start: 1.2cm;
+  border: 2px solid #15803d;
+  color: #15803d;
+  border-radius: 6px;
+  padding: 2px 10px;
+  font-weight: 700;
+  font-size: 10pt;
+  transform: rotate(-8deg);
+}
+
+@page {
+  size: A4;
+  margin: 0;
+}
+@media print {
+  html,
+  body {
+    background: #fff !important;
+  }
+  /* Only the document prints; the app around it does not. */
+  body * {
+    visibility: hidden;
+  }
+  .print-root,
+  .print-root * {
+    visibility: visible;
+  }
+  .print-root {
+    position: absolute;
+    inset: 0 0 auto 0;
+  }
+  .doc-sheet {
+    box-shadow: none;
+    width: auto;
+    min-height: 0;
+  }
+  .doc-var,
+  .doc-var-empty {
+    background: none;
+    color: inherit;
+    padding: 0;
+  }
+  .doc-watermark-approved {
+    display: none;
+  }
+}
+.doc-fit {
+  position: relative;
+  overflow: hidden;
+}
+.doc-fit-inner {
+  transform-origin: top right;
+  margin-inline-start: 0;
+}
+.doc-fit-inner .doc-sheet {
+  margin: 0;
+}
+@media print {
+  .doc-fit {
+    height: auto !important;
+    overflow: visible;
+  }
+  .doc-fit-inner {
+    transform: none !important;
+    width: auto !important;
+  }
+}

@@ -18,6 +18,7 @@ import { SESSION_COOKIE, SESSION_TTL, signSession, signSetup, verifySetup } from
 import { claimOwner, ownerExists, setupEnabled, tokenMatches } from "./auth/setup";
 import { assetsApp, type FileStore } from "./modules/assets";
 import { clientsApp } from "./modules/clients";
+import { documentsApp, projectDocumentsApp } from "./modules/documents";
 import { financeApp } from "./modules/finance";
 import { importApp } from "./modules/importer";
 import { orgApp } from "./modules/org";
@@ -153,6 +154,8 @@ export function createApp(deps: AppDeps = {}) {
 
       .route("/api/clients", clientsApp)
       .route("/api/projects/:projectId/finance", financeApp)
+      .route("/api/projects/:projectId/documents", projectDocumentsApp)
+      .route("/api/documents", documentsApp)
       .route("/api/projects", projectsApp)
       .route("/api/import", importApp)
       .route("/api/assets", assetsApp)
