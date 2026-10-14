@@ -632,6 +632,8 @@ export const importApp = new Hono<Env>()
         partners: company.partners.length,
         distributions: company.distributions.length,
         skipped: company.skipped,
+        present: company.present,
+        legacyOnly: company.legacyOnly,
         totals: {
           income: company.totals.income / 100,
           expenses: company.totals.expenses / 100,

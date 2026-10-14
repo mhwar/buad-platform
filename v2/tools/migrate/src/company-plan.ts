@@ -45,6 +45,10 @@ export type PlannedCompany = {
     shares: { partnerV1Id: string; partnerName: string; sharePct: number; amount: number }[];
   }[];
   skipped: number;
+  /** The file had a `buad2_pf` key at all. */
+  present: boolean;
+  /** It had only v1 sync leftovers: nothing real to bring (no entries, partners, distributions). */
+  legacyOnly: boolean;
   /** v1 sums, to show the import kept every riyal. */
   totals: { income: number; expenses: number; distributed: number; retained: number };
 };
@@ -57,6 +61,8 @@ export function planCompany(pf: Loose | undefined): PlannedCompany {
     partners: [],
     distributions: [],
     skipped: 0,
+    present: !!pf,
+    legacyOnly: false,
     totals: { income: 0, expenses: 0, distributed: 0, retained: 0 },
   };
   if (!pf) return out;
@@ -133,5 +139,7 @@ export function planCompany(pf: Loose | undefined): PlannedCompany {
       out.totals.retained += dist.retainedAmount;
     }
   }
+  out.legacyOnly =
+    out.skipped > 0 && !out.entries.length && !out.partners.length && !out.distributions.length;
   return out;
 }
