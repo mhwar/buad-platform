@@ -49,7 +49,7 @@ export function Home() {
             </p>
           </div>
           <Link
-            to="/import"
+            to="/settings/import"
             className="inline-flex items-center gap-2 rounded-lg bg-brand px-3.5 py-2 text-sm font-semibold text-white dark:text-canvas"
           >
             <FileUp className="size-4" /> استيراد من المنصة الحالية

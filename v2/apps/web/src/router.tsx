@@ -7,7 +7,7 @@ import {
   Outlet,
   redirect,
 } from "@tanstack/react-router";
-import { Briefcase, Building2, FileUp, House as Home_, Users } from "lucide-react";
+import { Briefcase, House as Home_, Settings, Users } from "lucide-react";
 import { z } from "zod";
 import { AccountPage } from "./account";
 import { api } from "./api";
@@ -20,6 +20,7 @@ import { ImportPage } from "./features/import/ImportPage";
 import { OrgSettingsPage } from "./features/org/OrgSettings";
 import { ProjectPage } from "./features/projects/ProjectPage";
 import { ProjectsPage } from "./features/projects/ProjectsPage";
+import { SettingsLayout } from "./features/settings/SettingsLayout";
 import { Home } from "./home";
 import { LoginPage } from "./login";
 import { queryClient } from "./query-client";
@@ -59,7 +60,7 @@ function Shell() {
           <div className="flex items-center gap-3 text-sm">
             <ThemeToggle />
             <Link
-              to="/account"
+              to="/settings/account"
               className="text-muted hover:text-ink"
               activeProps={{ className: "font-semibold text-ink" }}
             >
@@ -91,12 +92,10 @@ function Shell() {
               {n.label}
             </Link>
           ))}
-          {me.data.role === "owner" && (
-            <Link to="/import" className={navLink} activeProps={{ className: navActive }}>
-              <FileUp className="size-4" />
-              استيراد
-            </Link>
-          )}
+          <Link to="/settings" className={navLink} activeProps={{ className: navActive }}>
+            <Settings className="size-4" />
+            الإعدادات
+          </Link>
         </nav>
       </header>
       <div className="mx-auto flex w-full max-w-7xl flex-1 gap-8 px-4 sm:px-6">
@@ -115,16 +114,10 @@ function Shell() {
               </Link>
             ))}
             <hr className="my-3" />
-            <Link to="/settings/org" className={navLink} activeProps={{ className: navActive }}>
-              <Building2 className="size-4" />
-              إعدادات الجهة
+            <Link to="/settings" className={navLink} activeProps={{ className: navActive }}>
+              <Settings className="size-4" />
+              الإعدادات
             </Link>
-            {me.data.role === "owner" && (
-              <Link to="/import" className={navLink} activeProps={{ className: navActive }}>
-                <FileUp className="size-4" />
-                استيراد من المنصة الحالية
-              </Link>
-            )}
           </nav>
         </aside>
         <main className="min-w-0 flex-1 py-6">
@@ -232,32 +225,54 @@ const documentRoute = createRoute({
   component: DocumentEditor,
 });
 
-const orgRoute = createRoute({
+// «الإعدادات»: a layout with its own sub-navigation; each option is a child page.
+const settingsRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: "/settings/org",
+  path: "/settings",
   beforeLoad: authed,
+  component: SettingsLayout,
+});
+const settingsIndexRoute = createRoute({
+  getParentRoute: () => settingsRoute,
+  path: "/",
+  beforeLoad: () => {
+    throw redirect({ to: "/settings/org" });
+  },
+});
+const orgRoute = createRoute({
+  getParentRoute: () => settingsRoute,
+  path: "/org",
   component: OrgSettingsPage,
 });
-
 const importRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => settingsRoute,
   path: "/import",
   beforeLoad: async () => {
     const me = await queryClient.ensureQueryData(meQuery);
-    if (!me) throw redirect({ to: "/login" });
-    if (me.role !== "owner") throw redirect({ to: "/" });
+    if (me?.role !== "owner") throw redirect({ to: "/settings/org" });
   },
   component: ImportPage,
 });
-
 const accountRoute = createRoute({
+  getParentRoute: () => settingsRoute,
+  path: "/account",
+  component: AccountPage,
+});
+
+// Old addresses keep working.
+const legacyImportRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/import",
+  beforeLoad: () => {
+    throw redirect({ to: "/settings/import" });
+  },
+});
+const legacyAccountRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/account",
-  beforeLoad: async () => {
-    const me = await queryClient.ensureQueryData(meQuery);
-    if (!me) throw redirect({ to: "/login" });
+  beforeLoad: () => {
+    throw redirect({ to: "/settings/account" });
   },
-  component: AccountPage,
 });
 
 export const router = createRouter({
@@ -265,14 +280,14 @@ export const router = createRouter({
     indexRoute,
     loginRoute,
     setupRoute,
-    accountRoute,
     clientsRoute,
     clientRoute,
     projectsRoute,
     projectRoute,
-    importRoute,
-    orgRoute,
     documentRoute,
+    settingsRoute.addChildren([settingsIndexRoute, orgRoute, importRoute, accountRoute]),
+    legacyImportRoute,
+    legacyAccountRoute,
   ]),
 });
 

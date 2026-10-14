@@ -147,7 +147,7 @@ describe("FinanceStrip for projects brought from the current platform", () => {
     expect(await screen.findByText(/لم تُنقل من المنصة الحالية بعد/)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /استيراد المالية/ })).toHaveAttribute(
       "href",
-      "/import",
+      "/settings/import",
     );
   });
 
