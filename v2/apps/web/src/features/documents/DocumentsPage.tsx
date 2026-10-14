@@ -9,6 +9,9 @@ import {
   Button,
   Card,
   EmptyState,
+  Menu,
+  type MenuItem,
+  Notice,
   PageHeader,
   Pills,
   SearchBox,
@@ -16,7 +19,9 @@ import {
   Select,
 } from "../../components/ui";
 import { fromEpoch } from "../../lib/format";
+import { meQuery } from "../../session";
 import { type DocStatus, type RegisterItem, registerQuery } from "./api";
+import { useDocumentActions } from "./DocumentActions";
 import { STATUS_TONE } from "./DocumentsSection";
 
 const route = getRouteApi("/documents");
@@ -31,6 +36,8 @@ export function DocumentsPage() {
     navigate({ search: (prev) => ({ ...prev, ...patch }), replace: true });
   const q = useDeferredValue(s.q ?? "");
   const outgoing = s.view === "outgoing";
+  const role = useQuery(meQuery).data?.role;
+  const actions = useDocumentActions(role === "owner" || role === "admin");
   const reg = useQuery(
     registerQuery({
       q: q || undefined,
@@ -96,6 +103,8 @@ export function DocumentsPage() {
         />
       </div>
 
+      {actions.busy && <Notice tone="blue">جارٍ {actions.busy}…</Notice>}
+      {actions.error && <Notice>{actions.error}</Notice>}
       {reg.isPending ? (
         <p className="text-muted">جارٍ التحميل…</p>
       ) : reg.isError ? (
@@ -129,11 +138,14 @@ export function DocumentsPage() {
                   <th className="p-3 font-medium">العميل</th>
                   <th className="p-3 font-medium">الحالة</th>
                   <th className="p-3 font-medium">{outgoing ? "تاريخ الصادر" : "آخر تعديل"}</th>
+                  <th className="p-3">
+                    <span className="sr-only">إجراءات</span>
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {items.map((d) => (
-                  <Row key={d.id} d={d} outgoing={outgoing} />
+                  <Row key={d.id} d={d} outgoing={outgoing} menu={actions.items(d)} />
                 ))}
               </tbody>
             </table>
@@ -141,7 +153,7 @@ export function DocumentsPage() {
           <ul className="space-y-3 md:hidden">
             {items.map((d) => (
               <li key={d.id}>
-                <MobileCard d={d} />
+                <MobileCard d={d} menu={actions.items(d)} />
               </li>
             ))}
           </ul>
@@ -162,7 +174,7 @@ function KindIcon({ kind }: { kind: Kind }) {
 const docLink = (d: RegisterItem) =>
   ({ to: "/projects/$id/documents/$docId", params: { id: d.projectId, docId: d.id } }) as const;
 
-function Row({ d, outgoing }: { d: RegisterItem; outgoing: boolean }) {
+function Row({ d, outgoing, menu }: { d: RegisterItem; outgoing: boolean; menu: MenuItem[] }) {
   return (
     <tr className="border-b last:border-0 hover:bg-brand-soft/50">
       {outgoing && (
@@ -214,27 +226,36 @@ function Row({ d, outgoing }: { d: RegisterItem; outgoing: boolean }) {
       <td className="p-3 whitespace-nowrap text-muted">
         {fromEpoch(outgoing ? d.outgoingAt : d.updatedAt)}
       </td>
+      <td className="p-2">
+        <Menu items={menu} label={`إجراءات ${d.title || d.number}`} />
+      </td>
     </tr>
   );
 }
 
-function MobileCard({ d }: { d: RegisterItem }) {
+function MobileCard({ d, menu }: { d: RegisterItem; menu: MenuItem[] }) {
   return (
-    <Link {...docLink(d)} className="block">
-      <Card className="flex items-start gap-3 p-4">
-        <KindIcon kind={d.kind} />
-        <div className="min-w-0 flex-1">
-          <p className="truncate font-semibold">{d.title || DOC_KIND_LABELS[d.kind]}</p>
-          <p className="truncate text-xs text-muted">
-            {d.projectName} · {d.clientName}
-          </p>
-          <p className="mt-1 text-xs text-muted">
-            {d.outgoingNo && <span className="font-semibold text-brand">{d.outgoingNo} · </span>}
-            <span dir="ltr">{d.number}</span>
-          </p>
-        </div>
-        <Badge tone={STATUS_TONE[d.status]}>{DOC_STATUS_LABELS[d.status]}</Badge>
-      </Card>
-    </Link>
+    <Card className="relative flex items-start gap-3 p-4">
+      <KindIcon kind={d.kind} />
+      <div className="min-w-0 flex-1">
+        <Link
+          {...docLink(d)}
+          className="block truncate font-semibold after:absolute after:inset-0 after:rounded-2xl"
+        >
+          {d.title || DOC_KIND_LABELS[d.kind]}
+        </Link>
+        <p className="truncate text-xs text-muted">
+          {d.projectName} · {d.clientName}
+        </p>
+        <p className="mt-1 text-xs text-muted">
+          {d.outgoingNo && <span className="font-semibold text-brand">{d.outgoingNo} · </span>}
+          <span dir="ltr">{d.number}</span>
+        </p>
+      </div>
+      <Badge tone={STATUS_TONE[d.status]}>{DOC_STATUS_LABELS[d.status]}</Badge>
+      <div className="relative z-10">
+        <Menu items={menu} label={`إجراءات ${d.title || d.number}`} />
+      </div>
+    </Card>
   );
 }

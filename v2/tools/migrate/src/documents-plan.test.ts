@@ -17,7 +17,12 @@ const fin = {
         weird: { x: 1 },
       },
       clauses: [
-        { id: "a", key: "opening", title: "أطراف العقد", content: "..." },
+        {
+          id: "a",
+          key: "opening",
+          title: "أطراف العقد",
+          content: "بمدينة {{أبها}} في {{contract_date}}",
+        },
         {
           id: "b",
           key: "subject",
@@ -76,6 +81,8 @@ describe("planDocuments", () => {
       ["أطراف العقد", "", false],
       ["", "موضوع العقد", true],
     ]);
+    // A value typed inside braces in v1 is text; real variables stay.
+    expect(c?.content[0]?.content).toBe("بمدينة أبها في {{contract_date}}");
     expect(c?.layout).toMatchObject({
       fontSize: 12,
       lineHeight: 2,

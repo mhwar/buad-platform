@@ -11,6 +11,7 @@ import {
   resolveVariables,
   segments,
   toHijri,
+  unwrapLiteralBraces,
 } from "./index";
 
 /** v1's own number-to-words, loaded from app.html so the port is checked against the source. */
@@ -113,5 +114,21 @@ describe("variables", () => {
     expect(
       fillText("رقم {{contract_no}} و{{nope}}", resolveVariables({ contract_no: "CT-1" }, ctx)),
     ).toBe("رقم CT-1 و{{nope}}");
+  });
+});
+
+describe("literal braces from v1", () => {
+  it("keeps variables, unwraps typed values", () => {
+    expect(
+      unwrapLiteralBraces(
+        "بمدينة {{أبها}} رقم {{1000714900}} وعنوانه {{ عسير - أبها }} في {{contract_date}}",
+      ),
+    ).toBe("بمدينة أبها رقم 1000714900 وعنوانه عسير - أبها في {{contract_date}}");
+  });
+  it("only latin keys are variables", () => {
+    const parts = segments("رقم {{1000714900}} و{{contract_no}}", {});
+    expect(parts.filter((p) => "key" in p).map((p) => ("key" in p ? p.key : ""))).toEqual([
+      "contract_no",
+    ]);
   });
 });

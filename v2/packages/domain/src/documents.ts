@@ -162,11 +162,24 @@ export function resolveVariables(stored: Record<string, string>, ctx: DocContext
 
 export type Segment = { text: string } | { key: string; value: string; empty: boolean };
 
+/** A variable key: lower-case latin, digits and "_" (e.g. contract_date_hijri). */
+export const VARIABLE_KEY = /^[a-z][a-z0-9_]*$/;
+
+/**
+ * v1 users sometimes typed a value inside the braces («{{أبها}}», «{{1000714900}}») instead of
+ * a variable. Those are text, not variables: keep the text, drop the braces.
+ */
+export function unwrapLiteralBraces(text: string): string {
+  return text.replace(/\{\{([^{}]*)\}\}/g, (m, inner: string) =>
+    VARIABLE_KEY.test(inner.trim()) ? m : inner.trim(),
+  );
+}
+
 /** Splits text into literal text and variable slots (so the editor can highlight or flag empty ones). */
 export function segments(text: string, values: Resolved): Segment[] {
   const out: Segment[] = [];
   let last = 0;
-  for (const m of text.matchAll(/\{\{(\w+)\}\}/g)) {
+  for (const m of text.matchAll(/\{\{([a-z][a-z0-9_]*)\}\}/g)) {
     if (m.index > last) out.push({ text: text.slice(last, m.index) });
     const key = m[1] ?? "";
     const value = values[key]?.value ?? "";

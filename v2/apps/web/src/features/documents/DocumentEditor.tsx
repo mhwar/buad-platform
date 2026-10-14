@@ -20,6 +20,8 @@ import {
   ArrowUp,
   Check,
   Copy,
+  FileDown,
+  FileText,
   Pencil,
   Printer,
   RotateCcw,
@@ -46,6 +48,7 @@ import {
 import { ApiError, fromEpoch } from "../../lib/format";
 import { meQuery } from "../../session";
 import { type DocDetail, docApi, docKeys, documentQuery } from "./api";
+import { exportPdf, exportWord } from "./DocumentActions";
 import { STATUS_TONE } from "./DocumentsSection";
 import { DocumentView, VAR_LABELS } from "./DocumentView";
 import { FitToWidth } from "./FitToWidth";
@@ -149,7 +152,9 @@ export function DocumentEditor() {
   const [draft, setDraft] = useState<Draft | null>(null);
   const [panel, setPanel] = useState<Panel>("data");
   const [saveState, setSaveState] = useState<"idle" | "pending" | "saving" | "saved">("idle");
-  const [notice, setNotice] = useState<{ tone: "red" | "amber"; text: string } | null>(null);
+  const [notice, setNotice] = useState<{ tone: "red" | "amber" | "blue"; text: string } | null>(
+    null,
+  );
   const pending = useRef<DocumentPatch | null>(null);
   const version = useRef(0);
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -268,7 +273,34 @@ export function DocumentEditor() {
     window.print();
   };
 
+  const download = async (kind: "pdf" | "word") => {
+    clearTimeout(timer.current);
+    await flush();
+    const fresh = qc.getQueryData<DocDetail>(docKeys.detail(docId)) ?? q.data;
+    if (!fresh) return;
+    setNotice({ tone: "blue", text: "جارٍ تجهيز الملف…" });
+    try {
+      await (kind === "pdf" ? exportPdf(fresh) : exportWord(fresh));
+      setNotice(null);
+    } catch {
+      setNotice({ tone: "red", text: "تعذّر تجهيز الملف" });
+    }
+  };
+
   const menu: MenuItem[] = [
+    { section: "تنزيل وطباعة" },
+    {
+      label: "تنزيل PDF",
+      hint: "بمقاس A4 كما يظهر",
+      icon: <FileDown />,
+      onSelect: () => download("pdf"),
+    },
+    {
+      label: "تصدير Word",
+      hint: "للتعديل على الصياغة",
+      icon: <FileText />,
+      onSelect: () => download("word"),
+    },
     { label: "طباعة / حفظ PDF", icon: <Printer />, onSelect: print },
     ...(manager
       ? ([

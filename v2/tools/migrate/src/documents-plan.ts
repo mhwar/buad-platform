@@ -2,6 +2,8 @@
  * v1 contracts and letters (fin.contracts[] / fin.letters[], app.html L2972–3003, L7759) → v2 documents.
  * Pure: images stay as data URLs here; the importer turns them into deduplicated R2 assets.
  */
+import { unwrapLiteralBraces } from "@buad/domain";
+
 type Loose = Record<string, unknown>;
 
 export type PlannedDoc = {
@@ -103,9 +105,9 @@ export function planDocuments(projectId: string, fin: Loose): PlannedDoc[] {
         return {
           id: s(cl.id) || `cl_${j}`,
           key: s(cl.key),
-          title: m ? "" : title,
-          baseTitle: m ? (m[1] ?? "").trim() : "",
-          content: s(cl.content),
+          title: m ? "" : unwrapLiteralBraces(title),
+          baseTitle: m ? unwrapLiteralBraces(m[1] ?? "").trim() : "",
+          content: unwrapLiteralBraces(s(cl.content)),
           pageBreak: !!cl.page_break,
         };
       });
@@ -153,7 +155,14 @@ export function planDocuments(projectId: string, fin: Loose): PlannedDoc[] {
         letter_signer_title: s(l.signer_title),
       },
       content: [
-        { id: "body", key: "body", title: "", baseTitle: "", content: s(l.body), pageBreak: false },
+        {
+          id: "body",
+          key: "body",
+          title: "",
+          baseTitle: "",
+          content: unwrapLiteralBraces(s(l.body)),
+          pageBreak: false,
+        },
       ],
       layout: { ...layoutOf(l), useOrgStamp: !!images.stamp },
       images,

@@ -1,5 +1,5 @@
 import { layoutSchema } from "@buad/schema/documents";
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { DocumentView } from "./DocumentView";
 
@@ -29,6 +29,9 @@ const clause = {
   pageBreak: false,
 };
 
+// The visible first A4 page (a hidden copy exists only to measure block heights).
+const page = () => within(screen.getByRole("article", { name: /صفحة 1 من/ }));
+
 describe("DocumentView", () => {
   it("fills variables and flags empty ones while editing", () => {
     render(
@@ -43,9 +46,9 @@ describe("DocumentView", () => {
         editing
       />,
     );
-    expect(screen.getByText("خمسة وستون ألفاً")).toBeInTheDocument();
-    expect(screen.getByText("الرقم الضريبي للطرف الثاني")).toHaveClass("doc-var-empty");
-    expect(screen.getByAltText("الختم")).toHaveAttribute("src", "/s.png");
+    expect(page().getByText("خمسة وستون ألفاً")).toBeInTheDocument();
+    expect(page().getByText("الرقم الضريبي للطرف الثاني")).toHaveClass("doc-var-empty");
+    expect(page().getByAltText("الختم")).toHaveAttribute("src", "/s.png");
   });
 
   it("prints a blank line (not the variable name) for an empty value", () => {
@@ -60,8 +63,8 @@ describe("DocumentView", () => {
         org={org}
       />,
     );
-    expect(screen.queryByText("الرقم الضريبي للطرف الثاني")).toBeNull();
-    expect(screen.getByText("…………")).toBeInTheDocument();
-    expect(screen.queryByAltText("الختم")).toBeNull(); // stamp only when chosen
+    expect(page().queryByText("الرقم الضريبي للطرف الثاني")).toBeNull();
+    expect(page().getByText("…………")).toBeInTheDocument();
+    expect(page().queryByAltText("الختم")).toBeNull(); // stamp only when chosen
   });
 });
