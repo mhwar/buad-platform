@@ -284,3 +284,118 @@ export const financeCategories = sqliteTable(
   },
   (t) => [index("idx_categories_project").on(t.projectId)],
 );
+
+/** Organisation identity used by documents (v1 settings company_* + logo, stamp, signature, letterhead). */
+export const orgProfile = sqliteTable("org_profile", {
+  orgId: text("org_id")
+    .primaryKey()
+    .references(() => orgs.id),
+  name: text("name").notNull().default(""),
+  email: text("email").notNull().default(""),
+  phone: text("phone").notNull().default(""),
+  website: text("website").notNull().default(""),
+  address: text("address").notNull().default(""),
+  reg: text("reg").notNull().default(""),
+  tax: text("tax").notNull().default(""),
+  signerName: text("signer_name").notNull().default(""),
+  signerTitle: text("signer_title").notNull().default(""),
+  signerId: text("signer_id").notNull().default(""),
+  bankName: text("bank_name").notNull().default(""),
+  bankIban: text("bank_iban").notNull().default(""),
+  /** Asset ids (see `assets`). */
+  logoAsset: text("logo_asset").notNull().default(""),
+  stampAsset: text("stamp_asset").notNull().default(""),
+  signatureAsset: text("signature_asset").notNull().default(""),
+  headerAsset: text("header_asset").notNull().default(""),
+  footerAsset: text("footer_asset").notNull().default(""),
+  version: integer("version").notNull().default(1),
+  updatedBy: text("updated_by").notNull().default(""),
+  updatedAt: integer("updated_at").notNull().default(now),
+});
+
+/** Files kept in R2, one row per distinct content per org (deduplicated by sha256). */
+export const assets = sqliteTable(
+  "assets",
+  {
+    id: text("id").primaryKey(),
+    orgId: text("org_id")
+      .notNull()
+      .references(() => orgs.id),
+    sha256: text("sha256").notNull(),
+    mime: text("mime").notNull(),
+    size: integer("size").notNull(),
+    r2Key: text("r2_key").notNull(),
+    createdBy: text("created_by").notNull().default(""),
+    createdAt: integer("created_at").notNull().default(now),
+  },
+  (t) => [uniqueIndex("uq_assets_hash").on(t.orgId, t.sha256)],
+);
+
+export const DOC_KINDS = ["contract", "letter"] as const;
+export const DOC_STATUSES = ["draft", "review", "approved"] as const;
+
+/** Organisation's own contract templates (built-in ones live in code). */
+export const docTemplates = sqliteTable(
+  "doc_templates",
+  {
+    id: text("id").primaryKey(),
+    orgId: text("org_id")
+      .notNull()
+      .references(() => orgs.id),
+    name: text("name").notNull(),
+    kind: text("kind", { enum: DOC_KINDS }).notNull().default("contract"),
+    /** JSON: { clauses, customVars, layout } */
+    body: text("body").notNull().default("{}"),
+    ...audit,
+  },
+  (t) => [index("idx_templates_org").on(t.orgId)],
+);
+
+/** Contracts and letters of a project. Content is JSON; numbers are per org and year. */
+export const documents = sqliteTable(
+  "documents",
+  {
+    id: text("id").primaryKey(),
+    orgId: text("org_id")
+      .notNull()
+      .references(() => orgs.id),
+    projectId: text("project_id")
+      .notNull()
+      .references(() => projects.id),
+    kind: text("kind", { enum: DOC_KINDS }).notNull(),
+    number: text("number").notNull(),
+    title: text("title").notNull().default(""),
+    templateKey: text("template_key").notNull().default(""),
+    status: text("status", { enum: DOC_STATUSES }).notNull().default("draft"),
+    /** JSON: variable values as edited. */
+    variables: text("variables").notNull().default("{}"),
+    /** JSON: [{ id, key, title, content, pageBreak }] for contracts; letters keep their body here. */
+    content: text("content").notNull().default("[]"),
+    /** JSON: style, margins, cover, header/footer bands. */
+    layout: text("layout").notNull().default("{}"),
+    version: integer("version").notNull().default(1),
+    approvedBy: text("approved_by").notNull().default(""),
+    approvedAt: integer("approved_at"),
+    ...audit,
+  },
+  (t) => [
+    uniqueIndex("uq_documents_number").on(t.orgId, t.number),
+    index("idx_documents_project").on(t.projectId, t.kind),
+  ],
+);
+
+/** Immutable snapshot of a document at each approval. */
+export const documentVersions = sqliteTable(
+  "document_versions",
+  {
+    id: text("id").primaryKey(),
+    documentId: text("document_id")
+      .notNull()
+      .references(() => documents.id),
+    version: integer("version").notNull(),
+    snapshot: text("snapshot").notNull(),
+    approvedBy: text("approved_by").notNull(),
+    approvedAt: integer("approved_at").notNull(),
+  },
+  (t) => [index("idx_versions_document").on(t.documentId)],
+);

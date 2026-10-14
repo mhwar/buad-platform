@@ -7,7 +7,7 @@ import {
   Outlet,
   redirect,
 } from "@tanstack/react-router";
-import { Briefcase, FileUp, House as Home_, Users } from "lucide-react";
+import { Briefcase, Building2, FileUp, House as Home_, Users } from "lucide-react";
 import { z } from "zod";
 import { AccountPage } from "./account";
 import { api } from "./api";
@@ -16,6 +16,7 @@ import { UpdateBanner, useServerVersion } from "./components/UpdateBanner";
 import { ClientPage } from "./features/clients/ClientPage";
 import { ClientsPage } from "./features/clients/ClientsPage";
 import { ImportPage } from "./features/import/ImportPage";
+import { OrgSettingsPage } from "./features/org/OrgSettings";
 import { ProjectPage } from "./features/projects/ProjectPage";
 import { ProjectsPage } from "./features/projects/ProjectsPage";
 import { Home } from "./home";
@@ -112,14 +113,16 @@ function Shell() {
                 {n.label}
               </Link>
             ))}
+            <hr className="my-3" />
+            <Link to="/settings/org" className={navLink} activeProps={{ className: navActive }}>
+              <Building2 className="size-4" />
+              إعدادات الجهة
+            </Link>
             {me.data.role === "owner" && (
-              <>
-                <hr className="my-3" />
-                <Link to="/import" className={navLink} activeProps={{ className: navActive }}>
-                  <FileUp className="size-4" />
-                  استيراد من المنصة الحالية
-                </Link>
-              </>
+              <Link to="/import" className={navLink} activeProps={{ className: navActive }}>
+                <FileUp className="size-4" />
+                استيراد من المنصة الحالية
+              </Link>
             )}
           </nav>
         </aside>
@@ -221,6 +224,13 @@ const projectRoute = createRoute({
   component: ProjectPage,
 });
 
+const orgRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/settings/org",
+  beforeLoad: authed,
+  component: OrgSettingsPage,
+});
+
 const importRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/import",
@@ -253,6 +263,7 @@ export const router = createRouter({
     projectsRoute,
     projectRoute,
     importRoute,
+    orgRoute,
   ]),
 });
 

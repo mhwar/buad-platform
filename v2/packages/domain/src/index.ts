@@ -1,4 +1,6 @@
+export * from "./documents";
 export * from "./finance-adapter";
 export * from "./fincalc";
 export * from "./money";
+export * from "./templates/v1-templates";
 export * from "./text";

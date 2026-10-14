@@ -16,9 +16,11 @@ import { requireAuth, requireRole, type Vars } from "./auth/middleware";
 import { type Db, getUser, login, setPassword } from "./auth/service";
 import { SESSION_COOKIE, SESSION_TTL, signSession, signSetup, verifySetup } from "./auth/session";
 import { claimOwner, ownerExists, setupEnabled, tokenMatches } from "./auth/setup";
+import { assetsApp, type FileStore } from "./modules/assets";
 import { clientsApp } from "./modules/clients";
 import { financeApp } from "./modules/finance";
 import { importApp } from "./modules/importer";
+import { orgApp } from "./modules/org";
 import { projectsApp } from "./modules/projects";
 
 export type Env = {
@@ -26,6 +28,8 @@ export type Env = {
   JWT_SECRET: string;
   /** Optional. Enables the one-time /setup flow that creates the first owner. */
   OWNER_SETUP_TOKEN?: string;
+  /** R2 bucket for uploaded files (logos, stamps, letterheads). */
+  FILES?: FileStore;
   DB: Parameters<typeof drizzle>[0];
 };
 
@@ -151,6 +155,8 @@ export function createApp(deps: AppDeps = {}) {
       .route("/api/projects/:projectId/finance", financeApp)
       .route("/api/projects", projectsApp)
       .route("/api/import", importApp)
+      .route("/api/assets", assetsApp)
+      .route("/api/org", orgApp)
 
       .onError((err, c) => {
         console.error(err);
