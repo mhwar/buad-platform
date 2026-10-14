@@ -1,6 +1,12 @@
-import { type PricingIn, productReadiness } from "@buad/domain";
+import {
+  type PricingIn,
+  plannedMargin,
+  productReadiness,
+  productStats,
+  type StatProject,
+} from "@buad/domain";
 import { BLUEPRINTS, blueprintByKey } from "@buad/schema/blueprints";
-import { products } from "@buad/schema/db";
+import { clients, productRequests, products, projects } from "@buad/schema/db";
 import {
   type PricingModel,
   type ProductContent,
@@ -10,12 +16,12 @@ import {
   productPatch,
 } from "@buad/schema/products";
 import { zValidator } from "@hono/zod-validator";
-import { and, asc, eq } from "drizzle-orm";
+import { and, asc, eq, isNull, ne, type SQL } from "drizzle-orm";
 import { Hono } from "hono";
 import { requireAuth, requireRole, type Vars } from "../auth/middleware";
 import type { Db } from "../auth/service";
 import { newId, nowSec } from "./common";
-import { loadVatRate } from "./finance";
+import { loadFinance, loadVatRate } from "./finance";
 
 /* ─────────────────────────────────────────────────────────────────────────────
  * «المنتجات والخدمات» (owner and managers only). A product is public-safe `content` plus a
@@ -55,6 +61,80 @@ export function shapeProduct(row: Row, vatRate: number) {
     readiness,
   };
 }
+
+type StatRow = {
+  productId: string;
+  stat: StatProject;
+  row: {
+    id: string;
+    number: string;
+    name: string;
+    clientId: string;
+    clientName: string;
+    status: string;
+    packageId: string;
+    packageName: string;
+    startDate: string;
+    hasFinance: boolean;
+    contractNet: number;
+    gross: number;
+    received: number;
+    expenses: number;
+    profit: number;
+  };
+};
+
+/** Live projects matching `where`, each with its own finance numbers (finCalc). */
+async function statRows(db: Db, orgId: string, where: SQL | undefined): Promise<StatRow[]> {
+  const rows = await db
+    .select({ p: projects, clientName: clients.name })
+    .from(projects)
+    .innerJoin(clients, eq(clients.id, projects.clientId))
+    .where(and(eq(projects.orgId, orgId), isNull(projects.archivedAt), where))
+    .orderBy(asc(projects.number));
+  const out: StatRow[] = [];
+  for (const { p, clientName } of rows) {
+    const fin = await loadFinance(db, p);
+    const m = {
+      contractNet: fin.summary.contractNet,
+      gross: fin.summary.grossTotal,
+      received: fin.received,
+      expenses: fin.summary.totalExpenses,
+      profit: fin.summary.profit,
+    };
+    out.push({
+      productId: p.productId,
+      stat: {
+        id: p.id,
+        clientId: p.clientId,
+        clientName,
+        status: p.status,
+        packageId: p.packageId,
+        startDate: p.startDate,
+        ...m,
+      },
+      row: {
+        id: p.id,
+        number: p.number,
+        name: p.name,
+        clientId: p.clientId,
+        clientName,
+        status: p.status,
+        packageId: p.packageId,
+        packageName: p.packageName,
+        startDate: p.startDate,
+        hasFinance: fin.ctrl.version > 0 || fin.entries.length > 0,
+        ...m,
+      },
+    });
+  }
+  return out;
+}
+
+const plannedOf = (row: Row) => {
+  const pr = pricingOf(row);
+  return plannedMargin(pr.method, pr.value);
+};
 
 async function slugFor(db: Db, orgId: string, wanted: string): Promise<string> {
   const base = wanted || "product";
@@ -129,6 +209,72 @@ export const productsApp = new Hono<Env>()
     });
   })
 
+  // What the service has done across the org's projects: counts, entities, packages, money.
+  .get("/overview", async (c) => {
+    const db = c.get("db");
+    const orgId = c.get("user").orgId;
+    const prods = await db
+      .select()
+      .from(products)
+      .where(eq(products.orgId, orgId))
+      .orderBy(asc(products.sortOrder), asc(products.createdAt));
+    const linked = await statRows(db, orgId, ne(projects.productId, ""));
+    const unlinked = await db
+      .select({ id: projects.id })
+      .from(projects)
+      .where(
+        and(eq(projects.orgId, orgId), isNull(projects.archivedAt), eq(projects.productId, "")),
+      );
+    const reqs = await db.select().from(productRequests).where(eq(productRequests.orgId, orgId));
+    const now = nowSec();
+    return c.json({
+      ok: true,
+      unlinkedProjects: unlinked.length,
+      products: prods.map((p) => {
+        const mine = linked.filter((r) => r.productId === p.id);
+        const s = productStats({
+          projects: mine.map((r) => r.stat),
+          requests: reqs.filter((r) => r.productId === p.id),
+          plannedMarginPct: plannedOf(p),
+          packageNames: {},
+          now,
+        });
+        return {
+          id: p.id,
+          name: p.name,
+          status: p.status,
+          projects: s.totals.projects,
+          entities: s.totals.entities,
+          repeatEntities: s.totals.repeatEntities,
+          contractNet: s.totals.contractNet,
+          profit: s.totals.profit,
+          marginPct: s.totals.marginPct,
+          plannedMarginPct: s.plannedMarginPct,
+          marginGap: s.marginGap,
+          requests: s.funnel.total,
+          won: s.funnel.won,
+          conversionPct: s.funnel.conversionPct,
+        };
+      }),
+    });
+  })
+
+  // Live projects that are not linked to any service yet (linking is the owner's choice).
+  .get("/unlinked-projects", async (c) => {
+    const rows = await statRows(c.get("db"), c.get("user").orgId, eq(projects.productId, ""));
+    return c.json({
+      ok: true,
+      projects: rows.map((r) => ({
+        id: r.row.id,
+        number: r.row.number,
+        name: r.row.name,
+        clientName: r.row.clientName,
+        status: r.row.status,
+        contractNet: r.row.contractNet,
+      })),
+    });
+  })
+
   // Idempotent: asking again for the same blueprint returns the product it already made.
   .post("/from-blueprint/:key", async (c) => {
     const bp = blueprintByKey(c.req.param("key"));
@@ -180,6 +326,36 @@ export const productsApp = new Hono<Env>()
       updatedAt: t,
     });
     return c.json({ ok: true, id }, 201);
+  })
+
+  .get("/:id/stats", async (c) => {
+    const db = c.get("db");
+    const orgId = c.get("user").orgId;
+    const [prod] = await db
+      .select()
+      .from(products)
+      .where(and(eq(products.id, c.req.param("id")), eq(products.orgId, orgId)))
+      .limit(1);
+    if (!prod) return c.json({ ok: false, error: "not_found" }, 404);
+    const rows = await statRows(db, orgId, eq(projects.productId, prod.id));
+    const reqs = await db
+      .select()
+      .from(productRequests)
+      .where(and(eq(productRequests.orgId, orgId), eq(productRequests.productId, prod.id)));
+    const content = contentOf(prod);
+    const stats = productStats({
+      projects: rows.map((r) => r.stat),
+      requests: reqs.map((r) => ({ status: r.status, createdAt: r.createdAt })),
+      plannedMarginPct: plannedOf(prod),
+      packageNames: Object.fromEntries(content.packages.map((p) => [p.id, p.name])),
+      now: nowSec(),
+    });
+    return c.json({
+      ok: true,
+      product: { id: prod.id, name: prod.name, slug: prod.slug },
+      stats,
+      projects: rows.map((r) => r.row),
+    });
   })
 
   .get("/:id", async (c) => {

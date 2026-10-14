@@ -118,3 +118,160 @@ export const requestsQuery = (status: RequestStatus | "") =>
     queryFn: async () =>
       ok<RequestsData>(await fetch(`/api/product-requests${status ? `?status=${status}` : ""}`)),
   });
+
+/* ── Performance (how a service has actually done) ───────────────────────── */
+export type Insight =
+  | { code: "no_projects" }
+  | { code: "top_package"; name: string; share: number }
+  | { code: "margin_below_plan"; gap: number }
+  | { code: "margin_above_plan"; gap: number }
+  | { code: "repeat_entities"; count: number }
+  | { code: "no_package"; count: number }
+  | { code: "losing_projects"; count: number }
+  | { code: "stale_requests"; count: number }
+  | { code: "low_conversion"; pct: number };
+export type ProductStats = {
+  totals: {
+    projects: number;
+    active: number;
+    completed: number;
+    entities: number;
+    repeatEntities: number;
+    contractNet: number;
+    gross: number;
+    received: number;
+    expenses: number;
+    profit: number;
+    realizedProfit: number;
+    marginPct: number;
+    avgContract: number;
+  };
+  plannedMarginPct: number | null;
+  marginGap: number | null;
+  packages: {
+    packageId: string;
+    name: string;
+    projects: number;
+    contractNet: number;
+    profit: number;
+    marginPct: number;
+    share: number;
+  }[];
+  entities: { clientId: string; name: string; projects: number; contractNet: number }[];
+  trend: { key: string; projects: number; contractNet: number }[];
+  funnel: {
+    total: number;
+    new: number;
+    contacted: number;
+    quoted: number;
+    won: number;
+    lost: number;
+    conversionPct: number;
+  };
+  insights: Insight[];
+};
+export type StatProjectRow = {
+  id: string;
+  number: string;
+  name: string;
+  clientId: string;
+  clientName: string;
+  status: string;
+  packageId: string;
+  packageName: string;
+  startDate: string;
+  hasFinance: boolean;
+  contractNet: number;
+  gross: number;
+  received: number;
+  expenses: number;
+  profit: number;
+};
+export const statsQuery = (id: string) =>
+  queryOptions({
+    queryKey: ["product-stats", id],
+    queryFn: async () =>
+      ok<{
+        product: { id: string; name: string; slug: string };
+        stats: ProductStats;
+        projects: StatProjectRow[];
+      }>(await fetch(`/api/products/${id}/stats`)),
+  });
+
+export type OverviewRow = {
+  id: string;
+  name: string;
+  status: ProductStatus;
+  projects: number;
+  entities: number;
+  repeatEntities: number;
+  contractNet: number;
+  profit: number;
+  marginPct: number;
+  plannedMarginPct: number | null;
+  marginGap: number | null;
+  requests: number;
+  won: number;
+  conversionPct: number;
+};
+export const overviewQuery = queryOptions({
+  queryKey: ["product-overview"],
+  queryFn: async () =>
+    ok<{ products: OverviewRow[]; unlinkedProjects: number }>(
+      await fetch("/api/products/overview"),
+    ),
+});
+
+export type UnlinkedProject = {
+  id: string;
+  number: string;
+  name: string;
+  clientName: string;
+  status: string;
+  contractNet: number;
+};
+export const unlinkedQuery = queryOptions({
+  queryKey: ["product-unlinked"],
+  queryFn: async () =>
+    (await ok<{ projects: UnlinkedProject[] }>(await fetch("/api/products/unlinked-projects")))
+      .projects,
+});
+
+/** The sentence for an insight (the domain returns only the rule and its numbers). */
+export const insightText = (i: Insight): { tone: "good" | "warn" | "info"; text: string } => {
+  switch (i.code) {
+    case "no_projects":
+      return {
+        tone: "info",
+        text: "لا مشاريع مرتبطة بهذه الخدمة بعد. اربط المشاريع المنفذة أو اختر الخدمة عند إنشاء مشروع.",
+      };
+    case "top_package":
+      return {
+        tone: "info",
+        text: `باقة «${i.name}» تمثل ${i.share}% من مشاريع هذه الخدمة: هي الباقة التي يطلبها عملاؤكم.`,
+      };
+    case "margin_below_plan":
+      return {
+        tone: "warn",
+        text: `الهامش الفعلي أقل من المخطط بـ ${i.gap} نقطة: راجعوا تكاليف الخدمة أو سعرها.`,
+      };
+    case "margin_above_plan":
+      return { tone: "good", text: `الهامش الفعلي أعلى من المخطط بـ ${i.gap} نقطة.` };
+    case "repeat_entities":
+      return {
+        tone: "good",
+        text: `${i.count} جهة كررت الخدمة: مؤشر رضا يستحق عرض عقد ممتد عليها.`,
+      };
+    case "no_package":
+      return { tone: "warn", text: `${i.count} مشروع بلا باقة محددة: حدّدوها ليكتمل التحليل.` };
+    case "losing_projects":
+      return { tone: "warn", text: `${i.count} مشروع بربح سالب في هذه الخدمة.` };
+    case "stale_requests":
+      return { tone: "warn", text: `${i.count} طلب جديد لم يُتابَع منذ أكثر من 3 أيام.` };
+    case "low_conversion":
+      return {
+        tone: "warn",
+        text: `نسبة تحويل الطلبات إلى تعاقد ${i.pct}% فقط: راجعوا العرض أو سرعة المتابعة.`,
+      };
+  }
+};

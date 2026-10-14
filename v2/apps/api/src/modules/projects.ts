@@ -1,6 +1,6 @@
 import { formatCode, fromRiyals } from "@buad/domain";
 import { listQuery, projectInput, projectPatch } from "@buad/schema/clients";
-import { clients, legacyMap, projectFinance, projects } from "@buad/schema/db";
+import { clients, legacyMap, products, projectFinance, projects } from "@buad/schema/db";
 import { zValidator } from "@hono/zod-validator";
 import { and, asc, count, desc, eq, isNotNull, isNull, or, type SQL, sql } from "drizzle-orm";
 import { Hono } from "hono";
@@ -16,6 +16,7 @@ import {
   nextCounter,
   nowSec,
 } from "./common";
+import { resolveServiceLink } from "./service-link";
 
 type Env = { Bindings: { JWT_SECRET: string }; Variables: Vars };
 
@@ -62,6 +63,11 @@ export async function insertProject(
   db: Db,
   me: { id: string; orgId: string },
   v: z.output<typeof projectInput>,
+  link: { productId: string; packageId: string; packageName: string } = {
+    productId: "",
+    packageId: "",
+    packageName: "",
+  },
 ) {
   const year = new Date().getUTCFullYear();
   const number = formatCode("PRJ", await nextCounter(db, me.orgId, "project", year), year);
@@ -83,6 +89,9 @@ export async function insertProject(
     payDate: v.payDate,
     expectedValue: fromRiyals(v.expectedValue),
     notes: v.notes,
+    productId: link.productId,
+    packageId: link.packageId,
+    packageName: link.packageName,
     createdBy: me.id,
     createdAt: t,
     updatedBy: me.id,
@@ -111,6 +120,7 @@ export const projectsApp = new Hono<Env>()
       live,
       visibleProjects(me).where,
       q.clientId ? eq(projects.clientId, q.clientId) : undefined,
+      q.product ? eq(projects.productId, q.product === "none" ? "" : q.product) : undefined,
       q.type ? eq(projects.type, q.type as never) : undefined,
       search,
     );
@@ -140,9 +150,14 @@ export const projectsApp = new Hono<Env>()
         clientName: clients.name,
         clientLogoUrl: sql<string>`${logoUrlSql("clients")}`,
         clientCode: clients.code,
+        productId: projects.productId,
+        packageId: projects.packageId,
+        packageName: projects.packageName,
+        productName: sql<string>`COALESCE(${products.name}, '')`,
       })
       .from(projects)
       .innerJoin(clients, eq(clients.id, projects.clientId))
+      .leftJoin(products, eq(products.id, projects.productId))
       .where(and(base, q.status ? eq(projects.status, q.status as never) : undefined))
       .orderBy(...order)
       .limit(1000);
@@ -166,7 +181,13 @@ export const projectsApp = new Hono<Env>()
     const client = await liveClient(db, me.orgId, v.clientId);
     if (!client) return c.json({ ok: false, error: "client_not_found" }, 404);
     if (client.archivedAt) return c.json({ ok: false, error: "client_archived" }, 409);
-    const { id, number } = await insertProject(db, me, v);
+    const link = await resolveServiceLink(db, me.orgId, v.productId, v.packageId);
+    if (!link.ok)
+      return c.json(
+        { ok: false, error: link.error },
+        link.error === "package_without_product" ? 400 : 404,
+      );
+    const { id, number } = await insertProject(db, me, v, link);
     return c.json({ ok: true, id, number }, 201);
   })
 
@@ -197,9 +218,24 @@ export const projectsApp = new Hono<Env>()
       .from(legacyMap)
       .where(and(eq(legacyMap.kind, "finance"), eq(legacyMap.legacyId, project.id)))
       .limit(1);
+    const [svc] = project.productId
+      ? await db
+          .select({ name: products.name })
+          .from(products)
+          .where(and(eq(products.id, project.productId), eq(products.orgId, me.orgId)))
+          .limit(1)
+      : [];
     return c.json({
       ok: true,
       project,
+      service: project.productId
+        ? {
+            productId: project.productId,
+            productName: svc?.name ?? "",
+            packageId: project.packageId,
+            packageName: project.packageName,
+          }
+        : null,
       client: client ?? null,
       financeExists: !!fin,
       financeImported: !!imported,
@@ -228,11 +264,29 @@ export const projectsApp = new Hono<Env>()
     const start = v.startDate ?? current.startDate;
     const end = v.endDate ?? current.endDate;
     if (start && end && end < start) return c.json({ ok: false, error: "end_before_start" }, 400);
-    const { expectedValue, ...rest } = v;
+    const { expectedValue, productId, packageId, ...rest } = v;
+    // Changing the service without naming a package clears the old package.
+    let link: { productId: string; packageId: string; packageName: string } | undefined;
+    if (productId !== undefined || packageId !== undefined) {
+      const nextProduct = productId ?? current.productId;
+      const nextPackage =
+        packageId ??
+        (productId !== undefined && productId !== current.productId ? "" : current.packageId);
+      const r = await resolveServiceLink(db, me.orgId, nextProduct, nextPackage);
+      if (!r.ok)
+        return c.json(
+          { ok: false, error: r.error },
+          r.error === "package_without_product" ? 400 : 404,
+        );
+      link = r;
+    }
     await db
       .update(projects)
       .set({
         ...rest,
+        ...(link
+          ? { productId: link.productId, packageId: link.packageId, packageName: link.packageName }
+          : {}),
         ...(expectedValue !== undefined ? { expectedValue: fromRiyals(expectedValue) } : {}),
         updatedBy: me.id,
         updatedAt: nowSec(),

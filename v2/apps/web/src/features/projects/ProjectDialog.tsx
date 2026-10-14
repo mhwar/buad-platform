@@ -7,8 +7,10 @@ import { useForm } from "react-hook-form";
 import type { z } from "zod";
 import { Button, Dialog, Field, Input, Notice, Select, Textarea } from "../../components/ui";
 import { ApiError, today } from "../../lib/format";
+import { meQuery } from "../../session";
 import { clientKeys, clientsQuery } from "../clients/api";
 import { PROJECT_STATUS_LABELS, PROJECT_TYPE_LABELS } from "../labels";
+import { productQuery, productsQuery } from "../products/products-api";
 import { createProject, type ProjectDetail, projectKeys, updateProject } from "./api";
 
 type Form = z.input<typeof projectInput>;
@@ -29,6 +31,8 @@ function toForm(clientId?: string, d?: ProjectDetail): Form {
       visibility: "team",
       startDate: today(),
       expectedValue: 0,
+      productId: "",
+      packageId: "",
     };
   const p = d.project;
   return {
@@ -43,6 +47,8 @@ function toForm(clientId?: string, d?: ProjectDetail): Form {
     payDate: p.payDate,
     expectedValue: p.expectedValue / 100,
     notes: p.notes,
+    productId: d.service?.productId ?? "",
+    packageId: d.service?.packageId ?? "",
   };
 }
 
@@ -74,6 +80,13 @@ export function ProjectDialog({
     enabled: open && (pickClient || !!existing),
   });
   const e = f.formState.errors;
+  // Linking a project to a service and package is for managers (who can see the products).
+  const me = useQuery(meQuery).data;
+  const manager = me?.role === "owner" || me?.role === "admin";
+  const products = useQuery({ ...productsQuery, enabled: open && manager });
+  const productId = f.watch("productId") ?? "";
+  const product = useQuery({ ...productQuery(productId), enabled: open && manager && !!productId });
+  const services = (products.data ?? []).filter((x) => x.status !== "archived");
 
   const close = (v: boolean) => {
     if (!v) {
@@ -85,16 +98,22 @@ export function ProjectDialog({
 
   const save = f.handleSubmit(async (v) => {
     setError(null);
+    const body = { ...v } as ProjectInput;
+    if (!manager) {
+      // Never send an empty link on behalf of someone who cannot see the services.
+      body.productId = undefined;
+      body.packageId = undefined;
+    }
     try {
       if (existing) {
-        await updateProject(existing.project.id, v as ProjectInput);
+        await updateProject(existing.project.id, body);
         await Promise.all([
           qc.invalidateQueries({ queryKey: projectKeys.all }),
           qc.invalidateQueries({ queryKey: clientKeys.all }),
         ]);
         close(false);
       } else {
-        const res = await createProject(v as ProjectInput);
+        const res = await createProject(body);
         await Promise.all([
           qc.invalidateQueries({ queryKey: projectKeys.all }),
           qc.invalidateQueries({ queryKey: clientKeys.all }),
@@ -134,6 +153,34 @@ export function ProjectDialog({
           <Field label="اسم المشروع *" error={err(e.name)} className="sm:col-span-2">
             <Input autoFocus {...f.register("name")} />
           </Field>
+          {manager && services.length > 0 && (
+            <>
+              <Field label="الخدمة / المنتج" hint="اختياري: لقياس أداء كل خدمة">
+                <Select
+                  {...f.register("productId", {
+                    onChange: () => f.setValue("packageId", ""),
+                  })}
+                >
+                  <option value="">بدون</option>
+                  {services.map((x) => (
+                    <option key={x.id} value={x.id}>
+                      {x.name}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+              <Field label="الباقة المتعاقد عليها">
+                <Select {...f.register("packageId")} disabled={!productId || product.isPending}>
+                  <option value="">{productId ? "بدون باقة محددة" : "اختر الخدمة أولاً"}</option>
+                  {(product.data?.content.packages ?? []).map((x) => (
+                    <option key={x.id} value={x.id}>
+                      {x.name}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+            </>
+          )}
           <Field label="نوع المشروع">
             <Select {...f.register("type")}>
               {Object.entries(PROJECT_TYPE_LABELS).map(([k, v]) => (

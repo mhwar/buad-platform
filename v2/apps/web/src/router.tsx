@@ -241,7 +241,11 @@ const statementRoute = createRoute({
 const projectsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/projects",
-  validateSearch: z.object({ ...listSearch, status: z.string().optional() }),
+  validateSearch: z.object({
+    ...listSearch,
+    status: z.string().optional(),
+    product: z.string().optional(),
+  }),
   beforeLoad: authed,
   component: ProjectsPage,
 });
@@ -324,7 +328,7 @@ const siteProductRoute = createRoute({
 const productsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/products",
-  validateSearch: z.object({ tab: z.enum(["products", "requests"]).optional() }),
+  validateSearch: z.object({ tab: z.enum(["products", "overview", "requests"]).optional() }),
   beforeLoad: managerOnly,
   component: ProductsPage,
 });
@@ -338,7 +342,9 @@ const productRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/products/$id",
   validateSearch: z.object({
-    step: z.enum(["identity", "packages", "pricing", "intake", "content", "publish"]).optional(),
+    step: z
+      .enum(["identity", "packages", "pricing", "performance", "intake", "content", "publish"])
+      .optional(),
   }),
   beforeLoad: managerOnly,
   component: ProductBuilderPage,

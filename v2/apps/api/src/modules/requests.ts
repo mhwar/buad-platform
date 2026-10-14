@@ -6,11 +6,13 @@ import { and, desc, eq, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { z } from "zod";
 import { requireAuth, requireRole, type Vars } from "../auth/middleware";
+import type { Db } from "../auth/service";
 import { findSimilarName, insertClient } from "./clients";
 import { newId, nowSec } from "./common";
 import { loadVatRate } from "./finance";
 import { pricingOf } from "./products";
 import { insertProject, liveClient } from "./projects";
+import { resolveServiceLink } from "./service-link";
 
 /** «الطلبات»: quote requests from the website or logged by staff. Owner and managers only. */
 type Env = { Bindings: { JWT_SECRET: string }; Variables: Vars };
@@ -131,6 +133,22 @@ const convertInput = z.object({
 
 const r2 = (n: number) => Math.round(n * 100) / 100;
 
+/** The service and package a request was quoted on (falls back to its product, no package). */
+async function serviceLinkOf(
+  db: Db,
+  orgId: string,
+  requestProductId: string,
+  quote: { productId?: string; packageId?: string },
+) {
+  const r = await resolveServiceLink(
+    db,
+    orgId,
+    quote.productId || requestProductId,
+    quote.packageId ?? "",
+  );
+  return r.ok ? r : { productId: "", packageId: "", packageName: "" };
+}
+
 requestsApp
   // Prices the request from the product's private pricing model: numbers are computed here,
   // never taken from the browser. The snapshot is kept with the request (managers only).
@@ -237,29 +255,42 @@ requestsApp
       ).id;
     }
 
-    const quote = JSON.parse(row.quote) as { price?: number; packageName?: string; times?: number };
+    const quote = JSON.parse(row.quote) as {
+      price?: number;
+      productId?: string;
+      packageId?: string;
+      packageName?: string;
+      times?: number;
+    };
     const answers = Object.entries(JSON.parse(row.answers) as Record<string, string>)
       .map(([k, a]) => `${k}: ${a}`)
       .join("\n");
-    const project = await insertProject(db, me, {
-      clientId,
-      name: v.projectName || `${row.productName || "طلب"} — ${row.entity || row.name}`,
-      type: "other",
-      status: "draft",
-      visibility: "team",
-      location: "",
-      startDate: "",
-      endDate: "",
-      payDate: "",
-      expectedValue: r2(quote.price ?? 0),
-      notes: [
-        quote.packageName ? `الباقة: ${quote.packageName} × ${quote.times}` : "",
-        answers,
-        row.message,
-      ]
-        .filter(Boolean)
-        .join("\n"),
-    } as Parameters<typeof insertProject>[2]);
+    const project = await insertProject(
+      db,
+      me,
+      {
+        clientId,
+        name: v.projectName || `${row.productName || "طلب"} — ${row.entity || row.name}`,
+        type: "other",
+        status: "draft",
+        visibility: "team",
+        location: "",
+        startDate: "",
+        endDate: "",
+        payDate: "",
+        expectedValue: r2(quote.price ?? 0),
+        notes: [
+          quote.packageName ? `الباقة: ${quote.packageName} × ${quote.times}` : "",
+          answers,
+          row.message,
+        ]
+          .filter(Boolean)
+          .join("\n"),
+        productId: "",
+        packageId: "",
+      } as Parameters<typeof insertProject>[2],
+      await serviceLinkOf(db, me.orgId, row.productId, quote),
+    );
     await db
       .update(productRequests)
       .set({

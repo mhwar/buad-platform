@@ -166,6 +166,10 @@ export const projects = sqliteTable(
     /** «قيمة العقد المتوقعة» in halalas. Finance module takes over the real contract value. */
     expectedValue: integer("expected_value_halalas").notNull().default(0),
     notes: text("notes").notNull().default(""),
+    /** The service (product) and package contracted; "" = none. packageName is a snapshot. */
+    productId: text("product_id").notNull().default(""),
+    packageId: text("package_id").notNull().default(""),
+    packageName: text("package_name").notNull().default(""),
     ...audit,
     /** Set to the client id when the project was archived together with its client. */
     archivedWith: text("archived_with").notNull().default(""),
@@ -174,6 +178,7 @@ export const projects = sqliteTable(
     uniqueIndex("uq_projects_number").on(t.orgId, t.number),
     index("idx_projects_client").on(t.orgId, t.clientId),
     index("idx_projects_status").on(t.orgId, t.status),
+    index("idx_projects_product").on(t.orgId, t.productId),
   ],
 );
 

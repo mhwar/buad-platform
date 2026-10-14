@@ -28,7 +28,13 @@ export function ProjectsPage() {
     navigate({ search: (prev) => ({ ...prev, ...patch }), replace: true });
   const q = useDeferredValue(s.q ?? "");
   const list = useQuery(
-    projectsQuery({ q, status: s.status, sort: s.sort, archived: s.archived ? "1" : "0" }),
+    projectsQuery({
+      q,
+      status: s.status,
+      product: s.product,
+      sort: s.sort,
+      archived: s.archived ? "1" : "0",
+    }),
   );
   const [adding, setAdding] = useState(false);
   const counts = list.data?.counts ?? {};
@@ -46,6 +52,22 @@ export function ProjectsPage() {
           </Button>
         }
       />
+      {s.product && (
+        <p className="mb-3 flex flex-wrap items-center gap-2 text-sm">
+          <Badge tone="blue">
+            {s.product === "none"
+              ? "مشاريع بلا خدمة"
+              : `مشاريع الخدمة: ${items[0]?.productName || "…"}`}
+          </Badge>
+          <button
+            type="button"
+            onClick={() => set({ product: undefined })}
+            className="text-muted underline hover:text-ink"
+          >
+            إزالة التصفية
+          </button>
+        </p>
+      )}
       <div className="mb-4 flex flex-wrap items-center gap-3">
         <SearchBox
           value={s.q ?? ""}
@@ -139,6 +161,12 @@ function ProjectCard({ p }: { p: ProjectListItem }) {
           <Avatar name={p.clientName} logo={p.clientLogoUrl} size="xs" />
           <span className="truncate">{p.clientName}</span>
         </p>
+        {p.productName && (
+          <p className="mt-2 text-xs text-brand">
+            {p.productName}
+            {p.packageName && ` · ${p.packageName}`}
+          </p>
+        )}
         <div className="mt-auto flex items-center justify-between border-t pt-3 text-sm">
           <span className="text-muted">
             {label(PROJECT_TYPE_LABELS, p.type)}
@@ -161,6 +189,7 @@ function ProjectTable({ items }: { items: ProjectListItem[] }) {
             <th className="p-3 font-medium">العميل</th>
             <th className="p-3 font-medium">الحالة</th>
             <th className="p-3 font-medium">النوع</th>
+            <th className="p-3 font-medium">الخدمة</th>
             <th className="p-3 font-medium">البداية</th>
             <th className="p-3 font-medium">قيمة العقد</th>
           </tr>
@@ -194,6 +223,11 @@ function ProjectTable({ items }: { items: ProjectListItem[] }) {
                 <Badge tone={STATUS_TONE[p.status]}>{label(PROJECT_STATUS_LABELS, p.status)}</Badge>
               </td>
               <td className="p-3">{label(PROJECT_TYPE_LABELS, p.type)}</td>
+              <td className="p-3">
+                {p.productName
+                  ? `${p.productName}${p.packageName ? ` · ${p.packageName}` : ""}`
+                  : "—"}
+              </td>
               <td className="p-3">{day(p.startDate) || "—"}</td>
               <td className="p-3">{p.contractTotal ? money(p.contractTotal) : "—"}</td>
             </tr>

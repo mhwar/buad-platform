@@ -15,6 +15,7 @@ import {
   Tabs,
 } from "../../components/ui";
 import { ago, ok } from "../../lib/format";
+import { PortfolioOverview } from "./PortfolioOverview";
 import {
   type BlueprintItem,
   blueprintsQuery,
@@ -32,7 +33,7 @@ const STATUS_TONE = { draft: "gray", published: "green", archived: "amber" } as 
 export function ProductsPage() {
   const qc = useQueryClient();
   const navigate = useNavigate();
-  const search = useSearch({ strict: false }) as { tab?: "products" | "requests" };
+  const search = useSearch({ strict: false }) as { tab?: "products" | "overview" | "requests" };
   const tab = search.tab ?? "products";
   const newCount = useQuery(requestsQuery("")).data?.counts.new ?? 0;
   const products = useQuery(productsQuery);
@@ -88,6 +89,13 @@ export function ProductsPage() {
           },
           {
             to: "",
+            label: "نظرة عامة",
+            active: tab === "overview",
+            onClick: () =>
+              navigate({ to: "/products", search: { tab: "overview" }, replace: true }),
+          },
+          {
+            to: "",
             label: newCount ? `الطلبات (${newCount} جديد)` : "الطلبات",
             active: tab === "requests",
             onClick: () =>
@@ -98,6 +106,8 @@ export function ProductsPage() {
       {error && <Notice>{error}</Notice>}
       {tab === "requests" ? (
         <RequestsInbox products={list} />
+      ) : tab === "overview" ? (
+        <PortfolioOverview />
       ) : (
         <>
           {products.isError && <Notice>تعذّر تحميل المنتجات</Notice>}
