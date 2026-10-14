@@ -6,12 +6,16 @@ import {
   type PlannedDoc,
   parseV1Export,
   planBusiness,
+  planCompany,
   planDocuments,
   planFinance,
 } from "@buad/migrate";
 import {
   clientContacts,
   clients,
+  companyEntries,
+  distributionShares,
+  distributions,
   documents,
   documentVersions,
   financeBudgetItems,
@@ -19,6 +23,7 @@ import {
   financeEntries,
   legacyMap,
   orgProfile,
+  partners,
   projectFinance,
   projects,
   users,
@@ -537,6 +542,74 @@ export const importApp = new Hono<Env>()
       }
     }
 
+    // Company finance («مالية المنصة»): not per client, so it comes with every import.
+    // Rows still as imported are refreshed; anything edited in v2 is left alone.
+    const company = planCompany(ws.pf);
+    const cid = (kind: string, v1Id: string) => `v1${kind}_${me.orgId}_${v1Id}`;
+    const fromV1 = sql`updated_by LIKE 'v1-import%'`;
+    for (const e of company.entries) {
+      const row = {
+        type: e.type,
+        category: e.category,
+        date: e.date,
+        paymentDate: e.paymentDate,
+        description: e.description,
+        amount: e.amount,
+        note: e.note,
+        updatedBy: by,
+        updatedAt: t,
+      };
+      q.push(
+        db
+          .insert(companyEntries)
+          .values({ id: cid("pf", e.v1Id), orgId: me.orgId, ...row, createdBy: by, createdAt: t })
+          .onConflictDoUpdate({ target: companyEntries.id, set: row, setWhere: fromV1 }),
+      );
+    }
+    for (const p of company.partners) {
+      const row = { name: p.name, sharePct: p.sharePct, note: p.note, updatedBy: by, updatedAt: t };
+      q.push(
+        db
+          .insert(partners)
+          .values({ id: cid("prt", p.v1Id), orgId: me.orgId, ...row, createdBy: by, createdAt: t })
+          .onConflictDoUpdate({ target: partners.id, set: row, setWhere: fromV1 }),
+      );
+    }
+    // Distributions are records of what was paid: imported once, never rewritten.
+    for (const d of company.distributions) {
+      const id = cid("dst", d.v1Id);
+      const { v1Id: _, shares, projectIds, ...rest } = d;
+      q.push(
+        db
+          .insert(distributions)
+          .values({
+            id,
+            orgId: me.orgId,
+            ...rest,
+            projectIds: JSON.stringify(projectIds),
+            completedAt: d.status === "completed" ? d.createdAt || t : null,
+            createdBy: by,
+            createdAt: d.createdAt || t,
+            updatedBy: by,
+            updatedAt: t,
+          })
+          .onConflictDoNothing(),
+        ...shares.map((sh, i) =>
+          db
+            .insert(distributionShares)
+            .values({
+              id: `${id}_${i}`,
+              distributionId: id,
+              partnerId: sh.partnerV1Id ? cid("prt", sh.partnerV1Id) : "",
+              partnerName: sh.partnerName,
+              sharePct: sh.sharePct,
+              amount: sh.amount,
+            })
+            .onConflictDoNothing(),
+        ),
+      );
+    }
+
     await runAll(db, q as never);
 
     return c.json({
@@ -553,6 +626,18 @@ export const importApp = new Hono<Env>()
         withCover,
         adoptedLetterhead: Object.keys(adopt),
         items: docs,
+      },
+      company: {
+        entries: company.entries.length,
+        partners: company.partners.length,
+        distributions: company.distributions.length,
+        skipped: company.skipped,
+        totals: {
+          income: company.totals.income / 100,
+          expenses: company.totals.expenses / 100,
+          distributed: company.totals.distributed / 100,
+          retained: company.totals.retained / 100,
+        },
       },
       issues,
     });

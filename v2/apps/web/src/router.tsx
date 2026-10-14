@@ -272,6 +272,7 @@ const financeRoute = createRoute({
   validateSearch: z.object({
     ...periodSearch,
     preset: z.enum(["all", "year", "last", "custom"]).optional(),
+    tab: z.enum(["projects", "company", "partners"]).optional(),
   }),
   beforeLoad: managerOnly,
   component: FinancePage,

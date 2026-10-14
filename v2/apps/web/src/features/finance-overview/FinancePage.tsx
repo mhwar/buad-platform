@@ -1,8 +1,17 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getRouteApi, Link } from "@tanstack/react-router";
-import { AlertTriangle, FileBarChart2 } from "lucide-react";
+import { AlertTriangle, Briefcase, Building2, FileBarChart2, Users } from "lucide-react";
 import { useState } from "react";
-import { Badge, Button, Card, EmptyState, Input, PageHeader, Pills } from "../../components/ui";
+import {
+  Badge,
+  Button,
+  Card,
+  EmptyState,
+  Input,
+  PageHeader,
+  Pills,
+  Segmented,
+} from "../../components/ui";
 import { day, pct, sar } from "../../lib/format";
 import { financeApi } from "../finance/api";
 import { label, PROJECT_STATUS_LABELS } from "../labels";
@@ -13,11 +22,15 @@ import {
   type Period,
   presetPeriod,
 } from "./api";
+import { CompanyTab } from "./CompanyTab";
 import { MonthlyBars, RankBars } from "./charts";
+import { PartnersTab } from "./PartnersTab";
+import { Tile } from "./Tile";
 
 const route = getRouteApi("/finance");
 type Preset = "all" | "year" | "last" | "custom";
 type SortKey = "profit" | "margin" | "gross";
+type Tab = "projects" | "company" | "partners";
 
 /** «المالية»: the organisation's money at a glance, then the detail behind every number. */
 export function FinancePage() {
@@ -25,7 +38,8 @@ export function FinancePage() {
   const navigate = route.useNavigate();
   const preset: Preset = (s.preset as Preset) ?? "all";
   const period: Period = preset === "custom" ? { from: s.from, to: s.to } : presetPeriod(preset);
-  const q = useQuery(overviewQuery(period));
+  const tab: Tab = s.tab ?? "projects";
+  const q = useQuery({ ...overviewQuery(period), enabled: tab === "projects" });
   const set = (patch: Partial<typeof s>) =>
     navigate({ search: (prev) => ({ ...prev, ...patch }), replace: true });
   const [sort, setSort] = useState<SortKey>("profit");
@@ -44,10 +58,24 @@ export function FinancePage() {
     <>
       <PageHeader
         title="المالية"
-        subtitle="عقود الجهة وأرباحها ومصروفاتها والتزاماتها، من مالية كل مشروع"
+        subtitle="عقود الجهة وأرباحها ومصروفاتها والتزاماتها، ومالية الشركة والشركاء"
         actions={reportLink}
       />
-      <div className="mb-6 flex flex-wrap items-center gap-3">
+      <div className="mb-4 max-w-xl">
+        <Segmented<Tab>
+          label="أقسام المالية"
+          value={tab}
+          onChange={(v) => set({ tab: v === "projects" ? undefined : v })}
+          items={[
+            { value: "projects", label: "المشاريع", icon: <Briefcase className="size-4" /> },
+            { value: "company", label: "الشركة", icon: <Building2 className="size-4" /> },
+            { value: "partners", label: "الشركاء والتوزيع", icon: <Users className="size-4" /> },
+          ]}
+        />
+      </div>
+      <div
+        className={`mb-6 flex flex-wrap items-center gap-3 ${tab === "partners" ? "hidden" : ""}`}
+      >
         <Pills<Preset>
           value={preset}
           onChange={(v) => set({ preset: (v || "all") as Preset })}
@@ -79,7 +107,11 @@ export function FinancePage() {
         )}
       </div>
 
-      {q.isPending ? (
+      {tab === "company" ? (
+        <CompanyTab period={period} />
+      ) : tab === "partners" ? (
+        <PartnersTab />
+      ) : q.isPending ? (
         <div className="h-64 animate-pulse rounded-2xl bg-slate-200 dark:bg-slate-800" />
       ) : q.isError || !q.data ? (
         <EmptyState
@@ -95,36 +127,6 @@ export function FinancePage() {
         <Dashboard data={q.data} sort={sort} setSort={setSort} />
       )}
     </>
-  );
-}
-
-function Tile({
-  title,
-  value,
-  sub,
-  tone,
-}: {
-  title: string;
-  value: string;
-  sub?: string;
-  tone?: "good" | "bad" | "warn";
-}) {
-  return (
-    <Card className="p-4">
-      <p className="text-xs text-muted">{title}</p>
-      <p
-        className={`mt-1 text-xl font-bold ${
-          tone === "good"
-            ? "text-emerald-700 dark:text-emerald-400"
-            : tone === "bad"
-              ? "text-red-600 dark:text-red-400"
-              : ""
-        }`}
-      >
-        {value}
-      </p>
-      {sub && <p className="mt-0.5 text-xs text-muted">{sub}</p>}
-    </Card>
   );
 }
 

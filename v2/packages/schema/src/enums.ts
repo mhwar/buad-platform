@@ -26,3 +26,23 @@ export const BUILTIN_CATEGORIES = [
   "vat",
 ] as const;
 export const DEFAULT_OP_CATS = ["salary", "logistics", "materials", "other"] as const;
+
+/** Company finance (v1 «مالية المنصة», app.html Pages._pfCats). */
+export const COMPANY_INCOME_CATS = [
+  "project_fee",
+  "subscription",
+  "setup",
+  "consulting",
+  "commission",
+  "other",
+] as const;
+export const COMPANY_EXPENSE_CATS = [
+  "hosting",
+  "marketing",
+  "payroll",
+  "tools",
+  "legal",
+  "other",
+] as const;
+export const RETAINED_CATS = ["ops", "dev", "reserve"] as const;
+export const DISTRIBUTION_STATUSES = ["draft", "completed"] as const;

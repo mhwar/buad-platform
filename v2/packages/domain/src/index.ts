@@ -1,3 +1,4 @@
+export * from "./company";
 export * from "./documents";
 export * from "./finance-adapter";
 export * from "./fincalc";

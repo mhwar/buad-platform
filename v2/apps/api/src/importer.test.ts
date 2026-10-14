@@ -378,3 +378,72 @@ describe("import v1 contracts and letters", () => {
     );
   });
 });
+
+describe("import v1 company finance («مالية المنصة»)", () => {
+  const pf = {
+    income: [
+      {
+        id: "i1",
+        date: "2026-03-30",
+        payment_date: "2026-04-02",
+        desc: "استشارة",
+        category: "consulting",
+        amount: 2000,
+      },
+      { id: "i2", date: "2026-02-01", desc: "مزامنة قديمة", category: "project_fee", amount: 9999 },
+    ],
+    expenses: [{ id: "e1", date: "2026-04-10", desc: "استضافة", category: "hosting", amount: 500 }],
+    partners: [
+      { id: "pa", name: "سلطان", share_pct: 60 },
+      { id: "pb", name: "أحمد", share_pct: 40 },
+    ],
+    distributions: [
+      {
+        id: "d1",
+        created_at: "2026-07-01T10:00:00Z",
+        period_type: "q2",
+        period_label: "الربع الثاني 2026",
+        net_profit: 1000,
+        distribution_pct: 80,
+        distributed_amount: 800,
+        retained_amount: 200,
+        retained_category: "reserve",
+        entries: [
+          { partner_id: "pa", partner_name: "سلطان", share_pct: 60, amount: 480 },
+          { partner_id: "pb", partner_name: "أحمد", share_pct: 40, amount: 320 },
+        ],
+        status: "completed",
+      },
+    ],
+  };
+  const file = { ...backup, buad2_pf: JSON.stringify(pf) };
+
+  it("brings entries, partners and distributions; re-import is safe and respects v2 edits", async () => {
+    const r = (await call("own", "POST", "/api/import/v1", file)).body;
+    expect(r.company).toMatchObject({
+      entries: 2,
+      partners: 2,
+      distributions: 1,
+      skipped: 1,
+      totals: { income: 2000, expenses: 500, distributed: 800, retained: 200 },
+    });
+    const C = "/api/finance/company";
+    const o = (await call("own", "GET", `${C}/overview`)).body;
+    expect(o.calc).toMatchObject({ serviceIncome: 2000, companyExpenses: 500 });
+    expect(o.allTime.distributed).toBe(800);
+    expect(o.retained.reserve).toBe(200);
+    const dist = (await call("own", "GET", `${C}/distributions`)).body.items[0];
+    expect(dist.shares.map((s: J) => s.amount)).toEqual([480, 320]);
+
+    // Edited in v2 → a re-import leaves it alone; nothing is duplicated.
+    const p = (await call("own", "GET", `${C}/partners`)).body.items.find(
+      (x: J) => x.name === "سلطان",
+    );
+    await call("own", "PATCH", `${C}/partners/${p.id}`, { name: "سلطان عسيري", sharePct: 60 });
+    await call("own", "POST", "/api/import/v1", file);
+    const names = (await call("own", "GET", `${C}/partners`)).body.items.map((x: J) => x.name);
+    expect(names.sort()).toEqual(["أحمد", "سلطان عسيري"]);
+    expect((await call("own", "GET", `${C}/entries`)).body.items).toHaveLength(2);
+    expect((await call("own", "GET", `${C}/distributions`)).body.items).toHaveLength(1);
+  });
+});
