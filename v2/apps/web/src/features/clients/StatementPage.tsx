@@ -3,8 +3,8 @@ import { getRouteApi, Link } from "@tanstack/react-router";
 import { Download, Printer } from "lucide-react";
 import { Button, EmptyState, Notice } from "../../components/ui";
 import { fromEpoch, sar } from "../../lib/format";
-import { Paper } from "../documents/DocumentView";
 import { FitToWidth } from "../documents/FitToWidth";
+import { type Block, PagedSheets } from "../documents/Pages";
 import { label, PROJECT_STATUS_LABELS } from "../labels";
 import { type Statement, statementQuery } from "./api";
 
@@ -68,71 +68,104 @@ export function StatementPage() {
       )}
       <div className="print-root rounded-2xl bg-slate-100 p-3 sm:p-4 dark:bg-slate-900 print:bg-transparent print:p-0">
         <FitToWidth>
-          <Paper
+          <PagedSheets
             title={`كشف حساب ${st.client.name}`}
             style={SHEET_STYLE}
             header={st.org.urls.headerAsset}
             footer={st.org.urls.footerAsset}
-          >
-            <StatementBody st={st} />
-          </Paper>
+            blocks={statementBlocks(st)}
+            repeat={<HeadRow />}
+          />
         </FitToWidth>
       </div>
     </>
   );
 }
 
-function StatementBody({ st }: { st: Statement }) {
-  const c = st.client;
+/** Fixed column widths, so the one-row tables of each page line up as a single table. */
+function Cols() {
   return (
-    <div className="st">
-      <h1 className="doc-title">كشف حساب عميل</h1>
-      <div className="st-meta">
-        <div>
-          <p>
-            <b>العميل:</b> {c.name}
-          </p>
-          {c.regNo && (
-            <p>
-              <b>السجل:</b> <span dir="ltr">{c.regNo}</span>
-            </p>
-          )}
-          {c.taxNo && (
-            <p>
-              <b>الرقم الضريبي:</b> <span dir="ltr">{c.taxNo}</span>
-            </p>
-          )}
-          {(c.address || c.city) && (
-            <p>
-              <b>العنوان:</b> {[c.address, c.city].filter(Boolean).join("، ")}
-            </p>
-          )}
-        </div>
-        <div>
-          <p>
-            <b>رقم العميل:</b> <span dir="ltr">{c.code}</span>
-          </p>
-          <p>
-            <b>التاريخ:</b> {fromEpoch(st.generatedAt)}
-          </p>
-          <p>
-            <b>عدد المشاريع:</b> {st.items.length}
-          </p>
-        </div>
-      </div>
-      <table className="st-table">
-        <thead>
-          <tr>
-            <th>المشروع</th>
-            <th>الحالة</th>
-            {COLUMNS.map(([k, l]) => (
-              <th key={k}>{l}</th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {st.items.map((i) => (
-            <tr key={i.id}>
+    <colgroup>
+      <col style={{ width: "28%" }} />
+      <col style={{ width: "10%" }} />
+      <col style={{ width: "18%" }} />
+      <col style={{ width: "14%" }} />
+      <col style={{ width: "15%" }} />
+      <col style={{ width: "15%" }} />
+    </colgroup>
+  );
+}
+
+function HeadRow() {
+  return (
+    <table className="st-table">
+      <Cols />
+      <thead>
+        <tr>
+          <th>المشروع</th>
+          <th>الحالة</th>
+          {COLUMNS.map(([k, l]) => (
+            <th key={k}>{l}</th>
+          ))}
+        </tr>
+      </thead>
+    </table>
+  );
+}
+
+/** The statement as page blocks: intro, header, one block per project, totals, note. */
+function statementBlocks(st: Statement): Block[] {
+  const c = st.client;
+  return [
+    {
+      key: "intro",
+      node: (
+        <>
+          <h1 className="doc-title">كشف حساب عميل</h1>
+          <div className="st-meta">
+            <div>
+              <p>
+                <b>العميل:</b> {c.name}
+              </p>
+              {c.regNo && (
+                <p>
+                  <b>السجل:</b> <span dir="ltr">{c.regNo}</span>
+                </p>
+              )}
+              {c.taxNo && (
+                <p>
+                  <b>الرقم الضريبي:</b> <span dir="ltr">{c.taxNo}</span>
+                </p>
+              )}
+              {(c.address || c.city) && (
+                <p>
+                  <b>العنوان:</b> {[c.address, c.city].filter(Boolean).join("، ")}
+                </p>
+              )}
+            </div>
+            <div>
+              <p>
+                <b>رقم العميل:</b> <span dir="ltr">{c.code}</span>
+              </p>
+              <p>
+                <b>التاريخ:</b> {fromEpoch(st.generatedAt)}
+              </p>
+              <p>
+                <b>عدد المشاريع:</b> {st.items.length}
+              </p>
+            </div>
+          </div>
+        </>
+      ),
+    },
+    { key: "head", keepWithNext: true, node: <HeadRow /> },
+    ...st.items.map((i) => ({
+      key: i.id,
+      node: (
+        <table className="st-table st-cont">
+          <Cols />
+          <tbody>
+            <tr>
               <td>
                 {i.name}
                 <span className="st-sub" dir="ltr">
@@ -147,25 +180,39 @@ function StatementBody({ st }: { st: Statement }) {
                 </td>
               ))}
             </tr>
-          ))}
-        </tbody>
-        <tfoot>
-          <tr>
-            <td colSpan={2}>الإجمالي</td>
-            {COLUMNS.map(([k]) => (
-              <td key={k} className="st-num">
-                {sar(st.totals[k])}
-              </td>
-            ))}
-          </tr>
-        </tfoot>
-      </table>
-      <p className="st-note">
-        المتبقي = قيمة العقد شامل الضريبة ناقص كل القيود المسجلة في مالية المشروع (المصروفات وبنود
-        الاتفاقية). صادر من {st.org.name}.
-      </p>
-    </div>
-  );
+          </tbody>
+        </table>
+      ),
+    })),
+    {
+      key: "totals",
+      keepWithPrev: true,
+      node: (
+        <table className="st-table st-cont st-totals">
+          <Cols />
+          <tbody>
+            <tr>
+              <td colSpan={2}>الإجمالي</td>
+              {COLUMNS.map(([k]) => (
+                <td key={k} className="st-num">
+                  {sar(st.totals[k])}
+                </td>
+              ))}
+            </tr>
+          </tbody>
+        </table>
+      ),
+    },
+    {
+      key: "note",
+      node: (
+        <p className="st-note">
+          المتبقي = قيمة العقد شامل الضريبة ناقص كل القيود المسجلة في مالية المشروع (المصروفات وبنود
+          الاتفاقية). صادر من {st.org.name}.
+        </p>
+      ),
+    },
+  ];
 }
 
 const cell = (v: string | number) => `"${String(v).replaceAll('"', '""')}"`;

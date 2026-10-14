@@ -79,19 +79,6 @@
   font-size: var(--doc-fs, 13pt);
   line-height: var(--doc-lh, 1.9);
 }
-.doc-table {
-  width: 100%;
-  /* A table's height acts as a minimum: the body row stretches so the footer sits at the page bottom. */
-  height: 297mm;
-  border-collapse: collapse;
-}
-.doc-table tbody td {
-  height: 100%;
-}
-.doc-table td {
-  padding: 0;
-  vertical-align: top;
-}
 .doc-band {
   display: block;
   width: 100%;
@@ -118,8 +105,55 @@
   font-weight: 700;
   margin: 0.2cm 0 0.6cm;
 }
-.doc-clause {
-  margin-bottom: 0.35cm;
+/* Real A4 pages: fixed size, letterhead on each, body between the bands. */
+.doc-pages {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  position: relative;
+  /* Set here (not on each sheet) so the hidden measuring copy uses the same type. */
+  color: #111827;
+  font-size: var(--doc-fs, 13pt);
+  line-height: var(--doc-lh, 1.9);
+}
+.doc-page {
+  height: 297mm;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.doc-page .doc-body {
+  flex: 1;
+  min-height: 0;
+}
+.doc-page-footer {
+  margin-top: auto;
+}
+.doc-page-no {
+  position: absolute;
+  bottom: 3mm;
+  inset-inline-end: 6mm;
+  font-size: 8pt;
+  color: #9ca3af;
+}
+.doc-block {
+  display: flow-root;
+}
+.doc-measure {
+  position: absolute;
+  top: 0;
+  left: -10000px;
+  width: 210mm;
+  visibility: hidden;
+  pointer-events: none;
+}
+.doc-line .doc-p {
+  margin-bottom: 0;
+}
+.doc-clause-end {
+  padding-bottom: 0.35cm;
 }
 .doc-clause-title {
   font-weight: 700;
@@ -208,6 +242,9 @@
   text-align: right;
   vertical-align: top;
 }
+.st-cont td {
+  border-top: 0;
+}
 .st-table thead th {
   background: #eef2f9;
   font-weight: 700;
@@ -283,28 +320,65 @@
   body {
     background: #fff !important;
   }
-  /* Only the document prints; the app around it does not. */
-  body * {
-    visibility: hidden;
+  /* Only the document prints: everything that is neither the document nor one of its
+     ancestors is removed from layout (so no blank trailing pages), and the ancestors lose
+     their own spacing. */
+  body *:not(:has(.print-root)):not(.print-root):not(.print-root *) {
+    display: none !important;
   }
-  .print-root,
-  .print-root * {
-    visibility: visible;
+  body :has(.print-root) {
+    display: block !important;
+    position: static !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    background: none !important;
+    width: auto !important;
+    max-width: none !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    transform: none !important;
   }
   .print-root {
-    position: absolute;
-    inset: 0 0 auto 0;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: none !important;
+  }
+  .doc-pages {
+    gap: 0;
   }
   .doc-sheet {
     box-shadow: none;
-    width: auto;
-    min-height: 0;
+  }
+  .doc-page {
+    width: 210mm;
+    height: 297mm;
+    margin: 0;
+    break-after: page;
+    break-inside: avoid;
+  }
+  .doc-page:last-of-type {
+    break-after: auto;
+  }
+  .doc-page-no,
+  .doc-measure {
+    display: none !important;
   }
   .doc-var,
   .doc-var-empty {
     background: none;
     color: inherit;
     padding: 0;
+  }
+  /* Printing from the editor: an empty field is a line to write on, not its label. */
+  .doc-var-empty {
+    font-size: 0 !important;
+  }
+  .doc-var-empty::after {
+    content: "…………";
+    font-size: var(--doc-fs, 13pt);
   }
   .doc-watermark-approved {
     display: none;

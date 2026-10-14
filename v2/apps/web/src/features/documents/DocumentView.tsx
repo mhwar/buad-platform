@@ -1,6 +1,7 @@
 import { type Resolved, segments } from "@buad/domain";
 import type { Clause, DocLayout } from "@buad/schema/documents";
 import { Fragment, type ReactNode } from "react";
+import { type Block, PagedSheets } from "./Pages";
 
 /** Labels for variables, shown in place of empty values while editing. */
 export const VAR_LABELS: Record<string, string> = {
@@ -61,6 +62,8 @@ type Props = {
   approved?: boolean;
   /** Outgoing register reference («ص-2026-0015 / PRJ-2026-0003»), once registered. */
   outgoing?: string;
+  /** How an asset id becomes a URL (public share pages use their own route). */
+  assetUrl?: (id: string, fallback: string) => string;
 };
 
 function Text({ text, values, editing }: { text: string; values: Resolved; editing?: boolean }) {
@@ -95,137 +98,132 @@ function Text({ text, values, editing }: { text: string; values: Resolved; editi
 const paragraphs = (t: string) => t.split(/\n{2,}/).filter((p) => p.trim());
 const v = (values: Resolved, k: string) => values[k]?.value ?? "";
 
-/**
- * One renderer for the screen preview and for printing.
- * The page is a table: <thead>/<tfoot> repeat the letterhead on every printed page.
- */
-export function DocumentView(props: Props) {
-  // A document's own letterhead/stamp (e.g. imported from v1) wins over the organisation's.
-  const own = (id: string, fallback: string) => (id ? `/api/assets/${id}` : fallback);
-  const org = {
-    ...props.org,
-    urls: {
-      ...props.org.urls,
-      headerAsset: own(props.layout.headerAsset, props.org.urls.headerAsset ?? ""),
-      footerAsset: own(props.layout.footerAsset, props.org.urls.footerAsset ?? ""),
-      stampAsset: own(props.layout.stampAsset, props.org.urls.stampAsset ?? ""),
-    },
+const ownAsset = (id: string, fallback: string) => (id ? `/api/assets/${id}` : fallback);
+
+/** Image URLs a document prints with: its own letterhead/stamp (e.g. from v1) win over the org's. */
+export function documentUrls(
+  layout: DocLayout,
+  orgUrls: Record<string, string>,
+  assetUrl: (id: string, fallback: string) => string = ownAsset,
+): Record<string, string> {
+  return {
+    ...orgUrls,
+    headerAsset: assetUrl(layout.headerAsset, orgUrls.headerAsset ?? ""),
+    footerAsset: assetUrl(layout.footerAsset, orgUrls.footerAsset ?? ""),
+    stampAsset: assetUrl(layout.stampAsset, orgUrls.stampAsset ?? ""),
   };
+}
+
+/** One paragraph: single line breaks inside it are kept. */
+function Para({ text, values, editing }: { text: string; values: Resolved; editing?: boolean }) {
+  return (
+    <p className="doc-p">
+      {text.split("\n").map((line, j) => (
+        // biome-ignore lint/suspicious/noArrayIndexKey: lines of one paragraph
+        <Fragment key={j}>
+          {j > 0 && <br />}
+          <Text text={line} values={values} editing={editing} />
+        </Fragment>
+      ))}
+    </p>
+  );
+}
+
+/**
+ * One renderer for the screen preview, printing and PDF: the document is cut into blocks
+ * and laid out on real A4 pages, each carrying the letterhead.
+ */
+export function DocumentView(props: Props & { onReady?: (root: HTMLElement) => void }) {
+  const org = { ...props.org, urls: documentUrls(props.layout, props.org.urls, props.assetUrl) };
   const p = { ...props, org };
-  const { layout: l, values } = p;
-  const header = l.showHeader && org.urls.headerAsset;
+  const { layout: l } = p;
   const style = {
     "--doc-fs": `${l.fontSize}pt`,
     "--doc-lh": l.lineHeight,
     "--doc-mx": `${l.marginX}cm`,
   } as React.CSSProperties;
   return (
-    <Paper
+    <PagedSheets
       title={p.title}
       style={style}
       watermark={p.approved ? "معتمد" : ""}
-      header={header ? org.urls.headerAsset : ""}
+      header={l.showHeader ? org.urls.headerAsset : ""}
       footer={l.showFooter ? org.urls.footerAsset : ""}
       footerLabel={l.showFooter ? l.footerLabel : ""}
-    >
-      {p.kind === "contract" ? <Contract {...p} /> : <Letter {...p} />}
-    </Paper>
+      blocks={p.kind === "contract" ? contractBlocks(p) : letterBlocks(p)}
+      onReady={props.onReady}
+    />
   );
 }
 
-/**
- * An A4 sheet on the letterhead. It is a table so <thead>/<tfoot> repeat the header and
- * footer bands on every printed page. Shared by documents and reports (e.g. statements).
- */
-export function Paper({
+function contractBlocks({
   title,
-  style,
-  watermark,
-  header,
-  footer,
-  footerLabel,
-  children,
-}: {
-  title: string;
-  style?: React.CSSProperties;
-  watermark?: string;
-  header?: string;
-  footer?: string;
-  footerLabel?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <article className="doc-sheet" style={style} dir="rtl" aria-label={title}>
-      {watermark && <div className="doc-watermark-approved">{watermark}</div>}
-      <table className="doc-table">
-        <thead>
-          <tr>
-            <td>
-              {header ? (
-                <img src={header} alt="" className="doc-band" />
-              ) : (
-                <div className="doc-band-space" />
-              )}
-            </td>
-          </tr>
-        </thead>
-        <tfoot>
-          <tr>
-            <td>
-              {footer || footerLabel ? (
-                <div className="doc-footer">
-                  {footer && <img src={footer} alt="" className="doc-band" />}
-                  {footerLabel && <span className="doc-footer-label">{footerLabel}</span>}
-                </div>
-              ) : (
-                <div className="doc-band-space" />
-              )}
-            </td>
-          </tr>
-        </tfoot>
-        <tbody>
-          <tr>
-            <td className="doc-body">{children}</td>
-          </tr>
-        </tbody>
-      </table>
-    </article>
-  );
-}
-
-function Contract({ title, content, layout: l, values, editing, org, outgoing }: Props) {
-  return (
-    <>
-      {outgoing && (
+  content,
+  layout: l,
+  values,
+  editing,
+  org,
+  outgoing,
+}: Props): Block[] {
+  const blocks: Block[] = [];
+  if (outgoing)
+    blocks.push({
+      key: "outgoing",
+      node: (
         <p className="doc-outgoing">
           رقم الصادر: <span dir="rtl">{outgoing}</span>
         </p>
-      )}
+      ),
+    });
+  blocks.push({
+    key: "title",
+    keepWithNext: true,
+    node: (
       <h1 className="doc-title" style={{ fontSize: `${l.titleSize}pt` }}>
         {title}
       </h1>
-      {content.map((c) => (
-        <section key={c.id} className={`doc-clause ${c.pageBreak ? "doc-page-break" : ""}`}>
-          {(c.title || c.baseTitle) && (
-            <h2 className="doc-clause-title" style={{ fontSize: `${l.clauseTitleSize}pt` }}>
-              {c.title || c.baseTitle}
-            </h2>
-          )}
-          {paragraphs(c.content).map((para, i) => (
-            // biome-ignore lint/suspicious/noArrayIndexKey: paragraphs of one clause
-            <p key={i} className="doc-p">
-              {para.split("\n").map((line, j) => (
-                // biome-ignore lint/suspicious/noArrayIndexKey: lines of one paragraph
-                <Fragment key={j}>
-                  {j > 0 && <br />}
-                  <Text text={line} values={values} editing={editing} />
-                </Fragment>
-              ))}
-            </p>
-          ))}
-        </section>
-      ))}
-      {l.showSignatures && (
+    ),
+  });
+  for (const c of content) {
+    const heading = c.title || c.baseTitle;
+    const paras = paragraphs(c.content);
+    let first = true;
+    if (heading) {
+      blocks.push({
+        key: `${c.id}-h`,
+        breakBefore: c.pageBreak,
+        keepWithNext: paras.length > 0,
+        node: (
+          <h2 className="doc-clause-title" style={{ fontSize: `${l.clauseTitleSize}pt` }}>
+            {heading}
+          </h2>
+        ),
+      });
+      first = false;
+    }
+    paras.forEach((para, i) => {
+      const end = i === paras.length - 1 ? "doc-clause-end" : "";
+      const lines = para.split("\n");
+      // A long multi-line paragraph (e.g. the parties' details) may continue on the next page.
+      const parts = lines.length >= 4 ? lines : [para];
+      parts.forEach((part, j) => {
+        const last = j === parts.length - 1;
+        blocks.push({
+          key: `${c.id}-${i}-${j}`,
+          breakBefore: first && c.pageBreak,
+          keepWithNext: parts.length > 1 && j === 0,
+          className: `${last ? end : "doc-line"}`,
+          node: <Para text={part} values={values} editing={editing} />,
+        });
+        first = false;
+      });
+    });
+  }
+  if (l.showSignatures)
+    blocks.push({
+      key: "signatures",
+      keepWithPrev: true,
+      node: (
         <section className="doc-signatures">
           <SignatureBlock
             heading="الطرف الأول"
@@ -242,9 +240,9 @@ function Contract({ title, content, layout: l, values, editing, org, outgoing }:
             role={v(values, "party_b_title")}
           />
         </section>
-      )}
-    </>
-  );
+      ),
+    });
+  return blocks;
 }
 
 function SignatureBlock({
@@ -281,55 +279,73 @@ function SignatureBlock({
   );
 }
 
-function Letter({ number, title, content, layout: l, values, editing, org, outgoing }: Props) {
+function letterBlocks({
+  number,
+  title,
+  content,
+  layout: l,
+  values,
+  editing,
+  org,
+  outgoing,
+}: Props): Block[] {
   const body = content[0]?.content ?? "";
   const date = v(values, "letter_date");
-  return (
-    <div className="doc-letter">
-      <div className="doc-letter-meta">
-        <span>
-          الرقم: <span dir="rtl">{outgoing || number}</span>
-        </span>
-        <span>
-          التاريخ: {date ? date.split("-").reverse().join("/") : "—"}
-          {values.today_hijri && date && <> الموافق {hijriOf(values)} هـ</>}
-        </span>
-      </div>
-      <p className="doc-p doc-letter-to">
-        <Text
-          text="{{letter_to_honorific}} / {{letter_to}} {{letter_to_suffix}}"
-          values={values}
-          editing={editing}
-        />
-      </p>
-      <p className="doc-p">
-        <Text text="{{letter_salutation}}" values={values} editing={editing} />
-      </p>
-      <p className="doc-letter-subject">الموضوع: {title}</p>
-      {paragraphs(body).map((para, i) => (
-        // biome-ignore lint/suspicious/noArrayIndexKey: paragraphs of the body
-        <p key={i} className="doc-p">
-          <Text text={para} values={values} editing={editing} />
-        </p>
-      ))}
-      <p className="doc-p">
-        <Text text="{{letter_closing}}" values={values} editing={editing} />
-      </p>
-      <div className="doc-letter-sign">
-        <p className="font-semibold">{org.name}</p>
-        <p>{v(values, "letter_signer_name") || v(values, "company_signer_name")}</p>
-        <p>{v(values, "letter_signer_title") || v(values, "company_signer_title")}</p>
-        <div className="doc-sign-area">
-          {l.useOrgSignature && org.urls.signatureAsset && (
-            <img src={org.urls.signatureAsset} alt="التوقيع" className="doc-sign-img" />
-          )}
-          {l.useOrgStamp && org.urls.stampAsset && (
-            <img src={org.urls.stampAsset} alt="الختم" className="doc-stamp-img" />
-          )}
+  const t = (text: string) => <Text text={text} values={values} editing={editing} />;
+  return [
+    {
+      key: "meta",
+      node: (
+        <div className="doc-letter-meta">
+          <span>
+            الرقم: <span dir="rtl">{outgoing || number}</span>
+          </span>
+          <span>
+            التاريخ: {date ? date.split("-").reverse().join("/") : "—"}
+            {values.today_hijri && date && <> الموافق {hijriOf(values)} هـ</>}
+          </span>
         </div>
-      </div>
-    </div>
-  );
+      ),
+    },
+    {
+      key: "to",
+      node: (
+        <p className="doc-p doc-letter-to">
+          {t("{{letter_to_honorific}} / {{letter_to}} {{letter_to_suffix}}")}
+        </p>
+      ),
+    },
+    { key: "salutation", node: <p className="doc-p">{t("{{letter_salutation}}")}</p> },
+    {
+      key: "subject",
+      keepWithNext: true,
+      node: <p className="doc-letter-subject">الموضوع: {title}</p>,
+    },
+    ...paragraphs(body).map((para, i) => ({
+      key: `p${i}`,
+      node: <Para text={para} values={values} editing={editing} />,
+    })),
+    { key: "closing", node: <p className="doc-p">{t("{{letter_closing}}")}</p> },
+    {
+      key: "sign",
+      keepWithPrev: true,
+      node: (
+        <div className="doc-letter-sign">
+          <p className="font-semibold">{org.name}</p>
+          <p>{v(values, "letter_signer_name") || v(values, "company_signer_name")}</p>
+          <p>{v(values, "letter_signer_title") || v(values, "company_signer_title")}</p>
+          <div className="doc-sign-area">
+            {l.useOrgSignature && org.urls.signatureAsset && (
+              <img src={org.urls.signatureAsset} alt="التوقيع" className="doc-sign-img" />
+            )}
+            {l.useOrgStamp && org.urls.stampAsset && (
+              <img src={org.urls.stampAsset} alt="الختم" className="doc-stamp-img" />
+            )}
+          </div>
+        </div>
+      ),
+    },
+  ];
 }
 
 /** Hijri of the letter's own date (falls back to today's). */

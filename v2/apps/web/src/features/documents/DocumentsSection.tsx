@@ -3,9 +3,10 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { FileSignature, Mail, Plus } from "lucide-react";
 import { useState } from "react";
-import { Badge, Button, Card, Dialog, Notice, type Tone } from "../../components/ui";
+import { Badge, Button, Card, Dialog, Menu, Notice, type Tone } from "../../components/ui";
 import { fromEpoch } from "../../lib/format";
 import { docApi, docKeys, documentsQuery, templatesQuery } from "./api";
+import { useDocumentActions } from "./DocumentActions";
 
 export const STATUS_TONE: Record<string, Tone> = {
   draft: "gray",
@@ -18,8 +19,18 @@ export function DocumentsSection({ projectId, canEdit }: { projectId: string; ca
   const q = useQuery(documentsQuery(projectId));
   const [creating, setCreating] = useState(false);
   const items = q.data ?? [];
+  const actions = useDocumentActions(canEdit);
   return (
     <Card className="p-0">
+      {(actions.busy || actions.error) && (
+        <div className="px-5 pt-4">
+          {actions.busy ? (
+            <Notice tone="blue">جارٍ {actions.busy}…</Notice>
+          ) : (
+            <Notice>{actions.error}</Notice>
+          )}
+        </div>
+      )}
       <div className="flex items-center justify-between px-5 pt-5">
         <h2 className="font-semibold">العقود والخطابات</h2>
         {canEdit && (
@@ -42,11 +53,14 @@ export function DocumentsSection({ projectId, canEdit }: { projectId: string; ca
       ) : (
         <ul className="mt-4 divide-y border-t">
           {items.map((d) => (
-            <li key={d.id}>
+            <li
+              key={d.id}
+              className="flex items-center gap-2 pe-3 transition hover:bg-brand-soft/50"
+            >
               <Link
                 to="/projects/$id/documents/$docId"
                 params={{ id: projectId, docId: d.id }}
-                className="flex items-center gap-3 px-5 py-3 transition hover:bg-brand-soft/50"
+                className="flex min-w-0 flex-1 items-center gap-3 py-3 ps-5"
               >
                 <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-brand-soft text-brand">
                   {d.kind === "contract" ? (
@@ -69,6 +83,10 @@ export function DocumentsSection({ projectId, canEdit }: { projectId: string; ca
                 )}
                 <Badge tone={STATUS_TONE[d.status]}>{DOC_STATUS_LABELS[d.status]}</Badge>
               </Link>
+              <Menu
+                items={actions.items({ ...d, projectId })}
+                label={`إجراءات ${d.title || d.number}`}
+              />
             </li>
           ))}
         </ul>

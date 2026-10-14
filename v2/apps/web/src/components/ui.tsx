@@ -341,13 +341,13 @@ export function Notice({
   tone = "red",
   children,
 }: {
-  tone?: "red" | "amber";
+  tone?: "red" | "amber" | "blue";
   children: ReactNode;
 }) {
   return (
     <div
-      role="alert"
-      className={cx("mb-4 rounded-lg px-3 py-2 text-sm", tone === "red" ? tones.red : tones.amber)}
+      role={tone === "blue" ? "status" : "alert"}
+      className={cx("mb-4 rounded-lg px-3 py-2 text-sm", tones[tone])}
     >
       {children}
     </div>
