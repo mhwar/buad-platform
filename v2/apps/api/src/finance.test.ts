@@ -522,7 +522,7 @@ describe("finance correctness (I1)", () => {
       status: "pending",
     });
     let q = (await call("adm", "GET", "/api/finance/overview")).body.quality;
-    expect(q).toMatchObject([{ missingContractDate: true, entriesWithoutStatus: 1 }]);
+    expect(q).toMatchObject([{ missingReceipts: true, entriesWithoutStatus: 1 }]);
     // No contract date: the project is placed by its first entry, not by when it was created.
     const may = (await call("adm", "GET", "/api/finance/overview?from=2026-05-01&to=2026-05-31"))
       .body;
@@ -534,5 +534,53 @@ describe("finance correctness (I1)", () => {
     expect(r.entries.map((e: J) => e.status).sort()).toEqual(["paid", "pending"]);
     q = (await call("adm", "GET", "/api/finance/overview")).body.quality;
     expect(q[0].entriesWithoutStatus).toBe(0);
+  });
+});
+
+describe("finance filters and receipts (J2)", () => {
+  it("filters by client and status, totals what was received in the period", async () => {
+    await call("adm", "PATCH", `${F()}/ctrl`, {
+      version: 0,
+      contractValue: 1000,
+      contractDate: "2026-01-10",
+    });
+    await call("adm", "POST", `${F()}/receipts`, { date: "2026-02-01", amount: 400 });
+    await call("adm", "POST", `${F()}/receipts`, { date: "2026-05-01", amount: 300 });
+    const c2 = (await call("adm", "POST", "/api/clients", { name: "عميل آخر" })).body.id;
+    await call("adm", "POST", "/api/projects", { clientId: c2, name: "آخر", expectedValue: 5000 });
+    const q1 = (await call("adm", "GET", "/api/finance/overview?from=2026-01-01&to=2026-03-31"))
+      .body;
+    expect(q1.totals.received).toBe(400);
+    const clientId = (await call("adm", "GET", `/api/projects/${pid}`)).body.project.clientId;
+    const only = (await call("adm", "GET", `/api/finance/overview?client=${clientId}`)).body;
+    expect(only.projects.map((p: J) => p.id)).toEqual([pid]);
+    const st = (await call("adm", "GET", "/api/finance/overview?status=completed")).body;
+    expect(st.totals.projects).toBe(0);
+    // The other project has a value and nothing received: the data card asks for a receipt.
+    const all = (await call("adm", "GET", "/api/finance/overview")).body;
+    expect(all.quality.find((x: J) => x.name === "آخر")).toMatchObject({ missingReceipts: true });
+    // Statement: received and still owed.
+    const s = (await call("adm", "GET", `/api/clients/${clientId}/statement`)).body;
+    expect(s.items[0]).toMatchObject({ received: 700 });
+    expect(s.items[0].owed).toBeCloseTo(s.items[0].gross - 700, 2);
+  });
+});
+
+describe("finance periods follow receipts", () => {
+  it("a project shows in every period where money came in from it", async () => {
+    await call("adm", "PATCH", `${F()}/ctrl`, { version: 0, contractValue: 1000 });
+    await call("adm", "POST", `${F()}/receipts`, { date: "2026-05-01", amount: 500 });
+    await call("adm", "POST", `${F()}/receipts`, { date: "2026-08-01", amount: 500 });
+    for (const [from, to] of [
+      ["2026-04-01", "2026-06-30"],
+      ["2026-07-01", "2026-09-30"],
+    ]) {
+      const o = (await call("adm", "GET", `/api/finance/overview?from=${from}&to=${to}`)).body;
+      expect(o.projects.map((p: J) => p.id)).toEqual([pid]);
+      expect(o.totals.received).toBe(500);
+    }
+    const q1 = (await call("adm", "GET", "/api/finance/overview?from=2026-01-01&to=2026-03-31"))
+      .body;
+    expect(q1.totals.projects).toBe(0);
   });
 });

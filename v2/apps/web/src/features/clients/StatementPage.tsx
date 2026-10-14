@@ -16,11 +16,12 @@ const SHEET_STYLE = {
   "--doc-mx": "1.6cm",
 } as React.CSSProperties;
 
+// What the client sees: the contract, what they paid, and what they still owe.
 const COLUMNS = [
   ["gross", "قيمة العقد (شامل الضريبة)"],
   ["vat", "الضريبة"],
-  ["spent", "المصروف"],
-  ["remaining", "المتبقي"],
+  ["received", "المستلم"],
+  ["owed", "المتبقي على العميل"],
 ] as const;
 
 /** «كشف حساب»: the client's projects with contract value, VAT, spending and remaining, on the letterhead. */
@@ -209,8 +210,7 @@ function statementBlocks(st: Statement): Block[] {
       key: "note",
       node: (
         <p className="st-note">
-          المتبقي = قيمة العقد شامل الضريبة ناقص كل القيود المسجلة في مالية المشروع (المصروفات وبنود
-          الاتفاقية). صادر من {st.org.name}.
+          المتبقي على العميل = قيمة العقد شامل الضريبة ناقص ما استُلم منه. صادر من {st.org.name}.
         </p>
       ),
     },
@@ -230,7 +230,9 @@ export function statementCsv(st: Statement) {
     "الضريبة",
     "قيمة العقد شامل الضريبة",
     "المصروف",
-    "المتبقي",
+    "المتبقي من العقد",
+    "المستلم",
+    "المتبقي على العميل",
   ];
   const rows = st.items.map((i) => [
     i.number,
@@ -242,9 +244,23 @@ export function statementCsv(st: Statement) {
     i.gross,
     i.spent,
     i.remaining,
+    i.received,
+    i.owed,
   ]);
   const t = st.totals;
-  rows.push(["", "الإجمالي", "", "", t.contractNet, t.vat, t.gross, t.spent, t.remaining]);
+  rows.push([
+    "",
+    "الإجمالي",
+    "",
+    "",
+    t.contractNet,
+    t.vat,
+    t.gross,
+    t.spent,
+    t.remaining,
+    t.received,
+    t.owed,
+  ]);
   return `﻿${[head, ...rows].map((r) => r.map(cell).join(",")).join("\r\n")}`;
 }
 

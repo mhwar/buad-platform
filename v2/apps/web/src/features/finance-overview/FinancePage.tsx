@@ -21,26 +21,29 @@ import {
   PageHeader,
   Pills,
   Segmented,
+  Select,
 } from "../../components/ui";
 import { day, pct, sar } from "../../lib/format";
 import { financeApi } from "../finance/api";
+import { ReceiptDialog } from "../finance/Receipts";
 import { label, PROJECT_STATUS_LABELS } from "../labels";
 import {
   type Overview,
   type OverviewProject,
   overviewQuery,
   type Period,
-  presetPeriod,
+  type PeriodChoice,
+  resolvePeriod,
 } from "./api";
 import { downloadArchive } from "./archive";
 import { CompanyTab } from "./CompanyTab";
 import { MonthlyBars, RankBars } from "./charts";
 import { PartnersTab } from "./PartnersTab";
+import { PeriodPicker } from "./PeriodPicker";
 import { QuarterCentre } from "./QuarterCentre";
 import { Tile } from "./Tile";
 
 const route = getRouteApi("/finance");
-type Preset = "all" | "year" | "last" | "custom";
 type SortKey = "profit" | "margin" | "gross";
 type Tab = "projects" | "quarter" | "company" | "partners";
 
@@ -48,10 +51,21 @@ type Tab = "projects" | "quarter" | "company" | "partners";
 export function FinancePage() {
   const s = route.useSearch();
   const navigate = route.useNavigate();
-  const preset: Preset = (s.preset as Preset) ?? "all";
-  const period: Period = preset === "custom" ? { from: s.from, to: s.to } : presetPeriod(preset);
+  const choice: PeriodChoice = { preset: s.preset, year: s.year, q: s.q, from: s.from, to: s.to };
+  const r = resolvePeriod(choice);
+  const filters = { client: s.client, status: s.status };
+  const period: Period = { ...r.period, ...filters };
   const tab: Tab = s.tab ?? "projects";
   const q = useQuery({ ...overviewQuery(period), enabled: tab === "projects" });
+  // The previous quarter/year, for ▲▼ on the headline numbers.
+  const prevQ = useQuery({
+    ...overviewQuery({ ...(r.prev ?? {}), ...filters }),
+    enabled: tab === "projects" && !!r.prev,
+  });
+  const clients = useQuery({ ...overviewQuery({}), enabled: tab === "projects" });
+  const clientOptions = [
+    ...new Map((clients.data?.projects ?? []).map((p) => [p.clientId, p.clientName])).entries(),
+  ];
   const set = (patch: Partial<typeof s>) =>
     navigate({ search: (prev) => ({ ...prev, ...patch }), replace: true });
   const [sort, setSort] = useState<SortKey>("profit");
@@ -95,34 +109,39 @@ export function FinancePage() {
       <div
         className={`mb-6 flex flex-wrap items-center gap-3 ${tab === "partners" || tab === "quarter" ? "hidden" : ""}`}
       >
-        <Pills<Preset>
-          value={preset}
-          onChange={(v) => set({ preset: (v || "all") as Preset })}
-          items={[
-            { value: "all", label: "كل الفترات" },
-            { value: "year", label: "هذه السنة" },
-            { value: "last", label: "السنة الماضية" },
-            { value: "custom", label: "فترة مخصصة" },
-          ]}
+        <PeriodPicker
+          value={choice}
+          onChange={(c) => set({ preset: c.preset, year: c.year, q: c.q, from: c.from, to: c.to })}
         />
-        {preset === "custom" && (
-          <div className="flex items-center gap-2 text-sm">
-            <Input
-              type="date"
-              aria-label="من"
-              value={s.from ?? ""}
-              onChange={(e) => set({ from: e.target.value || undefined })}
+        {tab === "projects" && (
+          <>
+            <Select
+              aria-label="العميل"
+              value={s.client ?? ""}
+              onChange={(e) => set({ client: e.target.value || undefined })}
               className="w-auto"
-            />
-            <span className="text-muted">إلى</span>
-            <Input
-              type="date"
-              aria-label="إلى"
-              value={s.to ?? ""}
-              onChange={(e) => set({ to: e.target.value || undefined })}
+            >
+              <option value="">كل العملاء</option>
+              {clientOptions.map(([id, name]) => (
+                <option key={id} value={id}>
+                  {name}
+                </option>
+              ))}
+            </Select>
+            <Select
+              aria-label="حالة المشروع"
+              value={s.status ?? ""}
+              onChange={(e) => set({ status: e.target.value || undefined })}
               className="w-auto"
-            />
-          </div>
+            >
+              <option value="">كل الحالات</option>
+              {Object.entries(PROJECT_STATUS_LABELS).map(([k, l]) => (
+                <option key={k} value={k}>
+                  {l}
+                </option>
+              ))}
+            </Select>
+          </>
         )}
       </div>
 
@@ -143,10 +162,16 @@ export function FinancePage() {
       ) : q.data.totals.projects === 0 ? (
         <EmptyState
           title="لا مشاريع في هذه الفترة"
-          text="تُحسب المشاريع بتاريخ عقدها (أو تاريخ بدايتها). جرّبوا «كل الفترات»."
+          text="يدخل المشروع الفترة بتاريخ أول مبلغ استُلم منه (أو تاريخ عقده أو بدايته). جرّبوا «كل الفترات»."
         />
       ) : (
-        <Dashboard data={q.data} sort={sort} setSort={setSort} />
+        <Dashboard
+          data={q.data}
+          prev={r.prev ? prevQ.data : undefined}
+          prevLabel={r.prevLabel}
+          sort={sort}
+          setSort={setSort}
+        />
       )}
     </>
   );
@@ -154,10 +179,14 @@ export function FinancePage() {
 
 function Dashboard({
   data,
+  prev,
+  prevLabel,
   sort,
   setSort,
 }: {
   data: Overview;
+  prev?: Overview;
+  prevLabel?: string;
   sort: SortKey;
   setSort: (k: SortKey) => void;
 }) {
@@ -171,21 +200,34 @@ function Dashboard({
         <Tile
           title="قيمة العقود (شامل الضريبة)"
           value={sar(t.gross)}
-          sub={`${t.projects} مشروع${t.withoutFinance ? ` · ${t.withoutFinance} بلا مالية` : ""}`}
+          sub={`${t.projects} مشروع · ضريبة ${sar(t.vat)}${t.withoutFinance ? ` · ${t.withoutFinance} بلا مالية` : ""}`}
+          delta={prev && { now: t.gross, prev: prev.totals.gross, label: prevLabel }}
         />
         <Tile
           title="صافي الربح"
           value={sar(t.profit)}
           sub={`هامش ${pct(t.margin)}`}
           tone={t.profit > 0 ? "good" : undefined}
+          delta={prev && { now: t.profit, prev: prev.totals.profit, label: prevLabel }}
         />
-        <Tile title="المصروفات" value={sar(t.spent)} />
+        <Tile
+          title="المستلم من العملاء"
+          value={sar(t.received)}
+          sub="بتاريخ وصوله للبنك"
+          delta={prev && { now: t.received, prev: prev.totals.received, label: prevLabel }}
+        />
+        <Tile
+          title="المصروفات"
+          value={sar(t.spent)}
+          delta={
+            prev && { now: t.spent, prev: prev.totals.spent, label: prevLabel, lowerIsBetter: true }
+          }
+        />
         <Tile
           title="المتبقي من العقود"
           value={sar(t.remaining)}
           tone={t.remaining < 0 ? "bad" : undefined}
         />
-        <Tile title="ضريبة القيمة المضافة" value={sar(t.vat)} sub="على العقود" />
         <Tile
           title="التزامات قائمة"
           value={sar(t.pending + t.unregistered)}
@@ -326,7 +368,7 @@ function ProjectRow({ p }: { p: OverviewProject }) {
 function QualityCard({ items }: { items: Overview["quality"] }) {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
-  const dates = items.filter((i) => i.missingContractDate).length;
+  const dates = items.filter((i) => i.missingReceipts).length;
   const statuses = items.reduce((a, i) => a + i.entriesWithoutStatus, 0);
   const refresh = () => qc.invalidateQueries({ queryKey: ["finance-overview"] });
   return (
@@ -337,7 +379,8 @@ function QualityCard({ items }: { items: Overview["quality"] }) {
           <div>
             <p className="font-semibold">بيانات ناقصة تؤثر على دقة الأرقام</p>
             <p className="text-xs text-muted">
-              {dates > 0 && `${dates} مشروع بلا تاريخ عقد (تُستخدم تواريخ بديلة لتحديد الفترة)`}
+              {dates > 0 &&
+                `${dates} مشروع لم يُسجَّل له أي مبلغ مستلم (لا يُعرف ربعه ولا يدخل في التوزيع)`}
               {dates > 0 && statuses > 0 && " · "}
               {statuses > 0 && `${statuses} قيد بلا حالة (مدفوع/معلّق)`}
             </p>
@@ -365,7 +408,7 @@ function QualityRow({
   item: Overview["quality"][number];
   onDone: () => void;
 }) {
-  const [date, setDate] = useState("");
+  const [receipt, setReceipt] = useState(false);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
   const api = financeApi(i.projectId);
@@ -389,23 +432,21 @@ function QualityRow({
           {i.number}
         </span>
       </span>
-      {i.missingContractDate && (
-        <span className="flex items-center gap-2">
-          <Input
-            type="date"
-            aria-label={`تاريخ عقد ${i.name}`}
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            className="w-auto"
-          />
-          <Button
-            variant="secondary"
-            disabled={!date || busy}
-            onClick={() => run(() => api.saveCtrl({ version: i.ctrlVersion, contractDate: date }))}
-          >
-            حفظ تاريخ العقد
-          </Button>
-        </span>
+      {i.missingReceipts && (
+        <Button variant="secondary" disabled={busy} onClick={() => setReceipt(true)}>
+          سجّل ما استُلم ({sar(i.gross)})
+        </Button>
+      )}
+      {receipt && (
+        <ReceiptDialog
+          projectId={i.projectId}
+          receipt={null}
+          remaining={i.gross}
+          onClose={() => {
+            setReceipt(false);
+            onDone();
+          }}
+        />
       )}
       {i.entriesWithoutStatus > 0 && (
         <Button

@@ -101,15 +101,27 @@ describe("statement CSV", () => {
           gross: 115000,
           spent: 10000,
           remaining: 105000,
+          received: 50000,
+          owed: 65000,
         },
       ],
-      totals: { contractNet: 100000, vat: 15000, gross: 115000, spent: 10000, remaining: 105000 },
+      totals: {
+        contractNet: 100000,
+        vat: 15000,
+        gross: 115000,
+        spent: 10000,
+        remaining: 105000,
+        received: 50000,
+        owed: 65000,
+      },
     } as unknown as Statement;
     const csv = statementCsv(st);
     expect(csv.charCodeAt(0)).toBe(0xfeff);
     const lines = csv.slice(1).split("\r\n");
     expect(lines).toHaveLength(3);
     expect(lines[1]).toContain('"برنامج، تدريبي"');
-    expect(lines[2]).toBe('"","الإجمالي","","","100000","15000","115000","10000","105000"');
+    expect(lines[2]).toBe(
+      '"","الإجمالي","","","100000","15000","115000","10000","105000","50000","65000"',
+    );
   });
 });

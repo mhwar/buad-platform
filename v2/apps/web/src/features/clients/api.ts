@@ -88,6 +88,8 @@ export type StatementLine = {
   spent: number;
   income: number;
   remaining: number;
+  received: number;
+  owed: number;
 };
 export type Statement = {
   client: {
@@ -103,7 +105,10 @@ export type Statement = {
   };
   org: { name: string; reg: string; tax: string; urls: Record<string, string> };
   items: StatementLine[];
-  totals: Record<"contractNet" | "vat" | "gross" | "spent" | "income" | "remaining", number>;
+  totals: Record<
+    "contractNet" | "vat" | "gross" | "spent" | "income" | "remaining" | "received" | "owed",
+    number
+  >;
   generatedAt: number;
 };
 export const statementQuery = (id: string) =>
