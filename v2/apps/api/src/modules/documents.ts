@@ -9,7 +9,7 @@ import {
   renumberClauses,
   resolveVariables,
 } from "@buad/domain";
-import { clientContacts, clients, documents, documentVersions } from "@buad/schema/db";
+import { clientContacts, clients, documents, documentVersions, projects } from "@buad/schema/db";
 import {
   type Clause,
   createDocumentInput,
@@ -18,18 +18,27 @@ import {
   statusInput,
 } from "@buad/schema/documents";
 import { zValidator } from "@hono/zod-validator";
-import { and, count, desc, eq } from "drizzle-orm";
+import { and, count, desc, eq, isNotNull, ne, or, type SQL, sql } from "drizzle-orm";
 import { Hono } from "hono";
+import { z } from "zod";
 import { requireAuth, requireRole, type Vars } from "../auth/middleware";
 import type { AuthUser, Db } from "../auth/service";
-import { newId, nextCounter, nowSec } from "./common";
+import { likeTerm, logoUrlSql, newId, nextCounter, nowSec } from "./common";
 import { loadFinance } from "./finance";
 import { loadOrgProfile } from "./org";
-import { loadVisible } from "./projects";
+import { loadVisible, visibleProjects } from "./projects";
 
 type Env = { Bindings: { JWT_SECRET: string }; Variables: Vars };
 const manager = requireRole("owner", "admin");
 const today = () => new Date().toISOString().slice(0, 10);
+const registerQuery = z.object({
+  q: z.string().max(100).optional(),
+  kind: z.enum(["contract", "letter"]).optional(),
+  status: z.enum(["draft", "review", "approved"]).optional(),
+  outgoing: z.enum(["0", "1"]).optional(),
+  clientId: z.string().max(64).optional(),
+  projectId: z.string().max(64).optional(),
+});
 const BUILTIN_CONTRACTS = Object.keys(CONTRACT_TEMPLATES) as (keyof typeof CONTRACT_TEMPLATES)[];
 
 /** Everything a document can draw on, gathered once per request. */
@@ -133,6 +142,7 @@ async function view(
     .orderBy(desc(documentVersions.version));
   return {
     document: d,
+    project: { id: project.id, number: project.number, name: project.name },
     values: resolveVariables(d.variables, ctx),
     /** What each variable would be if filled automatically now (for «تلقائي» badges and reset). */
     auto: initialVariables(ctx),
@@ -158,6 +168,7 @@ export const projectDocumentsApp = new Hono<Env>()
         number: documents.number,
         title: documents.title,
         status: documents.status,
+        outgoingNo: documents.outgoingNo,
         updatedAt: documents.updatedAt,
         version: documents.version,
       })
@@ -262,6 +273,71 @@ export const documentsApp = new Hono<Env>()
     }),
   )
 
+  // The organisation's register: every document the user may see, across projects.
+  .get("/", zValidator("query", registerQuery), async (c) => {
+    const db = c.get("db");
+    const me = c.get("user");
+    const q = c.req.valid("query");
+    const base: (SQL | undefined)[] = [eq(documents.orgId, me.orgId), visibleProjects(me).where];
+    const where: (SQL | undefined)[] = [...base];
+    if (q.kind) where.push(eq(documents.kind, q.kind));
+    if (q.status) where.push(eq(documents.status, q.status));
+    if (q.outgoing === "1") where.push(ne(documents.outgoingNo, ""));
+    if (q.clientId) where.push(eq(projects.clientId, q.clientId));
+    if (q.projectId) where.push(eq(documents.projectId, q.projectId));
+    if (q.q) {
+      const t = likeTerm(q.q);
+      where.push(
+        or(
+          sql`${documents.title} LIKE ${t} ESCAPE '\\'`,
+          sql`${documents.number} LIKE ${t} ESCAPE '\\'`,
+          sql`${documents.outgoingNo} LIKE ${t} ESCAPE '\\'`,
+          sql`${projects.name} LIKE ${t} ESCAPE '\\'`,
+          sql`${clients.name} LIKE ${t} ESCAPE '\\'`,
+        ),
+      );
+    }
+    const items = await db
+      .select({
+        id: documents.id,
+        kind: documents.kind,
+        number: documents.number,
+        title: documents.title,
+        status: documents.status,
+        outgoingNo: documents.outgoingNo,
+        outgoingAt: documents.outgoingAt,
+        updatedAt: documents.updatedAt,
+        projectId: projects.id,
+        projectNumber: projects.number,
+        projectName: projects.name,
+        clientId: clients.id,
+        clientName: clients.name,
+        clientLogo: sql<string>`${logoUrlSql("clients")}`,
+      })
+      .from(documents)
+      .innerJoin(projects, eq(projects.id, documents.projectId))
+      .innerJoin(clients, eq(clients.id, projects.clientId))
+      .where(and(...where))
+      .orderBy(
+        ...(q.outgoing === "1"
+          ? [desc(documents.outgoingAt), desc(documents.outgoingNo)]
+          : [desc(documents.updatedAt)]),
+      )
+      .limit(500);
+    const counts = await db
+      .select({ kind: documents.kind, status: documents.status, n: count() })
+      .from(documents)
+      .innerJoin(projects, eq(projects.id, documents.projectId))
+      .where(and(...base))
+      .groupBy(documents.kind, documents.status);
+    const [out] = await db
+      .select({ n: count() })
+      .from(documents)
+      .innerJoin(projects, eq(projects.id, documents.projectId))
+      .where(and(...base, isNotNull(documents.outgoingAt)));
+    return c.json({ ok: true, items, counts, outgoingCount: out?.n ?? 0 });
+  })
+
   .get("/:id", async (c) => {
     const db = c.get("db");
     const found = await loadDoc(db, c.get("user"), c.req.param("id"));
@@ -349,6 +425,33 @@ export const documentsApp = new Hono<Env>()
     return c.json({ ok: true, ...(await view(db, me, fresh!, found.project)) });
   })
 
+  // Registers an approved document in the outgoing (صادر) ledger. Optional, once, and never reused.
+  .post("/:id/outgoing", manager, async (c) => {
+    const db = c.get("db");
+    const me = c.get("user");
+    const found = await loadDoc(db, me, c.req.param("id"));
+    if (!found) return c.json({ ok: false, error: "not_found" }, 404);
+    const { doc, project } = found;
+    if (doc.outgoingNo) return c.json({ ok: true, outgoingNo: doc.outgoingNo, created: false });
+    if (doc.status !== "approved") return c.json({ ok: false, error: "not_approved" }, 409);
+    const year = new Date().getUTCFullYear();
+    const outgoingNo = formatCode("ص", await nextCounter(db, me.orgId, "outgoing", year), year);
+    const upd = await db
+      .update(documents)
+      .set({ outgoingNo, outgoingAt: nowSec(), outgoingBy: me.id })
+      .where(and(eq(documents.id, doc.id), eq(documents.outgoingNo, "")))
+      .returning({ id: documents.id });
+    if (!upd.length) {
+      // Someone registered it a moment ago: return theirs (the number taken here is skipped).
+      const [cur] = await db
+        .select({ n: documents.outgoingNo })
+        .from(documents)
+        .where(eq(documents.id, doc.id));
+      return c.json({ ok: true, outgoingNo: cur?.n ?? "", created: false });
+    }
+    return c.json({ ok: true, outgoingNo, projectNumber: project.number, created: true }, 201);
+  })
+
   .get("/:id/versions/:version", async (c) => {
     const db = c.get("db");
     const found = await loadDoc(db, c.get("user"), c.req.param("id"));
@@ -395,6 +498,9 @@ export const documentsApp = new Hono<Env>()
       version: 1,
       approvedBy: "",
       approvedAt: null,
+      outgoingNo: "",
+      outgoingAt: null,
+      outgoingBy: "",
       createdBy: me.id,
       createdAt: t,
       updatedBy: me.id,

@@ -10,8 +10,37 @@ export type DocListItem = {
   number: string;
   title: string;
   status: DocStatus;
+  outgoingNo: string;
   updatedAt: number;
   version: number;
+};
+export type RegisterItem = {
+  id: string;
+  kind: "contract" | "letter";
+  number: string;
+  title: string;
+  status: DocStatus;
+  outgoingNo: string;
+  outgoingAt: number | null;
+  updatedAt: number;
+  projectId: string;
+  projectNumber: string;
+  projectName: string;
+  clientId: string;
+  clientName: string;
+  clientLogo: string;
+};
+export type Register = {
+  items: RegisterItem[];
+  counts: { kind: "contract" | "letter"; status: DocStatus; n: number }[];
+  outgoingCount: number;
+};
+export type RegisterFilter = {
+  q?: string;
+  kind?: "contract" | "letter";
+  status?: DocStatus;
+  outgoing?: "1";
+  clientId?: string;
 };
 export type DocDetail = {
   document: {
@@ -28,8 +57,11 @@ export type DocDetail = {
     version: number;
     approvedBy: string;
     approvedAt: number | null;
+    outgoingNo: string;
+    outgoingAt: number | null;
     updatedAt: number;
   };
+  project: { id: string; number: string; name: string };
   values: Resolved;
   auto: Resolved;
   org: {
@@ -55,7 +87,20 @@ const json = (method: string, body?: unknown) => ({
 export const docKeys = {
   list: (projectId: string) => ["documents", "list", projectId] as const,
   detail: (id: string) => ["documents", "detail", id] as const,
+  register: (f: RegisterFilter) => ["documents", "register", f] as const,
 };
+
+export const registerQuery = (f: RegisterFilter) =>
+  queryOptions({
+    queryKey: docKeys.register(f),
+    queryFn: async () => {
+      const qs = new URLSearchParams(
+        Object.entries(f).filter((e): e is [string, string] => !!e[1]),
+      ).toString();
+      return ok<Register>(await fetch(`/api/documents${qs ? `?${qs}` : ""}`));
+    },
+    placeholderData: (prev) => prev,
+  });
 
 export const documentsQuery = (projectId: string) =>
   queryOptions({
@@ -86,6 +131,10 @@ export const docApi = {
     ok<DocDetail>(await fetch(`/api/documents/${id}/status`, json("POST", { to, version }))),
   duplicate: async (id: string) =>
     ok<{ id: string; number: string }>(await fetch(`/api/documents/${id}/duplicate`, json("POST"))),
+  outgoing: async (id: string) =>
+    ok<{ outgoingNo: string; created: boolean }>(
+      await fetch(`/api/documents/${id}/outgoing`, json("POST")),
+    ),
   remove: async (id: string) =>
     ok<{ ok: true }>(await fetch(`/api/documents/${id}`, json("DELETE"))),
 };

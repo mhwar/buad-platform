@@ -185,6 +185,11 @@
   color: #6b7280;
   width: 6cm;
 }
+.doc-outgoing {
+  font-size: 0.85em;
+  color: #374151;
+  margin-bottom: 0.3cm;
+}
 .doc-letter-meta {
   display: flex;
   justify-content: space-between;
