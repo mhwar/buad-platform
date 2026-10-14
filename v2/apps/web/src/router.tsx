@@ -15,6 +15,7 @@ import { Logo } from "./brand";
 import { UpdateBanner, useServerVersion } from "./components/UpdateBanner";
 import { ClientPage } from "./features/clients/ClientPage";
 import { ClientsPage } from "./features/clients/ClientsPage";
+import { DocumentEditor } from "./features/documents/DocumentEditor";
 import { ImportPage } from "./features/import/ImportPage";
 import { OrgSettingsPage } from "./features/org/OrgSettings";
 import { ProjectPage } from "./features/projects/ProjectPage";
@@ -224,6 +225,13 @@ const projectRoute = createRoute({
   component: ProjectPage,
 });
 
+const documentRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/projects/$id/documents/$docId",
+  beforeLoad: authed,
+  component: DocumentEditor,
+});
+
 const orgRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/settings/org",
@@ -264,6 +272,7 @@ export const router = createRouter({
     projectRoute,
     importRoute,
     orgRoute,
+    documentRoute,
   ]),
 });
 

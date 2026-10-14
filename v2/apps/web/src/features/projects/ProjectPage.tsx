@@ -32,6 +32,7 @@ import {
 import { day, fromEpoch } from "../../lib/format";
 import { meQuery } from "../../session";
 import { clientKeys } from "../clients/api";
+import { DocumentsSection } from "../documents/DocumentsSection";
 import { type Finance, financeKey } from "../finance/api";
 import {
   ContractSummary,
@@ -286,7 +287,6 @@ export function ProjectPage() {
                 value: "documents",
                 label: "المستندات",
                 icon: <FileText className="size-4" />,
-                soon: true,
                 hint: "العقود والخطابات",
               },
               {
@@ -306,10 +306,7 @@ export function ProjectPage() {
               setAdding={setAdding}
             />
           ) : section === "documents" ? (
-            <Upcoming
-              title="المستندات"
-              text="العقود والخطابات في مكان واحد: إنشاء من قوالب مرتبطة بأرقام المشروع، ومراجعة واعتماد وطباعة."
-            />
+            <DocumentsSection projectId={p.id} canEdit={manager} />
           ) : (
             <Upcoming
               title="التنفيذ"

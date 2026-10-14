@@ -8,7 +8,8 @@
     "./db": "./src/db.ts",
     "./clients": "./src/clients.ts",
     "./finance": "./src/finance.ts",
-    "./org": "./src/org.ts"
+    "./org": "./src/org.ts",
+    "./documents": "./src/documents.ts"
   },
   "scripts": {
     "typecheck": "tsc -p .",
