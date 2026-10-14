@@ -61,7 +61,7 @@ describe("receivables", () => {
       balance: 1300,
     });
     expect(w[1]).toMatchObject({ inflow: 700, outflow: 2500, balance: -500 });
-    expect(w[12].balance).toBe(-500);
+    expect(w[12]?.balance).toBe(-500);
     expect(firstShortfall(w)?.start).toBe("2026-03-08");
     expect(
       firstShortfall(cashForecast({ today: T, opening: 5, inflows: [], outflows: [] })),
