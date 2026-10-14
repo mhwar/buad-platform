@@ -1,30 +1,38 @@
-import { formatCode } from "@buad/domain";
+import { CONTRACT_ORDINALS, formatCode, renumberClauses } from "@buad/domain";
 import {
   financeParity,
   type Issue,
   type Parity,
+  type PlannedDoc,
   parseV1Export,
   planBusiness,
+  planDocuments,
   planFinance,
 } from "@buad/migrate";
 import {
   clientContacts,
   clients,
+  documents,
+  documentVersions,
   financeBudgetItems,
   financeCategories,
   financeEntries,
   legacyMap,
+  orgProfile,
   projectFinance,
   projects,
   users,
 } from "@buad/schema/db";
+import { layoutSchema } from "@buad/schema/documents";
 import { and, eq, inArray, ne, notLike, or, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { requireAuth, requireRole, type Vars } from "../auth/middleware";
 import type { Db } from "../auth/service";
+import { type FileStore, storeAsset } from "./assets";
 import { nowSec } from "./common";
+import { loadOrgProfile } from "./org";
 
-type Env = { Bindings: { JWT_SECRET: string }; Variables: Vars };
+type Env = { Bindings: { JWT_SECRET: string; FILES?: FileStore }; Variables: Vars };
 const MAX_CLIENTS = 2000;
 
 /** Reserve k consecutive numbers in one atomic UPSERT; returns the first. */
@@ -349,6 +357,182 @@ export const importApp = new Hono<Env>()
         );
     }
 
+    // ── Contracts and letters of each imported project.
+    const docs: {
+      id: string;
+      projectId: string;
+      kind: string;
+      title: string;
+      number: string;
+      status: string;
+    }[] = [];
+    let docsSkipped = 0;
+    let withCover = 0;
+    const imageCount = new Map<string, Map<string, number>>(); // header/footer/stamp → asset id → uses
+    const assetFor = async (dataUrl: string, slot: "header" | "footer" | "stamp") => {
+      if (!dataUrl || !c.env.FILES) return "";
+      const bytes = Uint8Array.from(atob(dataUrl.slice(dataUrl.indexOf(",") + 1)), (ch) =>
+        ch.charCodeAt(0),
+      );
+      const r = await storeAsset(db, c.env.FILES, me.orgId, me.id, bytes);
+      if ("error" in r) return "";
+      const m = imageCount.get(slot) ?? new Map<string, number>();
+      m.set(r.id, (m.get(r.id) ?? 0) + 1);
+      imageCount.set(slot, m);
+      return r.id;
+    };
+    const takenNumbers = new Set(
+      (
+        await db
+          .select({ n: documents.number })
+          .from(documents)
+          .where(eq(documents.orgId, me.orgId))
+      ).map((r) => r.n),
+    );
+    for (const p of pr) {
+      const raw = ws.fin[p.id];
+      if (!raw || typeof raw !== "object") continue;
+      for (const d of planDocuments(p.id, raw) as PlannedDoc[]) {
+        const [existing] = await db
+          .select({
+            number: documents.number,
+            updatedBy: documents.updatedBy,
+            orgId: documents.orgId,
+          })
+          .from(documents)
+          .where(eq(documents.id, d.id))
+          .limit(1);
+        if (
+          existing &&
+          (existing.orgId !== me.orgId || !existing.updatedBy.startsWith("v1-import"))
+        ) {
+          docsSkipped++;
+          issues.push({
+            kind: "project",
+            id: p.id,
+            name: `${p.name} — ${d.title}`,
+            severity: "fixed",
+            reason: "المستند عُدّل في الإصدار الثاني، فلم يُستبدل",
+          });
+          continue;
+        }
+        if (d.hadCover) withCover++;
+        let number = existing?.number ?? "";
+        if (!number) {
+          if (d.v1Number && !takenNumbers.has(d.v1Number)) number = d.v1Number;
+          else {
+            const y = new Date().getUTCFullYear();
+            number = formatCode(
+              d.kind === "contract" ? "CT" : "LT",
+              await reserve(db, me.orgId, `doc_${d.kind}`, y, 1),
+              y,
+            );
+          }
+          takenNumbers.add(number);
+        }
+        const layout = layoutSchema.parse({
+          ...Object.fromEntries(Object.entries(d.layout).filter(([, v]) => v !== undefined)),
+          headerAsset: await assetFor(d.images.header, "header"),
+          footerAsset: await assetFor(d.images.footer, "footer"),
+          stampAsset: await assetFor(d.images.stamp, "stamp"),
+        });
+        const row = {
+          title: d.title,
+          templateKey: d.templateKey,
+          status: d.status,
+          variables: JSON.stringify(d.variables),
+          content: JSON.stringify(
+            d.kind === "contract" ? renumberClauses(d.content, CONTRACT_ORDINALS) : d.content,
+          ),
+          layout: JSON.stringify(layout),
+          approvedBy: d.status === "approved" ? by : "",
+          approvedAt: d.status === "approved" ? (d.updatedAt ?? t) : null,
+          updatedBy: by,
+          updatedAt: d.updatedAt ?? t,
+        };
+        q.push(
+          db
+            .insert(documents)
+            .values({
+              id: d.id,
+              orgId: me.orgId,
+              projectId: p.id,
+              kind: d.kind,
+              number,
+              ...row,
+              createdBy: by,
+              createdAt: d.updatedAt ?? t,
+            })
+            .onConflictDoUpdate({ target: documents.id, set: row }),
+          db
+            .insert(legacyMap)
+            .values({ kind: "document", legacyId: d.id, newId: d.id })
+            .onConflictDoNothing(),
+        );
+        if (d.status === "approved") {
+          q.push(
+            db
+              .insert(documentVersions)
+              .values({
+                id: `dv_${d.id}`,
+                documentId: d.id,
+                version: 1,
+                snapshot: JSON.stringify({ document: { ...d, number }, importedFromV1: true }),
+                approvedBy: by,
+                approvedAt: d.updatedAt ?? t,
+              })
+              .onConflictDoNothing(),
+          );
+        }
+        docs.push({
+          id: d.id,
+          projectId: p.id,
+          kind: d.kind,
+          title: d.title,
+          number,
+          status: d.status,
+        });
+      }
+    }
+    // The organisation has no letterhead/stamp yet: adopt the one v1 documents used most.
+    const [profile] = await db
+      .select()
+      .from(orgProfile)
+      .where(eq(orgProfile.orgId, me.orgId))
+      .limit(1);
+    const mostUsed = (slot: string) =>
+      [...(imageCount.get(slot) ?? new Map()).entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? "";
+    const adopt: Record<string, string> = {};
+    if (!profile?.headerAsset && mostUsed("header")) adopt.headerAsset = mostUsed("header");
+    if (!profile?.footerAsset && mostUsed("footer")) adopt.footerAsset = mostUsed("footer");
+    if (!profile?.stampAsset && mostUsed("stamp")) adopt.stampAsset = mostUsed("stamp");
+    if (Object.keys(adopt).length) {
+      if (profile)
+        q.push(
+          db
+            .update(orgProfile)
+            .set({ ...adopt, version: profile.version + 1, updatedBy: by, updatedAt: t })
+            .where(eq(orgProfile.orgId, me.orgId)),
+        );
+      else {
+        const base = await loadOrgProfile(db, me.orgId);
+        const { urls: _u, ...defaults } = base;
+        q.push(
+          db
+            .insert(orgProfile)
+            .values({
+              ...defaults,
+              ...adopt,
+              orgId: me.orgId,
+              version: 1,
+              updatedBy: by,
+              updatedAt: t,
+            })
+            .onConflictDoNothing(),
+        );
+      }
+    }
+
     await runAll(db, q as never);
 
     return c.json({
@@ -359,6 +543,13 @@ export const importApp = new Hono<Env>()
         updated: pr.filter((p) => existingProjects.has(p.id)).length,
       },
       finance: { imported: finance.length, skipped: financeSkipped, parity: finance },
+      documents: {
+        imported: docs.length,
+        skipped: docsSkipped,
+        withCover,
+        adoptedLetterhead: Object.keys(adopt),
+        items: docs,
+      },
       issues,
     });
   });

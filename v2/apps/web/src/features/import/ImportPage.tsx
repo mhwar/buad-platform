@@ -42,6 +42,13 @@ type Result = {
   clients: { created: number; updated: number };
   projects: { created: number; updated: number };
   finance?: { imported: number; skipped: number; parity: Parity[] };
+  documents?: {
+    imported: number;
+    skipped: number;
+    withCover: number;
+    adoptedLetterhead: string[];
+    items: { id: string; kind: string; title: string; number: string; status: string }[];
+  };
   issues: Issue[];
 };
 const FIELD_AR: Record<string, string> = {
@@ -341,6 +348,33 @@ function ResultView({ r, onAgain }: { r: Result; onAgain: () => void }) {
         </div>
       </Card>
       {r.finance && r.finance.parity.length > 0 && <ParityView f={r.finance} />}
+      {r.documents && r.documents.imported > 0 && (
+        <Card className="mb-4">
+          <h2 className="mb-1 font-semibold">العقود والخطابات</h2>
+          <p className="text-sm">
+            نُقل {r.documents.items.filter((d) => d.kind === "contract").length} عقد و
+            {r.documents.items.filter((d) => d.kind === "letter").length} خطاب، كلٌّ تحت مشروعه في قسم
+            «المستندات».
+          </p>
+          {r.documents.adoptedLetterhead.length > 0 && (
+            <p className="mt-1 text-xs text-muted">
+              لم تكن للجهة ترويسة أو ختم، فاعتُمد الأكثر استخداماً في عقود المنصة الحالية. يمكن تغييره
+              من «إعدادات الجهة».
+            </p>
+          )}
+          {r.documents.withCover > 0 && (
+            <p className="mt-1 text-xs text-muted">
+              {r.documents.withCover} عقد كان له غلاف مصمم في المنصة الحالية؛ الأغلفة لا تُنقل في هذه
+              المرحلة، والعقد نفسه نُقل كاملاً.
+            </p>
+          )}
+          {r.documents.skipped > 0 && (
+            <p className="mt-1 text-xs text-muted">
+              {r.documents.skipped} مستند عُدّل هنا بعد الاستيراد فلم يُستبدل.
+            </p>
+          )}
+        </Card>
+      )}
       {r.issues.length === 0 ? (
         <EmptyState title="لا ملاحظات" text="نُقلت كل السجلات المحددة كما هي." />
       ) : (
