@@ -18,7 +18,8 @@
       "database_id": "33b6bb7c-c22c-4796-892a-ac0e94a024d2",
       "migrations_dir": "migrations"
     }
-  ]
-  // R2 (files) is added with the documents module.
+  ],
+  // Uploaded files (organisation logo, stamp, signature, letterheads, document images).
+  "r2_buckets": [{ "binding": "FILES", "bucket_name": "buad-v2-files" }]
   // Secret (never in this file): wrangler secret put JWT_SECRET
 }
