@@ -1,4 +1,4 @@
-import type { SiteContent } from "@buad/schema/site";
+import { type SiteContent, trustItems } from "@buad/schema/site";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { Copy, ExternalLink } from "lucide-react";
@@ -18,6 +18,7 @@ import { ApiError, ago, ok } from "../../lib/format";
 import { uploadImage } from "../org/OrgSettings";
 import { IconSelect, LinesField, Repeater, TitleTextList } from "../products/editors";
 import { productsQuery, sendJson } from "../products/products-api";
+import { TrustLogosEditor } from "./TrustLogosEditor";
 
 type Draft = {
   content: SiteContent;
@@ -358,18 +359,16 @@ function Editor({ data }: { data: Draft }) {
           </div>
         </Section>
 
-        <Section title="جهات نفذنا معها">
+        <Section title="جهات نفذنا معها وشعاراتها">
           <Field label="عنوان القسم">
             <Input
               value={c.trust.title}
               onChange={(e) => patch("trust", { title: e.target.value })}
             />
           </Field>
-          <LinesField
-            label="أسماء الجهات"
-            value={c.trust.names}
-            onChange={(names) => patch("trust", { names })}
-            hint="سطر لكل جهة. اذكر فقط جهات وافقت على ذكرها."
+          <TrustLogosEditor
+            items={trustItems(c.trust)}
+            onChange={(items) => patch("trust", { items, names: [] })}
           />
         </Section>
 

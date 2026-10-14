@@ -1,3 +1,4 @@
+import { trustItems } from "@buad/schema/site";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useSearch } from "@tanstack/react-router";
 import { ArrowLeft, Check, X } from "lucide-react";
@@ -105,15 +106,24 @@ export function SitePage() {
           </div>
         </section>
 
-        {site.show.trust && site.trust.names.length > 0 && (
+        {site.show.trust && trustItems(site.trust).length > 0 && (
           <section aria-label={site.trust.title} style={{ paddingTop: "clamp(56px,7vw,88px)" }}>
             <p className="small" style={{ margin: "0 0 16px", textAlign: "center" }}>
               {site.trust.title}
             </p>
             <div className="g6">
-              {site.trust.names.map((n) => (
-                <div key={n} className="trust-name">
-                  {n}
+              {trustItems(site.trust).map((n) => (
+                <div key={n.name} className={`trust-name${n.logoAsset ? " has-logo" : ""}`}>
+                  {n.logoAsset ? (
+                    <img
+                      className="trust-logo"
+                      src={`/api/public/site/assets/${n.logoAsset}`}
+                      alt={n.name}
+                      loading="lazy"
+                    />
+                  ) : (
+                    n.name
+                  )}
                 </div>
               ))}
             </div>

@@ -1,6 +1,6 @@
 import { productRequests, siteSettings } from "@buad/schema/db";
 import { type IntakeQuestion, productContent, requestInput } from "@buad/schema/products";
-import { type SiteContent, siteContent } from "@buad/schema/site";
+import { type SiteContent, siteAssetIds, siteContent } from "@buad/schema/site";
 import { zValidator } from "@hono/zod-validator";
 import { and, eq, gte, sql } from "drizzle-orm";
 import { Hono } from "hono";
@@ -104,12 +104,12 @@ export const publicSiteApp = new Hono<Env>()
     });
   })
 
-  // Only the logo the published site actually uses.
+  // Only images the published site actually uses (brand logo, entity logos).
   .get("/assets/:id", async (c) => {
     const db = c.get("db");
     const site = await publishedSite(db);
     const id = c.req.param("id");
-    if (!site || !id || site.brand.logoAsset !== id)
+    if (!site || !id || !siteAssetIds(site).includes(id))
       return c.json({ ok: false, error: "not_found" }, 404);
     const res = await assetResponse(db, c.env.FILES, ORG, id);
     if (!res) return c.json({ ok: false, error: "not_found" }, 404);

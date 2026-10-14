@@ -56,7 +56,15 @@ export const siteContent = z.object({
       secondaryCta: s(40),
     })
     .default({ badge: "", title: "", accent: "", lead: "", primaryCta: "", secondaryCta: "" }),
-  trust: z.object({ title: s(80), names: arr(s(60), 12) }).default({ title: "", names: [] }),
+  trust: z
+    .object({
+      title: s(80),
+      /** Legacy plain names; used only while `items` is empty. */
+      names: arr(s(60), 12),
+      /** Entities worked with: a name and (optionally) an uploaded logo. */
+      items: arr(z.object({ name: s(60), logoAsset: s(60) }), 16),
+    })
+    .default({ title: "", names: [], items: [] }),
   why: z
     .object({
       eyebrow: s(60),
@@ -123,6 +131,14 @@ export const siteContent = z.object({
 });
 export type SiteContent = z.infer<typeof siteContent>;
 
+/** The entities to show: the logo-aware list, or the legacy names. */
+export const trustItems = (t: SiteContent["trust"]) =>
+  t.items.length ? t.items : t.names.map((name) => ({ name, logoAsset: "" }));
+
+/** Every uploaded image the site uses (brand logo and entity logos). */
+export const siteAssetIds = (c: SiteContent) =>
+  [c.brand.logoAsset, ...c.trust.items.map((i) => i.logoAsset)].filter(Boolean);
+
 export const sitePatch = z.object({ version: z.number().int().min(1), content: siteContent });
 
 /** The org's starting website, from its own design brief. Shown until the owner edits and publishes. */
@@ -148,7 +164,9 @@ export const DEFAULT_SITE: SiteContent = siteContent.parse({
   },
   trust: {
     title: "جهات نفذنا معها مشاريع",
-    names: ["جمعية جسد", "توفير الدواء", "خبرة التعليمية", "أجيالنا", "آفاق", "جمعية شكر"],
+    items: ["جمعية جسد", "توفير الدواء", "خبرة التعليمية", "أجيالنا", "آفاق", "جمعية شكر"].map(
+      (name) => ({ name, logoAsset: "" }),
+    ),
   },
   why: {
     eyebrow: "لماذا بُعد التمكين",

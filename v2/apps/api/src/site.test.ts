@@ -4,7 +4,24 @@ import { createApp, type Env } from "./app";
 import { hashPassword } from "./auth/password";
 import { testDb } from "./test-db";
 
-const env = { APP_VERSION: "t", JWT_SECRET: "test-secret-at-least-16-chars" } as Env;
+const blobs = new Map<string, Uint8Array>();
+const FILES = {
+  put: async (k: string, v: ArrayBuffer | Uint8Array) => void blobs.set(k, new Uint8Array(v)),
+  get: async (k: string) => {
+    const b = blobs.get(k);
+    return b
+      ? {
+          arrayBuffer: async () =>
+            b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength) as ArrayBuffer,
+        }
+      : null;
+  },
+};
+const env = {
+  APP_VERSION: "t",
+  JWT_SECRET: "test-secret-at-least-16-chars",
+  FILES,
+} as unknown as Env;
 let ctx: ReturnType<typeof testDb>;
 let app: ReturnType<typeof createApp>;
 const cookie: Record<string, string> = {};
@@ -423,5 +440,66 @@ describe("pricing a request and converting it", () => {
     );
     expect((await call("m1", "POST", `${REQ}/${id}/convert`, {})).status).toBe(403);
     expect((await call("x", "POST", `${REQ}/${id}/convert`, {})).status).toBe(404);
+  });
+});
+
+describe("entity logos on the site", () => {
+  const png = (n: number) => {
+    const b = new Uint8Array(64);
+    b.set([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+    b[20] = n; // different bytes → different asset
+    return b;
+  };
+  const upload = async (who: string, n: number) => {
+    const r = await app.request(
+      "/api/assets",
+      {
+        method: "POST",
+        headers: { "content-type": "image/png", cookie: cookie[who] ?? "" },
+        body: png(n),
+      },
+      env,
+    );
+    return ((await r.json()) as J).id as string;
+  };
+
+  it("serves a logo publicly only once the published site uses it", async () => {
+    const logo = await upload("adm", 1);
+    const other = await upload("adm", 2);
+    const d = (await call("adm", "GET", `${S}/draft`)).body;
+    const content = {
+      ...d.content,
+      trust: { ...d.content.trust, items: [{ name: "جمعية جسد", logoAsset: logo }] },
+    };
+    expect((await call("adm", "PATCH", `${S}/draft`, { version: 1, content })).status).toBe(200);
+    // saved as a draft only: not public yet
+    expect((await call("", "GET", `${PUB}/assets/${logo}`)).status).toBe(404);
+    await call("adm", "POST", `${S}/publish`);
+    const ok = await app.request(`${PUB}/assets/${logo}`, {}, env);
+    expect(ok.status).toBe(200);
+    expect(ok.headers.get("content-type")).toBe("image/png");
+    expect(ok.headers.get("cache-control")).toContain("public");
+    // an uploaded asset the site does not use stays private
+    expect((await call("", "GET", `${PUB}/assets/${other}`)).status).toBe(404);
+    const home = (await call("", "GET", PUB)).body;
+    expect(home.site.trust.items[0]).toEqual({ name: "جمعية جسد", logoAsset: logo });
+  });
+
+  it("refuses a logo that belongs to another organisation", async () => {
+    const theirs = await upload("x", 3);
+    const d = (await call("adm", "GET", `${S}/draft`)).body;
+    const content = {
+      ...d.content,
+      trust: { ...d.content.trust, items: [{ name: "س", logoAsset: theirs }] },
+    };
+    const r = await call("adm", "PATCH", `${S}/draft`, { version: 1, content });
+    expect(r.status).toBe(400);
+    expect(r.body.error).toBe("invalid_asset");
+  });
+
+  it("the default site lists the six entities by name until logos are added", async () => {
+    const d = (await call("adm", "GET", `${S}/draft`)).body;
+    expect(d.content.trust.items.map((i: J) => i.name)).toHaveLength(6);
+    expect(d.content.trust.items.every((i: J) => i.logoAsset === "")).toBe(true);
   });
 });

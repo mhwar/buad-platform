@@ -1,6 +1,38 @@
-@import "@fontsource/alexandria/arabic-600.css";
-@import "@fontsource/alexandria/arabic-700.css";
-@import "@fontsource/alexandria/arabic-800.css";
+@font-face {
+  font-family: "Thmanyah Sans";
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+  src: url("./fonts/thmanyahsans-Light.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Thmanyah Sans";
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  src: url("./fonts/thmanyahsans-Regular.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Thmanyah Sans";
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+  src: url("./fonts/thmanyahsans-Medium.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Thmanyah Sans";
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+  src: url("./fonts/thmanyahsans-Bold.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Thmanyah Sans";
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+  src: url("./fonts/thmanyahsans-Black.woff2") format("woff2");
+}
 
 /* The public website: always light, independent of the app theme (explicit colours only). */
 .site-root {
@@ -14,7 +46,8 @@
   min-height: 100vh;
   background: var(--bg);
   color: var(--ink);
-  font-family: "IBM Plex Sans Arabic", Tahoma, sans-serif;
+  font-family: "Thmanyah Sans", "IBM Plex Sans Arabic", Tahoma, sans-serif;
+  --head: "Thmanyah Sans", "IBM Plex Sans Arabic", Tahoma, sans-serif;
   padding: 12px clamp(16px, 4vw, 32px) 0;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
@@ -60,26 +93,31 @@
 .site-root .h2,
 .site-root .h3 {
   margin: 0;
-  font-family: "Alexandria", Tahoma, sans-serif;
+  font-family: var(--head);
 }
 .site-root .h1 {
   font-weight: 800;
-  font-size: clamp(36px, 6vw, 76px);
-  line-height: 1.2;
+  font-size: clamp(34px, 5.6vw, 72px);
+  /* Arabic display type needs air between lines: tall ascenders and dots must not touch. */
+  line-height: 1.5;
+  text-wrap: balance;
   white-space: pre-line;
 }
 .site-root .h2 {
   font-weight: 800;
   font-size: clamp(26px, 3.4vw, 42px);
-  line-height: 1.35;
+  line-height: 1.55;
+  text-wrap: balance;
   white-space: pre-line;
 }
 .site-root .h3 {
   font-weight: 700;
   font-size: clamp(17px, 1.6vw, 19px);
-  line-height: 1.5;
+  line-height: 1.65;
+  text-wrap: balance;
 }
 .site-root .lead {
+  text-wrap: pretty;
   margin: 0;
   font-size: clamp(16px, 1.5vw, 18px);
   line-height: 1.85;
@@ -272,11 +310,30 @@
   border-radius: 14px;
   background: #eaeaee;
   color: #6b6e86;
-  font-family: "Alexandria", sans-serif;
+  font-family: var(--head);
   font-weight: 700;
   font-size: 14px;
   text-align: center;
   padding: 0 8px;
+}
+.site-root .trust-name.has-logo {
+  background: #fff;
+  border: 1px solid var(--line);
+  padding: 10px 14px;
+}
+.site-root .trust-logo {
+  max-width: 100%;
+  max-height: 44px;
+  object-fit: contain;
+  filter: grayscale(1);
+  opacity: 0.7;
+  transition:
+    filter 0.2s,
+    opacity 0.2s;
+}
+.site-root .trust-name.has-logo:hover .trust-logo {
+  filter: none;
+  opacity: 1;
 }
 .site-root .list {
   display: flex;
@@ -329,7 +386,7 @@
   gap: 16px;
 }
 .site-root .step-n {
-  font-family: "Alexandria", sans-serif;
+  font-family: var(--head);
   font-weight: 800;
   font-size: 24px;
   line-height: 1.2;
@@ -345,7 +402,7 @@
   font-weight: 600;
 }
 .site-root .stat {
-  font-family: "Alexandria", sans-serif;
+  font-family: var(--head);
   font-weight: 800;
   font-size: clamp(30px, 3.2vw, 40px);
   line-height: 1.1;
