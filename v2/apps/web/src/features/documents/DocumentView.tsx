@@ -97,8 +97,20 @@ const v = (values: Resolved, k: string) => values[k]?.value ?? "";
  * One renderer for the screen preview and for printing.
  * The page is a table: <thead>/<tfoot> repeat the letterhead on every printed page.
  */
-export function DocumentView(p: Props) {
-  const { layout: l, values, org } = p;
+export function DocumentView(props: Props) {
+  // A document's own letterhead/stamp (e.g. imported from v1) wins over the organisation's.
+  const own = (id: string, fallback: string) => (id ? `/api/assets/${id}` : fallback);
+  const org = {
+    ...props.org,
+    urls: {
+      ...props.org.urls,
+      headerAsset: own(props.layout.headerAsset, props.org.urls.headerAsset ?? ""),
+      footerAsset: own(props.layout.footerAsset, props.org.urls.footerAsset ?? ""),
+      stampAsset: own(props.layout.stampAsset, props.org.urls.stampAsset ?? ""),
+    },
+  };
+  const p = { ...props, org };
+  const { layout: l, values } = p;
   const header = l.showHeader && org.urls.headerAsset;
   const footer = l.showFooter && (org.urls.footerAsset || l.footerLabel);
   const style = {
@@ -266,8 +278,8 @@ function Letter({ number, title, content, layout: l, values, editing, org }: Pro
       </p>
       <div className="doc-letter-sign">
         <p className="font-semibold">{org.name}</p>
-        <p>{v(values, "company_signer_name")}</p>
-        <p>{v(values, "company_signer_title")}</p>
+        <p>{v(values, "letter_signer_name") || v(values, "company_signer_name")}</p>
+        <p>{v(values, "letter_signer_title") || v(values, "company_signer_title")}</p>
         <div className="doc-sign-area">
           {l.useOrgSignature && org.urls.signatureAsset && (
             <img src={org.urls.signatureAsset} alt="التوقيع" className="doc-sign-img" />

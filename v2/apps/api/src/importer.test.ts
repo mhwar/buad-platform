@@ -262,3 +262,103 @@ describe("finance import marker", () => {
     );
   });
 });
+
+describe("import v1 contracts and letters", () => {
+  const PNG =
+    "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGNgYGAAAAAEAAH2FzhVAAAAAElFTkSuQmCC";
+  const contract = (id: string, status: string) => ({
+    id,
+    template_type: "service",
+    title: `عقد ${id}`,
+    status,
+    updated: "2026-02-01",
+    variables: { contract_no: `CON-${id}`, party_b_name: "شركة الأفق" },
+    clauses: [
+      { id: "a", key: "subject", title: "المادة الأولى: موضوع العقد", content: "{{party_b_name}}" },
+    ],
+    page_layout: { header: { show: true, image: PNG }, footer: { show: true, image: "" } },
+  });
+  const finWithDocs = {
+    ctrl: { contract_value: 1000 },
+    contracts: [contract("k1", "final"), contract("k2", "draft")],
+    letters: [
+      {
+        id: "L1",
+        type: "cashback",
+        no: "15/2026",
+        date: "2026-03-05",
+        to: "شركة الأفق",
+        title: "كاش باك",
+        body: "نص",
+        stamp_image: PNG,
+      },
+    ],
+  };
+  const store = new Map<string, Uint8Array>();
+  const files = {
+    put: async (k: string, v: ArrayBuffer | Uint8Array) =>
+      void store.set(k, new Uint8Array(v instanceof Uint8Array ? v : new Uint8Array(v))),
+    get: async (k: string) =>
+      store.has(k)
+        ? { arrayBuffer: async () => (store.get(k) as Uint8Array).buffer as ArrayBuffer }
+        : null,
+  };
+  const withFiles = async (method: string, path: string, body?: unknown) => {
+    const r = await app.request(
+      path,
+      {
+        method,
+        headers: { "content-type": "application/json", cookie: cookie.own ?? "" },
+        body: body === undefined ? undefined : JSON.stringify(body),
+      },
+      { ...env, FILES: files } as unknown as Env,
+    );
+    return { status: r.status, body: (await r.json()) as J };
+  };
+  const file = { ...backup, buad2_fin_p1: JSON.stringify(finWithDocs) };
+
+  it("brings them under their project, deduplicates images, and adopts the letterhead", async () => {
+    store.clear();
+    const r = await withFiles("POST", "/api/import/v1", file);
+    expect(r.body.documents).toMatchObject({ imported: 3, skipped: 0 });
+    expect(r.body.documents.adoptedLetterhead.sort()).toEqual(["headerAsset", "stampAsset"]);
+    expect(store.size).toBe(1); // one PNG used three times → stored once
+    const list = (await withFiles("GET", "/api/projects/p1/documents")).body.items;
+    expect(list.map((d: J) => [d.kind, d.status]).sort()).toEqual([
+      ["contract", "approved"],
+      ["contract", "draft"],
+      ["letter", "draft"],
+    ]);
+    expect(list.find((d: J) => d.kind === "letter").number).toBe("15/2026"); // v1's printed number kept
+    const k1 = list.find((d: J) => d.status === "approved");
+    const detail = (await withFiles("GET", `/api/documents/${k1.id}`)).body;
+    expect(detail.document.content[0]).toMatchObject({
+      baseTitle: "موضوع العقد",
+      title: "المادة الأولى: موضوع العقد",
+    });
+    expect(detail.values.party_b_name.value).toBe("شركة الأفق");
+    expect(detail.versions).toHaveLength(1);
+    expect((await withFiles("GET", "/api/org/profile")).body.profile.urls.headerAsset).toMatch(
+      /^\/api\/assets\/ast_/,
+    );
+  });
+
+  it("re-import is idempotent and never overwrites a document edited in v2", async () => {
+    await withFiles("POST", "/api/import/v1", file);
+    const again = await withFiles("POST", "/api/import/v1", file);
+    expect(again.body.documents.imported).toBe(3);
+    expect((await withFiles("GET", "/api/projects/p1/documents")).body.items).toHaveLength(3);
+    const draft = (await withFiles("GET", "/api/projects/p1/documents")).body.items.find(
+      (d: J) => d.kind === "contract" && d.status === "draft",
+    );
+    await withFiles("PATCH", `/api/documents/${draft.id}`, {
+      version: draft.version,
+      title: "عدّلته هنا",
+    });
+    const third = await withFiles("POST", "/api/import/v1", file);
+    expect(third.body.documents.skipped).toBe(1);
+    expect((await withFiles("GET", `/api/documents/${draft.id}`)).body.document.title).toBe(
+      "عدّلته هنا",
+    );
+  });
+});

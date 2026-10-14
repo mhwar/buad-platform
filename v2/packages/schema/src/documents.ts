@@ -24,6 +24,11 @@ export const layoutSchema = z.object({
   useOrgSignature: z.boolean().default(false),
   useOrgStamp: z.boolean().default(false),
   footerLabel: z.enum(["", "سري", "مسودة", "نسخة طبق الأصل", "نهائي"]).default(""),
+  /** This document's own letterhead (asset ids); empty = the organisation's. */
+  headerAsset: z.string().max(64).default(""),
+  footerAsset: z.string().max(64).default(""),
+  /** A stamp specific to this document (e.g. imported from v1); empty = the organisation's. */
+  stampAsset: z.string().max(64).default(""),
 });
 export type DocLayout = z.output<typeof layoutSchema>;
 
