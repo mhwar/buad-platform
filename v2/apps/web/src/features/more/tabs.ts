@@ -86,19 +86,13 @@ export const MORE_TABS: MoreTab[] = [
   {
     key: "receivables",
     label: "التحصيل",
-    to: soon("receivables"),
+    to: "/more/receivables",
     icon: Banknote,
     group: "work",
-    soon: true,
     perm: "treasury.view",
     desc: "الدفعات المستحقة والمتأخرة على العملاء، وتوقّع النقد للأسابيع القادمة.",
     when: "أسبوعياً: لمعرفة من يجب متابعته ومتى يتوفر النقد.",
-    will: [
-      "جدول دفعات لكل مشروع وتحويل الدفعة المستلمة إلى مقبوضة تلقائياً.",
-      "أعمار الديون: غير مستحقة، 1–30، 31–60، 61–90، أكثر من 90 يوماً.",
-      "توقّع نقدي لـ13 أسبوعاً من الدفعات المجدولة والمصروفات المعلّقة.",
-    ],
-    match: at("/more/soon/receivables"),
+    match: at("/more/receivables"),
   },
   {
     key: "documents",

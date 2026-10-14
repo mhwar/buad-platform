@@ -10,6 +10,7 @@ export * from "./product-stats";
 export * from "./quotes";
 export * from "./realized";
 export * from "./receipts";
+export * from "./receivables";
 export * from "./templates/v1-templates";
 export * from "./text";
 export * from "./vat";

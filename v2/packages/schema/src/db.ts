@@ -1022,3 +1022,32 @@ export const quotes = sqliteTable(
     index("idx_quotes_request").on(t.requestId),
   ],
 );
+
+/** What a client is expected to pay and when. Marking a line received creates the receipt. */
+export const paymentSchedule = sqliteTable(
+  "payment_schedule",
+  {
+    id: text("id").primaryKey(),
+    orgId: text("org_id")
+      .notNull()
+      .references(() => orgs.id),
+    projectId: text("project_id")
+      .notNull()
+      .references(() => projects.id, { onDelete: "cascade" }),
+    label: text("label").notNull(),
+    dueDate: text("due_date").notNull(),
+    /** Gross, as the client pays it. */
+    amount: integer("amount_halalas").notNull(),
+    status: text("status", { enum: ["pending", "received", "cancelled"] })
+      .notNull()
+      .default("pending"),
+    receiptId: text("receipt_id").notNull().default(""),
+    receivedAt: text("received_at").notNull().default(""),
+    createdBy: text("created_by").notNull().default(""),
+    createdAt: integer("created_at").notNull().default(now),
+  },
+  (t) => [
+    index("idx_sched_org").on(t.orgId, t.status, t.dueDate),
+    index("idx_sched_project").on(t.projectId),
+  ],
+);
