@@ -26,8 +26,9 @@ const iso = z
   .regex(/^\d{4}-\d{2}-\d{2}$/)
   .optional();
 const periodQuery = z.object({ from: iso, to: iso });
+/** With no period everything counts; with one, an undated item cannot be placed in it. */
 const inRange = (d: string, from?: string, to?: string) =>
-  !!d && (!from || d >= from) && (!to || d <= to);
+  (!from && !to) || (!!d && (!from || d >= from) && (!to || d <= to));
 
 /** Agreement items that the contract defines but finance has not registered yet. */
 const AGREEMENT = [
@@ -65,6 +66,14 @@ export async function financeOverview(db: Db, orgId: string, from?: string, to?:
     .orderBy(asc(projects.number));
 
   const list: ProjectRow[] = [];
+  const quality: {
+    projectId: string;
+    number: string;
+    name: string;
+    missingContractDate: boolean;
+    ctrlVersion: number;
+    entriesWithoutStatus: number;
+  }[] = [];
   const months = new Map<string, { expense: number; income: number }>();
   const cats = new Map<string, number>();
   const pending: {
@@ -82,10 +91,23 @@ export async function financeOverview(db: Db, orgId: string, from?: string, to?:
     const fin = await loadFinance(db, p);
     const s = fin.summary;
     const hasFinance = fin.ctrl.version > 0 || fin.entries.length > 0;
-    const date =
-      fin.ctrl.contractDate ||
-      p.startDate ||
-      new Date((p.createdAt ?? 0) * 1000).toISOString().slice(0, 10);
+    // The project's date in time: money received (v1 «تاريخ الاستلام»), else the contract,
+    // else the start, else its first entry. Never the date it was created or imported.
+    const firstEntry = fin.entries
+      .map((e) => e.date)
+      .filter(Boolean)
+      .sort()[0];
+    const date = p.payDate || fin.ctrl.contractDate || p.startDate || firstEntry || "";
+    const noStatus = fin.entries.filter((e) => e.status === "").length;
+    if (!fin.ctrl.contractDate || noStatus)
+      quality.push({
+        projectId: p.id,
+        number: p.number,
+        name: p.name,
+        missingContractDate: !fin.ctrl.contractDate,
+        ctrlVersion: fin.ctrl.version,
+        entriesWithoutStatus: noStatus,
+      });
 
     // Entries by their own date (cancelled ones never count).
     for (const e of fin.entries) {
@@ -199,6 +221,8 @@ export async function financeOverview(db: Db, orgId: string, from?: string, to?:
       pending: pending.sort((a, b) => a.date.localeCompare(b.date)),
       unregistered,
     },
+    /** Data to complete so periods and statuses are right. */
+    quality,
   };
 }
 

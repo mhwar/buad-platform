@@ -202,7 +202,11 @@ describe("finance: entries, budget, categories, agreement", () => {
         { type: "income", cat: "exec", amount: 9000 },
       ],
     });
-    expect(r.body.summary).toEqual(JSON.parse(JSON.stringify(v1)));
+    expect(r.body.summary).toEqual({
+      ...JSON.parse(JSON.stringify(v1)),
+      pendingExpenses: 0,
+      pendingIncome: 0,
+    });
   });
 
   it("editing an entry updates the totals (v1 did not refresh them)", async () => {
@@ -464,5 +468,71 @@ describe("المالية: organisation overview", () => {
     expect((await call("adm", "GET", "/api/finance/overview?from=2026")).status).toBe(400);
     const report = (await call("adm", "GET", "/api/finance/report")).body;
     expect(report.org.name).toBe("بُعد");
+  });
+});
+
+describe("finance correctness (I1)", () => {
+  it("cancelled entries never count; pending ones count and are reported apart", async () => {
+    await call("adm", "PATCH", `${F()}/ctrl`, { version: 0, contractValue: 100000, execV: 0 });
+    await call("adm", "POST", `${F()}/entries`, {
+      description: "أ",
+      type: "expense",
+      amount: 1000,
+      status: "paid",
+    });
+    await call("adm", "POST", `${F()}/entries`, {
+      description: "ب",
+      type: "expense",
+      amount: 400,
+      status: "pending",
+    });
+    const s = (
+      await call("adm", "POST", `${F()}/entries`, {
+        description: "ج",
+        type: "expense",
+        amount: 9999,
+        status: "cancelled",
+      })
+    ).body.summary;
+    expect(s.totalExpenses).toBe(1400);
+    expect(s.pendingExpenses).toBe(400);
+    expect(s.remaining).toBeCloseTo(s.grossTotal - 1400, 2);
+  });
+
+  it("a cancelled agreement entry does not block registering the item again", async () => {
+    await call("adm", "PATCH", `${F()}/ctrl`, { version: 0, contractValue: 100000, execV: 10 });
+    const first = (await call("adm", "POST", `${F()}/agreement/exec`)).body;
+    const entry = first.entries.find((e: J) => e.cat === "exec");
+    expect((await call("adm", "POST", `${F()}/agreement/exec`)).status).toBe(409);
+    await call("adm", "PATCH", `${F()}/entries/${entry.id}`, { status: "cancelled" });
+    expect((await call("adm", "POST", `${F()}/agreement/exec`)).status).toBe(201);
+  });
+
+  it("marks entries without a status in one go, and lists what data is missing", async () => {
+    await call("adm", "POST", `${F()}/entries`, {
+      description: "قديم",
+      type: "expense",
+      amount: 50,
+      date: "2026-05-02",
+    });
+    await call("adm", "POST", `${F()}/entries`, {
+      description: "معلق",
+      type: "expense",
+      amount: 60,
+      status: "pending",
+    });
+    let q = (await call("adm", "GET", "/api/finance/overview")).body.quality;
+    expect(q).toMatchObject([{ missingContractDate: true, entriesWithoutStatus: 1 }]);
+    // No contract date: the project is placed by its first entry, not by when it was created.
+    const may = (await call("adm", "GET", "/api/finance/overview?from=2026-05-01&to=2026-05-31"))
+      .body;
+    expect(may.totals.projects).toBe(1);
+    expect(
+      (await call("m1", "POST", `${F()}/entries/bulk-status`, { status: "paid" })).status,
+    ).toBe(403);
+    const r = (await call("adm", "POST", `${F()}/entries/bulk-status`, { status: "paid" })).body;
+    expect(r.entries.map((e: J) => e.status).sort()).toEqual(["paid", "pending"]);
+    q = (await call("adm", "GET", "/api/finance/overview")).body.quality;
+    expect(q[0].entriesWithoutStatus).toBe(0);
   });
 });

@@ -53,6 +53,7 @@ describe("finance overview helpers", () => {
         monthly: [{ month: "2026-03", income: 0, expense: 10000 }],
         categories: [{ label: "رواتب", amount: 10000 }],
         obligations: { pending: [], unregistered: [] },
+        quality: [],
       },
       {},
     );

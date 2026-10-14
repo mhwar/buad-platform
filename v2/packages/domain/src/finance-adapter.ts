@@ -27,6 +27,8 @@ export type StoredFinance = {
     amount: number;
     profitMargin: number;
     profitMarginType: string;
+    /** "" | paid | pending | cancelled — cancelled entries never count. */
+    status?: string;
   }[];
   budget: { amount: number }[];
 };
@@ -54,15 +56,31 @@ export function toFinInput(f: StoredFinance): FinInput {
       cf_base: c.cfBase as "net",
       op_cats: c.opCats,
     },
-    entries: f.entries.map((e) => ({
-      type: e.type as "income",
-      cat: e.cat,
-      amount: e.amount / 100,
-      profit_margin: e.profitMargin,
-      profit_margin_type: e.profitMarginType as "pct",
-    })),
+    entries: f.entries
+      .filter((e) => e.status !== "cancelled")
+      .map((e) => ({
+        type: e.type as "income",
+        cat: e.cat,
+        amount: e.amount / 100,
+        profit_margin: e.profitMargin,
+        profit_margin_type: e.profitMarginType as "pct",
+      })),
     budget: f.budget.map((b) => ({ amount: b.amount / 100 })),
   };
 }
 
-export const summarize = (f: StoredFinance) => finCalc(toFinInput(f));
+/**
+ * The project's numbers (v1 FinCalc) on its live entries, plus what is still pending
+ * (registered but not paid yet), so pending amounts can be shown apart.
+ */
+export function summarize(f: StoredFinance) {
+  const pending = (type: string) =>
+    f.entries
+      .filter((e) => e.status === "pending" && e.type === type)
+      .reduce((s, e) => s + e.amount / 100, 0);
+  return {
+    ...finCalc(toFinInput(f)),
+    pendingExpenses: pending("expense"),
+    pendingIncome: pending("income"),
+  };
+}

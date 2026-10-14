@@ -151,7 +151,14 @@ const COMPARED = [
 
 /** v1's numbers (computed by the exact v1 formula on the raw data) against v2's numbers from the imported rows. */
 export function financeParity(projectId: string, raw: Loose, rows: FinanceRows): Parity {
-  const v1 = finCalc(raw as FinInput) as Record<string, unknown>;
+  // v2 leaves cancelled entries out of every number; compare v1's formula on the same entries.
+  const live = {
+    ...raw,
+    entries: (Array.isArray(raw.entries) ? (raw.entries as Loose[]) : []).filter(
+      (e) => e?.status !== "cancelled",
+    ),
+  };
+  const v1 = finCalc(live as unknown as FinInput) as Record<string, unknown>;
   const v2 = summarize(rows as unknown as StoredFinance) as Record<string, unknown>;
   // Amounts are stored in whole halalas: each one may move by at most half a halala.
   const tolerance = 0.005 * (rows.entries.length + rows.budget.length + 2) + 1e-9;
