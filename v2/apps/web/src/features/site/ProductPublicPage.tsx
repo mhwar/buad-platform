@@ -6,7 +6,7 @@ import { downloadPublicBrochure } from "../products/BrochurePages";
 import { Icon } from "../products/icons";
 import { ContactBand, SiteChrome, useLightTheme } from "./chrome";
 import { RequestDialog } from "./RequestDialog";
-import { siteProductQuery } from "./site-api";
+import { interestForm, siteProductQuery } from "./site-api";
 
 const route = getRouteApi("/site/p/$slug");
 
@@ -49,10 +49,16 @@ export function ProductPublicPage() {
 
   const { site, logoUrl, product } = q.data;
   const c = product.content;
-  const target = { slug: product.slug, name: product.name, intake: c.intake };
+  const soon = c.comingSoon;
+  const target = {
+    slug: product.slug,
+    name: product.name,
+    intake: c.intake,
+    comingSoon: soon,
+  };
   const cta = (
     <button type="button" className="btn primary" onClick={() => setOpen(true)}>
-      اطلب عرضاً
+      {soon ? "سجّل اهتمامك" : "اطلب عرضاً"}
       <ArrowLeft size={16} aria-hidden="true" />
     </button>
   );
@@ -67,7 +73,10 @@ export function ProductPublicPage() {
         onRequest={() => setOpen(true)}
       >
         <section className="hero">
-          <span className="eyebrow">{c.hero.eyebrow || "خدمة"}</span>
+          <span className="eyebrow">
+            {c.hero.eyebrow || "خدمة"}
+            {soon && <b style={{ marginInlineStart: 8, color: "var(--accent)" }}>· قريباً</b>}
+          </span>
           <h1 className="h1" style={{ fontSize: "clamp(32px,5vw,60px)" }}>
             {c.hero.title || product.name}
           </h1>
@@ -83,7 +92,7 @@ export function ProductPublicPage() {
           )}
           <div className="btns">
             {cta}
-            {c.brochure && (
+            {c.brochure && !soon && (
               <button
                 type="button"
                 className="btn white"
@@ -153,7 +162,7 @@ export function ProductPublicPage() {
 
         {c.model.length > 0 && (
           <section className="sec">
-            <Head eyebrow="نموذج التشغيل" title="نُدير الشبكة، ولا نُحمّلك التكلفة الثابتة" />
+            <Head eyebrow="نموذج التشغيل" title="كيف نشغّل الخدمة" />
             <div className="g3">
               {c.model.map((m) => (
                 <div key={m.title} className="card">
@@ -167,7 +176,7 @@ export function ProductPublicPage() {
 
         {c.benefits.length > 0 && (
           <section className="sec">
-            <Head eyebrow="كفاءة التكلفة" title="كيف نخفض التكلفة على الجهة" />
+            <Head eyebrow="المزايا" title="ما يميّز هذه الخدمة" />
             <div className="g3">
               {c.benefits.map((b) => (
                 <div key={b.title} className="card">
@@ -242,7 +251,10 @@ export function ProductPublicPage() {
 
         {c.process.length > 0 && (
           <section className="sec">
-            <Head eyebrow="آلية العمل" title="من استلام البيانات إلى التقرير الختامي" />
+            <Head
+              eyebrow={soon ? "خارطة العمل" : "آلية العمل"}
+              title={soon ? "كيف نبنيها معكم" : "من البداية إلى التسليم"}
+            />
             <div className="g3" style={{ gap: 12 }}>
               {c.process.map((s, i) => (
                 <div key={s.title} className="card step">
@@ -371,17 +383,26 @@ export function ProductPublicPage() {
         )}
 
         <ContactBand
-          title={site.cta.title || "جاهزون لنصمم لك العرض المناسب"}
+          title={soon ? "كن أول من يعرف" : site.cta.title || "جاهزون لنصمم لك العرض المناسب"}
           lead={
-            c.intake.length > 0
-              ? `${c.intake.length} معلومات تكفينا لإعداد عرض مخصص لجهتكم.`
-              : site.cta.lead
+            soon
+              ? "سجّل اهتمامك بضغطات سريعة، ونخبرك أولاً عند الإطلاق."
+              : c.intake.length > 0
+                ? `${c.intake.length} معلومات تكفينا لإعداد عرض مخصص لجهتكم.`
+                : site.cta.lead
           }
+          soon={soon}
           contact={site.contact}
           onRequest={() => setOpen(true)}
         />
+        {/* Inside the site wrapper so its styles apply to the dialog. */}
+        <RequestDialog
+          form={soon ? interestForm(site.form) : site.form}
+          target={target}
+          open={open}
+          onClose={() => setOpen(false)}
+        />
       </SiteChrome>
-      <RequestDialog form={site.form} target={target} open={open} onClose={() => setOpen(false)} />
     </>
   );
 }

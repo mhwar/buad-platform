@@ -638,3 +638,62 @@ describe("service profile (brochure) PDF", () => {
     expect(raw).toContain('"brochure":true');
   });
 });
+
+describe("a coming-soon product on the public site", () => {
+  it("is flagged for the page, takes interest registrations with chip answers, and shows no pricing", async () => {
+    await call("adm", "POST", "/api/products/seed-blueprints");
+    const erp = (await call("adm", "GET", "/api/products")).body.products.find(
+      (p: J) => p.slug === "erp-platform",
+    );
+    const g = (await call("adm", "GET", `/api/products/${erp.id}`)).body.product;
+    await call("adm", "PATCH", `/api/products/${erp.id}`, {
+      version: g.version,
+      status: "published",
+      showOnSite: true,
+    });
+    await call("adm", "POST", `${S}/publish`);
+
+    const home = (await call("", "GET", PUB)).body;
+    const card = home.products.find((p: J) => p.slug === "erp-platform");
+    expect(card.comingSoon).toBe(true);
+    const page = (await call("", "GET", `${PUB}/products/erp-platform`)).body;
+    expect(page.product.content.comingSoon).toBe(true);
+    expect(JSON.stringify(page)).not.toContain("pricing");
+
+    const r = await call(
+      "",
+      "POST",
+      `${PUB}/requests`,
+      {
+        productSlug: "erp-platform",
+        name: "نجلاء",
+        entity: "جمعية الأمل",
+        phone: "0555555555",
+        answers: {
+          client_type: "جمعية أهلية",
+          org_kind: "صحية",
+          pain: "أنظمة منفصلة لا تتكامل، تقارير ضعيفة للمانحين",
+          wish: "المالية والضريبة، المستندات والعقود",
+          team: "6 إلى 20",
+        },
+      },
+      ip("9.9.9.9"),
+    );
+    expect(r.status).toBe(201);
+    const q = (await call("adm", "GET", REQ)).body.requests[0];
+    expect(q.productName).toBe("منصة بُعد ERP");
+    expect(q.interest).toBe(true);
+    expect(q.answers["من أنتم؟"]).toBe("جمعية أهلية");
+    expect(q.answers["ما الذي يواجهكم في المنصات الحالية؟"]).toContain("أنظمة منفصلة");
+    // the only required question is who they are
+    const miss = await call(
+      "",
+      "POST",
+      `${PUB}/requests`,
+      { productSlug: "erp-platform", name: "ليلى", phone: "0555555556", answers: {} },
+      ip("9.9.9.8"),
+    );
+    expect(miss.body.error).toBe("missing_answers");
+    expect(miss.body.keys).toEqual(["client_type"]);
+  });
+});

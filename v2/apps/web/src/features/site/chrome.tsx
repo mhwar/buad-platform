@@ -100,12 +100,15 @@ export function ContactBand({
   lead,
   contact,
   onRequest,
+  soon,
   logoWhite = "/site/logo-white.png",
 }: {
   title: string;
   lead: string;
   contact: SiteContent["contact"];
   onRequest: () => void;
+  /** A coming-soon product: register interest instead of asking for a quote. */
+  soon?: boolean;
   logoWhite?: string;
 }) {
   return (
@@ -118,7 +121,7 @@ export function ContactBand({
         {lead && <p className="lead">{lead}</p>}
         <div className="btns">
           <button type="button" className="btn primary" onClick={onRequest}>
-            اطلب عرضاً
+            {soon ? "سجّل اهتمامك" : "اطلب عرضاً"}
             <ArrowLeft size={16} aria-hidden="true" />
           </button>
           {contact.whatsapp && (

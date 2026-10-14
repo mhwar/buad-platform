@@ -2,7 +2,7 @@ import { normalizeName, type PricingIn, priceQuote } from "@buad/domain";
 import { productRequests, products } from "@buad/schema/db";
 import { REQUEST_STATUSES, requestInput, requestPatch } from "@buad/schema/products";
 import { zValidator } from "@hono/zod-validator";
-import { and, desc, eq, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { z } from "zod";
 import { requireAuth, requireRole, type Vars } from "../auth/middleware";
@@ -68,9 +68,25 @@ export const requestsApp = new Hono<Env>()
       .from(productRequests)
       .where(eq(productRequests.orgId, orgId))
       .groupBy(productRequests.status);
+    // Registrations of interest: requests made for a «coming soon» product.
+    const ids = [...new Set(rows.map((r) => r.productId).filter(Boolean))];
+    const soon = new Set<string>();
+    if (ids.length) {
+      const prods = await db
+        .select({ id: products.id, content: products.content })
+        .from(products)
+        .where(and(eq(products.orgId, orgId), inArray(products.id, ids)));
+      for (const p of prods) {
+        try {
+          if (JSON.parse(p.content)?.comingSoon === true) soon.add(p.id);
+        } catch {
+          // unreadable content: not coming-soon
+        }
+      }
+    }
     return c.json({
       ok: true,
-      requests: rows.map(shapeRequest),
+      requests: rows.map((r) => ({ ...shapeRequest(r), interest: soon.has(r.productId) })),
       counts: Object.fromEntries(counts.map((x) => [x.status, Number(x.n)])),
     });
   })

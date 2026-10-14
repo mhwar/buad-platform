@@ -75,6 +75,36 @@ describe("ProductsPage", () => {
   });
 });
 
+describe("seeding the ready-made services", () => {
+  it("offers one button that creates all missing blueprints as drafts", async () => {
+    const calls = stubApi({
+      "GET /api/products": () => ({ ok: true, products: [] }),
+      "GET /api/products/blueprints": () => ({
+        ok: true,
+        blueprints: ["a", "b", "c"].map((k) => ({
+          key: k,
+          name: `خدمة ${k}`,
+          tagline: "",
+          productId: null,
+        })),
+      }),
+      "POST /api/products/seed-blueprints": () => ({
+        ok: true,
+        created: ["a", "b", "c"],
+        existing: 0,
+      }),
+    });
+    await renderWithApp(<ProductsPage />);
+    expect(await screen.findByText(/3 قوالب جاهزة لم تُنشأ بعد/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "إنشاء الكل كمسودات" }));
+    await waitFor(() =>
+      expect(
+        calls.some((c) => c.method === "POST" && c.path === "/api/products/seed-blueprints"),
+      ).toBe(true),
+    );
+  });
+});
+
 describe("PricingPanel", () => {
   const pricing = {
     method: "margin" as const,

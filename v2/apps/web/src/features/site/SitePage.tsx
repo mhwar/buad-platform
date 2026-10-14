@@ -6,7 +6,7 @@ import { useState } from "react";
 import { Icon } from "../products/icons";
 import { ContactBand, SiteChrome, useLightTheme } from "./chrome";
 import { RequestDialog } from "./RequestDialog";
-import { type RequestTarget, siteHomeQuery } from "./site-api";
+import { interestForm, type RequestTarget, siteHomeQuery } from "./site-api";
 
 const NavLinks = (show: Record<string, boolean>, hasProducts: boolean) =>
   [
@@ -191,6 +191,14 @@ export function SitePage() {
                     </span>
                     <h3 className="h3" style={{ paddingTop: 4 }}>
                       {s.title}
+                      {products.find((p) => p.slug === s.productSlug)?.comingSoon && (
+                        <span
+                          className="tag"
+                          style={{ marginInlineStart: 10, verticalAlign: "middle" }}
+                        >
+                          قريباً
+                        </span>
+                      )}
                     </h3>
                     <p className="body" style={s.featured ? { color: "#C9CBDD" } : undefined}>
                       {s.text}
@@ -247,6 +255,9 @@ export function SitePage() {
                     }}
                   >
                     {p.hero.eyebrow || "خدمة متخصصة"}
+                    {p.comingSoon && (
+                      <b style={{ marginInlineStart: 10, color: "#fff" }}>· قريباً</b>
+                    )}
                   </span>
                   <h2 className="h2">{p.hero.title || p.name}</h2>
                   <p className="lead">{p.hero.subtitle || p.tagline}</p>
@@ -254,9 +265,16 @@ export function SitePage() {
                     <button
                       type="button"
                       className="btn white"
-                      onClick={() => open({ slug: p.slug, name: p.name, intake: p.intake })}
+                      onClick={() =>
+                        open({
+                          slug: p.slug,
+                          name: p.name,
+                          intake: p.intake,
+                          comingSoon: p.comingSoon,
+                        })
+                      }
                     >
-                      اطلب عرضاً
+                      {p.comingSoon ? "سجّل اهتمامك" : "اطلب عرضاً"}
                     </button>
                     <Link to="/site/p/$slug" params={{ slug: p.slug }} className="btn ghost-dark">
                       تفاصيل الخدمة
@@ -398,13 +416,14 @@ export function SitePage() {
           contact={site.contact}
           onRequest={() => open()}
         />
+        {/* Inside the site wrapper so its styles apply to the dialog. */}
+        <RequestDialog
+          form={req.target?.comingSoon ? interestForm(site.form) : site.form}
+          target={req.target}
+          open={req.open}
+          onClose={() => setReq((r) => ({ ...r, open: false }))}
+        />
       </SiteChrome>
-      <RequestDialog
-        form={site.form}
-        target={req.target}
-        open={req.open}
-        onClose={() => setReq((r) => ({ ...r, open: false }))}
-      />
     </>
   );
 }

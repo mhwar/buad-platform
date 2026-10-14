@@ -117,6 +117,7 @@ export function packageQuote(model: PricingIn, packageId: string, vatRatePct: nu
 /* ───────────────────────── readiness (what is missing before a product is publishable) */
 
 type ContentIn = {
+  comingSoon?: boolean;
   hero: { title: string; subtitle: string };
   packages: { id: string; name: string }[];
   process: unknown[];
@@ -132,6 +133,8 @@ export function productReadiness(
   pricing: PricingIn,
   vatRatePct: number,
 ): ReadinessItem[] {
+  // A coming-soon product only introduces itself and collects interest: no packages or costs yet.
+  const soon = !!content.comingSoon;
   const priced = content.packages.filter(
     (p) => packageQuote(pricing, p.id, vatRatePct).status === "ok",
   ).length;
@@ -145,13 +148,13 @@ export function productReadiness(
     {
       key: "packages",
       label: "باقة واحدة على الأقل",
-      ok: content.packages.length > 0,
+      ok: soon || content.packages.length > 0,
       hint: "في «الباقات»",
     },
     {
       key: "costs",
       label: "تسعير كل الباقات من تكلفتها الفعلية",
-      ok: content.packages.length > 0 && priced === content.packages.length,
+      ok: soon || (content.packages.length > 0 && priced === content.packages.length),
       hint: "أدخل تكلفة كل بند وكمياته في «التكلفة والتسعير»",
     },
     {

@@ -73,6 +73,28 @@ describe("priceQuote", () => {
   });
 });
 
+describe("readiness of a coming-soon product", () => {
+  it("does not ask for packages or costs", () => {
+    const content = {
+      comingSoon: true,
+      hero: { title: "ا", subtitle: "ب" },
+      packages: [],
+      process: [],
+      intake: [{}],
+      faq: [],
+      deliverables: [],
+    };
+    const r = productReadiness(
+      content,
+      { method: "markup", value: 0, lines: [], packages: [] },
+      15,
+    );
+    expect(r.find((x) => x.key === "packages")?.ok).toBe(true);
+    expect(r.find((x) => x.key === "costs")?.ok).toBe(true);
+    expect(r.find((x) => x.key === "hero")?.ok).toBe(true);
+  });
+});
+
 describe("packageQuote and readiness", () => {
   const pricing = {
     method: "margin" as const,

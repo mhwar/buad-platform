@@ -55,6 +55,12 @@ export function ProductsPage() {
     },
     onError: () => setError("تعذّر إنشاء المنتج"),
   });
+  const seedAll = useMutation({
+    mutationFn: async () =>
+      ok<{ created: string[] }>(await sendJson("/api/products/seed-blueprints", "POST")),
+    onSuccess: refresh,
+    onError: () => setError("تعذّر إنشاء المسودات"),
+  });
   const create = useMutation({
     mutationFn: async () => ok<{ id: string }>(await sendJson("/api/products", "POST", { name })),
     onSuccess: (r) => {
@@ -136,6 +142,15 @@ export function ProductsPage() {
                 كل قالب يحمل المحتوى والباقات والاستبيان ومراحل التشغيل. التكاليف تبدأ فارغة: أدخل
                 تكاليفك الفعلية ليُحسب السعر.
               </p>
+              <Card className="mb-4 flex flex-wrap items-center justify-between gap-3 border-dashed p-4">
+                <p className="text-sm">
+                  <b>{available.length} قوالب جاهزة لم تُنشأ بعد.</b> تُنشأ كمسودات لا تظهر في الموقع
+                  حتى تراجعها وتنشرها.
+                </p>
+                <Button disabled={seedAll.isPending} onClick={() => seedAll.mutate()}>
+                  {seedAll.isPending ? "جارٍ الإنشاء…" : "إنشاء الكل كمسودات"}
+                </Button>
+              </Card>
               <div className="grid gap-4 sm:grid-cols-2">
                 {available.map((b) => (
                   <BlueprintCard
