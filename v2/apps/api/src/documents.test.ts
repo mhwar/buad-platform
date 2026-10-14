@@ -2,6 +2,7 @@ import { orgs, users } from "@buad/schema/db";
 import { beforeEach, describe, expect, it } from "vitest";
 import { createApp, type Env } from "./app";
 import { hashPassword } from "./auth/password";
+import { isPrintable } from "./modules/pdf";
 import { testDb } from "./test-db";
 
 const env = { APP_VERSION: "t", JWT_SECRET: "test-secret-at-least-16-chars" } as Env;
@@ -299,5 +300,27 @@ describe("outgoing register (الصادر)", () => {
     expect((await call("adm", "GET", "/api/documents?q=خبرة")).body.items).toHaveLength(1);
     expect((await call("adm", "GET", `/api/documents?clientId=${c2}`)).body.items).toHaveLength(1);
     expect((await call("x", "GET", "/api/documents")).body.items).toHaveLength(0);
+  });
+});
+
+describe("vector PDF", () => {
+  it("prints only the app's own print pages, signed in, and says when the service is off", async () => {
+    expect(isPrintable("/print/documents/doc_abc")).toBe(true);
+    expect(isPrintable("/clients/cl_1/statement")).toBe(true);
+    expect(isPrintable("/finance/report?from=2026-01-01&to=2026-12-31")).toBe(true);
+    for (const bad of [
+      "https://evil.example/",
+      "//evil.example",
+      "/api/documents",
+      "/print/documents/../x",
+    ])
+      expect(isPrintable(bad)).toBe(false);
+    const ok = { path: "/print/documents/doc_abc", name: "CT-1" };
+    expect((await call("anon", "POST", "/api/pdf", ok)).status).toBe(401);
+    expect((await call("adm", "POST", "/api/pdf", { ...ok, path: "//evil.example" })).status).toBe(
+      400,
+    );
+    // No Browser Run binding here → the web app falls back to its own capture.
+    expect((await call("adm", "POST", "/api/pdf", ok)).body.error).toBe("pdf_unavailable");
   });
 });

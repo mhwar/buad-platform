@@ -15,8 +15,9 @@
     "@buad/domain": "workspace:*",
     "@buad/migrate": "workspace:*",
     "@buad/schema": "workspace:*",
-    "drizzle-orm": "^0.45.0",
+    "@cloudflare/puppeteer": "1.0.4",
     "@hono/zod-validator": "^0.7.0",
+    "drizzle-orm": "^0.45.0",
     "hono": "^4.9.0",
     "zod": "^4.0.0"
   },

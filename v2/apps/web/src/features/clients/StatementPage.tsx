@@ -5,6 +5,7 @@ import { Button, EmptyState, Notice } from "../../components/ui";
 import { fromEpoch, sar } from "../../lib/format";
 import { FitToWidth } from "../documents/FitToWidth";
 import { type Block, PagedSheets } from "../documents/Pages";
+import { PdfButton } from "../documents/PdfButton";
 import { label, PROJECT_STATUS_LABELS } from "../labels";
 import { type Statement, statementQuery } from "./api";
 
@@ -54,9 +55,10 @@ export function StatementPage() {
           <Button variant="secondary" onClick={() => downloadCsv(st)}>
             <Download className="size-4" /> تصدير Excel
           </Button>
-          <Button onClick={() => window.print()}>
-            <Printer className="size-4" /> طباعة / PDF
+          <Button variant="secondary" onClick={() => window.print()}>
+            <Printer className="size-4" /> طباعة
           </Button>
+          <PdfButton path={`/clients/${id}/statement`} name={`statement-${st.client.code}`} />
         </div>
       </div>
       {st.items.some((i) => !i.hasFinance) && (

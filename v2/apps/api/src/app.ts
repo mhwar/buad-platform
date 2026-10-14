@@ -22,6 +22,7 @@ import { documentsApp, projectDocumentsApp } from "./modules/documents";
 import { financeApp } from "./modules/finance";
 import { importApp } from "./modules/importer";
 import { orgApp } from "./modules/org";
+import { type BrowserBinding, pdfApp } from "./modules/pdf";
 import { projectsApp } from "./modules/projects";
 import { documentSharesApp, publicShareApp } from "./modules/share";
 
@@ -32,6 +33,8 @@ export type Env = {
   OWNER_SETUP_TOKEN?: string;
   /** R2 bucket for uploaded files (logos, stamps, letterheads). */
   FILES?: FileStore;
+  /** Cloudflare Browser Run, for vector PDFs. */
+  BROWSER?: BrowserBinding;
   DB: Parameters<typeof drizzle>[0];
 };
 
@@ -159,6 +162,7 @@ export function createApp(deps: AppDeps = {}) {
       .route("/api/documents/:docId/shares", documentSharesApp)
       .route("/api/documents", documentsApp)
       .route("/api/public/s", publicShareApp)
+      .route("/api/pdf", pdfApp)
       .route("/api/projects", projectsApp)
       .route("/api/import", importApp)
       .route("/api/assets", assetsApp)

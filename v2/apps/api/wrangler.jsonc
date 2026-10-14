@@ -20,6 +20,8 @@
     }
   ],
   // Uploaded files (organisation logo, stamp, signature, letterheads, document images).
-  "r2_buckets": [{ "binding": "FILES", "bucket_name": "buad-v2-files" }]
+  "r2_buckets": [{ "binding": "FILES", "bucket_name": "buad-v2-files" }],
+  // Headless Chrome (Browser Run) for real vector PDFs of documents and reports.
+  "browser": { "binding": "BROWSER" }
   // Secret (never in this file): wrangler secret put JWT_SECRET
 }

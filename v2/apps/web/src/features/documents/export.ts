@@ -24,8 +24,43 @@ function save(blob: Blob, name: string) {
   setTimeout(() => URL.revokeObjectURL(a.href), 2000);
 }
 
-/** `root` is a rendered PagedSheets (`.doc-pages`). */
-export async function downloadPdf(root: HTMLElement, name: string) {
+/**
+ * Real PDF first: the server prints the page with Chrome (selectable text, sharp at any zoom).
+ * If that service is unavailable, the pages are captured here instead (image quality).
+ * Returns which one the user got.
+ */
+export async function downloadPdf(opts: {
+  /** Server endpoint and body that return the vector PDF. */
+  endpoint: string;
+  body?: unknown;
+  name: string;
+  /** Rendered pages (`.doc-pages`) for the fallback capture. */
+  pages: () => Promise<{ root: HTMLElement; done?: () => void }>;
+}): Promise<"vector" | "image"> {
+  try {
+    const res = await fetch(opts.endpoint, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(opts.body ?? {}),
+    });
+    if (res.ok && res.headers.get("content-type")?.includes("application/pdf")) {
+      save(await res.blob(), `${opts.name}.pdf`);
+      return "vector";
+    }
+  } catch {
+    // network trouble: fall back below
+  }
+  const { root, done } = await opts.pages();
+  try {
+    await capturePdf(root, opts.name);
+  } finally {
+    done?.();
+  }
+  return "image";
+}
+
+/** Fallback: each A4 page captured as a high-resolution image on an A4 PDF page. */
+export async function capturePdf(root: HTMLElement, name: string) {
   const [{ domToJpeg }, { jsPDF }] = await Promise.all([
     import("modern-screenshot"),
     import("jspdf"),
@@ -34,8 +69,8 @@ export async function downloadPdf(root: HTMLElement, name: string) {
   const pdf = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait", compress: true });
   for (const [i, page] of pages.entries()) {
     const img = await domToJpeg(page, {
-      scale: 2,
-      quality: 0.88,
+      scale: 3,
+      quality: 0.9,
       backgroundColor: "#ffffff",
       // Screen-only marks are not part of the document.
       filter: (n) =>
