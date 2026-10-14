@@ -8,7 +8,7 @@ import {
   redirect,
   useRouterState,
 } from "@tanstack/react-router";
-import { Briefcase, Files, House as Home_, Settings, Users } from "lucide-react";
+import { Briefcase, Files, House as Home_, Landmark, Settings, Users } from "lucide-react";
 import { z } from "zod";
 import { AccountPage } from "./account";
 import { api } from "./api";
@@ -21,6 +21,8 @@ import { PrintDocumentPage } from "./features/documents/DocumentActions";
 import { DocumentEditor } from "./features/documents/DocumentEditor";
 import { DocumentsPage } from "./features/documents/DocumentsPage";
 import { PublicDocumentPage } from "./features/documents/PublicDocument";
+import { FinancePage } from "./features/finance-overview/FinancePage";
+import { ReportPage } from "./features/finance-overview/ReportPage";
 import { ImportPage } from "./features/import/ImportPage";
 import { OrgSettingsPage } from "./features/org/OrgSettings";
 import { ProjectPage } from "./features/projects/ProjectPage";
@@ -38,6 +40,7 @@ const NAV = [
   { to: "/clients", label: "العملاء", icon: Users, exact: false },
   { to: "/projects", label: "المشاريع", icon: Briefcase, exact: false },
   { to: "/documents", label: "المستندات", icon: Files, exact: false },
+  { to: "/finance", label: "المالية", icon: Landmark, exact: false, managerOnly: true },
 ] as const;
 
 function Shell() {
@@ -55,6 +58,8 @@ function Shell() {
   };
   // Signed out (login), or a document opened from a share link: the page owns the whole screen.
   if (!me.data || isShareLink) return <Outlet />;
+  const manager = me.data.role === "owner" || me.data.role === "admin";
+  const nav = NAV.filter((n) => !("managerOnly" in n) || manager);
   const navLink =
     "flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-muted transition hover:bg-brand-soft hover:text-ink";
   const navActive = "bg-brand-soft font-semibold text-brand";
@@ -90,7 +95,7 @@ function Shell() {
           className="flex gap-1 overflow-x-auto border-t px-3 py-2 lg:hidden"
           aria-label="الأقسام"
         >
-          {NAV.map((n) => (
+          {nav.map((n) => (
             <Link
               key={n.to}
               to={n.to}
@@ -111,7 +116,7 @@ function Shell() {
       <div className="mx-auto flex w-full max-w-7xl flex-1 gap-8 px-4 sm:px-6">
         <aside className="hidden w-52 shrink-0 py-6 lg:block">
           <nav className="sticky top-24 space-y-1" aria-label="الأقسام">
-            {NAV.map((n) => (
+            {nav.map((n) => (
               <Link
                 key={n.to}
                 to={n.to}
@@ -251,6 +256,34 @@ const printDocumentRoute = createRoute({
   },
 });
 
+/** Finance across the organisation: owner and managers only. */
+const managerOnly = async () => {
+  const me = await queryClient.ensureQueryData(meQuery);
+  if (!me) throw redirect({ to: "/login" });
+  if (me.role !== "owner" && me.role !== "admin") throw redirect({ to: "/" });
+};
+const periodSearch = {
+  from: z.string().optional(),
+  to: z.string().optional(),
+};
+const financeRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/finance",
+  validateSearch: z.object({
+    ...periodSearch,
+    preset: z.enum(["all", "year", "last", "custom"]).optional(),
+  }),
+  beforeLoad: managerOnly,
+  component: FinancePage,
+});
+const financeReportRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/finance/report",
+  validateSearch: z.object(periodSearch),
+  beforeLoad: managerOnly,
+  component: ReportPage,
+});
+
 const documentsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/documents",
@@ -333,6 +366,8 @@ export const router = createRouter({
     projectRoute,
     documentsRoute,
     documentRoute,
+    financeRoute,
+    financeReportRoute,
     shareRoute,
     printDocumentRoute,
     settingsRoute.addChildren([settingsIndexRoute, orgRoute, importRoute, accountRoute]),

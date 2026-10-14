@@ -380,3 +380,89 @@ describe("client statement and card data", () => {
     expect(memberCard.recentProjects.map((p: J) => p.name)).toEqual(["مشروع"]);
   });
 });
+
+describe("المالية: organisation overview", () => {
+  it("adds up each project's own finance, by period, for managers only", async () => {
+    // Project 1 (2026): 115,000 incl. VAT, 10% fees, cashback 2% not registered.
+    await call("adm", "PATCH", `${F()}/ctrl`, {
+      version: 0,
+      contractValue: 115000,
+      vatIncluded: true,
+      execV: 10,
+      cbV: 2,
+      contractDate: "2026-03-01",
+    });
+    await call("adm", "POST", `${F()}/entries`, {
+      description: "رواتب",
+      type: "expense",
+      cat: "salary",
+      amount: 10000,
+      date: "2026-03-10",
+    });
+    await call("adm", "POST", `${F()}/entries`, {
+      description: "نقل",
+      type: "expense",
+      cat: "logistics",
+      amount: 2500,
+      date: "2026-04-02",
+      status: "pending",
+    });
+    await call("adm", "POST", `${F()}/entries`, {
+      description: "ملغى",
+      type: "expense",
+      cat: "salary",
+      amount: 999,
+      date: "2026-04-03",
+      status: "cancelled",
+    });
+    // Project 2 (2025), another client.
+    const c2 = (await call("adm", "POST", "/api/clients", { name: "عميل ثان" })).body.id;
+    const p2 = (
+      await call("adm", "POST", "/api/projects", {
+        clientId: c2,
+        name: "قديم",
+        expectedValue: 1000,
+      })
+    ).body.id;
+    await call("adm", "PATCH", `/api/projects/${p2}/finance/ctrl`, {
+      version: 0,
+      contractValue: 20000,
+      contractDate: "2025-06-01",
+    });
+
+    const all = (await call("adm", "GET", "/api/finance/overview")).body;
+    const s1 = (await call("adm", "GET", F())).body.summary;
+    const s2 = (await call("adm", "GET", `/api/projects/${p2}/finance`)).body.summary;
+    expect(all.totals.projects).toBe(2);
+    expect(all.totals.gross).toBeCloseTo(s1.grossTotal + s2.grossTotal, 2);
+    expect(all.totals.profit).toBeCloseTo(s1.profit + s2.profit, 2);
+    expect(all.totals.margin).toBeCloseTo(((s1.profit + s2.profit) / all.totals.gross) * 100, 1);
+    expect(all.clients).toHaveLength(2);
+    // Cancelled entries never count; months and categories follow entry dates.
+    expect(all.monthly).toEqual([
+      { month: "2026-03", expense: 10000, income: 0 },
+      { month: "2026-04", expense: 2500, income: 0 },
+    ]);
+    expect(all.categories.map((c: J) => c.amount)).toEqual([10000, 2500]);
+    expect(all.obligations.pending).toMatchObject([{ description: "نقل", amount: 2500 }]);
+    const items = all.obligations.unregistered.map((u: J) => u.item).sort();
+    // Fees default to 10% of the contract, so the 2025 project owes them too.
+    expect(items).toEqual(["أتعاب التنفيذ", "أتعاب التنفيذ", "كاش باك"]);
+    expect(all.totals.unregistered).toBeCloseTo(11500 + 2300 + 2300, 2);
+
+    const y2026 = (await call("adm", "GET", "/api/finance/overview?from=2026-01-01&to=2026-12-31"))
+      .body;
+    expect(y2026.projects.map((p: J) => p.id)).toEqual([pid]);
+    expect(y2026.totals.gross).toBeCloseTo(s1.grossTotal, 2);
+    const y2025 = (await call("adm", "GET", "/api/finance/overview?from=2025-01-01&to=2025-12-31"))
+      .body;
+    expect(y2025.projects.map((p: J) => p.id)).toEqual([p2]);
+    expect(y2025.monthly).toEqual([]);
+
+    expect((await call("m1", "GET", "/api/finance/overview")).status).toBe(403);
+    expect((await call("x", "GET", "/api/finance/overview")).body.totals.projects).toBe(0);
+    expect((await call("adm", "GET", "/api/finance/overview?from=2026")).status).toBe(400);
+    const report = (await call("adm", "GET", "/api/finance/report")).body;
+    expect(report.org.name).toBe("بُعد");
+  });
+});

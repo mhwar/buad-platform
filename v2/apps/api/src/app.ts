@@ -20,6 +20,7 @@ import { assetsApp, type FileStore } from "./modules/assets";
 import { clientsApp } from "./modules/clients";
 import { documentsApp, projectDocumentsApp } from "./modules/documents";
 import { financeApp } from "./modules/finance";
+import { financeOverviewApp } from "./modules/finance-overview";
 import { importApp } from "./modules/importer";
 import { orgApp } from "./modules/org";
 import { type BrowserBinding, pdfApp } from "./modules/pdf";
@@ -163,6 +164,7 @@ export function createApp(deps: AppDeps = {}) {
       .route("/api/documents", documentsApp)
       .route("/api/public/s", publicShareApp)
       .route("/api/pdf", pdfApp)
+      .route("/api/finance", financeOverviewApp)
       .route("/api/projects", projectsApp)
       .route("/api/import", importApp)
       .route("/api/assets", assetsApp)
