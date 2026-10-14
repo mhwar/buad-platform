@@ -1,4 +1,5 @@
 export * from "./business";
+export * from "./company-plan";
 export * from "./documents-plan";
 export * from "./finance-plan";
 export * from "./plan";

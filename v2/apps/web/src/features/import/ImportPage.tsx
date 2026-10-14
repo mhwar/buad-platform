@@ -11,7 +11,7 @@ import { CheckCircle2, FileUp, Sparkles } from "lucide-react";
 import { useMemo, useState } from "react";
 import { api } from "../../api";
 import { Badge, Button, Card, EmptyState, Notice, PageHeader } from "../../components/ui";
-import { ApiError, ok } from "../../lib/format";
+import { ApiError, ok, sar } from "../../lib/format";
 import { clientKeys, clientsQuery } from "../clients/api";
 import { CLIENT_TYPE_LABELS, label, PROJECT_STATUS_LABELS, STATUS_TONE } from "../labels";
 import { projectKeys } from "../projects/api";
@@ -48,6 +48,13 @@ type Result = {
     withCover: number;
     adoptedLetterhead: string[];
     items: { id: string; kind: string; title: string; number: string; status: string }[];
+  };
+  company?: {
+    entries: number;
+    partners: number;
+    distributions: number;
+    skipped: number;
+    totals: { income: number; expenses: number; distributed: number; retained: number };
   };
   issues: Issue[];
 };
@@ -348,6 +355,30 @@ function ResultView({ r, onAgain }: { r: Result; onAgain: () => void }) {
         </div>
       </Card>
       {r.finance && r.finance.parity.length > 0 && <ParityView f={r.finance} />}
+      {r.company && r.company.entries + r.company.partners + r.company.distributions > 0 && (
+        <Card className="mb-4">
+          <h2 className="mb-1 font-semibold">مالية الشركة والشركاء</h2>
+          <p className="text-sm">
+            نُقل {r.company.entries} قيد (إيرادات {sar(r.company.totals.income)} · مصروفات{" "}
+            {sar(r.company.totals.expenses)})، و{r.company.partners} شريك، و
+            {r.company.distributions} توزيع (وُزّع {sar(r.company.totals.distributed)} · محتجز{" "}
+            {sar(r.company.totals.retained)}).
+          </p>
+          {r.company.skipped > 0 && (
+            <p className="mt-1 text-xs text-muted">
+              {r.company.skipped} قيد مزامنة قديم مرتبط بمشروع لم يُنقل، كما كانت المنصة الحالية
+              تحذفه؛ أرباح المشاريع تُحسب من ماليتها مباشرة.
+            </p>
+          )}
+          <Link
+            to="/finance"
+            search={{ tab: "partners" }}
+            className="mt-2 inline-block text-sm text-brand underline"
+          >
+            فتح الشركاء والتوزيع
+          </Link>
+        </Card>
+      )}
       {r.documents && r.documents.imported > 0 && (
         <Card className="mb-4">
           <h2 className="mb-1 font-semibold">العقود والخطابات</h2>

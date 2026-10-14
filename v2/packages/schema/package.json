@@ -9,7 +9,8 @@
     "./clients": "./src/clients.ts",
     "./finance": "./src/finance.ts",
     "./org": "./src/org.ts",
-    "./documents": "./src/documents.ts"
+    "./documents": "./src/documents.ts",
+    "./company": "./src/company.ts"
   },
   "scripts": {
     "typecheck": "tsc -p .",

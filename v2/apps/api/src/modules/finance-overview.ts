@@ -38,6 +38,21 @@ const AGREEMENT = [
   { cat: "cf", label: "رسوم إضافية", key: "cfAmt" },
 ] as const;
 
+/**
+ * A project's date in time: money received (v1 «تاريخ الاستلام»), else the contract, else the
+ * start, else its first entry. Never the date it was created or imported.
+ */
+export function projectDate(
+  p: { payDate: string; startDate: string },
+  fin: { ctrl: { contractDate: string }; entries: { date: string }[] },
+) {
+  const firstEntry = fin.entries
+    .map((e) => e.date)
+    .filter(Boolean)
+    .sort()[0];
+  return p.payDate || fin.ctrl.contractDate || p.startDate || firstEntry || "";
+}
+
 type ProjectRow = {
   id: string;
   number: string;
@@ -91,13 +106,7 @@ export async function financeOverview(db: Db, orgId: string, from?: string, to?:
     const fin = await loadFinance(db, p);
     const s = fin.summary;
     const hasFinance = fin.ctrl.version > 0 || fin.entries.length > 0;
-    // The project's date in time: money received (v1 «تاريخ الاستلام»), else the contract,
-    // else the start, else its first entry. Never the date it was created or imported.
-    const firstEntry = fin.entries
-      .map((e) => e.date)
-      .filter(Boolean)
-      .sort()[0];
-    const date = p.payDate || fin.ctrl.contractDate || p.startDate || firstEntry || "";
+    const date = projectDate(p, fin);
     const noStatus = fin.entries.filter((e) => e.status === "").length;
     if (!fin.ctrl.contractDate || noStatus)
       quality.push({

@@ -12,12 +12,14 @@ import {
 import {
   CATEGORY_TYPES,
   CLIENT_TYPES,
+  DISTRIBUTION_STATUSES,
   ENTRY_STATUSES,
   ENTRY_TYPES,
   FEE_BASES,
   FEE_TYPES,
   PROJECT_STATUSES,
   PROJECT_TYPES,
+  RETAINED_CATS,
 } from "./enums";
 
 export { CLIENT_TYPES, PROJECT_STATUSES, PROJECT_TYPES };
@@ -432,4 +434,90 @@ export const documentShares = sqliteTable(
     uniqueIndex("uq_document_shares_token").on(t.tokenHash),
     index("idx_document_shares_document").on(t.documentId),
   ],
+);
+
+/* ── Company finance («مالية الشركة»): money not tied to one project ─────────── */
+
+/** Company income (services, subscriptions…) and expenses (hosting, payroll…). */
+export const companyEntries = sqliteTable(
+  "company_entries",
+  {
+    id: text("id").primaryKey(),
+    orgId: text("org_id")
+      .notNull()
+      .references(() => orgs.id),
+    type: text("type", { enum: ["income", "expense"] }).notNull(),
+    category: text("category").notNull().default("other"),
+    date: text("date").notNull().default(""),
+    /** Income only: when the money reached the bank (decides its quarter, as in v1). */
+    paymentDate: text("payment_date").notNull().default(""),
+    description: text("description").notNull(),
+    amount: integer("amount_halalas").notNull(),
+    note: text("note").notNull().default(""),
+    ...audit,
+  },
+  (t) => [index("idx_company_entries_org").on(t.orgId, t.type, t.date)],
+);
+
+/** Partners and their share of distributed profit. */
+export const partners = sqliteTable(
+  "partners",
+  {
+    id: text("id").primaryKey(),
+    orgId: text("org_id")
+      .notNull()
+      .references(() => orgs.id),
+    name: text("name").notNull(),
+    /** Percent, e.g. 33.33. */
+    sharePct: real("share_pct").notNull().default(0),
+    note: text("note").notNull().default(""),
+    ...audit,
+  },
+  (t) => [index("idx_partners_org").on(t.orgId)],
+);
+
+/** A profit distribution: a draft until completed, then frozen (shares are copied). */
+export const distributions = sqliteTable(
+  "distributions",
+  {
+    id: text("id").primaryKey(),
+    orgId: text("org_id")
+      .notNull()
+      .references(() => orgs.id),
+    periodType: text("period_type").notNull().default("quarter"),
+    periodLabel: text("period_label").notNull().default(""),
+    fromDate: text("from_date").notNull().default(""),
+    toDate: text("to_date").notNull().default(""),
+    grossIncome: integer("gross_income_halalas").notNull().default(0),
+    grossExpenses: integer("gross_expenses_halalas").notNull().default(0),
+    netProfit: integer("net_profit_halalas").notNull().default(0),
+    distributionPct: real("distribution_pct").notNull().default(100),
+    distributedAmount: integer("distributed_halalas").notNull().default(0),
+    retainedAmount: integer("retained_halalas").notNull().default(0),
+    retainedCategory: text("retained_category", { enum: RETAINED_CATS }),
+    /** JSON array of project ids the distribution covers. */
+    projectIds: text("project_ids").notNull().default("[]"),
+    /** A single-project distribution («توزيع أرباح هذا المشروع»). */
+    projectId: text("project_id").notNull().default(""),
+    status: text("status", { enum: DISTRIBUTION_STATUSES }).notNull().default("draft"),
+    note: text("note").notNull().default(""),
+    completedAt: integer("completed_at"),
+    ...audit,
+  },
+  (t) => [index("idx_distributions_org").on(t.orgId, t.status)],
+);
+
+export const distributionShares = sqliteTable(
+  "distribution_shares",
+  {
+    id: text("id").primaryKey(),
+    distributionId: text("distribution_id")
+      .notNull()
+      .references(() => distributions.id),
+    partnerId: text("partner_id").notNull().default(""),
+    partnerName: text("partner_name").notNull(),
+    sharePct: real("share_pct").notNull(),
+    amount: integer("amount_halalas").notNull(),
+  },
+  (t) => [index("idx_distribution_shares").on(t.distributionId)],
 );

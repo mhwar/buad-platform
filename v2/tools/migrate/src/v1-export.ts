@@ -10,6 +10,8 @@ export type V1Workspace = {
   clients: Record<string, unknown>[];
   projects: Record<string, unknown>[];
   fin: Record<string, Record<string, unknown>>;
+  /** v1 «مالية المنصة» (company finance): income, expenses, partners, distributions. */
+  pf?: Record<string, unknown>;
 };
 
 const parse = (v: unknown): unknown => {
@@ -38,14 +40,21 @@ export function parseV1Export(input: unknown): V1Workspace | null {
       if (f && typeof f === "object")
         fin[k.slice("buad2_fin_".length)] = f as Record<string, unknown>;
     }
-    return { clients: arr(parse(o.buad2_clients)), projects: arr(parse(o.buad2_projects)), fin };
+    const pf = parse(o.buad2_pf);
+    return {
+      clients: arr(parse(o.buad2_clients)),
+      projects: arr(parse(o.buad2_projects)),
+      fin,
+      ...(pf && typeof pf === "object" ? { pf: pf as Record<string, unknown> } : {}),
+    };
   }
   const ws = "workspace" in o ? parse(o.workspace) : o;
   if (!ws || typeof ws !== "object") return null;
   const w = ws as Record<string, unknown>;
   if (!("clients" in w) && !("projects" in w)) return null;
   const fin = w.fin && typeof w.fin === "object" ? (w.fin as V1Workspace["fin"]) : {};
-  return { clients: arr(w.clients), projects: arr(w.projects), fin };
+  const pf = w.pf && typeof w.pf === "object" ? (w.pf as Record<string, unknown>) : undefined;
+  return { clients: arr(w.clients), projects: arr(w.projects), fin, ...(pf ? { pf } : {}) };
 }
 
 /** Keep only the chosen clients and everything that belongs to them (projects, their fin). */
@@ -59,7 +68,8 @@ export function selectClients(ws: V1Workspace, clientIds: string[] | "all"): V1W
     const f = ws.fin[String(p.id)];
     if (f) fin[String(p.id)] = f; // the whole project finance: settings, entries, budget
   }
-  return { clients, projects, fin };
+  // Company finance is not per client: it always comes along (re-importing it is harmless).
+  return { clients, projects, fin, ...(ws.pf ? { pf: ws.pf } : {}) };
 }
 
 const FILLED_FIELDS = [
