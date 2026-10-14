@@ -3,7 +3,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { ExternalLink, Monitor, Smartphone, Tablet } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { Badge, Button, Notice, PageHeader, Tabs } from "../../components/ui";
+import { StepNav } from "../../components/StepNav";
+import { Badge, Button, Notice, PageHeader } from "../../components/ui";
 import { ApiError, ago, ok } from "../../lib/format";
 import { uploadImage } from "../org/OrgSettings";
 import { sendJson } from "../products/products-api";
@@ -182,13 +183,14 @@ function Editor({ data }: { data: Draft }) {
 
       <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_24rem]">
         <div className="min-w-0">
-          <Tabs
-            items={TABS.map((t) => ({
-              to: "",
-              label: t.key === "overview" && issues ? `${t.label} (${issues})` : t.label,
-              active: tab === t.key,
-              onClick: () => goTab(t.key),
+          <StepNav
+            steps={TABS.map((t) => ({
+              key: t.key,
+              label: t.label,
+              badge: t.key === "overview" ? issues : undefined,
             }))}
+            value={tab}
+            onChange={goTab}
           />
           {tab === "overview" && (
             <OverviewTab
@@ -216,7 +218,7 @@ function Editor({ data }: { data: Draft }) {
         </aside>
       </div>
 
-      <div className="fixed inset-x-0 bottom-0 z-30 border-t bg-surface/95 backdrop-blur">
+      <div className="fixed inset-x-0 bottom-[calc(3.5rem+env(safe-area-inset-bottom))] z-30 border-t bg-surface/95 backdrop-blur lg:bottom-0">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
           <span className="text-sm text-muted">
             {dirty ? "تغييرات غير محفوظة" : "كل التغييرات محفوظة"}

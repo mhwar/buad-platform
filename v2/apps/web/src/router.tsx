@@ -22,6 +22,7 @@ import { z } from "zod";
 import { AccountPage } from "./account";
 import { api } from "./api";
 import { Logo } from "./brand";
+import { MobileTabBar } from "./components/MobileTabBar";
 import { UpdateBanner, useServerVersion } from "./components/UpdateBanner";
 import { ClientPage } from "./features/clients/ClientPage";
 import { ClientsPage } from "./features/clients/ClientsPage";
@@ -91,7 +92,7 @@ function Shell() {
             <Logo className="hidden h-11 w-auto sm:block" />
             <Logo variant="icon" className="h-9 w-auto sm:hidden" />
           </Link>
-          <div className="flex items-center gap-3 text-sm">
+          <div className="hidden items-center gap-3 text-sm lg:flex">
             <ThemeToggle />
             <Link
               to="/settings/account"
@@ -109,28 +110,6 @@ function Shell() {
             </button>
           </div>
         </div>
-        {/* Mobile: the sections become a scrollable strip under the header. */}
-        <nav
-          className="flex gap-1 overflow-x-auto border-t px-3 py-2 lg:hidden"
-          aria-label="الأقسام"
-        >
-          {nav.map((n) => (
-            <Link
-              key={n.to}
-              to={n.to}
-              activeOptions={{ exact: n.exact }}
-              className={navLink}
-              activeProps={{ className: navActive }}
-            >
-              <n.icon className="size-4" />
-              {n.label}
-            </Link>
-          ))}
-          <Link to="/settings" className={navLink} activeProps={{ className: navActive }}>
-            <Settings className="size-4" />
-            الإعدادات
-          </Link>
-        </nav>
       </header>
       <div className="mx-auto flex w-full max-w-7xl flex-1 gap-8 px-4 sm:px-6">
         <aside className="hidden w-52 shrink-0 py-6 lg:block">
@@ -154,11 +133,21 @@ function Shell() {
             </Link>
           </nav>
         </aside>
-        <main className="min-w-0 flex-1 py-6">
+        <main className="min-w-0 flex-1 py-6 pb-28 lg:pb-6">
           <Outlet />
         </main>
       </div>
-      <footer className="border-t py-4 text-center text-xs text-muted">
+      <MobileTabBar
+        nav={nav}
+        primary={
+          manager
+            ? ["/", "/clients", "/projects", "/finance"]
+            : ["/", "/clients", "/projects", "/documents"]
+        }
+        userName={me.data.name || me.data.email}
+        onLogout={logout}
+      />
+      <footer className="mb-16 border-t py-4 text-center text-xs text-muted lg:mb-0">
         بُعد التمكين · الإصدار الثاني ·{" "}
         <span data-testid="status">
           {health.isError

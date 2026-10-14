@@ -8,7 +8,11 @@ import {
   forwardRef,
   type ReactElement,
   type ReactNode,
+  useCallback,
+  useEffect,
   useId,
+  useRef,
+  useState,
 } from "react";
 import { twMerge } from "tailwind-merge";
 
@@ -32,7 +36,7 @@ export function Button({
       type="button"
       {...p}
       className={cx(
-        "inline-flex items-center justify-center gap-2 rounded-lg px-3.5 py-2 text-sm font-semibold transition disabled:opacity-60",
+        "inline-flex min-h-11 items-center justify-center gap-2 rounded-lg px-3.5 py-2 text-sm font-semibold transition disabled:opacity-60 sm:min-h-0",
         btn[variant],
         className,
       )}
@@ -42,7 +46,7 @@ export function Button({
 
 /* ── Form fields ─────────────────────────────────────── */
 const control =
-  "w-full rounded-lg border border-line bg-surface px-3 py-2.5 text-ink outline-none transition focus:border-brand focus:ring-2 focus:ring-accent/30 disabled:opacity-60";
+  "w-full rounded-lg border border-line bg-surface px-3 py-2.5 text-base text-ink sm:text-sm outline-none transition focus:border-brand focus:ring-2 focus:ring-accent/30 disabled:opacity-60";
 
 /**
  * Label + control + hint/error, linked explicitly (htmlFor, aria-describedby, aria-invalid)
@@ -213,10 +217,13 @@ export function PageHeader({
   title,
   subtitle,
   actions,
+  moreActions,
 }: {
   title: ReactNode;
   subtitle?: ReactNode;
   actions?: ReactNode;
+  /** Secondary actions: a «⋯» menu on phones only (hide their desktop buttons with `hidden sm:inline-flex`). */
+  moreActions?: MenuItem[];
 }) {
   return (
     <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
@@ -224,7 +231,80 @@ export function PageHeader({
         <h1 className="text-2xl font-bold">{title}</h1>
         {subtitle && <p className="mt-1 text-sm text-muted">{subtitle}</p>}
       </div>
-      {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
+      {(actions || moreActions) && (
+        <div className="flex flex-wrap items-center gap-2">
+          {actions}
+          {moreActions && (
+            <div className="sm:hidden">
+              <Menu items={moreActions} />
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/**
+ * A horizontally scrolling row (tabs, segmented switchers, chips) that tells you there is more:
+ * the edge that still has content fades out, and the active item is brought into view.
+ * RTL-aware (scrollLeft is negative there). `activeKey` changes re-centre the active item.
+ */
+export function ScrollRow({
+  children,
+  className,
+  activeKey,
+  ...rest
+}: ComponentProps<"div"> & { activeKey?: string }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [edge, setEdge] = useState({ start: true, end: true });
+  const update = useCallback(() => {
+    const el = ref.current;
+    if (!el) return;
+    const max = el.scrollWidth - el.clientWidth;
+    const pos = Math.abs(el.scrollLeft);
+    setEdge({ start: pos < 4, end: max - pos < 4 });
+  }, []);
+  useEffect(() => {
+    update();
+    const el = ref.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [update]);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: re-run only when the active item changes
+  useEffect(() => {
+    const active = ref.current?.querySelector<HTMLElement>(
+      '[aria-selected="true"],[aria-pressed="true"]',
+    );
+    const calm = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    active?.scrollIntoView?.({
+      inline: "center",
+      block: "nearest",
+      behavior: calm ? "auto" : "smooth",
+    });
+  }, [activeKey]);
+  const fade = edge.start && edge.end ? undefined : 28;
+  return (
+    <div
+      ref={ref}
+      onScroll={update}
+      {...rest}
+      className={cx(
+        "snap-x overflow-x-auto overscroll-x-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
+        className,
+      )}
+      style={
+        fade
+          ? {
+              maskImage: `linear-gradient(to right, ${edge.end ? "#000" : "transparent"} 0, #000 ${fade}px, #000 calc(100% - ${fade}px), ${edge.start ? "#000" : "transparent"} 100%)`,
+              WebkitMaskImage: `linear-gradient(to right, ${edge.end ? "#000" : "transparent"} 0, #000 ${fade}px, #000 calc(100% - ${fade}px), ${edge.start ? "#000" : "transparent"} 100%)`,
+            }
+          : undefined
+      }
+    >
+      {children}
     </div>
   );
 }
@@ -239,7 +319,11 @@ export function Pills<T extends string>({
   items: { value: T | ""; label: string; count?: number }[];
 }) {
   return (
-    <div className="flex flex-wrap gap-2" role="tablist">
+    <ScrollRow
+      className="-mx-4 flex max-w-[calc(100%+2rem)] gap-2 px-4 pb-1 sm:mx-0 sm:max-w-full sm:flex-wrap sm:px-0"
+      role="tablist"
+      activeKey={value}
+    >
       {items.map((i) => (
         <button
           key={i.value || "all"}
@@ -248,7 +332,7 @@ export function Pills<T extends string>({
           aria-selected={value === i.value}
           onClick={() => onChange(i.value)}
           className={cx(
-            "rounded-full border px-3 py-1 text-sm transition",
+            "min-h-10 shrink-0 snap-center whitespace-nowrap rounded-full border px-3.5 py-1.5 text-sm transition sm:min-h-0 sm:py-1",
             value === i.value
               ? "border-brand bg-brand text-white dark:text-canvas"
               : "bg-surface text-muted hover:text-ink",
@@ -258,7 +342,7 @@ export function Pills<T extends string>({
           {i.count !== undefined && <span className="ms-1.5 opacity-70">{i.count}</span>}
         </button>
       ))}
-    </div>
+    </ScrollRow>
   );
 }
 
@@ -276,7 +360,7 @@ export function ViewToggle({
       aria-pressed={value === v}
       onClick={() => onChange(v)}
       className={cx(
-        "rounded-md p-1.5",
+        "grid min-h-10 min-w-10 place-items-center rounded-md sm:min-h-0 sm:min-w-0 sm:p-1.5",
         value === v ? "bg-brand-soft text-brand" : "text-muted hover:text-ink",
       )}
     >
@@ -304,7 +388,11 @@ export function Tabs({
   }[];
 }) {
   return (
-    <div className="mb-6 flex gap-1 overflow-x-auto border-b" role="tablist">
+    <ScrollRow
+      className="mb-6 flex gap-1 border-b"
+      role="tablist"
+      activeKey={items.find((t) => t.active)?.label}
+    >
       {items.map((t) => (
         <button
           key={t.label}
@@ -314,7 +402,7 @@ export function Tabs({
           disabled={t.disabled}
           onClick={t.onClick}
           className={cx(
-            "-mb-px whitespace-nowrap border-b-2 px-4 py-2.5 text-sm transition disabled:cursor-not-allowed disabled:opacity-50",
+            "-mb-px min-h-11 shrink-0 snap-center whitespace-nowrap border-b-2 px-4 py-2.5 text-sm transition disabled:cursor-not-allowed disabled:opacity-50",
             t.active
               ? "border-brand font-semibold text-ink"
               : "border-transparent text-muted hover:text-ink",
@@ -324,7 +412,7 @@ export function Tabs({
           {t.disabled && <span className="ms-1.5 text-xs">(قريباً)</span>}
         </button>
       ))}
-    </div>
+    </ScrollRow>
   );
 }
 
@@ -376,7 +464,7 @@ export function Dialog({
           dir="rtl"
           aria-describedby={undefined}
           className={cx(
-            "fixed inset-x-0 bottom-0 z-50 max-h-[92vh] overflow-y-auto rounded-t-2xl border bg-surface p-6 shadow-xl sm:inset-auto sm:top-1/2 sm:left-1/2 sm:w-full sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-2xl",
+            "fixed inset-x-0 bottom-0 z-50 max-h-[88dvh] overflow-y-auto rounded-t-2xl border bg-surface p-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] shadow-xl sm:inset-auto sm:top-1/2 sm:left-1/2 sm:w-full sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-2xl",
             wide ? "sm:max-w-2xl" : "sm:max-w-lg",
           )}
         >
@@ -517,10 +605,11 @@ export function Segmented<T extends string>({
   label: string;
 }) {
   return (
-    <div
+    <ScrollRow
       role="tablist"
       aria-label={label}
-      className="inline-flex w-full gap-1 overflow-x-auto rounded-xl border bg-surface p-1 sm:w-auto"
+      activeKey={value}
+      className="flex w-full gap-1 rounded-xl border bg-surface p-1 sm:inline-flex sm:w-auto"
     >
       {items.map((i) => (
         <button
@@ -531,7 +620,7 @@ export function Segmented<T extends string>({
           title={i.hint}
           onClick={() => onChange(i.value)}
           className={cx(
-            "inline-flex flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg px-2.5 py-2 text-sm transition sm:flex-none sm:gap-2 sm:px-4",
+            "inline-flex min-h-11 flex-1 shrink-0 snap-center items-center justify-center gap-1.5 whitespace-nowrap rounded-lg px-3 py-2 text-sm transition sm:min-h-0 sm:flex-none sm:gap-2 sm:px-4",
             value === i.value
               ? "bg-brand text-white shadow-sm dark:text-canvas"
               : "text-muted hover:bg-brand-soft hover:text-ink",
@@ -551,7 +640,7 @@ export function Segmented<T extends string>({
           )}
         </button>
       ))}
-    </div>
+    </ScrollRow>
   );
 }
 

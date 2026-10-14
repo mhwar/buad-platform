@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getRouteApi, Link } from "@tanstack/react-router";
 import { Check, Circle } from "lucide-react";
 import { type ReactNode, useState } from "react";
+import { StepNav } from "../../components/StepNav";
 import {
   Badge,
   Button,
@@ -13,7 +14,6 @@ import {
   Notice,
   PageHeader,
   Select,
-  Tabs,
   Textarea,
 } from "../../components/ui";
 import { ApiError, ok } from "../../lib/format";
@@ -155,13 +155,10 @@ function Builder({ product }: { product: Product }) {
         }
       />
       {msg && <Notice tone={msg.tone}>{msg.text}</Notice>}
-      <Tabs
-        items={STEPS.map((s) => ({
-          to: "",
-          label: s.label,
-          active: step === s.key,
-          onClick: () => navigate({ search: { step: s.key }, replace: true }),
-        }))}
+      <StepNav
+        steps={STEPS.map((x) => ({ key: x.key, label: x.label }))}
+        value={step}
+        onChange={(k) => navigate({ search: { step: k }, replace: true })}
       />
 
       {step === "identity" && <Identity d={d} patch={patch} patchContent={patchContent} />}
@@ -182,7 +179,7 @@ function Builder({ product }: { product: Product }) {
       )}
 
       {step !== "performance" && (
-        <div className="fixed inset-x-0 bottom-0 z-30 border-t bg-surface/95 backdrop-blur">
+        <div className="fixed inset-x-0 bottom-[calc(3.5rem+env(safe-area-inset-bottom))] z-30 border-t bg-surface/95 backdrop-blur lg:bottom-0">
           <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
             <span className="text-sm text-muted">
               {dirty ? "تغييرات غير محفوظة" : "كل التغييرات محفوظة"}

@@ -80,7 +80,7 @@ export function DocumentsPage() {
             aria-label="الحالة"
             value={s.status ?? ""}
             onChange={(e) => set({ status: (e.target.value || undefined) as DocStatus })}
-            className="w-auto"
+            className="w-auto flex-1 sm:flex-none"
           >
             <option value="">كل الحالات</option>
             {(["draft", "review", "approved"] as const).map((k) => (

@@ -11,6 +11,7 @@ import {
   Users,
 } from "lucide-react";
 import { useState } from "react";
+import { FilterBar } from "../../components/FilterBar";
 import {
   Badge,
   Button,
@@ -74,7 +75,11 @@ export function FinancePage() {
   const [archive, setArchive] = useState(false);
   const reportLink = (
     <>
-      <Button variant="secondary" onClick={() => setArchive(true)}>
+      <Button
+        variant="secondary"
+        className="hidden sm:inline-flex"
+        onClick={() => setArchive(true)}
+      >
         <FileSpreadsheet className="size-4" /> أرشيف Excel
       </Button>
       <Link
@@ -93,6 +98,14 @@ export function FinancePage() {
         title="المالية"
         subtitle="عقود الجهة وأرباحها ومصروفاتها والتزاماتها، ومالية الشركة والشركاء"
         actions={reportLink}
+        moreActions={[
+          {
+            label: "أرشيف Excel",
+            hint: "كل المشاريع والقيود",
+            icon: <FileSpreadsheet />,
+            onSelect: () => setArchive(true),
+          },
+        ]}
       />
       <div className="mb-4 max-w-3xl">
         <Segmented<Tab>
@@ -111,40 +124,40 @@ export function FinancePage() {
       <div
         className={`mb-6 flex flex-wrap items-center gap-3 ${tab === "partners" || tab === "quarter" || tab === "vat" ? "hidden" : ""}`}
       >
-        <PeriodPicker
-          value={choice}
-          onChange={(c) => set({ preset: c.preset, year: c.year, q: c.q, from: c.from, to: c.to })}
+        <FilterBar
+          leading={
+            <PeriodPicker
+              value={choice}
+              onChange={(c) =>
+                set({ preset: c.preset, year: c.year, q: c.q, from: c.from, to: c.to })
+              }
+            />
+          }
+          fields={
+            tab === "projects"
+              ? [
+                  {
+                    key: "client",
+                    label: "العميل",
+                    value: s.client ?? "",
+                    allLabel: "كل العملاء",
+                    options: clientOptions.map(([id, name]) => ({ value: id, label: name })),
+                  },
+                  {
+                    key: "status",
+                    label: "الحالة",
+                    value: s.status ?? "",
+                    allLabel: "كل الحالات",
+                    options: Object.entries(PROJECT_STATUS_LABELS).map(([k, l]) => ({
+                      value: k,
+                      label: l,
+                    })),
+                  },
+                ]
+              : []
+          }
+          onChange={(k, v) => set({ [k]: v || undefined })}
         />
-        {tab === "projects" && (
-          <>
-            <Select
-              aria-label="العميل"
-              value={s.client ?? ""}
-              onChange={(e) => set({ client: e.target.value || undefined })}
-              className="w-auto"
-            >
-              <option value="">كل العملاء</option>
-              {clientOptions.map(([id, name]) => (
-                <option key={id} value={id}>
-                  {name}
-                </option>
-              ))}
-            </Select>
-            <Select
-              aria-label="حالة المشروع"
-              value={s.status ?? ""}
-              onChange={(e) => set({ status: e.target.value || undefined })}
-              className="w-auto"
-            >
-              <option value="">كل الحالات</option>
-              {Object.entries(PROJECT_STATUS_LABELS).map(([k, l]) => (
-                <option key={k} value={k}>
-                  {l}
-                </option>
-              ))}
-            </Select>
-          </>
-        )}
       </div>
 
       {archive && <ArchiveDialog onClose={() => setArchive(false)} />}
@@ -377,12 +390,12 @@ function QualityCard({ items }: { items: Overview["quality"] }) {
   const refresh = () => qc.invalidateQueries({ queryKey: ["finance-overview"] });
   return (
     <Card className="border-amber-300 bg-amber-50/60 dark:border-amber-800 dark:bg-amber-950/30">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-start gap-2">
           <AlertTriangle className="mt-0.5 size-4 shrink-0 text-amber-600" />
           <div>
             <p className="font-semibold">بيانات ناقصة تؤثر على دقة الأرقام</p>
-            <p className="text-xs text-muted">
+            <p className={`text-xs text-muted ${open ? "" : "line-clamp-2 sm:line-clamp-none"}`}>
               {dates > 0 &&
                 `${dates} مشروع لم يُسجَّل له أي مبلغ مستلم (لا يُعرف ربعه ولا يدخل في التوزيع)`}
               {dates > 0 && statuses > 0 && " · "}
@@ -390,7 +403,11 @@ function QualityCard({ items }: { items: Overview["quality"] }) {
             </p>
           </div>
         </div>
-        <Button variant="secondary" onClick={() => setOpen((o) => !o)}>
+        <Button
+          variant="secondary"
+          className="min-h-11 sm:min-h-0"
+          onClick={() => setOpen((o) => !o)}
+        >
           {open ? "إخفاء" : "إكمال الآن"}
         </Button>
       </div>
