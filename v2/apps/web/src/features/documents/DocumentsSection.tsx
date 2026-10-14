@@ -22,6 +22,7 @@ export function DocumentsSection({ projectId, canEdit }: { projectId: string; ca
   const actions = useDocumentActions(canEdit);
   return (
     <Card className="p-0">
+      {actions.dialog}
       {(actions.busy || actions.error) && (
         <div className="px-5 pt-4">
           {actions.busy ? (

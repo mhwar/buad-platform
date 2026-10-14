@@ -102,19 +102,36 @@ export const assetsApp = new Hono<Env>()
   })
 
   .get("/:id", async (c) => {
-    const [row] = await c
-      .get("db")
-      .select()
-      .from(assets)
-      .where(and(eq(assets.id, c.req.param("id")), eq(assets.orgId, c.get("user").orgId)))
-      .limit(1);
-    const obj = row && c.env.FILES ? await c.env.FILES.get(row.r2Key) : null;
-    if (!row || !obj) return c.json({ ok: false, error: "not_found" }, 404);
-    return c.body(new Uint8Array(await obj.arrayBuffer()), 200, {
+    const res = await assetResponse(
+      c.get("db"),
+      c.env.FILES,
+      c.get("user").orgId,
+      c.req.param("id"),
+    );
+    return res ?? c.json({ ok: false, error: "not_found" }, 404);
+  });
+
+/** An org's stored image as a response (sandboxed, cached forever: ids are content-addressed). */
+export async function assetResponse(
+  db: Db,
+  files: FileStore | undefined,
+  orgId: string,
+  id: string,
+): Promise<Response | null> {
+  const [row] = await db
+    .select()
+    .from(assets)
+    .where(and(eq(assets.id, id), eq(assets.orgId, orgId)))
+    .limit(1);
+  const obj = row && files ? await files.get(row.r2Key) : null;
+  if (!row || !obj) return null;
+  return new Response(new Uint8Array(await obj.arrayBuffer()), {
+    headers: {
       "Content-Type": row.mime,
       // Content-addressed: the bytes behind an id never change.
       "Cache-Control": "private, max-age=31536000, immutable",
       "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'; sandbox",
       "X-Content-Type-Options": "nosniff",
-    });
+    },
   });
+}

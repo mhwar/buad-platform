@@ -8,6 +8,7 @@ import {
   FolderOpen,
   RotateCcw,
   Send,
+  Share2,
   Stamp,
   Trash2,
 } from "lucide-react";
@@ -17,6 +18,7 @@ import type { MenuItem } from "../../components/ui";
 import { type DocDetail, docApi, documentQuery } from "./api";
 import { DocumentView, documentUrls } from "./DocumentView";
 import { downloadPdf, downloadWord, fileBase } from "./export";
+import { SendDialog } from "./SendDialog";
 
 /** «ص-2026-0015 / PRJ-2026-0003» once registered, else "". */
 export const outgoingRef = (d: DocDetail) =>
@@ -99,6 +101,7 @@ export function useDocumentActions(manager: boolean) {
   const navigate = useNavigate();
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [sending, setSending] = useState<DocDetail | null>(null);
 
   const detail = (id: string) => qc.fetchQuery({ ...documentQuery(id), staleTime: 0 });
   const run = async (label: string, fn: () => Promise<unknown>) => {
@@ -141,6 +144,16 @@ export function useDocumentActions(manager: boolean) {
         icon: <FileText />,
         onSelect: () => run("تجهيز ملف Word", async () => exportWord(await detail(d.id))),
       },
+      ...((manager && d.status === "approved"
+        ? [
+            {
+              label: "إرسال للعميل",
+              hint: "رابط آمن عبر واتساب أو البريد",
+              icon: <Share2 />,
+              onSelect: () => run("تجهيز الإرسال", async () => setSending(await detail(d.id))),
+            },
+          ]
+        : []) as MenuItem[]),
       ...((manager
         ? [
             { section: "سير العمل" },
@@ -216,5 +229,6 @@ export function useDocumentActions(manager: boolean) {
         : []) as MenuItem[]),
     ];
   };
-  return { items, busy, error };
+  const dialog = sending ? <SendDialog detail={sending} onClose={() => setSending(null)} /> : null;
+  return { items, busy, error, dialog };
 }

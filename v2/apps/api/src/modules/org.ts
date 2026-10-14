@@ -9,7 +9,7 @@ import { assetUrl } from "./assets";
 import { nowSec } from "./common";
 
 type Env = { Bindings: { JWT_SECRET: string }; Variables: Vars };
-const ASSET_FIELDS = [
+export const ASSET_FIELDS = [
   "logoAsset",
   "stampAsset",
   "signatureAsset",
