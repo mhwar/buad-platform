@@ -25,6 +25,7 @@ import { financeOverviewApp } from "./modules/finance-overview";
 import { importApp } from "./modules/importer";
 import { orgApp } from "./modules/org";
 import { type BrowserBinding, pdfApp } from "./modules/pdf";
+import { productsApp } from "./modules/products";
 import { projectsApp } from "./modules/projects";
 import { documentSharesApp, publicShareApp } from "./modules/share";
 import { vatApp } from "./modules/vat";
@@ -169,6 +170,7 @@ export function createApp(deps: AppDeps = {}) {
       .route("/api/finance/vat", vatApp)
       .route("/api/finance/company", companyFinanceApp)
       .route("/api/finance", financeOverviewApp)
+      .route("/api/products", productsApp)
       .route("/api/projects", projectsApp)
       .route("/api/import", importApp)
       .route("/api/assets", assetsApp)

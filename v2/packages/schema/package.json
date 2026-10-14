@@ -10,7 +10,9 @@
     "./finance": "./src/finance.ts",
     "./org": "./src/org.ts",
     "./documents": "./src/documents.ts",
-    "./company": "./src/company.ts"
+    "./company": "./src/company.ts",
+    "./products": "./src/products.ts",
+    "./blueprints": "./src/blueprints.ts"
   },
   "scripts": {
     "typecheck": "tsc -p .",

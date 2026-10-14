@@ -8,7 +8,7 @@ import {
   redirect,
   useRouterState,
 } from "@tanstack/react-router";
-import { Briefcase, Files, House as Home_, Landmark, Settings, Users } from "lucide-react";
+import { Briefcase, Files, House as Home_, Landmark, Package, Settings, Users } from "lucide-react";
 import { z } from "zod";
 import { AccountPage } from "./account";
 import { api } from "./api";
@@ -27,6 +27,8 @@ import { ReportPage } from "./features/finance-overview/ReportPage";
 import { VatReportPage } from "./features/finance-overview/VatReportPage";
 import { ImportPage } from "./features/import/ImportPage";
 import { OrgSettingsPage } from "./features/org/OrgSettings";
+import { ProductBuilderPage } from "./features/products/ProductBuilder";
+import { ProductsPage } from "./features/products/ProductsPage";
 import { ProjectPage } from "./features/projects/ProjectPage";
 import { ProjectsPage } from "./features/projects/ProjectsPage";
 import { SettingsLayout } from "./features/settings/SettingsLayout";
@@ -43,6 +45,7 @@ const NAV = [
   { to: "/projects", label: "المشاريع", icon: Briefcase, exact: false },
   { to: "/documents", label: "المستندات", icon: Files, exact: false },
   { to: "/finance", label: "المالية", icon: Landmark, exact: false, managerOnly: true },
+  { to: "/products", label: "المنتجات والخدمات", icon: Package, exact: false, managerOnly: true },
 ] as const;
 
 function Shell() {
@@ -293,6 +296,21 @@ const vatReportRoute = createRoute({
   beforeLoad: managerOnly,
   component: VatReportPage,
 });
+const productsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/products",
+  beforeLoad: managerOnly,
+  component: ProductsPage,
+});
+const productRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/products/$id",
+  validateSearch: z.object({
+    step: z.enum(["identity", "packages", "pricing", "intake", "content", "publish"]).optional(),
+  }),
+  beforeLoad: managerOnly,
+  component: ProductBuilderPage,
+});
 const financeReportRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/finance/report",
@@ -405,6 +423,8 @@ export const router = createRouter({
     financeRoute,
     financeReportRoute,
     vatReportRoute,
+    productsRoute,
+    productRoute,
     shareRoute,
     printDocumentRoute,
     printFinanceRoute,

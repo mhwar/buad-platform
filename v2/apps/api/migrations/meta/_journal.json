@@ -71,6 +71,13 @@
       "when": 1791995965147,
       "tag": "0009_chilly_loa",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "6",
+      "when": 1791998124248,
+      "tag": "0010_amused_invaders",
+      "breakpoints": true
     }
   ]
 }
