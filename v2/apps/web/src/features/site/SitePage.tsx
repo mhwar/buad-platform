@@ -400,6 +400,7 @@ export function SitePage() {
         />
       </SiteChrome>
       <RequestDialog
+        form={site.form}
         target={req.target}
         open={req.open}
         onClose={() => setReq((r) => ({ ...r, open: false }))}

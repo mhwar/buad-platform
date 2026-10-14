@@ -128,6 +128,26 @@ export const siteContent = z.object({
     })
     .default({ title: "", lead: "", items: [] }),
   cta: z.object({ title: s(140), lead: s(300) }).default({ title: "", lead: "" }),
+  /** The public «اطلب عرضاً» form: wording and which optional fields it shows. */
+  form: z
+    .object({
+      title: s(80),
+      intro: s(300),
+      submitLabel: s(40),
+      successMessage: s(300),
+      showEntity: z.boolean().default(true),
+      showEmail: z.boolean().default(true),
+      showMessage: z.boolean().default(true),
+    })
+    .default({
+      title: "",
+      intro: "",
+      submitLabel: "",
+      successMessage: "",
+      showEntity: true,
+      showEmail: true,
+      showMessage: true,
+    }),
 });
 export type SiteContent = z.infer<typeof siteContent>;
 
@@ -307,5 +327,11 @@ export const DEFAULT_SITE: SiteContent = siteContent.parse({
   cta: {
     title: "مشروعك القادم يستحق\nتنفيذًا يليق بأهدافه",
     lead: "أخبرنا عن مشروعك، ونعود إليك بنموذج التنفيذ المناسب وتكلفته.",
+  },
+  form: {
+    title: "اطلب عرضاً",
+    intro: "أخبرنا عن احتياجك، ونعود إليك بنموذج التنفيذ المناسب وتكلفته.",
+    submitLabel: "إرسال الطلب",
+    successMessage: "شكراً لك. سنتواصل معك قريباً بنموذج التنفيذ المناسب.",
   },
 });

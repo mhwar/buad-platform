@@ -18,6 +18,7 @@ import {
 import { zValidator } from "@hono/zod-validator";
 import { and, asc, eq, isNull, ne, type SQL } from "drizzle-orm";
 import { Hono } from "hono";
+import { z } from "zod";
 import { requireAuth, requireRole, type Vars } from "../auth/middleware";
 import type { Db } from "../auth/service";
 import { newId, nowSec } from "./common";
@@ -274,6 +275,23 @@ export const productsApp = new Hono<Env>()
       })),
     });
   })
+
+  // The order products appear in (the site and lists follow it).
+  .post(
+    "/reorder",
+    zValidator("json", z.object({ ids: z.array(z.string().max(60)).max(100) })),
+    async (c) => {
+      const db = c.get("db");
+      const orgId = c.get("user").orgId;
+      const { ids } = c.req.valid("json");
+      for (const [i, id] of ids.entries())
+        await db
+          .update(products)
+          .set({ sortOrder: i })
+          .where(and(eq(products.id, id), eq(products.orgId, orgId)));
+      return c.json({ ok: true });
+    },
+  )
 
   // Idempotent: asking again for the same blueprint returns the product it already made.
   .post("/from-blueprint/:key", async (c) => {

@@ -678,3 +678,18 @@ export const siteSettings = sqliteTable("site_settings", {
   updatedBy: text("updated_by").notNull().default(""),
   updatedAt: integer("updated_at").notNull().default(now),
 });
+
+/** Every publish of the website, newest last: lets the owner see and restore earlier versions. */
+export const sitePublishes = sqliteTable(
+  "site_publishes",
+  {
+    id: text("id").primaryKey(),
+    orgId: text("org_id")
+      .notNull()
+      .references(() => orgs.id),
+    content: text("content").notNull(),
+    publishedAt: integer("published_at").notNull().default(now),
+    publishedBy: text("published_by").notNull().default(""),
+  },
+  (t) => [index("idx_site_publishes_org").on(t.orgId, t.publishedAt)],
+);

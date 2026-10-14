@@ -26,7 +26,7 @@ export const siteHomeQuery = (preview: boolean) =>
   });
 
 export type SiteProduct = {
-  site: Pick<SiteContent, "brand" | "contact" | "seo" | "cta">;
+  site: Pick<SiteContent, "brand" | "contact" | "seo" | "cta" | "form">;
   logoUrl: string;
   product: { slug: string; name: string; tagline: string; content: ProductContent };
 };

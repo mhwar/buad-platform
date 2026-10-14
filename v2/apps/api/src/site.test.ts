@@ -503,3 +503,89 @@ describe("entity logos on the site", () => {
     expect(d.content.trust.items.every((i: J) => i.logoAsset === "")).toBe(true);
   });
 });
+
+describe("publish history, overview and product order", () => {
+  const edit = async (accent: string) => {
+    const d = (await call("adm", "GET", `${S}/draft`)).body;
+    const r = await call("adm", "PATCH", `${S}/draft`, {
+      version: d.version,
+      content: { ...d.content, hero: { ...d.content.hero, accent } },
+    });
+    expect(r.status).toBe(200);
+  };
+
+  it("keeps each publish, flags the live one, and restores an old one as a draft only", async () => {
+    await edit("الأولى");
+    await call("adm", "POST", `${S}/publish`);
+    await edit("الثانية");
+    await call("adm", "POST", `${S}/publish`);
+    const h = (await call("adm", "GET", `${S}/history`)).body.history;
+    expect(h).toHaveLength(2);
+    expect(h[0].live).toBe(true);
+    expect(h[1].live).toBe(false);
+
+    expect((await call("adm", "POST", `${S}/history/${h[1].id}/restore`)).status).toBe(200);
+    const d = (await call("adm", "GET", `${S}/draft`)).body;
+    expect(d.content.hero.accent).toBe("الأولى");
+    expect(d.changed).toBe(true);
+    // visitors still see the second one
+    expect((await call("", "GET", PUB)).body.site.hero.accent).toBe("الثانية");
+    expect((await call("adm", "POST", `${S}/history/pub_missing/restore`)).status).toBe(404);
+    expect((await call("x", "POST", `${S}/history/${h[1].id}/restore`)).status).toBe(404);
+    expect((await call("m1", "GET", `${S}/history`)).status).toBe(403);
+  });
+
+  it("keeps only the last 20 publishes", async () => {
+    for (let i = 0; i < 22; i++) await call("adm", "POST", `${S}/publish`);
+    expect((await call("adm", "GET", `${S}/history`)).body.history).toHaveLength(20);
+  });
+
+  it("the overview reports what changed since publish and the requests picture", async () => {
+    await call("adm", "POST", `${S}/publish`);
+    expect((await call("adm", "GET", `${S}/overview`)).body.changedSections).toEqual([]);
+    await edit("تعديل");
+    const o = (await call("adm", "GET", `${S}/overview`)).body;
+    expect(o.changedSections).toEqual(["hero"]);
+    expect(o.requests).toMatchObject({ total: 0, new: 0, last30: 0 });
+    await publishedProduct();
+    await call("adm", "POST", REQ, {
+      name: "ريم",
+      phone: "0522222222",
+      productSlug: "patient-transport",
+    });
+    const o2 = (await call("adm", "GET", `${S}/overview`)).body;
+    expect(o2.requests).toMatchObject({ total: 1, new: 1, last30: 1, stale: 0 });
+    expect(o2.listedSlugs).toEqual(["patient-transport"]);
+  });
+
+  it("orders products as asked, and the public list follows", async () => {
+    await call("adm", "POST", `${S}/publish`);
+    const a = await publishedProduct();
+    const b = (await call("adm", "POST", "/api/products/from-blueprint/project-delivery")).body.id;
+    const g = (await call("adm", "GET", `/api/products/${b}`)).body.product;
+    await call("adm", "PATCH", `/api/products/${b}`, {
+      version: g.version,
+      status: "published",
+      showOnSite: true,
+    });
+    expect((await call("", "GET", PUB)).body.products.map((p: J) => p.slug)).toEqual([
+      "patient-transport",
+      "project-delivery",
+    ]);
+    expect((await call("adm", "POST", "/api/products/reorder", { ids: [b, a] })).status).toBe(200);
+    expect((await call("", "GET", PUB)).body.products.map((p: J) => p.slug)).toEqual([
+      "project-delivery",
+      "patient-transport",
+    ]);
+    expect((await call("m1", "POST", "/api/products/reorder", { ids: [] })).status).toBe(403);
+  });
+
+  it("the request-form wording ships with the product page", async () => {
+    const d = (await call("adm", "GET", `${S}/draft`)).body;
+    expect(d.content.form.title).toBe("اطلب عرضاً");
+    await call("adm", "POST", `${S}/publish`);
+    await publishedProduct();
+    const p = (await call("", "GET", `${PUB}/products/patient-transport`)).body;
+    expect(p.site.form).toMatchObject({ submitLabel: "إرسال الطلب", showEntity: true });
+  });
+});
