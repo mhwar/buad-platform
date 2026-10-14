@@ -8,7 +8,6 @@ import {
   text,
   uniqueIndex,
 } from "drizzle-orm/sqlite-core";
-
 import {
   CATEGORY_TYPES,
   CLIENT_TYPES,
@@ -21,6 +20,7 @@ import {
   PROJECT_TYPES,
   RETAINED_CATS,
 } from "./enums";
+import { PRODUCT_STATUSES } from "./products";
 
 export { CLIENT_TYPES, PROJECT_STATUSES, PROJECT_TYPES };
 
@@ -586,3 +586,36 @@ export const orgVatSettings = sqliteTable("org_vat_settings", {
   updatedBy: text("updated_by").notNull().default(""),
   updatedAt: integer("updated_at").notNull().default(now),
 });
+
+/**
+ * «المنتجات والخدمات»: an offer the org sells (e.g. patient transport). `content` (JSON text) is
+ * what may be shown publicly; `pricing` (JSON text: costs, margins) is private and never leaves
+ * the platform.
+ */
+export const products = sqliteTable(
+  "products",
+  {
+    id: text("id").primaryKey(),
+    orgId: text("org_id")
+      .notNull()
+      .references(() => orgs.id),
+    slug: text("slug").notNull(),
+    name: text("name").notNull(),
+    tagline: text("tagline").notNull().default(""),
+    status: text("status", { enum: PRODUCT_STATUSES }).notNull().default("draft"),
+    /** Listed on the public website (only when status = published). */
+    showOnSite: integer("show_on_site", { mode: "boolean" }).notNull().default(false),
+    content: text("content").notNull().default("{}"),
+    pricing: text("pricing").notNull().default("{}"),
+    sortOrder: integer("sort_order").notNull().default(0),
+    version: integer("version").notNull().default(1),
+    createdBy: text("created_by").notNull().default(""),
+    createdAt: integer("created_at").notNull().default(now),
+    updatedBy: text("updated_by").notNull().default(""),
+    updatedAt: integer("updated_at").notNull().default(now),
+  },
+  (t) => [
+    uniqueIndex("uq_products_slug").on(t.orgId, t.slug),
+    index("idx_products_org").on(t.orgId, t.status),
+  ],
+);
