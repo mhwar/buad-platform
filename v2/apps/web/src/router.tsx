@@ -50,6 +50,8 @@ import { TasksPage } from "./features/tasks/TasksPage";
 import { ActivityPage } from "./features/team/ActivityPage";
 import { TeamPage } from "./features/team/TeamPage";
 import { WebsiteEditorPage } from "./features/website/WebsiteEditor";
+import { DecisionsPage } from "./features/workspace/DecisionsPage";
+import { MeetingsPage } from "./features/workspace/MeetingsPage";
 import { Home } from "./home";
 import { LoginPage } from "./login";
 import { queryClient } from "./query-client";
@@ -391,6 +393,23 @@ const tasksRoute = createRoute({
   beforeLoad: needs("tasks.view"),
   component: TasksPage,
 });
+const meetingsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/meetings",
+  validateSearch: z.object({ open: z.string().max(60).optional() }),
+  beforeLoad: needs("meetings.view"),
+  component: MeetingsPage,
+});
+const decisionsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/decisions",
+  validateSearch: z.object({
+    mine: z.enum(["1"]).optional(),
+    show: z.enum(["open", "late", "done"]).optional(),
+  }),
+  beforeLoad: needs("meetings.view"),
+  component: DecisionsPage,
+});
 const salesRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/sales",
@@ -487,6 +506,8 @@ export const router = createRouter({
     moreSoonRoute,
     plansRoute,
     tasksRoute,
+    meetingsRoute,
+    decisionsRoute,
     salesRoute,
     analyticsRoute,
     opportunityRoute,

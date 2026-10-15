@@ -19,7 +19,7 @@ describe("buildNav", () => {
       flat(permsOf("owner"))
         .find((e) => e.key === k)!
         .tabs.map((t) => t.key);
-    expect(tabs("home")).toEqual(["today", "tasks"]);
+    expect(tabs("home")).toEqual(["today", "tasks", "meetings", "decisions"]);
     expect(tabs("projects")).toEqual([]);
     expect(tabs("documents")).toEqual([]);
     expect(tabs("finance")).toEqual([

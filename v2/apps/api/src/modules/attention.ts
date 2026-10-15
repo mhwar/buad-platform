@@ -1,5 +1,6 @@
 import {
   clients,
+  decisions,
   documents,
   financeEntries,
   orgProfile,
@@ -222,6 +223,29 @@ export const attentionApp = new Hono<{ Variables: Vars }>().use(requireAuth).get
       title: "مهام مسندة إليك تجاوزت موعدها",
       count: n,
       link: "/tasks?mine=1",
+    });
+  }
+  if (can("meetings.view")) {
+    const n = await count(
+      db
+        .select({ n: sql<number>`count(*)` })
+        .from(decisions)
+        .where(
+          and(
+            eq(decisions.orgId, me.orgId),
+            eq(decisions.ownerId, me.id),
+            eq(decisions.status, "open"),
+            ne(decisions.dueDate, ""),
+            lt(decisions.dueDate, today),
+          ),
+        ),
+    );
+    add({
+      key: "decisions",
+      tone: "warn",
+      title: "قرارات مسندة إليك تجاوزت موعدها",
+      count: n,
+      link: "/decisions?mine=1",
     });
   }
   if (can("plans.view")) {

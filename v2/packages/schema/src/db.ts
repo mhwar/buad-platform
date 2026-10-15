@@ -1093,3 +1093,64 @@ export const crmActivities = sqliteTable(
   },
   (t) => [index("idx_crm_client").on(t.clientId, t.at), index("idx_crm_org").on(t.orgId, t.at)],
 );
+
+/* ── Workspace: meetings and the decisions they produce ──────────────────── */
+export const meetings = sqliteTable(
+  "meetings",
+  {
+    id: text("id").primaryKey(),
+    orgId: text("org_id")
+      .notNull()
+      .references(() => orgs.id),
+    title: text("title").notNull(),
+    /** Local date and time («2026-10-15T10:30»): meetings are planned in the team's own clock. */
+    startsAt: text("starts_at").notNull(),
+    durationMin: integer("duration_min").notNull().default(60),
+    location: text("location").notNull().default(""),
+    /** JSON: user ids. */
+    attendeeIds: text("attendee_ids").notNull().default("[]"),
+    clientId: text("client_id").notNull().default(""),
+    requestId: text("request_id").notNull().default(""),
+    projectId: text("project_id").notNull().default(""),
+    agenda: text("agenda").notNull().default(""),
+    minutes: text("minutes").notNull().default(""),
+    status: text("status", { enum: ["scheduled", "done", "cancelled"] })
+      .notNull()
+      .default("scheduled"),
+    /** The contact written into the client's log when it was held (so it is written once). */
+    activityId: text("activity_id").notNull().default(""),
+    createdBy: text("created_by").notNull().default(""),
+    createdAt: integer("created_at").notNull().default(now),
+    updatedAt: integer("updated_at").notNull().default(now),
+  },
+  (t) => [index("idx_meetings_org").on(t.orgId, t.startsAt)],
+);
+
+export const decisions = sqliteTable(
+  "decisions",
+  {
+    id: text("id").primaryKey(),
+    orgId: text("org_id")
+      .notNull()
+      .references(() => orgs.id),
+    title: text("title").notNull(),
+    details: text("details").notNull().default(""),
+    ownerId: text("owner_id").notNull().default(""),
+    dueDate: text("due_date").notNull().default(""),
+    status: text("status", { enum: ["open", "done", "cancelled"] })
+      .notNull()
+      .default("open"),
+    meetingId: text("meeting_id").notNull().default(""),
+    projectId: text("project_id").notNull().default(""),
+    /** The task it was turned into, if any. */
+    taskId: text("task_id").notNull().default(""),
+    createdBy: text("created_by").notNull().default(""),
+    createdAt: integer("created_at").notNull().default(now),
+    updatedAt: integer("updated_at").notNull().default(now),
+  },
+  (t) => [
+    index("idx_decisions_org").on(t.orgId, t.status),
+    index("idx_decisions_owner").on(t.ownerId, t.status),
+    index("idx_decisions_meeting").on(t.meetingId),
+  ],
+);

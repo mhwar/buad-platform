@@ -44,7 +44,8 @@ describe("QuickCreate", () => {
     await renderWithApp(<QuickCreate collapsed={false} />);
     await userEvent.click(await screen.findByRole("button", { name: "إنشاء جديد" }));
     const items = (await screen.findAllByRole("menuitem")).map((i) => i.textContent);
-    expect(items).toEqual(["عميل", "مشروع", "مهمة"]); // a member cannot open sales opportunities
+    // a member cannot open sales opportunities, but plans meetings and records decisions
+    expect(items).toEqual(["عميل", "مشروع", "مهمة", "اجتماع", "قرار"]);
   });
 
   it("is hidden for someone who can create nothing", async () => {
