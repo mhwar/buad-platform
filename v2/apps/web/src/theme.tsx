@@ -51,7 +51,8 @@ const LABEL: Record<ThemeChoice, string> = {
 };
 
 /** One button that cycles نهاري → ليلي → حسب الجهاز, and says which one is active. */
-export function ThemeToggle() {
+/** `onDark` is for use on the brand-coloured header. */
+export function ThemeToggle({ onDark = false }: { onDark?: boolean }) {
   const [choice, setChoice] = useTheme();
   const Icon = choice === "light" ? Sun : choice === "dark" ? Moon : Monitor;
   return (
@@ -60,7 +61,11 @@ export function ThemeToggle() {
       onClick={() => setChoice(NEXT[choice])}
       title={`${LABEL[choice]} — اضغط للتبديل إلى ${LABEL[NEXT[choice]]}`}
       aria-label={`المظهر: ${LABEL[choice]}. اضغط للتبديل إلى ${LABEL[NEXT[choice]]}`}
-      className="inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-muted transition hover:text-ink"
+      className={`inline-flex min-h-10 items-center gap-1.5 rounded-lg border px-2.5 py-1.5 transition ${
+        onDark
+          ? "border-white/20 text-white/85 hover:bg-white/10 hover:text-white"
+          : "text-muted hover:text-ink"
+      }`}
     >
       <Icon className="size-4" />
       <span className="hidden text-xs md:inline">{LABEL[choice]}</span>

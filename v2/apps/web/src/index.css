@@ -18,7 +18,9 @@
   --color-brand-soft: oklch(0.96 0.02 265);
   --color-accent: oklch(0.6 0.15 185);
   --color-surface: #ffffff;
-  --color-canvas: oklch(0.98 0.004 260);
+  --color-canvas: oklch(0.962 0.007 255);
+  /* The header and other brand-coloured chrome. */
+  --color-chrome: #00197d;
   --color-ink: oklch(0.22 0.03 265);
   --color-muted: oklch(0.5 0.02 265);
   --color-line: oklch(0.92 0.008 265);
@@ -38,6 +40,7 @@
   --color-brand-soft: oklch(0.26 0.05 265);
   --color-surface: oklch(0.2 0.02 265);
   --color-canvas: oklch(0.15 0.015 265);
+  --color-chrome: oklch(0.21 0.05 265);
   --color-ink: oklch(0.95 0.005 265);
   --color-muted: oklch(0.72 0.015 265);
   --color-line: oklch(0.3 0.02 265);

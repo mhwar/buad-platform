@@ -13,7 +13,7 @@ import { z } from "zod";
 import { AccountPage } from "./account";
 import { api } from "./api";
 import { Logo } from "./brand";
-import { isNavActive, MobileTabBar } from "./components/MobileTabBar";
+import { AppShell } from "./components/shell/AppShell";
 import { UpdateBanner, useServerVersion } from "./components/UpdateBanner";
 import { ClientPage } from "./features/clients/ClientPage";
 import { ClientsPage } from "./features/clients/ClientsPage";
@@ -56,104 +56,7 @@ import { meQuery, setupStatusQuery } from "./session";
 import { SetupPage } from "./setup";
 import { ThemeToggle } from "./theme";
 
-const NAV = [
-  { to: "/", label: "الرئيسية", icon: Home_, exact: true },
-  { to: "/clients", label: "العملاء", icon: Users, exact: false },
-  { to: "/projects", label: "المشاريع", icon: Briefcase, exact: false },
-  { to: "/finance", label: "المالية", icon: Landmark, exact: false, perm: "treasury.view" },
-  { to: "/more", label: "المزيد", icon: Menu, exact: false, also: inHub },
-] as const;
-
-function Shell() {
-  // Pages that stand alone (no app chrome): a shared document, or a page prepared for PDF.
-  const isShareLink = useRouterState({
-    select: (s) => /^\/(s|print|site)(\/|$)/.test(s.location.pathname),
-  });
-  const me = useQuery(meQuery);
-  const health = useServerVersion();
-  const path = useRouterState({ select: (s) => s.location.pathname });
-  // A full page load after logout: nothing of the previous user's data stays in memory,
-  // and the next sign-in starts from a clean state.
-  const logout = async () => {
-    await api.api.auth.logout.$post().catch(() => undefined);
-    window.location.assign("/login");
-  };
-  // Signed out (login), or a document opened from a share link: the page owns the whole screen.
-  if (!me.data || isShareLink) return <Outlet />;
-  const perms = me.data.perms;
-  const hub = inHub(path);
-  const nav = NAV.filter((n) => !("perm" in n) || perms.includes(n.perm));
-  const navLink =
-    "flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-muted transition hover:bg-brand-soft hover:text-ink";
-  const navActive = "bg-brand-soft font-semibold text-brand";
-  return (
-    <div className="flex min-h-screen flex-col">
-      <UpdateBanner />
-      <header className="sticky top-0 z-20 border-b bg-surface/90 backdrop-blur">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6">
-          <Link to="/" aria-label="الرئيسية">
-            <Logo className="hidden h-11 w-auto sm:block" />
-            <Logo variant="icon" className="h-9 w-auto sm:hidden" />
-          </Link>
-          <div className="flex items-center gap-2">
-            <NotificationBell />
-            <div className="hidden items-center gap-3 text-sm lg:flex">
-              <ThemeToggle />
-              <Link
-                to="/settings/account"
-                className="text-muted hover:text-ink"
-                activeProps={{ className: "font-semibold text-ink" }}
-              >
-                {me.data.name || me.data.email}
-              </Link>
-              <button
-                type="button"
-                onClick={logout}
-                className="rounded-lg border px-3 py-1.5 text-muted transition hover:text-ink"
-              >
-                خروج
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
-      <div className="mx-auto flex w-full max-w-7xl flex-1 gap-8 px-4 sm:px-6">
-        <aside className="hidden w-52 shrink-0 py-6 lg:block">
-          <nav className="sticky top-24 space-y-1" aria-label="الأقسام">
-            {nav.map((n) => (
-              <Link
-                key={n.to}
-                to={n.to}
-                aria-current={isNavActive(path, n) ? "page" : undefined}
-                className={`${navLink} ${isNavActive(path, n) ? navActive : ""}`}
-              >
-                <n.icon className="size-4" />
-                {n.label}
-              </Link>
-            ))}
-          </nav>
-        </aside>
-        <main className="min-w-0 flex-1 py-6 pb-28 lg:pb-6">
-          {hub && <MoreHeader />}
-          <Outlet />
-        </main>
-      </div>
-      <MobileTabBar nav={nav} />
-      <footer className="mb-16 border-t py-4 text-center text-xs text-muted lg:mb-0">
-        بُعد التمكين · الإصدار الثاني ·{" "}
-        <span data-testid="status">
-          {health.isError
-            ? "الخادم غير متاح"
-            : health.data
-              ? `الخادم يعمل — ${health.data.version}`
-              : "…"}
-        </span>
-      </footer>
-    </div>
-  );
-}
-
-const rootRoute = createRootRoute({ component: Shell });
+const rootRoute = createRootRoute({ component: AppShell });
 
 const indexRoute = createRoute({
   getParentRoute: () => rootRoute,

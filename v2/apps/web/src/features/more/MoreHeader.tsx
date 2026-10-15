@@ -17,7 +17,7 @@ export function MoreHeader() {
         role="tablist"
         aria-label="أقسام المزيد"
         activeKey={current.key}
-        className="flex gap-1 border-b"
+        className="flex gap-1 border-b lg:hidden"
       >
         {tabs.map((t) => {
           const active = t.key === current.key;

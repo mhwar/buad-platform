@@ -6,7 +6,7 @@ import { ago } from "../../lib/format";
 import { notificationsQuery } from "./api";
 
 /** The bell in the header: unread count, and a sheet with the latest notifications. */
-export function NotificationBell() {
+export function NotificationBell({ onDark = false }: { onDark?: boolean }) {
   const [open, setOpen] = useState(false);
   const qc = useQueryClient();
   const q = useQuery(notificationsQuery);
@@ -24,7 +24,11 @@ export function NotificationBell() {
         type="button"
         onClick={() => setOpen(true)}
         aria-label={unread ? `التنبيهات، ${unread} غير مقروءة` : "التنبيهات"}
-        className="relative inline-flex size-11 items-center justify-center rounded-full text-muted hover:bg-brand-soft hover:text-ink"
+        className={`relative inline-flex size-11 items-center justify-center rounded-full ${
+          onDark
+            ? "text-white/85 hover:bg-white/10 hover:text-white"
+            : "text-muted hover:bg-brand-soft hover:text-ink"
+        }`}
       >
         <Bell className="size-5" />
         {unread > 0 && (
