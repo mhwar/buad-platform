@@ -3,8 +3,19 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { FileSignature, Mail, Plus } from "lucide-react";
 import { useState } from "react";
-import { Badge, Button, Card, Dialog, Menu, Notice, type Tone } from "../../components/ui";
+import {
+  Badge,
+  Button,
+  Card,
+  Dialog,
+  Field,
+  Menu,
+  Notice,
+  Select,
+  type Tone,
+} from "../../components/ui";
 import { fromEpoch } from "../../lib/format";
+import { projectsQuery } from "../projects/api";
 import { docApi, docKeys, documentsQuery, templatesQuery } from "./api";
 import { useDocumentActions } from "./DocumentActions";
 
@@ -97,13 +108,24 @@ export function DocumentsSection({ projectId, canEdit }: { projectId: string; ca
   );
 }
 
-function NewDocumentDialog({ projectId, onClose }: { projectId: string; onClose: () => void }) {
+/** «مستند جديد»: a contract or letter from a template. Without a project, the project is picked first. */
+export function NewDocumentDialog({
+  projectId: fixed,
+  onClose,
+}: {
+  projectId?: string;
+  onClose: () => void;
+}) {
   const qc = useQueryClient();
   const navigate = useNavigate();
   const t = useQuery(templatesQuery);
+  const [picked, setPicked] = useState("");
+  const projectId = fixed ?? picked;
+  const projects = useQuery({ ...projectsQuery({}), enabled: !fixed });
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const create = async (kind: "contract" | "letter", template: string) => {
+    if (!projectId) return setError("اختر المشروع أولاً");
     setBusy(template);
     setError(null);
     try {
@@ -131,7 +153,7 @@ function NewDocumentDialog({ projectId, onClose }: { projectId: string; onClose:
   }) => (
     <button
       type="button"
-      disabled={!!busy}
+      disabled={!!busy || !projectId}
       onClick={() => create(kind, k)}
       className="rounded-xl border p-4 text-right transition hover:border-brand hover:bg-brand-soft/50 disabled:opacity-60"
     >
@@ -142,6 +164,23 @@ function NewDocumentDialog({ projectId, onClose }: { projectId: string; onClose:
   return (
     <Dialog open onOpenChange={(v) => !v && onClose()} title="مستند جديد" wide>
       {error && <Notice>{error}</Notice>}
+      {!fixed && (
+        <div className="mb-5">
+          <Field label="المشروع">
+            <Select value={picked} onChange={(e) => setPicked(e.target.value)}>
+              <option value="">— اختر المشروع —</option>
+              {(projects.data?.items ?? []).map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+            </Select>
+          </Field>
+          <p className="mt-1 text-xs text-muted">
+            يُعبّأ المستند تلقائياً من بيانات المشروع وعميله وماليته.
+          </p>
+        </div>
+      )}
       <h3 className="mb-2 text-sm font-semibold">عقد</h3>
       <div className="grid gap-3 sm:grid-cols-2">
         {t.data?.contracts.map((c) => (
