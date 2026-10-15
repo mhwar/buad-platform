@@ -65,3 +65,105 @@ describe("cleanTags", () => {
     expect(cleanTags(Array.from({ length: 20 }, (_, i) => `t${i}`))).toHaveLength(10);
   });
 });
+
+import {
+  avgCycleDays,
+  bySource,
+  isStale,
+  monthlyWon,
+  pipelineStats,
+  winRate,
+  wonThisQuarter,
+} from "./sales";
+
+describe("the pipeline", () => {
+  const lead = (status: string, value: number, extra: object = {}) => ({
+    status,
+    valueHalalas: value,
+    createdAt: NOW - 30 * D,
+    updatedAt: NOW - D,
+    ...extra,
+  });
+
+  it("totals each open stage, weighted by its probability", () => {
+    const s = pipelineStats([
+      lead("new", 100_000),
+      lead("quoted", 100_000),
+      lead("quoted", 50_000),
+      lead("negotiating", 200_000),
+      lead("won", 999),
+      lead("lost", 999),
+    ]);
+    expect(s.stages.map((x) => [x.stage, x.count, x.value, x.weighted])).toEqual([
+      ["new", 1, 100_000, 10_000],
+      ["contacted", 0, 0, 0],
+      ["quoted", 2, 150_000, 60_000],
+      ["negotiating", 1, 200_000, 130_000],
+    ]);
+    expect(s.open).toEqual({ count: 4, value: 450_000, weighted: 200_000 });
+  });
+
+  it("win rate counts only closed leads; no closed leads is not zero", () => {
+    expect(winRate(3, 1)).toBe(75);
+    expect(winRate(1, 2)).toBe(33.3);
+    expect(winRate(0, 0)).toBeNull();
+  });
+
+  it("averages days to win", () => {
+    expect(avgCycleDays([])).toBeNull();
+    expect(
+      avgCycleDays([
+        { createdAt: NOW - 10 * D, updatedAt: NOW },
+        { createdAt: NOW - 20 * D, updatedAt: NOW },
+      ]),
+    ).toBe(15);
+  });
+
+  it("a lead untouched for more than a week is stale, only while open", () => {
+    expect(isStale({ status: "contacted", updatedAt: NOW - 8 * D }, NOW)).toBe(true);
+    expect(isStale({ status: "contacted", updatedAt: NOW - 7 * D }, NOW)).toBe(false);
+    expect(isStale({ status: "won", updatedAt: NOW - 90 * D }, NOW)).toBe(false);
+  });
+
+  it("breaks results down by source, busiest first", () => {
+    const r = bySource([
+      lead("won", 1, { source: "site" }),
+      lead("lost", 1, { source: "site" }),
+      lead("won", 1, { source: "referral" }),
+      lead("new", 1, { source: "referral" }),
+      lead("new", 1, { source: "referral" }),
+      lead("new", 1),
+    ]);
+    expect(r.map((x) => [x.source, x.total, x.rate])).toEqual([
+      ["referral", 3, 100],
+      ["site", 2, 50],
+      ["other", 1, null],
+    ]);
+  });
+
+  it("sums wins per month over the last twelve, and this quarter", () => {
+    const jan = Date.UTC(2026, 0, 15) / 1000;
+    const may = Date.UTC(2026, 4, 2) / 1000;
+    const now = Date.UTC(2026, 4, 20) / 1000;
+    const m = monthlyWon(
+      [
+        lead("won", 100, { updatedAt: jan }),
+        lead("won", 50, { updatedAt: may }),
+        lead("won", 25, { updatedAt: may }),
+        lead("new", 999, { updatedAt: may }),
+        lead("won", 7, { updatedAt: Date.UTC(2024, 0, 1) / 1000 }),
+      ],
+      now,
+    );
+    expect(m).toHaveLength(12);
+    expect(m.at(-1)).toEqual({ month: "2026-05", value: 75 });
+    expect(m.find((x) => x.month === "2026-01")?.value).toBe(100);
+    expect(m[0]?.month).toBe("2025-06");
+    expect(
+      wonThisQuarter(
+        [lead("won", 100, { updatedAt: jan }), lead("won", 50, { updatedAt: may })],
+        now,
+      ),
+    ).toBe(50); // Q2 starts in April
+  });
+});

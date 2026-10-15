@@ -76,14 +76,23 @@ export const SECTIONS: Section[] = [
     match: (p) => within("/sales")(p) || within("/clients")(p),
     tabs: [
       {
-        key: "pipeline",
-        label: "الفرص",
+        key: "overview",
+        label: "اللوحة",
         to: "/sales",
         perm: "sales.view",
-        attention: ["requests"],
-        desc: "مسار العميل المحتمل من الطلب إلى العقد.",
-        when: "عند وصول طلب جديد أو متابعة فرصة.",
+        desc: "أرقام المبيعات: القمع والتحويل والمكسوب والعروض، وما يحتاج تصرفاً اليوم.",
+        when: "كل صباح: لتعرف أين تقف مبيعاتك.",
         match: exact("/sales"),
+      },
+      {
+        key: "pipeline",
+        label: "الفرص",
+        to: "/sales/pipeline",
+        perm: "sales.view",
+        attention: ["requests"],
+        desc: "مسار العميل المحتمل من الطلب إلى العقد، تنقل بطاقاته بين المراحل.",
+        when: "عند وصول طلب جديد أو متابعة فرصة.",
+        match: exact("/sales/pipeline"),
       },
       {
         key: "clients",

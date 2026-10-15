@@ -92,3 +92,103 @@ export function cleanTags(tags: string[]): string[] {
   }
   return out.slice(0, 10);
 }
+
+/* ── The pipeline: how the open leads and the closed ones are doing ────────── */
+export const OPEN_STAGES = ["new", "contacted", "quoted", "negotiating"] as const;
+export type OpenStage = (typeof OPEN_STAGES)[number];
+export type Lead = {
+  status: string;
+  /** Expected value in halalas. */
+  valueHalalas: number;
+  createdAt: number;
+  /** Last time anything changed on it (epoch seconds). */
+  updatedAt: number;
+  source?: string;
+};
+
+const STAGE_P: Record<OpenStage, number> = {
+  new: 0.1,
+  contacted: 0.2,
+  quoted: 0.4,
+  negotiating: 0.65,
+};
+
+export type StageStat = { stage: string; count: number; value: number; weighted: number };
+
+/** Count, value and probability-weighted value per open stage, plus the totals of everything open. */
+export function pipelineStats(leads: Lead[]) {
+  const stages: StageStat[] = OPEN_STAGES.map((stage) => {
+    const rows = leads.filter((l) => l.status === stage);
+    const value = rows.reduce((s, l) => s + l.valueHalalas, 0);
+    return { stage, count: rows.length, value, weighted: Math.round(value * STAGE_P[stage]) };
+  });
+  return {
+    stages,
+    open: {
+      count: stages.reduce((s, x) => s + x.count, 0),
+      value: stages.reduce((s, x) => s + x.value, 0),
+      weighted: stages.reduce((s, x) => s + x.weighted, 0),
+    },
+  };
+}
+
+/** Share of closed leads that were won, in percent with one decimal; null when nothing has closed. */
+export function winRate(won: number, lost: number): number | null {
+  const n = won + lost;
+  return n ? Math.round((won / n) * 1000) / 10 : null;
+}
+
+/** Average days from first enquiry to winning, or null when nothing was won. */
+export function avgCycleDays(won: { createdAt: number; updatedAt: number }[]): number | null {
+  if (!won.length) return null;
+  const total = won.reduce((s, l) => s + Math.max(0, l.updatedAt - l.createdAt) / DAY, 0);
+  return Math.round(total / won.length);
+}
+
+export const STALE_DAYS = 7;
+/** An open lead nobody has touched for a week. */
+export const isStale = (l: Pick<Lead, "status" | "updatedAt">, now: number, days = STALE_DAYS) =>
+  (OPEN_STAGES as readonly string[]).includes(l.status) && now - l.updatedAt > days * DAY;
+
+/** Per source: how many leads, how many were won, and the win rate among the closed ones. */
+export function bySource(leads: Lead[]) {
+  const map = new Map<string, { total: number; won: number; lost: number }>();
+  for (const l of leads) {
+    const k = l.source || "other";
+    const r = map.get(k) ?? { total: 0, won: 0, lost: 0 };
+    r.total += 1;
+    if (l.status === "won") r.won += 1;
+    if (l.status === "lost") r.lost += 1;
+    map.set(k, r);
+  }
+  return [...map.entries()]
+    .map(([source, r]) => ({ source, ...r, rate: winRate(r.won, r.lost) }))
+    .sort((a, b) => b.total - a.total);
+}
+
+/** Value won in each of the last `months` months (oldest first), by the month the win was recorded. */
+export function monthlyWon(leads: Lead[], now: number, months = 12) {
+  const end = new Date(now * 1000);
+  const keys: string[] = [];
+  for (let i = months - 1; i >= 0; i--) {
+    const d = new Date(Date.UTC(end.getUTCFullYear(), end.getUTCMonth() - i, 1));
+    keys.push(`${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`);
+  }
+  const sums = new Map(keys.map((k) => [k, 0]));
+  for (const l of leads) {
+    if (l.status !== "won") continue;
+    const d = new Date(l.updatedAt * 1000);
+    const k = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
+    if (sums.has(k)) sums.set(k, (sums.get(k) ?? 0) + l.valueHalalas);
+  }
+  return keys.map((month) => ({ month, value: sums.get(month) ?? 0 }));
+}
+
+/** Value won since the start of the calendar quarter of `now`. */
+export function wonThisQuarter(leads: Lead[], now: number) {
+  const d = new Date(now * 1000);
+  const start = Date.UTC(d.getUTCFullYear(), Math.floor(d.getUTCMonth() / 3) * 3, 1) / 1000;
+  return leads
+    .filter((l) => l.status === "won" && l.updatedAt >= start)
+    .reduce((s, l) => s + l.valueHalalas, 0);
+}

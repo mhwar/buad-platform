@@ -90,7 +90,7 @@ export function RequestsInbox({ products }: { products: ProductListItem[] }) {
   );
 }
 
-function RequestCard({
+export function RequestCard({
   r,
   products,
   onChanged,
@@ -192,7 +192,7 @@ function RequestCard({
   );
 }
 
-function AddDialog({
+export function AddDialog({
   open,
   onClose,
   products,
