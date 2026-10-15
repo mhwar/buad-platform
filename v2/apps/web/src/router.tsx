@@ -10,7 +10,7 @@ import {
 } from "@tanstack/react-router";
 import { Briefcase, House as Home_, Landmark, Menu, Users } from "lucide-react";
 import { z } from "zod";
-import { AccountPage } from "./account";
+import { AccountPage, AppearancePage } from "./account";
 import { api } from "./api";
 import { Logo } from "./brand";
 import { AppShell } from "./components/shell/AppShell";
@@ -38,7 +38,7 @@ import { ProductsPage } from "./features/products/ProductsPage";
 import { ProjectPage } from "./features/projects/ProjectPage";
 import { ProjectsPage } from "./features/projects/ProjectsPage";
 import { QuotePrintPage } from "./features/sales/QuotePrint";
-import { SalesPage } from "./features/sales/SalesPage";
+import { PipelinePage, QuotesPage } from "./features/sales/SalesPage";
 import { SettingsLayout } from "./features/settings/SettingsLayout";
 import { ProductPublicPage } from "./features/site/ProductPublicPage";
 import { SitePage } from "./features/site/SitePage";
@@ -343,6 +343,11 @@ const activityRoute = createRoute({
   beforeLoad: needs("audit.view"),
   component: ActivityPage,
 });
+const appearanceRoute = createRoute({
+  getParentRoute: () => settingsRoute,
+  path: "/appearance",
+  component: AppearancePage,
+});
 const accountRoute = createRoute({
   getParentRoute: () => settingsRoute,
   path: "/account",
@@ -372,7 +377,13 @@ const salesRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/sales",
   beforeLoad: needs("sales.view"),
-  component: SalesPage,
+  component: PipelinePage,
+});
+const quotesRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/sales/quotes",
+  beforeLoad: needs("sales.view"),
+  component: QuotesPage,
 });
 const printQuoteRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -440,6 +451,7 @@ export const router = createRouter({
     plansRoute,
     tasksRoute,
     salesRoute,
+    quotesRoute,
     printQuoteRoute,
     soonRoute,
     ...movedRoutes,
@@ -471,6 +483,7 @@ export const router = createRouter({
       importRoute,
       teamRoute,
       activityRoute,
+      appearanceRoute,
       accountRoute,
     ]),
     legacyImportRoute,

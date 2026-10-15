@@ -30,26 +30,8 @@ import { QuoteDialog } from "./QuoteDialog";
 const STAGES: RequestStatus[] = ["new", "contacted", "quoted", "negotiating", "won", "lost"];
 const today = () => new Date().toISOString().slice(0, 10);
 
-/** «المبيعات»: the pipeline from first enquiry to contract, and the quotes sent along the way. */
-export function SalesPage() {
-  const [tab, setTab] = useState<"pipeline" | "quotes">("pipeline");
-  return (
-    <div className="space-y-5">
-      <Segmented
-        label="المبيعات"
-        value={tab}
-        onChange={setTab}
-        items={[
-          { value: "pipeline", label: "المسار" },
-          { value: "quotes", label: "عروض الأسعار" },
-        ]}
-      />
-      {tab === "pipeline" ? <Pipeline /> : <Quotes />}
-    </div>
-  );
-}
-
-function Pipeline() {
+/** «الفرص»: the pipeline from first enquiry to contract. */
+export function PipelinePage() {
   const can = useCan();
   const edit = can("sales.edit");
   const qc = useQueryClient();
@@ -279,7 +261,8 @@ function FollowUpDialog({
   );
 }
 
-function Quotes() {
+/** «عروض الأسعار»: the quotes sent along the way. */
+export function QuotesPage() {
   const can = useCan();
   const edit = can("sales.edit");
   const qc = useQueryClient();

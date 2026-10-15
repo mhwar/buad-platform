@@ -33,56 +33,103 @@ describe("Sidebar", () => {
     "GET /api/me": () => ({ ok: true, user }),
     "GET /api/attention": () => attention,
   });
+  const render = (user = owner, activeKey = "clients") =>
+    renderWithApp(
+      <Sidebar
+        groups={buildNav(user.perms)}
+        activeKey={activeKey}
+        user={{ name: "سلطان", role: "المالك" }}
+        onLogout={() => {}}
+      />,
+    );
 
-  it("lists the eight sections, settings and coming soon set apart below", async () => {
+  it("puts the account on top, the sections in the middle and settings at the bottom", async () => {
     stubApi(routes());
-    await renderWithApp(<Sidebar groups={buildNav(owner.perms)} activeKey="clients" />);
+    await render();
+    const account = screen.getByRole("button", { name: "حساب سلطان" });
     const nav = screen.getByRole("navigation", { name: "الأقسام" });
-    expect(
-      within(nav)
-        .getAllByRole("link")
-        .map((l) => l.textContent?.trim().replace(/\d+$/, "")),
-    ).toEqual([
+    expect(account.compareDocumentPosition(nav) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    const names = within(nav)
+      .getAllByRole("link")
+      .filter(
+        (l) =>
+          l.hasAttribute("data-section") ||
+          l.getAttribute("href") === "/" ||
+          l.getAttribute("href") === "/settings" ||
+          l.getAttribute("href") === "/soon",
+      );
+    expect(names.map((l) => l.textContent?.trim().replace(/\d+$/, ""))).toEqual([
       "الرئيسية",
-      "العملاء",
       "المبيعات",
       "المشاريع",
       "المالية",
-      "الخطط",
+      "التخطيط",
       "الإعدادات",
       "قريباً",
     ]);
-    expect(within(nav).getByRole("link", { name: /المبيعات/ })).toHaveAttribute("href", "/sales");
-    expect(within(nav).getByRole("link", { name: /الإعدادات/ })).toHaveAttribute(
-      "href",
-      "/settings",
-    );
-    expect(
-      within(nav).queryByRole("link", { name: /الفريق والصلاحيات|التحصيل|المهام/ }),
-    ).toBeNull(); // live inside sections
   });
 
-  it("marks the open section and shows live badges of its tabs", async () => {
+  it("opens the current section into its pages and marks the open one", async () => {
     stubApi(routes());
-    await renderWithApp(<Sidebar groups={buildNav(owner.perms)} activeKey="clients" />);
-    expect(screen.getByRole("link", { name: "العملاء" })).toHaveAttribute("aria-current", "page");
-    expect(screen.getByRole("link", { name: /المبيعات/ })).not.toHaveAttribute("aria-current");
+    await render(owner, "sales");
+    const nav = screen.getByRole("navigation", { name: "الأقسام" });
+    // the current section is open by default; others are closed
+    expect(within(nav).getByRole("button", { name: "طيّ المبيعات" })).toHaveAttribute(
+      "aria-expanded",
+      "true",
+    );
+    expect(within(nav).getByRole("button", { name: "فتح المشاريع" })).toHaveAttribute(
+      "aria-expanded",
+      "false",
+    );
+    expect(within(nav).getByRole("link", { name: "العملاء" })).toHaveAttribute("href", "/clients");
+    expect(within(nav).queryByRole("link", { name: "المهام" })).toBeNull();
+    await userEvent.click(within(nav).getByRole("button", { name: "فتح المشاريع" }));
+    expect(within(nav).getByRole("link", { name: /المهام/ })).toHaveAttribute("href", "/tasks");
+    await userEvent.click(within(nav).getByRole("button", { name: "طيّ المبيعات" }));
+    expect(within(nav).queryByRole("link", { name: "العملاء" })).toBeNull();
+  });
+
+  it("keeps the products, website and settings pages under their sections", async () => {
+    stubApi(routes());
+    await render(owner, "planning");
+    const nav = screen.getByRole("navigation", { name: "الأقسام" });
+    expect(within(nav).getByRole("link", { name: "المنتجات والخدمات" })).toHaveAttribute(
+      "href",
+      "/products",
+    );
+    expect(within(nav).getByRole("link", { name: "الموقع" })).toHaveAttribute("href", "/website");
+    await userEvent.click(within(nav).getByRole("button", { name: "فتح الإعدادات" }));
+    for (const l of ["بيانات الجهة", "الفريق والصلاحيات", "سجل النشاط", "المظهر"])
+      expect(within(nav).getByRole("link", { name: l })).toBeInTheDocument();
+  });
+
+  it("shows live badges: on the section while closed, on the page when open", async () => {
+    stubApi(routes());
+    await render(owner, "home");
     await waitFor(() =>
       expect(screen.getByRole("link", { name: /المبيعات/ })).toHaveTextContent("4"),
     ); // follow-ups + requests
-    expect(screen.getByRole("link", { name: /المشاريع/ })).toHaveTextContent("2"); // tasks (the feed has no others)
+    await userEvent.click(screen.getByRole("button", { name: "فتح المبيعات" }));
+    expect(screen.getByRole("link", { name: /الفرص/ })).toHaveTextContent("4");
+  });
+
+  it("the account menu offers the account page and sign-out", async () => {
+    stubApi(routes());
+    await render();
+    await userEvent.click(screen.getByRole("button", { name: "حساب سلطان" }));
+    expect(await screen.findByRole("menuitem", { name: /حسابي/ })).toBeInTheDocument();
+    expect(screen.getByRole("menuitem", { name: /تسجيل الخروج/ })).toBeInTheDocument();
   });
 
   it("folds to icons, keeps names accessible, and remembers the choice", async () => {
     stubApi(routes());
-    const { unmount } = await renderWithApp(
-      <Sidebar groups={buildNav(owner.perms)} activeKey="clients" />,
-    );
+    const { unmount } = await render();
     await userEvent.click(screen.getByRole("button", { name: "طيّ القائمة" }));
-    expect(screen.getByRole("link", { name: /^العملاء/ })).toHaveAttribute("title", "العملاء");
+    expect(screen.getByRole("button", { name: /^المبيعات/ })).toHaveAttribute("title", "المبيعات");
     expect(localStorage.getItem("buad-sidebar-collapsed")).toBe("1");
     unmount();
-    await renderWithApp(<Sidebar groups={buildNav(owner.perms)} activeKey="clients" />);
+    await render();
     expect(screen.getByRole("button", { name: "توسيع القائمة" })).toHaveAttribute(
       "aria-pressed",
       "true",
@@ -92,9 +139,8 @@ describe("Sidebar", () => {
   it("a member sees a short list", async () => {
     const member = meUser("member");
     stubApi(routes(member));
-    await renderWithApp(<Sidebar groups={buildNav(member.perms)} activeKey="home" />);
+    await render(member, "home");
     expect(screen.queryByRole("link", { name: "المالية" })).toBeNull();
-    expect(screen.queryByRole("link", { name: /المبيعات/ })).toBeNull();
     expect(screen.getByRole("link", { name: /المشاريع/ })).toBeInTheDocument();
   });
 });

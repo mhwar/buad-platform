@@ -25,7 +25,7 @@ export function SectionTabs() {
           role="tablist"
           aria-label={current.section.label}
           activeKey={current.tab.key}
-          className="flex gap-1 border-b"
+          className="flex gap-1 border-b lg:hidden"
         >
           {tabs.map((t) => {
             const active = t.key === current.tab.key;

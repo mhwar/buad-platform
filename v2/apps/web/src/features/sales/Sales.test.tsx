@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { meUser, renderWithApp, stubApi } from "../../test-utils";
 import { QuoteDialog } from "./QuoteDialog";
-import { SalesPage } from "./SalesPage";
+import { PipelinePage } from "./SalesPage";
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -54,7 +54,7 @@ const routes = (
 describe("pipeline", () => {
   it("summarises open leads, the weighted forecast, conversion and due follow-ups", async () => {
     stubApi(routes());
-    await renderWithApp(<SalesPage />);
+    await renderWithApp(<PipelinePage />);
     await screen.findByText("فرص مفتوحة");
     const stat = (label: string) => screen.getByText(label).parentElement as HTMLElement;
     await waitFor(() => expect(stat("فرص مفتوحة")).toHaveTextContent("2"));
@@ -66,7 +66,7 @@ describe("pipeline", () => {
 
   it("lists a stage's leads with an overdue follow-up, and moves a lead on", async () => {
     const calls = stubApi({ ...routes(), "PATCH /api/product-requests/r1": () => ({ ok: true }) });
-    await renderWithApp(<SalesPage />);
+    await renderWithApp(<PipelinePage />);
     await userEvent.click(await screen.findByRole("tab", { name: /عُرض عليه سعر \(1\)/ }));
     expect(screen.getByText("منى")).toBeInTheDocument();
     expect(screen.getByText(/متأخرة · 2020-01-01/)).toBeInTheDocument();
@@ -78,7 +78,7 @@ describe("pipeline", () => {
 
   it("a viewer sees the pipeline without actions", async () => {
     stubApi(routes("viewer"));
-    await renderWithApp(<SalesPage />);
+    await renderWithApp(<PipelinePage />);
     await screen.findByText("فرص مفتوحة");
     expect(screen.queryByLabelText(/مرحلة/)).toBeNull();
   });

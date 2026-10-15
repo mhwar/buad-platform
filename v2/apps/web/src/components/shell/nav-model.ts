@@ -3,8 +3,10 @@ import type { ComponentType } from "react";
 import {
   isMorePath,
   LOWER_SECTIONS,
+  type NavSearch,
   PHONE_CORE,
   type Section,
+  tabHref,
   visibleSections,
 } from "../../features/more/tabs";
 
@@ -20,10 +22,20 @@ export type NavEntry = {
   attention: readonly string[];
   /** One sentence for tooltips and the palette. */
   hint: string;
-  /** The pages inside it, for the palette («المبيعات › المنتجات والخدمات»). */
-  tabs: { key: string; label: string; to: string; desc: string }[];
+  /** The pages inside it: the drop-down under it in the sidebar, and results in the palette. */
+  tabs: NavChild[];
   /** True when the path belongs to this section. */
   match: (path: string) => boolean;
+};
+export type NavChild = {
+  key: string;
+  label: string;
+  /** Path and full URL (query included). */
+  to: string;
+  href: string;
+  desc: string;
+  attention: readonly string[];
+  match: (path: string, search?: NavSearch) => boolean;
 };
 /** A block of the sidebar; the lower one (settings, coming soon) is set apart by a divider. */
 export type NavGroup = { key: string; items: NavEntry[] };
@@ -38,7 +50,15 @@ const entryOf = (s: Section): NavEntry => ({
     ...new Set([...(s.attention ?? []), ...(s.tabs ?? []).flatMap((t) => t.attention ?? [])]),
   ],
   hint: s.hint,
-  tabs: (s.tabs ?? []).map((t) => ({ key: t.key, label: t.label, to: t.to, desc: t.desc })),
+  tabs: (s.tabs ?? []).map((t) => ({
+    key: t.key,
+    label: t.label,
+    to: t.to,
+    href: tabHref(t),
+    desc: t.desc,
+    attention: t.attention ?? [],
+    match: t.match,
+  })),
   match: s.match,
 });
 
@@ -61,9 +81,15 @@ export function activeEntry(groups: NavGroup[], path: string): NavEntry | null {
   return best;
 }
 
+/** The child of an entry that the current URL is, if any. */
+export const activeChild = (e: NavEntry, path: string, search?: NavSearch) =>
+  e.tabs.find((t) => t.match(path, search)) ?? null;
+
 /** Badge total for an entry from the attention counts. */
-export const badgeFor = (e: NavEntry, counts: Readonly<Record<string, number>>) =>
-  e.attention.reduce((s, k) => s + (counts[k] ?? 0), 0);
+export const badgeFor = (
+  e: { attention: readonly string[] },
+  counts: Readonly<Record<string, number>>,
+) => e.attention.reduce((s, k) => s + (counts[k] ?? 0), 0);
 
 /** The items of the phone's bottom bar: the core sections plus «المزيد». */
 export type PhoneNavItem = {

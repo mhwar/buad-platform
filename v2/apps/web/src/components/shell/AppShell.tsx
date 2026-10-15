@@ -77,14 +77,14 @@ export function AppShell() {
         تخطَّ إلى المحتوى
       </a>
       <UpdateBanner />
-      <AppHeader
-        name={me.data.name || me.data.email}
-        role={role}
-        onSearch={openPalette}
-        onLogout={logout}
-      />
+      <AppHeader onSearch={openPalette} />
       <div className="flex flex-1">
-        <Sidebar groups={groups} activeKey={active?.key ?? null} />
+        <Sidebar
+          groups={groups}
+          activeKey={active?.key ?? null}
+          user={{ name: me.data.name || me.data.email, role }}
+          onLogout={logout}
+        />
         <div className="flex min-w-0 flex-1 flex-col">
           <main
             id="main"

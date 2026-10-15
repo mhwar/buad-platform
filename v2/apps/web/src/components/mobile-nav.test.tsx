@@ -34,12 +34,13 @@ describe("MobileTabBar", () => {
     expect(within(bar).getByRole("link", { name: "المزيد" })).toHaveAttribute("href", "/more");
   });
 
-  it("pages inside the hub keep «المزيد» highlighted", () => {
-    expect(isNavActive("/sales", NAV[4]!)).toBe(true);
+  it("pages of sections outside the bar keep «المزيد» highlighted", () => {
     expect(isNavActive("/plans", NAV[4]!)).toBe(true);
+    expect(isNavActive("/products", NAV[4]!)).toBe(true);
     expect(isNavActive("/settings/team", NAV[4]!)).toBe(true);
     expect(isNavActive("/soon", NAV[4]!)).toBe(true);
-    expect(isNavActive("/documents", NAV[4]!)).toBe(false); // a tab of «المشاريع»
+    expect(isNavActive("/sales", NAV[4]!)).toBe(false); // «المبيعات» is in the bar
+    expect(isNavActive("/documents", NAV[4]!)).toBe(false); // a page of «المشاريع»
     expect(isNavActive("/projects/p1", NAV[2]!)).toBe(true);
   });
 });
