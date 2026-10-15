@@ -37,6 +37,7 @@ import { ProductBuilderPage } from "./features/products/ProductBuilder";
 import { ProductsPage } from "./features/products/ProductsPage";
 import { ProjectPage } from "./features/projects/ProjectPage";
 import { ProjectsPage } from "./features/projects/ProjectsPage";
+import { FollowupsPage } from "./features/sales/FollowupsPage";
 import { QuotePrintPage } from "./features/sales/QuotePrint";
 import { PipelinePage, QuotesPage } from "./features/sales/SalesPage";
 import { SettingsLayout } from "./features/settings/SettingsLayout";
@@ -103,14 +104,20 @@ const listSearch = {
 const clientsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/clients",
-  validateSearch: z.object({ ...listSearch, type: z.string().optional() }),
+  validateSearch: z.object({
+    ...listSearch,
+    type: z.string().optional(),
+    rel: z.enum(["active", "prospect", "former", "dormant", "new"]).optional(),
+    owner: z.string().optional(),
+    followup: z.enum(["due"]).optional(),
+  }),
   beforeLoad: authed,
   component: ClientsPage,
 });
 const clientRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/clients/$id",
-  validateSearch: z.object({ tab: z.enum(["overview", "projects"]).optional() }),
+  validateSearch: z.object({ tab: z.enum(["overview", "projects", "crm"]).optional() }),
   beforeLoad: authed,
   component: ClientPage,
 });
@@ -385,6 +392,12 @@ const quotesRoute = createRoute({
   beforeLoad: needs("sales.view"),
   component: QuotesPage,
 });
+const followupsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/sales/followups",
+  beforeLoad: needs("clients.view"),
+  component: FollowupsPage,
+});
 const printQuoteRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/print/quotes/$id",
@@ -452,6 +465,7 @@ export const router = createRouter({
     tasksRoute,
     salesRoute,
     quotesRoute,
+    followupsRoute,
     printQuoteRoute,
     soonRoute,
     ...movedRoutes,

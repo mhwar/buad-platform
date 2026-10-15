@@ -21,6 +21,7 @@ import { attentionApp } from "./modules/attention";
 import { auditApp, auditTrail } from "./modules/audit";
 import { clientsApp } from "./modules/clients";
 import { companyFinanceApp } from "./modules/company-finance";
+import { crmApp } from "./modules/crm";
 import { documentsApp, projectDocumentsApp } from "./modules/documents";
 import { financeApp } from "./modules/finance";
 import { financeOverviewApp } from "./modules/finance-overview";
@@ -181,6 +182,7 @@ export function createApp(deps: AppDeps = {}) {
       .route("/api/attention", attentionApp)
       .route("/api/notifications", notificationsApp)
       .route("/api/receivables", receivablesApp)
+      .route("/api/crm", crmApp)
       .route("/api/quotes", quotesApp)
       .route("/api/tasks", tasksApp)
       .route("/api/plans", plansApp)

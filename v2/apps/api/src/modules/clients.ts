@@ -1,4 +1,4 @@
-import { formatCode, normalizeName } from "@buad/domain";
+import { formatCode, normalizeName, relationshipOf } from "@buad/domain";
 import { clientInput, clientPatch, listQuery } from "@buad/schema/clients";
 import { clientContacts, clients, projects } from "@buad/schema/db";
 import { zValidator } from "@hono/zod-validator";
@@ -184,7 +184,9 @@ export const clientsApp = new Hono<Env>()
         ? [asc(clients.name)]
         : q.sort === "value"
           ? [desc(projectValue), asc(clients.name)]
-          : [desc(clients.createdAt), desc(clients.code)];
+          : q.sort === "contact"
+            ? [asc(clients.lastContactAt), asc(clients.name)]
+            : [desc(clients.createdAt), desc(clients.code)];
 
     const items = await db
       .select({
@@ -204,11 +206,58 @@ export const clientsApp = new Hono<Env>()
         documentsCount,
         lastActivity,
         updatedAt: clients.updatedAt,
+        ownerId: clients.ownerId,
+        ownerName: sql<string>`coalesce((SELECT u.name FROM users u WHERE u.id = "clients"."owner_id"), '')`,
+        source: clients.source,
+        tags: clients.tags,
+        nextFollowUpAt: clients.nextFollowUpAt,
+        lastContactAt: clients.lastContactAt,
+        activeProjects: sql<number>`(SELECT count(*) FROM projects p WHERE p.client_id = "clients"."id" AND p.archived_at IS NULL AND p.status = 'active' AND ${vis.sqlFor("p")})`,
+        completedProjects: sql<number>`(SELECT count(*) FROM projects p WHERE p.client_id = "clients"."id" AND p.archived_at IS NULL AND p.status = 'completed' AND ${vis.sqlFor("p")})`,
+        openRequests: sql<number>`(SELECT count(*) FROM product_requests r WHERE r.client_id = "clients"."id" AND r.status IN ('new','contacted','quoted','negotiating'))`,
+        openQuotes: sql<number>`(SELECT count(*) FROM quotes z WHERE z.client_id = "clients"."id" AND z.status IN ('draft','sent'))`,
       })
       .from(clients)
       .where(and(base, typeFilter))
       .orderBy(...order)
       .limit(1000);
+
+    const now = nowSec();
+    const todayIso = new Date().toISOString().slice(0, 10);
+    const enriched = items
+      .map((i) => {
+        const lastTouch = Math.max(Number(i.lastActivity ?? 0), i.lastContactAt);
+        return {
+          ...i,
+          projectCount: Number(i.projectCount),
+          projectValue: Number(i.projectValue),
+          recentProjects: JSON.parse(i.recentProjects || "[]") as { id: string; name: string }[],
+          documentsCount: Number(i.documentsCount),
+          lastActivity: Math.max(Number(i.lastActivity ?? 0), i.updatedAt ?? 0) || null,
+          tags: JSON.parse(i.tags || "[]") as string[],
+          activeProjects: Number(i.activeProjects),
+          completedProjects: Number(i.completedProjects),
+          openRequests: Number(i.openRequests),
+          openQuotes: Number(i.openQuotes),
+          relationship: relationshipOf({
+            activeProjects: Number(i.activeProjects),
+            completedProjects: Number(i.completedProjects),
+            openRequests: Number(i.openRequests),
+            openQuotes: Number(i.openQuotes),
+            lastTouch,
+            createdAt: i.createdAt,
+            now,
+          }),
+        };
+      })
+      .filter(
+        (i) =>
+          (!q.owner || i.ownerId === (q.owner === "me" ? me.id : q.owner)) &&
+          (!q.rel || i.relationship === q.rel) &&
+          (!q.source || i.source === q.source) &&
+          (!q.tag || i.tags.includes(q.tag)) &&
+          (!q.followup || (i.nextFollowUpAt !== "" && i.nextFollowUpAt <= todayIso)),
+      );
 
     const byType = await db
       .select({ type: clients.type, n: count() })
@@ -217,14 +266,7 @@ export const clientsApp = new Hono<Env>()
       .groupBy(clients.type);
     return c.json({
       ok: true,
-      items: items.map((i) => ({
-        ...i,
-        projectCount: Number(i.projectCount),
-        projectValue: Number(i.projectValue),
-        recentProjects: JSON.parse(i.recentProjects || "[]") as { id: string; name: string }[],
-        documentsCount: Number(i.documentsCount),
-        lastActivity: Math.max(Number(i.lastActivity ?? 0), i.updatedAt ?? 0) || null,
-      })),
+      items: enriched,
       counts: Object.fromEntries(byType.map((r) => [r.type, r.n])) as Record<string, number>,
     });
   })

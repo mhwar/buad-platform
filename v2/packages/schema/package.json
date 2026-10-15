@@ -17,6 +17,7 @@
     "./tasks": "./src/tasks.ts",
     "./quotes": "./src/quotes.ts",
     "./receivables": "./src/receivables.ts",
+    "./crm": "./src/crm.ts",
     "./blueprints": "./src/blueprints.ts",
     "./site": "./src/site.ts"
   },

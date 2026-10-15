@@ -60,11 +60,24 @@ export const attentionApp = new Hono<{ Variables: Vars }>().use(requireAuth).get
           ),
         ),
     );
+    const clientsDue = await count(
+      db
+        .select({ n: sql<number>`count(*)` })
+        .from(clients)
+        .where(
+          and(
+            eq(clients.orgId, me.orgId),
+            isNull(clients.archivedAt),
+            ne(clients.nextFollowUpAt, ""),
+            lt(clients.nextFollowUpAt, today),
+          ),
+        ),
+    );
     add({
       key: "followups",
       tone: "warn",
-      title: "متابعات مبيعات حان موعدها",
-      count: due,
+      title: "متابعات مبيعات وعملاء حان موعدها",
+      count: due + clientsDue,
       link: "/sales",
     });
     add({

@@ -1,3 +1,4 @@
+import { FOLLOW_UP_LABEL, followUpState, RELATIONSHIP_LABEL, RELATIONSHIPS } from "@buad/domain";
 import { useQuery } from "@tanstack/react-query";
 import { getRouteApi, Link } from "@tanstack/react-router";
 import { FileUp, Mail, MapPin, MessageCircle, Phone, Plus } from "lucide-react";
@@ -15,7 +16,7 @@ import {
   Select,
   ViewToggle,
 } from "../../components/ui";
-import { ago, money, moneyShort, whatsapp } from "../../lib/format";
+import { ago, money, moneyShort, today, whatsapp } from "../../lib/format";
 import { meQuery } from "../../session";
 import { CLIENT_TYPE_LABELS, label } from "../labels";
 import { type ClientListItem, type ClientType, clientsQuery } from "./api";
@@ -31,7 +32,15 @@ export function ClientsPage() {
     navigate({ search: (prev) => ({ ...prev, ...patch }), replace: true });
   const q = useDeferredValue(s.q ?? "");
   const list = useQuery(
-    clientsQuery({ q, type: s.type, sort: s.sort, archived: s.archived ? "1" : "0" }),
+    clientsQuery({
+      q,
+      type: s.type,
+      sort: s.sort,
+      archived: s.archived ? "1" : "0",
+      rel: s.rel,
+      owner: s.owner,
+      followup: s.followup,
+    }),
   );
   const [adding, setAdding] = useState(false);
   const me = useQuery(meQuery).data;
@@ -48,7 +57,7 @@ export function ClientsPage() {
   const counts = list.data?.counts ?? {};
   const total = Object.values(counts).reduce((a, b) => a + b, 0);
   const items = list.data?.items ?? [];
-  const filtering = !!(q || s.type);
+  const filtering = !!(q || s.type || s.rel || s.owner || s.followup);
 
   return (
     <>
@@ -79,7 +88,37 @@ export function ClientsPage() {
           <option value="newest">الأحدث</option>
           <option value="name">الاسم</option>
           <option value="value">قيمة العقود</option>
+          <option value="contact">الأقل تواصلاً</option>
         </Select>
+        <Select
+          aria-label="العلاقة"
+          value={s.rel ?? ""}
+          onChange={(e) => set({ rel: (e.target.value || undefined) as typeof s.rel })}
+          className="w-auto flex-1 sm:flex-none"
+        >
+          <option value="">كل العلاقات</option>
+          {RELATIONSHIPS.map((r) => (
+            <option key={r} value={r}>
+              {RELATIONSHIP_LABEL[r]}
+            </option>
+          ))}
+        </Select>
+        <button
+          type="button"
+          aria-pressed={s.owner === "me"}
+          onClick={() => set({ owner: s.owner === "me" ? undefined : "me" })}
+          className={`inline-flex min-h-11 items-center rounded-full border px-3 text-sm sm:min-h-9 ${s.owner === "me" ? "border-brand bg-brand-soft text-brand" : "text-muted"}`}
+        >
+          عملائي
+        </button>
+        <button
+          type="button"
+          aria-pressed={s.followup === "due"}
+          onClick={() => set({ followup: s.followup === "due" ? undefined : "due" })}
+          className={`inline-flex min-h-11 items-center rounded-full border px-3 text-sm sm:min-h-9 ${s.followup === "due" ? "border-brand bg-brand-soft text-brand" : "text-muted"}`}
+        >
+          تحتاج متابعة
+        </button>
         <ViewToggle value={s.view ?? "grid"} onChange={(v) => set({ view: v })} />
       </div>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
@@ -171,6 +210,19 @@ function ClientCard({ c, manager }: { c: ClientListItem; manager: boolean }) {
           <p className="mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-muted">
             <span dir="ltr">{c.code}</span>
             <Badge>{label(CLIENT_TYPE_LABELS, c.type)}</Badge>
+            <Badge
+              tone={
+                c.relationship === "active"
+                  ? "green"
+                  : c.relationship === "prospect"
+                    ? "blue"
+                    : c.relationship === "dormant"
+                      ? "amber"
+                      : "gray"
+              }
+            >
+              {RELATIONSHIP_LABEL[c.relationship]}
+            </Badge>
           </p>
         </div>
         <div className="relative z-10">
@@ -235,11 +287,33 @@ function ClientCard({ c, manager }: { c: ClientListItem; manager: boolean }) {
         <Stat label="قيمة العقود" value={c.projectValue > 0 ? moneyShort(c.projectValue) : "—"} />
         <Stat label="المستندات" value={String(c.documentsCount)} />
       </dl>
-      {c.lastActivity && (
-        <p className="-mt-2 text-center text-[11px] text-muted">آخر نشاط {ago(c.lastActivity)}</p>
-      )}
+      <CrmLine c={c} />
       {dialogs}
     </Card>
+  );
+}
+
+/** The CRM line of a card: who looks after the client, the last contact, and a follow-up that is due. */
+function CrmLine({ c }: { c: ClientListItem }) {
+  const state = followUpState(c.nextFollowUpAt, today());
+  const due = state === "overdue" || state === "today";
+  return (
+    <div className="-mt-2 space-y-1 text-center text-[11px] text-muted">
+      <p>
+        {c.ownerName ? `المسؤول: ${c.ownerName} · ` : ""}
+        {c.lastContactAt
+          ? `آخر تواصل ${ago(c.lastContactAt)}`
+          : c.lastActivity
+            ? `آخر نشاط ${ago(c.lastActivity)}`
+            : "لا تواصل بعد"}
+      </p>
+      {due && (
+        <p className="font-semibold text-red-600">
+          متابعة {FOLLOW_UP_LABEL[state]} · {c.nextFollowUpAt}
+        </p>
+      )}
+      {c.tags.length > 0 && <p>{c.tags.map((t) => `#${t}`).join(" ")}</p>}
+    </div>
   );
 }
 
@@ -261,6 +335,8 @@ function ClientTable({ items }: { items: ClientListItem[] }) {
             <th className="p-3 font-medium">العميل</th>
             <th className="p-3 font-medium">الرقم</th>
             <th className="p-3 font-medium">النوع</th>
+            <th className="p-3 font-medium">العلاقة</th>
+            <th className="p-3 font-medium">آخر تواصل</th>
             <th className="p-3 font-medium">المدينة</th>
             <th className="p-3 font-medium">المشاريع</th>
             <th className="p-3 font-medium">قيمة العقود</th>
@@ -283,6 +359,8 @@ function ClientTable({ items }: { items: ClientListItem[] }) {
                 {c.code}
               </td>
               <td className="p-3">{label(CLIENT_TYPE_LABELS, c.type)}</td>
+              <td className="p-3">{RELATIONSHIP_LABEL[c.relationship]}</td>
+              <td className="p-3">{c.lastContactAt ? ago(c.lastContactAt) : "—"}</td>
               <td className="p-3">{c.city || "—"}</td>
               <td className="p-3">{c.projectCount}</td>
               <td className="p-3">{c.projectValue ? money(c.projectValue) : "—"}</td>

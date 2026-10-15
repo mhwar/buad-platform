@@ -119,6 +119,13 @@ export const clients = sqliteTable(
     website: text("website").notNull().default(""),
     notes: text("notes").notNull().default(""),
     logo: text("logo").notNull().default(""),
+    /** CRM: who looks after the client, where they came from, labels, and when to reach out next. */
+    ownerId: text("owner_id").notNull().default(""),
+    source: text("source").notNull().default(""),
+    /** JSON array of short labels. */
+    tags: text("tags").notNull().default("[]"),
+    nextFollowUpAt: text("next_follow_up_at").notNull().default(""),
+    lastContactAt: integer("last_contact_at").notNull().default(0),
     ...audit,
   },
   (t) => [
@@ -1050,4 +1057,30 @@ export const paymentSchedule = sqliteTable(
     index("idx_sched_org").on(t.orgId, t.status, t.dueDate),
     index("idx_sched_project").on(t.projectId),
   ],
+);
+
+/** A logged contact with a client: a call, a meeting, a visit, a message or a note. */
+export const crmActivities = sqliteTable(
+  "crm_activities",
+  {
+    id: text("id").primaryKey(),
+    orgId: text("org_id")
+      .notNull()
+      .references(() => orgs.id),
+    clientId: text("client_id")
+      .notNull()
+      .references(() => clients.id, { onDelete: "cascade" }),
+    /** The enquiry this was about, when there is one. */
+    requestId: text("request_id").notNull().default(""),
+    type: text("type", {
+      enum: ["call", "meeting", "visit", "email", "whatsapp", "note"],
+    }).notNull(),
+    summary: text("summary").notNull(),
+    /** When it happened (epoch seconds). */
+    at: integer("at").notNull().default(now),
+    createdBy: text("created_by").notNull().default(""),
+    createdByName: text("created_by_name").notNull().default(""),
+    createdAt: integer("created_at").notNull().default(now),
+  },
+  (t) => [index("idx_crm_client").on(t.clientId, t.at), index("idx_crm_org").on(t.orgId, t.at)],
 );

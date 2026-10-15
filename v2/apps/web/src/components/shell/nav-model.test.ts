@@ -18,7 +18,7 @@ describe("buildNav", () => {
   it("opens each section into its pages", () => {
     const owner = buildNav(permsOf("owner")).flatMap((g) => g.items);
     const tabs = (k: string) => owner.find((e) => e.key === k)!.tabs.map((t) => t.key);
-    expect(tabs("sales")).toEqual(["pipeline", "clients", "quotes"]);
+    expect(tabs("sales")).toEqual(["pipeline", "clients", "followups", "quotes"]);
     expect(tabs("projects")).toEqual(["list", "tasks", "documents"]);
     expect(tabs("finance")).toEqual([
       "projects",
@@ -41,7 +41,7 @@ describe("buildNav", () => {
     const sales = buildNav(member)
       .flatMap((g) => g.items)
       .find((e) => e.key === "sales")!;
-    expect(sales.tabs.map((t) => t.key)).toEqual(["clients"]); // clients yes, pipeline and quotes need sales.view
+    expect(sales.tabs.map((t) => t.key)).toEqual(["clients", "followups"]); // pipeline and quotes need sales.view
     expect(sales.to).toBe("/clients");
     const salesRole = resolveRole("sales", [])!.perms;
     const s2 = buildNav(salesRole)
