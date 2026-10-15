@@ -1,69 +1,76 @@
 import { screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { meUser, renderWithApp, stubApi } from "../../test-utils";
-import { ComingSoon } from "./ComingSoon";
+import { ComingSoon, SoonPage } from "./ComingSoon";
 import { MoreIndex } from "./MoreIndex";
-import { inHub, MORE_TABS, tabOf, visibleTabs } from "./tabs";
+import { isMorePath, SECTIONS, SOON_TOOLS, tabOf, visibleSections } from "./tabs";
 
 afterEach(() => vi.unstubAllGlobals());
 
-describe("hub registry", () => {
-  it("every tab has a description and a unique key and path", () => {
-    expect(new Set(MORE_TABS.map((t) => t.key)).size).toBe(MORE_TABS.length);
-    expect(new Set(MORE_TABS.map((t) => t.to)).size).toBe(MORE_TABS.length);
-    for (const t of MORE_TABS) {
+describe("section registry", () => {
+  it("has unique keys, and every tab a description, a path and a permission or none", () => {
+    expect(new Set(SECTIONS.map((s) => s.key)).size).toBe(SECTIONS.length);
+    const paths = SECTIONS.flatMap((s) => s.tabs ?? []).map((t) => t.to);
+    expect(new Set(paths).size).toBe(paths.length);
+    for (const t of SECTIONS.flatMap((s) => s.tabs ?? [])) {
       expect(t.desc.length).toBeGreaterThan(10);
       expect(t.when.length).toBeGreaterThan(5);
-      if (t.soon) expect(t.will?.length).toBeGreaterThan(0);
     }
   });
 
-  it("knows which pages belong to the hub", () => {
-    expect(tabOf("/documents")?.key).toBe("documents");
-    expect(tabOf("/settings/account")?.key).toBe("settings");
-    expect(tabOf("/more/soon/hr")?.key).toBe("hr");
-    expect(inHub("/more")).toBe(true);
-    expect(inHub("/products")).toBe(true);
-    expect(inHub("/products/prd_1")).toBe(false); // the builder is full screen
-    expect(inHub("/clients")).toBe(false);
+  it("knows the tab a list page belongs to, and nothing for detail pages", () => {
+    expect(tabOf("/tasks")?.tab.key).toBe("tasks");
+    expect(tabOf("/documents")?.section.key).toBe("projects");
+    expect(tabOf("/products")?.section.key).toBe("sales");
+    expect(tabOf("/projects")?.tab.key).toBe("list");
+    expect(tabOf("/projects/p1")).toBeNull();
+    expect(tabOf("/products/prd_1")).toBeNull();
+    expect(tabOf("/finance")).toBeNull(); // finance has its own tabs inside the page
   });
 
-  it("gates tabs by permission", () => {
-    const member = meUser("member").perms;
-    const keys = visibleTabs(member).map((t) => t.key);
-    expect(keys).toContain("documents");
-    expect(keys).not.toContain("team");
-    expect(keys).not.toContain("products");
-    expect(visibleTabs(meUser("owner").perms).map((t) => t.key)).toContain("team");
+  it("gates sections and tabs by permission", () => {
+    const keys = (perms: string[]) => visibleSections(perms).map((s) => s.key);
+    expect(keys(meUser("member").perms)).toEqual([
+      "home",
+      "clients",
+      "projects",
+      "settings",
+      "soon",
+    ]);
+    expect(keys(meUser("owner").perms)).toContain("sales");
+  });
+
+  it("the phone's «المزيد» covers the sections outside the bottom bar", () => {
+    expect(isMorePath("/more")).toBe(true);
+    expect(isMorePath("/sales")).toBe(true);
+    expect(isMorePath("/settings/team")).toBe(true);
+    expect(isMorePath("/projects")).toBe(false);
+    expect(isMorePath("/finance")).toBe(false);
   });
 });
 
 describe("MoreIndex", () => {
-  it("lists tabs with their descriptions and marks the coming ones", async () => {
+  it("lists the remaining sections with a line each, and no theme switch", async () => {
     stubApi({ "GET /api/me": () => ({ ok: true, user: meUser("owner") }) });
     await renderWithApp(<MoreIndex />);
-    const team = await screen.findByRole("link", { name: /الفريق والصلاحيات/ });
-    expect(team).toHaveAttribute("href", "/more/team");
-    expect(within(team).getByText(/من يدخل المنصة/)).toBeInTheDocument();
-    const hr = screen.getByRole("link", { name: /الموارد البشرية/ });
-    expect(within(hr).getByText("قريباً")).toBeInTheDocument();
-  });
-
-  it("a member does not see admin tabs", async () => {
-    stubApi({ "GET /api/me": () => ({ ok: true, user: meUser("member") }) });
-    await renderWithApp(<MoreIndex />);
-    await screen.findByRole("link", { name: /المستندات/ });
-    expect(screen.queryByRole("link", { name: /الفريق والصلاحيات/ })).toBeNull();
-    expect(screen.queryByRole("link", { name: /سجل النشاط/ })).toBeNull();
+    const sales = await screen.findByRole("link", { name: /المبيعات/ });
+    expect(sales).toHaveAttribute("href", "/sales");
+    expect(within(sales).getByText(/الفرص وعروض الأسعار/)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /الإعدادات/ })).toHaveAttribute("href", "/settings");
+    expect(screen.queryByRole("button", { name: /المظهر/ })).toBeNull();
   });
 });
 
-describe("ComingSoon", () => {
-  it("shows what the section will hold, and no numbers", async () => {
-    await renderWithApp(<ComingSoon tabKey="compliance" />);
-    expect(await screen.findByText(/سجل بكل وثيقة/)).toBeInTheDocument();
+describe("coming soon", () => {
+  it("lists every tool on the way as a card", async () => {
+    await renderWithApp(<SoonPage />);
+    for (const t of SOON_TOOLS)
+      expect(await screen.findByRole("link", { name: new RegExp(t.label) })).toBeInTheDocument();
   });
-  it("explains an unknown key", async () => {
+  it("explains one tool, and an unknown key", async () => {
+    const { unmount } = await renderWithApp(<ComingSoon tabKey="compliance" />);
+    expect(await screen.findByText(/سجل بكل وثيقة/)).toBeInTheDocument();
+    unmount();
     await renderWithApp(<ComingSoon tabKey="nope" />);
     expect(await screen.findByText("هذا القسم غير موجود")).toBeInTheDocument();
   });

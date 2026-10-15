@@ -2,7 +2,7 @@ import { fireEvent, screen, within } from "@testing-library/react";
 import { Briefcase, House, Landmark, Menu, Users } from "lucide-react";
 import { useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { inHub } from "../features/more/tabs";
+import { isMorePath } from "../features/more/tabs";
 import { renderWithApp } from "../test-utils";
 import { FilterBar, type FilterField } from "./FilterBar";
 import { isNavActive, MobileTabBar } from "./MobileTabBar";
@@ -15,7 +15,7 @@ const NAV = [
   { to: "/clients", label: "العملاء", icon: Users, exact: false },
   { to: "/projects", label: "المشاريع", icon: Briefcase, exact: false },
   { to: "/finance", label: "المالية", icon: Landmark, exact: false },
-  { to: "/more", label: "المزيد", icon: Menu, exact: false, also: inHub },
+  { to: "/more", label: "المزيد", icon: Menu, exact: false, also: isMorePath },
 ];
 
 describe("MobileTabBar", () => {
@@ -35,10 +35,11 @@ describe("MobileTabBar", () => {
   });
 
   it("pages inside the hub keep «المزيد» highlighted", () => {
-    expect(isNavActive("/documents", NAV[4]!)).toBe(true);
-    expect(isNavActive("/more/team", NAV[4]!)).toBe(true);
-    expect(isNavActive("/settings/account", NAV[4]!)).toBe(true);
-    expect(isNavActive("/products/prd_1", NAV[4]!)).toBe(false);
+    expect(isNavActive("/sales", NAV[4]!)).toBe(true);
+    expect(isNavActive("/plans", NAV[4]!)).toBe(true);
+    expect(isNavActive("/settings/team", NAV[4]!)).toBe(true);
+    expect(isNavActive("/soon", NAV[4]!)).toBe(true);
+    expect(isNavActive("/documents", NAV[4]!)).toBe(false); // a tab of «المشاريع»
     expect(isNavActive("/projects/p1", NAV[2]!)).toBe(true);
   });
 });

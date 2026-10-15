@@ -28,10 +28,8 @@ import { ReportPage } from "./features/finance-overview/ReportPage";
 import { VatReportPage } from "./features/finance-overview/VatReportPage";
 import { NotificationBell } from "./features/home/NotificationBell";
 import { ImportPage } from "./features/import/ImportPage";
-import { ComingSoon } from "./features/more/ComingSoon";
-import { MoreHeader } from "./features/more/MoreHeader";
+import { ComingSoon, SoonPage } from "./features/more/ComingSoon";
 import { MoreIndex } from "./features/more/MoreIndex";
-import { inHub } from "./features/more/tabs";
 import { OrgSettingsPage } from "./features/org/OrgSettings";
 import { PlansPage } from "./features/plans/PlansPage";
 import { ProductBrochurePage, PublicBrochurePage } from "./features/products/BrochurePages";
@@ -39,7 +37,6 @@ import { ProductBuilderPage } from "./features/products/ProductBuilder";
 import { ProductsPage } from "./features/products/ProductsPage";
 import { ProjectPage } from "./features/projects/ProjectPage";
 import { ProjectsPage } from "./features/projects/ProjectsPage";
-import { ReceivablesPage } from "./features/receivables/ReceivablesPage";
 import { QuotePrintPage } from "./features/sales/QuotePrint";
 import { SalesPage } from "./features/sales/SalesPage";
 import { SettingsLayout } from "./features/settings/SettingsLayout";
@@ -183,7 +180,7 @@ const financeRoute = createRoute({
     q: z.coerce.number().int().min(1).max(4).optional(),
     client: z.string().optional(),
     status: z.string().optional(),
-    tab: z.enum(["projects", "quarter", "vat", "company", "partners"]).optional(),
+    tab: z.enum(["projects", "quarter", "vat", "company", "partners", "receivables"]).optional(),
   }),
   beforeLoad: needs("treasury.view"),
   component: FinancePage,
@@ -335,14 +332,14 @@ const importRoute = createRoute({
   component: ImportPage,
 });
 const teamRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: "/more/team",
+  getParentRoute: () => settingsRoute,
+  path: "/team",
   beforeLoad: needs("team.view"),
   component: TeamPage,
 });
 const activityRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: "/more/activity",
+  getParentRoute: () => settingsRoute,
+  path: "/activity",
   beforeLoad: needs("audit.view"),
   component: ActivityPage,
 });
@@ -360,20 +357,20 @@ const moreRoute = createRoute({
 });
 const plansRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: "/more/plans",
+  path: "/plans",
   beforeLoad: needs("plans.view"),
   component: PlansPage,
 });
 const tasksRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: "/more/tasks",
+  path: "/tasks",
   validateSearch: z.object({ mine: z.string().optional() }),
   beforeLoad: needs("tasks.view"),
   component: TasksPage,
 });
 const salesRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: "/more/sales",
+  path: "/sales",
   beforeLoad: needs("sales.view"),
   component: SalesPage,
 });
@@ -386,11 +383,11 @@ const printQuoteRoute = createRoute({
     return <QuotePrintPage id={id} />;
   },
 });
-const receivablesRoute = createRoute({
+const soonRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: "/more/receivables",
-  beforeLoad: needs("treasury.view"),
-  component: ReceivablesPage,
+  path: "/soon",
+  beforeLoad: authed,
+  component: SoonPage,
 });
 const moreSoonRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -401,20 +398,23 @@ const moreSoonRoute = createRoute({
     return <ComingSoon tabKey={key} />;
   },
 });
-const legacyTeamRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: "/settings/team",
-  beforeLoad: () => {
-    throw redirect({ to: "/more/team" });
-  },
-});
-const legacyActivityRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: "/settings/activity",
-  beforeLoad: () => {
-    throw redirect({ to: "/more/activity" });
-  },
-});
+/** Old addresses (links in saved notifications, bookmarks) keep working. */
+const moved = (from: string, to: string, search?: Record<string, string>) =>
+  createRoute({
+    getParentRoute: () => rootRoute,
+    path: from,
+    beforeLoad: () => {
+      throw redirect({ to, search } as never);
+    },
+  });
+const movedRoutes = [
+  moved("/more/plans", "/plans"),
+  moved("/more/tasks", "/tasks"),
+  moved("/more/sales", "/sales"),
+  moved("/more/team", "/settings/team"),
+  moved("/more/activity", "/settings/activity"),
+  moved("/more/receivables", "/finance", { tab: "receivables" }),
+];
 
 // Old addresses keep working.
 const legacyImportRoute = createRoute({
@@ -440,12 +440,9 @@ export const router = createRouter({
     plansRoute,
     tasksRoute,
     salesRoute,
-    receivablesRoute,
     printQuoteRoute,
-    teamRoute,
-    activityRoute,
-    legacyTeamRoute,
-    legacyActivityRoute,
+    soonRoute,
+    ...movedRoutes,
     loginRoute,
     setupRoute,
     clientsRoute,
@@ -468,7 +465,14 @@ export const router = createRouter({
     shareRoute,
     printDocumentRoute,
     printFinanceRoute,
-    settingsRoute.addChildren([settingsIndexRoute, orgRoute, importRoute, accountRoute]),
+    settingsRoute.addChildren([
+      settingsIndexRoute,
+      orgRoute,
+      importRoute,
+      teamRoute,
+      activityRoute,
+      accountRoute,
+    ]),
     legacyImportRoute,
     legacyAccountRoute,
   ]),

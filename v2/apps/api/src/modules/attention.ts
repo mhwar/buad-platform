@@ -65,7 +65,7 @@ export const attentionApp = new Hono<{ Variables: Vars }>().use(requireAuth).get
       tone: "warn",
       title: "متابعات مبيعات حان موعدها",
       count: due,
-      link: "/more/sales",
+      link: "/sales",
     });
     add({
       key: "requests",
@@ -161,7 +161,7 @@ export const attentionApp = new Hono<{ Variables: Vars }>().use(requireAuth).get
       tone: "warn",
       title: "دفعات عملاء تجاوزت موعد استحقاقها",
       count: n,
-      link: "/more/receivables",
+      link: "/finance?tab=receivables",
     });
   }
   if (can("tasks.view")) {
@@ -184,7 +184,7 @@ export const attentionApp = new Hono<{ Variables: Vars }>().use(requireAuth).get
       tone: "warn",
       title: "مهام مسندة إليك تجاوزت موعدها",
       count: n,
-      link: "/more/tasks?mine=1",
+      link: "/tasks?mine=1",
     });
   }
   if (can("plans.view")) {
@@ -206,7 +206,7 @@ export const attentionApp = new Hono<{ Variables: Vars }>().use(requireAuth).get
       tone: "warn",
       title: "مبادرات في الخطط تجاوزت موعدها",
       count: n,
-      link: "/more/plans",
+      link: "/plans",
     });
   }
 
@@ -254,12 +254,12 @@ export const attentionApp = new Hono<{ Variables: Vars }>().use(requireAuth).get
         link: "/projects",
       },
       { key: "product", label: "انشر أول خدمة", done: published > 0, link: "/products" },
-      { key: "team", label: "ادعُ زميلاً إلى المنصة", done: members > 1, link: "/more/team" },
+      { key: "team", label: "ادعُ زميلاً إلى المنصة", done: members > 1, link: "/settings/team" },
       {
         key: "plan",
         label: "ابدأ خطتك التشغيلية",
         done: await has(planCycles, eq(planCycles.orgId, me.orgId)),
-        link: "/more/plans",
+        link: "/plans",
       },
     ];
     if (checklist.every((i) => i.done)) checklist = [];

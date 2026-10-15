@@ -51,7 +51,7 @@ export function UserMenu({
           <RMenu.Separator className="my-1 h-px bg-line" />
           <RMenu.Item className={item} onSelect={() => navigate({ to: "/settings/account" })}>
             <User className="size-4 text-muted" />
-            حسابي
+            حسابي والمظهر
           </RMenu.Item>
           <RMenu.Item className={item} onSelect={() => navigate({ to: "/settings" })}>
             <Settings className="size-4 text-muted" />

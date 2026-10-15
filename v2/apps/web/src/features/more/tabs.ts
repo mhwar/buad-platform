@@ -1,16 +1,16 @@
 import {
-  Banknote,
   BookOpen,
   Briefcase,
   CalendarCheck,
+  Clock,
   Files,
   Globe,
-  History,
+  House,
+  Landmark,
   ListChecks,
   Package,
   Receipt,
   Settings,
-  ShieldCheck,
   ShoppingCart,
   Target,
   Truck,
@@ -19,160 +19,236 @@ import {
 } from "lucide-react";
 import type { ComponentType } from "react";
 
-export type MoreTab = {
+type Icon = ComponentType<{ className?: string }>;
+
+/** A page inside a section, shown as a tab above it. */
+export type SectionTab = {
   key: string;
   label: string;
   to: string;
-  icon: ComponentType<{ className?: string }>;
-  /** One sentence: what this tab is for. */
+  /** What this page is for, and when to open it: shown under the tabs. */
   desc: string;
-  /** When to open it. */
   when: string;
-  group: "work" | "company" | "admin" | "soon";
-  /** Permission needed to see the tab (none = everyone). */
   perm?: string;
-  /** Keys of `/api/attention` lines whose counts show as a badge on this tab. */
+  /** `/api/attention` keys whose counts badge the tab. */
   attention?: string[];
-  /** Not built yet: opens an explanation page and carries a «قريباً» badge. */
-  soon?: boolean;
-  /** What it will contain, for «قريباً» tabs. */
-  will?: string[];
+  /** True for the list page itself, false for detail pages (no tabs there). */
   match: (path: string) => boolean;
 };
 
-const at = (to: string) => (p: string) => p === to || p.startsWith(`${to}/`);
-const soon = (key: string) => `/more/soon/${key}`;
-
-export const GROUPS: Record<MoreTab["group"], string> = {
-  work: "إدارة العمل",
-  company: "الشركة",
-  admin: "الإدارة",
-  soon: "قريباً",
+/** One entry of the sidebar. Everything else lives inside it as tabs. */
+export type Section = {
+  key: string;
+  label: string;
+  to: string;
+  icon: Icon;
+  hint: string;
+  /** Needed to see the section at all (tabs may need more). */
+  perm?: string;
+  attention?: string[];
+  tabs?: SectionTab[];
+  /** True for every path that belongs to the section, details included. */
+  match: (path: string) => boolean;
 };
 
-/** Everything that is not one of the four basics, in the order the owner reads it. */
-export const MORE_TABS: MoreTab[] = [
+const exact = (to: string) => (p: string) => p === to;
+const within = (to: string) => (p: string) => p === to || p.startsWith(`${to}/`);
+
+export const SECTIONS: Section[] = [
   {
-    key: "plans",
-    label: "الخطط",
-    to: "/more/plans",
-    icon: Target,
-    group: "work",
-    desc: "الخطة الاستراتيجية بأهدافها ومؤشراتها، والخطة التشغيلية السنوية بأرباعها ومبادراتها.",
-    when: "عند وضع أهداف السنة أو مراجعة التقدّم كل ربع.",
-    perm: "plans.view",
-    attention: ["initiatives"],
-    match: at("/more/plans"),
+    key: "home",
+    label: "الرئيسية",
+    to: "/",
+    icon: House,
+    hint: "ملخص يومك وما يحتاج انتباهك",
+    match: exact("/"),
   },
   {
-    key: "tasks",
-    label: "المهام",
-    to: "/more/tasks",
-    icon: ListChecks,
-    group: "work",
-    desc: "مهام الفريق ومراحل تنفيذ كل مشروع ومن المسؤول عنها وموعدها.",
-    when: "يومياً: لمعرفة ما عليك وما تأخّر.",
-    perm: "tasks.view",
-    attention: ["tasks"],
-    match: at("/more/tasks"),
+    key: "clients",
+    label: "العملاء",
+    to: "/clients",
+    icon: Users,
+    hint: "ملفات العملاء وكشوف حساباتهم",
+    match: within("/clients"),
   },
   {
     key: "sales",
     label: "المبيعات",
-    to: "/more/sales",
+    to: "/sales",
     icon: ShoppingCart,
-    group: "work",
-    perm: "sales.view",
-    desc: "مسار العميل المحتمل من الطلب إلى العقد: متابعة، عرض سعر، تفاوض، مشروع.",
-    when: "عند وصول طلب جديد أو متابعة العروض المرسلة.",
-    attention: ["followups", "requests"],
-    match: at("/more/sales"),
+    hint: "الفرص وعروض الأسعار والخدمات والموقع",
+    attention: [],
+    match: (p) => within("/sales")(p) || within("/products")(p) || within("/website")(p),
+    tabs: [
+      {
+        key: "pipeline",
+        label: "الفرص وعروض الأسعار",
+        to: "/sales",
+        perm: "sales.view",
+        attention: ["followups", "requests"],
+        desc: "مسار العميل المحتمل من الطلب إلى العقد، وعروض الأسعار المرسلة.",
+        when: "عند وصول طلب جديد أو متابعة العروض.",
+        match: exact("/sales"),
+      },
+      {
+        key: "products",
+        label: "المنتجات والخدمات",
+        to: "/products",
+        perm: "products.view",
+        desc: "ما تقدّمه الشركة: الباقات والتسعير الداخلي وأداء كل خدمة.",
+        when: "عند تعديل خدمة أو تسعيرها أو قراءة أدائها.",
+        match: exact("/products"),
+      },
+      {
+        key: "website",
+        label: "الموقع",
+        to: "/website",
+        perm: "site.view",
+        desc: "الموقع التعريفي العام: المحتوى والمعاينة والنشر وسجل النسخ.",
+        when: "عند تحديث الموقع أو نشر تغيير.",
+        match: exact("/website"),
+      },
+    ],
   },
   {
-    key: "receivables",
-    label: "التحصيل",
-    to: "/more/receivables",
-    icon: Banknote,
-    group: "work",
+    key: "projects",
+    label: "المشاريع",
+    to: "/projects",
+    icon: Briefcase,
+    hint: "المشاريع ومراحلها ومهامها ومستنداتها",
+    perm: "projects.view",
+    attention: [],
+    match: (p) => within("/projects")(p) || within("/tasks")(p) || within("/documents")(p),
+    tabs: [
+      {
+        key: "list",
+        label: "المشاريع",
+        to: "/projects",
+        perm: "projects.view",
+        attention: ["overdue"],
+        desc: "كل المشاريع بحالتها وقيمتها وعميلها.",
+        when: "لمتابعة المشاريع الجارية أو إضافة مشروع.",
+        match: exact("/projects"),
+      },
+      {
+        key: "tasks",
+        label: "المهام",
+        to: "/tasks",
+        perm: "tasks.view",
+        attention: ["tasks"],
+        desc: "مهام الفريق عبر المشاريع وعمل الشركة، ومن المسؤول عنها وموعدها.",
+        when: "يومياً: لمعرفة ما عليك وما تأخّر.",
+        match: exact("/tasks"),
+      },
+      {
+        key: "documents",
+        label: "المستندات",
+        to: "/documents",
+        perm: "documents.view",
+        attention: ["docs"],
+        desc: "العقود والخطابات والصادر، من الإنشاء حتى الاعتماد والإرسال.",
+        when: "عند إعداد عقد أو خطاب أو البحث عن مستند سابق.",
+        match: exact("/documents"),
+      },
+    ],
+  },
+  {
+    key: "finance",
+    label: "المالية",
+    to: "/finance",
+    icon: Landmark,
+    hint: "مالية الجهة والتحصيل والشركاء والضريبة",
     perm: "treasury.view",
-    desc: "الدفعات المستحقة والمتأخرة على العملاء، وتوقّع النقد للأسابيع القادمة.",
-    when: "أسبوعياً: لمعرفة من يجب متابعته ومتى يتوفر النقد.",
     attention: ["instalments"],
-    match: at("/more/receivables"),
+    match: within("/finance"),
   },
   {
-    key: "documents",
-    label: "المستندات",
-    to: "/documents",
-    icon: Files,
-    group: "company",
-    perm: "documents.view",
-    desc: "العقود والخطابات والصادر، من الإنشاء حتى الاعتماد والإرسال.",
-    when: "عند إعداد عقد أو خطاب أو البحث عن مستند سابق.",
-    attention: ["docs"],
-    match: at("/documents"),
-  },
-  {
-    key: "products",
-    label: "المنتجات والخدمات",
-    to: "/products",
-    icon: Package,
-    group: "company",
-    perm: "products.view",
-    desc: "ما تقدّمه الشركة: الباقات والتسعير الداخلي وأداء كل خدمة وطلبات العروض.",
-    when: "عند تعديل خدمة أو تسعيرها أو قراءة أدائها.",
-    match: (p) => p === "/products",
-  },
-  {
-    key: "website",
-    label: "الموقع",
-    to: "/website",
-    icon: Globe,
-    group: "company",
-    perm: "site.view",
-    desc: "الموقع التعريفي العام: المحتوى والمعاينة والنشر وسجل النسخ.",
-    when: "عند تحديث الموقع أو نشر تغيير.",
-    match: (p) => p === "/website",
-  },
-  {
-    key: "team",
-    label: "الفريق والصلاحيات",
-    to: "/more/team",
-    icon: ShieldCheck,
-    group: "admin",
-    perm: "team.view",
-    desc: "من يدخل المنصة وبأي دور، وجدول ما يستطيع كل دور رؤيته وفعله.",
-    when: "عند انضمام موظف أو تغيير مسؤولياته أو إيقاف حسابه.",
-    match: at("/more/team"),
-  },
-  {
-    key: "activity",
-    label: "سجل النشاط",
-    to: "/more/activity",
-    icon: History,
-    group: "admin",
-    perm: "audit.view",
-    desc: "من غيّر ماذا ومتى، لمراجعة أي تعديل مالي أو إداري.",
-    when: "عند الاستفسار عن تعديل أو مراجعة نهاية الشهر.",
-    match: at("/more/activity"),
+    key: "plans",
+    label: "الخطط",
+    to: "/plans",
+    icon: Target,
+    hint: "الخطة الاستراتيجية والتشغيلية بأهدافها ومؤشراتها",
+    perm: "plans.view",
+    attention: ["initiatives"],
+    match: within("/plans"),
   },
   {
     key: "settings",
-    label: "الإعدادات والحساب",
+    label: "الإعدادات",
     to: "/settings",
     icon: Settings,
-    group: "admin",
-    desc: "بيانات الجهة وهويتها، الاستيراد من المنصة القديمة، وحسابك الشخصي.",
-    when: "عند تغيير بيانات الجهة أو كلمة المرور.",
-    match: at("/settings"),
+    hint: "بيانات الجهة والفريق والصلاحيات وسجل النشاط والمظهر",
+    match: within("/settings"),
   },
+  {
+    key: "soon",
+    label: "قريباً",
+    to: "/soon",
+    icon: Clock,
+    hint: "أدوات قادمة نعمل عليها",
+    match: (p) => within("/soon")(p) || within("/more/soon")(p),
+  },
+];
+
+/** The sections shown below the line in the sidebar, and not in the phone's bottom bar. */
+export const LOWER_SECTIONS = ["settings", "soon"] as const;
+export const PHONE_CORE = ["home", "clients", "projects", "finance"] as const;
+
+export const sectionByKey = (key: string) => SECTIONS.find((s) => s.key === key);
+
+/** A tab is visible when its permission is held (or it needs none). */
+const can = (perms: readonly string[], perm?: string) => !perm || perms.includes(perm);
+export const visibleTabs = (s: Section, perms: readonly string[]) =>
+  (s.tabs ?? []).filter((t) => can(perms, t.perm));
+
+/**
+ * Sections the person may open. One with tabs shows when at least one tab is allowed, and its link
+ * goes to the first allowed tab.
+ */
+export function visibleSections(perms: readonly string[]): Section[] {
+  const out: Section[] = [];
+  for (const s of SECTIONS) {
+    if (!can(perms, s.perm)) continue;
+    if (!s.tabs) {
+      out.push(s);
+      continue;
+    }
+    const tabs = visibleTabs(s, perms);
+    if (tabs.length) out.push({ ...s, to: tabs[0]?.to ?? s.to, tabs });
+  }
+  return out;
+}
+
+/** The section and tab a path is the list page of, or null (details, single-page sections). */
+export function tabOf(path: string): { section: Section; tab: SectionTab } | null {
+  for (const section of SECTIONS)
+    for (const tab of section.tabs ?? []) if (tab.match(path)) return { section, tab };
+  return null;
+}
+
+/** Whether a path belongs to the phone's «المزيد» (a section that is not in the bottom bar). */
+export const isMorePath = (path: string) =>
+  path === "/more" ||
+  SECTIONS.some((s) => !(PHONE_CORE as readonly string[]).includes(s.key) && s.match(path));
+
+/* ── Tools on the way: explained, not built ───────────────────────────────── */
+export type SoonTool = {
+  key: string;
+  label: string;
+  to: string;
+  icon: Icon;
+  desc: string;
+  when: string;
+  will: string[];
+};
+const soonTo = (key: string) => `/more/soon/${key}`;
+
+const RAW_SOON = [
   {
     key: "suppliers",
     label: "الموردون والمشتريات",
-    to: soon("suppliers"),
+    to: soonTo("suppliers"),
     icon: Truck,
-    group: "soon",
-    soon: true,
     desc: "دليل الموردين وأوامر الشراء وربطها بمصروفات المشاريع.",
     when: "عندما تتكرر المشتريات ويلزم مقارنة الأسعار.",
     will: [
@@ -180,86 +256,61 @@ export const MORE_TABS: MoreTab[] = [
       "أمر شراء يتحول إلى مصروف.",
       "مقارنة أسعار الموردين لنفس البند.",
     ],
-    match: at("/more/soon/suppliers"),
   },
   {
     key: "hr",
     label: "الموارد البشرية",
-    to: soon("hr"),
+    to: soonTo("hr"),
     icon: UserSquare,
-    group: "soon",
-    soon: true,
     desc: "ملفات الموظفين والعقود والإجازات والعهد.",
     when: "عند توسّع الفريق.",
     will: ["ملف موظف بالعقد والوثائق.", "طلبات الإجازة واعتمادها.", "العُهد والتجهيزات."],
-    match: at("/more/soon/hr"),
   },
   {
     key: "compliance",
     label: "الامتثال والوثائق",
-    to: soon("compliance"),
+    to: soonTo("compliance"),
     icon: CalendarCheck,
-    group: "soon",
-    soon: true,
     desc: "تواريخ انتهاء السجل والشهادات والتراخيص مع تنبيه قبل الانتهاء.",
     when: "لتفادي انتهاء وثيقة دون انتباه.",
     will: ["سجل بكل وثيقة وتاريخ انتهائها.", "تنبيه قبل 60 و30 يوماً.", "إرفاق الملف الأصلي."],
-    match: at("/more/soon/compliance"),
   },
   {
     key: "meetings",
     label: "الاجتماعات والقرارات",
-    to: soon("meetings"),
+    to: soonTo("meetings"),
     icon: Briefcase,
-    group: "soon",
-    soon: true,
     desc: "محاضر الاجتماعات وقراراتها ومتابعة تنفيذها.",
     when: "بعد كل اجتماع إداري أو مع شريك.",
     will: ["محضر بحضور وبنود.", "قرارات تتحول إلى مهام بمسؤول وموعد.", "أرشيف قابل للبحث."],
-    match: at("/more/soon/meetings"),
   },
   {
     key: "knowledge",
     label: "المعرفة والقوالب",
-    to: soon("knowledge"),
+    to: soonTo("knowledge"),
     icon: BookOpen,
-    group: "soon",
-    soon: true,
     desc: "دليل العمل والقوالب والعروض السابقة لتسريع التسليم.",
     when: "عند بدء مشروع يشبه مشروعاً سابقاً.",
     will: ["قوالب جاهزة لكل خدمة.", "أدلة إجرائية.", "دروس مستفادة من المشاريع."],
-    match: at("/more/soon/knowledge"),
   },
   {
     key: "portal",
     label: "بوابة العميل والمانح",
-    to: soon("portal"),
+    to: soonTo("portal"),
     icon: Users,
-    group: "soon",
-    soon: true,
     desc: "صفحة يرى فيها العميل أو المانح تقدّم مشروعه ومستنداته ودفعاته.",
     when: "لتقليل المتابعات اليدوية وزيادة الثقة.",
     will: ["رابط آمن لكل عميل.", "تقدّم المشروع والمستندات المعتمدة.", "كشف حساب ودفعات."],
-    match: at("/more/soon/portal"),
   },
   {
     key: "einvoice",
     label: "الفواتير الإلكترونية",
-    to: soon("einvoice"),
+    to: soonTo("einvoice"),
     icon: Receipt,
-    group: "soon",
-    soon: true,
     desc: "إصدار فواتير متوافقة مع متطلبات هيئة الزكاة والضريبة والجمارك.",
     when: "عند تطبيق مرحلة الربط الخاصة بالمنشأة.",
     will: ["فاتورة بتنسيق معتمد ورمز QR.", "ربط مع إقرار الضريبة.", "حفظ ومطابقة مع المقبوضات."],
-    match: at("/more/soon/einvoice"),
   },
 ];
-
-export const visibleTabs = (perms: readonly string[]) =>
-  MORE_TABS.filter((t) => !t.perm || perms.includes(t.perm));
-
-/** The tab a path belongs to, or null when the page is not part of the hub. */
-export const tabOf = (path: string) =>
-  path === "/more" ? null : (MORE_TABS.find((t) => t.match(path)) ?? null);
-export const inHub = (path: string) => path === "/more" || !!tabOf(path);
+export const SOON_TOOLS: SoonTool[] = RAW_SOON;
+export const soonToolOf = (key: string) => SOON_TOOLS.find((t) => t.key === key);

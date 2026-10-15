@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link, Outlet } from "@tanstack/react-router";
-import { Building2, FileUp, KeyRound } from "lucide-react";
+import { Building2, FileUp, History, KeyRound, ShieldCheck } from "lucide-react";
 import { meQuery } from "../../session";
 
 const ITEMS = [
@@ -12,7 +12,26 @@ const ITEMS = [
     icon: FileUp,
     perm: "import.run",
   },
-  { to: "/settings/account", label: "حسابي", hint: "كلمة المرور", icon: KeyRound },
+  {
+    to: "/settings/team",
+    label: "الفريق والصلاحيات",
+    hint: "المستخدمون والأدوار وما يراه كل دور",
+    icon: ShieldCheck,
+    perm: "team.view",
+  },
+  {
+    to: "/settings/activity",
+    label: "سجل النشاط",
+    hint: "من غيّر ماذا ومتى",
+    icon: History,
+    perm: "audit.view",
+  },
+  {
+    to: "/settings/account",
+    label: "حسابي والمظهر",
+    hint: "كلمة المرور ونمط اللون",
+    icon: KeyRound,
+  },
 ] as const;
 
 /** «الإعدادات»: one home for organisation-wide options, each a sub-page. */
@@ -26,7 +45,7 @@ export function SettingsLayout() {
     <div className="flex flex-col gap-6 xl:flex-row">
       <nav
         aria-label="الإعدادات"
-        className="flex gap-1 overflow-x-auto border-b pb-2 xl:sticky xl:top-24 xl:w-56 xl:shrink-0 xl:flex-col xl:self-start xl:border-b-0 xl:border-l xl:pb-0 xl:pl-4"
+        className="flex gap-1 overflow-x-auto border-b pb-2 xl:sticky xl:top-20 xl:w-56 xl:shrink-0 xl:flex-col xl:self-start xl:border-b-0 xl:border-l xl:pb-0 xl:pl-4"
       >
         <p className="mb-2 hidden px-3 text-xs font-semibold text-muted xl:block">الإعدادات</p>
         {items.map((i) => (

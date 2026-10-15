@@ -34,38 +34,43 @@ describe("Sidebar", () => {
     "GET /api/attention": () => attention,
   });
 
-  it("groups every tool under a heading, soon tools included but folded", async () => {
+  it("lists the eight sections, settings and coming soon set apart below", async () => {
     stubApi(routes());
     await renderWithApp(<Sidebar groups={buildNav(owner.perms)} activeKey="clients" />);
     const nav = screen.getByRole("navigation", { name: "الأقسام" });
-    for (const h of ["الأساسي", "إدارة العمل", "الشركة", "الإدارة"])
-      expect(within(nav).getByRole("heading", { name: h })).toBeInTheDocument();
-    expect(within(nav).getByRole("link", { name: /الخطط/ })).toHaveAttribute("href", "/more/plans");
-    const soon = within(nav).getByRole("button", { name: /قريباً/ });
-    expect(soon).toHaveAttribute("aria-expanded", "false");
-    expect(within(nav).queryByRole("link", { name: /الموارد البشرية/ })).toBeNull();
-    await userEvent.click(soon);
-    expect(within(nav).getByRole("link", { name: /الموارد البشرية/ })).toBeInTheDocument();
+    expect(
+      within(nav)
+        .getAllByRole("link")
+        .map((l) => l.textContent?.trim().replace(/\d+$/, "")),
+    ).toEqual([
+      "الرئيسية",
+      "العملاء",
+      "المبيعات",
+      "المشاريع",
+      "المالية",
+      "الخطط",
+      "الإعدادات",
+      "قريباً",
+    ]);
+    expect(within(nav).getByRole("link", { name: /المبيعات/ })).toHaveAttribute("href", "/sales");
+    expect(within(nav).getByRole("link", { name: /الإعدادات/ })).toHaveAttribute(
+      "href",
+      "/settings",
+    );
+    expect(
+      within(nav).queryByRole("link", { name: /الفريق والصلاحيات|التحصيل|المهام/ }),
+    ).toBeNull(); // live inside sections
   });
 
-  it("marks the open section and shows live badges", async () => {
+  it("marks the open section and shows live badges of its tabs", async () => {
     stubApi(routes());
     await renderWithApp(<Sidebar groups={buildNav(owner.perms)} activeKey="clients" />);
     expect(screen.getByRole("link", { name: "العملاء" })).toHaveAttribute("aria-current", "page");
-    expect(screen.getByRole("link", { name: /الخطط/ })).not.toHaveAttribute("aria-current");
+    expect(screen.getByRole("link", { name: /المبيعات/ })).not.toHaveAttribute("aria-current");
     await waitFor(() =>
       expect(screen.getByRole("link", { name: /المبيعات/ })).toHaveTextContent("4"),
     ); // follow-ups + requests
-    expect(screen.getByRole("link", { name: /المهام/ })).toHaveTextContent("2");
-  });
-
-  it("opens the folded group when one of its pages is the current one", async () => {
-    stubApi(routes());
-    await renderWithApp(<Sidebar groups={buildNav(owner.perms)} activeKey="hr" />);
-    expect(screen.getByRole("link", { name: /الموارد البشرية/ })).toHaveAttribute(
-      "aria-current",
-      "page",
-    );
+    expect(screen.getByRole("link", { name: /المشاريع/ })).toHaveTextContent("2"); // tasks (the feed has no others)
   });
 
   it("folds to icons, keeps names accessible, and remembers the choice", async () => {
@@ -75,7 +80,6 @@ describe("Sidebar", () => {
     );
     await userEvent.click(screen.getByRole("button", { name: "طيّ القائمة" }));
     expect(screen.getByRole("link", { name: /^العملاء/ })).toHaveAttribute("title", "العملاء");
-    expect(screen.queryByText("إدارة العمل")).toBeNull();
     expect(localStorage.getItem("buad-sidebar-collapsed")).toBe("1");
     unmount();
     await renderWithApp(<Sidebar groups={buildNav(owner.perms)} activeKey="clients" />);
@@ -85,13 +89,13 @@ describe("Sidebar", () => {
     );
   });
 
-  it("a member sees only what their role allows", async () => {
+  it("a member sees a short list", async () => {
     const member = meUser("member");
     stubApi(routes(member));
     await renderWithApp(<Sidebar groups={buildNav(member.perms)} activeKey="home" />);
     expect(screen.queryByRole("link", { name: "المالية" })).toBeNull();
-    expect(screen.queryByRole("link", { name: /الفريق والصلاحيات/ })).toBeNull();
-    expect(screen.getByRole("link", { name: /المهام/ })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /المبيعات/ })).toBeNull();
+    expect(screen.getByRole("link", { name: /المشاريع/ })).toBeInTheDocument();
   });
 });
 
@@ -152,7 +156,7 @@ describe("CommandPalette", () => {
     expect(within(screen.getByRole("listbox")).getAllByRole("option").length).toBeGreaterThan(5);
     await userEvent.type(box, "مهام");
     const options = within(screen.getByRole("listbox")).getAllByRole("option");
-    expect(options[0]).toHaveTextContent("المهام"); // the name match leads, mentions in descriptions follow
+    expect(options[0]).toHaveTextContent("المشاريع › المهام"); // a tab is found by name, under its section
     expect(matches("الإدارة", "الاداره")).toBe(true);
     expect(matches("مَدرسة", "مدرسه")).toBe(true);
     expect(matches("المبيعات", "تحصيل")).toBe(false);
