@@ -32,6 +32,18 @@ export function AppShell() {
     setPaletteOpen(true);
   }, []);
 
+  // Fetch the palette's code once the page is idle, so the first Ctrl+K opens instantly and no
+  // typed letter is lost while a chunk loads.
+  useEffect(() => {
+    const load = () => void import("./CommandPalette");
+    const idle = (window as { requestIdleCallback?: (cb: () => void) => number })
+      .requestIdleCallback;
+    const id = idle ? idle(load) : window.setTimeout(load, 1500);
+    return () => {
+      if (!idle) window.clearTimeout(id);
+    };
+  }, []);
+
   // One listener for the shortcut, wherever focus is.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
