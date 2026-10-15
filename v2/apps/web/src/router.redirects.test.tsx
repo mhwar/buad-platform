@@ -19,6 +19,7 @@ describe("old addresses", () => {
     ["/more/team", "/settings/team"],
     ["/more/activity", "/settings/activity"],
     ["/more/receivables", "/finance?tab=receivables"],
+    ["/products?tab=requests", "/sales/pipeline"],
     ["/import", "/settings/import"],
     ["/account", "/settings/account"],
   ])("%s → %s", async (from, to) => {

@@ -18,7 +18,7 @@ describe("buildNav", () => {
   it("opens each section into its pages", () => {
     const owner = buildNav(permsOf("owner")).flatMap((g) => g.items);
     const tabs = (k: string) => owner.find((e) => e.key === k)!.tabs.map((t) => t.key);
-    expect(tabs("sales")).toEqual(["pipeline", "clients", "followups", "quotes"]);
+    expect(tabs("sales")).toEqual(["overview", "pipeline", "clients", "followups", "quotes"]);
     expect(tabs("projects")).toEqual(["list", "tasks", "documents"]);
     expect(tabs("finance")).toEqual([
       "projects",

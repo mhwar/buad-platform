@@ -53,3 +53,59 @@ export type OrgPrint = {
   signerTitle: string;
   urls: Record<string, string>;
 };
+
+/* ── Dashboard ───────────────────────────────────────────────────────────── */
+export type SalesOverview = {
+  pipeline: {
+    stages: { stage: string; count: number; value: number; weighted: number }[];
+    open: { count: number; value: number; weighted: number };
+  };
+  results: {
+    won: number;
+    lost: number;
+    winRate: number | null;
+    avgCycleDays: number | null;
+    wonThisQuarter: number;
+  };
+  followups: { leadsDue: number; clientsDue: number };
+  stale: {
+    id: string;
+    name: string;
+    entity: string;
+    status: string;
+    value: number;
+    daysIdle: number;
+  }[];
+  quotes: {
+    sent: number;
+    accepted: number;
+    rejected: number;
+    acceptRate: number | null;
+    acceptedValue: number;
+    avgValue: number;
+    expiring: {
+      id: string;
+      number: string;
+      title: string;
+      recipient: string;
+      validUntil: string;
+      total: number;
+    }[];
+    waiting: {
+      id: string;
+      number: string;
+      title: string;
+      recipient: string;
+      days: number;
+      total: number;
+    }[];
+  };
+  sources: { source: string; total: number; won: number; rate: number | null }[];
+  monthlyWon: { month: string; value: number }[];
+  topClients: { id: string; name: string; value: number }[];
+};
+export const overviewQuery = queryOptions({
+  queryKey: ["sales-overview"],
+  queryFn: async () => ok<SalesOverview>(await fetch("/api/sales/overview")),
+  staleTime: 30_000,
+});

@@ -1,6 +1,5 @@
-import { weightedPipeline } from "@buad/domain";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { CalendarClock, FileText, MessageCircle } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useState } from "react";
 import {
   Badge,
@@ -14,23 +13,24 @@ import {
   Select,
   Textarea,
 } from "../../components/ui";
-import { ago, sar, whatsapp } from "../../lib/format";
+import { sar } from "../../lib/format";
 import { useCan } from "../../session";
 import {
   type ProductRequest,
+  productsQuery,
   REQUEST_LABEL,
   type RequestStatus,
   requestsQuery,
 } from "../products/products-api";
+import { AddDialog, RequestCard } from "../products/RequestsInbox";
 import { assigneesQuery } from "../tasks/queries";
 import { send } from "../team/queries";
 import { QUOTE_LABEL, type Quote, quotesQuery } from "./api";
+import { LeadCard, STAGES } from "./LeadCard";
+import { PipelineBoard } from "./PipelineBoard";
 import { QuoteDialog } from "./QuoteDialog";
 
-const STAGES: RequestStatus[] = ["new", "contacted", "quoted", "negotiating", "won", "lost"];
-const today = () => new Date().toISOString().slice(0, 10);
-
-/** «الفرص»: the pipeline from first enquiry to contract. */
+/** «الفرص»: the pipeline from first enquiry to contract — a board on wide screens, stages on phones. */
 export function PipelinePage() {
   const can = useCan();
   const edit = can("sales.edit");
@@ -40,124 +40,75 @@ export function PipelinePage() {
   const [stage, setStage] = useState<RequestStatus>("new");
   const [editing, setEditing] = useState<ProductRequest | null>(null);
   const [quoting, setQuoting] = useState<ProductRequest | null>(null);
+  const [details, setDetails] = useState<ProductRequest | null>(null);
   const refresh = () => {
     qc.invalidateQueries({ queryKey: ["product-requests"] });
     qc.invalidateQueries({ queryKey: ["attention"] });
+    qc.invalidateQueries({ queryKey: ["sales-overview"] });
   };
   const reqs = (all.data?.requests ?? []).filter((r) => !r.interest);
-  const open = reqs.filter((r) => !["won", "lost"].includes(r.status));
-  const won = reqs.filter((r) => r.status === "won").length;
-  const lost = reqs.filter((r) => r.status === "lost").length;
-  const forecast = weightedPipeline(
-    reqs.map((r) => ({ status: r.status, valueHalalas: Math.round(r.value * 100) })),
-  );
-  const due = open.filter((r) => r.followUpAt && r.followUpAt < today()).length;
   const items = reqs.filter((r) => r.status === stage);
   const owner = (id: string) => people.data?.find((p) => p.id === id)?.name ?? "";
+  const card = (r: ProductRequest) => (
+    <LeadCard
+      r={r}
+      ownerName={owner(r.ownerId)}
+      edit={edit}
+      onChanged={refresh}
+      onFollow={() => setEditing(r)}
+      onQuote={() => setQuoting(r)}
+      onDetails={() => setDetails(r)}
+    />
+  );
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Stat label="فرص مفتوحة" value={String(open.length)} />
-        <Stat label="القيمة المرجّحة" value={sar(forecast / 100)} hint="القيمة × احتمال المرحلة" />
-        <Stat
-          label="نسبة التحويل"
-          value={won + lost ? `${Math.round((won / (won + lost)) * 100)}%` : "—"}
-          hint={`${won} فازت · ${lost} خسرت`}
-        />
-        <Stat label="متابعات حان موعدها" value={String(due)} tone={due ? "warn" : undefined} />
-      </div>
-
-      <Segmented
-        label="مراحل المسار"
-        value={stage}
-        onChange={setStage}
-        items={STAGES.map((s) => ({
-          value: s,
-          label: `${REQUEST_LABEL[s]} (${reqs.filter((r) => r.status === s).length})`,
-        }))}
-      />
-
-      {all.isSuccess && items.length === 0 && (
+      {all.isSuccess && reqs.length === 0 && (
         <EmptyState
-          title="لا شيء في هذه المرحلة"
-          text="الطلبات الواردة من الموقع تبدأ في «جديد»."
+          title="لا فرص بعد"
+          text="تصلك هنا طلبات «اطلب عرضاً» من الموقع، ويمكنك تسجيل أي استفسار وصلك بوسيلة أخرى."
+          action={edit ? <ManualRequestButton onDone={refresh} /> : undefined}
         />
       )}
-      <ul className="grid gap-3 lg:grid-cols-2">
-        {items.map((r) => {
-          const late =
-            !!r.followUpAt && r.followUpAt < today() && !["won", "lost"].includes(r.status);
-          return (
-            <li key={r.id}>
-              <Card className="space-y-2 p-4">
-                <div className="flex flex-wrap items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <p className="font-semibold">{r.name}</p>
-                    <p className="text-xs text-muted">
-                      {[r.entity, r.productName].filter(Boolean).join(" · ")}
-                    </p>
-                  </div>
-                  {r.value > 0 && <Badge tone="blue">{sar(r.value)}</Badge>}
-                </div>
-                <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted">
-                  <span>وصل {ago(r.createdAt)}</span>
-                  {owner(r.ownerId) && <span>المسؤول: {owner(r.ownerId)}</span>}
-                  {r.followUpAt && (
-                    <span
-                      className={`inline-flex items-center gap-1 ${late ? "font-semibold text-red-600" : ""}`}
-                    >
-                      <CalendarClock className="size-3" />
-                      {late ? "متأخرة · " : "متابعة "}
-                      {r.followUpAt}
-                    </span>
-                  )}
-                  {r.status === "lost" && r.lostReason && <span>السبب: {r.lostReason}</span>}
-                </p>
-                {edit && (
-                  <div className="flex flex-wrap items-center gap-2">
-                    <select
-                      aria-label={`مرحلة ${r.name}`}
-                      value={r.status}
-                      onChange={async (e) => {
-                        await send("PATCH", `/api/product-requests/${r.id}`, {
-                          status: e.target.value,
-                        });
-                        refresh();
-                      }}
-                      className="min-h-11 rounded-lg border bg-surface px-2 text-sm sm:min-h-9"
-                    >
-                      {STAGES.map((s) => (
-                        <option key={s} value={s}>
-                          {REQUEST_LABEL[s]}
-                        </option>
-                      ))}
-                    </select>
-                    <Button variant="secondary" onClick={() => setEditing(r)}>
-                      تفاصيل المتابعة
-                    </Button>
-                    <Button variant="secondary" onClick={() => setQuoting(r)}>
-                      <FileText className="size-4" />
-                      عرض سعر
-                    </Button>
-                    {whatsapp(r.phone) && (
-                      <a
-                        href={`https://wa.me/${whatsapp(r.phone)}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        aria-label={`واتساب ${r.name}`}
-                        className="inline-flex min-h-11 items-center rounded-lg border px-3 text-muted hover:text-ink sm:min-h-9"
-                      >
-                        <MessageCircle className="size-4" />
-                      </a>
-                    )}
-                  </div>
-                )}
-              </Card>
-            </li>
-          );
-        })}
-      </ul>
+
+      {reqs.length > 0 && (
+        <>
+          <div className="flex justify-end">{edit && <ManualRequestButton onDone={refresh} />}</div>
+          <div className="hidden lg:block">
+            <PipelineBoard
+              reqs={reqs}
+              ownerName={owner}
+              edit={edit}
+              onChanged={refresh}
+              onFollow={setEditing}
+              onQuote={setQuoting}
+              onDetails={setDetails}
+            />
+          </div>
+          <div className="space-y-3 lg:hidden">
+            <Segmented
+              label="مراحل المسار"
+              value={stage}
+              onChange={setStage}
+              items={STAGES.map((s) => ({
+                value: s,
+                label: `${REQUEST_LABEL[s]} (${reqs.filter((r) => r.status === s).length})`,
+              }))}
+            />
+            {items.length === 0 && (
+              <EmptyState
+                title="لا شيء في هذه المرحلة"
+                text="الطلبات الواردة من الموقع تبدأ في «جديد»."
+              />
+            )}
+            <ul className="grid gap-3 sm:grid-cols-2">
+              {items.map((r) => (
+                <li key={r.id}>{card(r)}</li>
+              ))}
+            </ul>
+          </div>
+        </>
+      )}
 
       {editing && (
         <FollowUpDialog
@@ -186,7 +137,48 @@ export function PipelinePage() {
           }}
         />
       )}
+      {details && (
+        <DetailsDialog r={details} onClose={() => setDetails(null)} onChanged={refresh} />
+      )}
     </div>
+  );
+}
+
+/** «تسجيل طلب يدوياً»: an enquiry that came by phone or WhatsApp. */
+function ManualRequestButton({ onDone }: { onDone: () => void }) {
+  const [open, setOpen] = useState(false);
+  const products = useQuery(productsQuery);
+  return (
+    <>
+      <Button variant="secondary" onClick={() => setOpen(true)}>
+        <Plus className="size-4" />
+        تسجيل طلب يدوياً
+      </Button>
+      <AddDialog
+        open={open}
+        onClose={() => setOpen(false)}
+        products={products.data ?? []}
+        onDone={onDone}
+      />
+    </>
+  );
+}
+
+/** Notes, pricing from the service's calculator and conversion to a client and project, for one lead. */
+function DetailsDialog({
+  r,
+  onClose,
+  onChanged,
+}: {
+  r: ProductRequest;
+  onClose: () => void;
+  onChanged: () => void;
+}) {
+  const products = useQuery(productsQuery);
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()} title={`تفاصيل ${r.name}`} wide>
+      <RequestCard r={r} products={products.data ?? []} onChanged={onChanged} />
+    </Dialog>
   );
 }
 

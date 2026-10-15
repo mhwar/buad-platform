@@ -39,6 +39,7 @@ import { ProjectPage } from "./features/projects/ProjectPage";
 import { ProjectsPage } from "./features/projects/ProjectsPage";
 import { FollowupsPage } from "./features/sales/FollowupsPage";
 import { QuotePrintPage } from "./features/sales/QuotePrint";
+import { SalesDashboard } from "./features/sales/SalesDashboard";
 import { PipelinePage, QuotesPage } from "./features/sales/SalesPage";
 import { SettingsLayout } from "./features/settings/SettingsLayout";
 import { ProductPublicPage } from "./features/site/ProductPublicPage";
@@ -238,7 +239,11 @@ const productsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/products",
   validateSearch: z.object({ tab: z.enum(["products", "overview", "requests"]).optional() }),
-  beforeLoad: needs("products.view"),
+  // The requests inbox became «الفرص» under المبيعات; old links still land there.
+  beforeLoad: async ({ search }) => {
+    if (search.tab === "requests") throw redirect({ to: "/sales/pipeline" });
+    await needs("products.view")();
+  },
   component: ProductsPage,
 });
 const websiteRoute = createRoute({
@@ -384,6 +389,12 @@ const salesRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/sales",
   beforeLoad: needs("sales.view"),
+  component: SalesDashboard,
+});
+const pipelineRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/sales/pipeline",
+  beforeLoad: needs("sales.view"),
   component: PipelinePage,
 });
 const quotesRoute = createRoute({
@@ -464,6 +475,7 @@ export const router = createRouter({
     plansRoute,
     tasksRoute,
     salesRoute,
+    pipelineRoute,
     quotesRoute,
     followupsRoute,
     printQuoteRoute,

@@ -21,11 +21,9 @@ import {
   blueprintsQuery,
   type ProductListItem,
   productsQuery,
-  requestsQuery,
   STATUS_LABEL,
   sendJson,
 } from "./products-api";
-import { RequestsInbox } from "./RequestsInbox";
 
 const STATUS_TONE = { draft: "gray", published: "green", archived: "amber" } as const;
 
@@ -33,9 +31,8 @@ const STATUS_TONE = { draft: "gray", published: "green", archived: "amber" } as 
 export function ProductsPage() {
   const qc = useQueryClient();
   const navigate = useNavigate();
-  const search = useSearch({ strict: false }) as { tab?: "products" | "overview" | "requests" };
+  const search = useSearch({ strict: false }) as { tab?: "products" | "overview" };
   const tab = search.tab ?? "products";
-  const newCount = useQuery(requestsQuery("")).data?.counts.new ?? 0;
   const products = useQuery(productsQuery);
   const blueprints = useQuery(blueprintsQuery);
   const [creating, setCreating] = useState(false);
@@ -100,19 +97,10 @@ export function ProductsPage() {
             onClick: () =>
               navigate({ to: "/products", search: { tab: "overview" }, replace: true }),
           },
-          {
-            to: "",
-            label: newCount ? `الطلبات (${newCount} جديد)` : "الطلبات",
-            active: tab === "requests",
-            onClick: () =>
-              navigate({ to: "/products", search: { tab: "requests" }, replace: true }),
-          },
         ]}
       />
       {error && <Notice>{error}</Notice>}
-      {tab === "requests" ? (
-        <RequestsInbox products={list} />
-      ) : tab === "overview" ? (
+      {tab === "overview" ? (
         <PortfolioOverview />
       ) : (
         <>
