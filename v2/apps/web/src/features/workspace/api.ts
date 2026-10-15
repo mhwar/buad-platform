@@ -22,6 +22,8 @@ export type Meeting = {
   createdBy: string;
   createdByName: string;
   openDecisions?: number;
+  /** The organiser or a manager: may change and delete it (attendees keep the minutes). */
+  canManage?: boolean;
   createdAt: number;
   updatedAt: number;
 };
@@ -38,6 +40,9 @@ export type Decision = {
   meetingTitle: string;
   projectId: string;
   taskId: string;
+  /** What the viewer may do with it. */
+  canEdit?: boolean;
+  canClose?: boolean;
   createdAt: number;
   updatedAt: number;
 };

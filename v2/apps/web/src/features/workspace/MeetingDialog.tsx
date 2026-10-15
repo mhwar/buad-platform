@@ -7,7 +7,7 @@ import { requestsQuery } from "../products/products-api";
 import { projectsQuery } from "../projects/api";
 import { assigneesQuery } from "../tasks/queries";
 import { send } from "../team/queries";
-import { addDaysLocal, type Meeting } from "./api";
+import { addDaysLocal, type Meeting, meetingsQuery, timeOf } from "./api";
 
 /** Plan a meeting, or edit one: when, where, who, and what it is about. */
 export function MeetingDialog({
@@ -71,6 +71,22 @@ export function MeetingDialog({
     },
     onError: () => setError("تعذّر الحفظ: تأكد من العنوان والموعد."),
   });
+  // Someone invited who is already in another meeting at that time: say so, without blocking.
+  const sameDay = useQuery({ ...meetingsQuery({ from: f.day, to: f.day }), enabled: !!f.day });
+  const minutesOf = (t: string) => Number(t.slice(11, 13)) * 60 + Number(t.slice(14, 16));
+  const start = minutesOf(`${f.day}T${f.time}`);
+  const end = start + (Number(f.durationMin) || 60);
+  const clashes = (sameDay.data ?? [])
+    .filter((m) => m.id !== existing?.id && m.status === "scheduled")
+    .filter((m) => {
+      const s0 = minutesOf(m.startsAt);
+      return s0 < end && start < s0 + m.durationMin;
+    })
+    .flatMap((m) =>
+      m.attendees
+        .filter((a) => who.includes(a.id))
+        .map((a) => `${a.name} لديه «${m.title}» الساعة ${timeOf(m.startsAt)}`),
+    );
   const open = (reqs.data?.requests ?? []).filter(
     (r) => !r.interest && r.status !== "won" && r.status !== "lost",
   );
@@ -134,6 +150,7 @@ export function MeetingDialog({
             })}
           </div>
         </fieldset>
+        {clashes.length > 0 && <Notice tone="amber">تعارض في الموعد: {clashes.join("، ")}.</Notice>}
         <div className="grid gap-3 sm:grid-cols-3">
           {can("clients.view") && (
             <Field label="مع العميل">

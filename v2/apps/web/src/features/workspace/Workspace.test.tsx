@@ -114,7 +114,11 @@ describe("meetings", () => {
     const calls = stubApi({
       ...base(),
       "GET /api/meetings": () => ({ ok: true, items: [meeting()] }),
-      "GET /api/meetings/m1": () => ({ ok: true, meeting: meeting(), decisions: [decision()] }),
+      "GET /api/meetings/m1": () => ({
+        ok: true,
+        meeting: meeting({ canManage: true }),
+        decisions: [decision()],
+      }),
       "PATCH /api/meetings/m1": () => ({ ok: true }),
     });
     await open("/meetings?open=m1", "/meetings", MeetingsPage);
@@ -188,5 +192,46 @@ describe("decisions", () => {
     await screen.findByText("اعتماد الميزانية");
     expect(screen.queryByRole("button", { name: /تحويل إلى مهمة/ })).toBeNull();
     expect(screen.queryByRole("button", { name: /^قرار$/ })).toBeNull();
+  });
+});
+
+describe("what an attendee may do", () => {
+  it("writes the minutes and closes it, but cannot edit or delete the meeting or others' decisions", async () => {
+    stubApi({
+      ...base("member"),
+      "GET /api/meetings": () => ({ ok: true, items: [meeting()] }),
+      "GET /api/meetings/m1": () => ({
+        ok: true,
+        meeting: meeting({ canManage: false, attendees: [{ id: "u1", name: "س" }] }),
+        decisions: [decision({ canEdit: false, canClose: false, ownerId: "u2" })],
+      }),
+    });
+    await open("/meetings?open=m1", "/meetings", MeetingsPage);
+    const dlg = within(await screen.findByRole("dialog"));
+    expect(await dlg.findByRole("button", { name: /عُقد/ })).toBeInTheDocument();
+    expect(dlg.getByLabelText("المحضر")).toBeEnabled();
+    expect(dlg.queryByRole("button", { name: "تعديل الاجتماع" })).toBeNull();
+    expect(dlg.queryByRole("button", { name: "حذف الاجتماع" })).toBeNull();
+    expect(dlg.queryByRole("button", { name: /تعديل اعتماد/ })).toBeNull();
+    expect(dlg.queryByRole("button", { name: /تم تنفيذ/ })).toBeNull();
+  });
+});
+
+describe("planning a meeting", () => {
+  it("warns when someone invited is already in a meeting at that time", async () => {
+    const { MeetingDialog } = await import("./MeetingDialog");
+    stubApi({
+      ...base(),
+      "GET /api/meetings": () => ({
+        ok: true,
+        items: [meeting({ id: "m9", title: "لقاء سابق", startsAt: `${addDaysLocal(1)}T10:30` })],
+      }),
+    });
+    const Page = () => <MeetingDialog onClose={() => {}} onSaved={() => {}} />;
+    await open("/m", "/m", Page as typeof MeetingsPage);
+    const dlg = within(await screen.findByRole("dialog"));
+    expect(dlg.queryByText(/تعارض في الموعد/)).toBeNull();
+    await userEvent.click(await dlg.findByRole("button", { name: "نورة" }));
+    expect(await dlg.findByText(/تعارض في الموعد: نورة لديه «لقاء سابق»/)).toBeInTheDocument();
   });
 });

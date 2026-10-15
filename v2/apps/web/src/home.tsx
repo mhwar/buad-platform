@@ -181,6 +181,12 @@ function MyMeetings() {
   const rows = (q.data ?? []).filter((m) => m.status !== "cancelled");
   const todays = rows.filter((m) => m.startsAt.startsWith(t));
   const later = rows.filter((m) => !m.startsAt.startsWith(t));
+  // A meeting starting within the hour stands out.
+  const soon = (m: (typeof rows)[number]) => {
+    if (m.status !== "scheduled") return null;
+    const mins = Math.round((new Date(m.startsAt).getTime() - Date.now()) / 60000);
+    return mins >= 0 && mins <= 60 ? mins : null;
+  };
   const item = (m: (typeof rows)[number], withDay: boolean) => (
     <li key={m.id}>
       <Link
@@ -200,6 +206,7 @@ function MyMeetings() {
           </span>
         </span>
         {m.status === "done" && <Badge tone="green">عُقد</Badge>}
+        {soon(m) !== null && <Badge tone="amber">بعد {soon(m)} د</Badge>}
       </Link>
     </li>
   );
