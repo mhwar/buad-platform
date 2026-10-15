@@ -25,7 +25,7 @@ import {
   Trophy,
   XCircle,
 } from "lucide-react";
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useEffect, useRef, useState } from "react";
 import { useTrackRecent } from "../../components/shell/useRecent";
 import {
   Avatar,
@@ -580,9 +580,17 @@ function Stepper({
   onMove: (s: RequestStatus) => void;
 }) {
   const at = FUNNEL.indexOf(status);
+  const list = useRef<HTMLOListElement>(null);
+  // On a phone the steps scroll: bring the current one into view.
+  useEffect(() => {
+    list.current
+      ?.querySelector<HTMLElement>('[aria-current="step"]')
+      ?.scrollIntoView?.({ inline: "center", block: "nearest" });
+  }, [status]);
   return (
     <div className="flex flex-wrap items-stretch gap-2">
       <ol
+        ref={list}
         aria-label="مراحل الفرصة"
         className="flex min-w-0 flex-1 overflow-x-auto rounded-xl border bg-surface p-1"
       >
