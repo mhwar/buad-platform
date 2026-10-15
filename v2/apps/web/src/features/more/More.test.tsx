@@ -20,11 +20,12 @@ describe("section registry", () => {
 
   it("knows the tab a list page belongs to, and nothing for detail pages", () => {
     expect(tabOf("/tasks")?.tab.key).toBe("tasks");
-    expect(tabOf("/documents")?.section.key).toBe("projects");
+    expect(tabOf("/documents")).toBeNull(); // a section of its own, with no tabs
     expect(tabOf("/products")?.section.key).toBe("planning");
     expect(tabOf("/clients")?.tab.key).toBe("clients");
     expect(tabOf("/sales/quotes")?.tab.key).toBe("quotes");
-    expect(tabOf("/projects")?.tab.key).toBe("list");
+    expect(tabOf("/projects")).toBeNull();
+    expect(tabOf("/")?.tab.key).toBe("today");
     expect(tabOf("/projects/p1")).toBeNull();
     expect(tabOf("/products/prd_1")).toBeNull();
     expect(tabOf("/finance")).toBeNull(); // finance and settings have their own navigation
@@ -33,7 +34,14 @@ describe("section registry", () => {
 
   it("gates sections and tabs by permission", () => {
     const keys = (perms: string[]) => visibleSections(perms).map((s) => s.key);
-    expect(keys(meUser("member").perms)).toEqual(["home", "sales", "projects", "settings", "soon"]);
+    expect(keys(meUser("member").perms)).toEqual([
+      "home",
+      "sales",
+      "projects",
+      "documents",
+      "settings",
+      "soon",
+    ]);
     expect(keys(meUser("owner").perms)).toContain("sales");
   });
 

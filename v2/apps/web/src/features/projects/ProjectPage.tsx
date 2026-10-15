@@ -20,6 +20,7 @@ import {
   Wallet,
 } from "lucide-react";
 import { type ReactNode, useState } from "react";
+import { useTrackRecent } from "../../components/shell/useRecent";
 import {
   Avatar,
   BadgeMenu,
@@ -78,6 +79,9 @@ export function ProjectPage() {
   const qc = useQueryClient();
   const me = useQuery(meQuery).data;
   const q = useQuery(projectQuery(id));
+  useTrackRecent(
+    q.data ? { kind: "project", id, title: q.data.project.name, href: `/projects/${id}` } : null,
+  );
   const [editing, setEditing] = useState(false);
   const [settings, setSettings] = useState(false);
   const [members, setMembers] = useState(false);

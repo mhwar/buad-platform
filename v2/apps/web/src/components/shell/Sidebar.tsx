@@ -1,13 +1,25 @@
 import * as RMenu from "@radix-ui/react-dropdown-menu";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useRouterState } from "@tanstack/react-router";
-import { ChevronDown, PanelRightClose, PanelRightOpen } from "lucide-react";
+import {
+  Briefcase,
+  CalendarDays,
+  ChevronDown,
+  FileText,
+  PanelRightClose,
+  PanelRightOpen,
+  ShoppingCart,
+  Users,
+} from "lucide-react";
 import { useMemo, useState } from "react";
 import { attentionQuery } from "../../features/home/api";
 import type { NavSearch } from "../../features/more/tabs";
+import { TINT } from "../../features/more/tabs";
 import { cx } from "../ui";
 import { activeChild, badgeFor, type NavEntry, type NavGroup } from "./nav-model";
+import { QuickCreate } from "./QuickCreate";
 import { UserMenu } from "./UserMenu";
+import { useRecent } from "./useRecent";
 import { useSidebarCollapsed } from "./useSidebarCollapsed";
 
 const NO_COUNTS: Record<string, number> = {};
@@ -78,11 +90,20 @@ const queryOf = (href: string) =>
   href.includes("?") ? Object.fromEntries(new URLSearchParams(href.split("?")[1])) : undefined;
 
 const row =
-  "group relative flex min-h-10 items-center gap-3 rounded-lg px-3 text-sm transition-colors";
+  "group relative flex min-h-10 items-center gap-2.5 rounded-xl px-2 text-sm transition-colors";
 const tone = (active: boolean) =>
   active
-    ? "bg-brand-soft font-semibold text-brand"
-    : "text-muted hover:bg-brand-soft/60 hover:text-ink";
+    ? "bg-slate-100 font-semibold text-ink dark:bg-slate-800/70"
+    : "text-muted hover:bg-slate-100/70 hover:text-ink dark:hover:bg-slate-800/50";
+
+/** The section's icon on its soft colour tile. */
+const Tile = ({ entry }: { entry: NavEntry }) => (
+  <span
+    className={cx("flex size-7 shrink-0 items-center justify-center rounded-lg", TINT[entry.tint])}
+  >
+    <entry.icon className="size-4" />
+  </span>
+);
 
 /** One section. With pages inside, it opens as a drop-down; folded to icons, as a small menu. */
 function Item({
@@ -124,7 +145,7 @@ function Item({
             className={cx(row, "w-full justify-center px-0", tone(active))}
           >
             {bar}
-            <entry.icon className="size-[18px]" />
+            <Tile entry={entry} />
             {badge > 0 && (
               <span
                 aria-hidden
@@ -179,10 +200,10 @@ function Item({
             collapsed && "justify-center px-0",
             tone(active && !hasChildren),
           )}
-          {...(hasChildren ? { "data-section": entry.key } : {})}
+          data-section={entry.key}
         >
           {bar}
-          <entry.icon className="size-[18px] shrink-0" />
+          <Tile entry={entry} />
           {!collapsed && (
             <>
               <span
@@ -223,7 +244,7 @@ function Item({
         )}
       </div>
       {open && (
-        <ul id={listId} className="mt-0.5 space-y-0.5 pe-3 ps-[2.1rem]">
+        <ul id={listId} className="ms-[1.35rem] mt-0.5 space-y-0.5 border-s ps-3 pe-1">
           {entry.tabs.map((t) => {
             const on = child?.key === t.key;
             return (
@@ -288,6 +309,54 @@ function Group({
   );
 }
 
+const KIND_ICON = {
+  client: Users,
+  project: Briefcase,
+  opportunity: ShoppingCart,
+  document: FileText,
+  meeting: CalendarDays,
+};
+
+/** «الأخيرة»: the last records opened, to get back to them in one click. */
+function Recent() {
+  const items = useRecent();
+  const path = useRouterState({ select: (s) => s.location.pathname });
+  if (!items.length) return null;
+  return (
+    <section aria-labelledby="recent-title" className="mt-4 border-t pt-3">
+      <h2
+        id="recent-title"
+        className="px-2 pb-1 text-[11px] font-semibold tracking-wide text-muted"
+      >
+        الأخيرة
+      </h2>
+      <ul className="space-y-0.5">
+        {items.map((i) => {
+          const Icon = KIND_ICON[i.kind];
+          const on = path === i.href;
+          return (
+            <li key={`${i.kind}:${i.id}`}>
+              <NavLink
+                to={i.href}
+                current={on}
+                className={cx(
+                  "flex min-h-9 items-center gap-2.5 rounded-lg px-2 text-[13px] transition-colors",
+                  on
+                    ? "bg-slate-100 font-semibold text-ink dark:bg-slate-800/70"
+                    : "text-muted hover:bg-slate-100/70 hover:text-ink dark:hover:bg-slate-800/50",
+                )}
+              >
+                <Icon className="size-3.5 shrink-0 opacity-70" />
+                <span className="truncate">{i.title}</span>
+              </NavLink>
+            </li>
+          );
+        })}
+      </ul>
+    </section>
+  );
+}
+
 /**
  * The desktop sidebar: the account on top, the sections with their pages as drop-downs in the
  * middle, and settings at the bottom. Foldable to icons.
@@ -315,8 +384,9 @@ export function Sidebar({
         collapsed ? "w-[4.5rem]" : "w-64",
       )}
     >
-      <div className="border-b p-3">
+      <div className="space-y-2 border-b p-3">
         <UserMenu name={user.name} role={user.role} onLogout={onLogout} collapsed={collapsed} />
+        <QuickCreate collapsed={collapsed} />
       </div>
       <nav aria-label="الأقسام" className="flex min-h-0 flex-1 flex-col">
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-3">
@@ -330,6 +400,7 @@ export function Sidebar({
               search={search}
             />
           )}
+          {!collapsed && <Recent />}
         </div>
         {rest.map((g) => (
           <div key={g.key} className="max-h-[45%] overflow-y-auto border-t p-3">

@@ -3,8 +3,9 @@ import {
   Briefcase,
   CalendarCheck,
   Clock,
-  House,
+  Files,
   Landmark,
+  LayoutDashboard,
   Receipt,
   Settings,
   ShoppingCart,
@@ -16,6 +17,17 @@ import {
 import type { ComponentType } from "react";
 
 type Icon = ComponentType<{ className?: string }>;
+export type Tint = "indigo" | "emerald" | "sky" | "amber" | "teal" | "violet" | "slate";
+/** Icon tiles: a light wash and a deeper ink of one hue, readable in both themes. */
+export const TINT: Record<Tint, string> = {
+  indigo: "bg-indigo-50 text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-300",
+  emerald: "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-300",
+  sky: "bg-sky-50 text-sky-600 dark:bg-sky-950/60 dark:text-sky-300",
+  amber: "bg-amber-50 text-amber-600 dark:bg-amber-950/60 dark:text-amber-300",
+  teal: "bg-teal-50 text-teal-600 dark:bg-teal-950/60 dark:text-teal-300",
+  violet: "bg-violet-50 text-violet-600 dark:bg-violet-950/60 dark:text-violet-300",
+  slate: "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300",
+};
 /** The current URL's query, as far as navigation needs it (finance tabs live in `?tab=`). */
 export type NavSearch = Record<string, string | undefined>;
 
@@ -47,6 +59,10 @@ export type Section = {
   perm?: string;
   attention?: string[];
   tabs?: SectionTab[];
+  /** A shorter name where space is tight (the phone's bottom bar). */
+  short?: string;
+  /** The soft colour of the section's icon tile in the sidebar. */
+  tint?: Tint;
   /** Show the tab strip above the section's list pages (sections with their own in-page navigation say no). */
   strip?: boolean;
   /** True for every path that belongs to the section, details included. */
@@ -61,16 +77,39 @@ const financeTab = (tab: string) => (p: string, s?: NavSearch) =>
 export const SECTIONS: Section[] = [
   {
     key: "home",
-    label: "الرئيسية",
+    label: "مساحة العمل",
+    short: "اليوم",
     to: "/",
-    icon: House,
-    hint: "ملخص يومك وما يحتاج انتباهك",
-    match: exact("/"),
+    icon: LayoutDashboard,
+    tint: "indigo",
+    hint: "يومك: مهامك وما يحتاج انتباهك",
+    match: (p) => p === "/" || within("/tasks")(p),
+    tabs: [
+      {
+        key: "today",
+        label: "اليوم",
+        to: "/",
+        desc: "ما يحتاج انتباهك اليوم، ومهامك، وأرقامك.",
+        when: "أول ما تبدأ يومك.",
+        match: exact("/"),
+      },
+      {
+        key: "tasks",
+        label: "مهامي",
+        to: "/tasks",
+        perm: "tasks.view",
+        attention: ["tasks"],
+        desc: "مهامك ومهام الفريق عبر المشاريع وعمل الشركة، ومن المسؤول عنها وموعدها.",
+        when: "يومياً: لمعرفة ما عليك وما تأخّر.",
+        match: exact("/tasks"),
+      },
+    ],
   },
   {
     key: "sales",
     label: "المبيعات",
     to: "/sales",
+    tint: "emerald",
     icon: ShoppingCart,
     hint: "الفرص والعملاء وعروض الأسعار",
     match: (p) => within("/sales")(p) || within("/clients")(p),
@@ -129,46 +168,28 @@ export const SECTIONS: Section[] = [
     label: "المشاريع",
     to: "/projects",
     icon: Briefcase,
-    hint: "المشاريع ومراحلها ومهامها ومستنداتها",
+    tint: "sky",
+    hint: "المشاريع ومراحلها وماليتها وتنفيذها",
     perm: "projects.view",
-    match: (p) => within("/projects")(p) || within("/tasks")(p) || within("/documents")(p),
-    tabs: [
-      {
-        key: "list",
-        label: "المشاريع",
-        to: "/projects",
-        perm: "projects.view",
-        attention: ["overdue"],
-        desc: "كل المشاريع بحالتها وقيمتها وعميلها.",
-        when: "لمتابعة المشاريع الجارية أو إضافة مشروع.",
-        match: exact("/projects"),
-      },
-      {
-        key: "tasks",
-        label: "المهام",
-        to: "/tasks",
-        perm: "tasks.view",
-        attention: ["tasks"],
-        desc: "مهام الفريق عبر المشاريع وعمل الشركة، ومن المسؤول عنها وموعدها.",
-        when: "يومياً: لمعرفة ما عليك وما تأخّر.",
-        match: exact("/tasks"),
-      },
-      {
-        key: "documents",
-        label: "المستندات",
-        to: "/documents",
-        perm: "documents.view",
-        attention: ["docs"],
-        desc: "العقود والخطابات والصادر، من الإنشاء حتى الاعتماد والإرسال.",
-        when: "عند إعداد عقد أو خطاب أو البحث عن مستند سابق.",
-        match: exact("/documents"),
-      },
-    ],
+    attention: ["overdue"],
+    match: within("/projects"),
+  },
+  {
+    key: "documents",
+    label: "المستندات",
+    to: "/documents",
+    icon: Files,
+    tint: "amber",
+    hint: "العقود والخطابات وعروض الأسعار، مسودةً وصادرةً",
+    perm: "documents.view",
+    attention: ["docs"],
+    match: within("/documents"),
   },
   {
     key: "finance",
     label: "المالية",
     to: "/finance",
+    tint: "teal",
     icon: Landmark,
     hint: "مالية الجهة والتحصيل والشركاء والضريبة",
     perm: "treasury.view",
@@ -235,6 +256,7 @@ export const SECTIONS: Section[] = [
     key: "planning",
     label: "التخطيط",
     to: "/plans",
+    tint: "violet",
     icon: Target,
     hint: "الخطط وما نقدّمه من خدمات وكيف نعرضه",
     match: (p) => within("/plans")(p) || within("/products")(p) || within("/website")(p),
@@ -273,6 +295,7 @@ export const SECTIONS: Section[] = [
     key: "settings",
     label: "الإعدادات",
     to: "/settings",
+    tint: "slate",
     icon: Settings,
     hint: "بيانات الجهة والفريق والصلاحيات وسجل النشاط والمظهر",
     strip: false,
@@ -327,6 +350,7 @@ export const SECTIONS: Section[] = [
     key: "soon",
     label: "قريباً",
     to: "/soon",
+    tint: "slate",
     icon: Clock,
     hint: "أدوات قادمة نعمل عليها",
     match: (p) => within("/soon")(p) || within("/more/soon")(p),

@@ -2,6 +2,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getRouteApi, Link, useNavigate } from "@tanstack/react-router";
 import { FileSpreadsheet, Pencil, Plus, ReceiptText } from "lucide-react";
 import { useState } from "react";
+import { useTrackRecent } from "../../components/shell/useRecent";
 import {
   Avatar,
   Badge,
@@ -40,6 +41,9 @@ export function ClientPage() {
   const qc = useQueryClient();
   const me = useQuery(meQuery).data;
   const q = useQuery(clientQuery(id));
+  useTrackRecent(
+    q.data ? { kind: "client", id, title: q.data.client.name, href: `/clients/${id}` } : null,
+  );
   const [editing, setEditing] = useState(false);
   const [addingProject, setAddingProject] = useState(false);
   const [addingEntry, setAddingEntry] = useState(false);

@@ -40,7 +40,7 @@ describe("MobileTabBar", () => {
     expect(isNavActive("/settings/team", NAV[4]!)).toBe(true);
     expect(isNavActive("/soon", NAV[4]!)).toBe(true);
     expect(isNavActive("/sales", NAV[4]!)).toBe(false); // «المبيعات» is in the bar
-    expect(isNavActive("/documents", NAV[4]!)).toBe(false); // a page of «المشاريع»
+    expect(isNavActive("/documents", NAV[4]!)).toBe(true); // a section of its own, reached from «المزيد»
     expect(isNavActive("/projects/p1", NAV[2]!)).toBe(true);
   });
 });

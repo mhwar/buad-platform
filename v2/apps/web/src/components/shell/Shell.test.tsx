@@ -51,17 +51,12 @@ describe("Sidebar", () => {
     expect(account.compareDocumentPosition(nav) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     const names = within(nav)
       .getAllByRole("link")
-      .filter(
-        (l) =>
-          l.hasAttribute("data-section") ||
-          l.getAttribute("href") === "/" ||
-          l.getAttribute("href") === "/settings" ||
-          l.getAttribute("href") === "/soon",
-      );
+      .filter((l) => l.hasAttribute("data-section"));
     expect(names.map((l) => l.textContent?.trim().replace(/\d+$/, ""))).toEqual([
-      "الرئيسية",
+      "مساحة العمل",
       "المبيعات",
       "المشاريع",
+      "المستندات",
       "المالية",
       "التخطيط",
       "الإعدادات",
@@ -78,14 +73,14 @@ describe("Sidebar", () => {
       "aria-expanded",
       "true",
     );
-    expect(within(nav).getByRole("button", { name: "فتح المشاريع" })).toHaveAttribute(
+    expect(within(nav).getByRole("button", { name: "فتح مساحة العمل" })).toHaveAttribute(
       "aria-expanded",
       "false",
     );
     expect(within(nav).getByRole("link", { name: "العملاء" })).toHaveAttribute("href", "/clients");
-    expect(within(nav).queryByRole("link", { name: "المهام" })).toBeNull();
-    await userEvent.click(within(nav).getByRole("button", { name: "فتح المشاريع" }));
-    expect(within(nav).getByRole("link", { name: /المهام/ })).toHaveAttribute("href", "/tasks");
+    expect(within(nav).queryByRole("link", { name: /مهامي/ })).toBeNull();
+    await userEvent.click(within(nav).getByRole("button", { name: "فتح مساحة العمل" }));
+    expect(within(nav).getByRole("link", { name: /مهامي/ })).toHaveAttribute("href", "/tasks");
     await userEvent.click(within(nav).getByRole("button", { name: "طيّ المبيعات" }));
     expect(within(nav).queryByRole("link", { name: "العملاء" })).toBeNull();
   });
@@ -203,7 +198,7 @@ describe("CommandPalette", () => {
     expect(within(screen.getByRole("listbox")).getAllByRole("option").length).toBeGreaterThan(5);
     await userEvent.type(box, "مهام");
     const options = within(screen.getByRole("listbox")).getAllByRole("option");
-    expect(options[0]).toHaveTextContent("المشاريع › المهام"); // a tab is found by name, under its section
+    expect(options[0]).toHaveTextContent("مساحة العمل › مهامي"); // a tab is found by name, under its section
     expect(matches("الإدارة", "الاداره")).toBe(true);
     expect(matches("مَدرسة", "مدرسه")).toBe(true);
     expect(matches("المبيعات", "تحصيل")).toBe(false);
