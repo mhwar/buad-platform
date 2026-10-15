@@ -84,6 +84,7 @@ export function OpportunityPage() {
     o ? { kind: "opportunity", id, title: o.entity || o.name, href: `/sales/${id}` } : null,
   );
   const [tab, setTab] = useState<Tab>("activity");
+  const [noting, setNoting] = useState(false);
   const [dialog, setDialog] = useState<
     | null
     | { kind: "follow" | "pricing" | "convert" | "lose" | "win" | "new-quote" }
@@ -226,7 +227,13 @@ export function OpportunityPage() {
         </div>
         {edit && (
           <div className="flex flex-wrap gap-2">
-            <Button variant="secondary" onClick={() => setTab("activity")}>
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setTab("activity");
+                setNoting(true);
+              }}
+            >
               <NotebookPen className="size-4" />
               سجّل تواصلاً
             </Button>
@@ -286,7 +293,16 @@ export function OpportunityPage() {
           />
           {tab === "activity" && (
             <section aria-label="النشاط" className="space-y-4">
-              {edit && <LogContact opportunity={o} onSaved={refresh} />}
+              {/* Once closed, the log is a record: adding to it is one click away, not the first thing. */}
+              {edit &&
+                (open || noting ? (
+                  <LogContact opportunity={o} onSaved={refresh} />
+                ) : (
+                  <Button variant="secondary" onClick={() => setNoting(true)}>
+                    <NotebookPen className="size-4" />
+                    إضافة ملاحظة أو تواصل
+                  </Button>
+                ))}
               {activities.length === 0 ? (
                 <EmptyState
                   title="لا نشاط بعد"

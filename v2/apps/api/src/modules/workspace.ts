@@ -17,13 +17,14 @@ import {
   meetingQuery,
 } from "@buad/schema/workspace";
 import { zValidator } from "@hono/zod-validator";
-import { and, asc, desc, eq, gte, inArray, lt, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gte, inArray, lt, ne, or, type SQL, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { requireAuth, requireRW, type Vars } from "../auth/middleware";
 import type { Db } from "../auth/service";
 import { newId, nowSec } from "./common";
 import { notify } from "./notifications";
 import { ensureClient, touchClient } from "./opportunity";
+import { visibleProjects } from "./projects";
 
 /** «مساحة العمل»: meetings with their minutes, and the decisions that come out of them. */
 type Env = { Bindings: { JWT_SECRET: string }; Variables: Vars };
@@ -84,11 +85,14 @@ async function names(db: Db, orgId: string) {
 /** What the meeting was linked to, by name, for lists and the meeting card. */
 async function linkNames(
   db: Db,
+  me: Me,
   rows: { clientId: string; requestId: string; projectId: string }[],
 ) {
   const cIds = [...new Set(rows.map((r) => r.clientId).filter(Boolean))];
   const rIds = [...new Set(rows.map((r) => r.requestId).filter(Boolean))];
-  const pIds = [...new Set(rows.map((r) => r.projectId).filter(Boolean))];
+  const allP = [...new Set(rows.map((r) => r.projectId).filter(Boolean))];
+  const seenP = await seenProjects(db, me, allP);
+  const pIds = allP.filter((id) => seenP.has(id));
   const c = cIds.length
     ? await db
         .select({ id: clients.id, n: clients.name })
@@ -114,18 +118,60 @@ async function linkNames(
   };
 }
 
-/** A meeting is seen by its organisation's members with the permission; «mine» narrows it. */
+/** Someone whose projects scope is «all» (owner, managers, sales) sees and manages every meeting. */
+const full = (me: Me) => (me.scopes.projects ?? "team") === "all";
 const mineFilter = (me: Me) =>
   or(
     eq(meetings.createdBy, me.id),
     sql`EXISTS (SELECT 1 FROM json_each(${meetings.attendeeIds}) WHERE value = ${me.id})`,
   );
+const projectSeen = (me: Me, col: SQL | typeof meetings.projectId | typeof decisions.projectId) =>
+  sql`${col} IN (SELECT id FROM projects WHERE ${visibleProjects(me).sqlFor("projects")})`;
+/**
+ * Everyone else sees the meetings they organise or attend, and those about a project they see —
+ * so a management meeting, or one on a private project, stays with the people in it.
+ */
+const meetingSeen = (me: Me): SQL | undefined =>
+  full(me)
+    ? undefined
+    : or(mineFilter(me), and(ne(meetings.projectId, ""), projectSeen(me, meetings.projectId)));
+/** A decision: its owner and author, those who see its meeting or project; company-wide when unlinked. */
+const decisionSeen = (me: Me): SQL | undefined =>
+  full(me)
+    ? undefined
+    : or(
+        eq(decisions.ownerId, me.id),
+        eq(decisions.createdBy, me.id),
+        and(eq(decisions.meetingId, ""), eq(decisions.projectId, "")),
+        and(
+          ne(decisions.meetingId, ""),
+          sql`${decisions.meetingId} IN (SELECT ${meetings.id} FROM ${meetings} WHERE ${meetingSeen(me) ?? sql`1 = 1`})`,
+        ),
+        and(
+          eq(decisions.meetingId, ""),
+          ne(decisions.projectId, ""),
+          projectSeen(me, decisions.projectId),
+        ),
+      );
+/** Project ids among `want` this person may see (the others are neither named nor linked). */
+async function seenProjects(db: Db, me: Me, want: string[]) {
+  if (!want.length) return new Set<string>();
+  const rows = await db
+    .select({ id: projects.id })
+    .from(projects)
+    .where(
+      and(eq(projects.orgId, me.orgId), inArray(projects.id, want), visibleProjects(me).where),
+    );
+  return new Set(rows.map((r) => r.id));
+}
+const canManage = (me: Me, m: { createdBy: string }) => full(me) || m.createdBy === me.id;
 
-async function ownMeeting(db: Db, orgId: string, id: string) {
+/** The meeting, if this person may see it. */
+async function seenMeeting(db: Db, me: Me, id: string) {
   const [m] = await db
     .select()
     .from(meetings)
-    .where(and(eq(meetings.id, id), eq(meetings.orgId, orgId)))
+    .where(and(eq(meetings.id, id), eq(meetings.orgId, me.orgId), meetingSeen(me)))
     .limit(1);
   return m ?? null;
 }
@@ -178,7 +224,8 @@ const shapeMeeting = (
   clientName: links.client.get(m.clientId) ?? "",
   requestId: m.requestId,
   requestName: links.request.get(m.requestId) ?? "",
-  projectId: m.projectId,
+  // A private project the viewer cannot open is neither named nor linked.
+  projectId: links.project.has(m.projectId) ? m.projectId : "",
   projectName: links.project.get(m.projectId) ?? "",
   agenda: m.agenda,
   minutes: m.minutes,
@@ -189,10 +236,13 @@ const shapeMeeting = (
   updatedAt: m.updatedAt,
 });
 
-const shapeDecision = (d: Decision, who: Map<string, string>, meetingTitle = "") => ({
+const shapeDecision = (d: Decision, who: Map<string, string>, meetingTitle = "", me?: Me) => ({
   ...d,
   ownerName: who.get(d.ownerId) ?? "",
   meetingTitle,
+  /** What this viewer may do with it (the API enforces the same). */
+  canEdit: me ? canEditDecision(me, d) : false,
+  canClose: me ? canCloseDecision(me, d) : false,
 });
 
 export const meetingsApp = new Hono<Env>()
@@ -209,6 +259,7 @@ export const meetingsApp = new Hono<Env>()
       .where(
         and(
           eq(meetings.orgId, me.orgId),
+          meetingSeen(me),
           q.from ? gte(meetings.startsAt, q.from) : undefined,
           q.to ? lt(meetings.startsAt, nextDay(q.to)) : undefined,
           q.status ? eq(meetings.status, q.status) : undefined,
@@ -218,7 +269,7 @@ export const meetingsApp = new Hono<Env>()
       .orderBy(asc(meetings.startsAt))
       .limit(500);
     const who = await names(db, me.orgId);
-    const links = await linkNames(db, rows);
+    const links = await linkNames(db, me, rows);
     const open = rows.length
       ? await db
           .select({ meetingId: decisions.meetingId, n: sql<number>`count(*)` })
@@ -248,7 +299,7 @@ export const meetingsApp = new Hono<Env>()
   .get("/:id", async (c) => {
     const me = c.get("user");
     const db = c.get("db");
-    const m = await ownMeeting(db, me.orgId, c.req.param("id"));
+    const m = await seenMeeting(db, me, c.req.param("id"));
     if (!m) return c.json({ ok: false, error: "not_found" }, 404);
     const who = await names(db, me.orgId);
     const ds = await db
@@ -258,8 +309,11 @@ export const meetingsApp = new Hono<Env>()
       .orderBy(asc(decisions.createdAt));
     return c.json({
       ok: true,
-      meeting: shapeMeeting(m, who, await linkNames(db, [m])),
-      decisions: ds.map((d) => shapeDecision(d, who, m.title)),
+      meeting: {
+        ...shapeMeeting(m, who, await linkNames(db, me, [m])),
+        canManage: canManage(me, m),
+      },
+      decisions: ds.map((d) => shapeDecision(d, who, m.title, me)),
     });
   })
 
@@ -269,6 +323,8 @@ export const meetingsApp = new Hono<Env>()
     const v = c.req.valid("json");
     const bad = await checkLinks(db, me.orgId, v);
     if (bad) return c.json({ ok: false, error: bad }, 404);
+    if (v.projectId && !(await seenProjects(db, me, [v.projectId])).has(v.projectId))
+      return c.json({ ok: false, error: "project_not_found" }, 404);
     const attendees = await activeIds(db, me.orgId, v.attendeeIds);
     const id = newId("mtg");
     await db.insert(meetings).values({
@@ -289,7 +345,7 @@ export const meetingsApp = new Hono<Env>()
         dedupeKey: `meeting:${id}`,
       },
     );
-    const m = await ownMeeting(db, me.orgId, id);
+    const m = await seenMeeting(db, me, id);
     if (m && m.status === "done") await logHeld(db, me, m);
     return c.json({ ok: true, id }, 201);
   })
@@ -297,9 +353,22 @@ export const meetingsApp = new Hono<Env>()
   .patch("/:id", zValidator("json", meetingPatch), async (c) => {
     const me = c.get("user");
     const db = c.get("db");
-    const m = await ownMeeting(db, me.orgId, c.req.param("id"));
+    const m = await seenMeeting(db, me, c.req.param("id"));
     if (!m) return c.json({ ok: false, error: "not_found" }, 404);
-    const { attendeeIds, ...v } = c.req.valid("json");
+    const body = c.req.valid("json");
+    const { attendeeIds, ...v } = body;
+    // Attendees keep the minutes and mark it held or cancelled; the rest is the organiser's.
+    if (!canManage(me, m)) {
+      const other = Object.keys(body).filter((k) => k !== "minutes" && k !== "status");
+      if (other.length || !ids(m.attendeeIds).includes(me.id))
+        return c.json({ ok: false, error: "organiser_only" }, 403);
+    }
+    if (
+      v.projectId &&
+      v.projectId !== m.projectId &&
+      !(await seenProjects(db, me, [v.projectId])).has(v.projectId)
+    )
+      return c.json({ ok: false, error: "project_not_found" }, 404);
     const bad = await checkLinks(db, me.orgId, v);
     if (bad) return c.json({ ok: false, error: bad }, 404);
     const attendees = attendeeIds ? await activeIds(db, me.orgId, attendeeIds) : null;
@@ -325,7 +394,7 @@ export const meetingsApp = new Hono<Env>()
         },
       );
     }
-    const after = await ownMeeting(db, me.orgId, m.id);
+    const after = await seenMeeting(db, me, m.id);
     if (after && after.status === "done") await logHeld(db, me, after);
     return c.json({ ok: true });
   })
@@ -333,38 +402,36 @@ export const meetingsApp = new Hono<Env>()
   .delete("/:id", async (c) => {
     const me = c.get("user");
     const db = c.get("db");
-    const m = await ownMeeting(db, me.orgId, c.req.param("id"));
+    const m = await seenMeeting(db, me, c.req.param("id"));
     if (!m) return c.json({ ok: false, error: "not_found" }, 404);
+    if (!canManage(me, m)) return c.json({ ok: false, error: "organiser_only" }, 403);
     // Its decisions stay (they may already be work in progress); they just lose the link.
     await db.update(decisions).set({ meetingId: "" }).where(eq(decisions.meetingId, m.id));
     await db.delete(meetings).where(eq(meetings.id, m.id));
     return c.json({ ok: true });
   });
 
-async function ownDecision(db: Db, orgId: string, id: string) {
+async function ownDecision(db: Db, me: Me, id: string) {
   const [d] = await db
     .select()
     .from(decisions)
-    .where(and(eq(decisions.id, id), eq(decisions.orgId, orgId)))
+    .where(and(eq(decisions.id, id), eq(decisions.orgId, me.orgId), decisionSeen(me)))
     .limit(1);
   return d ?? null;
 }
+/** Its author (or a manager) edits and deletes it; its owner may also close it or delegate it. */
+const canEditDecision = (me: Me, d: Decision) => full(me) || d.createdBy === me.id;
+const canCloseDecision = (me: Me, d: Decision) => canEditDecision(me, d) || d.ownerId === me.id;
 
 async function checkDecisionLinks(
   db: Db,
-  orgId: string,
+  me: Me,
   v: { ownerId?: string; meetingId?: string; projectId?: string },
 ) {
-  if (v.ownerId && !(await activeIds(db, orgId, [v.ownerId])).length) return "owner_not_found";
-  if (v.meetingId && !(await ownMeeting(db, orgId, v.meetingId))) return "meeting_not_found";
-  if (v.projectId) {
-    const [p] = await db
-      .select({ id: projects.id })
-      .from(projects)
-      .where(and(eq(projects.id, v.projectId), eq(projects.orgId, orgId)))
-      .limit(1);
-    if (!p) return "project_not_found";
-  }
+  if (v.ownerId && !(await activeIds(db, me.orgId, [v.ownerId])).length) return "owner_not_found";
+  if (v.meetingId && !(await seenMeeting(db, me, v.meetingId))) return "meeting_not_found";
+  if (v.projectId && !(await seenProjects(db, me, [v.projectId])).has(v.projectId))
+    return "project_not_found";
   return null;
 }
 
@@ -393,6 +460,7 @@ export const decisionsApp = new Hono<Env>()
       .where(
         and(
           eq(decisions.orgId, me.orgId),
+          decisionSeen(me),
           q.status ? eq(decisions.status, q.status) : undefined,
           q.mine ? eq(decisions.ownerId, me.id) : undefined,
           q.meeting ? eq(decisions.meetingId, q.meeting) : undefined,
@@ -408,7 +476,7 @@ export const decisionsApp = new Hono<Env>()
     const who = await names(db, me.orgId);
     return c.json({
       ok: true,
-      items: rows.map((r) => shapeDecision(r.d, who, r.meetingTitle ?? "")),
+      items: rows.map((r) => shapeDecision(r.d, who, r.meetingTitle ?? "", me)),
     });
   })
 
@@ -416,7 +484,7 @@ export const decisionsApp = new Hono<Env>()
     const me = c.get("user");
     const db = c.get("db");
     const v = c.req.valid("json");
-    const bad = await checkDecisionLinks(db, me.orgId, v);
+    const bad = await checkDecisionLinks(db, me, v);
     if (bad) return c.json({ ok: false, error: bad }, 404);
     const id = newId("dec");
     await db.insert(decisions).values({ ...v, id, orgId: me.orgId, createdBy: me.id });
@@ -427,10 +495,13 @@ export const decisionsApp = new Hono<Env>()
   .patch("/:id", zValidator("json", decisionPatch), async (c) => {
     const me = c.get("user");
     const db = c.get("db");
-    const d = await ownDecision(db, me.orgId, c.req.param("id"));
+    const d = await ownDecision(db, me, c.req.param("id"));
     if (!d) return c.json({ ok: false, error: "not_found" }, 404);
     const v = c.req.valid("json");
-    const bad = await checkDecisionLinks(db, me.orgId, v);
+    const statusOnly = Object.keys(v).every((k) => k === "status");
+    if (!(statusOnly ? canCloseDecision(me, d) : canEditDecision(me, d)))
+      return c.json({ ok: false, error: "author_only" }, 403);
+    const bad = await checkDecisionLinks(db, me, v);
     if (bad) return c.json({ ok: false, error: bad }, 404);
     await db
       .update(decisions)
@@ -444,8 +515,9 @@ export const decisionsApp = new Hono<Env>()
   .delete("/:id", async (c) => {
     const me = c.get("user");
     const db = c.get("db");
-    const d = await ownDecision(db, me.orgId, c.req.param("id"));
+    const d = await ownDecision(db, me, c.req.param("id"));
     if (!d) return c.json({ ok: false, error: "not_found" }, 404);
+    if (!canEditDecision(me, d)) return c.json({ ok: false, error: "author_only" }, 403);
     await db.delete(decisions).where(eq(decisions.id, d.id));
     return c.json({ ok: true });
   })
@@ -455,8 +527,9 @@ export const decisionsApp = new Hono<Env>()
     const me = c.get("user");
     const db = c.get("db");
     if (!me.perms.includes("tasks.edit")) return c.json({ ok: false, error: "forbidden" }, 403);
-    const d = await ownDecision(db, me.orgId, c.req.param("id"));
+    const d = await ownDecision(db, me, c.req.param("id"));
     if (!d) return c.json({ ok: false, error: "not_found" }, 404);
+    if (!canCloseDecision(me, d)) return c.json({ ok: false, error: "author_only" }, 403);
     if (d.taskId) {
       const [t] = await db
         .select({ id: tasks.id })

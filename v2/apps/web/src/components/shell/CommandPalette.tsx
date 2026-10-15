@@ -1,7 +1,7 @@
 import * as RDialog from "@radix-ui/react-dialog";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { Briefcase, CornerDownLeft, Search, Users } from "lucide-react";
+import { Briefcase, CalendarDays, CornerDownLeft, Search, ShoppingCart, Users } from "lucide-react";
 import {
   type ComponentType,
   useDeferredValue,
@@ -12,7 +12,9 @@ import {
   useState,
 } from "react";
 import { clientsQuery } from "../../features/clients/api";
+import { requestsQuery } from "../../features/products/products-api";
 import { projectsQuery } from "../../features/projects/api";
+import { meetingsQuery } from "../../features/workspace/api";
 import { cx } from "../ui";
 import type { NavGroup } from "./nav-model";
 
@@ -23,6 +25,7 @@ type Result = {
   hint?: string;
   to: string;
   params?: Record<string, string>;
+  search?: Record<string, string>;
   icon: ComponentType<{ className?: string }>;
 };
 
@@ -47,12 +50,16 @@ export default function CommandPalette({
   groups,
   canSeeClients,
   canSeeProjects,
+  canSeeSales = false,
+  canSeeMeetings = false,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   groups: NavGroup[];
   canSeeClients: boolean;
   canSeeProjects: boolean;
+  canSeeSales?: boolean;
+  canSeeMeetings?: boolean;
 }) {
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
@@ -68,6 +75,13 @@ export default function CommandPalette({
   const projects = useQuery({
     ...projectsQuery({ q }),
     enabled: open && canSeeProjects && q.length >= 2,
+  });
+
+  // Opportunities and meetings are short lists: fetched once while searching, matched here.
+  const opps = useQuery({ ...requestsQuery(""), enabled: open && canSeeSales && q.length >= 2 });
+  const meets = useQuery({
+    ...meetingsQuery({}),
+    enabled: open && canSeeMeetings && q.length >= 2,
   });
 
   const results = useMemo<Result[]>(() => {
@@ -114,8 +128,37 @@ export default function CommandPalette({
       params: { id: p.id },
       icon: Briefcase,
     }));
-    return [...sections.slice(0, q ? 8 : 12), ...people, ...work];
-  }, [groups, q, clients.data, projects.data]);
+    const deals: Result[] = q
+      ? (opps.data?.requests ?? [])
+          .filter((r) => !r.interest && matches(`${r.entity} ${r.name} ${r.productName}`, q))
+          .slice(0, 5)
+          .map((r) => ({
+            id: `opp:${r.id}`,
+            group: "الفرص",
+            label: r.entity || r.name,
+            hint: r.productName,
+            to: "/sales/$id",
+            params: { id: r.id },
+            icon: ShoppingCart,
+          }))
+      : [];
+    const talks: Result[] = q
+      ? (meets.data ?? [])
+          .filter((m) => matches(m.title, q))
+          .slice(-5)
+          .reverse()
+          .map((m) => ({
+            id: `meeting:${m.id}`,
+            group: "الاجتماعات",
+            label: m.title,
+            hint: m.startsAt.replace("T", " "),
+            to: "/meetings",
+            search: { open: m.id },
+            icon: CalendarDays,
+          }))
+      : [];
+    return [...sections.slice(0, q ? 8 : 12), ...people, ...work, ...deals, ...talks];
+  }, [groups, q, clients.data, projects.data, opps.data, meets.data]);
 
   // Keep the highlighted row valid and in view as results change or the arrows move.
   const current = Math.min(active, Math.max(0, results.length - 1));
@@ -129,7 +172,7 @@ export default function CommandPalette({
     onOpenChange(false);
     setQuery("");
     setActive(0);
-    navigate({ to: r.to, params: r.params } as never);
+    navigate({ to: r.to, params: r.params, search: r.search } as never);
   };
   const onKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "ArrowDown") {

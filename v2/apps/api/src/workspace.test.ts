@@ -197,3 +197,114 @@ describe("decisions", () => {
     expect((await call("sal", "POST", `/api/decisions/${id2}/task`)).status).toBe(403);
   });
 });
+
+describe("who sees and changes what", () => {
+  // m1 is a team member (projects scope «team»); own and sal see every project.
+  const privateProject = async () => {
+    const cl = (await call("own", "POST", "/api/clients", { name: "عميل", type: "company" })).body
+      .id;
+    return (
+      await call("own", "POST", "/api/projects", {
+        clientId: cl,
+        name: "مشروع سري",
+        visibility: "private",
+      })
+    ).body.id as string;
+  };
+
+  it("a team member sees what they attend or organise, not management meetings or private projects", async () => {
+    const pp = await privateProject();
+    await call(
+      "own",
+      "POST",
+      "/api/meetings",
+      meeting({ title: "اجتماع الإدارة", attendeeIds: ["adm"] }),
+    );
+    await call(
+      "own",
+      "POST",
+      "/api/meetings",
+      meeting({ title: "عن السري", attendeeIds: [], projectId: pp }),
+    );
+    const invited = (
+      await call(
+        "own",
+        "POST",
+        "/api/meetings",
+        meeting({ title: "مع الفريق", attendeeIds: ["m1"], projectId: pp }),
+      )
+    ).body.id;
+    const seen = (await call("m1", "GET", "/api/meetings")).body.items;
+    expect(seen.map((m: J) => m.title)).toEqual(["مع الفريق"]);
+    // invited to it, but the private project is neither named nor linked
+    expect(seen[0].projectId).toBe("");
+    expect(seen[0].projectName).toBe("");
+    expect((await call("m1", "GET", `/api/meetings/${invited}`)).body.meeting.canManage).toBe(
+      false,
+    );
+    // the owner sees all three, with the project named
+    const all = (await call("own", "GET", "/api/meetings")).body.items;
+    expect(all).toHaveLength(3);
+    expect(all.find((m: J) => m.title === "مع الفريق").projectName).toBe("مشروع سري");
+    // and a member may not attach a meeting to a project they cannot see
+    expect((await call("m1", "POST", "/api/meetings", meeting({ projectId: pp }))).status).toBe(
+      404,
+    );
+  });
+
+  it("an attendee writes the minutes and closes it; only the organiser changes or deletes it", async () => {
+    const id = (await call("own", "POST", "/api/meetings", meeting({ attendeeIds: ["m1"] }))).body
+      .id;
+    expect(
+      (await call("m1", "PATCH", `/api/meetings/${id}`, { minutes: "محضر", status: "done" }))
+        .status,
+    ).toBe(200);
+    expect((await call("m1", "PATCH", `/api/meetings/${id}`, { title: "تغيير" })).status).toBe(403);
+    expect((await call("m1", "DELETE", `/api/meetings/${id}`)).status).toBe(403);
+    const mine = (await call("m1", "POST", "/api/meetings", meeting({ attendeeIds: [] }))).body.id;
+    expect((await call("m1", "PATCH", `/api/meetings/${mine}`, { title: "اجتماعي" })).status).toBe(
+      200,
+    );
+    expect((await call("m1", "DELETE", `/api/meetings/${mine}`)).status).toBe(200);
+  });
+
+  it("decisions: hidden with their meeting; the owner may close one but not rewrite or delete it", async () => {
+    const hidden = (await call("own", "POST", "/api/meetings", meeting({ attendeeIds: ["adm"] })))
+      .body.id;
+    await call("own", "POST", "/api/decisions", { title: "قرار الإدارة", meetingId: hidden });
+    const forM1 = (
+      await call("own", "POST", "/api/decisions", {
+        title: "لـm1",
+        ownerId: "m1",
+        meetingId: hidden,
+      })
+    ).body.id;
+    await call("own", "POST", "/api/decisions", { title: "قرار عام" });
+    const list = (await call("m1", "GET", "/api/decisions")).body.items
+      .map((d: J) => d.title)
+      .sort();
+    expect(list).toEqual(["قرار عام", "لـm1"].sort()); // its owner sees it even in a hidden meeting
+    const mine = (await call("m1", "GET", "/api/decisions")).body.items.find(
+      (d: J) => d.id === forM1,
+    );
+    expect([mine.canEdit, mine.canClose]).toEqual([false, true]);
+    expect((await call("m1", "PATCH", `/api/decisions/${forM1}`, { status: "done" })).status).toBe(
+      200,
+    );
+    expect((await call("m1", "PATCH", `/api/decisions/${forM1}`, { title: "س" })).status).toBe(403);
+    expect((await call("m1", "DELETE", `/api/decisions/${forM1}`)).status).toBe(403);
+    expect((await call("adm", "DELETE", `/api/decisions/${forM1}`)).status).toBe(200); // a manager may
+  });
+
+  it("today's meetings show in what needs attention", async () => {
+    const d = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Riyadh" }).format(new Date());
+    await call(
+      "own",
+      "POST",
+      "/api/meetings",
+      meeting({ startsAt: `${d}T23:00`, attendeeIds: ["m1"] }),
+    );
+    const items = (await call("m1", "GET", "/api/attention")).body.items;
+    expect(items.find((i: J) => i.key === "meetings")?.count).toBe(1);
+  });
+});

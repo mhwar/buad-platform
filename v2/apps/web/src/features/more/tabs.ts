@@ -65,6 +65,10 @@ export type Section = {
   tint?: Tint;
   /** Show the tab strip above the section's list pages (sections with their own in-page navigation say no). */
   strip?: boolean;
+  /** When only one of its pages is allowed, the section becomes that page (name and link). */
+  single?: boolean;
+  /** The icon it takes then (the page's own). */
+  singleIcon?: Icon;
   /** True for every path that belongs to the section, details included. */
   match: (path: string) => boolean;
 };
@@ -132,6 +136,8 @@ export const SECTIONS: Section[] = [
     tint: "emerald",
     icon: ShoppingCart,
     hint: "الفرص والعملاء وعروض الأسعار",
+    single: true,
+    singleIcon: Users,
     match: (p) => within("/sales")(p) || within("/clients")(p),
     tabs: [
       {
@@ -375,7 +381,19 @@ export function visibleSections(perms: readonly string[]): Section[] {
     }
     const tabs = visibleTabs(s, perms);
     const first = tabs[0];
-    if (first) out.push({ ...s, to: first.to, tabs });
+    if (!first) continue;
+    // e.g. a team member without sales sees «العملاء», not a «المبيعات» holding only clients.
+    if (s.single && tabs.length === 1)
+      out.push({
+        ...s,
+        label: first.label,
+        short: first.label,
+        hint: first.desc,
+        icon: s.singleIcon ?? s.icon,
+        to: first.to,
+        tabs: [],
+      });
+    else out.push({ ...s, to: first.to, tabs });
   }
   return out;
 }

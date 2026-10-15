@@ -14,6 +14,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { useState } from "react";
+import { useTrackRecent } from "../../components/shell/useRecent";
 import {
   Badge,
   Button,
@@ -27,7 +28,7 @@ import {
   Segmented,
   Textarea,
 } from "../../components/ui";
-import { useCan } from "../../session";
+import { meQuery, useCan } from "../../session";
 import { send } from "../team/queries";
 import {
   addDaysLocal,
@@ -206,6 +207,11 @@ function MeetingDetail({ id, onClose }: { id: string; onClose: () => void }) {
   const [deciding, setDeciding] = useState(false);
   const [error, setError] = useState("");
   const m = q.data?.meeting;
+  const me = useQuery(meQuery).data;
+  const manage = edit && !!m?.canManage;
+  // Attendees keep the minutes and close it; everything else is the organiser's.
+  const attend = edit && (manage || !!m?.attendees.some((a) => a.id === me?.id));
+  useTrackRecent(m ? { kind: "meeting", id, title: m.title, href: `/meetings?open=${id}` } : null);
   const refresh = () => {
     qc.invalidateQueries({ queryKey: ["meetings"] });
     qc.invalidateQueries({ queryKey: ["product-requests"] });
@@ -285,7 +291,7 @@ function MeetingDetail({ id, onClose }: { id: string; onClose: () => void }) {
               >
                 {MEETING_LABEL[m.status]}
               </Badge>
-              {edit && m.status === "scheduled" && (
+              {attend && m.status === "scheduled" && (
                 <>
                   <Button
                     onClick={() =>
@@ -301,7 +307,7 @@ function MeetingDetail({ id, onClose }: { id: string; onClose: () => void }) {
                   </Button>
                 </>
               )}
-              {edit && (
+              {manage && (
                 <>
                   <Button
                     variant="ghost"
@@ -343,7 +349,7 @@ function MeetingDetail({ id, onClose }: { id: string; onClose: () => void }) {
           <Field label="المحضر">
             <Textarea
               rows={5}
-              disabled={!edit}
+              disabled={!attend}
               value={minutes ?? m.minutes}
               onChange={(e) => setMinutes(e.target.value)}
               onBlur={() => minutes !== null && minutes !== m.minutes && patch({ minutes })}

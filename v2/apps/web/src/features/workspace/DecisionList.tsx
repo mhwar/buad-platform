@@ -45,7 +45,7 @@ export function DecisionList({
           const late = d.status === "open" && !!d.dueDate && d.dueDate < t;
           return (
             <li key={d.id} className="flex flex-wrap items-start gap-3 p-3">
-              {edit && d.status === "open" ? (
+              {edit && d.canClose !== false && d.status === "open" ? (
                 <button
                   type="button"
                   aria-label={`تم تنفيذ ${d.title}`}
@@ -114,33 +114,40 @@ export function DecisionList({
               )}
               {edit && !compact && (
                 <span className="flex gap-1">
-                  {d.status === "open" && !d.taskId && can("tasks.edit") && (
-                    <Button
-                      variant="secondary"
-                      className="px-2.5 text-xs"
-                      onClick={() => run(() => send("POST", `/api/decisions/${d.id}/task`))}
-                    >
-                      <ListChecks className="size-3.5" />
-                      تحويل إلى مهمة
-                    </Button>
+                  {d.status === "open" &&
+                    !d.taskId &&
+                    can("tasks.edit") &&
+                    d.canClose !== false && (
+                      <Button
+                        variant="secondary"
+                        className="px-2.5 text-xs"
+                        onClick={() => run(() => send("POST", `/api/decisions/${d.id}/task`))}
+                      >
+                        <ListChecks className="size-3.5" />
+                        تحويل إلى مهمة
+                      </Button>
+                    )}
+                  {d.canEdit !== false && (
+                    <>
+                      <Button
+                        variant="ghost"
+                        aria-label={`تعديل ${d.title}`}
+                        onClick={() => setEditing(d)}
+                      >
+                        <Pencil className="size-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        aria-label={`حذف ${d.title}`}
+                        onClick={() => {
+                          if (confirm(`حذف القرار «${d.title}»؟`))
+                            run(() => send("DELETE", `/api/decisions/${d.id}`));
+                        }}
+                      >
+                        <Trash2 className="size-4" />
+                      </Button>
+                    </>
                   )}
-                  <Button
-                    variant="ghost"
-                    aria-label={`تعديل ${d.title}`}
-                    onClick={() => setEditing(d)}
-                  >
-                    <Pencil className="size-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    aria-label={`حذف ${d.title}`}
-                    onClick={() => {
-                      if (confirm(`حذف القرار «${d.title}»؟`))
-                        run(() => send("DELETE", `/api/decisions/${d.id}`));
-                    }}
-                  >
-                    <Trash2 className="size-4" />
-                  </Button>
                 </span>
               )}
             </li>

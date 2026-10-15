@@ -115,6 +115,8 @@ export function AppShell() {
             groups={groups}
             canSeeClients={me.data.perms.includes("clients.view")}
             canSeeProjects={me.data.perms.includes("projects.view")}
+            canSeeSales={me.data.perms.includes("sales.view")}
+            canSeeMeetings={me.data.perms.includes("meetings.view")}
           />
         </Suspense>
       )}

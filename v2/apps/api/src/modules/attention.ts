@@ -3,6 +3,7 @@ import {
   decisions,
   documents,
   financeEntries,
+  meetings,
   orgProfile,
   paymentSchedule,
   planCycles,
@@ -240,6 +241,30 @@ export const attentionApp = new Hono<{ Variables: Vars }>().use(requireAuth).get
           ),
         ),
     );
+    // Meetings are kept in the team's local clock (Saudi time).
+    const localToday = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Riyadh" }).format(
+      new Date(),
+    );
+    const meetingsToday = await count(
+      db
+        .select({ n: sql<number>`count(*)` })
+        .from(meetings)
+        .where(
+          and(
+            eq(meetings.orgId, me.orgId),
+            eq(meetings.status, "scheduled"),
+            sql`substr(${meetings.startsAt}, 1, 10) = ${localToday}`,
+            sql`(${meetings.createdBy} = ${me.id} OR EXISTS (SELECT 1 FROM json_each(${meetings.attendeeIds}) WHERE value = ${me.id}))`,
+          ),
+        ),
+    );
+    add({
+      key: "meetings",
+      tone: "info",
+      title: "اجتماعاتك اليوم",
+      count: meetingsToday,
+      link: "/meetings",
+    });
     add({
       key: "decisions",
       tone: "warn",

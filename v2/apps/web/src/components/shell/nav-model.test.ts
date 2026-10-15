@@ -105,9 +105,10 @@ describe("phone", () => {
       "المالية",
       "المزيد",
     ]);
+    // a member without sales gets «العملاء» in its place, straight to the clients
     expect(phoneNav(permsOf("member")).map((i) => i.label)).toEqual([
       "اليوم",
-      "المبيعات",
+      "العملاء",
       "المشاريع",
       "المزيد",
     ]);

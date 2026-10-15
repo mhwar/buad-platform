@@ -216,6 +216,38 @@ describe("CommandPalette", () => {
     expect(box.getAttribute("aria-activedescendant")).not.toBe(first);
   });
 
+  it("finds opportunities and meetings too, for those who may see them", async () => {
+    stubApi({
+      "GET /api/clients": () => ({ ok: true, items: [], counts: {} }),
+      "GET /api/projects": () => ({ ok: true, items: [], counts: {} }),
+      "GET /api/product-requests": () => ({
+        ok: true,
+        counts: {},
+        requests: [
+          { id: "r1", name: "منى", entity: "جمعية النور", productName: "تدريب", interest: false },
+        ],
+      }),
+      "GET /api/meetings": () => ({
+        ok: true,
+        items: [{ id: "m1", title: "اجتماع النور", startsAt: "2030-01-01T10:00" }],
+      }),
+    });
+    await renderWithApp(
+      <CommandPalette
+        open
+        onOpenChange={() => {}}
+        groups={groups}
+        canSeeClients
+        canSeeProjects
+        canSeeSales
+        canSeeMeetings
+      />,
+    );
+    await userEvent.type(screen.getByRole("combobox"), "النور");
+    expect(await screen.findByRole("option", { name: /جمعية النور/ })).toBeInTheDocument();
+    expect(await screen.findByRole("option", { name: /اجتماع النور/ })).toBeInTheDocument();
+  });
+
   it("says so when nothing matches, and does not search for one letter", async () => {
     const { calls } = await setup(false);
     await userEvent.type(screen.getByRole("combobox"), "ي");
