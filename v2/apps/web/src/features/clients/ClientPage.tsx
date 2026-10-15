@@ -27,6 +27,7 @@ import { projectKeys } from "../projects/api";
 import { ProjectDialog } from "../projects/ProjectDialog";
 import { archiveClient, clientKeys, clientQuery, deleteClient } from "./api";
 import { AddEntry } from "./ClientActions";
+import { ClientCrm } from "./ClientCrm";
 import { ClientDialog } from "./ClientDialog";
 
 const route = getRouteApi("/clients/$id");
@@ -195,6 +196,12 @@ export function ClientPage() {
             active: tab === "projects",
             onClick: () => nav({ search: { tab: "projects" }, replace: true }),
           },
+          {
+            to: "",
+            label: "التواصل",
+            active: tab === "crm",
+            onClick: () => nav({ search: { tab: "crm" }, replace: true }),
+          },
         ]}
       />
 
@@ -291,6 +298,8 @@ export function ClientPage() {
             </ul>
           </Card>
         </div>
+      ) : tab === "crm" ? (
+        <ClientCrm clientId={client.id} />
       ) : live.length === 0 ? (
         <EmptyState
           title="لا توجد مشاريع لهذا العميل"

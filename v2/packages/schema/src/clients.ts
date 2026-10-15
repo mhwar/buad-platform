@@ -125,8 +125,14 @@ export const listQuery = z.object({
   status: z.string().optional(),
   clientId: z.string().optional(),
   product: z.string().max(60).optional(),
-  sort: z.enum(["newest", "name", "value"]).default("newest"),
+  sort: z.enum(["newest", "name", "value", "contact"]).default("newest"),
   archived: z.enum(["0", "1"]).default("0"),
+  /** CRM filters: "me" or a user id; a relationship; a source; a tag; follow-ups that are due. */
+  owner: z.string().max(60).optional(),
+  rel: z.enum(["active", "prospect", "former", "dormant", "new"]).optional(),
+  source: z.string().max(20).optional(),
+  tag: z.string().max(40).optional(),
+  followup: z.enum(["due"]).optional(),
 });
 
 /** Arabic labels, identical to v1 (app.html L3756–3771). */

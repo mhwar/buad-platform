@@ -27,6 +27,17 @@ const item: ClientListItem = {
   ],
   documentsCount: 3,
   lastActivity: Math.floor(Date.now() / 1000) - 86400 * 2,
+  ownerId: "",
+  ownerName: "",
+  source: "",
+  tags: [],
+  nextFollowUpAt: "",
+  lastContactAt: 0,
+  activeProjects: 1,
+  completedProjects: 0,
+  openRequests: 0,
+  openQuotes: 0,
+  relationship: "active" as const,
 };
 const me = (role: string) => () => ({ user: meUser(role) });
 
