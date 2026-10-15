@@ -1,6 +1,6 @@
 import * as RMenu from "@radix-ui/react-dropdown-menu";
 import { useQuery } from "@tanstack/react-query";
-import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
+import { useNavigate, useRouterState } from "@tanstack/react-router";
 import { ChevronDown, PanelRightClose, PanelRightOpen } from "lucide-react";
 import { useMemo, useState } from "react";
 import { attentionQuery } from "../../features/home/api";
@@ -28,6 +28,54 @@ const Count = ({ n }: { n: number }) =>
       {n > 99 ? "99+" : n}
     </span>
   ) : null;
+
+/**
+ * A link whose "current page" mark is ours, not the router's: the router marks every link whose
+ * path matches, which would highlight a section and all its pages that share one path (finance tabs).
+ */
+function NavLink({
+  to,
+  search,
+  current,
+  className,
+  children,
+  ...rest
+}: {
+  to: string;
+  search?: Record<string, string>;
+  current: boolean;
+  className: string;
+  children: React.ReactNode;
+} & Omit<React.AnchorHTMLAttributes<HTMLAnchorElement>, "href" | "className" | "children">) {
+  const navigate = useNavigate();
+  const href = search ? `${to}?${new URLSearchParams(search).toString()}` : to;
+  return (
+    <a
+      {...rest}
+      href={href}
+      aria-current={current ? "page" : undefined}
+      className={className}
+      onClick={(e) => {
+        if (
+          e.defaultPrevented ||
+          e.button !== 0 ||
+          e.metaKey ||
+          e.ctrlKey ||
+          e.shiftKey ||
+          e.altKey
+        )
+          return;
+        e.preventDefault();
+        navigate({ to, search } as never);
+      }}
+    >
+      {children}
+    </a>
+  );
+}
+
+const queryOf = (href: string) =>
+  href.includes("?") ? Object.fromEntries(new URLSearchParams(href.split("?")[1])) : undefined;
 
 const row =
   "group relative flex min-h-10 items-center gap-3 rounded-lg px-3 text-sm transition-colors";
@@ -120,9 +168,9 @@ function Item({
   return (
     <div>
       <div className="relative flex items-center">
-        <Link
+        <NavLink
           to={entry.to}
-          aria-current={active && !hasChildren ? "page" : undefined}
+          current={active && !hasChildren}
           aria-label={collapsed ? `${entry.label}${badge ? `، ${badge}` : ""}` : undefined}
           title={collapsed ? entry.label : entry.hint}
           className={cx(
@@ -154,7 +202,7 @@ function Item({
               className="absolute end-2 top-1.5 size-2 rounded-full bg-red-600 ring-2 ring-surface"
             />
           )}
-        </Link>
+        </NavLink>
         {hasChildren && !collapsed && (
           <button
             type="button"
@@ -180,14 +228,14 @@ function Item({
             const on = child?.key === t.key;
             return (
               <li key={t.key}>
-                <Link
+                <NavLink
                   to={t.to}
+                  current={on}
                   search={
                     t.href.includes("?")
                       ? (Object.fromEntries(new URLSearchParams(t.href.split("?")[1])) as never)
                       : undefined
                   }
-                  aria-current={on ? "page" : undefined}
                   className={cx(
                     "flex min-h-9 items-center justify-between gap-2 rounded-md px-3 text-[13px] transition-colors",
                     on
@@ -197,7 +245,7 @@ function Item({
                 >
                   <span className="truncate">{t.label}</span>
                   <Count n={badgeFor(t, counts)} />
-                </Link>
+                </NavLink>
               </li>
             );
           })}
