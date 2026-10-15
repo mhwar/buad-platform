@@ -1,14 +1,27 @@
-import { formatCode, type QuoteItem, quoteIsValid, quoteTotals } from "@buad/domain";
-import { productRequests, quotes } from "@buad/schema/db";
-import { quoteInput, quotePatch, quoteStatusInput } from "@buad/schema/quotes";
+import {
+  formatCode,
+  normalizeName,
+  type PricingIn,
+  priceQuote,
+  type QuoteItem,
+  quoteIsValid,
+  quoteTotals,
+  scheduleSplit,
+} from "@buad/domain";
+import { paymentSchedule, productRequests, products, quotes } from "@buad/schema/db";
+import { quoteConvertInput, quoteInput, quotePatch, quoteStatusInput } from "@buad/schema/quotes";
 import { zValidator } from "@hono/zod-validator";
 import { and, desc, eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { requireAuth, requireRW, type Vars } from "../auth/middleware";
 import type { Db } from "../auth/service";
+import { findSimilarName, insertClient } from "./clients";
 import { newId, nextCounter, nowSec } from "./common";
 import { loadVatRate } from "./finance";
 import { loadOrgProfile } from "./org";
+import { pricingOf } from "./products";
+import { insertProject, liveClient } from "./projects";
+import { resolveServiceLink } from "./service-link";
 
 type Env = { Bindings: { JWT_SECRET: string }; Variables: Vars };
 type Row = typeof quotes.$inferSelect;
@@ -30,6 +43,9 @@ const shape = (r: Row) => {
     number: r.number,
     requestId: r.requestId,
     clientId: r.clientId,
+    productId: r.productId,
+    packageId: r.packageId,
+    projectId: r.projectId,
     recipient: r.recipient,
     entity: r.entity,
     title: r.title,
@@ -116,6 +132,8 @@ export const quotesApp = new Hono<Env>()
       number,
       requestId: v.requestId,
       clientId: v.clientId,
+      productId: v.productId,
+      packageId: v.packageId,
       recipient,
       entity,
       title: v.title,
@@ -127,6 +145,50 @@ export const quotesApp = new Hono<Env>()
       createdBy: me.id,
     });
     return c.json({ ok: true, id, number }, 201);
+  })
+
+  // Service packages at their selling price. Prices only: costs and margins never leave the pricing module.
+  .get("/catalog", async (c) => {
+    const me = c.get("user");
+    const db = c.get("db");
+    const rate = await loadVatRate(db, me.orgId);
+    const rows = await db
+      .select()
+      .from(products)
+      .where(and(eq(products.orgId, me.orgId), eq(products.status, "published")));
+    const items: {
+      productId: string;
+      productName: string;
+      packageId: string;
+      packageName: string;
+      price: number;
+    }[] = [];
+    for (const p of rows) {
+      let names: Record<string, string> = {};
+      try {
+        names = Object.fromEntries(
+          ((JSON.parse(p.content)?.packages ?? []) as { id: string; name: string }[]).map((k) => [
+            k.id,
+            k.name,
+          ]),
+        );
+      } catch {
+        names = {};
+      }
+      const pricing = pricingOf(p);
+      for (const pkg of pricing.packages) {
+        const q = priceQuote(pricing as PricingIn, pkg.qty, pkg.fixedPrice, rate);
+        if (q.status === "ok" && names[pkg.packageId])
+          items.push({
+            productId: p.id,
+            productName: p.name,
+            packageId: pkg.packageId,
+            packageName: names[pkg.packageId] as string,
+            price: q.price,
+          });
+      }
+    }
+    return c.json({ ok: true, items });
   })
 
   .get("/vat-rate", async (c) =>
@@ -199,9 +261,162 @@ export const quotesApp = new Hono<Env>()
             .update(productRequests)
             .set({ status: next as "quoted", updatedBy: me.id, updatedAt: nowSec() })
             .where(eq(productRequests.id, req.id));
+        // Sending an offer starts the clock: follow up in five days unless a date is already set.
+        if (to === "sent" && req && !req.followUpAt && order.includes(req.status))
+          await db
+            .update(productRequests)
+            .set({ followUpAt: new Date(Date.now() + 5 * 86400000).toISOString().slice(0, 10) })
+            .where(eq(productRequests.id, req.id));
       }
     }
     return c.json({ ok: true });
+  })
+
+  // A copy as a new draft with its own number: to revise an offer without touching the one already sent.
+  .post("/:id/duplicate", async (c) => {
+    const me = c.get("user");
+    const db = c.get("db");
+    const r = await own(db, me.orgId, c.req.param("id"));
+    if (!r) return c.json({ ok: false, error: "not_found" }, 404);
+    const year = new Date().getUTCFullYear();
+    const number = formatCode("QT", await nextCounter(db, me.orgId, "quote", year), year);
+    const id = newId("qte");
+    await db.insert(quotes).values({
+      id,
+      orgId: me.orgId,
+      number,
+      requestId: r.requestId,
+      clientId: r.clientId,
+      productId: r.productId,
+      packageId: r.packageId,
+      recipient: r.recipient,
+      entity: r.entity,
+      title: r.title,
+      items: r.items,
+      discountHalalas: r.discountHalalas,
+      vatPct: r.vatPct,
+      validUntil: "",
+      terms: r.terms,
+      createdBy: me.id,
+    });
+    return c.json({ ok: true, id, number }, 201);
+  })
+
+  // An accepted offer becomes a client (new or existing) and a draft project at its price, with the
+  // payment schedule the person picked, ready in «التحصيل». Once only.
+  .post("/:id/convert", zValidator("json", quoteConvertInput), async (c) => {
+    const me = c.get("user");
+    const db = c.get("db");
+    const v = c.req.valid("json");
+    const r = await own(db, me.orgId, c.req.param("id"));
+    if (!r) return c.json({ ok: false, error: "not_found" }, 404);
+    if (r.status !== "accepted") return c.json({ ok: false, error: "not_accepted" }, 409);
+    if (r.projectId) return c.json({ ok: false, error: "already_converted" }, 409);
+
+    const [req] = r.requestId
+      ? await db
+          .select()
+          .from(productRequests)
+          .where(and(eq(productRequests.id, r.requestId), eq(productRequests.orgId, me.orgId)))
+          .limit(1)
+      : [];
+    let clientId = v.clientId ?? r.clientId ?? req?.clientId ?? "";
+    if (clientId) {
+      const cl = await liveClient(db, me.orgId, clientId);
+      if (!cl) return c.json({ ok: false, error: "client_not_found" }, 404);
+      if (cl.archivedAt) return c.json({ ok: false, error: "client_archived" }, 409);
+    } else {
+      const name = r.entity || r.recipient || req?.entity || req?.name || r.title;
+      if (!v.confirmSimilarName) {
+        const similar = await findSimilarName(db, me.orgId, normalizeName(name));
+        if (similar) return c.json({ ok: false, error: "similar_name", similar }, 409);
+      }
+      clientId = (
+        await insertClient(db, me, {
+          name,
+          type: "association",
+          email: req?.email ?? "",
+          phone: req?.phone ?? "",
+          city: "",
+          regNo: "",
+          taxNo: "",
+          address: "",
+          website: "",
+          notes: `أُنشئ من عرض السعر ${r.number}`,
+          logo: "",
+          signatoryName: "",
+          signatoryTitle: "",
+          contacts: r.recipient
+            ? [{ name: r.recipient, title: "", phone: req?.phone ?? "", email: req?.email ?? "" }]
+            : [],
+          confirmSimilarName: true,
+        } as Parameters<typeof insertClient>[2])
+      ).id;
+    }
+
+    const t = quoteTotals(itemsOf(r), r.discountHalalas, r.vatPct);
+    const link = r.productId
+      ? await resolveServiceLink(db, me.orgId, r.productId, r.packageId)
+      : null;
+    const project = await insertProject(
+      db,
+      me,
+      {
+        clientId,
+        name: v.projectName || r.title,
+        type: "other",
+        status: "draft",
+        visibility: "team",
+        location: "",
+        startDate: "",
+        endDate: "",
+        payDate: "",
+        // The contract value before VAT: the project adds its own VAT on top.
+        expectedValue: t.net / 100,
+        notes: `من عرض السعر ${r.number}`,
+        productId: "",
+        packageId: "",
+      } as Parameters<typeof insertProject>[2],
+      link && link.ok ? link : undefined,
+    );
+    const lines = scheduleSplit(v.schedule, t.total, today());
+    if (lines.length)
+      await db.insert(paymentSchedule).values(
+        lines.map((l) => ({
+          id: newId("psc"),
+          orgId: me.orgId,
+          projectId: project.id,
+          label: l.label,
+          dueDate: l.dueDate,
+          amount: l.amount,
+          createdBy: me.id,
+        })),
+      );
+    await db
+      .update(quotes)
+      .set({ clientId, projectId: project.id, updatedAt: nowSec() })
+      .where(eq(quotes.id, r.id));
+    if (req)
+      await db
+        .update(productRequests)
+        .set({
+          clientId,
+          projectId: project.id,
+          status: "won",
+          updatedBy: me.id,
+          updatedAt: nowSec(),
+        })
+        .where(eq(productRequests.id, req.id));
+    return c.json(
+      {
+        ok: true,
+        clientId,
+        projectId: project.id,
+        number: project.number,
+        instalments: lines.length,
+      },
+      201,
+    );
   })
 
   .delete("/:id", async (c) => {

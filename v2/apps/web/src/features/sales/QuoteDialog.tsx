@@ -6,7 +6,7 @@ import { useState } from "react";
 import { Badge, Button, Dialog, Field, Input, Notice, Textarea } from "../../components/ui";
 import { ApiError, sar } from "../../lib/format";
 import { send } from "../team/queries";
-import { QUOTE_LABEL, type Quote, vatRateQuery } from "./api";
+import { catalogQuery, QUOTE_LABEL, type Quote, vatRateQuery } from "./api";
 
 type Line = { label: string; qty: string; unit: string };
 const ERR: Record<string, string> = {
@@ -33,6 +33,11 @@ export function QuoteDialog({
   onSaved: () => void;
 }) {
   const rate = useQuery(vatRateQuery).data ?? 15;
+  const catalog = useQuery(catalogQuery).data ?? [];
+  const [service, setService] = useState({
+    productId: existing?.productId ?? "",
+    packageId: existing?.packageId ?? "",
+  });
   const locked = existing?.status === "accepted";
   const [title, setTitle] = useState(existing?.title ?? seed?.title ?? "");
   const [recipient, setRecipient] = useState(existing?.recipient ?? seed?.recipient ?? "");
@@ -55,6 +60,8 @@ export function QuoteDialog({
   );
   const body = {
     title,
+    productId: service.productId,
+    packageId: service.packageId,
     recipient,
     entity,
     items: lines
@@ -184,13 +191,48 @@ export function QuoteDialog({
               </Button>
             </div>
           ))}
-          <Button
-            variant="secondary"
-            onClick={() => setLines([...lines, { label: "", qty: "1", unit: "" }])}
-          >
-            <Plus className="size-4" />
-            بند
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              variant="secondary"
+              onClick={() => setLines([...lines, { label: "", qty: "1", unit: "" }])}
+            >
+              <Plus className="size-4" />
+              بند
+            </Button>
+            {catalog.length > 0 && (
+              <select
+                aria-label="إضافة من باقة"
+                value=""
+                onChange={(e) => {
+                  const item = catalog.find(
+                    (c) => `${c.productId}:${c.packageId}` === e.target.value,
+                  );
+                  if (!item) return;
+                  const line = {
+                    label: `${item.productName} — ${item.packageName}`,
+                    qty: "1",
+                    unit: String(item.price),
+                  };
+                  setLines(
+                    lines.length === 1 && !lines[0]?.label.trim() ? [line] : [...lines, line],
+                  );
+                  setService({ productId: item.productId, packageId: item.packageId });
+                  if (!title.trim()) setTitle(`عرض سعر — ${item.productName}`);
+                }}
+                className="min-h-11 rounded-lg border bg-surface px-2 text-sm sm:min-h-9"
+              >
+                <option value="">إضافة من باقة…</option>
+                {catalog.map((c) => (
+                  <option
+                    key={`${c.productId}:${c.packageId}`}
+                    value={`${c.productId}:${c.packageId}`}
+                  >
+                    {c.productName} — {c.packageName}
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
         </fieldset>
 
         <div className="grid gap-3 sm:grid-cols-3">
@@ -285,7 +327,18 @@ export function QuoteDialog({
           </div>
         )}
         {locked && (
-          <Notice tone="blue">العرض مقبول. حوّل الطلب إلى عميل ومشروع من تبويب «المسار».</Notice>
+          <Notice tone="blue">
+            {existing?.projectId ? (
+              <>
+                العرض مقبول وتحوّل إلى مشروع.{" "}
+                <Link to="/projects/$id" params={{ id: existing.projectId }} className="underline">
+                  فتح المشروع
+                </Link>
+              </>
+            ) : (
+              "العرض مقبول. حوّله إلى مشروع من قائمة العروض."
+            )}
+          </Notice>
         )}
       </div>
     </Dialog>

@@ -9,6 +9,7 @@ import {
   productRequests,
   products,
   projects,
+  quotes,
   tasks,
   users,
 } from "@buad/schema/db";
@@ -86,6 +87,29 @@ export const attentionApp = new Hono<{ Variables: Vars }>().use(requireAuth).get
       title: "طلبات عروض لم يُتواصل معها منذ أكثر من 3 أيام",
       count: n,
       link: "/products?tab=requests",
+    });
+  }
+  if (can("sales.view")) {
+    const sentQuotes = await db
+      .select({ validUntil: quotes.validUntil, updatedAt: quotes.updatedAt })
+      .from(quotes)
+      .where(and(eq(quotes.orgId, me.orgId), eq(quotes.status, "sent")));
+    const soon = new Date(Date.now() + 3 * 86400000).toISOString().slice(0, 10);
+    add({
+      key: "quotes-expiring",
+      tone: "warn",
+      title: "عروض أسعار تنتهي صلاحيتها خلال 3 أيام",
+      count: sentQuotes.filter(
+        (q) => q.validUntil !== "" && q.validUntil >= today && q.validUntil <= soon,
+      ).length,
+      link: "/sales/quotes",
+    });
+    add({
+      key: "quotes-waiting",
+      tone: "info",
+      title: "عروض أُرسلت ولم يُردّ عليها منذ أسبوع",
+      count: sentQuotes.filter((q) => nowSec() - q.updatedAt > 7 * 86400).length,
+      link: "/sales/quotes",
     });
   }
   if (can("documents.edit")) {

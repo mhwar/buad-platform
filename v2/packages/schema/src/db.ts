@@ -1005,6 +1005,10 @@ export const quotes = sqliteTable(
     number: text("number").notNull(),
     requestId: text("request_id").notNull().default(""),
     clientId: text("client_id").notNull().default(""),
+    /** The service and package it prices (when picked from the catalogue), and the project it became. */
+    productId: text("product_id").notNull().default(""),
+    packageId: text("package_id").notNull().default(""),
+    projectId: text("project_id").notNull().default(""),
     /** Who it is addressed to, kept as typed so it survives the client being renamed or absent. */
     recipient: text("recipient").notNull().default(""),
     entity: text("entity").notNull().default(""),
