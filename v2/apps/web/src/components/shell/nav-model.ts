@@ -6,6 +6,7 @@ import {
   type NavSearch,
   PHONE_CORE,
   type Section,
+  type Tint,
   tabHref,
   visibleSections,
 } from "../../features/more/tabs";
@@ -16,6 +17,7 @@ export type NavEntry = {
   label: string;
   to: string;
   icon: ComponentType<{ className?: string }>;
+  tint: Tint;
   /** Highlighted for this exact path only (the home page). */
   exact?: boolean;
   /** `/api/attention` keys whose counts form this entry's badge (its tabs' included). */
@@ -45,6 +47,7 @@ const entryOf = (s: Section): NavEntry => ({
   label: s.label,
   to: s.to,
   icon: s.icon,
+  tint: s.tint ?? "slate",
   exact: s.key === "home",
   attention: [
     ...new Set([...(s.attention ?? []), ...(s.tabs ?? []).flatMap((t) => t.attention ?? [])]),
@@ -104,7 +107,7 @@ export function phoneNav(perms: readonly string[]): PhoneNavItem[] {
     .filter((s) => (PHONE_CORE as readonly string[]).includes(s.key))
     .map((s) => ({
       to: s.to,
-      label: s.label,
+      label: s.short ?? s.label,
       icon: s.icon,
       exact: s.key === "home",
       also: s.match,

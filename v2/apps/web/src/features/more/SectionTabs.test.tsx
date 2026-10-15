@@ -41,18 +41,17 @@ async function at(path: string, role = "owner") {
 describe("SectionTabs", () => {
   it("shows the section's tabs with live counts, the open one marked, and what it is for", async () => {
     await at("/tasks");
-    const tabs = await screen.findByRole("tablist", { name: "المشاريع" });
+    const tabs = await screen.findByRole("tablist", { name: "مساحة العمل" });
     expect(
       within(tabs)
         .getAllByRole("tab")
         .map((t) => t.textContent?.replace(/\d+$/, "")),
-    ).toEqual(["المشاريع", "المهام", "المستندات"]);
-    expect(within(tabs).getByRole("tab", { name: /المهام/ })).toHaveAttribute(
+    ).toEqual(["اليوم", "مهامي"]);
+    expect(within(tabs).getByRole("tab", { name: /مهامي/ })).toHaveAttribute(
       "aria-selected",
       "true",
     );
-    expect(within(tabs).getByRole("tab", { name: /المهام/ })).toHaveTextContent("3");
-    expect(within(tabs).getByRole("tab", { name: /المستندات/ })).toHaveTextContent("2");
+    expect(within(tabs).getByRole("tab", { name: /مهامي/ })).toHaveTextContent("3");
     expect(screen.getByText(/مهام الفريق عبر المشاريع/)).toBeInTheDocument();
     expect(screen.getByText(/متى تستخدمه/)).toBeInTheDocument();
   });
@@ -68,9 +67,9 @@ describe("SectionTabs", () => {
   });
 
   it("only lists the tabs a role may open", async () => {
-    await at("/projects", "member");
-    const tabs = await screen.findByRole("tablist", { name: "المشاريع" });
-    expect(within(tabs).getAllByRole("tab")).toHaveLength(3); // projects, tasks, documents are all allowed to members
+    await at("/", "viewer");
+    const tabs = await screen.findByRole("tablist", { name: "مساحة العمل" });
+    expect(within(tabs).getAllByRole("tab")).toHaveLength(2); // viewers may read tasks
   });
 
   it("is absent on detail pages and on pages without tabs", async () => {

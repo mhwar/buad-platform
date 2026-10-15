@@ -32,6 +32,7 @@ import {
   Undo2,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useTrackRecent } from "../../components/shell/useRecent";
 import {
   Badge,
   Button,
@@ -150,6 +151,16 @@ export function DocumentEditor() {
   const navigate = useNavigate();
   const me = useQuery(meQuery).data;
   const q = useQuery(documentQuery(docId));
+  useTrackRecent(
+    q.data
+      ? {
+          kind: "document",
+          id: docId,
+          title: q.data.document.title || q.data.document.number,
+          href: `/projects/${projectId}/documents/${docId}`,
+        }
+      : null,
+  );
   const manager = !!me?.perms.includes("documents.edit");
   const [draft, setDraft] = useState<Draft | null>(null);
   const [panel, setPanel] = useState<Panel>("data");
