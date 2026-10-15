@@ -302,8 +302,12 @@ const documentsRoute = createRoute({
   path: "/documents",
   validateSearch: z.object({
     q: z.string().optional(),
-    kind: z.enum(["contract", "letter"]).optional(),
-    status: z.enum(["draft", "review", "approved"]).optional(),
+    kind: z.enum(["contract", "letter", "quote"]).optional(),
+    status: z
+      .enum(["draft", "review", "approved", "outgoing", "sent", "accepted", "rejected"])
+      .optional(),
+    client: z.string().max(200).optional(),
+    period: z.enum(["30", "90", "year"]).optional(),
     view: z.enum(["outgoing"]).optional(),
   }),
   beforeLoad: authed,
