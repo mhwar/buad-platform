@@ -18,6 +18,7 @@ import type { Db } from "../auth/service";
 import { findSimilarName, insertClient } from "./clients";
 import { newId, nextCounter, nowSec } from "./common";
 import { loadVatRate } from "./finance";
+import { moveStage } from "./opportunity";
 import { loadOrgProfile } from "./org";
 import { pricingOf } from "./products";
 import { insertProject, liveClient } from "./projects";
@@ -35,7 +36,7 @@ const itemsOf = (r: Row): QuoteItem[] => {
 };
 const today = () => new Date().toISOString().slice(0, 10);
 
-const shape = (r: Row) => {
+export const shapeQuote = (r: Row) => {
   const items = itemsOf(r);
   const t = quoteTotals(items, r.discountHalalas, r.vatPct);
   return {
@@ -105,14 +106,14 @@ export const quotesApp = new Hono<Env>()
       )
       .orderBy(desc(quotes.createdAt))
       .limit(200);
-    return c.json({ ok: true, quotes: rows.map(shape) });
+    return c.json({ ok: true, quotes: rows.map(shapeQuote) });
   })
 
   .post("/", zValidator("json", quoteInput), async (c) => {
     const me = c.get("user");
     const db = c.get("db");
     const v = c.req.valid("json");
-    let { recipient, entity } = v;
+    let { recipient, entity, clientId } = v;
     if (v.requestId) {
       const [req] = await db
         .select()
@@ -122,6 +123,7 @@ export const quotesApp = new Hono<Env>()
       if (!req) return c.json({ ok: false, error: "request_not_found" }, 404);
       recipient ||= req.name;
       entity ||= req.entity;
+      clientId ||= req.clientId; // an offer follows its opportunity's client
     }
     const year = new Date().getUTCFullYear();
     const number = formatCode("QT", await nextCounter(db, me.orgId, "quote", year), year);
@@ -131,7 +133,7 @@ export const quotesApp = new Hono<Env>()
       orgId: me.orgId,
       number,
       requestId: v.requestId,
-      clientId: v.clientId,
+      clientId,
       productId: v.productId,
       packageId: v.packageId,
       recipient,
@@ -200,7 +202,7 @@ export const quotesApp = new Hono<Env>()
     const db = c.get("db");
     const r = await own(db, me.orgId, c.req.param("id"));
     if (!r) return c.json({ ok: false, error: "not_found" }, 404);
-    return c.json({ ok: true, quote: shape(r), org: await loadOrgProfile(db, me.orgId) });
+    return c.json({ ok: true, quote: shapeQuote(r), org: await loadOrgProfile(db, me.orgId) });
   })
 
   .patch("/:id", zValidator("json", quotePatch), async (c) => {
@@ -257,10 +259,7 @@ export const quotesApp = new Hono<Env>()
         // Only move a lead forward, never back (a won or lost request stays as it is).
         const order = ["new", "contacted", "quoted", "negotiating"];
         if (req && order.includes(req.status) && order.indexOf(req.status) < order.indexOf(next))
-          await db
-            .update(productRequests)
-            .set({ status: next as "quoted", updatedBy: me.id, updatedAt: nowSec() })
-            .where(eq(productRequests.id, req.id));
+          await moveStage(db, me, req, next as "quoted");
         // Sending an offer starts the clock: follow up in five days unless a date is already set.
         if (to === "sent" && req && !req.followUpAt && order.includes(req.status))
           await db
@@ -396,17 +395,10 @@ export const quotesApp = new Hono<Env>()
       .update(quotes)
       .set({ clientId, projectId: project.id, updatedAt: nowSec() })
       .where(eq(quotes.id, r.id));
-    if (req)
-      await db
-        .update(productRequests)
-        .set({
-          clientId,
-          projectId: project.id,
-          status: "won",
-          updatedBy: me.id,
-          updatedAt: nowSec(),
-        })
-        .where(eq(productRequests.id, req.id));
+    if (req) {
+      req.clientId = clientId;
+      await moveStage(db, me, req, "won", { clientId, projectId: project.id });
+    }
     return c.json(
       {
         ok: true,

@@ -212,7 +212,7 @@ export const checkDuplicate = async (q: {
 /* ── CRM ─────────────────────────────────────────────────────────────────── */
 export type Activity = {
   id: string;
-  type: "call" | "meeting" | "visit" | "email" | "whatsapp" | "note";
+  type: "call" | "meeting" | "visit" | "email" | "whatsapp" | "note" | "stage";
   summary: string;
   at: number;
   createdByName: string;

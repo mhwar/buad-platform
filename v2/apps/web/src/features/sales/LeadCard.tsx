@@ -1,5 +1,6 @@
-import { isStale } from "@buad/domain";
-import { CalendarClock, ExternalLink, FileText, MessageCircle } from "lucide-react";
+import { daysInStage, isStale } from "@buad/domain";
+import { Link } from "@tanstack/react-router";
+import { CalendarClock, FileText, MessageCircle } from "lucide-react";
 import { Badge, Button, Card } from "../../components/ui";
 import { ago, sar, whatsapp } from "../../lib/format";
 import { type ProductRequest, REQUEST_LABEL, type RequestStatus } from "../products/products-api";
@@ -16,7 +17,6 @@ export function LeadCard({
   onChanged,
   onFollow,
   onQuote,
-  onDetails,
   draggable = false,
 }: {
   r: ProductRequest;
@@ -25,7 +25,6 @@ export function LeadCard({
   onChanged: () => void;
   onFollow: () => void;
   onQuote: () => void;
-  onDetails: () => void;
   draggable?: boolean;
 }) {
   const open = !["won", "lost"].includes(r.status);
@@ -35,6 +34,7 @@ export function LeadCard({
     Math.floor(Date.now() / 1000),
   );
   const wa = whatsapp(r.phone);
+  const inStage = daysInStage(r, Math.floor(Date.now() / 1000));
   return (
     <Card
       className="space-y-2 p-3"
@@ -50,9 +50,18 @@ export function LeadCard({
     >
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div className="min-w-0">
-          <p className="font-semibold">{r.name}</p>
+          <Link
+            to="/sales/$id"
+            params={{ id: r.id }}
+            draggable={false}
+            className="font-semibold hover:text-brand hover:underline"
+          >
+            {r.entity || r.name}
+          </Link>
           <p className="text-xs text-muted">
-            {[r.entity, r.productName].filter(Boolean).join(" · ")}
+            {[r.entity && r.name !== r.entity ? r.name : "", r.productName]
+              .filter(Boolean)
+              .join(" · ")}
           </p>
         </div>
         <span className="flex flex-wrap gap-1">
@@ -62,6 +71,7 @@ export function LeadCard({
       </div>
       <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted">
         <span>وصل {ago(r.createdAt)}</span>
+        {open && inStage > 0 && <span>{inStage} يوم في المرحلة</span>}
         {ownerName && <span>المسؤول: {ownerName}</span>}
         {r.followUpAt && (
           <span
@@ -97,9 +107,6 @@ export function LeadCard({
           <Button variant="secondary" onClick={onQuote}>
             <FileText className="size-4" />
             عرض
-          </Button>
-          <Button variant="ghost" aria-label={`تفاصيل وتسعير ${r.name}`} onClick={onDetails}>
-            <ExternalLink className="size-4" />
           </Button>
           {wa && (
             <a

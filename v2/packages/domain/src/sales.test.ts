@@ -167,3 +167,29 @@ describe("the pipeline", () => {
     ).toBe(50); // Q2 starts in April
   });
 });
+
+import { daysInStage, STAGE_HINT, STAGE_LABEL, STAGES, weightedValue } from "./sales";
+
+describe("the funnel", () => {
+  it("names every stage and explains it, in order from new to closed", () => {
+    expect(STAGES.map((s) => STAGE_LABEL[s])).toEqual([
+      "جديد",
+      "مؤهَّل",
+      "عرض سعر",
+      "تفاوض",
+      "مكسوب",
+      "خاسر",
+    ]);
+    for (const s of STAGES) expect(STAGE_HINT[s].length).toBeGreaterThan(5);
+  });
+  it("weights an open opportunity by its stage, and a closed one at nothing", () => {
+    expect(weightedValue("quoted", 40000)).toBe(16000);
+    expect(weightedValue("negotiating", 1000)).toBe(650);
+    expect(weightedValue("won", 1000)).toBe(0);
+  });
+  it("counts days in the stage from the last move, or from creation", () => {
+    const now = 100 * 86400;
+    expect(daysInStage({ stageChangedAt: 97 * 86400, createdAt: 10 }, now)).toBe(3);
+    expect(daysInStage({ stageChangedAt: 0, createdAt: 90 * 86400 }, now)).toBe(10);
+  });
+});

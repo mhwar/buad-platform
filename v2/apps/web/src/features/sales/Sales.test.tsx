@@ -2,9 +2,9 @@ import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { meUser, renderWithApp, stubApi } from "../../test-utils";
+import { OpportunitiesPage } from "./OpportunitiesPage";
 import { QuoteDialog } from "./QuoteDialog";
 import { SalesDashboard } from "./SalesDashboard";
-import { PipelinePage } from "./SalesPage";
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -15,7 +15,7 @@ const lead = (o: object = {}) => ({
   source: "site",
   status: "quoted",
   name: "منى",
-  entity: "جمعية الأمل",
+  entity: "",
   phone: "0551234567",
   email: "",
   message: "",
@@ -28,6 +28,8 @@ const lead = (o: object = {}) => ({
   followUpAt: "2020-01-01",
   value: 40000,
   lostReason: "",
+  packageId: "",
+  stageChangedAt: 0,
   updatedAt: 1,
   createdAt: Math.floor(Date.now() / 1000) - 86400,
   interest: false,
@@ -57,29 +59,29 @@ describe("pipeline board", () => {
 
   it("has a column per stage with its count, value and weighted value", async () => {
     stubApi(routes());
-    await renderWithApp(<PipelinePage />);
+    await renderWithApp(<OpportunitiesPage />);
     await screen.findByRole("list", { name: "مراحل الفرص" });
     const col = (name: string) => within(board().getByRole("listitem", { name }));
-    expect(col("عُرض عليه سعر").getByText("منى")).toBeInTheDocument();
-    expect(col("عُرض عليه سعر").getAllByText(/40[,٬]?000/).length).toBeGreaterThanOrEqual(2); // the column total and the card
-    expect(col("عُرض عليه سعر").getByText(/مرجّحة/)).toHaveTextContent(/16[,٬]?000/); // 40000 × 0.4
+    expect(col("عرض سعر").getByText("منى")).toBeInTheDocument();
+    expect(col("عرض سعر").getAllByText(/40[,٬]?000/).length).toBeGreaterThanOrEqual(2); // the column total and the card
+    expect(col("عرض سعر").getByText(/مرجّحة/)).toHaveTextContent(/16[,٬]?000/); // 40000 × 0.4
     expect(col("تفاوض").getByText("خالد")).toBeInTheDocument();
-    expect(col("تم التعاقد").getByText("سارة")).toBeInTheDocument();
-    expect(col("لم يكتمل").getByText("ليلى")).toBeInTheDocument();
+    expect(col("مكسوب").getByText("سارة")).toBeInTheDocument();
+    expect(col("خاسر").getByText("ليلى")).toBeInTheDocument();
     expect(col("جديد").getByText("لا شيء هنا")).toBeInTheDocument();
   });
 
   it("marks a lead whose follow-up is overdue, and one nobody has touched for a week", async () => {
     stubApi(routes("owner", [lead({ updatedAt: Math.floor(Date.now() / 1000) - 9 * 86400 })]));
-    await renderWithApp(<PipelinePage />);
-    const col = within(await screen.findByRole("listitem", { name: "عُرض عليه سعر" }));
+    await renderWithApp(<OpportunitiesPage />);
+    const col = within(await screen.findByRole("listitem", { name: "عرض سعر" }));
     expect(col.getByText(/متأخرة · 2020-01-01/)).toBeInTheDocument();
     expect(col.getByText("راكدة")).toBeInTheDocument();
   });
 
   it("moves a lead by dropping it on another column", async () => {
     const calls = stubApi({ ...routes(), "PATCH /api/product-requests/r1": () => ({ ok: true }) });
-    await renderWithApp(<PipelinePage />);
+    await renderWithApp(<OpportunitiesPage />);
     const target = await screen.findByRole("listitem", { name: "تفاوض" });
     const data: Record<string, string> = { "text/lead": "r1" };
     fireEvent.drop(target, { dataTransfer: { getData: (k: string) => data[k] ?? "" } });
@@ -90,7 +92,7 @@ describe("pipeline board", () => {
 
   it("also moves it from the card's own menu (keyboard and touch)", async () => {
     const calls = stubApi({ ...routes(), "PATCH /api/product-requests/r1": () => ({ ok: true }) });
-    await renderWithApp(<PipelinePage />);
+    await renderWithApp(<OpportunitiesPage />);
     const menus = await screen.findAllByLabelText("مرحلة منى");
     await userEvent.selectOptions(menus[0]!, "negotiating");
     await waitFor(() =>
@@ -100,7 +102,7 @@ describe("pipeline board", () => {
 
   it("a viewer sees the board without actions, and nothing can be dropped", async () => {
     const calls = stubApi({ ...routes("viewer") });
-    await renderWithApp(<PipelinePage />);
+    await renderWithApp(<OpportunitiesPage />);
     const target = await screen.findByRole("listitem", { name: "تفاوض" });
     expect(screen.queryByLabelText("مرحلة منى")).toBeNull();
     fireEvent.drop(target, { dataTransfer: { getData: () => "r1" } });
@@ -110,8 +112,68 @@ describe("pipeline board", () => {
 
   it("invites logging the first enquiry when there are none", async () => {
     stubApi(routes("owner", []));
-    await renderWithApp(<PipelinePage />);
+    await renderWithApp(<OpportunitiesPage />);
     expect(await screen.findByText("لا فرص بعد")).toBeInTheDocument();
+  });
+});
+
+describe("opportunities page", () => {
+  afterEach(() => localStorage.clear());
+
+  it("sums up the funnel on top: open, weighted, won this quarter, win rate and due follow-ups", async () => {
+    stubApi(routes());
+    await renderWithApp(<OpportunitiesPage />);
+    const strip = within(await screen.findByRole("list", { name: "ملخص الفرص" }));
+    await waitFor(() => expect(strip.getByText("مفتوحة").nextSibling).toHaveTextContent("2"));
+    expect(strip.getByText("نسبة الكسب").nextSibling).toHaveTextContent("50%");
+    // 40000 × 0.4 + 100000 × 0.65
+    expect(strip.getByText("القيمة المرجّحة").nextSibling).toHaveTextContent(/81[,٬]?000/);
+    expect(strip.getByRole("button", { name: /تحتاج متابعة اليوم/ })).toHaveTextContent("1");
+  });
+
+  it("switches to a table that links each opportunity, and remembers the choice", async () => {
+    stubApi(routes());
+    const { unmount } = await renderWithApp(<OpportunitiesPage />);
+    await userEvent.click(await screen.findByRole("tab", { name: /جدول/ }));
+    const table = await screen.findByRole("table");
+    expect(within(table).getByRole("link", { name: "خالد" })).toHaveAttribute("href", "/sales/r2");
+    expect(within(table).getAllByRole("row")).toHaveLength(5); // header + 4
+    expect(localStorage.getItem("buad-sales-view")).toBe("table");
+    unmount();
+    await renderWithApp(<OpportunitiesPage />);
+    expect(await screen.findByRole("table")).toBeInTheDocument();
+  });
+
+  it("filters to what needs a follow-up today from the strip, and by search", async () => {
+    stubApi(routes());
+    await renderWithApp(<OpportunitiesPage />);
+    await userEvent.click(await screen.findByRole("tab", { name: /قائمة/ }));
+    await userEvent.click(screen.getByRole("button", { name: /تحتاج متابعة اليوم/ }));
+    expect(screen.getAllByRole("link", { name: "منى" }).length).toBeGreaterThan(0);
+    expect(screen.queryByRole("link", { name: "خالد" })).toBeNull();
+    await userEvent.click(screen.getByRole("button", { name: /تحتاج متابعة اليوم/ }));
+    await userEvent.type(screen.getByRole("searchbox"), "خالد");
+    expect(screen.queryByRole("link", { name: "منى" })).toBeNull();
+    expect(screen.getByRole("link", { name: "خالد" })).toBeInTheDocument();
+  });
+
+  it("offers the offers list and analytics, and a new opportunity only to those who sell", async () => {
+    stubApi(routes());
+    const { unmount } = await renderWithApp(<OpportunitiesPage />);
+    expect(await screen.findByRole("link", { name: /عروض الأسعار/ })).toHaveAttribute(
+      "href",
+      "/sales/quotes",
+    );
+    expect(screen.getByRole("link", { name: /التحليلات/ })).toHaveAttribute(
+      "href",
+      "/sales/analytics",
+    );
+    expect(await screen.findByRole("button", { name: /فرصة/ })).toBeInTheDocument();
+    unmount();
+    stubApi(routes("viewer"));
+    await renderWithApp(<OpportunitiesPage />);
+    await screen.findByRole("link", { name: /التحليلات/ });
+    expect(screen.queryByRole("button", { name: /^فرصة$/ })).toBeNull();
   });
 });
 

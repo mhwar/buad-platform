@@ -1,11 +1,10 @@
 import * as RMenu from "@radix-ui/react-dropdown-menu";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { Briefcase, ListChecks, Plus, ShoppingCart, Users } from "lucide-react";
 import { type ComponentType, useState } from "react";
 import { ClientDialog } from "../../features/clients/ClientDialog";
-import { productsQuery } from "../../features/products/products-api";
-import { AddDialog } from "../../features/products/RequestsInbox";
 import { ProjectDialog } from "../../features/projects/ProjectDialog";
+import { NewOpportunityDialog } from "../../features/sales/NewOpportunityDialog";
 import { TaskDialog } from "../../features/tasks/TaskDialogs";
 import { useCan } from "../../session";
 import { cx } from "../ui";
@@ -28,7 +27,6 @@ export function QuickCreate({ collapsed }: { collapsed: boolean }) {
   const can = useCan();
   const qc = useQueryClient();
   const [open, setOpen] = useState<Kind | null>(null);
-  const products = useQuery({ ...productsQuery, enabled: open === "opportunity" });
   const items = ITEMS.filter((i) => can(i.perm));
   if (!items.length) return null;
   const item =
@@ -77,12 +75,7 @@ export function QuickCreate({ collapsed }: { collapsed: boolean }) {
           }}
         />
       )}
-      <AddDialog
-        open={open === "opportunity"}
-        onClose={() => setOpen(null)}
-        products={products.data ?? []}
-        onDone={() => qc.invalidateQueries({ queryKey: ["product-requests"] })}
-      />
+      <NewOpportunityDialog open={open === "opportunity"} onClose={() => setOpen(null)} />
     </>
   );
 }

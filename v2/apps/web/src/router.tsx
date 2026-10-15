@@ -38,9 +38,11 @@ import { ProductsPage } from "./features/products/ProductsPage";
 import { ProjectPage } from "./features/projects/ProjectPage";
 import { ProjectsPage } from "./features/projects/ProjectsPage";
 import { FollowupsPage } from "./features/sales/FollowupsPage";
+import { OpportunitiesPage } from "./features/sales/OpportunitiesPage";
+import { OpportunityPage } from "./features/sales/OpportunityPage";
 import { QuotePrintPage } from "./features/sales/QuotePrint";
 import { SalesDashboard } from "./features/sales/SalesDashboard";
-import { PipelinePage, QuotesPage } from "./features/sales/SalesPage";
+import { QuotesPage } from "./features/sales/SalesPage";
 import { SettingsLayout } from "./features/settings/SettingsLayout";
 import { ProductPublicPage } from "./features/site/ProductPublicPage";
 import { SitePage } from "./features/site/SitePage";
@@ -241,7 +243,7 @@ const productsRoute = createRoute({
   validateSearch: z.object({ tab: z.enum(["products", "overview", "requests"]).optional() }),
   // The requests inbox became «الفرص» under المبيعات; old links still land there.
   beforeLoad: async ({ search }) => {
-    if (search.tab === "requests") throw redirect({ to: "/sales/pipeline" });
+    if (search.tab === "requests") throw redirect({ to: "/sales" });
     await needs("products.view")();
   },
   component: ProductsPage,
@@ -389,13 +391,19 @@ const salesRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/sales",
   beforeLoad: needs("sales.view"),
+  component: OpportunitiesPage,
+});
+const analyticsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/sales/analytics",
+  beforeLoad: needs("sales.view"),
   component: SalesDashboard,
 });
-const pipelineRoute = createRoute({
+const opportunityRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: "/sales/pipeline",
+  path: "/sales/$id",
   beforeLoad: needs("sales.view"),
-  component: PipelinePage,
+  component: OpportunityPage,
 });
 const quotesRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -446,6 +454,7 @@ const movedRoutes = [
   moved("/more/plans", "/plans"),
   moved("/more/tasks", "/tasks"),
   moved("/more/sales", "/sales"),
+  moved("/sales/pipeline", "/sales"),
   moved("/more/team", "/settings/team"),
   moved("/more/activity", "/settings/activity"),
   moved("/more/receivables", "/finance", { tab: "receivables" }),
@@ -475,7 +484,8 @@ export const router = createRouter({
     plansRoute,
     tasksRoute,
     salesRoute,
-    pipelineRoute,
+    analyticsRoute,
+    opportunityRoute,
     quotesRoute,
     followupsRoute,
     printQuoteRoute,

@@ -1,3 +1,4 @@
+import { STAGE_LABEL } from "@buad/domain";
 import type { PricingModel, ProductContent } from "@buad/schema/products";
 import { queryOptions } from "@tanstack/react-query";
 import { ok } from "../../lib/format";
@@ -83,14 +84,8 @@ export const sendJson = (url: string, method: string, body?: unknown) =>
   });
 
 export type RequestStatus = "new" | "contacted" | "quoted" | "negotiating" | "won" | "lost";
-export const REQUEST_LABEL: Record<RequestStatus, string> = {
-  new: "جديد",
-  contacted: "تم التواصل",
-  quoted: "عُرض عليه سعر",
-  negotiating: "تفاوض",
-  won: "تم التعاقد",
-  lost: "لم يكتمل",
-};
+/** The funnel's names (stored values never change): جديد ← مؤهَّل ← عرض سعر ← تفاوض ← مكسوب/خاسر. */
+export const REQUEST_LABEL: Record<RequestStatus, string> = STAGE_LABEL;
 export type ProductRequest = {
   id: string;
   productId: string;
@@ -111,6 +106,9 @@ export type ProductRequest = {
   followUpAt: string;
   value: number;
   lostReason: string;
+  packageId: string;
+  /** When it last moved between stages (0 = never). */
+  stageChangedAt: number;
   updatedAt: number;
   createdAt: number;
   /** Registered for a «coming soon» product (not a quote request). */

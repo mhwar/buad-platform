@@ -172,7 +172,7 @@ export const crmApp = new Hono<Env>()
     const [latest] = await db
       .select({ at: crmActivities.at })
       .from(crmActivities)
-      .where(eq(crmActivities.clientId, a.clientId))
+      .where(and(eq(crmActivities.clientId, a.clientId), ne(crmActivities.type, "stage")))
       .orderBy(desc(crmActivities.at))
       .limit(1);
     await db
@@ -290,7 +290,7 @@ export const crmApp = new Hono<Env>()
         date: x.date,
         ownerId: x.ownerId,
         ownerName: nameOf(x.ownerId),
-        link: "/sales",
+        link: `/sales/${x.id}`,
         value: x.valueHalalas / 100,
         lastContactAt: 0,
       })),

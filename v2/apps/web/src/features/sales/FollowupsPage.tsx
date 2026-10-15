@@ -25,6 +25,7 @@ import { day, sar, whatsapp } from "../../lib/format";
 import { useCan } from "../../session";
 import { type FollowUp, followupsQuery } from "../clients/api";
 import { send } from "../team/queries";
+import { SalesCrumb } from "./SalesCrumb";
 
 const GROUPS: { state: FollowUpState; title: string }[] = [
   { state: "overdue", title: "متأخرة" },
@@ -59,6 +60,7 @@ export function FollowupsPage() {
 
   return (
     <div className="space-y-5">
+      <SalesCrumb title="المتابعات" subtitle="من ينتظر ردّنا: عملاء وفرصاً، المتأخر منها أولاً" />
       <Segmented
         label="النطاق"
         value={scope}
@@ -93,8 +95,8 @@ export function FollowupsPage() {
                       <div className="flex flex-wrap items-start justify-between gap-2">
                         <div className="min-w-0">
                           <Link
-                            to={i.kind === "client" ? "/clients/$id" : "/sales"}
-                            params={i.kind === "client" ? { id: i.id } : undefined}
+                            to={i.kind === "client" ? "/clients/$id" : "/sales/$id"}
+                            params={{ id: i.id }}
                             className="font-semibold hover:text-brand"
                           >
                             {i.title}

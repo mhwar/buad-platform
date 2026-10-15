@@ -24,6 +24,7 @@ import {
 } from "../../components/ui";
 import { ago, day, today } from "../../lib/format";
 import { useCan } from "../../session";
+import { ActivityTimeline } from "../sales/Timeline";
 import { assigneesQuery } from "../tasks/queries";
 import { send } from "../team/queries";
 import { crmQuery } from "./api";
@@ -174,37 +175,13 @@ export function ClientCrm({ clientId }: { clientId: string }) {
               text="سجّل أول اتصال أو اجتماع ليظهر هنا بترتيب زمني."
             />
           )}
-          <ol className="space-y-2">
-            {activities.map((a) => {
-              const Icon = ICON[a.type];
-              return (
-                <li key={a.id} className="flex items-start gap-3 rounded-xl border bg-surface p-3">
-                  <span className="mt-0.5 rounded-full bg-brand-soft p-2 text-brand">
-                    <Icon className="size-4" />
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm">
-                      <b>{ACTIVITY_LABEL[a.type]}</b> ·{" "}
-                      <span className="text-muted">
-                        {day(new Date(a.at * 1000).toISOString().slice(0, 10))} ({ago(a.at)})
-                      </span>
-                    </p>
-                    <p className="whitespace-pre-wrap text-sm">{a.summary}</p>
-                    {a.createdByName && <p className="text-xs text-muted">{a.createdByName}</p>}
-                  </div>
-                  {edit && (
-                    <Button
-                      variant="ghost"
-                      aria-label="حذف التواصل"
-                      onClick={() => run(() => send("DELETE", `/api/crm/activities/${a.id}`))}
-                    >
-                      <Trash2 className="size-4" />
-                    </Button>
-                  )}
-                </li>
-              );
-            })}
-          </ol>
+          <ActivityTimeline
+            items={activities}
+            linkOpportunities
+            onDelete={
+              edit ? (id) => run(() => send("DELETE", `/api/crm/activities/${id}`)) : undefined
+            }
+          />
         </section>
       </div>
 

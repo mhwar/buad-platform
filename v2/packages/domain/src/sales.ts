@@ -96,6 +96,26 @@ export function cleanTags(tags: string[]): string[] {
 /* ── The pipeline: how the open leads and the closed ones are doing ────────── */
 export const OPEN_STAGES = ["new", "contacted", "quoted", "negotiating"] as const;
 export type OpenStage = (typeof OPEN_STAGES)[number];
+export const STAGES = [...OPEN_STAGES, "won", "lost"] as const;
+export type Stage = (typeof STAGES)[number];
+/** The funnel as people say it: the stored values never change, only these names. */
+export const STAGE_LABEL: Record<Stage, string> = {
+  new: "جديد",
+  contacted: "مؤهَّل",
+  quoted: "عرض سعر",
+  negotiating: "تفاوض",
+  won: "مكسوب",
+  lost: "خاسر",
+};
+/** What a stage means, for the stepper's tooltips. */
+export const STAGE_HINT: Record<Stage, string> = {
+  new: "وصل الطلب ولم نتواصل بعد",
+  contacted: "تواصلنا وفهمنا الحاجة",
+  quoted: "أرسلنا عرض سعر",
+  negotiating: "نناقش السعر والشروط",
+  won: "تم الاتفاق والتعاقد",
+  lost: "لم تكتمل",
+};
 export type Lead = {
   status: string;
   /** Expected value in halalas. */
@@ -106,7 +126,7 @@ export type Lead = {
   source?: string;
 };
 
-const STAGE_P: Record<OpenStage, number> = {
+export const STAGE_P: Record<OpenStage, number> = {
   new: 0.1,
   contacted: 0.2,
   quoted: 0.4,
@@ -192,3 +212,15 @@ export function wonThisQuarter(leads: Lead[], now: number) {
     .filter((l) => l.status === "won" && l.updatedAt >= start)
     .reduce((s, l) => s + l.valueHalalas, 0);
 }
+
+/** Probability-weighted value of one open opportunity (0 when closed). */
+export const weightedValue = (status: string, value: number) =>
+  (OPEN_STAGES as readonly string[]).includes(status)
+    ? Math.round(value * STAGE_P[status as OpenStage] * 100) / 100
+    : 0;
+
+/** Whole days an opportunity has sat in its current stage. */
+export const daysInStage = (
+  o: { stageChangedAt: number; createdAt: number },
+  now: number,
+): number => Math.max(0, Math.floor((now - (o.stageChangedAt || o.createdAt)) / DAY));
