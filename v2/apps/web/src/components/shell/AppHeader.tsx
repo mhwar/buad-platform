@@ -2,24 +2,13 @@ import { Link } from "@tanstack/react-router";
 import { Search } from "lucide-react";
 import { Logo } from "../../brand";
 import { NotificationBell } from "../../features/home/NotificationBell";
-import { UserMenu } from "./UserMenu";
 
 const isMac = () =>
   typeof navigator !== "undefined" &&
   /mac|iphone|ipad/i.test(navigator.platform || navigator.userAgent);
 
 /** The top bar: logo on the brand colour, search, notifications, theme and account. */
-export function AppHeader({
-  name,
-  role,
-  onSearch,
-  onLogout,
-}: {
-  name: string;
-  role: string;
-  onSearch: () => void;
-  onLogout: () => void;
-}) {
+export function AppHeader({ onSearch }: { onSearch: () => void }) {
   return (
     <header className="sticky top-0 z-30 h-14 border-b border-white/10 bg-chrome text-white shadow-sm">
       <div className="flex h-full items-center gap-3 px-3 sm:px-5">
@@ -54,9 +43,6 @@ export function AppHeader({
             <Search className="size-5" />
           </button>
           <NotificationBell onDark />
-          <div className="hidden lg:block">
-            <UserMenu name={name} role={role} onLogout={onLogout} />
-          </div>
         </div>
       </div>
     </header>

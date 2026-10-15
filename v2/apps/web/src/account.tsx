@@ -9,6 +9,11 @@ import { button, card, field } from "./ui";
 
 type Form = z.input<typeof changePasswordInput>;
 
+/** «المظهر»: the colour mode. */
+export function AppearancePage() {
+  return <AppearanceCard />;
+}
+
 export function AccountPage() {
   const form = useForm<Form>({ resolver: zodResolver(changePasswordInput) });
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
@@ -27,7 +32,6 @@ export function AccountPage() {
 
   return (
     <div className="space-y-6">
-      <AppearanceCard />
       <section className={`max-w-sm ${card}`}>
         <h1 className="mb-4 text-xl font-bold">تغيير كلمة المرور</h1>
         {msg && (

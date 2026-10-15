@@ -57,14 +57,14 @@ describe("SectionTabs", () => {
     expect(screen.getByText(/متى تستخدمه/)).toBeInTheDocument();
   });
 
-  it("offers the sales tabs, including services and the website", async () => {
+  it("offers the planning tabs: plans, products and the website", async () => {
     await at("/products");
-    const tabs = await screen.findByRole("tablist", { name: "المبيعات" });
+    const tabs = await screen.findByRole("tablist", { name: "التخطيط" });
     expect(
       within(tabs)
         .getAllByRole("tab")
         .map((t) => t.textContent),
-    ).toEqual(["الفرص وعروض الأسعار", "المنتجات والخدمات", "الموقع"]);
+    ).toEqual(["الخطط", "المنتجات والخدمات", "الموقع"]);
   });
 
   it("only lists the tabs a role may open", async () => {

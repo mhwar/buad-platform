@@ -3,12 +3,8 @@ import {
   Briefcase,
   CalendarCheck,
   Clock,
-  Files,
-  Globe,
   House,
   Landmark,
-  ListChecks,
-  Package,
   Receipt,
   Settings,
   ShoppingCart,
@@ -20,12 +16,16 @@ import {
 import type { ComponentType } from "react";
 
 type Icon = ComponentType<{ className?: string }>;
+/** The current URL's query, as far as navigation needs it (finance tabs live in `?tab=`). */
+export type NavSearch = Record<string, string | undefined>;
 
-/** A page inside a section, shown as a tab above it. */
+/** A page inside a section: a tab on phones, a child of the section in the sidebar. */
 export type SectionTab = {
   key: string;
   label: string;
   to: string;
+  /** Query that selects this page when it shares a path with its siblings. */
+  search?: Record<string, string>;
   /** What this page is for, and when to open it: shown under the tabs. */
   desc: string;
   when: string;
@@ -33,10 +33,10 @@ export type SectionTab = {
   /** `/api/attention` keys whose counts badge the tab. */
   attention?: string[];
   /** True for the list page itself, false for detail pages (no tabs there). */
-  match: (path: string) => boolean;
+  match: (path: string, search?: NavSearch) => boolean;
 };
 
-/** One entry of the sidebar. Everything else lives inside it as tabs. */
+/** One entry of the sidebar. Its pages open under it as a drop-down. */
 export type Section = {
   key: string;
   label: string;
@@ -47,12 +47,16 @@ export type Section = {
   perm?: string;
   attention?: string[];
   tabs?: SectionTab[];
+  /** Show the tab strip above the section's list pages (sections with their own in-page navigation say no). */
+  strip?: boolean;
   /** True for every path that belongs to the section, details included. */
   match: (path: string) => boolean;
 };
 
 const exact = (to: string) => (p: string) => p === to;
 const within = (to: string) => (p: string) => p === to || p.startsWith(`${to}/`);
+const financeTab = (tab: string) => (p: string, s?: NavSearch) =>
+  p === "/finance" && (s?.tab ?? "projects") === tab;
 
 export const SECTIONS: Section[] = [
   {
@@ -64,49 +68,40 @@ export const SECTIONS: Section[] = [
     match: exact("/"),
   },
   {
-    key: "clients",
-    label: "العملاء",
-    to: "/clients",
-    icon: Users,
-    hint: "ملفات العملاء وكشوف حساباتهم",
-    match: within("/clients"),
-  },
-  {
     key: "sales",
     label: "المبيعات",
     to: "/sales",
     icon: ShoppingCart,
-    hint: "الفرص وعروض الأسعار والخدمات والموقع",
-    attention: [],
-    match: (p) => within("/sales")(p) || within("/products")(p) || within("/website")(p),
+    hint: "الفرص والعملاء وعروض الأسعار",
+    match: (p) => within("/sales")(p) || within("/clients")(p),
     tabs: [
       {
         key: "pipeline",
-        label: "الفرص وعروض الأسعار",
+        label: "الفرص",
         to: "/sales",
         perm: "sales.view",
         attention: ["followups", "requests"],
-        desc: "مسار العميل المحتمل من الطلب إلى العقد، وعروض الأسعار المرسلة.",
-        when: "عند وصول طلب جديد أو متابعة العروض.",
+        desc: "مسار العميل المحتمل من الطلب إلى العقد.",
+        when: "عند وصول طلب جديد أو متابعة فرصة.",
         match: exact("/sales"),
       },
       {
-        key: "products",
-        label: "المنتجات والخدمات",
-        to: "/products",
-        perm: "products.view",
-        desc: "ما تقدّمه الشركة: الباقات والتسعير الداخلي وأداء كل خدمة.",
-        when: "عند تعديل خدمة أو تسعيرها أو قراءة أدائها.",
-        match: exact("/products"),
+        key: "clients",
+        label: "العملاء",
+        to: "/clients",
+        perm: "clients.view",
+        desc: "ملفات العملاء وجهات الاتصال والمشاريع وكشوف الحسابات.",
+        when: "عند إضافة عميل أو البحث عن ملفه.",
+        match: exact("/clients"),
       },
       {
-        key: "website",
-        label: "الموقع",
-        to: "/website",
-        perm: "site.view",
-        desc: "الموقع التعريفي العام: المحتوى والمعاينة والنشر وسجل النسخ.",
-        when: "عند تحديث الموقع أو نشر تغيير.",
-        match: exact("/website"),
+        key: "quotes",
+        label: "عروض الأسعار",
+        to: "/sales/quotes",
+        perm: "sales.view",
+        desc: "عروض الأسعار المرسلة وحالتها وطباعتها.",
+        when: "عند إعداد عرض أو متابعة ما أُرسل.",
+        match: exact("/sales/quotes"),
       },
     ],
   },
@@ -117,7 +112,6 @@ export const SECTIONS: Section[] = [
     icon: Briefcase,
     hint: "المشاريع ومراحلها ومهامها ومستنداتها",
     perm: "projects.view",
-    attention: [],
     match: (p) => within("/projects")(p) || within("/tasks")(p) || within("/documents")(p),
     tabs: [
       {
@@ -159,18 +153,102 @@ export const SECTIONS: Section[] = [
     icon: Landmark,
     hint: "مالية الجهة والتحصيل والشركاء والضريبة",
     perm: "treasury.view",
-    attention: ["instalments"],
+    strip: false,
     match: within("/finance"),
+    tabs: [
+      {
+        key: "projects",
+        label: "المشاريع",
+        to: "/finance",
+        desc: "أرباح المشاريع وقيم العقود.",
+        when: "لقراءة أداء المشاريع مالياً.",
+        match: financeTab("projects"),
+      },
+      {
+        key: "quarter",
+        label: "توزيع الربع",
+        to: "/finance",
+        search: { tab: "quarter" },
+        desc: "ما تحقّق في الربع وما يُوزَّع.",
+        when: "عند إقفال الربع.",
+        match: financeTab("quarter"),
+      },
+      {
+        key: "vat",
+        label: "الضريبة",
+        to: "/finance",
+        search: { tab: "vat" },
+        desc: "ضريبة القيمة المضافة الربع سنوية.",
+        when: "عند تجهيز الإقرار.",
+        match: financeTab("vat"),
+      },
+      {
+        key: "company",
+        label: "الشركة",
+        to: "/finance",
+        search: { tab: "company" },
+        desc: "دخل الشركة ومصروفاتها.",
+        when: "لمتابعة مالية الشركة.",
+        match: financeTab("company"),
+      },
+      {
+        key: "partners",
+        label: "الشركاء والتوزيع",
+        to: "/finance",
+        search: { tab: "partners" },
+        desc: "حصص الشركاء وتوزيع الأرباح.",
+        when: "عند التوزيع.",
+        match: financeTab("partners"),
+      },
+      {
+        key: "receivables",
+        label: "التحصيل والتدفق",
+        to: "/finance",
+        search: { tab: "receivables" },
+        attention: ["instalments"],
+        desc: "الدفعات المنتظرة وأعمار الديون وتوقّع النقد.",
+        when: "أسبوعياً: لمعرفة من يجب متابعته.",
+        match: financeTab("receivables"),
+      },
+    ],
   },
   {
-    key: "plans",
-    label: "الخطط",
+    key: "planning",
+    label: "التخطيط",
     to: "/plans",
     icon: Target,
-    hint: "الخطة الاستراتيجية والتشغيلية بأهدافها ومؤشراتها",
-    perm: "plans.view",
-    attention: ["initiatives"],
-    match: within("/plans"),
+    hint: "الخطط وما نقدّمه من خدمات وكيف نعرضه",
+    match: (p) => within("/plans")(p) || within("/products")(p) || within("/website")(p),
+    tabs: [
+      {
+        key: "plans",
+        label: "الخطط",
+        to: "/plans",
+        perm: "plans.view",
+        attention: ["initiatives"],
+        desc: "الخطة الاستراتيجية والتشغيلية بأهدافها ومؤشراتها.",
+        when: "عند وضع أهداف السنة أو مراجعة التقدّم كل ربع.",
+        match: exact("/plans"),
+      },
+      {
+        key: "products",
+        label: "المنتجات والخدمات",
+        to: "/products",
+        perm: "products.view",
+        desc: "ما تقدّمه الشركة: الباقات والتسعير الداخلي وأداء كل خدمة.",
+        when: "عند تعديل خدمة أو تسعيرها أو قراءة أدائها.",
+        match: exact("/products"),
+      },
+      {
+        key: "website",
+        label: "الموقع",
+        to: "/website",
+        perm: "site.view",
+        desc: "الموقع التعريفي العام: المحتوى والمعاينة والنشر وسجل النسخ.",
+        when: "عند تحديث الموقع أو نشر تغيير.",
+        match: exact("/website"),
+      },
+    ],
   },
   {
     key: "settings",
@@ -178,7 +256,53 @@ export const SECTIONS: Section[] = [
     to: "/settings",
     icon: Settings,
     hint: "بيانات الجهة والفريق والصلاحيات وسجل النشاط والمظهر",
+    strip: false,
     match: within("/settings"),
+    tabs: [
+      {
+        key: "org",
+        label: "بيانات الجهة",
+        to: "/settings/org",
+        desc: "الهوية والترويسة والختم.",
+        when: "عند تغيير بيانات الجهة.",
+        match: within("/settings/org"),
+      },
+      {
+        key: "team",
+        label: "الفريق والصلاحيات",
+        to: "/settings/team",
+        perm: "team.view",
+        desc: "المستخدمون والأدوار وما يراه كل دور.",
+        when: "عند انضمام موظف أو تغيير مسؤولياته.",
+        match: within("/settings/team"),
+      },
+      {
+        key: "activity",
+        label: "سجل النشاط",
+        to: "/settings/activity",
+        perm: "audit.view",
+        desc: "من غيّر ماذا ومتى.",
+        when: "عند مراجعة تعديل.",
+        match: within("/settings/activity"),
+      },
+      {
+        key: "import",
+        label: "الاستيراد",
+        to: "/settings/import",
+        perm: "import.run",
+        desc: "نقل البيانات من المنصة القديمة.",
+        when: "عند نقل عميل.",
+        match: within("/settings/import"),
+      },
+      {
+        key: "appearance",
+        label: "المظهر",
+        to: "/settings/appearance",
+        desc: "نمط الألوان: نهاري أو ليلي أو حسب الجهاز.",
+        when: "عند تغيير راحة العين.",
+        match: within("/settings/appearance"),
+      },
+    ],
   },
   {
     key: "soon",
@@ -190,9 +314,9 @@ export const SECTIONS: Section[] = [
   },
 ];
 
-/** The sections shown below the line in the sidebar, and not in the phone's bottom bar. */
+/** The sections shown at the bottom of the sidebar, and not in the phone's bottom bar. */
 export const LOWER_SECTIONS = ["settings", "soon"] as const;
-export const PHONE_CORE = ["home", "clients", "projects", "finance"] as const;
+export const PHONE_CORE = ["home", "sales", "projects", "finance"] as const;
 
 export const sectionByKey = (key: string) => SECTIONS.find((s) => s.key === key);
 
@@ -214,15 +338,22 @@ export function visibleSections(perms: readonly string[]): Section[] {
       continue;
     }
     const tabs = visibleTabs(s, perms);
-    if (tabs.length) out.push({ ...s, to: tabs[0]?.to ?? s.to, tabs });
+    const first = tabs[0];
+    if (first) out.push({ ...s, to: first.to, tabs });
   }
   return out;
 }
 
-/** The section and tab a path is the list page of, or null (details, single-page sections). */
+/** The URL of a tab, query included. */
+export const tabHref = (t: Pick<SectionTab, "to" | "search">) =>
+  t.search ? `${t.to}?${new URLSearchParams(t.search).toString()}` : t.to;
+
+/** The section and tab a path is the list page of, or null (details, sections with their own navigation). */
 export function tabOf(path: string): { section: Section; tab: SectionTab } | null {
-  for (const section of SECTIONS)
+  for (const section of SECTIONS) {
+    if (section.strip === false) continue;
     for (const tab of section.tabs ?? []) if (tab.match(path)) return { section, tab };
+  }
   return null;
 }
 

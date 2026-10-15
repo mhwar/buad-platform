@@ -1,18 +1,21 @@
 import * as RMenu from "@radix-ui/react-dropdown-menu";
 import { useNavigate } from "@tanstack/react-router";
-import { ChevronDown, LogOut, Settings, User } from "lucide-react";
+import { ChevronDown, LogOut, User } from "lucide-react";
+import { cx } from "../ui";
 
 const initial = (name: string) => [...name.trim()][0] ?? "؟";
 
-/** The signed-in person: initial, name, role, and a menu for account and sign-out. */
+/** The signed-in person at the top of the sidebar: initial, name, role, and a menu for account and sign-out. */
 export function UserMenu({
   name,
   role,
   onLogout,
+  collapsed = false,
 }: {
   name: string;
   role: string;
   onLogout: () => void;
+  collapsed?: boolean;
 }) {
   const navigate = useNavigate();
   const item =
@@ -23,19 +26,27 @@ export function UserMenu({
         <button
           type="button"
           aria-label={`حساب ${name}`}
-          className="flex min-h-10 items-center gap-2 rounded-full ps-1 pe-2 text-white/90 transition hover:bg-white/10"
+          title={collapsed ? name : undefined}
+          className={cx(
+            "flex min-h-12 w-full items-center gap-3 rounded-xl px-2 text-start transition hover:bg-brand-soft/60",
+            collapsed && "justify-center px-0",
+          )}
         >
           <span
             aria-hidden
-            className="flex size-8 items-center justify-center rounded-full bg-white/15 text-sm font-bold text-white"
+            className="flex size-9 shrink-0 items-center justify-center rounded-full bg-brand text-sm font-bold text-white dark:text-canvas"
           >
             {initial(name)}
           </span>
-          <span className="hidden text-start leading-tight xl:block">
-            <span className="block max-w-36 truncate text-sm font-medium">{name}</span>
-            <span className="block max-w-36 truncate text-[11px] text-white/65">{role}</span>
-          </span>
-          <ChevronDown className="size-4 text-white/60" />
+          {!collapsed && (
+            <>
+              <span className="min-w-0 flex-1 leading-tight">
+                <span className="block truncate text-sm font-semibold">{name}</span>
+                <span className="block truncate text-xs text-muted">{role}</span>
+              </span>
+              <ChevronDown className="size-4 shrink-0 text-muted" />
+            </>
+          )}
         </button>
       </RMenu.Trigger>
       <RMenu.Portal>
@@ -51,11 +62,7 @@ export function UserMenu({
           <RMenu.Separator className="my-1 h-px bg-line" />
           <RMenu.Item className={item} onSelect={() => navigate({ to: "/settings/account" })}>
             <User className="size-4 text-muted" />
-            حسابي والمظهر
-          </RMenu.Item>
-          <RMenu.Item className={item} onSelect={() => navigate({ to: "/settings" })}>
-            <Settings className="size-4 text-muted" />
-            الإعدادات
+            حسابي وكلمة المرور
           </RMenu.Item>
           <RMenu.Separator className="my-1 h-px bg-line" />
           <RMenu.Item className={`${item} text-red-600`} onSelect={onLogout}>

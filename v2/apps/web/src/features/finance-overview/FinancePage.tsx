@@ -109,7 +109,7 @@ export function FinancePage() {
           },
         ]}
       />
-      <div className="mb-4 max-w-3xl">
+      <div className="mb-4 max-w-3xl lg:hidden">
         <Segmented<Tab>
           label="أقسام المالية"
           value={tab}
