@@ -8,7 +8,6 @@ import {
 } from "@tanstack/react-router";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import type { ComponentType } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { meUser, stubApi } from "../../test-utils";
 import { addDaysLocal, localDay } from "./api";
@@ -17,7 +16,7 @@ import { MeetingsPage } from "./MeetingsPage";
 
 afterEach(() => vi.unstubAllGlobals());
 
-async function open(path: string, at: string, Page: ComponentType) {
+async function open(path: string, at: string, Page: typeof MeetingsPage) {
   const root = createRootRoute();
   const page = createRoute({
     getParentRoute: () => root,
