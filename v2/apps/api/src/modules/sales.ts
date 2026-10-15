@@ -7,6 +7,7 @@ import {
   monthlyWon,
   OPEN_STAGES,
   pipelineStats,
+  quoteStats,
   quoteTotals,
   winRate,
   wonThisQuarter,
@@ -109,11 +110,25 @@ export const salesApp = new Hono<Env>()
         return 0;
       }
     };
-    const sent = qs.filter((q) => q.status !== "draft");
-    const accepted = qs.filter((q) => q.status === "accepted");
-    const rejected = qs.filter((q) => q.status === "rejected");
-    const sum = (a: typeof qs) => a.reduce((s, q) => s + total(q), 0);
-    const in7 = new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10);
+    const facts = qs.map((q) => ({
+      id: q.id,
+      status: q.status,
+      total: total(q),
+      validUntil: q.validUntil,
+      updatedAt: q.updatedAt,
+    }));
+    const qstat = quoteStats(facts, t, now);
+    const byId = new Map(qs.map((q) => [q.id, q]));
+    const brief = (f: { id: string }) => {
+      const q = byId.get(f.id);
+      return {
+        id: f.id,
+        number: q?.number ?? "",
+        title: q?.title ?? "",
+        recipient: q?.recipient ?? "",
+        total: money(total(q as (typeof qs)[number])),
+      };
+    };
 
     const topClients = await db
       .select({
@@ -151,38 +166,20 @@ export const salesApp = new Hono<Env>()
       followups: { leadsDue: due, clientsDue },
       stale,
       quotes: {
-        sent: sent.length,
-        accepted: accepted.length,
-        rejected: rejected.length,
-        acceptRate: winRate(accepted.length, rejected.length),
-        acceptedValue: money(sum(accepted)),
-        avgValue: sent.length ? money(Math.round(sum(sent) / sent.length)) : 0,
-        expiring: qs
-          .filter(
-            (q) =>
-              q.status === "sent" &&
-              q.validUntil !== "" &&
-              q.validUntil >= t &&
-              q.validUntil <= in7,
-          )
-          .map((q) => ({
-            id: q.id,
-            number: q.number,
-            title: q.title,
-            recipient: q.recipient,
-            validUntil: q.validUntil,
-            total: money(total(q)),
-          })),
-        waiting: qs
-          .filter((q) => q.status === "sent" && now - q.updatedAt > 7 * 86400)
-          .map((q) => ({
-            id: q.id,
-            number: q.number,
-            title: q.title,
-            recipient: q.recipient,
-            days: Math.floor((now - q.updatedAt) / 86400),
-            total: money(total(q)),
-          })),
+        sent: qstat.sent,
+        accepted: qstat.accepted,
+        rejected: qstat.rejected,
+        acceptRate: qstat.acceptRate,
+        acceptedValue: money(qstat.acceptedValue),
+        avgValue: money(qstat.avgValue),
+        expiring: qstat.expiring.map((f) => ({
+          ...brief(f),
+          validUntil: byId.get(f.id)?.validUntil ?? "",
+        })),
+        waiting: qstat.waiting.map((f) => ({
+          ...brief(f),
+          days: Math.floor((now - f.updatedAt) / 86400),
+        })),
       },
       sources: bySource(leads).map((s) => ({
         source: s.source,

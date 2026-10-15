@@ -8,6 +8,9 @@ export type Quote = {
   number: string;
   requestId: string;
   clientId: string;
+  productId: string;
+  packageId: string;
+  projectId: string;
   recipient: string;
   entity: string;
   title: string;
@@ -19,6 +22,7 @@ export type Quote = {
   terms: string;
   status: QuoteStatus;
   version: number;
+  updatedAt: number;
   totals: { subtotal: number; discount: number; net: number; vat: number; total: number };
   createdAt: number;
 };
@@ -108,4 +112,18 @@ export const overviewQuery = queryOptions({
   queryKey: ["sales-overview"],
   queryFn: async () => ok<SalesOverview>(await fetch("/api/sales/overview")),
   staleTime: 30_000,
+});
+
+export type CatalogItem = {
+  productId: string;
+  productName: string;
+  packageId: string;
+  packageName: string;
+  price: number;
+};
+export const catalogQuery = queryOptions({
+  queryKey: ["quote-catalog"],
+  queryFn: async () =>
+    (await ok<{ items: CatalogItem[] }>(await fetch("/api/quotes/catalog"))).items,
+  staleTime: 60_000,
 });

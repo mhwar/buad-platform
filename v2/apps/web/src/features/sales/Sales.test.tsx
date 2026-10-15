@@ -284,6 +284,10 @@ describe("QuoteDialog", () => {
       version: 3,
       totals: { subtotal: 100, discount: 0, net: 100, vat: 15, total: 115 },
       createdAt: 1,
+      productId: "",
+      packageId: "",
+      projectId: "",
+      updatedAt: 1,
     };
     await renderWithApp(<QuoteDialog existing={q} onClose={() => {}} onSaved={() => {}} />);
     expect(await screen.findByText(/العرض مقبول/)).toBeInTheDocument();
