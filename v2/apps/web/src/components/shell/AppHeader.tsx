@@ -2,7 +2,6 @@ import { Link } from "@tanstack/react-router";
 import { Search } from "lucide-react";
 import { Logo } from "../../brand";
 import { NotificationBell } from "../../features/home/NotificationBell";
-import { ThemeToggle } from "../../theme";
 import { UserMenu } from "./UserMenu";
 
 const isMac = () =>
@@ -55,9 +54,6 @@ export function AppHeader({
             <Search className="size-5" />
           </button>
           <NotificationBell onDark />
-          <div className="hidden lg:block">
-            <ThemeToggle onDark />
-          </div>
           <div className="hidden lg:block">
             <UserMenu name={name} role={role} onLogout={onLogout} />
           </div>

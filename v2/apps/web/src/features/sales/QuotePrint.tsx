@@ -16,7 +16,7 @@ export function QuotePrintPage({ id }: { id: string }) {
   return (
     <div className="mx-auto max-w-5xl p-3 sm:p-6">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3 print:hidden">
-        <Link to="/more/sales" className="text-sm text-muted hover:text-ink">
+        <Link to="/sales" className="text-sm text-muted hover:text-ink">
           ← المبيعات
         </Link>
         <div className="flex gap-2">

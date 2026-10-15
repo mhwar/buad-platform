@@ -24,7 +24,6 @@ type Result = {
   to: string;
   params?: Record<string, string>;
   icon: ComponentType<{ className?: string }>;
-  soon?: boolean;
 };
 
 /** Case- and diacritic-insensitive contains, so «الاداره» finds «الإدارة». */
@@ -73,15 +72,24 @@ export default function CommandPalette({
 
   const results = useMemo<Result[]>(() => {
     const all: Result[] = groups.flatMap((g) =>
-      g.items.map((i) => ({
-        id: `nav:${i.key}`,
-        group: "الأقسام",
-        label: i.label,
-        hint: i.hint,
-        to: i.to,
-        icon: i.icon,
-        soon: i.soon,
-      })),
+      g.items.flatMap((i) => [
+        {
+          id: `nav:${i.key}`,
+          group: "الأقسام",
+          label: i.label,
+          hint: i.hint,
+          to: i.to,
+          icon: i.icon,
+        },
+        ...i.tabs.map((t) => ({
+          id: `nav:${i.key}:${t.key}`,
+          group: "الأقسام",
+          label: `${i.label} › ${t.label}`,
+          hint: t.desc,
+          to: t.to,
+          icon: i.icon,
+        })),
+      ]),
     );
     // Typing: sections whose name matches come before those that only mention it in their description.
     const sections = q
@@ -215,11 +223,6 @@ export default function CommandPalette({
                       {r.label}
                       {r.hint && <span className="ms-2 text-xs text-muted">{r.hint}</span>}
                     </span>
-                    {r.soon && (
-                      <span className="rounded bg-slate-100 px-1.5 text-[10px] text-muted dark:bg-slate-800">
-                        قريباً
-                      </span>
-                    )}
                     {i === current && <CornerDownLeft className="size-3.5 shrink-0 text-muted" />}
                   </div>
                 </li>

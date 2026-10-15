@@ -72,3 +72,44 @@ export function ThemeToggle({ onDark = false }: { onDark?: boolean }) {
     </button>
   );
 }
+
+/** «المظهر»: the colour mode, chosen here and saved on this device. */
+export function AppearanceCard() {
+  const [choice, setChoice] = useTheme();
+  const options: { value: ThemeChoice; label: string; Icon: typeof Sun; hint: string }[] = [
+    { value: "light", label: "نهاري", Icon: Sun, hint: "خلفية فاتحة" },
+    { value: "dark", label: "ليلي", Icon: Moon, hint: "خلفية داكنة مريحة للعين" },
+    { value: "system", label: "حسب الجهاز", Icon: Monitor, hint: "يتبع إعداد جهازك" },
+  ];
+  return (
+    <section
+      aria-labelledby="appearance"
+      className="max-w-xl rounded-2xl border border-line bg-surface p-5 shadow-sm"
+    >
+      <h2 id="appearance" className="mb-1 text-lg font-bold">
+        المظهر
+      </h2>
+      <p className="mb-4 text-sm text-muted">نمط الألوان على هذا الجهاز.</p>
+      <div role="radiogroup" aria-labelledby="appearance" className="grid gap-2 sm:grid-cols-3">
+        {options.map(({ value, label, Icon, hint }) => (
+          <button
+            key={value}
+            type="button"
+            role="radio"
+            aria-checked={choice === value}
+            onClick={() => setChoice(value)}
+            className={`flex min-h-16 flex-col items-start gap-1 rounded-xl border p-3 text-start transition ${
+              choice === value ? "border-brand bg-brand-soft text-brand" : "hover:bg-brand-soft/50"
+            }`}
+          >
+            <span className="flex items-center gap-2 text-sm font-semibold">
+              <Icon className="size-4" />
+              {label}
+            </span>
+            <span className="text-xs text-muted">{hint}</span>
+          </button>
+        ))}
+      </div>
+    </section>
+  );
+}

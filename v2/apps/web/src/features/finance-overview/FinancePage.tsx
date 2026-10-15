@@ -9,6 +9,7 @@ import {
   Percent,
   PieChart,
   Users,
+  Wallet,
 } from "lucide-react";
 import { useState } from "react";
 import { FilterBar } from "../../components/FilterBar";
@@ -28,6 +29,7 @@ import {
 import { day, pct, sar } from "../../lib/format";
 import { financeApi } from "../finance/api";
 import { label, PROJECT_STATUS_LABELS } from "../labels";
+import { ReceivablesPage } from "../receivables/ReceivablesPage";
 import {
   type Overview,
   type OverviewProject,
@@ -47,7 +49,7 @@ import { VatTab } from "./VatTab";
 
 const route = getRouteApi("/finance");
 type SortKey = "profit" | "margin" | "gross";
-type Tab = "projects" | "quarter" | "vat" | "company" | "partners";
+type Tab = "projects" | "quarter" | "vat" | "company" | "partners" | "receivables";
 
 /** «المالية»: the organisation's money at a glance, then the detail behind every number. */
 export function FinancePage() {
@@ -118,11 +120,12 @@ export function FinancePage() {
             { value: "vat", label: "الضريبة", icon: <Percent className="size-4" /> },
             { value: "company", label: "الشركة", icon: <Building2 className="size-4" /> },
             { value: "partners", label: "الشركاء والتوزيع", icon: <Users className="size-4" /> },
+            { value: "receivables", label: "التحصيل والتدفق", icon: <Wallet className="size-4" /> },
           ]}
         />
       </div>
       <div
-        className={`mb-6 flex flex-wrap items-center gap-3 ${tab === "partners" || tab === "quarter" || tab === "vat" ? "hidden" : ""}`}
+        className={`mb-6 flex flex-wrap items-center gap-3 ${tab === "partners" || tab === "quarter" || tab === "vat" || tab === "receivables" ? "hidden" : ""}`}
       >
         <FilterBar
           leading={
@@ -167,6 +170,8 @@ export function FinancePage() {
         <QuarterCentre />
       ) : tab === "company" ? (
         <CompanyTab period={period} />
+      ) : tab === "receivables" ? (
+        <ReceivablesPage />
       ) : tab === "partners" ? (
         <PartnersTab />
       ) : q.isPending ? (

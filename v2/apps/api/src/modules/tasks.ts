@@ -44,7 +44,7 @@ async function loadTask(db: Db, me: Vars["user"], id: string) {
 }
 
 const link = (t: { projectId: string }) =>
-  t.projectId ? `/projects/${t.projectId}?view=execution` : "/more/tasks";
+  t.projectId ? `/projects/${t.projectId}?view=execution` : "/tasks";
 
 export const tasksApp = new Hono<Env>()
   .use(requireAuth)

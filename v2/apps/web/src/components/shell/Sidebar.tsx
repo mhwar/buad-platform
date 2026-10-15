@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { ChevronDown, PanelRightClose, PanelRightOpen } from "lucide-react";
-import { memo, useMemo, useState } from "react";
+import { PanelRightClose, PanelRightOpen } from "lucide-react";
+import { memo, useMemo } from "react";
 import { attentionQuery } from "../../features/home/api";
 import { cx } from "../ui";
 import { badgeFor, type NavEntry, type NavGroup } from "./nav-model";
@@ -51,11 +51,6 @@ const SidebarItem = memo(function SidebarItem({
       {!collapsed && (
         <>
           <span className="min-w-0 flex-1 truncate">{entry.label}</span>
-          {entry.soon && (
-            <span className="rounded bg-slate-100 px-1.5 text-[10px] font-medium text-muted dark:bg-slate-800">
-              قريباً
-            </span>
-          )}
           {badge > 0 && (
             <span className="min-w-5 rounded-full bg-red-600 px-1.5 text-center text-[11px] font-bold leading-5 text-white">
               {badge > 99 ? "99+" : badge}
@@ -84,48 +79,19 @@ function Group({
   collapsed: boolean;
   counts: Record<string, number>;
 }) {
-  // A collapsible group (the «قريباً» tools) starts folded, unless one of its pages is open.
-  const containsActive = group.items.some((i) => i.key === activeKey);
-  const [open, setOpen] = useState(!group.collapsible);
-  // Folded to icons, the not-yet-built tools stay out of the way unless one is open.
-  const shown = !group.collapsible || (collapsed ? containsActive : open || containsActive);
-  const id = `nav-${group.key}`;
   return (
-    <section aria-labelledby={id} className="space-y-0.5">
-      {collapsed ? (
-        <hr aria-hidden className="mx-3 my-2 first:hidden" />
-      ) : group.collapsible ? (
-        <button
-          type="button"
-          id={id}
-          aria-expanded={shown}
-          aria-controls={`${id}-list`}
-          onClick={() => setOpen((o) => !o)}
-          className="flex min-h-9 w-full items-center justify-between rounded-lg px-3 text-[11px] font-semibold tracking-wide text-muted hover:text-ink"
-        >
-          {group.label}
-          <ChevronDown className={cx("size-3.5 transition-transform", shown && "rotate-180")} />
-        </button>
-      ) : (
-        <h2 id={id} className="px-3 pb-1 pt-2 text-[11px] font-semibold tracking-wide text-muted">
-          {group.label}
-        </h2>
-      )}
-      {shown && (
-        <ul id={`${id}-list`} className="space-y-0.5">
-          {group.items.map((e) => (
-            <li key={e.key}>
-              <SidebarItem
-                entry={e}
-                active={e.key === activeKey}
-                collapsed={collapsed}
-                badge={badgeFor(e, counts)}
-              />
-            </li>
-          ))}
-        </ul>
-      )}
-    </section>
+    <ul className="space-y-0.5">
+      {group.items.map((e) => (
+        <li key={e.key}>
+          <SidebarItem
+            entry={e}
+            active={e.key === activeKey}
+            collapsed={collapsed}
+            badge={badgeFor(e, counts)}
+          />
+        </li>
+      ))}
+    </ul>
   );
 }
 

@@ -3,8 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Outlet, useRouterState } from "@tanstack/react-router";
 import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { api } from "../../api";
-import { MoreHeader } from "../../features/more/MoreHeader";
-import { inHub } from "../../features/more/tabs";
+import { SectionTabs } from "../../features/more/SectionTabs";
 import { meQuery } from "../../session";
 import { MobileTabBar } from "../MobileTabBar";
 import { UpdateBanner, useServerVersion } from "../UpdateBanner";
@@ -80,7 +79,7 @@ export function AppShell() {
             tabIndex={-1}
             className="mx-auto w-full max-w-[88rem] flex-1 px-4 py-6 pb-28 outline-none sm:px-6 lg:px-8 lg:pb-8"
           >
-            {inHub(path) && <MoreHeader />}
+            <SectionTabs />
             <Outlet />
           </main>
           <footer className="mb-16 border-t py-4 text-center text-xs text-muted lg:mb-0">
