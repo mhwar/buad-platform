@@ -31,6 +31,8 @@ export type MoreTab = {
   group: "work" | "company" | "admin" | "soon";
   /** Permission needed to see the tab (none = everyone). */
   perm?: string;
+  /** Keys of `/api/attention` lines whose counts show as a badge on this tab. */
+  attention?: string[];
   /** Not built yet: opens an explanation page and carries a «قريباً» badge. */
   soon?: boolean;
   /** What it will contain, for «قريباً» tabs. */
@@ -59,6 +61,7 @@ export const MORE_TABS: MoreTab[] = [
     desc: "الخطة الاستراتيجية بأهدافها ومؤشراتها، والخطة التشغيلية السنوية بأرباعها ومبادراتها.",
     when: "عند وضع أهداف السنة أو مراجعة التقدّم كل ربع.",
     perm: "plans.view",
+    attention: ["initiatives"],
     match: at("/more/plans"),
   },
   {
@@ -70,6 +73,7 @@ export const MORE_TABS: MoreTab[] = [
     desc: "مهام الفريق ومراحل تنفيذ كل مشروع ومن المسؤول عنها وموعدها.",
     when: "يومياً: لمعرفة ما عليك وما تأخّر.",
     perm: "tasks.view",
+    attention: ["tasks"],
     match: at("/more/tasks"),
   },
   {
@@ -81,6 +85,7 @@ export const MORE_TABS: MoreTab[] = [
     perm: "sales.view",
     desc: "مسار العميل المحتمل من الطلب إلى العقد: متابعة، عرض سعر، تفاوض، مشروع.",
     when: "عند وصول طلب جديد أو متابعة العروض المرسلة.",
+    attention: ["followups", "requests"],
     match: at("/more/sales"),
   },
   {
@@ -92,6 +97,7 @@ export const MORE_TABS: MoreTab[] = [
     perm: "treasury.view",
     desc: "الدفعات المستحقة والمتأخرة على العملاء، وتوقّع النقد للأسابيع القادمة.",
     when: "أسبوعياً: لمعرفة من يجب متابعته ومتى يتوفر النقد.",
+    attention: ["instalments"],
     match: at("/more/receivables"),
   },
   {
@@ -103,6 +109,7 @@ export const MORE_TABS: MoreTab[] = [
     perm: "documents.view",
     desc: "العقود والخطابات والصادر، من الإنشاء حتى الاعتماد والإرسال.",
     when: "عند إعداد عقد أو خطاب أو البحث عن مستند سابق.",
+    attention: ["docs"],
     match: at("/documents"),
   },
   {
