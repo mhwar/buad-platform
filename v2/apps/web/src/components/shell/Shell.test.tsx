@@ -106,8 +106,7 @@ describe("Sidebar", () => {
       expect(screen.getByRole("link", { name: /المبيعات/ })).toHaveTextContent("4"),
     ); // follow-ups + requests
     await userEvent.click(screen.getByRole("button", { name: "فتح المبيعات" }));
-    expect(screen.getByRole("link", { name: /الفرص/ })).toHaveTextContent("1"); // new requests
-    expect(screen.getByRole("link", { name: /المتابعات/ })).toHaveTextContent("3"); // follow-ups due
+    expect(screen.getByRole("link", { name: /الفرص/ })).toHaveTextContent("4"); // new requests + follow-ups due
   });
 
   it("the account menu offers the account page and sign-out", async () => {

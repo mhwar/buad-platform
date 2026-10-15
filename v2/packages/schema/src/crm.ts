@@ -15,6 +15,9 @@ export const activityInput = z.object({
   followUpAt: date.optional(),
 });
 
+/** A contact logged from an opportunity's page (the client is found or created from it). */
+export const opportunityActivityInput = activityInput.omit({ requestId: true });
+
 export const crmPatch = z.object({
   ownerId: z.string().max(60).optional(),
   source: z.enum(["", "site", "referral", "event", "call", "social", "other"]).optional(),

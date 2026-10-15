@@ -33,160 +33,9 @@ import { ConvertQuoteDialog } from "./ConvertQuoteDialog";
 import { LeadCard, STAGES } from "./LeadCard";
 import { PipelineBoard } from "./PipelineBoard";
 import { QuoteDialog } from "./QuoteDialog";
+import { SalesCrumb } from "./SalesCrumb";
 
-/** «الفرص»: the pipeline from first enquiry to contract — a board on wide screens, stages on phones. */
-export function PipelinePage() {
-  const can = useCan();
-  const edit = can("sales.edit");
-  const qc = useQueryClient();
-  const all = useQuery(requestsQuery(""));
-  const people = useQuery(assigneesQuery);
-  const [stage, setStage] = useState<RequestStatus>("new");
-  const [editing, setEditing] = useState<ProductRequest | null>(null);
-  const [quoting, setQuoting] = useState<ProductRequest | null>(null);
-  const [details, setDetails] = useState<ProductRequest | null>(null);
-  const refresh = () => {
-    qc.invalidateQueries({ queryKey: ["product-requests"] });
-    qc.invalidateQueries({ queryKey: ["attention"] });
-    qc.invalidateQueries({ queryKey: ["sales-overview"] });
-  };
-  const reqs = (all.data?.requests ?? []).filter((r) => !r.interest);
-  const items = reqs.filter((r) => r.status === stage);
-  const owner = (id: string) => people.data?.find((p) => p.id === id)?.name ?? "";
-  const card = (r: ProductRequest) => (
-    <LeadCard
-      r={r}
-      ownerName={owner(r.ownerId)}
-      edit={edit}
-      onChanged={refresh}
-      onFollow={() => setEditing(r)}
-      onQuote={() => setQuoting(r)}
-      onDetails={() => setDetails(r)}
-    />
-  );
-
-  return (
-    <div className="space-y-4">
-      {all.isSuccess && reqs.length === 0 && (
-        <EmptyState
-          title="لا فرص بعد"
-          text="تصلك هنا طلبات «اطلب عرضاً» من الموقع، ويمكنك تسجيل أي استفسار وصلك بوسيلة أخرى."
-          action={edit ? <ManualRequestButton onDone={refresh} /> : undefined}
-        />
-      )}
-
-      {reqs.length > 0 && (
-        <>
-          <div className="flex justify-end">{edit && <ManualRequestButton onDone={refresh} />}</div>
-          <div className="hidden lg:block">
-            <PipelineBoard
-              reqs={reqs}
-              ownerName={owner}
-              edit={edit}
-              onChanged={refresh}
-              onFollow={setEditing}
-              onQuote={setQuoting}
-              onDetails={setDetails}
-            />
-          </div>
-          <div className="space-y-3 lg:hidden">
-            <Segmented
-              label="مراحل المسار"
-              value={stage}
-              onChange={setStage}
-              items={STAGES.map((s) => ({
-                value: s,
-                label: `${REQUEST_LABEL[s]} (${reqs.filter((r) => r.status === s).length})`,
-              }))}
-            />
-            {items.length === 0 && (
-              <EmptyState
-                title="لا شيء في هذه المرحلة"
-                text="الطلبات الواردة من الموقع تبدأ في «جديد»."
-              />
-            )}
-            <ul className="grid gap-3 sm:grid-cols-2">
-              {items.map((r) => (
-                <li key={r.id}>{card(r)}</li>
-              ))}
-            </ul>
-          </div>
-        </>
-      )}
-
-      {editing && (
-        <FollowUpDialog
-          r={editing}
-          people={people.data ?? []}
-          onClose={() => setEditing(null)}
-          onSaved={() => {
-            setEditing(null);
-            refresh();
-          }}
-        />
-      )}
-      {quoting && (
-        <QuoteDialog
-          seed={{
-            requestId: quoting.id,
-            recipient: quoting.name,
-            entity: quoting.entity,
-            title: quoting.productName ? `عرض سعر — ${quoting.productName}` : "عرض سعر",
-            value: quoting.value,
-          }}
-          onClose={() => setQuoting(null)}
-          onSaved={() => {
-            qc.invalidateQueries({ queryKey: ["quotes"] });
-            refresh();
-          }}
-        />
-      )}
-      {details && (
-        <DetailsDialog r={details} onClose={() => setDetails(null)} onChanged={refresh} />
-      )}
-    </div>
-  );
-}
-
-/** «تسجيل طلب يدوياً»: an enquiry that came by phone or WhatsApp. */
-function ManualRequestButton({ onDone }: { onDone: () => void }) {
-  const [open, setOpen] = useState(false);
-  const products = useQuery(productsQuery);
-  return (
-    <>
-      <Button variant="secondary" onClick={() => setOpen(true)}>
-        <Plus className="size-4" />
-        تسجيل طلب يدوياً
-      </Button>
-      <AddDialog
-        open={open}
-        onClose={() => setOpen(false)}
-        products={products.data ?? []}
-        onDone={onDone}
-      />
-    </>
-  );
-}
-
-/** Notes, pricing from the service's calculator and conversion to a client and project, for one lead. */
-function DetailsDialog({
-  r,
-  onClose,
-  onChanged,
-}: {
-  r: ProductRequest;
-  onClose: () => void;
-  onChanged: () => void;
-}) {
-  const products = useQuery(productsQuery);
-  return (
-    <Dialog open onOpenChange={(o) => !o && onClose()} title={`تفاصيل ${r.name}`} wide>
-      <RequestCard r={r} products={products.data ?? []} onChanged={onChanged} />
-    </Dialog>
-  );
-}
-
-function FollowUpDialog({
+export function FollowUpDialog({
   r,
   people,
   onClose,
@@ -310,6 +159,10 @@ export function QuotesPage() {
 
   return (
     <div className="space-y-4">
+      <SalesCrumb
+        title="عروض الأسعار"
+        subtitle="كل العروض بحالاتها، ونسخها وتحويل المقبول إلى مشروع"
+      />
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Stat
           label="أُرسلت"

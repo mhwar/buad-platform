@@ -23,7 +23,9 @@ describe("section registry", () => {
     expect(tabOf("/documents")).toBeNull(); // a section of its own, with no tabs
     expect(tabOf("/products")?.section.key).toBe("planning");
     expect(tabOf("/clients")?.tab.key).toBe("clients");
-    expect(tabOf("/sales/quotes")?.tab.key).toBe("quotes");
+    expect(tabOf("/sales/quotes")?.tab.key).toBe("opportunities"); // offers live inside «الفرص»
+    expect(tabOf("/sales")?.tab.key).toBe("opportunities");
+    expect(tabOf("/sales/r1")).toBeNull(); // an opportunity's own page
     expect(tabOf("/projects")).toBeNull();
     expect(tabOf("/")?.tab.key).toBe("today");
     expect(tabOf("/projects/p1")).toBeNull();

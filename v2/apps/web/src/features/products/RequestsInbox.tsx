@@ -350,7 +350,7 @@ function QuoteBlock({
         )}
       </div>
       {quoting && (
-        <QuoteDialog
+        <PricingDialog
           r={r}
           products={products}
           onClose={() => setQuoting(false)}
@@ -358,13 +358,13 @@ function QuoteBlock({
         />
       )}
       {converting && (
-        <ConvertDialog r={r} onClose={() => setConverting(false)} onDone={onChanged} />
+        <ConvertRequestDialog r={r} onClose={() => setConverting(false)} onDone={onChanged} />
       )}
     </div>
   );
 }
 
-function QuoteDialog({
+export function PricingDialog({
   r,
   products,
   onClose,
@@ -457,7 +457,7 @@ function QuoteDialog({
   );
 }
 
-function ConvertDialog({
+export function ConvertRequestDialog({
   r,
   onClose,
   onDone,
@@ -515,10 +515,14 @@ function ConvertDialog({
       ) : (
         <div className="space-y-4 text-sm">
           {error && <Notice>{error}</Notice>}
-          <p>
-            سيُنشأ عميل باسم <b>{r.entity || r.name}</b> (جمعية) مع جهة اتصال {r.name}، ومشروع بحالة
-            «مسودة».
-          </p>
+          {r.clientId ? (
+            <p>سيُنشأ مشروع بحالة «مسودة» لعميل هذه الفرصة، وسعره المتوقع من عرضها، وتُعلَّم مكسوبة.</p>
+          ) : (
+            <p>
+              سيُنشأ عميل باسم <b>{r.entity || r.name}</b> (جمعية) مع جهة اتصال {r.name}، ومشروع
+              بحالة «مسودة».
+            </p>
+          )}
           {similar && (
             <Notice tone="amber">
               يوجد عميل بنفس الاسم: {similar.name} ({similar.code}).

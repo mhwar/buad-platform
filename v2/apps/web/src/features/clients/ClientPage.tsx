@@ -26,6 +26,7 @@ import {
 } from "../labels";
 import { projectKeys } from "../projects/api";
 import { ProjectDialog } from "../projects/ProjectDialog";
+import { ClientOpportunities } from "../sales/ClientOpportunities";
 import { archiveClient, clientKeys, clientQuery, deleteClient } from "./api";
 import { AddEntry } from "./ClientActions";
 import { ClientCrm } from "./ClientCrm";
@@ -202,7 +203,7 @@ export function ClientPage() {
           },
           {
             to: "",
-            label: "التواصل",
+            label: "التواصل والفرص",
             active: tab === "crm",
             onClick: () => nav({ search: { tab: "crm" }, replace: true }),
           },
@@ -303,7 +304,10 @@ export function ClientPage() {
           </Card>
         </div>
       ) : tab === "crm" ? (
-        <ClientCrm clientId={client.id} />
+        <div className="space-y-6">
+          <ClientOpportunities clientId={client.id} />
+          <ClientCrm clientId={client.id} />
+        </div>
       ) : live.length === 0 ? (
         <EmptyState
           title="لا توجد مشاريع لهذا العميل"

@@ -669,6 +669,10 @@ export const productRequests = sqliteTable(
     followUpAt: text("follow_up_at").notNull().default(""),
     valueHalalas: integer("value_halalas").notNull().default(0),
     lostReason: text("lost_reason").notNull().default(""),
+    /** The package it is for, when known (the service is `productId`). */
+    packageId: text("package_id").notNull().default(""),
+    /** When it last moved between stages (epoch seconds, 0 = never moved). */
+    stageChangedAt: integer("stage_changed_at").notNull().default(0),
     /** Hash of (ip, org, day): only used to limit abuse, never shown. */
     ipHash: text("ip_hash").notNull().default(""),
     createdAt: integer("created_at").notNull().default(now),
@@ -1077,7 +1081,8 @@ export const crmActivities = sqliteTable(
     /** The enquiry this was about, when there is one. */
     requestId: text("request_id").notNull().default(""),
     type: text("type", {
-      enum: ["call", "meeting", "visit", "email", "whatsapp", "note"],
+      /** «stage» is written by the platform when an opportunity moves along the funnel. */
+      enum: ["call", "meeting", "visit", "email", "whatsapp", "note", "stage"],
     }).notNull(),
     summary: text("summary").notNull(),
     /** When it happened (epoch seconds). */

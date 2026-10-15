@@ -16,7 +16,6 @@ export function PipelineBoard({
   onChanged,
   onFollow,
   onQuote,
-  onDetails,
 }: {
   reqs: ProductRequest[];
   ownerName: (id: string) => string;
@@ -24,7 +23,6 @@ export function PipelineBoard({
   onChanged: () => void;
   onFollow: (r: ProductRequest) => void;
   onQuote: (r: ProductRequest) => void;
-  onDetails: (r: ProductRequest) => void;
 }) {
   const [over, setOver] = useState<RequestStatus | null>(null);
   const stats = pipelineStats(
@@ -95,7 +93,6 @@ export function PipelineBoard({
                     onChanged={onChanged}
                     onFollow={() => onFollow(r)}
                     onQuote={() => onQuote(r)}
-                    onDetails={() => onDetails(r)}
                   />
                 </li>
               ))}

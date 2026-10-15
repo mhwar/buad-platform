@@ -195,6 +195,32 @@ export const requestInput = z.object({
 });
 export type RequestInput = z.infer<typeof requestInput>;
 
+const day = z.union([z.literal(""), z.string().regex(/^\d{4}-\d{2}-\d{2}$/)]);
+
+/** A new opportunity logged by staff: for an existing client, a new one, or (old way) contact details only. */
+export const opportunityInput = z.object({
+  clientId: z.string().max(60).default(""),
+  /** Create the client from `entity` (or the contact's name) in the same step. */
+  newClient: z.boolean().default(false),
+  /** Seen the «similar name» warning and still want a new client. */
+  confirmSimilarName: z.boolean().default(false),
+  name: z.string().trim().max(100).default(""),
+  entity: z.string().trim().max(160).default(""),
+  phone: z.string().trim().max(30).default(""),
+  email: z.union([z.literal(""), z.email().max(160)]).default(""),
+  message: z.string().trim().max(2000).default(""),
+  answers: z.record(z.string().max(40), z.string().max(500)).default({}),
+  productId: z.string().max(60).default(""),
+  /** Older form: the service by its slug. */
+  productSlug: z.string().trim().max(60).optional(),
+  packageId: z.string().max(60).default(""),
+  /** Expected value in riyals. */
+  value: z.number().min(0).max(1_000_000_000).default(0),
+  ownerId: z.string().max(60).default(""),
+  followUpAt: day.default(""),
+});
+export type OpportunityInput = z.infer<typeof opportunityInput>;
+
 export const requestPatch = z
   .object({
     status: z.enum(REQUEST_STATUSES),
@@ -204,5 +230,7 @@ export const requestPatch = z
     /** The expected deal value in riyals. */
     value: z.number().min(0).max(1_000_000_000),
     lostReason: z.string().trim().max(300),
+    productId: z.string().max(60),
+    packageId: z.string().max(60),
   })
   .partial();

@@ -8,6 +8,7 @@ import { day, sar } from "../../lib/format";
 import { RankBars } from "../finance-overview/charts";
 import { REQUEST_LABEL, type RequestStatus } from "../products/products-api";
 import { overviewQuery } from "./api";
+import { SalesCrumb } from "./SalesCrumb";
 import { WonBars } from "./WonBars";
 
 const Tile = ({
@@ -62,6 +63,7 @@ export function SalesDashboard() {
 
   return (
     <div className="space-y-6">
+      <SalesCrumb title="تحليلات المبيعات" subtitle="القمع والتحويل والمكسوب والعروض والمصادر" />
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Tile
           label="فرص مفتوحة"
@@ -92,7 +94,7 @@ export function SalesDashboard() {
         <Panel
           title="قمع الفرص"
           action={
-            <Link to="/sales/pipeline" className="text-sm text-brand underline">
+            <Link to="/sales" className="text-sm text-brand underline">
               فتح الفرص
             </Link>
           }
@@ -164,10 +166,13 @@ export function SalesDashboard() {
               <ul className="space-y-1 text-sm">
                 {o.stale.map((s) => (
                   <li key={s.id} className="flex justify-between gap-2">
-                    <span className="truncate">
-                      {s.name}
-                      {s.entity && <span className="text-muted"> · {s.entity}</span>}
-                    </span>
+                    <Link
+                      to="/sales/$id"
+                      params={{ id: s.id }}
+                      className="truncate hover:text-brand hover:underline"
+                    >
+                      {s.entity || s.name}
+                    </Link>
                     <span className="shrink-0 text-xs text-muted">{s.daysIdle} يوماً</span>
                   </li>
                 ))}

@@ -79,14 +79,14 @@ export const attentionApp = new Hono<{ Variables: Vars }>().use(requireAuth).get
       tone: "warn",
       title: "متابعات مبيعات وعملاء حان موعدها",
       count: due + clientsDue,
-      link: "/sales",
+      link: "/sales/followups",
     });
     add({
       key: "requests",
       tone: "warn",
       title: "طلبات عروض لم يُتواصل معها منذ أكثر من 3 أيام",
       count: n,
-      link: "/products?tab=requests",
+      link: "/sales",
     });
   }
   if (can("sales.view")) {

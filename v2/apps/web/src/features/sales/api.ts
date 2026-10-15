@@ -1,5 +1,6 @@
 import { queryOptions } from "@tanstack/react-query";
 import { ok } from "../../lib/format";
+import type { ProductRequest } from "../products/products-api";
 
 export type QuoteStatus = "draft" | "sent" | "accepted" | "rejected";
 export type QuoteItemView = { label: string; qty: number; unit: number; total: number };
@@ -127,3 +128,31 @@ export const catalogQuery = queryOptions({
     (await ok<{ items: CatalogItem[] }>(await fetch("/api/quotes/catalog"))).items,
   staleTime: 60_000,
 });
+
+/* ── One opportunity ─────────────────────────────────────────────────────── */
+export type OpportunityActivity = {
+  id: string;
+  type: "call" | "meeting" | "visit" | "email" | "whatsapp" | "note" | "stage";
+  summary: string;
+  at: number;
+  createdByName: string;
+  requestId: string;
+};
+export type OpportunityDetail = {
+  opportunity: ProductRequest & { packageName: string; ownerName: string };
+  client: {
+    id: string;
+    code: string;
+    name: string;
+    phone: string;
+    email: string;
+    archived: boolean;
+  } | null;
+  quotes: Quote[];
+  activities: OpportunityActivity[];
+};
+export const opportunityQuery = (id: string) =>
+  queryOptions({
+    queryKey: ["product-requests", "detail", id],
+    queryFn: async () => ok<OpportunityDetail>(await fetch(`/api/product-requests/${id}`)),
+  });
