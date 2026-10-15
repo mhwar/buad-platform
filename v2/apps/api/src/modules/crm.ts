@@ -126,7 +126,7 @@ export const crmApp = new Hono<Env>()
       const client = await ownClient(db, me.orgId, c.req.param("id"));
       if (!client) return c.json({ ok: false, error: "not_found" }, 404);
       const v = c.req.valid("json");
-      const at = v.on ? epochOf(v.on) : nowSec();
+      const at = v.on && v.on !== today() ? epochOf(v.on) : nowSec(); // today means now, never a future noon
       const id = newId("act");
       await db.insert(crmActivities).values({
         id,
