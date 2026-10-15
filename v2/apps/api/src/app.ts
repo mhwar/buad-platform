@@ -43,6 +43,7 @@ import { publicSiteApp } from "./modules/site-public";
 import { tasksApp } from "./modules/tasks";
 import { teamApp } from "./modules/team";
 import { vatApp } from "./modules/vat";
+import { decisionsApp, meetingsApp } from "./modules/workspace";
 
 export type Env = {
   APP_VERSION: string;
@@ -187,6 +188,8 @@ export function createApp(deps: AppDeps = {}) {
       .route("/api/sales", salesApp)
       .route("/api/quotes", quotesApp)
       .route("/api/tasks", tasksApp)
+      .route("/api/meetings", meetingsApp)
+      .route("/api/decisions", decisionsApp)
       .route("/api/plans", plansApp)
       .route("/api/team", teamApp)
       .route("/api/audit", auditApp)

@@ -95,6 +95,8 @@ const TRAIL: { re: RegExp; entity: string; noun: string }[] = [
   { re: /^\/api\/receivables\/?[^/]*\/?([^/]*)/, entity: "project", noun: "جدول الدفعات" },
   { re: /^\/api\/crm\/clients\/([^/]+)/, entity: "client", noun: "متابعة العميل" },
   { re: /^\/api\/quotes\/?([^/]*)/, entity: "quote", noun: "عرض سعر" },
+  { re: /^\/api\/meetings\/?([^/]*)/, entity: "meeting", noun: "اجتماع" },
+  { re: /^\/api\/decisions\/?([^/]*)/, entity: "decision", noun: "قرار" },
   { re: /^\/api\/plans/, entity: "plan", noun: "الخطط" },
   { re: /^\/api\/site/, entity: "site", noun: "الموقع" },
   { re: /^\/api\/org/, entity: "org", noun: "بيانات المنشأة" },

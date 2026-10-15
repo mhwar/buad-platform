@@ -46,7 +46,7 @@ describe("SectionTabs", () => {
       within(tabs)
         .getAllByRole("tab")
         .map((t) => t.textContent?.replace(/\d+$/, "")),
-    ).toEqual(["اليوم", "مهامي"]);
+    ).toEqual(["اليوم", "مهامي", "الاجتماعات", "القرارات"]);
     expect(within(tabs).getByRole("tab", { name: /مهامي/ })).toHaveAttribute(
       "aria-selected",
       "true",
@@ -69,7 +69,7 @@ describe("SectionTabs", () => {
   it("only lists the tabs a role may open", async () => {
     await at("/", "viewer");
     const tabs = await screen.findByRole("tablist", { name: "مساحة العمل" });
-    expect(within(tabs).getAllByRole("tab")).toHaveLength(2); // viewers may read tasks
+    expect(within(tabs).getAllByRole("tab")).toHaveLength(4); // viewers may read tasks and meetings
   });
 
   it("is absent on detail pages and on pages without tabs", async () => {

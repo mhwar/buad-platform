@@ -1,15 +1,26 @@
 import * as RMenu from "@radix-ui/react-dropdown-menu";
 import { useQueryClient } from "@tanstack/react-query";
-import { Briefcase, ListChecks, Plus, ShoppingCart, Users } from "lucide-react";
+import { useNavigate } from "@tanstack/react-router";
+import {
+  Briefcase,
+  CalendarDays,
+  Gavel,
+  ListChecks,
+  Plus,
+  ShoppingCart,
+  Users,
+} from "lucide-react";
 import { type ComponentType, useState } from "react";
 import { ClientDialog } from "../../features/clients/ClientDialog";
 import { ProjectDialog } from "../../features/projects/ProjectDialog";
 import { NewOpportunityDialog } from "../../features/sales/NewOpportunityDialog";
 import { TaskDialog } from "../../features/tasks/TaskDialogs";
+import { DecisionDialog } from "../../features/workspace/DecisionDialog";
+import { MeetingDialog } from "../../features/workspace/MeetingDialog";
 import { useCan } from "../../session";
 import { cx } from "../ui";
 
-type Kind = "client" | "opportunity" | "project" | "task";
+type Kind = "client" | "opportunity" | "project" | "task" | "meeting" | "decision";
 const ITEMS: {
   kind: Kind;
   label: string;
@@ -20,12 +31,15 @@ const ITEMS: {
   { kind: "client", label: "عميل", icon: Users, perm: "clients.edit" },
   { kind: "project", label: "مشروع", icon: Briefcase, perm: "projects.edit" },
   { kind: "task", label: "مهمة", icon: ListChecks, perm: "tasks.edit" },
+  { kind: "meeting", label: "اجتماع", icon: CalendarDays, perm: "meetings.edit" },
+  { kind: "decision", label: "قرار", icon: Gavel, perm: "meetings.edit" },
 ];
 
 /** «إنشاء جديد»: the things people add most, one click away, with the forms they already know. */
 export function QuickCreate({ collapsed }: { collapsed: boolean }) {
   const can = useCan();
   const qc = useQueryClient();
+  const navigate = useNavigate();
   const [open, setOpen] = useState<Kind | null>(null);
   const items = ITEMS.filter((i) => can(i.perm));
   if (!items.length) return null;
@@ -76,6 +90,13 @@ export function QuickCreate({ collapsed }: { collapsed: boolean }) {
         />
       )}
       <NewOpportunityDialog open={open === "opportunity"} onClose={() => setOpen(null)} />
+      {open === "meeting" && (
+        <MeetingDialog
+          onClose={() => setOpen(null)}
+          onSaved={(id) => navigate({ to: "/meetings", search: { open: id } })}
+        />
+      )}
+      {open === "decision" && <DecisionDialog onClose={() => setOpen(null)} />}
     </>
   );
 }

@@ -82,8 +82,9 @@ export const SECTIONS: Section[] = [
     to: "/",
     icon: LayoutDashboard,
     tint: "indigo",
-    hint: "يومك: مهامك وما يحتاج انتباهك",
-    match: (p) => p === "/" || within("/tasks")(p),
+    hint: "يومك: مهامك واجتماعاتك وقراراتك وما يحتاج انتباهك",
+    match: (p) =>
+      p === "/" || within("/tasks")(p) || within("/meetings")(p) || within("/decisions")(p),
     tabs: [
       {
         key: "today",
@@ -102,6 +103,25 @@ export const SECTIONS: Section[] = [
         desc: "مهامك ومهام الفريق عبر المشاريع وعمل الشركة، ومن المسؤول عنها وموعدها.",
         when: "يومياً: لمعرفة ما عليك وما تأخّر.",
         match: exact("/tasks"),
+      },
+      {
+        key: "meetings",
+        label: "الاجتماعات",
+        to: "/meetings",
+        perm: "meetings.view",
+        desc: "مواعيد الاجتماعات وحضورها ومحاضرها، مرتبطة بعميل أو فرصة أو مشروع.",
+        when: "قبل الاجتماع لتجهيزه، وبعده لتدوين المحضر والقرارات.",
+        match: exact("/meetings"),
+      },
+      {
+        key: "decisions",
+        label: "القرارات",
+        to: "/decisions",
+        perm: "meetings.view",
+        attention: ["decisions"],
+        desc: "ما تقرّر ومن المسؤول عنه وموعده، وتحويله إلى مهمة تُتابَع.",
+        when: "بعد كل اجتماع، وأسبوعياً لمتابعة التنفيذ.",
+        match: exact("/decisions"),
       },
     ],
   },
@@ -421,15 +441,6 @@ const RAW_SOON = [
     desc: "تواريخ انتهاء السجل والشهادات والتراخيص مع تنبيه قبل الانتهاء.",
     when: "لتفادي انتهاء وثيقة دون انتباه.",
     will: ["سجل بكل وثيقة وتاريخ انتهائها.", "تنبيه قبل 60 و30 يوماً.", "إرفاق الملف الأصلي."],
-  },
-  {
-    key: "meetings",
-    label: "الاجتماعات والقرارات",
-    to: soonTo("meetings"),
-    icon: Briefcase,
-    desc: "محاضر الاجتماعات وقراراتها ومتابعة تنفيذها.",
-    when: "بعد كل اجتماع إداري أو مع شريك.",
-    will: ["محضر بحضور وبنود.", "قرارات تتحول إلى مهام بمسؤول وموعد.", "أرشيف قابل للبحث."],
   },
   {
     key: "knowledge",
