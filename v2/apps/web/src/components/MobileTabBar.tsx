@@ -16,9 +16,18 @@ export const isNavActive = (path: string, n: NavItem) =>
 
 /**
  * Phone navigation: the five main sections in a bottom bar (reachable by thumb, safe-area aware).
- * «المزيد» is one of them and opens the hub page that holds everything else.
+ * «المزيد» opens the drawer with everything else (or the hub page when there is no drawer).
  */
-export function MobileTabBar({ nav }: { nav: readonly NavItem[] }) {
+export function MobileTabBar({
+  nav,
+  onMore,
+  moreOpen = false,
+}: {
+  nav: readonly NavItem[];
+  /** «المزيد» opens the drawer instead of a page. */
+  onMore?: () => void;
+  moreOpen?: boolean;
+}) {
   const path = useRouterState({ select: (s) => s.location.pathname });
   return (
     <nav
@@ -27,7 +36,26 @@ export function MobileTabBar({ nav }: { nav: readonly NavItem[] }) {
     >
       <div className="mx-auto flex max-w-xl">
         {nav.map((n) => {
-          const active = isNavActive(path, n);
+          const active =
+            n.to === "/more" && onMore ? moreOpen || isNavActive(path, n) : isNavActive(path, n);
+          if (n.to === "/more" && onMore)
+            return (
+              <button
+                key={n.to}
+                type="button"
+                onClick={onMore}
+                aria-expanded={moreOpen}
+                aria-haspopup="dialog"
+                className={cx(
+                  "relative flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 px-1 text-[11px] font-medium transition",
+                  active ? "text-brand" : "text-muted",
+                )}
+              >
+                {active && <span className="absolute inset-x-5 top-0 h-0.5 rounded-b bg-brand" />}
+                <n.icon className="size-5" />
+                {n.label}
+              </button>
+            );
           return (
             <Link
               key={n.to}

@@ -36,7 +36,7 @@ const ITEMS: {
 ];
 
 /** «إنشاء جديد»: the things people add most, one click away, with the forms they already know. */
-export function QuickCreate({ collapsed }: { collapsed: boolean }) {
+export function QuickCreate({ collapsed, fab = false }: { collapsed: boolean; fab?: boolean }) {
   const can = useCan();
   const qc = useQueryClient();
   const navigate = useNavigate();
@@ -54,18 +54,20 @@ export function QuickCreate({ collapsed }: { collapsed: boolean }) {
             aria-label="إنشاء جديد"
             title={collapsed ? "إنشاء جديد" : undefined}
             className={cx(
-              "flex min-h-10 w-full items-center justify-center gap-2 rounded-xl bg-brand text-sm font-semibold text-white shadow-sm transition hover:bg-brand-strong dark:text-canvas",
-              collapsed && "px-0",
+              fab
+                ? "grid size-14 place-items-center rounded-full bg-brand text-white shadow-lg ring-4 ring-canvas transition hover:bg-brand-strong dark:text-canvas"
+                : "flex min-h-10 w-full items-center justify-center gap-2 rounded-xl bg-brand text-sm font-semibold text-white shadow-sm transition hover:bg-brand-strong dark:text-canvas",
+              collapsed && !fab && "px-0",
             )}
           >
-            <Plus className="size-4" />
+            <Plus className={fab ? "size-6" : "size-4"} />
             {!collapsed && "إنشاء جديد"}
           </button>
         </RMenu.Trigger>
         <RMenu.Portal>
           <RMenu.Content
             align="start"
-            side={collapsed ? "left" : "bottom"}
+            side={fab ? "top" : collapsed ? "left" : "bottom"}
             sideOffset={8}
             className="z-50 min-w-52 rounded-xl border bg-surface p-1 shadow-lg"
           >

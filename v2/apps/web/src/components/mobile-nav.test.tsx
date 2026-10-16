@@ -131,3 +131,42 @@ describe("StepNav", () => {
     expect(within(nav).getByText("الخطوة 1 من 3")).toBeInTheDocument();
   });
 });
+
+describe("the phone's drawer", () => {
+  it("«المزيد» opens a drawer with the whole sidebar, and it can be closed", async () => {
+    const { stubApi, meUser } = await import("../test-utils");
+    const { buildNav } = await import("./shell/nav-model");
+    const { MobileDrawer } = await import("./shell/MobileDrawer");
+    stubApi({
+      "GET /api/me": () => ({ ok: true, user: meUser("owner") }),
+      "GET /api/attention": () => ({ ok: true, items: [], checklist: [] }),
+    });
+    function Phone() {
+      const [open, setOpen] = useState(false);
+      return (
+        <>
+          <MobileTabBar nav={NAV} onMore={() => setOpen(true)} moreOpen={open} />
+          <MobileDrawer
+            open={open}
+            onOpenChange={setOpen}
+            groups={buildNav(meUser("owner").perms)}
+            activeKey={null}
+            user={{ name: "سلطان", role: "المالك" }}
+            onLogout={() => {}}
+          />
+        </>
+      );
+    }
+    await renderWithApp(<Phone />);
+    const more = screen.getByRole("button", { name: "المزيد" });
+    expect(more).toHaveAttribute("aria-expanded", "false");
+    fireEvent.click(more);
+    const drawer = await screen.findByRole("dialog", { name: "القائمة" });
+    for (const s of ["مساحة العمل", "المبيعات", "المستندات", "التخطيط", "الإعدادات"])
+      expect(within(drawer).getAllByText(s).length).toBeGreaterThan(0);
+    expect(await within(drawer).findByRole("button", { name: "إنشاء جديد" })).toBeInTheDocument();
+    expect(within(drawer).queryByRole("button", { name: "طيّ القائمة" })).toBeNull();
+    fireEvent.click(within(drawer).getByRole("button", { name: "إغلاق القائمة" }));
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+});

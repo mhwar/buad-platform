@@ -366,13 +366,17 @@ export function Sidebar({
   activeKey,
   user,
   onLogout,
+  drawer = false,
 }: {
   groups: NavGroup[];
   activeKey: string | null;
   user: { name: string; role: string };
   onLogout: () => void;
+  /** Inside the phone's drawer: full width, always open, no fold button. */
+  drawer?: boolean;
 }) {
-  const [collapsed, setCollapsed] = useSidebarCollapsed();
+  const [folded, setCollapsed] = useSidebarCollapsed();
+  const collapsed = drawer ? false : folded;
   const counts = useAttentionCounts();
   const path = useRouterState({ select: (s) => s.location.pathname });
   const search = useRouterState({ select: (s) => s.location.search }) as NavSearch;
@@ -380,8 +384,10 @@ export function Sidebar({
   return (
     <aside
       className={cx(
-        "sticky top-14 hidden h-[calc(100dvh-3.5rem)] shrink-0 flex-col border-e bg-surface transition-[width] duration-200 motion-reduce:transition-none lg:flex",
-        collapsed ? "w-[4.5rem]" : "w-64",
+        drawer
+          ? "flex h-full w-full flex-col bg-surface"
+          : "sticky top-14 hidden h-[calc(100dvh-3.5rem)] shrink-0 flex-col border-e bg-surface transition-[width] duration-200 motion-reduce:transition-none lg:flex",
+        !drawer && (collapsed ? "w-[4.5rem]" : "w-64"),
       )}
     >
       <div className="space-y-2 border-b p-3">
@@ -415,25 +421,27 @@ export function Sidebar({
           </div>
         ))}
       </nav>
-      <div className="border-t p-3">
-        <button
-          type="button"
-          onClick={() => setCollapsed(!collapsed)}
-          aria-pressed={collapsed}
-          aria-label={collapsed ? "توسيع القائمة" : "طيّ القائمة"}
-          className={cx(
-            "flex min-h-10 w-full items-center gap-3 rounded-lg px-3 text-sm text-muted transition hover:bg-brand-soft/60 hover:text-ink",
-            collapsed && "justify-center px-0",
-          )}
-        >
-          {collapsed ? (
-            <PanelRightOpen className="size-[18px]" />
-          ) : (
-            <PanelRightClose className="size-[18px]" />
-          )}
-          {!collapsed && "طيّ القائمة"}
-        </button>
-      </div>
+      {!drawer && (
+        <div className="border-t p-3">
+          <button
+            type="button"
+            onClick={() => setCollapsed(!collapsed)}
+            aria-pressed={collapsed}
+            aria-label={collapsed ? "توسيع القائمة" : "طيّ القائمة"}
+            className={cx(
+              "flex min-h-10 w-full items-center gap-3 rounded-lg px-3 text-sm text-muted transition hover:bg-brand-soft/60 hover:text-ink",
+              collapsed && "justify-center px-0",
+            )}
+          >
+            {collapsed ? (
+              <PanelRightOpen className="size-[18px]" />
+            ) : (
+              <PanelRightClose className="size-[18px]" />
+            )}
+            {!collapsed && "طيّ القائمة"}
+          </button>
+        </div>
+      )}
     </aside>
   );
 }
