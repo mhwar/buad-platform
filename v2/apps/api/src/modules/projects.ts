@@ -128,12 +128,33 @@ export const projectsApp = new Hono<Env>()
       search,
     );
     const contractTotal = sql<number>`${contractTotalSql("projects")}`;
+    const today = new Date().toISOString().slice(0, 10);
+    // Health at a glance, worked out per row: money in, work done, what is due next, and lateness.
+    const received = sql<number>`COALESCE((SELECT SUM(r.amount_halalas) FROM project_receipts r
+      WHERE r.project_id = ${projects.id} AND r.approved_at IS NOT NULL), 0)`;
+    const nextDue = sql<string>`COALESCE((SELECT MIN(s.due_date) FROM payment_schedule s
+      WHERE s.project_id = ${projects.id} AND s.status = 'pending'), '')`;
+    const late = sql`(${projects.status} = 'active' AND ${projects.endDate} <> '' AND ${projects.endDate} < ${today})`;
     const order =
       q.sort === "name"
         ? [asc(projects.name)]
         : q.sort === "value"
           ? [desc(contractTotal), asc(projects.name)]
-          : [desc(projects.createdAt), desc(projects.number)];
+          : q.sort === "deadline"
+            ? [
+                asc(
+                  sql`CASE WHEN ${projects.status} = 'active' AND ${projects.endDate} <> '' THEN 0 ELSE 1 END`,
+                ),
+                asc(projects.endDate),
+                asc(projects.name),
+              ]
+            : [desc(projects.createdAt), desc(projects.number)];
+    const flag =
+      q.flag === "late"
+        ? late
+        : q.flag === "due"
+          ? sql`${nextDue} <> '' AND ${nextDue} < ${today}`
+          : undefined;
     const items = await db
       .select({
         id: projects.id,
@@ -157,11 +178,23 @@ export const projectsApp = new Hono<Env>()
         packageId: projects.packageId,
         packageName: projects.packageName,
         productName: sql<string>`COALESCE(${products.name}, '')`,
+        /** True when the value is the expected value + 15% (no contract recorded yet). */
+        estimated: sql<boolean>`NOT EXISTS (SELECT 1 FROM project_finance f WHERE f.project_id = ${projects.id})`,
+        received,
+        stagesTotal: sql<number>`(SELECT COUNT(*) FROM project_stages g WHERE g.project_id = ${projects.id})`,
+        stagesDone: sql<number>`(SELECT COUNT(*) FROM project_stages g WHERE g.project_id = ${projects.id} AND g.status = 'done')`,
+        tasksOpen: sql<number>`(SELECT COUNT(*) FROM tasks t WHERE t.project_id = ${projects.id} AND t.status <> 'done')`,
+        tasksDone: sql<number>`(SELECT COUNT(*) FROM tasks t WHERE t.project_id = ${projects.id} AND t.status = 'done')`,
+        tasksOverdue: sql<number>`(SELECT COUNT(*) FROM tasks t WHERE t.project_id = ${projects.id} AND t.status <> 'done' AND t.due_date <> '' AND t.due_date < ${today})`,
+        nextDueDate: nextDue,
+        nextDueAmount: sql<number>`COALESCE((SELECT s.amount_halalas FROM payment_schedule s
+          WHERE s.project_id = ${projects.id} AND s.status = 'pending' ORDER BY s.due_date LIMIT 1), 0)`,
+        late: sql<boolean>`${late}`,
       })
       .from(projects)
       .innerJoin(clients, eq(clients.id, projects.clientId))
       .leftJoin(products, eq(products.id, projects.productId))
-      .where(and(base, q.status ? eq(projects.status, q.status as never) : undefined))
+      .where(and(base, q.status ? eq(projects.status, q.status as never) : undefined, flag))
       .orderBy(...order)
       .limit(1000);
     const byStatus = await db
@@ -170,9 +203,18 @@ export const projectsApp = new Hono<Env>()
       .innerJoin(clients, eq(clients.id, projects.clientId))
       .where(base)
       .groupBy(projects.status);
+    // Money in and money due are finance figures: only for those who may see project finance.
+    const money = me.perms.includes("finance.view");
     return c.json({
       ok: true,
-      items,
+      items: items.map((p) => ({
+        ...p,
+        estimated: !!p.estimated,
+        late: !!p.late,
+        received: money ? Number(p.received) : null,
+        nextDueAmount: money ? Number(p.nextDueAmount) : null,
+        nextDueDate: money ? p.nextDueDate : "",
+      })),
       counts: Object.fromEntries(byStatus.map((r) => [r.status, r.n])) as Record<string, number>,
     });
   })

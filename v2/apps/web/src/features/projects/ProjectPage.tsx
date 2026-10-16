@@ -35,6 +35,7 @@ import {
 import { day, fromEpoch } from "../../lib/format";
 import { meQuery } from "../../session";
 import { clientKeys } from "../clients/api";
+import { documentsQuery } from "../documents/api";
 import { DocumentsSection } from "../documents/DocumentsSection";
 import { type Finance, financeKey } from "../finance/api";
 import {
@@ -48,6 +49,7 @@ import { ReceiptsCard } from "../finance/Receipts";
 import { label, PROJECT_STATUS_LABELS, PROJECT_TYPE_LABELS, STATUS_TONE } from "../labels";
 import { ScheduleCard } from "../receivables/ScheduleCard";
 import { ExecutionTab } from "../tasks/ExecutionTab";
+import { executionQuery } from "../tasks/queries";
 import { ProjectMembers } from "../team/ProjectMembers";
 import {
   archiveProject,
@@ -58,6 +60,7 @@ import {
   updateProject,
 } from "./api";
 import { ProjectDialog } from "./ProjectDialog";
+import { ProjectPulse } from "./ProjectPulse";
 
 const route = getRouteApi("/projects/$id");
 type Section = "finance" | "documents" | "execution";
@@ -79,6 +82,11 @@ export function ProjectPage() {
   const qc = useQueryClient();
   const me = useQuery(meQuery).data;
   const q = useQuery(projectQuery(id));
+  const docs = useQuery({ ...documentsQuery(id), enabled: !!me?.perms.includes("documents.view") });
+  const execution = useQuery({
+    ...executionQuery(id),
+    enabled: !!me?.perms.includes("tasks.view"),
+  });
   useTrackRecent(
     q.data ? { kind: "project", id, title: q.data.project.name, href: `/projects/${id}` } : null,
   );
@@ -103,6 +111,15 @@ export function ProjectPage() {
     );
 
   const { project: p, client, service } = q.data;
+  // Counts on the section switcher: how many documents, how much of the work is done.
+  const docCount = docs.data?.length ?? 0;
+  const exStages = execution.data?.stages ?? [];
+  const exTasks = execution.data?.tasks ?? [];
+  const workLabel = exStages.length
+    ? `${exStages.filter((x) => x.status === "done").length}/${exStages.length}`
+    : exTasks.length
+      ? `${exTasks.filter((x) => x.status === "done").length}/${exTasks.length}`
+      : "";
   const manager = !!me?.perms.includes("finance.edit");
   const canDelete = !!me?.perms.includes("projects.delete");
   const canArchive = !!me?.perms.includes("projects.archive");
@@ -317,6 +334,13 @@ export function ProjectPage() {
         </div>
       </header>
 
+      <ProjectPulse
+        projectId={p.id}
+        status={p.status}
+        endDate={p.endDate}
+        onExecution={() => nav({ search: { view: "execution" }, replace: true })}
+      />
+
       <FinanceStrip
         projectId={p.id}
         canEdit={manager}
@@ -339,13 +363,13 @@ export function ProjectPage() {
               { value: "finance", label: "المالية", icon: <Wallet className="size-4" /> },
               {
                 value: "documents",
-                label: "المستندات",
+                label: docCount ? `المستندات (${docCount})` : "المستندات",
                 icon: <FileText className="size-4" />,
                 hint: "العقود والخطابات",
               },
               {
                 value: "execution",
-                label: "التنفيذ",
+                label: workLabel ? `التنفيذ (${workLabel})` : "التنفيذ",
                 icon: <ListChecks className="size-4" />,
                 hint: "المراحل والمهام والوقت",
               },
@@ -365,7 +389,7 @@ export function ProjectPage() {
           )}
         </div>
 
-        <aside className="space-y-4 lg:sticky lg:top-24" aria-label="تفاصيل المشروع">
+        <aside className="flex flex-col gap-4 lg:sticky lg:top-24" aria-label="تفاصيل المشروع">
           <ContractSummary
             projectId={p.id}
             canEdit={manager}
@@ -373,7 +397,8 @@ export function ProjectPage() {
           />
           <ReceiptsCard projectId={p.id} canEdit={manager} />
           <ScheduleCard projectId={p.id} canEdit={manager} />
-          <Card>
+          {/* On a phone the details come first; on a computer they close the column. */}
+          <Card className="order-first lg:order-none">
             <div className="mb-3 flex items-center justify-between">
               <h2 className="font-semibold">بيانات المشروع</h2>
               <Button
