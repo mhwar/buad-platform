@@ -23,7 +23,7 @@ import { Hono } from "hono";
 import { z } from "zod";
 import { requireAuth, requirePerm, type Vars } from "../auth/middleware";
 import type { AuthUser, Db } from "../auth/service";
-import { likeTerm, logoUrlSql, newId, nextCounter, nowSec } from "./common";
+import { atomic, likeTerm, logoUrlSql, newId, nextCounter, nowSec } from "./common";
 import { loadFinance } from "./finance";
 import { notify, usersWithPerm } from "./notifications";
 import { loadOrgProfile } from "./org";
@@ -410,24 +410,43 @@ export const documentsApp = new Hono<Env>()
       if (doc.status === "approved") return c.json({ ok: false, error: "already_approved" }, 409);
       set.approvedBy = me.id;
       set.approvedAt = t;
-      const v = await view(db, me, doc, found.project);
-      // Snapshot what was approved, with every variable filled as it was at that moment.
-      await db.insert(documentVersions).values({
-        id: newId("dv"),
-        documentId: doc.id,
-        version: doc.version,
-        snapshot: JSON.stringify({ document: v.document, values: v.values }),
-        approvedBy: me.id,
-        approvedAt: t,
-      });
     }
-    const upd = await db
+    const move = db
       .update(documents)
       .set(set)
-      .where(and(eq(documents.id, doc.id), eq(documents.version, doc.version)))
-      .returning({ v: documents.version });
-    if (!upd.length) return c.json({ ok: false, error: "stale" }, 409);
+      .where(and(eq(documents.id, doc.id), eq(documents.version, doc.version)));
+    if (to === "approved") {
+      const v = await view(db, me, doc, found.project);
+      // Snapshot what was approved, with every variable filled as it was at that moment — in the
+      // same batch as the approval, and only if this very approval went through (no orphan copy).
+      await atomic(db, [
+        move,
+        db.insert(documentVersions).select(
+          db
+            .select({
+              id: sql`${newId("dv")}`.as("id"),
+              documentId: documents.id,
+              version: sql`${doc.version}`.as("version"),
+              snapshot: sql`${JSON.stringify({ document: v.document, values: v.values })}`.as(
+                "snapshot",
+              ),
+              approvedBy: sql`${me.id}`.as("approved_by"),
+              approvedAt: documents.approvedAt,
+            })
+            .from(documents)
+            .where(
+              and(
+                eq(documents.id, doc.id),
+                eq(documents.version, doc.version + 1),
+                eq(documents.approvedAt, t),
+              ),
+            ) as never,
+        ),
+      ]);
+    } else await move;
     const [fresh] = await db.select().from(documents).where(eq(documents.id, doc.id)).limit(1);
+    if (!fresh || fresh.version !== doc.version + 1)
+      return c.json({ ok: false, error: "stale" }, 409);
     if (to === "review")
       await notify(
         db,

@@ -41,7 +41,21 @@ pnpm verify    # فحص + أنواع + اختبارات + بناء (نفس بو�
 - الجلسة: كوكي `HttpOnly; Secure; SameSite=Strict` لمدة 12 ساعة، وتُلغى فوراً بتغيير `token_version`.
 - `JWT_SECRET` إلزامي (لا قيمة افتراضية) — يُضبط بـ `wrangler secret put JWT_SECRET`.
 - كل استعلام يُقيَّد بـ `org_id` للمستخدم؛ انظر `GET /api/users` والاختبار `isolates organisations`.
-- مؤجل للإنتاج: تحديد معدل المحاولات (Cloudflare Rate Limiting) على `/api/auth/login`.
+- تحديد معدل الدخول: 10 محاولات في الدقيقة لكل عنوان (`LOGIN_LIMITER` في `wrangler.jsonc`)، وما زاد يُرفض بـ 429.
+
+## النسخ الاحتياطي والاستعادة والمراقبة
+
+- **قبل كل نشر**: يأخذ `v2-deploy` نسخة كاملة من القاعدة (`wrangler d1 export`) قبل تطبيق الهجرات، ويحفظها 30 يوماً كملف مرفق بالتشغيل (Actions ← التشغيل ← Artifacts ← `d1-backup-<sha>`).
+- **الاستعادة إلى لحظة سابقة** (الأسرع، بلا ملف): D1 Time Travel يحتفظ بتاريخ القاعدة (30 يوماً في الخطة المدفوعة، 7 في المجانية):
+  ```
+  cd v2/apps/api
+  pnpm exec wrangler d1 time-travel info buad-v2 --timestamp=2026-10-16T09:00:00Z   # يعرض نقطة الاستعادة
+  pnpm exec wrangler d1 time-travel restore buad-v2 --timestamp=2026-10-16T09:00:00Z
+  ```
+- **الاستعادة من ملف النسخة**: نزّلوا الملف من الـ Artifacts، ثم على قاعدة جديدة فارغة:
+  `pnpm exec wrangler d1 execute <قاعدة-جديدة> --remote --file=backup-<sha>.sql`، وتحقّقوا منها قبل ربطها في `wrangler.jsonc`.
+- **المراقبة**: `observability` مفعّلة، فالسجلات والأخطاء تظهر في Cloudflare ← Workers ← `buad-v2` ← Logs. يُنصح بإضافة تنبيه (Notifications ← Workers) عند ارتفاع الأخطاء.
+- **e2e قبل النشر**: لا يصل شيء للإنتاج إلا إذا نجحت اختبارات الطرف إلى الطرف على نفس البناء.
 
 ## أداة الترحيل (`tools/migrate`)
 

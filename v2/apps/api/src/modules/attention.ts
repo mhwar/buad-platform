@@ -187,11 +187,14 @@ export const attentionApp = new Hono<{ Variables: Vars }>().use(requireAuth).get
       db
         .select({ n: sql<number>`count(*)` })
         .from(paymentSchedule)
+        // Same list as «التحصيل»: archived projects are out of it.
+        .innerJoin(projects, eq(projects.id, paymentSchedule.projectId))
         .where(
           and(
             eq(paymentSchedule.orgId, me.orgId),
             eq(paymentSchedule.status, "pending"),
             lt(paymentSchedule.dueDate, today),
+            isNull(projects.archivedAt),
           ),
         ),
     );
