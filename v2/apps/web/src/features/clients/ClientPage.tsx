@@ -2,6 +2,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getRouteApi, Link, useNavigate } from "@tanstack/react-router";
 import { FileSpreadsheet, Pencil, Plus, ReceiptText } from "lucide-react";
 import { useState } from "react";
+import { PageSkeleton, SectionBoundary } from "../../components/Resilience";
 import { useTrackRecent } from "../../components/shell/useRecent";
 import {
   Avatar,
@@ -52,7 +53,7 @@ export function ClientPage() {
   const [addingEntry, setAddingEntry] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  if (q.isPending) return <p className="text-muted">جارٍ التحميل…</p>;
+  if (q.isPending) return <PageSkeleton />;
   if (q.isError || !q.data)
     return (
       <EmptyState
@@ -189,13 +190,15 @@ export function ClientPage() {
         </div>
       </Card>
 
-      <ClientPulse
-        clientId={client.id}
-        active={byStatus.active ?? 0}
-        total={live.length}
-        onProjects={() => nav({ search: { tab: "projects" }, replace: true })}
-        onCrm={() => nav({ search: { tab: "crm" }, replace: true })}
-      />
+      <SectionBoundary label="نبض العميل">
+        <ClientPulse
+          clientId={client.id}
+          active={byStatus.active ?? 0}
+          total={live.length}
+          onProjects={() => nav({ search: { tab: "projects" }, replace: true })}
+          onCrm={() => nav({ search: { tab: "crm" }, replace: true })}
+        />
+      </SectionBoundary>
 
       <Tabs
         items={[

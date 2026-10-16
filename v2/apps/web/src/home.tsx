@@ -13,6 +13,7 @@ import {
   ShoppingCart,
 } from "lucide-react";
 import type { ReactNode } from "react";
+import { SectionBoundary } from "./components/Resilience";
 import { Badge, Card, cx } from "./components/ui";
 import { followupsQuery } from "./features/clients/api";
 import { AttentionPanel } from "./features/home/AttentionPanel";
@@ -58,17 +59,43 @@ export function Home() {
         <span className="sr-only">أهلاً {me?.name}</span>
       </header>
       {me?.perms.includes("import.run") && <ImportHint />}
-      <AttentionPanel />
+      <SectionBoundary label="ما يحتاج انتباهك">
+        <AttentionPanel />
+      </SectionBoundary>
       <div className="grid items-start gap-5 lg:grid-cols-3">
         <div className="space-y-5 lg:col-span-2">
-          {can("tasks.view") && <MyTasks />}
-          {can("meetings.view") && <MyMeetings />}
-          {can("meetings.view") && <MyDecisions />}
+          {can("tasks.view") && (
+            <SectionBoundary label="مهامي">
+              <MyTasks />
+            </SectionBoundary>
+          )}
+          {can("meetings.view") && (
+            <SectionBoundary label="اجتماعاتي">
+              <MyMeetings />
+            </SectionBoundary>
+          )}
+          {can("meetings.view") && (
+            <SectionBoundary label="قراراتي">
+              <MyDecisions />
+            </SectionBoundary>
+          )}
         </div>
         <aside className="space-y-5" aria-label="أرقامك">
-          {can("clients.view") && <MyFollowups />}
-          {can("sales.view") && <SalesNumbers />}
-          {can("projects.view") && <ProjectNumbers />}
+          {can("clients.view") && (
+            <SectionBoundary label="المتابعات">
+              <MyFollowups />
+            </SectionBoundary>
+          )}
+          {can("sales.view") && (
+            <SectionBoundary label="أرقام المبيعات">
+              <SalesNumbers />
+            </SectionBoundary>
+          )}
+          {can("projects.view") && (
+            <SectionBoundary label="أرقام المشاريع">
+              <ProjectNumbers />
+            </SectionBoundary>
+          )}
         </aside>
       </div>
     </>
