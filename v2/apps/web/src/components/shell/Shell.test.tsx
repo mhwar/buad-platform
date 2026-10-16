@@ -249,6 +249,67 @@ describe("CommandPalette", () => {
     expect(await screen.findByRole("option", { name: /اجتماع النور/ })).toBeInTheDocument();
   });
 
+  it("finds documents and open tasks, and runs «إنشاء» commands", async () => {
+    stubApi({
+      "GET /api/clients": () => ({ ok: true, items: [], counts: {} }),
+      "GET /api/projects": () => ({ ok: true, items: [], counts: {} }),
+      "GET /api/documents": () => ({
+        ok: true,
+        items: [
+          {
+            id: "d1",
+            kind: "contract",
+            title: "عقد النور",
+            number: "CT-1",
+            outgoingNo: "",
+            projectId: "p1",
+            clientName: "جمعية النور",
+          },
+        ],
+        counts: [],
+        outgoingCount: 0,
+      }),
+      "GET /api/tasks": () => ({
+        ok: true,
+        items: [
+          {
+            id: "t1",
+            title: "تجهيز قاعة النور",
+            status: "todo",
+            projectName: "",
+            assigneeName: "",
+          },
+          { id: "t2", title: "النور القديمة", status: "done", projectName: "", assigneeName: "" },
+        ],
+      }),
+    });
+    const created: string[] = [];
+    const on = (e: Event) => created.push((e as CustomEvent<string>).detail);
+    window.addEventListener("buad:create", on);
+    const onOpenChange = vi.fn();
+    await renderWithApp(
+      <CommandPalette
+        open
+        onOpenChange={onOpenChange}
+        groups={groups}
+        canSeeClients
+        canSeeProjects
+        perms={owner.perms}
+      />,
+    );
+    const box = screen.getByRole("combobox");
+    await userEvent.type(box, "النور");
+    expect(await screen.findByRole("option", { name: /عقد النور/ })).toBeInTheDocument();
+    expect(await screen.findByRole("option", { name: /تجهيز قاعة النور/ })).toBeInTheDocument();
+    expect(screen.queryByRole("option", { name: /النور القديمة/ })).toBeNull();
+    await userEvent.clear(box);
+    await userEvent.type(box, "اجتماع جديد");
+    await userEvent.click(await screen.findByRole("option", { name: "اجتماع جديد" }));
+    expect(created).toEqual(["meeting"]);
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+    window.removeEventListener("buad:create", on);
+  });
+
   it("says so when nothing matches, and does not search for one letter", async () => {
     const { calls } = await setup(false);
     await userEvent.type(screen.getByRole("combobox"), "ي");

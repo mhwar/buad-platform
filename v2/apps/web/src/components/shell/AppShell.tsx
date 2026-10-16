@@ -127,6 +127,7 @@ export function AppShell() {
           <QuickCreate collapsed fab />
         </div>
       )}
+      <QuickCreate collapsed headless />
       {paletteLoaded && (
         <Suspense fallback={null}>
           <CommandPalette
@@ -137,6 +138,7 @@ export function AppShell() {
             canSeeProjects={me.data.perms.includes("projects.view")}
             canSeeSales={me.data.perms.includes("sales.view")}
             canSeeMeetings={me.data.perms.includes("meetings.view")}
+            perms={me.data.perms}
           />
         </Suspense>
       )}
