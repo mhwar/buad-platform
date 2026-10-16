@@ -171,10 +171,12 @@ export function ClientPage() {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button variant="secondary" onClick={() => setEditing(true)}>
-            <Pencil className="size-4" /> تعديل
-          </Button>
-          {!client.archivedAt && (
+          {me?.perms.includes("clients.edit") && (
+            <Button variant="secondary" onClick={() => setEditing(true)}>
+              <Pencil className="size-4" /> تعديل
+            </Button>
+          )}
+          {!client.archivedAt && me?.perms.includes("projects.edit") && (
             <Button onClick={() => setAddingProject(true)}>
               <Plus className="size-4" /> مشروع جديد
             </Button>
