@@ -409,6 +409,8 @@ export const documents = sqliteTable(
     outgoingNo: text("outgoing_no").notNull().default(""),
     outgoingAt: integer("outgoing_at"),
     outgoingBy: text("outgoing_by").notNull().default(""),
+    /** When it last moved between draft, review and approved (0 = before this was kept). */
+    statusChangedAt: integer("status_changed_at").notNull().default(0),
     ...audit,
   },
   (t) => [

@@ -1,0 +1,1 @@
+ALTER TABLE `documents` ADD `status_changed_at` integer DEFAULT 0 NOT NULL;

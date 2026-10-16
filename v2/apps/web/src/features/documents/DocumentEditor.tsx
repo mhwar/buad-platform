@@ -50,6 +50,7 @@ import {
 import { ApiError, fromEpoch } from "../../lib/format";
 import { meQuery } from "../../session";
 import { type DocDetail, docApi, docKeys, documentQuery } from "./api";
+import { DocStepper } from "./DocStepper";
 import { exportPdf, exportWord } from "./DocumentActions";
 import { STATUS_TONE } from "./DocumentsSection";
 import { DocumentView, VAR_LABELS } from "./DocumentView";
@@ -436,6 +437,7 @@ export function DocumentEditor() {
           <Menu items={menu} label="إجراءات المستند" />
         </div>
       </div>
+      <DocStepper doc={doc} />
       {notice && <Notice tone={notice.tone}>{notice.text}</Notice>}
       {sending && q.data && <SendDialog detail={q.data} onClose={() => setSending(false)} />}
 

@@ -12,8 +12,27 @@ export type DocListItem = {
   status: DocStatus;
   outgoingNo: string;
   updatedAt: number;
+  /** When it last changed status (0 = not kept yet: fall back to updatedAt). */
+  statusChangedAt?: number;
   version: number;
 };
+
+/** «بانتظار الاعتماد منذ …» for a document in review, from when it got there. */
+export function waitingLabel(
+  d: { status: string; statusChangedAt?: number; updatedAt: number },
+  now = Date.now(),
+) {
+  if (d.status !== "review") return "";
+  const since = d.statusChangedAt || d.updatedAt;
+  const days = Math.max(0, Math.floor((now / 1000 - since) / 86400));
+  return days === 0
+    ? "بانتظار الاعتماد منذ اليوم"
+    : days === 1
+      ? "بانتظار الاعتماد منذ يوم"
+      : days === 2
+        ? "بانتظار الاعتماد منذ يومين"
+        : `بانتظار الاعتماد منذ ${days} ${days <= 10 ? "أيام" : "يوماً"}`;
+}
 export type RegisterItem = {
   id: string;
   kind: "contract" | "letter";
@@ -23,6 +42,7 @@ export type RegisterItem = {
   outgoingNo: string;
   outgoingAt: number | null;
   updatedAt: number;
+  statusChangedAt?: number;
   projectId: string;
   projectNumber: string;
   projectName: string;
@@ -60,6 +80,7 @@ export type DocDetail = {
     outgoingNo: string;
     outgoingAt: number | null;
     updatedAt: number;
+    statusChangedAt?: number;
   };
   project: { id: string; number: string; name: string };
   values: Resolved;
