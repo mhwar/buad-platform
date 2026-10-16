@@ -171,3 +171,39 @@ describe("project list health", () => {
     expect(r.every((p: J) => p.received === null && p.nextDueAmount === null)).toBe(true);
   });
 });
+
+describe("client list money", () => {
+  it("shows what each client still owes and its late instalments, to finance viewers only", async () => {
+    const a = await proj("مشروع العميل");
+    const list0 = (await call("own", "GET", "/api/clients")).body.items;
+    const c = list0.find((x: J) => x.name === "عميل مشروع العميل");
+    await ctx.db.insert(projectReceipts).values([
+      {
+        id: "rc1",
+        orgId: "org_platform",
+        projectId: a,
+        date: "2026-01-01",
+        amount: 1_500_000,
+        approvedAt: 1,
+      },
+    ]);
+    await ctx.db.insert(paymentSchedule).values([
+      {
+        id: "sc1",
+        orgId: "org_platform",
+        projectId: a,
+        label: "أ",
+        dueDate: "2020-01-01",
+        amount: 100,
+      },
+    ]);
+    const row = (await call("own", "GET", "/api/clients")).body.items.find((x: J) => x.id === c.id);
+    // 100,000 + 15% VAT = 11,500,000 halalas, minus 1,500,000 received
+    expect(row.owed).toBe(10_000_000);
+    expect(row.lateInstalments).toBe(1);
+    const viewer = (await call("view", "GET", "/api/clients")).body.items.find(
+      (x: J) => x.id === c.id,
+    );
+    expect([viewer.owed, viewer.lateInstalments]).toEqual([null, 0]);
+  });
+});
