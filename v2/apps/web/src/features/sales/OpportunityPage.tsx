@@ -52,6 +52,7 @@ import { productsQuery } from "../products/products-api";
 import { ConvertRequestDialog, PricingDialog } from "../products/RequestsInbox";
 import { assigneesQuery } from "../tasks/queries";
 import { send } from "../team/queries";
+import { RecordMeetings } from "../workspace/RecordMeetings";
 import { opportunityQuery, QUOTE_LABEL, type Quote } from "./api";
 import { ConvertQuoteDialog } from "./ConvertQuoteDialog";
 import { QuoteDialog } from "./QuoteDialog";
@@ -505,6 +506,10 @@ export function OpportunityPage() {
               <Row label="آخر حركة">{ago(o.updatedAt)}</Row>
             </dl>
           </Card>
+          <RecordMeetings
+            link={{ requestId: o.id, clientId: o.clientId }}
+            title={`اجتماع مع ${o.entity || o.name}`}
+          />
         </aside>
       </div>
 

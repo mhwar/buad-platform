@@ -58,7 +58,15 @@ export const DECISION_LABEL: Record<DecisionStatus, string> = {
   cancelled: "أُلغي",
 };
 
-export type MeetingFilter = { from?: string; to?: string; mine?: "1" };
+export type MeetingFilter = {
+  from?: string;
+  to?: string;
+  mine?: "1";
+  /** One record's meetings: shown on its client, opportunity or project page. */
+  clientId?: string;
+  requestId?: string;
+  projectId?: string;
+};
 export const meetingsQuery = (f: MeetingFilter = {}) =>
   queryOptions({
     queryKey: ["meetings", "list", f],

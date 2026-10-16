@@ -32,6 +32,10 @@ export const meetingQuery = z.object({
   to: date.optional(),
   mine: z.enum(["1"]).optional(),
   status: z.enum(MEETING_STATUSES).optional(),
+  /** The meetings about one record: its client, opportunity or project page. */
+  clientId: z.string().max(60).optional(),
+  requestId: z.string().max(60).optional(),
+  projectId: z.string().max(60).optional(),
 });
 
 export const DECISION_STATUSES = ["open", "done", "cancelled"] as const;

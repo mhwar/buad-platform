@@ -27,6 +27,7 @@ import {
 import { projectKeys } from "../projects/api";
 import { ProjectDialog } from "../projects/ProjectDialog";
 import { ClientOpportunities } from "../sales/ClientOpportunities";
+import { RecordMeetings } from "../workspace/RecordMeetings";
 import { archiveClient, clientKeys, clientQuery, deleteClient } from "./api";
 import { AddEntry } from "./ClientActions";
 import { ClientCrm } from "./ClientCrm";
@@ -315,6 +316,7 @@ export function ClientPage() {
       ) : tab === "crm" ? (
         <div className="space-y-6">
           <ClientOpportunities clientId={client.id} />
+          <RecordMeetings link={{ clientId: client.id }} title={`اجتماع مع ${client.name}`} />
           <ClientCrm clientId={client.id} />
         </div>
       ) : live.length === 0 ? (

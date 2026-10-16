@@ -264,6 +264,9 @@ export const meetingsApp = new Hono<Env>()
           q.to ? lt(meetings.startsAt, nextDay(q.to)) : undefined,
           q.status ? eq(meetings.status, q.status) : undefined,
           q.mine ? mineFilter(me) : undefined,
+          q.clientId ? eq(meetings.clientId, q.clientId) : undefined,
+          q.requestId ? eq(meetings.requestId, q.requestId) : undefined,
+          q.projectId ? eq(meetings.projectId, q.projectId) : undefined,
         ),
       )
       .orderBy(asc(meetings.startsAt))
