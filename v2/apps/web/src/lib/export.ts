@@ -15,7 +15,10 @@ function save(blob: Blob, name: string) {
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
   a.download = name;
+  // Attached while clicked, so every browser keeps the file name.
+  document.body.appendChild(a);
   a.click();
+  a.remove();
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 }
 
