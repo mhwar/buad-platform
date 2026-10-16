@@ -13,6 +13,7 @@ import { Link } from "@tanstack/react-router";
 import { BarChart3, Columns3, FileText, List, Plus, Table2 } from "lucide-react";
 import { type ComponentType, useState } from "react";
 import { FilterBar } from "../../components/FilterBar";
+import { StatTile } from "../../components/StatTile";
 import {
   Badge,
   Button,
@@ -423,24 +424,6 @@ export function OpportunitiesPage() {
   );
 }
 
-function Kpi({
-  label,
-  value,
-  hint,
-  tone,
-}: {
-  label: string;
-  value: string;
-  hint?: string;
-  tone?: "good";
-}) {
-  return (
-    <li className="bg-surface p-3">
-      <p className="text-xs text-muted">{label}</p>
-      <p className={cx("mt-0.5 text-lg font-bold", tone === "good" && "text-emerald-600")}>
-        {value}
-      </p>
-      {hint && <p className="text-[11px] text-muted">{hint}</p>}
-    </li>
-  );
+function Kpi(r: { label: string; value: string; hint?: string; tone?: "good" }) {
+  return <StatTile {...r} as="cell" />;
 }

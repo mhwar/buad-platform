@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { useState } from "react";
+import { StatTile } from "../../components/StatTile";
 import { Badge, Button, Card, Notice, Select } from "../../components/ui";
 import { ok, pct, sar } from "../../lib/format";
 import { label, PROJECT_STATUS_LABELS, STATUS_TONE } from "../labels";
@@ -14,26 +15,8 @@ import {
   unlinkedQuery,
 } from "./products-api";
 
-const Tile = ({
-  label,
-  value,
-  hint,
-  tone,
-}: {
-  label: string;
-  value: string;
-  hint?: string;
-  tone?: "good" | "bad";
-}) => (
-  <Card className="p-4">
-    <p className="text-xs text-muted">{label}</p>
-    <p
-      className={`mt-1 text-xl font-bold ${tone === "bad" ? "text-red-600" : tone === "good" ? "text-emerald-700 dark:text-emerald-300" : ""}`}
-    >
-      {value}
-    </p>
-    {hint && <p className="mt-0.5 text-xs text-muted">{hint}</p>}
-  </Card>
+const Tile = (r: { label: string; value: string; hint?: string; tone?: "good" | "bad" }) => (
+  <StatTile {...r} />
 );
 
 /** «الأداء»: what this service has actually done: projects, entities, packages, money, requests. */

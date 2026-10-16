@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { AlertTriangle, PieChart, Wallet } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Badge, Button, Card, EmptyState, Select } from "../../components/ui";
@@ -26,8 +26,15 @@ const thisQ = Math.floor(now.getMonth() / 3) + 1;
  * what was already distributed, what is left, every warning — then «توزيع هذا الربع».
  */
 export function QuarterCentre() {
-  const [year, setYear] = useState(now.getFullYear());
-  const [q, setQ] = useState(thisQ);
+  // The year and quarter live in the address, so the view can be shared and survives a reload.
+  const search = useSearch({ strict: false }) as { year?: number; q?: number };
+  const go = useNavigate();
+  const year = search.year ?? now.getFullYear();
+  const q = search.q ?? thisQ;
+  const setYear = (y: number) =>
+    go({ to: ".", search: (p: object) => ({ ...p, year: y }), replace: true } as never);
+  const setQ = (n: number) =>
+    go({ to: ".", search: (p: object) => ({ ...p, q: n }), replace: true } as never);
   const d = useQuery(quarterQuery(year, q));
   const [selected, setSelected] = useState<string[] | null>(null);
   const [wizard, setWizard] = useState(false);

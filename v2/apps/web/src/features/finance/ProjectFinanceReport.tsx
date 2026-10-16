@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { Download, Printer } from "lucide-react";
 import { Button, Segmented } from "../../components/ui";
+import { csvToRows, downloadSheet } from "../../lib/export";
 import { day, fromEpoch, pct, sar } from "../../lib/format";
 import { FitToWidth } from "../documents/FitToWidth";
 import { type Block, PagedSheets } from "../documents/Pages";
@@ -281,19 +282,10 @@ function downloadCsv(f: Finance, p: ProjectDetail, mode: ReportMode) {
       e.amount / 100,
     ]),
   ];
-  if (mode === "detailed") {
+  // The agreement report is part of the detailed view, which needs sight of the profit.
+  if (mode === "detailed" && !f.profitHidden) {
     lines.push([], ["تقرير الاتفاقية"], ["البند", "المتفق عليه", "المسجّل", "الفرق"]);
     for (const r of agreementRows(f)) lines.push([r.label, r.agreed, r.registered, r.diff]);
   }
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(
-    new Blob([`﻿${lines.map((l) => l.map(cell).join(",")).join("\r\n")}`], {
-      type: "text/csv;charset=utf-8",
-    }),
-  );
-  a.download = `${p.project.number}-${mode}.csv`;
-  document.body.append(a);
-  a.click();
-  a.remove();
-  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  void downloadSheet(`${p.project.number}-${mode}`, "التقرير المالي", lines);
 }

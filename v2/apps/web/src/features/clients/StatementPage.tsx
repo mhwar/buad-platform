@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getRouteApi, Link } from "@tanstack/react-router";
 import { Download, Printer } from "lucide-react";
 import { Button, EmptyState, Notice } from "../../components/ui";
+import { csvToRows, downloadSheet } from "../../lib/export";
 import { fromEpoch, sar } from "../../lib/format";
 import { FitToWidth } from "../documents/FitToWidth";
 import { type Block, PagedSheets } from "../documents/Pages";
@@ -265,13 +266,10 @@ export function statementCsv(st: Statement) {
 }
 
 function downloadCsv(st: Statement) {
-  const blob = new Blob([statementCsv(st)], { type: "text/csv;charset=utf-8" });
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  // ASCII name: some browsers drop non-Latin download names.
-  a.download = `statement-${st.client.code}-${new Date().toISOString().slice(0, 10)}.csv`;
-  document.body.append(a);
-  a.click();
-  a.remove();
-  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  // Latin file name: some browsers drop Arabic download names.
+  void downloadSheet(
+    `statement-${st.client.code}-${new Date().toISOString().slice(0, 10)}`,
+    "كشف الحساب",
+    csvToRows(statementCsv(st)),
+  );
 }

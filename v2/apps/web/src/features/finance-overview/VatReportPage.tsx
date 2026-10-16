@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getRouteApi, Link } from "@tanstack/react-router";
 import { Download, Printer } from "lucide-react";
 import { Button, EmptyState } from "../../components/ui";
+import { csvToRows, downloadSheet } from "../../lib/export";
 import { day, fromEpoch, sar } from "../../lib/format";
 import { FitToWidth } from "../documents/FitToWidth";
 import { type Block, PagedSheets } from "../documents/Pages";
@@ -248,15 +249,6 @@ function downloadCsv(v: VatReport) {
     ["التاريخ", "البيان", "المشروع", "المبلغ"],
     ...v.unidentified.rows.map((u) => [u.date, u.description, u.projectName, u.amount]),
   ];
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(
-    new Blob([`﻿${lines.map((l) => l.map(cell).join(",")).join("\r\n")}`], {
-      type: "text/csv;charset=utf-8",
-    }),
-  );
-  a.download = `vat-${v.period.from}-${v.period.to}.csv`;
-  document.body.append(a);
-  a.click();
-  a.remove();
-  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  // A real Excel file (the rows above, as they are).
+  void downloadSheet(`vat-${v.period.from}-${v.period.to}`, "إقرار الضريبة", lines);
 }

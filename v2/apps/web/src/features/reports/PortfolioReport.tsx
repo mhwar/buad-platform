@@ -71,6 +71,8 @@ export function PortfolioReport() {
           : []),
       ],
       items,
+      "xlsx",
+      `portfolio-${new Date().toISOString().slice(0, 10)}`,
     );
 
   return (
