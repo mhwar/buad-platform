@@ -20,6 +20,7 @@ import {
   Wallet,
 } from "lucide-react";
 import { type ReactNode, useState } from "react";
+import { PageSkeleton, SectionBoundary } from "../../components/Resilience";
 import { useTrackRecent } from "../../components/shell/useRecent";
 import {
   Avatar,
@@ -91,7 +92,7 @@ export function ProjectPage() {
   const [error, setError] = useState<string | null>(null);
   const section: Section = search.view ?? "finance";
 
-  if (q.isPending) return <ProjectSkeleton />;
+  if (q.isPending) return <PageSkeleton />;
   if (q.isError || !q.data)
     return (
       <EmptyState
@@ -384,7 +385,9 @@ export function ProjectPage() {
         </div>
 
         <aside className="flex flex-col gap-4 lg:sticky lg:top-24" aria-label="تفاصيل المشروع">
-          <ContractCard projectId={p.id} canEdit={manager} onSettings={() => setSettings(true)} />
+          <SectionBoundary label="العقد والتحصيل">
+            <ContractCard projectId={p.id} canEdit={manager} onSettings={() => setSettings(true)} />
+          </SectionBoundary>
           {/* On a phone the details come first; on a computer they close the column. */}
           <Card className="order-first lg:order-none">
             <div className="mb-3 flex items-center justify-between">
@@ -418,10 +421,12 @@ export function ProjectPage() {
               أُضيف {fromEpoch(p.createdAt)} · آخر تعديل {fromEpoch(p.updatedAt)}
             </p>
           </Card>
-          <RecordMeetings
-            link={{ projectId: p.id, clientId: p.clientId }}
-            title={`اجتماع ${p.name}`}
-          />
+          <SectionBoundary label="الاجتماعات">
+            <RecordMeetings
+              link={{ projectId: p.id, clientId: p.clientId }}
+              title={`اجتماع ${p.name}`}
+            />
+          </SectionBoundary>
         </aside>
       </div>
 
@@ -451,16 +456,6 @@ function Detail({ label, value, icon }: { label: string; value: string; icon?: R
           <span className="text-muted">—</span>
         )}
       </dd>
-    </div>
-  );
-}
-
-function ProjectSkeleton() {
-  return (
-    <div aria-busy className="space-y-4">
-      <div className="h-8 w-64 animate-pulse rounded-lg bg-slate-200 dark:bg-slate-800" />
-      <div className="h-36 animate-pulse rounded-2xl bg-slate-200 dark:bg-slate-800" />
-      <div className="h-64 animate-pulse rounded-2xl bg-slate-200 dark:bg-slate-800" />
     </div>
   );
 }

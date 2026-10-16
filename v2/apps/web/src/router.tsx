@@ -13,6 +13,7 @@ import { z } from "zod";
 import { AccountPage, AppearancePage } from "./account";
 import { api } from "./api";
 import { Logo } from "./brand";
+import { RouteError } from "./components/Resilience";
 import { AppShell } from "./components/shell/AppShell";
 import { UpdateBanner, useServerVersion } from "./components/UpdateBanner";
 import { ClientPage } from "./features/clients/ClientPage";
@@ -598,6 +599,8 @@ export const router = createRouter({
     legacyImportRoute,
     legacyAccountRoute,
   ]),
+  // A page that throws keeps the shell (header, menu) and offers to try again.
+  defaultErrorComponent: RouteError,
 });
 
 declare module "@tanstack/react-router" {

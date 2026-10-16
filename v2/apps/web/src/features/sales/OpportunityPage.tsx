@@ -26,6 +26,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { type ReactNode, useEffect, useRef, useState } from "react";
+import { PageSkeleton, SectionBoundary } from "../../components/Resilience";
 import { StatTile } from "../../components/StatTile";
 import { useTrackRecent } from "../../components/shell/useRecent";
 import {
@@ -95,7 +96,7 @@ export function OpportunityPage() {
   >(null);
   const [error, setError] = useState("");
 
-  if (q.isPending) return <Card className="h-64 animate-pulse" aria-busy />;
+  if (q.isPending) return <PageSkeleton />;
   if (q.isError || !q.data || !o)
     return (
       <EmptyState
@@ -506,10 +507,12 @@ export function OpportunityPage() {
               <Row label="آخر حركة">{ago(o.updatedAt)}</Row>
             </dl>
           </Card>
-          <RecordMeetings
-            link={{ requestId: o.id, clientId: o.clientId }}
-            title={`اجتماع مع ${o.entity || o.name}`}
-          />
+          <SectionBoundary label="الاجتماعات">
+            <RecordMeetings
+              link={{ requestId: o.id, clientId: o.clientId }}
+              title={`اجتماع مع ${o.entity || o.name}`}
+            />
+          </SectionBoundary>
         </aside>
       </div>
 

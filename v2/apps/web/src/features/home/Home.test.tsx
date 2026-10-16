@@ -1,9 +1,9 @@
-import { screen, waitFor } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { renderWithApp, stubApi } from "../../test-utils";
 import { AttentionPanel } from "./AttentionPanel";
-import { NotificationBell } from "./NotificationBell";
+import { groupNotices, NotificationBell } from "./NotificationBell";
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -78,5 +78,48 @@ describe("NotificationBell", () => {
     await waitFor(() =>
       expect(calls.some((c) => c.path === "/api/notifications/read-all")).toBe(true),
     );
+  });
+
+  it("groups by subject, filters to unread, and marks one group as read", async () => {
+    const t = Math.floor(Date.now() / 1000);
+    const n = (id: string, kind: string, title: string, readAt = 0) => ({
+      id,
+      kind,
+      title,
+      link: "",
+      readAt,
+      createdAt: t,
+    });
+    const calls = stubApi({
+      "GET /api/notifications": () => ({
+        ok: true,
+        unread: 2,
+        items: [
+          n("a", "task", "مهمة جديدة لك"),
+          n("b", "meeting", "دعوة لاجتماع"),
+          n("c", "task", "مهمة قديمة", t),
+          n("d", "mystery", "شيء آخر", t),
+        ],
+      }),
+      "POST /api/notifications/a/read": () => ({ ok: true }),
+    });
+    expect(groupNotices([n("x", "decision", "ق")])[0]?.label).toBe("الاجتماعات والقرارات");
+    await renderWithApp(<NotificationBell />);
+    await userEvent.click(await screen.findByRole("button", { name: /2 غير مقروءة/ }));
+    const tasks = await screen.findByRole("region", { name: "المهام" });
+    expect(within(tasks).getAllByRole("button", { name: /مهمة/ })).toHaveLength(2);
+    expect(screen.getByRole("region", { name: "أخرى" })).toHaveTextContent("شيء آخر");
+    await userEvent.click(screen.getByRole("tab", { name: "غير المقروءة (2)" }));
+    expect(screen.queryByText("مهمة قديمة")).toBeNull();
+    expect(screen.queryByRole("region", { name: "أخرى" })).toBeNull();
+    await userEvent.click(
+      within(screen.getByRole("region", { name: "المهام" })).getByRole("button", {
+        name: "تعليم كمقروء",
+      }),
+    );
+    await waitFor(() =>
+      expect(calls.some((c) => c.path === "/api/notifications/a/read")).toBe(true),
+    );
+    expect(calls.some((c) => c.path === "/api/notifications/b/read")).toBe(false);
   });
 });

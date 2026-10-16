@@ -3,6 +3,7 @@ import { getRouteApi, Link } from "@tanstack/react-router";
 import { AlertTriangle, CalendarClock, Lock, Plus } from "lucide-react";
 import { useDeferredValue, useState } from "react";
 import { FilterBar } from "../../components/FilterBar";
+import { SkeletonGrid } from "../../components/Resilience";
 import {
   Avatar,
   Badge,
@@ -140,11 +141,7 @@ export function ProjectsPage() {
       </div>
 
       {list.isPending ? (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" aria-busy>
-          {[0, 1, 2].map((i) => (
-            <Card key={i} className="h-48 animate-pulse" />
-          ))}
-        </div>
+        <SkeletonGrid label="جارٍ تحميل المشاريع" />
       ) : list.isError ? (
         <EmptyState
           title="تعذّر تحميل المشاريع"

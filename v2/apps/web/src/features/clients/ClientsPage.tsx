@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getRouteApi, Link } from "@tanstack/react-router";
 import { FileUp, Mail, MapPin, MessageCircle, Phone, Plus } from "lucide-react";
 import { useDeferredValue, useState } from "react";
+import { SkeletonGrid } from "../../components/Resilience";
 import {
   Avatar,
   Badge,
@@ -144,7 +145,7 @@ export function ClientsPage() {
       </div>
 
       {list.isPending ? (
-        <p className="text-muted">جارٍ التحميل…</p>
+        <SkeletonGrid className="h-56" label="جارٍ تحميل العملاء" />
       ) : list.isError ? (
         <EmptyState
           title="تعذّر تحميل العملاء"
