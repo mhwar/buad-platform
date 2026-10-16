@@ -14,12 +14,15 @@ import {
 export function TaskDialog({
   existing,
   projectId = "",
+  initiativeId = "",
   stages = [],
   onClose,
   onSaved,
 }: {
   existing?: Task;
   projectId?: string;
+  /** Filed under a plan initiative (its progress follows its tasks). */
+  initiativeId?: string;
   stages?: Stage[];
   onClose: () => void;
   onSaved: () => void;
@@ -52,6 +55,7 @@ export function TaskDialog({
         : send("POST", "/api/tasks", {
             ...body,
             projectId: projectId,
+            ...(initiativeId ? { initiativeId } : {}),
           }));
       onSaved();
     } catch {

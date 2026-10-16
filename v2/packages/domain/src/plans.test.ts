@@ -58,3 +58,44 @@ describe("plans", () => {
     expect(yearQuarterRange(2026, 0)).toEqual({ start: "2026-01-01", end: "2026-12-31" });
   });
 });
+
+import { initiativeDone, monthsOf, targetPace } from "./plans";
+
+describe("tracking a target", () => {
+  it("compares the actual with straight-line pacing and projects the year", () => {
+    const p = targetPace({
+      target: 2_000_000,
+      actual: 600_000,
+      start: "2027-01-01",
+      end: "2027-12-31",
+      today: "2027-06-30",
+    });
+    expect(p.share).toBeCloseTo(181 / 365, 3);
+    expect(p.expected).toBe(Math.round(2_000_000 * (181 / 365)));
+    expect(p.projected).toBe(Math.round((600_000 / 181) * 365));
+    expect(p.gap).toBe(1_400_000);
+    expect(p.ahead).toBe(false);
+    expect(p.perMonthNeeded).toBeGreaterThan(200_000);
+  });
+  it("before the start nothing is expected", () => {
+    const p = targetPace({
+      target: 100,
+      actual: 0,
+      start: "2027-01-01",
+      end: "2027-12-31",
+      today: "2026-12-01",
+    });
+    expect([p.expected, p.projected, p.ahead]).toEqual([0, 0, true]);
+  });
+  it("splits a period into months, clipped to it", () => {
+    const m = monthsOf("2027-01-15", "2027-03-10");
+    expect(m.map((x) => x.key)).toEqual(["2027-01", "2027-02", "2027-03"]);
+    expect(m[0]).toMatchObject({ start: "2027-01-15", end: "2027-01-31" });
+    expect(m[2]).toMatchObject({ start: "2027-03-01", end: "2027-03-10" });
+  });
+  it("an initiative with tasks counts their completion", () => {
+    expect(initiativeDone({ status: "doing", tasks: { total: 4, done: 1 } })).toBe(0.25);
+    expect(initiativeDone({ status: "doing" })).toBe(0.5);
+    expect(initiativeDone({ status: "done", tasks: { total: 4, done: 1 } })).toBe(1);
+  });
+});

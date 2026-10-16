@@ -1,5 +1,5 @@
 import { PLAN_STATUS_LABEL, type PlanStatus } from "@buad/domain";
-import { Link2, MessageSquarePlus, Pencil, Plus, Trash2 } from "lucide-react";
+import { Link2, ListPlus, MessageSquarePlus, Pencil, Plus, Trash2 } from "lucide-react";
 import { Badge, Button, Card, type Tone } from "../../components/ui";
 import { sar } from "../../lib/format";
 import { send } from "../team/queries";
@@ -44,7 +44,7 @@ const INIT_LABEL: Record<Initiative["status"], string> = {
   blocked: "متعثرة",
   done: "منجزة",
 };
-const fmt = (n: number) =>
+export const fmt = (n: number) =>
   new Intl.NumberFormat("ar-SA-u-nu-latn", { maximumFractionDigits: 1 }).format(n);
 
 export function ObjectiveCard({
@@ -60,6 +60,7 @@ export function ObjectiveCard({
   onEditInitiative,
   onReview,
   onChanged,
+  onAddTask,
 }: {
   o: Objective;
   canEdit: boolean;
@@ -73,6 +74,8 @@ export function ObjectiveCard({
   onEditInitiative: (i: Initiative) => void;
   onReview: () => void;
   onChanged: () => void;
+  /** File a task under one of its initiatives (when the viewer may add tasks). */
+  onAddTask?: (i: Initiative) => void;
 }) {
   const last = o.reviews[0];
   return (
@@ -135,7 +138,7 @@ export function ObjectiveCard({
                   {i.name}
                 </button>
                 <span className="shrink-0 tabular-nums text-muted">
-                  {fmt(i.current)} / {fmt(i.target)} {i.unit}
+                  {i.current === null ? "مخفي" : fmt(i.current)} / {fmt(i.target)} {i.unit}
                 </span>
               </div>
               <div className="mt-1.5 flex items-center gap-2">
@@ -176,6 +179,22 @@ export function ObjectiveCard({
               </button>
               <span className="flex items-center gap-2">
                 {i.dueDate && <span className="text-xs text-muted">حتى {i.dueDate}</span>}
+                {!!i.tasks?.total && (
+                  <Badge tone={i.tasks.done === i.tasks.total ? "green" : "gray"}>
+                    مهام {i.tasks.done}/{i.tasks.total}
+                  </Badge>
+                )}
+                {onAddTask && (
+                  <Button
+                    variant="ghost"
+                    className="px-2"
+                    aria-label={`مهمة لـ ${i.title}`}
+                    title="أضف مهمة لهذه المبادرة"
+                    onClick={() => onAddTask(i)}
+                  >
+                    <ListPlus className="size-4" />
+                  </Button>
+                )}
                 {canEdit ? (
                   <select
                     aria-label={`حالة ${i.title}`}
