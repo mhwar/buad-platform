@@ -176,7 +176,17 @@ export function ClientsPage() {
           ))}
         </div>
       ) : (
-        <ClientTable items={items} />
+        <>
+          <div className="hidden md:block">
+            <ClientTable items={items} />
+          </div>
+          {/* A wide table does not fit a phone: the same clients as cards. */}
+          <div className="grid gap-4 md:hidden">
+            {items.map((c) => (
+              <ClientCard key={c.id} c={c} manager={manager} />
+            ))}
+          </div>
+        </>
       )}
       <ClientDialog open={adding} onOpenChange={setAdding} />
     </>
@@ -282,10 +292,28 @@ function ClientCard({ c, manager }: { c: ClientListItem; manager: boolean }) {
         </div>
       )}
 
+      {(c.openRequests > 0 || !!c.lateInstalments) && (
+        <p className="flex flex-wrap gap-1.5 text-xs">
+          {c.openRequests > 0 && (
+            <Badge tone="blue">
+              {c.openRequests} {c.openRequests === 1 ? "فرصة مفتوحة" : "فرص مفتوحة"}
+            </Badge>
+          )}
+          {!!c.lateInstalments && (
+            <Badge tone="red">
+              {c.lateInstalments} {c.lateInstalments === 1 ? "دفعة متأخرة" : "دفعات متأخرة"}
+            </Badge>
+          )}
+        </p>
+      )}
       <dl className="mt-auto grid grid-cols-3 gap-2 border-t pt-3 text-center">
         <Stat label="المشاريع" value={String(c.projectCount)} />
         <Stat label="قيمة العقود" value={c.projectValue > 0 ? moneyShort(c.projectValue) : "—"} />
-        <Stat label="المستندات" value={String(c.documentsCount)} />
+        {c.owed !== null && c.owed !== undefined ? (
+          <Stat label="المستحق عليه" value={c.owed > 0 ? moneyShort(c.owed) : "—"} />
+        ) : (
+          <Stat label="المستندات" value={String(c.documentsCount)} />
+        )}
       </dl>
       <CrmLine c={c} />
       {dialogs}

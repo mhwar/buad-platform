@@ -41,10 +41,10 @@ const item: ClientListItem = {
 };
 const me = (role: string) => () => ({ user: meUser(role) });
 
-async function render(role: string) {
+async function render(role: string, c: ClientListItem = item) {
   stubApi({
     "GET /api/me": me(role),
-    "GET /api/clients": () => ({ items: [item], counts: { association: 1 } }),
+    "GET /api/clients": () => ({ items: [c], counts: { association: 1 } }),
   });
   // ClientsPage reads its search params from the /clients route.
   const { createRootRoute, createRoute, createRouter, createMemoryHistory, RouterProvider } =
@@ -94,6 +94,22 @@ describe("client card", () => {
     const menu = await screen.findByRole("menu");
     expect(within(menu).getAllByRole("menuitem")).toHaveLength(1);
     expect(within(menu).getByRole("menuitem", { name: /كشف حساب/ })).toBeInTheDocument();
+  });
+
+  it("shows what the client owes, its late instalments and open opportunities", async () => {
+    await render("admin", { ...item, owed: 500000, lateInstalments: 2, openRequests: 1 });
+    await screen.findByText("جمعية أجيالنا");
+    expect(screen.getAllByText("المستحق عليه").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("2 دفعات متأخرة").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("1 فرصة مفتوحة").length).toBeGreaterThan(0);
+    expect(screen.queryByText("المستندات")).not.toBeInTheDocument();
+  });
+
+  it("without finance it keeps the documents count instead of the money owed", async () => {
+    await render("member", { ...item, owed: null });
+    await screen.findByText("جمعية أجيالنا");
+    expect(screen.getByText("المستندات")).toBeInTheDocument();
+    expect(screen.queryByText("المستحق عليه")).not.toBeInTheDocument();
   });
 });
 

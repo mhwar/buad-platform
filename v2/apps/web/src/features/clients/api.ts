@@ -34,6 +34,9 @@ export type ClientListItem = {
   completedProjects: number;
   openRequests: number;
   openQuotes: number;
+  /** Still owed on its work (halalas); null when the viewer may not see project finance. */
+  owed?: number | null;
+  lateInstalments?: number;
   relationship: Relationship;
 };
 export type Client = Omit<
@@ -53,6 +56,8 @@ export type Client = Omit<
   | "openRequests"
   | "openQuotes"
   | "relationship"
+  | "owed"
+  | "lateInstalments"
   | "ownerId"
   | "source"
 > & {

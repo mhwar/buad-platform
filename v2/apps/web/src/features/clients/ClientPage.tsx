@@ -31,6 +31,7 @@ import { archiveClient, clientKeys, clientQuery, deleteClient } from "./api";
 import { AddEntry } from "./ClientActions";
 import { ClientCrm } from "./ClientCrm";
 import { ClientDialog } from "./ClientDialog";
+import { ClientPulse } from "./ClientPulse";
 
 const route = getRouteApi("/clients/$id");
 
@@ -157,7 +158,7 @@ export function ClientPage() {
         <Notice tone="amber">هذا العميل مؤرشف منذ {fromEpoch(client.archivedAt)}.</Notice>
       )}
 
-      <Card className="mb-6 flex flex-wrap items-center gap-4">
+      <Card className="mb-4 flex flex-wrap items-center gap-4">
         <Avatar name={client.name} logo={client.logo} size="lg" />
         <div className="min-w-0 flex-1">
           <h1 className="text-2xl font-bold">{client.name}</h1>
@@ -186,6 +187,14 @@ export function ClientPage() {
           <Menu items={menu} />
         </div>
       </Card>
+
+      <ClientPulse
+        clientId={client.id}
+        active={byStatus.active ?? 0}
+        total={live.length}
+        onProjects={() => nav({ search: { tab: "projects" }, replace: true })}
+        onCrm={() => nav({ search: { tab: "crm" }, replace: true })}
+      />
 
       <Tabs
         items={[
