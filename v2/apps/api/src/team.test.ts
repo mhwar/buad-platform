@@ -130,6 +130,9 @@ describe("roles and what each may do", () => {
     expect(hidden.body.profitHidden).toBe(true);
     expect(hidden.body.summary.profit).toBe(0);
     expect(hidden.body.entries.every((e: J) => e.profitMargin === 0)).toBe(true);
+    // nor the figures the profit could be rebuilt from
+    expect(hidden.body.summary).toMatchObject({ execAmt: 0, execIncomeReg: 0, nonExecInc: 0 });
+    expect(hidden.body.ctrl.execV).toBe(0);
     const shown = await call("acc", "GET", `/api/projects/${id}/finance`);
     expect(shown.body.profitHidden).toBe(false);
     expect(shown.body.entries[0].profitMargin).toBe(20);

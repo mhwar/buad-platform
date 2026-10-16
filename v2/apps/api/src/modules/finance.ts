@@ -217,8 +217,19 @@ export const financeApp = new Hono<Env>()
       return c.json({
         ok: true,
         ...data,
+        // The fee rates and the figures the profit is worked out from go too, or it could be
+        // rebuilt from them (execution fee + margins + other income).
+        ctrl: { ...data.ctrl, execV: 0, mktV: 0 },
         entries: data.entries.map((e) => ({ ...e, profitMargin: 0 })),
-        summary: { ...data.summary, profit: 0, profitMargins: [] },
+        summary: {
+          ...data.summary,
+          profit: 0,
+          profitMargins: 0,
+          execAmt: 0,
+          execIncomeReg: 0,
+          nonExecInc: 0,
+          mkt: 0,
+        },
         profitHidden: true,
       });
     }
