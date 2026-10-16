@@ -159,6 +159,10 @@ importers:
         version: 3.2.7(@types/node@26.6.5)(jiti@2.7.0)(jsdom@26.1.0)(lightningcss@1.32.0)(tsx@4.23.15)
 
   e2e:
+    dependencies:
+      '@buad/domain':
+        specifier: workspace:*
+        version: link:../packages/domain
     devDependencies:
       '@playwright/test':
         specifier: 1.56.1
