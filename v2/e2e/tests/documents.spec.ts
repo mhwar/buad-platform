@@ -1,0 +1,25 @@
+import { clientWithProject, expect, test } from "./fixtures";
+
+test("a document walks draft → review → approved → outgoing, and the list shows the wait", async ({
+  page,
+  api,
+}) => {
+  const { projectId } = await clientWithProject(api);
+  const doc = await api<{ id: string }>("POST", `/api/projects/${projectId}/documents`, {
+    kind: "contract",
+    template: "blank",
+  });
+  await api("POST", `/api/documents/${doc.id}/status`, { to: "review", version: 1 });
+
+  await page.goto("/documents");
+  await expect(page.getByText("بانتظار الاعتماد منذ اليوم").first()).toBeVisible();
+
+  await page.goto(`/projects/${projectId}/documents/${doc.id}`);
+  const steps = page.getByRole("list", { name: "مراحل المستند" });
+  await expect(steps.locator("[aria-current=step]")).toContainText("مراجعة");
+  page.on("dialog", (d) => d.accept());
+  await page.getByRole("button", { name: "اعتماد" }).click();
+  await expect(steps.locator("[aria-current=step]")).toContainText("معتمد");
+  await page.getByRole("button", { name: "تسجيل صادر" }).click();
+  await expect(steps.locator("[aria-current=step]")).toContainText("صادر");
+});

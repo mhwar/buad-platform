@@ -1,0 +1,13 @@
+{
+  "name": "@buad/e2e",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "e2e": "playwright test",
+    "typecheck": "tsc -p ."
+  },
+  "devDependencies": {
+    "@playwright/test": "1.56.1",
+    "@types/node": "^22.10.0"
+  }
+}
