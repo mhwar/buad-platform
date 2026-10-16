@@ -1,7 +1,16 @@
 import * as RDialog from "@radix-ui/react-dialog";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { Briefcase, CalendarDays, CornerDownLeft, Search, ShoppingCart, Users } from "lucide-react";
+import {
+  Briefcase,
+  CalendarDays,
+  CornerDownLeft,
+  FileText,
+  ListChecks,
+  Search,
+  ShoppingCart,
+  Users,
+} from "lucide-react";
 import {
   type ComponentType,
   useDeferredValue,
@@ -12,11 +21,23 @@ import {
   useState,
 } from "react";
 import { clientsQuery } from "../../features/clients/api";
+import { registerQuery } from "../../features/documents/api";
 import { requestsQuery } from "../../features/products/products-api";
 import { projectsQuery } from "../../features/projects/api";
+import { tasksQuery } from "../../features/tasks/queries";
 import { meetingsQuery } from "../../features/workspace/api";
 import { cx } from "../ui";
 import type { NavGroup } from "./nav-model";
+import { CREATE_ITEMS, type CreateKind, requestCreate } from "./QuickCreate";
+
+const CREATE_LABEL: Record<CreateKind, string> = {
+  opportunity: "فرصة جديدة",
+  client: "عميل جديد",
+  project: "مشروع جديد",
+  task: "مهمة جديدة",
+  meeting: "اجتماع جديد",
+  decision: "قرار جديد",
+};
 
 type Result = {
   id: string;
@@ -27,6 +48,8 @@ type Result = {
   params?: Record<string, string>;
   search?: Record<string, string>;
   icon: ComponentType<{ className?: string }>;
+  /** A command (e.g. «فرصة جديدة») runs here instead of going to a page. */
+  run?: () => void;
 };
 
 /** Case- and diacritic-insensitive contains, so «الاداره» finds «الإدارة». */
@@ -52,6 +75,7 @@ export default function CommandPalette({
   canSeeProjects,
   canSeeSales = false,
   canSeeMeetings = false,
+  perms = [],
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
@@ -60,6 +84,8 @@ export default function CommandPalette({
   canSeeProjects: boolean;
   canSeeSales?: boolean;
   canSeeMeetings?: boolean;
+  /** For the documents and tasks results, and the «إنشاء» commands. */
+  perms?: string[];
 }) {
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
@@ -84,7 +110,26 @@ export default function CommandPalette({
     enabled: open && canSeeMeetings && q.length >= 2,
   });
 
+  const docs = useQuery({
+    ...registerQuery({ q }),
+    enabled: open && perms.includes("documents.view") && q.length >= 2,
+  });
+  const todo = useQuery({
+    ...tasksQuery({}),
+    enabled: open && perms.includes("tasks.view") && q.length >= 2,
+  });
+
   const results = useMemo<Result[]>(() => {
+    const commands: Result[] = CREATE_ITEMS.filter((c) => perms.includes(c.perm))
+      .map((c) => ({
+        id: `new:${c.kind}`,
+        group: "إنشاء",
+        label: CREATE_LABEL[c.kind],
+        to: "",
+        icon: c.icon,
+        run: () => requestCreate(c.kind),
+      }))
+      .filter((c) => !q || matches(c.label, q));
     const all: Result[] = groups.flatMap((g) =>
       g.items.flatMap((i) => [
         {
@@ -157,8 +202,37 @@ export default function CommandPalette({
             icon: CalendarDays,
           }))
       : [];
-    return [...sections.slice(0, q ? 8 : 12), ...people, ...work, ...deals, ...talks];
-  }, [groups, q, clients.data, projects.data, opps.data, meets.data]);
+    const papers: Result[] = q
+      ? (docs.data?.items ?? []).slice(0, 5).map((d) => ({
+          id: `doc:${d.id}`,
+          group: "المستندات",
+          label: d.title || (d.kind === "contract" ? "عقد" : "خطاب"),
+          hint: [d.outgoingNo || d.number, d.clientName].filter(Boolean).join(" · "),
+          to: "/projects/$id/documents/$docId",
+          params: { id: d.projectId, docId: d.id },
+          icon: FileText,
+        }))
+      : [];
+    const jobs: Result[] = q
+      ? (todo.data ?? [])
+          .filter((t) => t.status !== "done" && matches(`${t.title} ${t.projectName ?? ""}`, q))
+          .slice(0, 5)
+          .map((t) => ({
+            id: `task:${t.id}`,
+            group: "المهام",
+            label: t.title,
+            hint: [t.projectName, t.assigneeName].filter(Boolean).join(" · "),
+            to: "/tasks",
+            search: { scope: "all", q: t.title },
+            icon: ListChecks,
+          }))
+      : [];
+    // Typing a command's words («جديد», «اجتماع») puts it first; an empty box lists them after the sections.
+    const head = q
+      ? [...commands, ...sections.slice(0, 8)]
+      : [...sections.slice(0, 12), ...commands];
+    return [...head, ...people, ...work, ...deals, ...papers, ...jobs, ...talks];
+  }, [groups, q, perms, clients.data, projects.data, opps.data, meets.data, docs.data, todo.data]);
 
   // Keep the highlighted row valid and in view as results change or the arrows move.
   const current = Math.min(active, Math.max(0, results.length - 1));
@@ -172,7 +246,8 @@ export default function CommandPalette({
     onOpenChange(false);
     setQuery("");
     setActive(0);
-    navigate({ to: r.to, params: r.params, search: r.search } as never);
+    if (r.run) r.run();
+    else navigate({ to: r.to, params: r.params, search: r.search } as never);
   };
   const onKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "ArrowDown") {
