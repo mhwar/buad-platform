@@ -7,7 +7,16 @@ import { send } from "../team/queries";
 import { scheduleQuery } from "./api";
 
 /** A project's expected payments, on the project page. Marking one received creates the receipt. */
-export function ScheduleCard({ projectId, canEdit }: { projectId: string; canEdit: boolean }) {
+export function ScheduleCard({
+  projectId,
+  canEdit,
+  embedded = false,
+}: {
+  projectId: string;
+  canEdit: boolean;
+  /** Inside «العقد والتحصيل»: no frame and no title. */
+  embedded?: boolean;
+}) {
   const qc = useQueryClient();
   const q = useQuery(scheduleQuery(projectId));
   const [adding, setAdding] = useState(false);
@@ -31,11 +40,12 @@ export function ScheduleCard({ projectId, canEdit }: { projectId: string; canEdi
   };
   const today = new Date().toISOString().slice(0, 10);
   const items = (q.data ?? []).filter((i) => i.status !== "cancelled");
-  if (!canEdit && items.length === 0) return null;
+  if (!canEdit && items.length === 0 && !embedded) return null;
+  const Frame = embedded ? "div" : Card;
   return (
-    <Card>
+    <Frame>
       <div className="mb-3 flex items-center justify-between">
-        <h2 className="font-semibold">جدول الدفعات</h2>
+        {embedded ? <span /> : <h2 className="font-semibold">جدول الدفعات</h2>}
         {canEdit && (
           <Button variant="secondary" onClick={() => setAdding(true)}>
             <Plus className="size-4" />
@@ -45,7 +55,9 @@ export function ScheduleCard({ projectId, canEdit }: { projectId: string; canEdi
       </div>
       {error && <Notice>{error}</Notice>}
       {items.length === 0 && (
-        <p className="text-sm text-muted">أضف الدفعات المنتظرة من العميل لتتابعها وتظهر أعمارها.</p>
+        <p className="text-sm text-muted">
+          {canEdit ? "أضف الدفعات المنتظرة من العميل لتتابعها وتظهر أعمارها." : "لا دفعات مجدولة."}
+        </p>
       )}
       <ul className="space-y-2">
         {items.map((i) => (
@@ -130,6 +142,6 @@ export function ScheduleCard({ projectId, canEdit }: { projectId: string; canEdi
           </div>
         </Dialog>
       )}
-    </Card>
+    </Frame>
   );
 }

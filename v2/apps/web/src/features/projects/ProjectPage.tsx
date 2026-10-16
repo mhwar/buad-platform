@@ -38,16 +38,9 @@ import { clientKeys } from "../clients/api";
 import { documentsQuery } from "../documents/api";
 import { DocumentsSection } from "../documents/DocumentsSection";
 import { type Finance, financeKey } from "../finance/api";
-import {
-  ContractSummary,
-  exportCsv,
-  FinanceSettings,
-  FinanceStrip,
-  Transactions,
-} from "../finance/FinanceTab";
-import { ReceiptsCard } from "../finance/Receipts";
+import { ContractCard } from "../finance/ContractCard";
+import { exportCsv, FinanceSettings, FinanceStrip, Transactions } from "../finance/FinanceTab";
 import { label, PROJECT_STATUS_LABELS, PROJECT_TYPE_LABELS, STATUS_TONE } from "../labels";
-import { ScheduleCard } from "../receivables/ScheduleCard";
 import { ExecutionTab } from "../tasks/ExecutionTab";
 import { executionQuery } from "../tasks/queries";
 import { ProjectMembers } from "../team/ProjectMembers";
@@ -390,13 +383,7 @@ export function ProjectPage() {
         </div>
 
         <aside className="flex flex-col gap-4 lg:sticky lg:top-24" aria-label="تفاصيل المشروع">
-          <ContractSummary
-            projectId={p.id}
-            canEdit={manager}
-            onSettings={() => setSettings(true)}
-          />
-          <ReceiptsCard projectId={p.id} canEdit={manager} />
-          <ScheduleCard projectId={p.id} canEdit={manager} />
+          <ContractCard projectId={p.id} canEdit={manager} onSettings={() => setSettings(true)} />
           {/* On a phone the details come first; on a computer they close the column. */}
           <Card className="order-first lg:order-none">
             <div className="mb-3 flex items-center justify-between">

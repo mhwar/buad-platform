@@ -10,37 +10,55 @@ import { financeApi, financeKey, financeQuery, type Receipt } from "./api";
  * «الاستلامات من العميل»: the money that reached the bank for this project. A project's
  * profit counts as realized (and can be distributed) in proportion to what was received.
  */
-export function ReceiptsCard({ projectId, canEdit }: { projectId: string; canEdit: boolean }) {
+export function ReceiptsCard({
+  projectId,
+  canEdit,
+  embedded = false,
+}: {
+  projectId: string;
+  canEdit: boolean;
+  /** Inside «العقد والتحصيل»: no frame, no title, no totals (the card shows them). */
+  embedded?: boolean;
+}) {
   const q = useQuery(financeQuery(projectId));
   const [editing, setEditing] = useState<Receipt | "new" | null>(null);
   if (!q.data) return null;
   const f = q.data;
   const gross = f.summary.grossTotal;
   const share = gross > 0 ? Math.min(100, Math.max(0, (f.received / gross) * 100)) : 0;
+  const Frame = embedded ? "div" : Card;
   return (
-    <Card>
+    <Frame>
       <div className="mb-3 flex items-center justify-between">
-        <h2 className="flex items-center gap-2 font-semibold">
-          <Wallet className="size-4" /> الاستلامات من العميل
-        </h2>
+        {embedded ? (
+          <span />
+        ) : (
+          <h2 className="flex items-center gap-2 font-semibold">
+            <Wallet className="size-4" /> الاستلامات من العميل
+          </h2>
+        )}
         {canEdit && (
           <Button variant="secondary" onClick={() => setEditing("new")}>
             <Plus className="size-4" /> تسجيل استلام
           </Button>
         )}
       </div>
-      <div className="mb-1 flex justify-between text-xs text-muted">
-        <span>
-          استُلم {sar(f.received)} من {sar(gross)}
-        </span>
-        <span>{share.toFixed(0)}%</span>
-      </div>
-      <div className="mb-2 h-2 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
-        <div className="h-full rounded-full bg-accent" style={{ width: `${share}%` }} />
-      </div>
-      <p className="mb-3 text-sm">
-        المتبقي على العميل: <b>{sar(Math.max(0, gross - f.received))}</b>
-      </p>
+      {!embedded && (
+        <>
+          <div className="mb-1 flex justify-between text-xs text-muted">
+            <span>
+              استُلم {sar(f.received)} من {sar(gross)}
+            </span>
+            <span>{share.toFixed(0)}%</span>
+          </div>
+          <div className="mb-2 h-2 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
+            <div className="h-full rounded-full bg-accent" style={{ width: `${share}%` }} />
+          </div>
+          <p className="mb-3 text-sm">
+            المتبقي على العميل: <b>{sar(Math.max(0, gross - f.received))}</b>
+          </p>
+        </>
+      )}
       {f.receipts.length === 0 ? (
         <p className="text-xs text-muted">
           لم يُسجَّل استلام بعد. الربح يُعدّ متحققاً (وقابلاً للتوزيع) بقدر ما يُستلم من قيمة العقد.
@@ -86,7 +104,7 @@ export function ReceiptsCard({ projectId, canEdit }: { projectId: string; canEdi
           onClose={() => setEditing(null)}
         />
       )}
-    </Card>
+    </Frame>
   );
 }
 

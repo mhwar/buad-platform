@@ -237,10 +237,13 @@ export function ContractSummary({
   projectId,
   onSettings,
   canEdit,
+  embedded = false,
 }: {
   projectId: string;
   onSettings: () => void;
   canEdit: boolean;
+  /** Inside «العقد والتحصيل»: no frame and no title. */
+  embedded?: boolean;
 }) {
   const q = useFinance(projectId);
   if (!q.data) return null;
@@ -275,10 +278,11 @@ export function ContractSummary({
       </span>
     </li>
   );
+  const Frame = embedded ? "div" : Card;
   return (
-    <Card>
+    <Frame>
       <div className="mb-3 flex items-center justify-between">
-        <h2 className="font-semibold">ملخص العقد</h2>
+        {embedded ? <span /> : <h2 className="font-semibold">ملخص العقد</h2>}
         <Button variant="ghost" onClick={onSettings} className="px-2 py-1 text-xs">
           <Settings2 className="size-3.5" /> {canEdit ? "الإعدادات" : "التفاصيل"}
         </Button>
@@ -334,7 +338,7 @@ export function ContractSummary({
           </p>
         )}
       </div>
-    </Card>
+    </Frame>
   );
 }
 
