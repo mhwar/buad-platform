@@ -8,7 +8,9 @@ import { meQuery } from "../../session";
 import { MobileTabBar } from "../MobileTabBar";
 import { UpdateBanner, useServerVersion } from "../UpdateBanner";
 import { AppHeader } from "./AppHeader";
+import { MobileDrawer } from "./MobileDrawer";
 import { activeEntry, buildNav, phoneNav } from "./nav-model";
+import { QuickCreate } from "./QuickCreate";
 import { Sidebar } from "./Sidebar";
 
 // Loaded the first time it is opened: the palette brings its own queries and list logic.
@@ -24,6 +26,10 @@ export function AppShell() {
   const health = useServerVersion();
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [paletteLoaded, setPaletteLoaded] = useState(false);
+  const [drawer, setDrawer] = useState(false);
+  // Going somewhere closes the phone's drawer.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: close on every path change
+  useEffect(() => setDrawer(false), [path]);
   const perms = me.data?.perms;
   const groups = useMemo(() => buildNav(perms ?? []), [perms]);
   const phone = useMemo(() => phoneNav(perms ?? []), [perms]);
@@ -106,7 +112,21 @@ export function AppShell() {
           </footer>
         </div>
       </div>
-      <MobileTabBar nav={phone} />
+      <MobileTabBar nav={phone} onMore={() => setDrawer(true)} moreOpen={drawer} />
+      <MobileDrawer
+        open={drawer}
+        onOpenChange={setDrawer}
+        groups={groups}
+        activeKey={active?.key ?? null}
+        user={{ name: me.data.name || me.data.email, role }}
+        onLogout={logout}
+      />
+      {/* Pages with their own bottom save bar (site editor, document editor) keep that space. */}
+      {!/^\/(website|projects\/[^/]+\/documents)/.test(path) && (
+        <div className="fixed bottom-[calc(4.25rem+env(safe-area-inset-bottom))] left-4 z-30 lg:hidden">
+          <QuickCreate collapsed fab />
+        </div>
+      )}
       {paletteLoaded && (
         <Suspense fallback={null}>
           <CommandPalette
