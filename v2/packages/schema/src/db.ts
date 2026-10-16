@@ -417,6 +417,7 @@ export const documents = sqliteTable(
     uniqueIndex("uq_documents_number").on(t.orgId, t.number),
     uniqueIndex("uq_documents_outgoing").on(t.orgId, t.outgoingNo).where(sql`outgoing_no <> ''`),
     index("idx_documents_project").on(t.projectId, t.kind),
+    index("idx_documents_org_status").on(t.orgId, t.status),
   ],
 );
 
@@ -572,7 +573,11 @@ export const projectReceipts = sqliteTable(
     approvedAt: integer("approved_at"),
     ...audit,
   },
-  (t) => [index("idx_receipts_project").on(t.projectId, t.date)],
+  (t) => [
+    index("idx_receipts_project").on(t.projectId, t.date),
+    // The year's and the quarter's revenue add receipts up by organisation and date.
+    index("idx_receipts_org_date").on(t.orgId, t.date),
+  ],
 );
 
 /** How much of each project's profit a completed distribution paid out (never twice). */

@@ -88,6 +88,7 @@ export function ActivityPage() {
                 <p className="text-xs text-muted">
                   {i.userName || "النظام"} · {time.format(new Date(i.at * 1000))} · {ago(i.at)}
                 </p>
+                <Changes detail={i.detail} />
               </div>
               <Badge>{ENTITIES[i.entity] ?? i.entity}</Badge>
             </Card>
@@ -95,5 +96,30 @@ export function ActivityPage() {
         ))}
       </ul>
     </div>
+  );
+}
+
+type Change = { field: string; label: string; before: string; after: string };
+/** What a change did, field by field: «المبلغ: 50,000 ر.س ← 5,000 ر.س». */
+function Changes({ detail }: { detail: Record<string, unknown> }) {
+  const list = Array.isArray(detail.changes) ? (detail.changes as Change[]) : [];
+  if (!list.length) return null;
+  return (
+    <ul aria-label="التغييرات" className="mt-1.5 space-y-0.5 text-sm">
+      {list.map((c) => (
+        <li key={c.field}>
+          <span className="text-muted">{c.label}: </span>
+          {c.before !== "—" && (
+            <>
+              <span className="text-red-700 line-through decoration-1 dark:text-red-400">
+                {c.before}
+              </span>
+              <span className="mx-1 text-muted">←</span>
+            </>
+          )}
+          <span className="font-medium text-emerald-700 dark:text-emerald-400">{c.after}</span>
+        </li>
+      ))}
+    </ul>
   );
 }

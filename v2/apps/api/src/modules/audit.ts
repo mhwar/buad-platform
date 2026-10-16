@@ -1,4 +1,16 @@
-import { auditLog } from "@buad/schema/db";
+import { PROJECT_STATUS_LABELS } from "@buad/schema/clients";
+import {
+  auditLog,
+  companyEntries,
+  distributions,
+  documents,
+  financeEntries,
+  paymentSchedule,
+  projectFinance,
+  projectReceipts,
+  projects,
+} from "@buad/schema/db";
+import { DOC_STATUS_LABELS } from "@buad/schema/documents";
 import { auditQuery } from "@buad/schema/team";
 import { zValidator } from "@hono/zod-validator";
 import { and, desc, eq, gte, lt, lte } from "drizzle-orm";
@@ -113,14 +125,174 @@ const VERBS: Record<string, string> = {
   approve: "اعتماد",
 };
 
+/* ── Money and its paperwork: what a change did, field by field ─────────────────────────
+ * For these records the trail keeps the values before and after (an amount edited from
+ * 50,000 to 5,000 reads exactly so), and what was entered when one is created. */
+type Field = { label: string; kind?: "money" | "bool" | "status" };
+type Watch = {
+  re: RegExp;
+  table: any;
+  /** The column the id from the path matches. */
+  by: "id" | "projectId";
+  fields: Record<string, Field>;
+};
+const MONEY: Field = { label: "المبلغ", kind: "money" };
+const WATCH: Watch[] = [
+  {
+    re: /^\/api\/projects\/[^/]+\/finance\/receipts\/([^/]+)$/,
+    table: projectReceipts,
+    by: "id",
+    fields: { date: { label: "التاريخ" }, amount: MONEY, note: { label: "الملاحظة" } },
+  },
+  {
+    re: /^\/api\/projects\/[^/]+\/finance\/entries\/([^/]+)$/,
+    table: financeEntries,
+    by: "id",
+    fields: {
+      date: { label: "التاريخ" },
+      description: { label: "البيان" },
+      type: { label: "النوع" },
+      amount: MONEY,
+      status: { label: "الحالة" },
+    },
+  },
+  {
+    re: /^\/api\/projects\/([^/]+)\/finance\/ctrl$/,
+    table: projectFinance,
+    by: "projectId",
+    fields: {
+      contractNo: { label: "رقم العقد" },
+      contractDate: { label: "تاريخ العقد" },
+      contractValue: { label: "قيمة العقد", kind: "money" },
+      vatIncluded: { label: "شاملة الضريبة", kind: "bool" },
+      vatPct: { label: "نسبة الضريبة" },
+    },
+  },
+  {
+    re: /^\/api\/receivables\/([^/]+)(?:\/receive)?$/,
+    table: paymentSchedule,
+    by: "id",
+    fields: {
+      label: { label: "الدفعة" },
+      dueDate: { label: "الاستحقاق" },
+      amount: MONEY,
+      status: { label: "الحالة" },
+    },
+  },
+  {
+    re: /^\/api\/projects\/([^/]+)$/,
+    table: projects,
+    by: "id",
+    fields: {
+      name: { label: "الاسم" },
+      status: { label: "الحالة", kind: "status" },
+      expectedValue: { label: "القيمة المتوقعة", kind: "money" },
+    },
+  },
+  {
+    re: /^\/api\/finance\/company\/entries\/([^/]+)(?:\/restore)?$/,
+    table: companyEntries,
+    by: "id",
+    fields: {
+      date: { label: "التاريخ" },
+      description: { label: "البيان" },
+      type: { label: "النوع" },
+      amount: MONEY,
+    },
+  },
+  {
+    re: /^\/api\/documents\/([^/]+)\/(?:status|outgoing)$/,
+    table: documents,
+    by: "id",
+    fields: { status: { label: "الحالة", kind: "status" }, outgoingNo: { label: "رقم الصادر" } },
+  },
+  {
+    re: /^\/api\/finance\/company\/distributions\/([^/]+)(?:\/complete)?$/,
+    table: distributions,
+    by: "id",
+    fields: {
+      periodLabel: { label: "الفترة" },
+      status: { label: "الحالة" },
+      distributedAmount: { label: "الموزَّع", kind: "money" },
+    },
+  },
+];
+/** Creating one of these: the trail keeps what was entered (amounts arrive in riyals). */
+const CREATE: { re: RegExp; fields: Record<string, Field> }[] = [
+  {
+    re: /^\/api\/projects\/[^/]+\/finance\/(?:receipts|entries)$/,
+    fields: {
+      date: { label: "التاريخ" },
+      description: { label: "البيان" },
+      amount: MONEY,
+      note: { label: "الملاحظة" },
+    },
+  },
+  {
+    re: /^\/api\/finance\/company\/entries$/,
+    fields: { date: { label: "التاريخ" }, description: { label: "البيان" }, amount: MONEY },
+  },
+  {
+    re: /^\/api\/receivables\/projects\/[^/]+$/,
+    fields: { label: { label: "الدفعة" }, dueDate: { label: "الاستحقاق" }, amount: MONEY },
+  },
+];
+
+const riyalFmt = new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 });
+const STATUS: Record<string, string> = { ...PROJECT_STATUS_LABELS, ...DOC_STATUS_LABELS };
+/** A stored value as the owner reads it (amounts are halalas in the tables). */
+function show(v: unknown, f: Field, halalas = true): string {
+  if (v === null || v === undefined || v === "") return "—";
+  if (f.kind === "money") return `${riyalFmt.format(Number(v) / (halalas ? 100 : 1))} ر.س`;
+  if (f.kind === "bool") return v ? "نعم" : "لا";
+  if (f.kind === "status") return STATUS[String(v)] ?? String(v);
+  return String(v);
+}
+export type Change = { field: string; label: string; before: string; after: string };
+
+async function rowOf(db: Db, w: Watch, id: string) {
+  if (!id) return null;
+  const [r] = await db.select().from(w.table).where(eq(w.table[w.by], id)).limit(1);
+  return (r as Record<string, unknown> | undefined) ?? null;
+}
+
 /** Records every successful change made through the API: one place, so none is forgotten. */
 export const auditTrail = createMiddleware<{ Variables: Vars }>(async (c, next) => {
-  await next();
   const m = c.req.method;
+  const path = new URL(c.req.url).pathname;
+  const writes = m === "POST" || m === "PATCH" || m === "PUT" || m === "DELETE";
+  const watch = writes ? WATCH.find((w) => w.re.test(path)) : undefined;
+  const watchId = watch ? (path.match(watch.re)?.[1] ?? "") : "";
+  const db = c.get("db");
+  const before = watch && db ? await rowOf(db, watch, watchId).catch(() => null) : null;
+  const create = m === "POST" && !watch ? CREATE.find((x) => x.re.test(path)) : undefined;
+  const body = create
+    ? ((await c.req.json().catch(() => null)) as Record<string, unknown> | null)
+    : null;
+  await next();
   if (m === "GET" || m === "HEAD" || m === "OPTIONS" || c.res.status >= 300) return;
   const me = c.get("user");
   if (!me) return;
-  const path = new URL(c.req.url).pathname;
+  const changes: Change[] = [];
+  if (watch) {
+    const after = await rowOf(c.get("db"), watch, watchId).catch(() => null);
+    for (const [k, f] of Object.entries(watch.fields)) {
+      const b = before?.[k];
+      const a = after?.[k];
+      if (!before && !after) continue;
+      if (before && after && b === a) continue;
+      changes.push({
+        field: k,
+        label: f.label,
+        before: before ? show(b, f) : "—",
+        after: after ? show(a, f) : "—",
+      });
+    }
+  } else if (create && body) {
+    for (const [k, f] of Object.entries(create.fields))
+      if (body[k] !== undefined && body[k] !== "")
+        changes.push({ field: k, label: f.label, before: "—", after: show(body[k], f, false) });
+  }
   const hit = TRAIL.find((t) => t.re.test(path));
   if (!hit) return;
   const id = path.match(hit.re)?.[1] ?? "";
@@ -131,6 +303,6 @@ export const auditTrail = createMiddleware<{ Variables: Vars }>(async (c, next) 
     entityId: id,
     action: VERBS[last] ? last : m === "POST" ? "create" : m === "DELETE" ? "delete" : "update",
     summary: `${verb} ${hit.noun}`,
-    detail: { method: m, path },
+    detail: changes.length ? { method: m, path, changes } : { method: m, path },
   });
 });

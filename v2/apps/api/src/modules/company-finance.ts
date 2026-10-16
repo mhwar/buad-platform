@@ -39,7 +39,7 @@ import { Hono } from "hono";
 import { z } from "zod";
 import { requireAuth, requireRW, type Vars } from "../auth/middleware";
 import type { Db } from "../auth/service";
-import { newId, nowSec } from "./common";
+import { atomic, newId, nowSec } from "./common";
 import { loadFinance } from "./finance";
 import { projectDate } from "./finance-overview";
 
@@ -560,54 +560,62 @@ export const companyFinanceApp = new Hono<Env>()
       if (r.netProfit <= 0) return c.json({ ok: false, error: "nothing_to_distribute" }, 409);
       const id = newId("dst");
       const t = nowSec();
-      await db.insert(distributions).values({
-        id,
-        orgId: me.orgId,
-        periodType:
-          v.mode === "project" ? "project" : v.mode === "quarter" ? `q${v.q}` : v.periodType,
-        periodLabel: r.label,
-        fromDate: r.range.from,
-        toDate: r.range.to,
-        grossIncome: r.grossIncome,
-        grossExpenses: r.grossExpenses,
-        netProfit: r.netProfit,
-        distributionPct: v.pct,
-        distributedAmount: r.distributed,
-        retainedAmount: r.retained,
-        retainedCategory: r.retained > 0 ? v.retainedCategory : null,
-        projectIds: JSON.stringify(
-          v.mode === "project" ? [v.projectId] : r.perProject.map((x) => x.projectId),
-        ),
-        projectId: v.mode === "project" ? v.projectId : "",
-        status: v.status,
-        note: v.note,
-        completedAt: v.status === "completed" ? t : null,
-        createdBy: me.id,
-        createdAt: t,
-        updatedBy: me.id,
-        updatedAt: t,
-      });
+      // The distribution, what it takes from each project and each partner's share: all or none.
+      const writes: { run: () => unknown }[] = [
+        db.insert(distributions).values({
+          id,
+          orgId: me.orgId,
+          periodType:
+            v.mode === "project" ? "project" : v.mode === "quarter" ? `q${v.q}` : v.periodType,
+          periodLabel: r.label,
+          fromDate: r.range.from,
+          toDate: r.range.to,
+          grossIncome: r.grossIncome,
+          grossExpenses: r.grossExpenses,
+          netProfit: r.netProfit,
+          distributionPct: v.pct,
+          distributedAmount: r.distributed,
+          retainedAmount: r.retained,
+          retainedCategory: r.retained > 0 ? v.retainedCategory : null,
+          projectIds: JSON.stringify(
+            v.mode === "project" ? [v.projectId] : r.perProject.map((x) => x.projectId),
+          ),
+          projectId: v.mode === "project" ? v.projectId : "",
+          status: v.status,
+          note: v.note,
+          completedAt: v.status === "completed" ? t : null,
+          createdBy: me.id,
+          createdAt: t,
+          updatedBy: me.id,
+          updatedAt: t,
+        }),
+      ];
       // What this distribution takes out of each project's realized profit.
       if (r.perProject.length)
-        await db.insert(distributionProjects).values(
-          r.perProject.map((x) => ({
-            id: newId("dpr"),
-            distributionId: id,
-            projectId: x.projectId,
-            amount: Math.sign(x.amount) * fromRiyals(Math.abs(x.amount)),
-          })),
+        writes.push(
+          db.insert(distributionProjects).values(
+            r.perProject.map((x) => ({
+              id: newId("dpr"),
+              distributionId: id,
+              projectId: x.projectId,
+              amount: Math.sign(x.amount) * fromRiyals(Math.abs(x.amount)),
+            })),
+          ),
         );
       if (r.shares.length)
-        await db.insert(distributionShares).values(
-          r.shares.map((s) => ({
-            id: newId("dsh"),
-            distributionId: id,
-            partnerId: s.partnerId,
-            partnerName: s.partnerName,
-            sharePct: s.sharePct,
-            amount: s.amount,
-          })),
+        writes.push(
+          db.insert(distributionShares).values(
+            r.shares.map((s) => ({
+              id: newId("dsh"),
+              distributionId: id,
+              partnerId: s.partnerId,
+              partnerName: s.partnerName,
+              sharePct: s.sharePct,
+              amount: s.amount,
+            })),
+          ),
         );
+      await atomic(db, writes);
       return c.json({ ok: true, id }, 201);
     },
   )

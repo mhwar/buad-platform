@@ -133,7 +133,11 @@ export function ProjectPage() {
     } catch (x) {
       const code = (x as { body?: { error?: string } }).body?.error;
       setError(
-        code === "client_archived" ? "العميل مؤرشف. استعيدوا العميل أولاً." : "تعذّر تنفيذ العملية",
+        code === "client_archived"
+          ? "العميل مؤرشف. استعيدوا العميل أولاً."
+          : code === "has_records"
+            ? "للمشروع قيود مالية أو مستندات أو مهام، فلا يُحذف نهائياً. أرشِفه بدلاً من ذلك ليبقى سجله."
+            : "تعذّر تنفيذ العملية",
       );
     }
   };

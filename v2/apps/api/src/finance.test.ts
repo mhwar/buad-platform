@@ -66,7 +66,7 @@ beforeEach(async () => {
 
 describe("finance: defaults and permissions", () => {
   it("starts from v1 defaults with the project's expected value, without writing anything", async () => {
-    const r = await call("m1", "GET", F());
+    const r = await call("adm", "GET", F());
     expect(r.status).toBe(200);
     expect(r.body.ctrl).toMatchObject({
       contractValue: 10000000,

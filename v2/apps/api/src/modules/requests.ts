@@ -39,7 +39,23 @@ const json = (s: string): Record<string, unknown> => {
   }
 };
 
-export const shapeRequest = (r: Row) => ({
+/** A priced quote without what it costs us: for those who may not see profit. */
+export function withoutCosts(q: Record<string, unknown>) {
+  const { cost: _c, profit: _p, marginPct: _m, lines, ...rest } = q;
+  return {
+    ...rest,
+    ...(Array.isArray(lines)
+      ? {
+          lines: lines.map((l: Record<string, unknown>) => {
+            const { unitCost: _u, amount: _a, ...line } = l;
+            return line;
+          }),
+        }
+      : {}),
+  };
+}
+
+export const shapeRequest = (r: Row, seesProfit = true) => ({
   id: r.id,
   productId: r.productId,
   productName: r.productName,
@@ -51,7 +67,7 @@ export const shapeRequest = (r: Row) => ({
   email: r.email,
   message: r.message,
   answers: json(r.answers) as Record<string, string>,
-  quote: json(r.quote),
+  quote: seesProfit ? json(r.quote) : withoutCosts(json(r.quote)),
   notes: r.notes,
   clientId: r.clientId,
   projectId: r.projectId,
@@ -106,7 +122,10 @@ export const requestsApp = new Hono<Env>()
     }
     return c.json({
       ok: true,
-      requests: rows.map((r) => ({ ...shapeRequest(r), interest: soon.has(r.productId) })),
+      requests: rows.map((r) => ({
+        ...shapeRequest(r, c.get("user").perms.includes("finance.profit")),
+        interest: soon.has(r.productId),
+      })),
       counts: Object.fromEntries(counts.map((x) => [x.status, Number(x.n)])),
     });
   })
@@ -151,7 +170,7 @@ export const requestsApp = new Hono<Env>()
     return c.json({
       ok: true,
       opportunity: {
-        ...shapeRequest(row),
+        ...shapeRequest(row, c.get("user").perms.includes("finance.profit")),
         productName: prod?.name ?? row.productName,
         packageName: packages.find((p) => p.id === row.packageId)?.name ?? "",
         ownerName: owner?.name ?? "",
@@ -431,7 +450,10 @@ requestsApp
         ...(row.valueHalalas ? {} : { valueHalalas: Math.round(q.price * 100) }),
       },
     );
-    return c.json({ ok: true, quote });
+    return c.json({
+      ok: true,
+      quote: me.perms.includes("finance.profit") ? quote : withoutCosts(quote),
+    });
   })
 
   // Request → client (new, or an existing one) + a draft project carrying the quoted price.

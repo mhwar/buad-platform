@@ -217,7 +217,8 @@ export const clientsApp = new Hono<Env>()
         openRequests: sql<number>`(SELECT count(*) FROM product_requests r WHERE r.client_id = "clients"."id" AND r.status IN ('new','contacted','quoted','negotiating'))`,
         openQuotes: sql<number>`(SELECT count(*) FROM quotes z WHERE z.client_id = "clients"."id" AND z.status IN ('draft','sent'))`,
         // What the client still owes on its running and finished work, and instalments past due.
-        owed: sql<number>`(SELECT coalesce(sum(${contractTotalSql("p")} - coalesce((SELECT sum(r.amount_halalas) FROM project_receipts r WHERE r.project_id = p.id AND r.approved_at IS NOT NULL), 0)), 0)
+        // Per project, never below zero: the same figure as the client's statement.
+        owed: sql<number>`(SELECT coalesce(sum(max(${contractTotalSql("p")} - coalesce((SELECT sum(r.amount_halalas) FROM project_receipts r WHERE r.project_id = p.id AND r.approved_at IS NOT NULL), 0), 0)), 0)
           FROM projects p WHERE ${liveVisible} AND p.status IN ('active','completed','paused'))`,
         lateInstalments: sql<number>`(SELECT count(*) FROM payment_schedule s JOIN projects p ON p.id = s.project_id
           WHERE ${liveVisible} AND s.status = 'pending' AND s.due_date < ${new Date().toISOString().slice(0, 10)})`,
@@ -396,7 +397,11 @@ export const clientsApp = new Hono<Env>()
         income: r2(s.totalIncome),
         remaining: r2(s.remainingFromGross),
         received: r2(fin.received),
-        owed: r2(Math.max(0, s.grossTotal - fin.received)),
+        // Drafts and cancelled work are listed but owe nothing (as on the client's card).
+        owed:
+          p.status === "draft" || p.status === "cancelled"
+            ? 0
+            : r2(Math.max(0, s.grossTotal - fin.received)),
       });
     }
     const sum = (

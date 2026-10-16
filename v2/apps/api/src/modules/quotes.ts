@@ -16,7 +16,7 @@ import { Hono } from "hono";
 import { requireAuth, requireRW, type Vars } from "../auth/middleware";
 import type { Db } from "../auth/service";
 import { findSimilarName, insertClient } from "./clients";
-import { newId, nextCounter, nowSec } from "./common";
+import { atomic, newId, nextCounter, nowSec } from "./common";
 import { loadVatRate } from "./finance";
 import { moveStage } from "./opportunity";
 import { loadOrgProfile } from "./org";
@@ -379,22 +379,28 @@ export const quotesApp = new Hono<Env>()
       link && link.ok ? link : undefined,
     );
     const lines = scheduleSplit(v.schedule, t.total, today());
-    if (lines.length)
-      await db.insert(paymentSchedule).values(
-        lines.map((l) => ({
-          id: newId("psc"),
-          orgId: me.orgId,
-          projectId: project.id,
-          label: l.label,
-          dueDate: l.dueDate,
-          amount: l.amount,
-          createdBy: me.id,
-        })),
-      );
-    await db
-      .update(quotes)
-      .set({ clientId, projectId: project.id, updatedAt: nowSec() })
-      .where(eq(quotes.id, r.id));
+    // The instalments and the quote's link to its project land together.
+    await atomic(db, [
+      ...(lines.length
+        ? [
+            db.insert(paymentSchedule).values(
+              lines.map((l) => ({
+                id: newId("psc"),
+                orgId: me.orgId,
+                projectId: project.id,
+                label: l.label,
+                dueDate: l.dueDate,
+                amount: l.amount,
+                createdBy: me.id,
+              })),
+            ),
+          ]
+        : []),
+      db
+        .update(quotes)
+        .set({ clientId, projectId: project.id, updatedAt: nowSec() })
+        .where(eq(quotes.id, r.id)),
+    ]);
     if (req) {
       req.clientId = clientId;
       await moveStage(db, me, req, "won", { clientId, projectId: project.id });

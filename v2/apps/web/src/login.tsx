@@ -36,6 +36,7 @@ export function LoginPage() {
     setError(null);
     const res = await api.api.auth.login.$post({ json: values });
     const body = await res.json();
+    if (res.status === 429) return setError("محاولات دخول كثيرة. انتظر دقيقة ثم حاول مجدداً.");
     if (!res.ok || !("ok" in body) || !body.ok)
       return setError("البريد الإلكتروني أو كلمة المرور غير صحيحة");
     await done();

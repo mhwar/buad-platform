@@ -58,6 +58,8 @@ export type Env = {
   ASSETS?: { fetch: (req: Request) => Promise<Response> };
   /** Cloudflare Browser Run, for vector PDFs. */
   BROWSER?: BrowserBinding;
+  /** Cloudflare rate limiter for sign-in attempts (absent in tests). */
+  LOGIN_LIMITER?: { limit: (o: { key: string }) => Promise<{ success: boolean }> };
   DB: Parameters<typeof drizzle>[0];
 };
 
@@ -117,6 +119,13 @@ export function createApp(deps: AppDeps = {}) {
 
       .post("/api/auth/login", zValidator("json", loginInput), async (c) => {
         const { email, password } = c.req.valid("json");
+        // Guessing passwords is slowed per address: every attempt also costs the Worker a hash.
+        const limiter = c.env.LOGIN_LIMITER;
+        if (limiter) {
+          const key = c.req.header("cf-connecting-ip") ?? "unknown";
+          if (!(await limiter.limit({ key })).success)
+            return c.json({ ok: false, error: "too_many_attempts" }, 429);
+        }
         const res = await login(c.get("db"), email, password);
         if (res.status === "invalid")
           return c.json({ ok: false, error: "invalid_credentials" }, 401);

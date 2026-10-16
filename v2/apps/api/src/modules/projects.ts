@@ -374,6 +374,18 @@ export const projectsApp = new Hono<Env>()
     const me = c.get("user");
     const p = await loadVisible(db, me, c.req.param("id"));
     if (!p) return c.json({ ok: false, error: "not_found" }, 404);
-    await db.delete(projects).where(eq(projects.id, p.id));
+    try {
+      await db.delete(projects).where(eq(projects.id, p.id));
+    } catch (err) {
+      // Finance, documents or tasks still point at it: archive it instead (keeps the history).
+      if (
+        /FOREIGN KEY/i.test(
+          String((err as Error)?.message ?? err) +
+            String((err as { cause?: unknown })?.cause ?? ""),
+        )
+      )
+        return c.json({ ok: false, error: "has_records" }, 409);
+      throw err;
+    }
     return c.json({ ok: true });
   });

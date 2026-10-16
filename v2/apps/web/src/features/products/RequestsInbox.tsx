@@ -317,10 +317,12 @@ function QuoteBlock({
           <p>
             السعر {sar(q.price ?? 0)} قبل الضريبة · الإجمالي {sar(q.total ?? 0)}
           </p>
-          <p className="text-xs text-muted">
-            التكلفة {sar(q.cost ?? 0)} · الربح {sar(q.profit ?? 0)} ({q.marginPct}%). هذه الأرقام
-            داخلية ولا تظهر للعميل.
-          </p>
+          {typeof q.profit === "number" && (
+            <p className="text-xs text-muted">
+              التكلفة {sar(q.cost ?? 0)} · الربح {sar(q.profit)} ({q.marginPct}%). هذه الأرقام
+              داخلية ولا تظهر للعميل.
+            </p>
+          )}
         </div>
       )}
       <div className="flex flex-wrap gap-2">

@@ -35,6 +35,23 @@ jobs:
         env:
           # Lets an open browser notice a newer deploy and offer to reload.
           VITE_APP_VERSION: ${{ github.sha }}
+      # Nothing reaches production unless the end-to-end tests pass on this exact build.
+      - run: pnpm --filter @buad/e2e exec playwright install --with-deps chromium
+      - run: pnpm --filter @buad/e2e e2e
+      # A full copy of the live database before any migration touches it (kept 30 days, private
+      # to this repository). Restore: see «النسخ الاحتياطي والاستعادة» in v2/README.md.
+      - name: Back up the database
+        working-directory: v2/apps/api
+        run: pnpm exec wrangler d1 export buad-v2 --remote --output "../../backup-${GITHUB_SHA::7}.sql"
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: d1-backup-${{ github.sha }}
+          path: v2/backup-*.sql
+          retention-days: 30
+          if-no-files-found: error
       - name: Apply database migrations
         working-directory: v2/apps/api
         run: pnpm exec wrangler d1 migrations apply buad-v2 --remote

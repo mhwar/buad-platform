@@ -820,9 +820,11 @@ function Details({
             {qs.packageName} × {qs.times}: السعر {sar(qs.price)} قبل الضريبة · الإجمالي{" "}
             {sar(qs.total ?? 0)}
           </p>
-          <p className="text-xs text-muted">
-            الربح {sar(qs.profit ?? 0)} ({qs.marginPct}%). أرقام داخلية لا تظهر للعميل.
-          </p>
+          {typeof qs.profit === "number" && (
+            <p className="text-xs text-muted">
+              الربح {sar(qs.profit)} ({qs.marginPct}%). أرقام داخلية لا تظهر للعميل.
+            </p>
+          )}
         </Card>
       )}
       <Card>

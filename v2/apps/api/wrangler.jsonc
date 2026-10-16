@@ -24,6 +24,12 @@
   // Uploaded files (organisation logo, stamp, signature, letterheads, document images).
   "r2_buckets": [{ "binding": "FILES", "bucket_name": "buad-v2-files" }],
   // Headless Chrome (Browser Run) for real vector PDFs of documents and reports.
-  "browser": { "binding": "BROWSER" }
+  "browser": { "binding": "BROWSER" },
+  // Sign-in attempts: at most 10 a minute from one address.
+  "ratelimits": [
+    { "name": "LOGIN_LIMITER", "namespace_id": "1001", "simple": { "limit": 10, "period": 60 } }
+  ],
+  // Logs and errors kept in Cloudflare (Workers Logs), to see and alert on failures in production.
+  "observability": { "enabled": true }
   // Secret (never in this file): wrangler secret put JWT_SECRET
 }
