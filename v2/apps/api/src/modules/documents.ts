@@ -172,6 +172,7 @@ export const projectDocumentsApp = new Hono<Env>()
         status: documents.status,
         outgoingNo: documents.outgoingNo,
         updatedAt: documents.updatedAt,
+        statusChangedAt: documents.statusChangedAt,
         version: documents.version,
       })
       .from(documents)
@@ -310,6 +311,7 @@ export const documentsApp = new Hono<Env>()
         outgoingNo: documents.outgoingNo,
         outgoingAt: documents.outgoingAt,
         updatedAt: documents.updatedAt,
+        statusChangedAt: documents.statusChangedAt,
         projectId: projects.id,
         projectNumber: projects.number,
         projectName: projects.name,
@@ -399,6 +401,7 @@ export const documentsApp = new Hono<Env>()
     const t = nowSec();
     const set: Partial<typeof documents.$inferInsert> = {
       status: to,
+      statusChangedAt: t,
       version: doc.version + 1,
       updatedBy: me.id,
       updatedAt: t,

@@ -39,7 +39,7 @@ import { useCan } from "../../session";
 import { QUOTE_LABEL, type Quote, quotesQuery } from "../sales/api";
 import { QuoteDialog } from "../sales/QuoteDialog";
 import { send } from "../team/queries";
-import { type RegisterItem, registerQuery } from "./api";
+import { type RegisterItem, registerQuery, waitingLabel } from "./api";
 import { useDocumentActions } from "./DocumentActions";
 import { NewDocumentDialog, STATUS_TONE } from "./DocumentsSection";
 
@@ -95,6 +95,8 @@ type Entry = {
   amount: number | null;
   updatedAt: number;
   date: number;
+  /** In review: how long it has waited for approval. */
+  waiting?: string;
   open: () => void;
   menu: MenuItem[];
 };
@@ -148,6 +150,7 @@ export function DocumentsPage() {
     amount: null,
     updatedAt: d.updatedAt,
     date: outgoing ? (d.outgoingAt ?? d.updatedAt) : d.updatedAt,
+    waiting: waitingLabel(d),
     open: () =>
       navigate({ to: "/projects/$id/documents/$docId", params: { id: d.projectId, docId: d.id } }),
     menu: actions.items(d),
@@ -411,6 +414,11 @@ export function DocumentsPage() {
                   </td>
                   <td className="p-3">
                     <Badge tone={e.tone}>{e.statusLabel}</Badge>
+                    {e.waiting && (
+                      <span className="mt-1 block text-xs text-amber-700 dark:text-amber-400">
+                        {e.waiting}
+                      </span>
+                    )}
                   </td>
                   <td className="p-3 whitespace-nowrap tabular-nums">
                     {e.amount === null ? "—" : sar(e.amount)}
@@ -451,6 +459,11 @@ export function DocumentsPage() {
                       <span className="font-semibold text-ink">{sar(e.amount)}</span>
                     )}
                   </p>
+                  {e.waiting && (
+                    <p className="mt-1 text-xs font-medium text-amber-700 dark:text-amber-400">
+                      {e.waiting}
+                    </p>
+                  )}
                 </div>
                 <div className="relative z-10 flex flex-col items-end gap-2">
                   <Badge tone={e.tone}>{e.statusLabel}</Badge>

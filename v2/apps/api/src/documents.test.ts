@@ -150,6 +150,9 @@ describe("contracts", () => {
   it("approval locks the document and keeps a snapshot; reopening starts a new version", async () => {
     const a = await call("adm", "POST", D(), { kind: "contract", template: "blank" });
     await call("adm", "POST", `/api/documents/${a.body.id}/status`, { to: "review", version: 1 });
+    // the moment it went to review is kept, for «waiting for approval since»
+    const inReview = (await call("adm", "GET", "/api/documents?status=review")).body.items[0];
+    expect(inReview.statusChangedAt).toBeGreaterThan(0);
     const ok = await call("adm", "POST", `/api/documents/${a.body.id}/status`, {
       to: "approved",
       version: 2,
