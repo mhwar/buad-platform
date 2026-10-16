@@ -1,0 +1,4 @@
+.state/
+.auth/
+test-results/
+playwright-report/

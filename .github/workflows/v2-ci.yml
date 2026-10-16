@@ -22,3 +22,14 @@ jobs:
           cache-dependency-path: v2/pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
       - run: pnpm verify
+      # End-to-end on the real Worker with the web app `pnpm verify` just built, at desktop and phone sizes.
+      - run: pnpm --filter @buad/e2e exec playwright install --with-deps chromium
+      - run: pnpm --filter @buad/e2e e2e
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-report
+          path: |
+            v2/e2e/playwright-report
+            v2/e2e/test-results
+          retention-days: 7
