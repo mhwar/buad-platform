@@ -44,6 +44,7 @@ import { label, PROJECT_STATUS_LABELS, PROJECT_TYPE_LABELS, STATUS_TONE } from "
 import { ExecutionTab } from "../tasks/ExecutionTab";
 import { executionQuery } from "../tasks/queries";
 import { ProjectMembers } from "../team/ProjectMembers";
+import { RecordMeetings } from "../workspace/RecordMeetings";
 import {
   archiveProject,
   deleteProject,
@@ -417,6 +418,10 @@ export function ProjectPage() {
               أُضيف {fromEpoch(p.createdAt)} · آخر تعديل {fromEpoch(p.updatedAt)}
             </p>
           </Card>
+          <RecordMeetings
+            link={{ projectId: p.id, clientId: p.clientId }}
+            title={`اجتماع ${p.name}`}
+          />
         </aside>
       </div>
 

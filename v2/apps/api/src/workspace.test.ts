@@ -100,6 +100,23 @@ describe("meetings", () => {
     expect((await call("adm", "GET", "/api/meetings?mine=1")).body.items).toHaveLength(0);
   });
 
+  it("filter to one client, opportunity or project", async () => {
+    await ctx.db
+      .insert(productRequests)
+      .values({ id: "rq1", orgId: "org_platform", name: "منى", entity: "جمعية الأمل" });
+    const cl = (
+      await call("own", "POST", "/api/clients", { name: "جمعية الأمل", type: "association" })
+    ).body.id;
+    await call("own", "POST", "/api/meetings", meeting({ clientId: cl }));
+    await call("own", "POST", "/api/meetings", meeting({ requestId: "rq1", title: "عرض" }));
+    await call("own", "POST", "/api/meetings", meeting({ title: "عام" }));
+    const of = async (q: string) =>
+      (await call("own", "GET", `/api/meetings?${q}`)).body.items.map((m: J) => m.title);
+    expect(await of(`clientId=${cl}`)).toEqual(["اجتماع متابعة"]);
+    expect(await of("requestId=rq1")).toEqual(["عرض"]);
+    expect(await of("projectId=none")).toEqual([]);
+  });
+
   it("are kept to the organisation and to those with the permission", async () => {
     const id = (await call("own", "POST", "/api/meetings", meeting())).body.id;
     expect((await call("x", "GET", `/api/meetings/${id}`)).status).toBe(404);
