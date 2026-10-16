@@ -1,8 +1,9 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Pencil, Plus } from "lucide-react";
+import { Pencil, Plus, Sparkles } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Badge, Button, Card, EmptyState, Segmented, Select } from "../../components/ui";
 import { useCan } from "../../session";
+import { TaskDialog } from "../tasks/TaskDialogs";
 import { send } from "../team/queries";
 import {
   CycleDialog,
@@ -22,6 +23,7 @@ import {
   type Objective,
   ownersQuery,
 } from "./queries";
+import { FollowUp, TargetPanel, TemplateDialog } from "./Tracking";
 
 type Modal =
   | { t: "cycle" }
@@ -29,7 +31,9 @@ type Modal =
   | { t: "objective"; o?: Objective }
   | { t: "indicator"; objective: string; i?: Indicator }
   | { t: "initiative"; objective: string; i?: Initiative }
-  | { t: "review"; o: Objective };
+  | { t: "review"; o: Objective }
+  | { t: "template" }
+  | { t: "task"; initiative: Initiative };
 
 const STATUS: Record<Cycle["status"], string> = {
   draft: "مسودة",
@@ -50,6 +54,7 @@ export function PlansPage() {
   const [picked, setPicked] = useState("");
   const [quarter, setQuarter] = useState<"all" | "1" | "2" | "3" | "4">("all");
   const [modal, setModal] = useState<Modal | null>(null);
+  const [view, setView] = useState<"goals" | "follow">("goals");
   const cycleId =
     mine.find((c) => c.id === picked)?.id ??
     mine.find((c) => c.status === "active")?.id ??
@@ -78,6 +83,22 @@ export function PlansPage() {
     (o) => quarter === "all" || o.quarter === Number(quarter),
   );
   const parentObjs = parent.data?.objectives ?? [];
+  // The headline money target: the plan's own revenue indicator, or the strategic plan's.
+  const isRevenue = (i: Indicator) => i.source === "platform:revenue";
+  const yearly = (x?: typeof d) =>
+    x?.objectives
+      .filter((o) => o.quarter === 0)
+      .flatMap((o) => o.indicators)
+      .find(isRevenue);
+  const headline = yearly(d) ?? (kind === "operational" ? yearly(parent.data) : undefined);
+  const quarterTargets = (d?.objectives ?? [])
+    .filter((o) => o.quarter > 0)
+    .flatMap((o) =>
+      o.indicators
+        .filter(isRevenue)
+        .map((i) => ({ quarter: o.quarter, target: i.target, current: i.current })),
+    )
+    .sort((a, b) => a.quarter - b.quarter);
   const remove = async (o: Objective) => {
     if (!confirm(`حذف الهدف «${o.title}» بمؤشراته ومبادرته؟`)) return;
     await send("DELETE", `/api/plans/objectives/${o.id}`);
@@ -111,6 +132,12 @@ export function PlansPage() {
               ))}
             </Select>
           )}
+          {edit && (
+            <Button variant="secondary" onClick={() => setModal({ t: "template" })}>
+              <Sparkles className="size-4" />
+              خطة جاهزة
+            </Button>
+          )}
           {edit && mine.length > 0 && (
             <Button variant="secondary" onClick={() => setModal({ t: "cycle" })}>
               <Plus className="size-4" />
@@ -129,7 +156,17 @@ export function PlansPage() {
               : "اجعل السنة أربعة أرباع، واربط أهدافها بالخطة الاستراتيجية."
           }
           action={
-            edit ? <Button onClick={() => setModal({ t: "cycle" })}>إنشاء الخطة</Button> : undefined
+            edit ? (
+              <div className="flex flex-wrap justify-center gap-2">
+                <Button onClick={() => setModal({ t: "template" })}>
+                  <Sparkles className="size-4" />
+                  أنشئ خطة السنة الأولى
+                </Button>
+                <Button variant="secondary" onClick={() => setModal({ t: "cycle" })}>
+                  خطة فارغة
+                </Button>
+              </div>
+            ) : undefined
           }
         />
       )}
@@ -189,7 +226,26 @@ export function PlansPage() {
             )}
           </Card>
 
-          {kind === "operational" && (
+          {headline && (
+            <TargetPanel
+              indicator={headline}
+              quarters={kind === "operational" ? quarterTargets : undefined}
+            />
+          )}
+
+          <Segmented
+            label="طريقة العرض"
+            value={view}
+            onChange={setView}
+            items={[
+              { value: "goals", label: "الأهداف" },
+              { value: "follow", label: "المتابعة" },
+            ]}
+          />
+
+          {view === "follow" && <FollowUp d={d} />}
+
+          {view === "goals" && kind === "operational" && (
             <Segmented
               label="الربع"
               value={quarter}
@@ -204,39 +260,51 @@ export function PlansPage() {
             />
           )}
 
-          <div className="flex items-center justify-between">
-            <h2 className="font-semibold">
-              {kind === "strategic" ? "الأهداف الاستراتيجية" : "الأهداف التشغيلية"}
-            </h2>
-            {edit && (
-              <Button onClick={() => setModal({ t: "objective" })}>
-                <Plus className="size-4" />
-                هدف
-              </Button>
-            )}
-          </div>
-          {objectives.length === 0 && (
-            <EmptyState title="لا أهداف هنا بعد" text="أضف هدفاً ثم مؤشراً ومبادرة ليظهر التقدّم." />
+          {view === "goals" && (
+            <>
+              <div className="flex items-center justify-between">
+                <h2 className="font-semibold">
+                  {kind === "strategic" ? "الأهداف الاستراتيجية" : "الأهداف التشغيلية"}
+                </h2>
+                {edit && (
+                  <Button onClick={() => setModal({ t: "objective" })}>
+                    <Plus className="size-4" />
+                    هدف
+                  </Button>
+                )}
+              </div>
+              {objectives.length === 0 && (
+                <EmptyState
+                  title="لا أهداف هنا بعد"
+                  text="أضف هدفاً ثم مؤشراً ومبادرة ليظهر التقدّم."
+                />
+              )}
+              <div className="grid gap-4 xl:grid-cols-2">
+                {objectives.map((o) => (
+                  <ObjectiveCard
+                    key={o.id}
+                    o={o}
+                    canEdit={edit}
+                    ownerName={ownerName(o.ownerId)}
+                    parentTitle={parentObjs.find((p) => p.id === o.parentId)?.title}
+                    onEdit={() => setModal({ t: "objective", o })}
+                    onDelete={() => remove(o)}
+                    onAddIndicator={() => setModal({ t: "indicator", objective: o.id })}
+                    onEditIndicator={(i) => setModal({ t: "indicator", objective: o.id, i })}
+                    onAddInitiative={() => setModal({ t: "initiative", objective: o.id })}
+                    onEditInitiative={(i) => setModal({ t: "initiative", objective: o.id, i })}
+                    onReview={() => setModal({ t: "review", o })}
+                    onChanged={refresh}
+                    onAddTask={
+                      can("tasks.edit")
+                        ? (initiative) => setModal({ t: "task", initiative })
+                        : undefined
+                    }
+                  />
+                ))}
+              </div>
+            </>
           )}
-          <div className="grid gap-4 xl:grid-cols-2">
-            {objectives.map((o) => (
-              <ObjectiveCard
-                key={o.id}
-                o={o}
-                canEdit={edit}
-                ownerName={ownerName(o.ownerId)}
-                parentTitle={parentObjs.find((p) => p.id === o.parentId)?.title}
-                onEdit={() => setModal({ t: "objective", o })}
-                onDelete={() => remove(o)}
-                onAddIndicator={() => setModal({ t: "indicator", objective: o.id })}
-                onEditIndicator={(i) => setModal({ t: "indicator", objective: o.id, i })}
-                onAddInitiative={() => setModal({ t: "initiative", objective: o.id })}
-                onEditInitiative={(i) => setModal({ t: "initiative", objective: o.id, i })}
-                onReview={() => setModal({ t: "review", o })}
-                onChanged={refresh}
-              />
-            ))}
-          </div>
         </>
       )}
 
@@ -274,6 +342,25 @@ export function PlansPage() {
           existing={modal.i}
           onClose={() => setModal(null)}
           onSaved={done}
+        />
+      )}
+      {modal?.t === "template" && (
+        <TemplateDialog
+          onClose={() => setModal(null)}
+          onCreated={() => {
+            done();
+            setKind("strategic");
+          }}
+        />
+      )}
+      {modal?.t === "task" && (
+        <TaskDialog
+          initiativeId={modal.initiative.id}
+          onClose={() => setModal(null)}
+          onSaved={() => {
+            done();
+            qc.invalidateQueries({ queryKey: ["tasks"] });
+          }}
         />
       )}
       {modal?.t === "review" && (

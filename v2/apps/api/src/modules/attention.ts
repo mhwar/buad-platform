@@ -295,6 +295,28 @@ export const attentionApp = new Hono<{ Variables: Vars }>().use(requireAuth).get
       link: "/plans",
     });
   }
+  // The quarter that just ended: its objectives in active plans want a review.
+  if (can("plans.edit")) {
+    const d = new Date(`${today}T00:00:00Z`);
+    const q = Math.floor(d.getUTCMonth() / 3); // the last finished quarter of this year (0 = none yet)
+    if (q >= 1) {
+      const year = String(d.getUTCFullYear());
+      const row = (await db.get(sql`
+        SELECT COUNT(*) AS n FROM plan_objectives o JOIN plan_cycles c ON c.id = o.cycle_id
+        WHERE o.org_id = ${me.orgId} AND c.status = 'active' AND substr(c.start_date, 1, 4) = ${year}
+          AND o.quarter = ${q}
+          AND NOT EXISTS (SELECT 1 FROM plan_reviews r WHERE r.objective_id = o.id AND r.quarter = ${q})`)) as
+        | { n: number }
+        | undefined;
+      add({
+        key: "plan-review",
+        tone: "info",
+        title: `مراجعة الربع ${q} في الخطة لم تُسجَّل بعد`,
+        count: Number(row?.n ?? 0),
+        link: "/plans",
+      });
+    }
+  }
 
   // A short list for whoever sets the platform up; disappears when everything is done.
   let checklist: { key: string; label: string; done: boolean; link: string }[] = [];

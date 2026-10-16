@@ -16,6 +16,7 @@
     "./plans": "./src/plans.ts",
     "./tasks": "./src/tasks.ts",
     "./workspace": "./src/workspace.ts",
+    "./plan-templates": "./src/plan-templates.ts",
     "./quotes": "./src/quotes.ts",
     "./receivables": "./src/receivables.ts",
     "./crm": "./src/crm.ts",
