@@ -8,6 +8,8 @@ export function TaskRow({
   t,
   canEdit,
   showProject,
+  compact,
+  draggable,
   onEdit,
   onTime,
   onChanged,
@@ -15,14 +17,27 @@ export function TaskRow({
   t: Task;
   canEdit: boolean;
   showProject?: boolean;
+  /** On the board: the status menu sits under the title, so a narrow column fits. */
+  compact?: boolean;
+  /** On the board: the card can be dragged to another status column. */
+  draggable?: boolean;
   onEdit: () => void;
   onTime: () => void;
   onChanged: () => void;
 }) {
   const late = isOverdue(t);
   return (
-    <li className="rounded-xl border bg-surface p-3">
-      <div className="flex flex-wrap items-start justify-between gap-2">
+    <li
+      className={`rounded-xl border bg-surface p-3 ${draggable ? "cursor-grab" : ""}`}
+      draggable={draggable}
+      onDragStart={(e) => {
+        e.dataTransfer.setData("text/task", t.id);
+        e.dataTransfer.effectAllowed = "move";
+      }}
+    >
+      <div
+        className={`flex flex-wrap items-start justify-between gap-2 ${compact ? "flex-col" : ""}`}
+      >
         <div className="min-w-0">
           <p className={`font-medium ${t.status === "done" ? "text-muted line-through" : ""}`}>
             {t.title}

@@ -76,6 +76,41 @@ describe("TasksPage", () => {
     expect(screen.queryByRole("button", { name: "مهمة جديدة" })).toBeNull();
     expect(screen.queryByLabelText("حالة جهّز العرض")).toBeNull();
   });
+
+  it("shows a board by status, with done tasks in their own column", async () => {
+    stubApi(base());
+    const { router } = await renderWithApp(<TasksPage />);
+    await screen.findByText("جهّز العرض");
+    await userEvent.click(screen.getByRole("tab", { name: "لوحة" }));
+    const board = await screen.findByRole("list", { name: "المهام حسب الحالة" });
+    expect(within(board).getByRole("listitem", { name: "قيد التنفيذ" })).toHaveTextContent(
+      "جهّز العرض",
+    );
+    expect(within(board).getByRole("listitem", { name: "منجزة" })).toHaveTextContent("منجزة قديمة");
+    expect(router.state.location.search).toMatchObject({ layout: "board" });
+  });
+
+  it("filters by text and project, and lays the result out as a table", async () => {
+    stubApi({
+      ...base(),
+      "GET /api/tasks": () => ({
+        ok: true,
+        items: [
+          task(),
+          task({ id: "t3", title: "اطبع الشهادات", projectId: "p2", projectName: "ملتقى" }),
+        ],
+      }),
+    });
+    const { router } = await renderWithApp(<TasksPage />);
+    await screen.findByText("اطبع الشهادات");
+    await userEvent.selectOptions(screen.getByLabelText("المشروع"), "p2");
+    expect(screen.queryByText("جهّز العرض")).toBeNull();
+    expect(router.state.location.search).toMatchObject({ project: "p2" });
+    await userEvent.click(screen.getByRole("tab", { name: "جدول" }));
+    expect(screen.getByRole("table")).toHaveTextContent("اطبع الشهادات");
+    await userEvent.type(screen.getByPlaceholderText(/ابحث في المهام/), "لا يوجد");
+    expect(await screen.findByText("لا مهام تطابق البحث")).toBeInTheDocument();
+  });
 });
 
 describe("ExecutionTab", () => {

@@ -401,7 +401,14 @@ const plansRoute = createRoute({
 const tasksRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/tasks",
-  validateSearch: z.object({ mine: z.string().optional() }),
+  validateSearch: z.object({
+    mine: z.string().optional(),
+    scope: z.enum(["mine", "all"]).optional().catch(undefined),
+    show: z.enum(["open", "late", "done"]).optional().catch(undefined),
+    layout: z.enum(["list", "board", "table"]).optional().catch(undefined),
+    q: z.string().max(100).optional().catch(undefined),
+    project: z.string().max(60).optional().catch(undefined),
+  }),
   beforeLoad: needs("tasks.view"),
   component: TasksPage,
 });
