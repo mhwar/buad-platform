@@ -84,7 +84,7 @@ export function TargetPanel({
           </ul>
           {/* Month by month: bars for each month's amount, a line for the running total, a dashed line for pacing. */}
           <figure aria-label="التراكم الشهري مقابل المستهدف">
-            <div className="flex h-40 items-end gap-1" dir="ltr">
+            <div className="flex h-40 items-end gap-1">
               {s.months.map((m, i) => {
                 const pace = (indicator.target * (i + 1)) / s.months.length;
                 return (
@@ -106,7 +106,7 @@ export function TargetPanel({
                 );
               })}
             </div>
-            <div className="mt-1 flex gap-1 text-[10px] text-muted" dir="ltr">
+            <div className="mt-1 flex gap-1 text-[10px] text-muted">
               {s.months.map((m) => (
                 <span key={m.month} className="flex-1 text-center">
                   {MONTH[Number(m.month.slice(5, 7)) - 1]}
