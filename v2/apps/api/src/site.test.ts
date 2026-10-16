@@ -497,6 +497,41 @@ describe("entity logos on the site", () => {
     expect(r.body.error).toBe("invalid_asset");
   });
 
+  it("a hero photo and a service cover are public only once published; previews read them privately", async () => {
+    const hero = await upload("adm", 4);
+    const cover = await upload("adm", 5);
+    const d = (await call("adm", "GET", `${S}/draft`)).body;
+    const content = { ...d.content, hero: { ...d.content.hero, imageAsset: hero } };
+    expect((await call("adm", "PATCH", `${S}/draft`, { version: 1, content })).status).toBe(200);
+    // the draft preview points at the private store, so unpublished images show while editing
+    const preview = (await call("adm", "GET", `${S}/preview`)).body;
+    expect(preview.assetBase).toBe("/api/assets/");
+    expect((await call("", "GET", `${PUB}/assets/${hero}`)).status).toBe(404);
+    await call("adm", "POST", `${S}/publish`);
+    expect((await call("", "GET", PUB)).body.assetBase).toBe(`${PUB}/assets/`);
+    expect((await app.request(`${PUB}/assets/${hero}`, {}, env)).status).toBe(200);
+    // a service cover: refused if it is not ours, public while the service is listed
+    const id = await publishedProduct();
+    const g = (await call("adm", "GET", `/api/products/${id}`)).body.product;
+    const theirs = await upload("x", 6);
+    const bad = await call("adm", "PATCH", `/api/products/${id}`, {
+      version: g.version,
+      content: { ...g.content, hero: { ...g.content.hero, imageAsset: theirs } },
+    });
+    expect(bad.body.error).toBe("invalid_asset");
+    await call("adm", "PATCH", `/api/products/${id}`, {
+      version: g.version,
+      content: { ...g.content, hero: { ...g.content.hero, imageAsset: cover } },
+    });
+    const card = (await call("", "GET", PUB)).body.products[0];
+    expect(card.imageUrl).toBe(`${PUB}/assets/${cover}`);
+    expect(card.points.length).toBeGreaterThan(0);
+    expect((await call("", "GET", `${PUB}/products/patient-transport`)).body.imageUrl).toBe(
+      `${PUB}/assets/${cover}`,
+    );
+    expect((await app.request(`${PUB}/assets/${cover}`, {}, env)).status).toBe(200);
+  });
+
   it("the default site lists the six entities by name until logos are added", async () => {
     const d = (await call("adm", "GET", `${S}/draft`)).body;
     expect(d.content.trust.items.map((i: J) => i.name)).toHaveLength(6);

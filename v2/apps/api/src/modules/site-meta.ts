@@ -52,12 +52,16 @@ async function metaFor(db: Db, path: string) {
       return {
         title: `${prod.name} | ${site.brand.name}`,
         description: hero.subtitle || prod.tagline || site.seo.description,
+        image: hero.imageAsset || site.hero.imageAsset || site.brand.logoAsset,
+        site,
       };
     }
   }
   return {
     title: site.seo.title || site.brand.name,
     description: site.seo.description,
+    image: site.hero.imageAsset || site.brand.logoAsset,
+    site,
   };
 }
 
@@ -75,7 +79,22 @@ export async function siteMeta(c: Ctx): Promise<Response> {
     const url = new URL(c.req.url);
     const meta = await metaFor(c.get("db"), url.pathname);
     if (!meta) return res;
-    const image = `${url.origin}/site/logo.png`;
+    // The share card: the page's own photo, else the uploaded logo, else the bundled one.
+    const image = meta.image
+      ? `${url.origin}/api/public/site/assets/${meta.image}`
+      : `${url.origin}/site/logo.png`;
+    const c0 = meta.site.contact;
+    // Structured data so search engines know who the organisation is and how to reach it.
+    const org = {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      name: meta.site.brand.name,
+      url: `${url.origin}/site`,
+      logo: `${url.origin}${meta.site.brand.logoAsset ? `/api/public/site/assets/${meta.site.brand.logoAsset}` : "/site/logo.png"}`,
+      ...(c0.email ? { email: c0.email } : {}),
+      ...(c0.phone ? { telephone: c0.phone } : {}),
+      sameAs: Object.values(c0.socials ?? {}).filter(Boolean),
+    };
     const out = new Ctor()
       .on("title", { element: (e) => void e.setInnerContent(meta.title) })
       .on('meta[name="description"]', {
@@ -89,7 +108,8 @@ export async function siteMeta(c: Ctx): Promise<Response> {
               `<meta property="og:description" content="${esc(meta.description)}">` +
               `<meta property="og:url" content="${esc(url.origin + url.pathname)}">` +
               `<meta property="og:image" content="${esc(image)}">` +
-              `<meta name="twitter:card" content="summary">`,
+              `<meta name="twitter:card" content="${meta.image ? "summary_large_image" : "summary"}">` +
+              `<script type="application/ld+json">${JSON.stringify(org).replace(/</g, "\\u003c")}</script>`,
             { html: true },
           ),
       })

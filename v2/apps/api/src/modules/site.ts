@@ -71,7 +71,7 @@ export const siteApp = new Hono<Env>()
   // The home page as the draft would look (for managers, before publishing).
   .get("/preview", async (c) => {
     const s = await loadSite(c.get("db"), c.get("user").orgId);
-    return c.json(await siteHomePayload(c.get("db"), s.draft));
+    return c.json(await siteHomePayload(c.get("db"), s.draft, true));
   })
 
   .patch("/draft", zValidator("json", sitePatch), async (c) => {

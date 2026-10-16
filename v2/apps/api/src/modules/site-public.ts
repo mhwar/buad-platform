@@ -37,7 +37,11 @@ async function publishedSite(db: Db) {
   }
 }
 
-const logoUrl = (asset: string) => (asset ? `/api/public/site/assets/${asset}` : "/site/logo.png");
+const PUBLIC_ASSETS = "/api/public/site/assets/";
+/** Signed-in previews read draft images from the private store (they are not published yet). */
+const PREVIEW_ASSETS = "/api/assets/";
+const logoUrl = (asset: string, base = PUBLIC_ASSETS) =>
+  asset ? `${base}${asset}` : "/site/logo.png";
 
 const sha256 = async (s: string) =>
   [...new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s)))]
@@ -55,13 +59,16 @@ const publicProduct = (row: Parameters<typeof contentOf>[0]) => ({
 const answerText = (v: string) => v.trim();
 
 /** What the home page needs: the site content, its logo and the listed products' cards. */
-export async function siteHomePayload(db: Db, site: SiteContent) {
+export async function siteHomePayload(db: Db, site: SiteContent, preview = false) {
   const prods = await listedProducts(db, ORG);
+  const base = preview ? PREVIEW_ASSETS : PUBLIC_ASSETS;
   return {
     ok: true as const,
     published: true as const,
     site,
-    logoUrl: logoUrl(site.brand.logoAsset),
+    logoUrl: logoUrl(site.brand.logoAsset, base),
+    /** Where this payload's uploaded images are served from. */
+    assetBase: base,
     products: prods.map((p) => {
       const pc = contentOf(p);
       return {
@@ -69,12 +76,21 @@ export async function siteHomePayload(db: Db, site: SiteContent) {
         name: p.name,
         tagline: p.tagline,
         hero: pc.hero,
+        imageUrl: pc.hero.imageAsset ? `${base}${pc.hero.imageAsset}` : "",
+        icon: pc.offerings.find((o) => o.icon)?.icon ?? pc.problems.find((o) => o.icon)?.icon,
+        /** Three reasons to choose it: its tags, else its benefits. */
+        points: (pc.hero.tags.length ? pc.hero.tags : pc.benefits.map((b) => b.title)).slice(0, 3),
         packages: pc.packages.length,
         intake: pc.intake,
         comingSoon: pc.comingSoon,
       };
     }),
   };
+}
+
+/** Images of the listed products (their covers): public because their pages are. */
+async function productAssetIds(db: Db) {
+  return (await listedProducts(db, ORG)).map((p) => contentOf(p).hero.imageAsset).filter(Boolean);
 }
 
 export const publicSiteApp = new Hono<Env>()
@@ -107,6 +123,10 @@ export const publicSiteApp = new Hono<Env>()
       },
       logoUrl: logoUrl(site.brand.logoAsset),
       product: publicProduct(prod),
+      imageUrl: (() => {
+        const id = contentOf(prod).hero.imageAsset;
+        return id ? `${PUBLIC_ASSETS}${id}` : "";
+      })(),
     });
   })
 
@@ -145,7 +165,11 @@ export const publicSiteApp = new Hono<Env>()
     const db = c.get("db");
     const site = await publishedSite(db);
     const id = c.req.param("id");
-    if (!site || !id || !siteAssetIds(site).includes(id))
+    if (
+      !site ||
+      !id ||
+      !(siteAssetIds(site).includes(id) || (await productAssetIds(db)).includes(id))
+    )
       return c.json({ ok: false, error: "not_found" }, 404);
     const res = await assetResponse(db, c.env.FILES, ORG, id);
     if (!res) return c.json({ ok: false, error: "not_found" }, 404);

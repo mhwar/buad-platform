@@ -79,8 +79,10 @@ export const productContent = z.object({
       title: str(160),
       subtitle: str(500),
       tags: list(z.string().trim().min(1).max(40), 6),
+      /** A cover photo for the service (uploaded asset id). */
+      imageAsset: str(60),
     })
-    .default({ eyebrow: "", title: "", subtitle: "", tags: [] }),
+    .default({ eyebrow: "", title: "", subtitle: "", tags: [], imageAsset: "" }),
   problems: list(item, 8),
   offerings: list(
     z.object({

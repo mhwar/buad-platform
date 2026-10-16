@@ -19,6 +19,7 @@ import { IconSelect, LinesField, Repeater, TitleTextList } from "../products/edi
 import { productsQuery, STATUS_LABEL, sendJson } from "../products/products-api";
 import { projectsQuery } from "../projects/api";
 import { type EditorTab, type HealthItem, healthScore, SECTION_LABEL } from "./health";
+import { ImagePicker } from "./ImagePicker";
 import { TrustLogosEditor } from "./TrustLogosEditor";
 
 export type Patch = <K extends keyof SiteContent>(k: K, v: Partial<SiteContent[K]>) => void;
@@ -42,6 +43,7 @@ export const SHOW_LABEL: Record<keyof SiteContent["show"], string> = {
   method: "كيف نعمل",
   works: "أعمالنا",
   faq: "الأسئلة الشائعة",
+  testimonials: "آراء العملاء",
 };
 
 export const Section = ({
@@ -136,6 +138,25 @@ export function IdentityTab({ c, patch, busy, pickLogo }: TabProps) {
               onChange={(e) => patch("contact", { email: e.target.value })}
             />
           </Field>
+          {(
+            [
+              ["x", "حساب X"],
+              ["linkedin", "LinkedIn"],
+              ["instagram", "Instagram"],
+              ["youtube", "YouTube"],
+            ] as const
+          ).map(([k, l]) => (
+            <Field key={k} label={`${l} (الرابط كاملاً)`}>
+              <Input
+                dir="ltr"
+                placeholder="https://"
+                value={c.contact.socials[k]}
+                onChange={(e) =>
+                  patch("contact", { socials: { ...c.contact.socials, [k]: e.target.value } })
+                }
+              />
+            </Field>
+          ))}
           <Field label="عنوان الصفحة في محركات البحث">
             <Input value={c.seo.title} onChange={(e) => patch("seo", { title: e.target.value })} />
           </Field>
@@ -217,6 +238,14 @@ export function HomeTab({ c, patch }: TabProps) {
               onChange={(e) => patch("hero", { secondaryCta: e.target.value })}
             />
           </Field>
+          <div className="sm:col-span-2">
+            <ImagePicker
+              label="صورة بجانب العنوان (اختيارية)"
+              hint="صورة حقيقية من أعمالكم أو فريقكم تزيد الثقة؛ تظهر بجانب العنوان على الحاسوب وتحته على الجوال."
+              value={c.hero.imageAsset}
+              onChange={(imageAsset) => patch("hero", { imageAsset })}
+            />
+          </div>
         </div>
       </Section>
       <Section title="لماذا نحن" open>
@@ -275,6 +304,43 @@ export function HomeTab({ c, patch }: TabProps) {
           addLabel="إضافة خطوة"
           icons={false}
         />
+      </Section>
+      <Section title="آراء العملاء" open>
+        <Field label="العنوان">
+          <Input
+            value={c.testimonials.title}
+            placeholder="قالوا عنّا"
+            onChange={(e) => patch("testimonials", { title: e.target.value })}
+          />
+        </Field>
+        <Repeater
+          items={c.testimonials.items}
+          max={8}
+          addLabel="إضافة رأي"
+          onChange={(items) => patch("testimonials", { items })}
+          make={() => ({ quote: "", name: "", role: "", entity: "" })}
+          render={(t, set) => (
+            <>
+              <Field label="ما قاله العميل" className="sm:col-span-2">
+                <Textarea
+                  rows={3}
+                  value={t.quote}
+                  onChange={(e) => set({ quote: e.target.value })}
+                />
+              </Field>
+              <Field label="الاسم">
+                <Input value={t.name} onChange={(e) => set({ name: e.target.value })} />
+              </Field>
+              <Field label="الصفة">
+                <Input value={t.role} onChange={(e) => set({ role: e.target.value })} />
+              </Field>
+              <Field label="الجهة" className="sm:col-span-2">
+                <Input value={t.entity} onChange={(e) => set({ entity: e.target.value })} />
+              </Field>
+            </>
+          )}
+        />
+        <p className="text-xs text-muted">أضف آراء حقيقية بإذن أصحابها فقط.</p>
       </Section>
       <Section title="الأسئلة الشائعة" open>
         <div className="grid gap-4 sm:grid-cols-2">
