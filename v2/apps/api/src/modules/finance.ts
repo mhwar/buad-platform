@@ -2,10 +2,13 @@ import { fromRiyals, type StoredFinance, summarize, vatOfGrossHalalas } from "@b
 import { BUILTIN_CATEGORIES } from "@buad/schema/clients";
 import { receiptInput } from "@buad/schema/company";
 import {
+  distributionProjects,
+  distributions,
   financeBudgetItems,
   financeCategories,
   financeEntries,
   orgVatSettings,
+  paymentSchedule,
   projectFinance,
   projectReceipts,
 } from "@buad/schema/db";
@@ -21,12 +24,12 @@ import {
   type taxInvoiceInput,
 } from "@buad/schema/finance";
 import { zValidator } from "@hono/zod-validator";
-import { and, asc, count, desc, eq, max } from "drizzle-orm";
+import { and, asc, count, desc, eq, max, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { z } from "zod";
 import { requireAuth, requirePerm, requireRW, type Vars } from "../auth/middleware";
 import type { Db } from "../auth/service";
-import { newId, nowSec } from "./common";
+import { atomic, newId, nowSec } from "./common";
 import { loadVisible } from "./projects";
 
 type Project = NonNullable<Awaited<ReturnType<typeof loadVisible>>>;
@@ -76,6 +79,24 @@ function taxInvoiceColumns(ti: TaxInvoice | null | undefined, amountHalalas: num
     invoiceNo: ti.invoiceNo,
     invoiceDate: ti.invoiceDate,
   };
+}
+
+/** Whether a completed profit distribution covered this project on that date. */
+async function inCompletedDistribution(db: Db, projectId: string, date: string) {
+  const [hit] = await db
+    .select({ id: distributions.id })
+    .from(distributions)
+    .innerJoin(distributionProjects, eq(distributionProjects.distributionId, distributions.id))
+    .where(
+      and(
+        eq(distributionProjects.projectId, projectId),
+        eq(distributions.status, "completed"),
+        sql`(${distributions.fromDate} = '' OR ${distributions.fromDate} <= ${date})`,
+        sql`(${distributions.toDate} = '' OR ${distributions.toDate} >= ${date})`,
+      ),
+    )
+    .limit(1);
+  return !!hit;
 }
 
 export async function loadFinance(db: Db, project: Pick<Project, "id" | "expectedValue">) {
@@ -433,14 +454,29 @@ export const financeApp = new Hono<Env>()
   .delete("/receipts/:receiptId", manager, async (c) => {
     const db = c.get("db");
     const project = c.get("project");
-    await db
-      .delete(projectReceipts)
+    const [rc] = await db
+      .select()
+      .from(projectReceipts)
       .where(
         and(
           eq(projectReceipts.id, c.req.param("receiptId")),
           eq(projectReceipts.projectId, project.id),
         ),
-      );
+      )
+      .limit(1);
+    if (!rc) return c.json({ ok: false, error: "not_found" }, 404);
+    // Profit already paid out to partners from this money: deleting it would leave the project
+    // «distributed more than it earned». Reverse the distribution first.
+    if (await inCompletedDistribution(db, project.id, rc.date))
+      return c.json({ ok: false, error: "in_distribution" }, 409);
+    // An instalment it closed goes back to waiting, so it can be received again.
+    await atomic(db, [
+      db.delete(projectReceipts).where(eq(projectReceipts.id, rc.id)),
+      db
+        .update(paymentSchedule)
+        .set({ status: "pending", receiptId: "", receivedAt: "" })
+        .where(eq(paymentSchedule.receiptId, rc.id)),
+    ]);
     return c.json({ ok: true, ...(await loadFinance(db, project)) });
   })
 

@@ -45,6 +45,7 @@ import { tasksApp } from "./modules/tasks";
 import { teamApp } from "./modules/team";
 import { vatApp } from "./modules/vat";
 import { decisionsApp, meetingsApp } from "./modules/workspace";
+import { yearReviewApp } from "./modules/year-review";
 
 export type Env = {
   APP_VERSION: string;
@@ -205,6 +206,7 @@ export function createApp(deps: AppDeps = {}) {
       .route("/api/pdf", pdfApp)
       .route("/api/finance/vat", vatApp)
       .route("/api/finance/company", companyFinanceApp)
+      .route("/api/finance/year-review", yearReviewApp)
       .route("/api/finance", financeOverviewApp)
       .route("/api/products", productsApp)
       .route("/api/product-requests", requestsApp)

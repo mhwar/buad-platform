@@ -206,6 +206,15 @@ export const SECTIONS: Section[] = [
         match: financeTab("projects"),
       },
       {
+        key: "review",
+        label: "مراجعة السنة",
+        to: "/finance",
+        search: { tab: "review" },
+        desc: "إيراد السنة شاملاً الضريبة مقابل المستهدف، والمشاريع التي تحتاج مراجعة.",
+        when: "لتصحيح المستلم والمغلق قبل الاعتماد على الرقم.",
+        match: financeTab("review"),
+      },
+      {
         key: "quarter",
         label: "توزيع الربع",
         to: "/finance",

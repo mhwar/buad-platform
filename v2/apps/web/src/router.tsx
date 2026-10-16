@@ -199,7 +199,9 @@ const financeRoute = createRoute({
     q: z.coerce.number().int().min(1).max(4).optional(),
     client: z.string().optional(),
     status: z.string().optional(),
-    tab: z.enum(["projects", "quarter", "vat", "company", "partners", "receivables"]).optional(),
+    tab: z
+      .enum(["projects", "review", "quarter", "vat", "company", "partners", "receivables"])
+      .optional(),
   }),
   beforeLoad: needs("treasury.view"),
   component: FinancePage,

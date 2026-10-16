@@ -36,3 +36,21 @@ export const logoUrlSql = (c: string) =>
   sql.raw(
     `CASE WHEN ${c}.logo <> '' THEN '/api/clients/' || ${c}.id || '/logo?v=' || ${c}.updated_at ELSE '' END`,
   );
+
+/**
+ * Several writes that must all happen or none: one D1 batch in production (atomic, one round
+ * trip); a transaction on the test driver, which has no batch.
+ */
+export async function atomic(db: Db, queries: { run: () => unknown }[]) {
+  if (!queries.length) return;
+  const d = db as unknown as {
+    batch?: (q: unknown[]) => Promise<unknown>;
+    transaction?: (fn: () => void) => unknown;
+  };
+  if (typeof d.batch === "function") await d.batch(queries);
+  else if (typeof d.transaction === "function")
+    d.transaction(() => {
+      for (const q of queries) q.run();
+    });
+  else for (const q of queries) await q.run();
+}
