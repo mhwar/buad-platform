@@ -125,7 +125,9 @@ export const listQuery = z.object({
   status: z.string().optional(),
   clientId: z.string().optional(),
   product: z.string().max(60).optional(),
-  sort: z.enum(["newest", "name", "value", "contact"]).default("newest"),
+  sort: z.enum(["newest", "name", "value", "contact", "deadline"]).default("newest"),
+  /** Projects needing attention: running past their end date, or with an instalment overdue. */
+  flag: z.enum(["late", "due"]).optional(),
   archived: z.enum(["0", "1"]).default("0"),
   /** CRM filters: "me" or a user id; a relationship; a source; a tag; follow-ups that are due. */
   owner: z.string().max(60).optional(),

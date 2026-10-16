@@ -81,7 +81,7 @@ export function FinanceStrip({
           tone={q.data.profitHidden ? undefined : "good"}
         />
         <Stat
-          label="المتبقي من العقد"
+          label="غير المصروف من العقد"
           value={sar(s.remaining)}
           tone={s.remaining < 0 ? "bad" : undefined}
           sub={s.remaining < 0 ? "▲ تجاوز قيمة العقد" : undefined}

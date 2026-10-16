@@ -27,6 +27,19 @@ export type ProjectListItem = {
   productName: string;
   packageId: string;
   packageName: string;
+  /** Health (list only): the value is an estimate (no contract yet), money in, work done, what is due. */
+  estimated?: boolean;
+  /** Approved receipts, halalas; null when the viewer may not see project finance. */
+  received?: number | null;
+  stagesTotal?: number;
+  stagesDone?: number;
+  tasksOpen?: number;
+  tasksDone?: number;
+  tasksOverdue?: number;
+  nextDueDate?: string;
+  nextDueAmount?: number | null;
+  /** Active and past its end date. */
+  late?: boolean;
 };
 export type Project = Omit<
   ProjectListItem,
@@ -65,7 +78,9 @@ export type ProjectFilters = {
   clientId?: string;
   /** A product id, or "none" for projects without a service. */
   product?: string;
-  sort?: "newest" | "name" | "value";
+  type?: string;
+  flag?: "late" | "due";
+  sort?: "newest" | "name" | "value" | "deadline";
   archived?: "0" | "1";
 };
 
@@ -88,6 +103,8 @@ export const projectsQuery = (f: ProjectFilters) =>
             ...(f.status ? { status: f.status } : {}),
             ...(f.clientId ? { clientId: f.clientId } : {}),
             ...(f.product ? { product: f.product } : {}),
+            ...(f.type ? { type: f.type } : {}),
+            ...(f.flag ? { flag: f.flag } : {}),
           },
         }),
       ),

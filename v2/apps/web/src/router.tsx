@@ -137,8 +137,11 @@ const projectsRoute = createRoute({
   path: "/projects",
   validateSearch: z.object({
     ...listSearch,
+    sort: z.enum(["newest", "name", "value", "deadline"]).optional(),
     status: z.string().optional(),
     product: z.string().optional(),
+    type: z.string().optional(),
+    flag: z.enum(["late", "due"]).optional(),
   }),
   beforeLoad: authed,
   component: ProjectsPage,
