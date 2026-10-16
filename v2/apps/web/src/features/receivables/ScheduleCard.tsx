@@ -4,7 +4,8 @@ import { useState } from "react";
 import { Badge, Button, Card, Dialog, Field, Input, Notice } from "../../components/ui";
 import { day, sar } from "../../lib/format";
 import { send } from "../team/queries";
-import { scheduleQuery } from "./api";
+import { type Instalment, scheduleQuery } from "./api";
+import { ReceiveDialog } from "./ReceiveDialog";
 
 /** A project's expected payments, on the project page. Marking one received creates the receipt. */
 export function ScheduleCard({
@@ -24,6 +25,7 @@ export function ScheduleCard({
   const [due, setDue] = useState("");
   const [amount, setAmount] = useState("");
   const [error, setError] = useState("");
+  const [receiving, setReceiving] = useState<Instalment | null>(null);
   const refresh = () => {
     qc.invalidateQueries({ queryKey: ["schedule", projectId] });
     qc.invalidateQueries({ queryKey: ["receivables"] });
@@ -79,7 +81,7 @@ export function ScheduleCard({
                   <Button
                     variant="ghost"
                     aria-label={`تم استلام ${i.label}`}
-                    onClick={() => run(() => send("POST", `/api/receivables/${i.id}/receive`, {}))}
+                    onClick={() => setReceiving(i)}
                   >
                     <Check className="size-4" />
                   </Button>
@@ -96,6 +98,9 @@ export function ScheduleCard({
           </li>
         ))}
       </ul>
+      {receiving && (
+        <ReceiveDialog line={receiving} onClose={() => setReceiving(null)} onDone={refresh} />
+      )}
       {adding && (
         <Dialog open onOpenChange={(o) => !o && setAdding(false)} title="دفعة منتظرة">
           <div className="space-y-4">

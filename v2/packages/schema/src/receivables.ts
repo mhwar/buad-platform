@@ -12,4 +12,8 @@ export const scheduleInput = z.object(shape);
 export const schedulePatch = patchOf(shape).extend({
   status: z.enum(["pending", "cancelled"]).optional(),
 });
-export const receiveInput = z.object({ date: date.optional() });
+export const receiveInput = z.object({
+  date: date.optional(),
+  /** Riyals. Less than the line: a partial payment, and the rest stays as a new pending line. */
+  amount: z.number().positive().max(1_000_000_000).optional(),
+});

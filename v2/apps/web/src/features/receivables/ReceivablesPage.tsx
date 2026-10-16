@@ -6,8 +6,9 @@ import { Badge, Button, Card, EmptyState, Field, Input, Notice } from "../../com
 import { day, sar, whatsapp } from "../../lib/format";
 import { useCan } from "../../session";
 import { send } from "../team/queries";
-import { receivablesQuery } from "./api";
+import { type OwedItem, receivablesQuery } from "./api";
 import { ForecastChart } from "./ForecastChart";
+import { ReceiveDialog } from "./ReceiveDialog";
 
 const KEY = "buad.opening-balance";
 const read = () => {
@@ -36,16 +37,7 @@ export function ReceivablesPage() {
       // the figure simply is not remembered
     }
   };
-  const receive = async (id: string) => {
-    setError("");
-    try {
-      await send("POST", `/api/receivables/${id}/receive`, {});
-      qc.invalidateQueries({ queryKey: ["receivables"] });
-      qc.invalidateQueries({ queryKey: ["attention"] });
-    } catch {
-      setError("تعذّر تسجيل الاستلام.");
-    }
-  };
+  const [receiving, setReceiving] = useState<OwedItem | null>(null);
   if (!d) return <Card className="h-40 animate-pulse" aria-busy />;
   const late = (due: string) => due < d.today;
   return (
@@ -115,7 +107,7 @@ export function ReceivablesPage() {
                 </div>
                 <div className="mt-2 flex flex-wrap gap-2">
                   {edit && (
-                    <Button variant="secondary" onClick={() => receive(i.id)}>
+                    <Button variant="secondary" onClick={() => setReceiving(i)}>
                       <Check className="size-4" />
                       تم الاستلام
                     </Button>
@@ -165,6 +157,7 @@ export function ReceivablesPage() {
         )}
         <ForecastChart weeks={d.weeks} />
       </section>
+      {receiving && <ReceiveDialog line={receiving} onClose={() => setReceiving(null)} />}
     </div>
   );
 }

@@ -4,6 +4,7 @@ import {
   AlertTriangle,
   Briefcase,
   Building2,
+  ClipboardCheck,
   FileBarChart2,
   FileSpreadsheet,
   Percent,
@@ -30,6 +31,7 @@ import { day, pct, sar } from "../../lib/format";
 import { financeApi } from "../finance/api";
 import { label, PROJECT_STATUS_LABELS } from "../labels";
 import { ReceivablesPage } from "../receivables/ReceivablesPage";
+import { YearReview } from "../year-review/YearReview";
 import {
   type Overview,
   type OverviewProject,
@@ -49,7 +51,7 @@ import { VatTab } from "./VatTab";
 
 const route = getRouteApi("/finance");
 type SortKey = "profit" | "margin" | "gross";
-type Tab = "projects" | "quarter" | "vat" | "company" | "partners" | "receivables";
+type Tab = "projects" | "review" | "quarter" | "vat" | "company" | "partners" | "receivables";
 
 /** «المالية»: the organisation's money at a glance, then the detail behind every number. */
 export function FinancePage() {
@@ -116,6 +118,7 @@ export function FinancePage() {
           onChange={(v) => set({ tab: v === "projects" ? undefined : v })}
           items={[
             { value: "projects", label: "المشاريع", icon: <Briefcase className="size-4" /> },
+            { value: "review", label: "مراجعة السنة", icon: <ClipboardCheck className="size-4" /> },
             { value: "quarter", label: "توزيع الربع", icon: <PieChart className="size-4" /> },
             { value: "vat", label: "الضريبة", icon: <Percent className="size-4" /> },
             { value: "company", label: "الشركة", icon: <Building2 className="size-4" /> },
@@ -125,7 +128,7 @@ export function FinancePage() {
         />
       </div>
       <div
-        className={`mb-6 flex flex-wrap items-center gap-3 ${tab === "partners" || tab === "quarter" || tab === "vat" || tab === "receivables" ? "hidden" : ""}`}
+        className={`mb-6 flex flex-wrap items-center gap-3 ${tab === "partners" || tab === "quarter" || tab === "vat" || tab === "receivables" || tab === "review" ? "hidden" : ""}`}
       >
         <FilterBar
           leading={
@@ -164,7 +167,12 @@ export function FinancePage() {
       </div>
 
       {archive && <ArchiveDialog onClose={() => setArchive(false)} />}
-      {tab === "vat" ? (
+      {tab === "review" ? (
+        <YearReview
+          year={s.year ?? new Date().getFullYear()}
+          onYear={(y) => set({ year: y === new Date().getFullYear() ? undefined : y })}
+        />
+      ) : tab === "vat" ? (
         <VatTab />
       ) : tab === "quarter" ? (
         <QuarterCentre />

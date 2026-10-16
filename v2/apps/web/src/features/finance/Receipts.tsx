@@ -198,7 +198,15 @@ export function ReceiptDialog({
             variant="secondary"
             onClick={async () => {
               if (!confirm("حذف هذا الاستلام؟")) return;
-              done(await api.deleteReceipt(receipt.id));
+              try {
+                done(await api.deleteReceipt(receipt.id));
+              } catch (e) {
+                setErr(
+                  e instanceof Error && e.message === "in_distribution"
+                    ? "وُزّع ربح هذا المبلغ على الشركاء في توزيع مكتمل؛ ألغِ التوزيع أولاً."
+                    : "تعذّر الحذف",
+                );
+              }
             }}
           >
             <Trash2 className="size-4" /> حذف

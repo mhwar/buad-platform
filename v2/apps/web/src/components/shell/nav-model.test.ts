@@ -24,6 +24,7 @@ describe("buildNav", () => {
     expect(tabs("documents")).toEqual([]);
     expect(tabs("finance")).toEqual([
       "projects",
+      "review",
       "quarter",
       "vat",
       "company",

@@ -12,7 +12,7 @@ import { and, asc, eq, isNull } from "drizzle-orm";
 import { Hono } from "hono";
 import { requireAuth, requirePerm, type Vars } from "../auth/middleware";
 import type { Db } from "../auth/service";
-import { newId, nowSec } from "./common";
+import { atomic, newId, nowSec } from "./common";
 import { loadVisible } from "./projects";
 
 type Env = { Bindings: { JWT_SECRET: string }; Variables: Vars };
@@ -187,7 +187,8 @@ export const receivablesApp = new Hono<Env>()
   })
 
   // The instalment arrived: it becomes a verified receipt on the project (so profit, VAT and the
-  // quarter centre see it) and the line is closed. Both happen or neither.
+  // quarter centre see it) and the line is closed. Part of it may arrive: the line then closes at
+  // that amount and the rest becomes a new pending line. Both happen or neither.
   .post(
     "/:id/receive",
     requirePerm("finance.edit"),
@@ -199,7 +200,11 @@ export const receivablesApp = new Hono<Env>()
       if (!r || !(await loadVisible(db, me, r.projectId)))
         return c.json({ ok: false, error: "not_found" }, 404);
       if (r.status !== "pending") return c.json({ ok: false, error: "not_pending" }, 409);
-      const date = c.req.valid("json").date ?? today();
+      const v = c.req.valid("json");
+      const date = v.date ?? today();
+      const paid = v.amount === undefined ? r.amount : fromRiyals(v.amount);
+      if (paid > r.amount) return c.json({ ok: false, error: "amount_exceeds_line" }, 400);
+      const rest = r.amount - paid;
       const receiptId = newId("rcp");
       // Claim the line first: a double tap cannot create two receipts.
       const claimed = await db
@@ -208,19 +213,43 @@ export const receivablesApp = new Hono<Env>()
         .where(and(eq(paymentSchedule.id, r.id), eq(paymentSchedule.status, "pending")))
         .returning({ id: paymentSchedule.id });
       if (!claimed.length) return c.json({ ok: false, error: "not_pending" }, 409);
-      await db.insert(projectReceipts).values({
+      const receipt = db.insert(projectReceipts).values({
         id: receiptId,
         orgId: me.orgId,
         projectId: r.projectId,
         date,
-        amount: r.amount,
-        note: r.label,
+        amount: paid,
+        note: rest > 0 ? `${r.label} (جزئي)` : r.label,
         basis: "من جدول الدفعات",
         approvedBy: me.id,
         approvedAt: nowSec(),
         createdBy: me.id,
         updatedBy: me.id,
       });
-      return c.json({ ok: true, receiptId });
+      try {
+        if (rest > 0)
+          await atomic(db, [
+            receipt,
+            db.update(paymentSchedule).set({ amount: paid }).where(eq(paymentSchedule.id, r.id)),
+            db.insert(paymentSchedule).values({
+              id: newId("psc"),
+              orgId: me.orgId,
+              projectId: r.projectId,
+              label: `${r.label} (المتبقي)`,
+              dueDate: r.dueDate,
+              amount: rest,
+              createdBy: me.id,
+            }),
+          ]);
+        else await receipt;
+      } catch (err) {
+        // The receipt could not be written: give the line back so nothing is half done.
+        await db
+          .update(paymentSchedule)
+          .set({ status: "pending", receiptId: "", receivedAt: "" })
+          .where(eq(paymentSchedule.id, r.id));
+        throw err;
+      }
+      return c.json({ ok: true, receiptId, rest: rest / 100 });
     },
   );
