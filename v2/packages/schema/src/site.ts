@@ -24,8 +24,21 @@ export const siteContent = z.object({
     })
     .default({ name: "بُعد التمكين", accent: "#5B3FE0", logoAsset: "", tagline: "" }),
   contact: z
-    .object({ phone: s(30), whatsapp: s(20), email: s(120) })
-    .default({ phone: "", whatsapp: "", email: "" }),
+    .object({
+      phone: s(30),
+      whatsapp: s(20),
+      email: s(120),
+      /** Social profiles: full links (https://…). */
+      socials: z
+        .object({ x: s(200), linkedin: s(200), instagram: s(200), youtube: s(200) })
+        .default({ x: "", linkedin: "", instagram: "", youtube: "" }),
+    })
+    .default({
+      phone: "",
+      whatsapp: "",
+      email: "",
+      socials: { x: "", linkedin: "", instagram: "", youtube: "" },
+    }),
   seo: z.object({ title: s(90), description: s(300) }).default({ title: "", description: "" }),
   show: z
     .object({
@@ -36,6 +49,7 @@ export const siteContent = z.object({
       method: z.boolean().default(true),
       works: z.boolean().default(true),
       faq: z.boolean().default(true),
+      testimonials: z.boolean().default(true),
     })
     .default({
       trust: true,
@@ -45,6 +59,7 @@ export const siteContent = z.object({
       method: true,
       works: true,
       faq: true,
+      testimonials: true,
     }),
   hero: z
     .object({
@@ -54,8 +69,25 @@ export const siteContent = z.object({
       lead: s(400),
       primaryCta: s(40),
       secondaryCta: s(40),
+      /** An optional photo beside the headline (uploaded asset id). */
+      imageAsset: s(60),
     })
-    .default({ badge: "", title: "", accent: "", lead: "", primaryCta: "", secondaryCta: "" }),
+    .default({
+      badge: "",
+      title: "",
+      accent: "",
+      lead: "",
+      primaryCta: "",
+      secondaryCta: "",
+      imageAsset: "",
+    }),
+  /** What clients said: short quotes with who said them. */
+  testimonials: z
+    .object({
+      title: s(100),
+      items: arr(z.object({ quote: s(500), name: s(80), role: s(80), entity: s(100) }), 8),
+    })
+    .default({ title: "", items: [] }),
   trust: z
     .object({
       title: s(80),
@@ -157,7 +189,7 @@ export const trustItems = (t: SiteContent["trust"]) =>
 
 /** Every uploaded image the site uses (brand logo and entity logos). */
 export const siteAssetIds = (c: SiteContent) =>
-  [c.brand.logoAsset, ...c.trust.items.map((i) => i.logoAsset)].filter(Boolean);
+  [c.brand.logoAsset, c.hero.imageAsset, ...c.trust.items.map((i) => i.logoAsset)].filter(Boolean);
 
 export const sitePatch = z.object({ version: z.number().int().min(1), content: siteContent });
 

@@ -6,7 +6,7 @@ import {
   type StatProject,
 } from "@buad/domain";
 import { BLUEPRINTS, blueprintByKey } from "@buad/schema/blueprints";
-import { clients, productRequests, products, projects } from "@buad/schema/db";
+import { assets, clients, productRequests, products, projects } from "@buad/schema/db";
 import {
   type PricingModel,
   type ProductContent,
@@ -429,6 +429,16 @@ export const productsApp = new Hono<Env>()
       if (dup) return c.json({ ok: false, error: "duplicate_slug" }, 409);
     }
     const { version: _v, content, pricing, ...rest } = v;
+    // A cover image must be one of this organisation's own uploads.
+    const cover = content?.hero?.imageAsset;
+    if (cover) {
+      const [own] = await db
+        .select({ id: assets.id })
+        .from(assets)
+        .where(and(eq(assets.id, cover), eq(assets.orgId, me.orgId)))
+        .limit(1);
+      if (!own) return c.json({ ok: false, error: "invalid_asset" }, 400);
+    }
     const upd = await db
       .update(products)
       .set({

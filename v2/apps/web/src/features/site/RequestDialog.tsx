@@ -63,7 +63,15 @@ export function RequestDialog({
         await fetch("/api/public/site/requests", {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ ...f, productSlug: target?.slug, answers }),
+          body: JSON.stringify({
+            ...f,
+            // The package chosen on the product page travels with the message.
+            message: target?.packageName
+              ? [`الباقة: ${target.packageName}`, f.message].filter(Boolean).join("\n")
+              : f.message,
+            productSlug: target?.slug,
+            answers,
+          }),
         }),
       );
       setDone(true);
@@ -90,7 +98,11 @@ export function RequestDialog({
           }}
         >
           <h2 className="h3" id="rq-title">
-            {done ? "وصلنا طلبك" : target ? `${title}: ${target.name}` : title}
+            {done
+              ? "وصلنا طلبك"
+              : target
+                ? `${title}: ${target.name}${target.packageName ? ` — ${target.packageName}` : ""}`
+                : title}
           </h2>
           <button
             type="button"

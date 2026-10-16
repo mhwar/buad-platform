@@ -23,6 +23,7 @@ export function ProductPublicPage() {
   const { slug } = route.useParams();
   const q = useQuery(siteProductQuery(slug));
   const [open, setOpen] = useState(false);
+  const [pkg, setPkg] = useState("");
   const [pdfBusy, setPdfBusy] = useState(false);
   const [pdfFailed, setPdfFailed] = useState(false);
   useLightTheme(q.data ? `${q.data.product.name} | ${q.data.site.brand.name}` : undefined);
@@ -48,16 +49,34 @@ export function ProductPublicPage() {
     );
 
   const { site, logoUrl, product } = q.data;
+  const imageUrl = q.data.imageUrl ?? "";
   const c = product.content;
+  // The page's own table of contents: only sections that exist.
+  const jumps = [
+    c.problems.length > 0 && { id: "problem", label: "التحدي" },
+    c.offerings.length > 0 && { id: "offer", label: "ما نقدّمه" },
+    c.packages.length > 0 && { id: "packages", label: "الباقات" },
+    c.process.length > 0 && { id: "process", label: "كيف نعمل" },
+    c.proof.length > 0 && { id: "proof", label: "قصص نجاح" },
+    c.faq.length > 0 && { id: "faq", label: "أسئلة" },
+  ].filter(Boolean) as { id: string; label: string }[];
   const soon = c.comingSoon;
   const target = {
     slug: product.slug,
     name: product.name,
     intake: c.intake,
     comingSoon: soon,
+    packageName: pkg || undefined,
   };
   const cta = (
-    <button type="button" className="btn primary" onClick={() => setOpen(true)}>
+    <button
+      type="button"
+      className="btn primary"
+      onClick={() => {
+        setPkg("");
+        setOpen(true);
+      }}
+    >
       {soon ? "سجّل اهتمامك" : "اطلب عرضاً"}
       <ArrowLeft size={16} aria-hidden="true" />
     </button>
@@ -70,7 +89,11 @@ export function ProductPublicPage() {
         contact={site.contact}
         logoUrl={logoUrl}
         links={[{ href: "/site", label: "الرئيسية" }]}
-        onRequest={() => setOpen(true)}
+        onRequest={() => {
+          setPkg("");
+          setOpen(true);
+        }}
+        ctaLabel={soon ? "سجّل اهتمامك" : "اطلب عرضاً"}
       >
         <section className="hero">
           <span className="eyebrow">
@@ -114,8 +137,24 @@ export function ProductPublicPage() {
           )}
         </section>
 
+        {imageUrl && (
+          <div className="pcover">
+            <img src={imageUrl} alt="" width={1120} height={480} />
+          </div>
+        )}
+
+        {jumps.length > 2 && (
+          <nav className="subnav" aria-label="أقسام الصفحة">
+            {jumps.map((j) => (
+              <a key={j.id} href={`#${j.id}`}>
+                {j.label}
+              </a>
+            ))}
+          </nav>
+        )}
+
         {c.problems.length > 0 && (
-          <section className="sec">
+          <section id="problem" className="sec">
             <Head eyebrow="لماذا هذه الخدمة" title="التحدي الذي نحلّه" />
             <div className="g4 stack">
               {c.problems.map((p) => (
@@ -132,7 +171,7 @@ export function ProductPublicPage() {
         )}
 
         {c.offerings.length > 0 && (
-          <section className="sec">
+          <section id="offer" className="sec">
             <Head eyebrow="ماذا نقدم" title="ما تحصل عليه الجهة" />
             <div className="g2">
               {c.offerings.map((o, i) => (
@@ -218,7 +257,7 @@ export function ProductPublicPage() {
         )}
 
         {c.packages.length > 0 && (
-          <section className="sec">
+          <section id="packages" className="sec">
             <Head eyebrow="خيارات الخدمة" title="نماذج مرنة تناسب طبيعة المستفيدين" />
             <div className="g3">
               {c.packages.map((p) => (
@@ -243,6 +282,19 @@ export function ProductPublicPage() {
                       </span>
                     ))}
                   </div>
+                  {!soon && (
+                    <button
+                      type="button"
+                      className={`btn ${p.highlight ? "white" : "primary"}`}
+                      style={{ marginTop: "auto" }}
+                      onClick={() => {
+                        setPkg(p.name);
+                        setOpen(true);
+                      }}
+                    >
+                      اطلب هذه الباقة
+                    </button>
+                  )}
                 </div>
               ))}
             </div>
@@ -250,7 +302,7 @@ export function ProductPublicPage() {
         )}
 
         {c.process.length > 0 && (
-          <section className="sec">
+          <section id="process" className="sec">
             <Head
               eyebrow={soon ? "خارطة العمل" : "آلية العمل"}
               title={soon ? "كيف نبنيها معكم" : "من البداية إلى التسليم"}
@@ -317,7 +369,7 @@ export function ProductPublicPage() {
         )}
 
         {c.proof.length > 0 && (
-          <section className="sec">
+          <section id="proof" className="sec">
             <Head eyebrow="تجربة منفذة" title="مشاريع منفذة، لا وعود" />
             <div className="g2">
               {c.proof.map((p) => (
@@ -393,7 +445,10 @@ export function ProductPublicPage() {
           }
           soon={soon}
           contact={site.contact}
-          onRequest={() => setOpen(true)}
+          onRequest={() => {
+            setPkg("");
+            setOpen(true);
+          }}
         />
         {/* Inside the site wrapper so its styles apply to the dialog. */}
         <RequestDialog

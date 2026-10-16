@@ -1,7 +1,7 @@
 import { trustItems } from "@buad/schema/site";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useSearch } from "@tanstack/react-router";
-import { ArrowLeft, Check, X } from "lucide-react";
+import { ArrowLeft, Check, Quote, X } from "lucide-react";
 import { useState } from "react";
 import { Icon } from "../products/icons";
 import { ContactBand, SiteChrome, useLightTheme } from "./chrome";
@@ -52,6 +52,8 @@ export function SitePage() {
     );
 
   const { site, logoUrl, products } = published;
+  const assetBase = published.assetBase ?? "/api/public/site/assets/";
+  const heroImage = site.hero.imageAsset ? `${assetBase}${site.hero.imageAsset}` : "";
   const open = (target: RequestTarget = null) => setReq({ open: true, target });
 
   return (
@@ -101,44 +103,75 @@ export function SitePage() {
         contact={site.contact}
         logoUrl={logoUrl}
         links={NavLinks(site.show, products.length > 0)}
+        products={products.map((p) => ({ slug: p.slug, name: p.name }))}
         onRequest={() => open()}
       >
-        <section className="hero">
-          {site.hero.badge && (
-            <div className="badge">
-              <i aria-hidden="true" />
-              {site.hero.badge}
+        <section className={`hero${heroImage ? " split" : ""}`}>
+          <div className="hero-text">
+            {site.hero.badge && (
+              <div className="badge">
+                <i aria-hidden="true" />
+                {site.hero.badge}
+              </div>
+            )}
+            <h1 className="h1">
+              {site.hero.title} <span style={{ color: "var(--accent)" }}>{site.hero.accent}</span>
+            </h1>
+            <p className="lead">{site.hero.lead}</p>
+            <div className="btns">
+              <button type="button" className="btn primary" onClick={() => open()}>
+                {site.hero.primaryCta || "اطلب عرضاً"}
+                <ArrowLeft size={16} aria-hidden="true" />
+              </button>
+              {site.show.works && site.hero.secondaryCta && (
+                <a href="#work" className="btn white">
+                  {site.hero.secondaryCta}
+                </a>
+              )}
             </div>
-          )}
-          <h1 className="h1">
-            {site.hero.title} <span style={{ color: "var(--accent)" }}>{site.hero.accent}</span>
-          </h1>
-          <p className="lead">{site.hero.lead}</p>
-          <div className="btns">
-            <button type="button" className="btn primary" onClick={() => open()}>
-              {site.hero.primaryCta || "اطلب عرضاً"}
-              <ArrowLeft size={16} aria-hidden="true" />
-            </button>
-            {site.show.works && site.hero.secondaryCta && (
-              <a href="#work" className="btn white">
-                {site.hero.secondaryCta}
-              </a>
+            {site.show.works && site.works.stats.length > 0 && (
+              <ul className="hero-stats" aria-label="بالأرقام">
+                {site.works.stats.slice(0, 4).map((st) => (
+                  <li key={st.label}>
+                    <b>{st.value}</b>
+                    <span>{st.label}</span>
+                  </li>
+                ))}
+              </ul>
             )}
           </div>
+          {heroImage && (
+            <div className="hero-media">
+              <img src={heroImage} alt="" width={560} height={640} loading="eager" />
+            </div>
+          )}
         </section>
 
+        {site.show.products && products.length > 1 && (
+          <nav className="need" aria-label="ما الذي تحتاجه؟">
+            <span className="small">ما الذي تحتاجه؟</span>
+            <div className="need-chips">
+              {products.map((p) => (
+                <Link key={p.slug} to="/site/p/$slug" params={{ slug: p.slug }} className="chip">
+                  {p.name}
+                </Link>
+              ))}
+            </div>
+          </nav>
+        )}
+
         {site.show.trust && trustItems(site.trust).length > 0 && (
-          <section aria-label={site.trust.title} style={{ paddingTop: "clamp(56px,7vw,88px)" }}>
+          <section aria-label={site.trust.title} className="trust">
             <p className="small" style={{ margin: "0 0 16px", textAlign: "center" }}>
               {site.trust.title}
             </p>
-            <div className="g6">
+            <div className="trust-row">
               {trustItems(site.trust).map((n) => (
                 <div key={n.name} className={`trust-name${n.logoAsset ? " has-logo" : ""}`}>
                   {n.logoAsset ? (
                     <img
                       className="trust-logo"
-                      src={`/api/public/site/assets/${n.logoAsset}`}
+                      src={`${assetBase}${n.logoAsset}`}
                       alt={n.name}
                       loading="lazy"
                     />
@@ -146,6 +179,75 @@ export function SitePage() {
                     n.name
                   )}
                 </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {site.show.products && products.length > 0 && (
+          <section id="products" className="sec">
+            <div className="head">
+              <span className="eyebrow">منتجاتنا</span>
+              <h2 className="h2">حلول جاهزة بخبرة مجرّبة</h2>
+              <p className="lead">
+                كل خدمة لها مسار واضح وباقات تناسب حجمك. اختر ما يناسبك وتعرّف على التفاصيل.
+              </p>
+            </div>
+            <div className="rail" role="list">
+              {products.map((p) => (
+                <article key={p.slug} className="pcard" role="listitem">
+                  <Link
+                    to="/site/p/$slug"
+                    params={{ slug: p.slug }}
+                    className="pcard-cover"
+                    aria-label={`تفاصيل ${p.name}`}
+                  >
+                    {p.imageUrl ? (
+                      <img src={p.imageUrl} alt="" width={420} height={236} loading="lazy" />
+                    ) : (
+                      <span className="pcard-art" aria-hidden="true">
+                        <Icon name={p.icon} />
+                      </span>
+                    )}
+                    <span className="pcard-eyebrow">
+                      {p.hero.eyebrow || "خدمة متخصصة"}
+                      {p.comingSoon && " · قريباً"}
+                    </span>
+                  </Link>
+                  <div className="pcard-body">
+                    <h3 className="h3">{p.hero.title || p.name}</h3>
+                    <p className="body">{p.tagline || p.hero.subtitle}</p>
+                    {(p.points ?? []).length > 0 && (
+                      <ul className="pcard-points">
+                        {(p.points ?? []).map((t) => (
+                          <li key={t}>
+                            <Check size={16} aria-hidden="true" />
+                            {t}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                    <div className="pcard-actions">
+                      <Link to="/site/p/$slug" params={{ slug: p.slug }} className="btn white">
+                        التفاصيل
+                      </Link>
+                      <button
+                        type="button"
+                        className="btn primary"
+                        onClick={() =>
+                          open({
+                            slug: p.slug,
+                            name: p.name,
+                            intake: p.intake,
+                            comingSoon: p.comingSoon,
+                          })
+                        }
+                      >
+                        {p.comingSoon ? "سجّل اهتمامك" : "اطلب عرضاً"}
+                      </button>
+                    </div>
+                  </div>
+                </article>
               ))}
             </div>
           </section>
@@ -261,68 +363,13 @@ export function SitePage() {
           </section>
         )}
 
-        {site.show.products && products.length > 0 && (
-          <section id="products" className="sec">
-            {products.map((p) => (
-              <div key={p.slug} className="band">
-                <div className="list" style={{ gap: 18 }}>
-                  <span
-                    className="eyebrow"
-                    style={{
-                      alignSelf: "flex-start",
-                      background: "#1C2675",
-                      borderColor: "#1C2675",
-                      color: "#C9C2FF",
-                    }}
-                  >
-                    {p.hero.eyebrow || "خدمة متخصصة"}
-                    {p.comingSoon && (
-                      <b style={{ marginInlineStart: 10, color: "#fff" }}>· قريباً</b>
-                    )}
-                  </span>
-                  <h2 className="h2">{p.hero.title || p.name}</h2>
-                  <p className="lead">{p.hero.subtitle || p.tagline}</p>
-                  <div className="btns" style={{ justifyContent: "flex-start", paddingTop: 6 }}>
-                    <button
-                      type="button"
-                      className="btn white"
-                      onClick={() =>
-                        open({
-                          slug: p.slug,
-                          name: p.name,
-                          intake: p.intake,
-                          comingSoon: p.comingSoon,
-                        })
-                      }
-                    >
-                      {p.comingSoon ? "سجّل اهتمامك" : "اطلب عرضاً"}
-                    </button>
-                    <Link to="/site/p/$slug" params={{ slug: p.slug }} className="btn ghost-dark">
-                      تفاصيل الخدمة
-                    </Link>
-                  </div>
-                </div>
-                {p.hero.tags.length > 0 && (
-                  <div className="tiles">
-                    {p.hero.tags.map((t) => (
-                      <div key={t} className="tile">
-                        {t}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))}
-          </section>
-        )}
-
         {site.show.method && site.method.steps.length > 0 && (
           <section id="method" className="sec">
             <div className="head">
               <span className="eyebrow">{site.method.eyebrow}</span>
               <h2 className="h2">{site.method.title}</h2>
             </div>
-            <div className="g3" style={{ gap: 12 }}>
+            <div className="g3 steps-rail" style={{ gap: 12 }}>
               {site.method.steps.map((s, i) => {
                 const last = i === site.method.steps.length - 1;
                 return (
@@ -349,7 +396,7 @@ export function SitePage() {
               <span className="eyebrow">{site.works.eyebrow}</span>
               <h2 className="h2">{site.works.title}</h2>
             </div>
-            <div className="g4 stack">
+            <div className="g4 stack works-rail">
               {site.works.items.map((w) => (
                 <article key={w.title} className="card">
                   <div
@@ -399,6 +446,27 @@ export function SitePage() {
                 ))}
               </div>
             )}
+          </section>
+        )}
+
+        {site.show.testimonials && site.testimonials.items.length > 0 && (
+          <section className="sec" aria-label={site.testimonials.title || "قالوا عنّا"}>
+            <div className="head">
+              <span className="eyebrow">آراء عملائنا</span>
+              <h2 className="h2">{site.testimonials.title || "قالوا عنّا"}</h2>
+            </div>
+            <div className="g3 quotes">
+              {site.testimonials.items.map((t) => (
+                <figure key={t.quote} className="card quote">
+                  <Quote size={28} aria-hidden="true" className="quote-mark" />
+                  <blockquote className="body">{t.quote}</blockquote>
+                  <figcaption>
+                    <b>{t.name}</b>
+                    <span className="small">{[t.role, t.entity].filter(Boolean).join(" · ")}</span>
+                  </figcaption>
+                </figure>
+              ))}
+            </div>
           </section>
         )}
 

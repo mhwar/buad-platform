@@ -17,6 +17,7 @@ import {
   Textarea,
 } from "../../components/ui";
 import { ApiError, ok } from "../../lib/format";
+import { ImagePicker } from "../website/ImagePicker";
 import { IconSelect, LinesField, Repeater, TitleTextList, uid } from "./editors";
 import { PerformancePanel } from "./PerformancePanel";
 import { PricingPanel } from "./PricingPanel";
@@ -259,6 +260,14 @@ function Identity({
         rows={3}
         hint="حتى 6، سطر لكل وسم"
       />
+      <div className="sm:col-span-2">
+        <ImagePicker
+          label="صورة الغلاف (اختيارية)"
+          hint="تظهر على بطاقة الخدمة في الموقع وأعلى صفحتها. يُفضّل 16:9."
+          value={h.imageAsset ?? ""}
+          onChange={(imageAsset) => setHero({ imageAsset })}
+        />
+      </div>
     </Card>
   );
 }
