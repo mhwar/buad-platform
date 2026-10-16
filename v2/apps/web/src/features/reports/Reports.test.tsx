@@ -8,7 +8,6 @@ import {
 } from "@tanstack/react-router";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import type { ComponentType } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { meUser, stubApi } from "../../test-utils";
 import { ExecutionReport } from "./ExecutionReport";
@@ -21,7 +20,7 @@ afterEach(() => {
   localStorage.clear();
 });
 
-async function open(path: string, at: string, Page: ComponentType) {
+async function open(path: string, at: string, Page: typeof PortfolioReport) {
   const root = createRootRoute();
   const page = createRoute({
     getParentRoute: () => root,
@@ -59,7 +58,7 @@ describe("reports register", () => {
 describe("reports page", () => {
   it("groups the reports by subject, carries the period into periodic ones, and keeps favourites", async () => {
     stubApi({ "GET /api/me": () => ({ ok: true, user: meUser("owner") }) });
-    await open("/reports?preset=year&year=2026", "/reports", ReportsPage as ComponentType);
+    await open("/reports?preset=year&year=2026", "/reports", ReportsPage);
     const finance = within(await screen.findByRole("region", { name: "المالية" }));
     expect(finance.getByRole("link", { name: "التقرير المالي للجهة" })).toHaveAttribute(
       "href",
