@@ -1,4 +1,5 @@
 import {
+  BarChart3,
   BookOpen,
   Briefcase,
   CalendarCheck,
@@ -17,7 +18,7 @@ import {
 import type { ComponentType } from "react";
 
 type Icon = ComponentType<{ className?: string }>;
-export type Tint = "indigo" | "emerald" | "sky" | "amber" | "teal" | "violet" | "slate";
+export type Tint = "indigo" | "emerald" | "sky" | "amber" | "teal" | "violet" | "rose" | "slate";
 /** Icon tiles: a light wash and a deeper ink of one hue, readable in both themes. */
 export const TINT: Record<Tint, string> = {
   indigo: "bg-indigo-50 text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-300",
@@ -26,6 +27,7 @@ export const TINT: Record<Tint, string> = {
   amber: "bg-amber-50 text-amber-600 dark:bg-amber-950/60 dark:text-amber-300",
   teal: "bg-teal-50 text-teal-600 dark:bg-teal-950/60 dark:text-teal-300",
   violet: "bg-violet-50 text-violet-600 dark:bg-violet-950/60 dark:text-violet-300",
+  rose: "bg-rose-50 text-rose-600 dark:bg-rose-950/60 dark:text-rose-300",
   slate: "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300",
 };
 /** The current URL's query, as far as navigation needs it (finance tabs live in `?tab=`). */
@@ -250,6 +252,15 @@ export const SECTIONS: Section[] = [
         match: financeTab("receivables"),
       },
     ],
+  },
+  {
+    key: "reports",
+    label: "التقارير",
+    to: "/reports",
+    icon: BarChart3,
+    tint: "rose",
+    hint: "كل التقارير في مكان واحد: المالية والمشاريع والمبيعات والخطط",
+    match: within("/reports"),
   },
   {
     key: "planning",

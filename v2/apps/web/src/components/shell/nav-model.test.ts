@@ -9,7 +9,7 @@ const keys = (perms: readonly string[]) => flat(perms).map((i) => i.key);
 describe("buildNav", () => {
   it("orders the work by the day: workspace, sales, projects, documents, finance, planning; then settings and coming soon", () => {
     expect(buildNav(permsOf("owner")).map((g) => g.items.map((i) => i.key))).toEqual([
-      ["home", "sales", "projects", "documents", "finance", "planning"],
+      ["home", "sales", "projects", "documents", "finance", "reports", "planning"],
       ["settings", "soon"],
     ]);
   });
@@ -41,7 +41,15 @@ describe("buildNav", () => {
 
   it("hides what a role may not use and sends a section to its first allowed page", () => {
     const member = permsOf("member");
-    expect(keys(member)).toEqual(["home", "sales", "projects", "documents", "settings", "soon"]);
+    expect(keys(member)).toEqual([
+      "home",
+      "sales",
+      "projects",
+      "documents",
+      "reports",
+      "settings",
+      "soon",
+    ]);
     const sales = flat(member).find((e) => e.key === "sales")!;
     expect(sales.to).toBe("/clients"); // the pipeline needs sales.view
     expect(keys(resolveRole("sales", [])!.perms)).not.toContain("finance");
@@ -114,6 +122,7 @@ describe("phone", () => {
     ]);
     expect(moreSections(permsOf("owner")).map((e) => e.key)).toEqual([
       "documents",
+      "reports",
       "planning",
       "settings",
       "soon",

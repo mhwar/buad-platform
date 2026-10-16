@@ -34,6 +34,7 @@ import { productsApp } from "./modules/products";
 import { projectsApp } from "./modules/projects";
 import { quotesApp } from "./modules/quotes";
 import { receivablesApp } from "./modules/receivables";
+import { reportsApp } from "./modules/reports";
 import { requestsApp } from "./modules/requests";
 import { salesApp } from "./modules/sales";
 import { documentSharesApp, publicShareApp } from "./modules/share";
@@ -188,6 +189,7 @@ export function createApp(deps: AppDeps = {}) {
       .route("/api/sales", salesApp)
       .route("/api/quotes", quotesApp)
       .route("/api/tasks", tasksApp)
+      .route("/api/reports", reportsApp)
       .route("/api/meetings", meetingsApp)
       .route("/api/decisions", decisionsApp)
       .route("/api/plans", plansApp)

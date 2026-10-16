@@ -10,7 +10,7 @@ const isMac = () =>
 /** The top bar: logo on the brand colour, search, notifications, theme and account. */
 export function AppHeader({ onSearch }: { onSearch: () => void }) {
   return (
-    <header className="sticky top-0 z-30 h-14 border-b border-white/10 bg-chrome text-white shadow-sm">
+    <header className="sticky top-0 z-30 h-14 border-b border-white/10 bg-chrome text-white shadow-sm print:hidden">
       <div className="flex h-full items-center gap-3 px-3 sm:px-5">
         <Link to="/" aria-label="الرئيسية" className="flex shrink-0 items-center rounded-md px-1">
           <Logo tone="light" className="hidden h-9 w-auto sm:block" />

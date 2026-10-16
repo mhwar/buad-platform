@@ -1,11 +1,13 @@
 import { SOURCE_LABEL, type Source } from "@buad/domain";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { AlertTriangle, CalendarClock, FileText } from "lucide-react";
 import type { ReactNode } from "react";
 import { Badge, Card, EmptyState } from "../../components/ui";
 import { day, sar } from "../../lib/format";
+import { resolvePeriod } from "../finance-overview/api";
 import { RankBars } from "../finance-overview/charts";
+import { PeriodPicker } from "../finance-overview/PeriodPicker";
 import { REQUEST_LABEL, type RequestStatus } from "../products/products-api";
 import { overviewQuery } from "./api";
 import { SalesCrumb } from "./SalesCrumb";
@@ -53,7 +55,9 @@ const Panel = ({
 
 /** «لوحة المبيعات»: where the pipeline stands, how the closed ones went, and what needs doing today. */
 export function SalesDashboard() {
-  const q = useQuery(overviewQuery);
+  const s = useSearch({ strict: false }) as { from?: string; to?: string };
+  const navigate = useNavigate();
+  const q = useQuery(overviewQuery(s.from, s.to));
   if (!q.data) return <Card className="h-48 animate-pulse" aria-busy />;
   const o = q.data;
   const due = o.followups.leadsDue + o.followups.clientsDue;
@@ -64,6 +68,27 @@ export function SalesDashboard() {
   return (
     <div className="space-y-6">
       <SalesCrumb title="تحليلات المبيعات" subtitle="القمع والتحويل والمكسوب والعروض والمصادر" />
+      <div className="flex flex-wrap items-center gap-3">
+        <PeriodPicker
+          value={s.from || s.to ? { preset: "custom", from: s.from, to: s.to } : { preset: "all" }}
+          onChange={(v) => {
+            const r = resolvePeriod(v).period;
+            navigate({
+              to: "/sales/analytics",
+              search:
+                r.from || r.to
+                  ? { from: r.from, to: r.to }
+                  : v.preset === "custom"
+                    ? { from: v.from, to: v.to }
+                    : {},
+              replace: true,
+            });
+          }}
+        />
+        <p className="text-xs text-muted">
+          الفترة تخص النتائج (المكسوب والخاسر والمصادر)؛ الفرص المفتوحة كما هي اليوم.
+        </p>
+      </div>
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Tile
           label="فرص مفتوحة"

@@ -37,6 +37,9 @@ import { ProductBuilderPage } from "./features/products/ProductBuilder";
 import { ProductsPage } from "./features/products/ProductsPage";
 import { ProjectPage } from "./features/projects/ProjectPage";
 import { ProjectsPage } from "./features/projects/ProjectsPage";
+import { ExecutionReport } from "./features/reports/ExecutionReport";
+import { PortfolioReport } from "./features/reports/PortfolioReport";
+import { ReportsPage } from "./features/reports/ReportsPage";
 import { FollowupsPage } from "./features/sales/FollowupsPage";
 import { OpportunitiesPage } from "./features/sales/OpportunitiesPage";
 import { OpportunityPage } from "./features/sales/OpportunityPage";
@@ -419,9 +422,35 @@ const salesRoute = createRoute({
   beforeLoad: needs("sales.view"),
   component: OpportunitiesPage,
 });
+const reportsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/reports",
+  validateSearch: z.object({
+    ...periodSearch,
+    preset: z.enum(["all", "year", "last", "quarter", "custom"]).optional(),
+    year: z.coerce.number().int().min(2000).max(2100).optional(),
+    q: z.coerce.number().int().min(1).max(4).optional(),
+  }),
+  beforeLoad: authed,
+  component: ReportsPage,
+});
+const portfolioRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/reports/portfolio",
+  beforeLoad: needs("projects.view"),
+  component: PortfolioReport,
+});
+const executionReportRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/reports/execution",
+  validateSearch: z.object(periodSearch),
+  beforeLoad: needs("tasks.view"),
+  component: ExecutionReport,
+});
 const analyticsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/sales/analytics",
+  validateSearch: z.object(periodSearch),
   beforeLoad: needs("sales.view"),
   component: SalesDashboard,
 });
@@ -513,6 +542,9 @@ export const router = createRouter({
     decisionsRoute,
     salesRoute,
     analyticsRoute,
+    reportsRoute,
+    portfolioRoute,
+    executionReportRoute,
     opportunityRoute,
     quotesRoute,
     followupsRoute,

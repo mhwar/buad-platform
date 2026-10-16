@@ -41,6 +41,7 @@ describe("section registry", () => {
       "sales",
       "projects",
       "documents",
+      "reports",
       "settings",
       "soon",
     ]);
