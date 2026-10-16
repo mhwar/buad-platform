@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { ChevronLeft, FileSpreadsheet, Printer } from "lucide-react";
 import type { ReactNode } from "react";
+import { StatTile } from "../../components/StatTile";
 import { Button } from "../../components/ui";
 
 /** The frame of a report page: the way back to «التقارير», its title and period, and its exports. */
@@ -53,23 +54,6 @@ export function ReportFrame({
 }
 
 /** A number on a report: what it is, and the figure. */
-export function Figure({
-  label,
-  value,
-  tone,
-}: {
-  label: string;
-  value: string;
-  tone?: "bad" | "good";
-}) {
-  return (
-    <li className="bg-surface p-3">
-      <p className="text-xs text-muted">{label}</p>
-      <p
-        className={`mt-0.5 text-lg font-bold tabular-nums ${tone === "bad" ? "text-red-600" : tone === "good" ? "text-emerald-600" : ""}`}
-      >
-        {value}
-      </p>
-    </li>
-  );
+export function Figure(r: { label: string; value: string; tone?: "bad" | "good" }) {
+  return <StatTile {...r} as="cell" />;
 }

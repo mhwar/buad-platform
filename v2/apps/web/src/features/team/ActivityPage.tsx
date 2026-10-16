@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useNavigate, useSearch } from "@tanstack/react-router";
 import { Badge, Card, EmptyState, Field, Input, Select } from "../../components/ui";
 import { ago } from "../../lib/format";
 import { auditQuery, teamUsersQuery } from "./queries";
@@ -18,6 +18,11 @@ const ENTITIES: Record<string, string> = {
   role: "الأدوار",
   asset: "الملفات",
   import: "الاستيراد",
+  task: "المهام",
+  quote: "عروض الأسعار",
+  plan: "الخطط",
+  meeting: "الاجتماعات",
+  decision: "القرارات",
 };
 const time = new Intl.DateTimeFormat("ar-SA-u-ca-gregory-nu-latn", {
   dateStyle: "medium",
@@ -26,10 +31,19 @@ const time = new Intl.DateTimeFormat("ar-SA-u-ca-gregory-nu-latn", {
 
 /** «سجل النشاط»: who changed what and when. Read-only. */
 export function ActivityPage() {
-  const [entity, setEntity] = useState("");
-  const [user, setUser] = useState("");
-  const [from, setFrom] = useState("");
-  const [to, setTo] = useState("");
+  // Filters live in the address: a filtered log can be shared and survives a reload.
+  const s = useSearch({ strict: false }) as Record<string, string | undefined>;
+  const go = useNavigate();
+  const setter = (k: string) => (v: string) =>
+    go({ to: ".", search: (p: object) => ({ ...p, [k]: v || undefined }), replace: true } as never);
+  const entity = s.entity ?? "";
+  const user = s.user ?? "";
+  const from = s.from ?? "";
+  const to = s.to ?? "";
+  const setEntity = setter("entity");
+  const setUser = setter("user");
+  const setFrom = setter("from");
+  const setTo = setter("to");
   const q = useQuery(auditQuery({ entity, user, from, to }));
   const users = useQuery(teamUsersQuery);
   return (

@@ -4,6 +4,7 @@ import { Link } from "@tanstack/react-router";
 import { AlertTriangle, FileUp, Plus, Settings2, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Badge, Button, Card, Input, Pills, SearchBox, Sheet } from "../../components/ui";
+import { csvToRows, downloadSheet } from "../../lib/export";
 import { day, pct, sar } from "../../lib/format";
 import { type Entry, type Finance, financeApi, financeKey, financeQuery } from "./api";
 import { ControlCentre } from "./ControlCentre";
@@ -696,12 +697,5 @@ export function exportCsv(
   fin: Finance,
   label: (cat: string) => string = (c) => catLabel(c, fin.categories, fin.budget),
 ) {
-  const url = URL.createObjectURL(
-    new Blob([toCsv(fin, label)], { type: "text/csv;charset=utf-8" }),
-  );
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "سجل-المعاملات.csv";
-  a.click();
-  URL.revokeObjectURL(url);
+  void downloadSheet("transactions", "سجل المعاملات", csvToRows(toCsv(fin, label)));
 }

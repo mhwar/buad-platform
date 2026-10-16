@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { AlertTriangle, CalendarClock, FileText } from "lucide-react";
 import type { ReactNode } from "react";
+import { StatTile } from "../../components/StatTile";
 import { Badge, Card, EmptyState } from "../../components/ui";
 import { day, sar } from "../../lib/format";
 import { resolvePeriod } from "../finance-overview/api";
@@ -14,26 +15,14 @@ import { SalesCrumb } from "./SalesCrumb";
 import { WonBars } from "./WonBars";
 
 const Tile = ({
-  label,
-  value,
-  hint,
   tone,
+  ...r
 }: {
   label: string;
   value: string;
   hint?: string;
   tone?: "warn" | "good";
-}) => (
-  <Card className="p-4">
-    <p className="text-xs text-muted">{label}</p>
-    <p
-      className={`mt-1 text-2xl font-bold ${tone === "warn" ? "text-amber-600" : tone === "good" ? "text-emerald-600" : ""}`}
-    >
-      {value}
-    </p>
-    {hint && <p className="mt-0.5 text-[11px] text-muted">{hint}</p>}
-  </Card>
-);
+}) => <StatTile {...r} tone={tone} />;
 
 const Panel = ({
   title,

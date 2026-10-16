@@ -3,6 +3,7 @@ import { getRouteApi, Link } from "@tanstack/react-router";
 import { Download, Printer } from "lucide-react";
 import type { ReactNode } from "react";
 import { Button, EmptyState } from "../../components/ui";
+import { csvToRows, downloadSheet } from "../../lib/export";
 import { day, fromEpoch, pct, sar } from "../../lib/format";
 import { FitToWidth } from "../documents/FitToWidth";
 import { type Block, PagedSheets } from "../documents/Pages";
@@ -310,13 +311,9 @@ export function reportCsv(r: Report, period: Period) {
 }
 
 function downloadCsv(r: Report, period: Period) {
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(
-    new Blob([reportCsv(r, period)], { type: "text/csv;charset=utf-8" }),
+  void downloadSheet(
+    `finance-report-${period.from || "all"}${period.to ? `-${period.to}` : ""}`,
+    "التقرير المالي",
+    csvToRows(reportCsv(r, period)),
   );
-  a.download = `finance-report-${period.from || "all"}${period.to ? `-${period.to}` : ""}.csv`;
-  document.body.append(a);
-  a.click();
-  a.remove();
-  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 }

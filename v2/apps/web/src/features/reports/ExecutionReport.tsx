@@ -59,6 +59,8 @@ export function ExecutionReport() {
         { header: "الساعات", value: (l) => Math.round((l.minutes / 60) * 10) / 10 },
       ],
       rows,
+      "xlsx",
+      `execution-${by}-${d?.period.from ?? "all"}`,
     );
   return (
     <ReportFrame

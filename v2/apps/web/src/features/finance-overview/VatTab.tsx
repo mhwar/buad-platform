@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { AlertTriangle, FileText, Settings2 } from "lucide-react";
 import { useState } from "react";
 import {
@@ -45,8 +45,15 @@ const WARNING: Record<VatWarningCode, (n?: number) => string> = {
  * tax invoices, what is still to identify, and the net payable.
  */
 export function VatTab() {
-  const [year, setYear] = useState(now.getFullYear());
-  const [q, setQ] = useState(Math.floor(now.getMonth() / 3) + 1);
+  // The year and quarter live in the address, so the view can be shared and survives a reload.
+  const search = useSearch({ strict: false }) as { year?: number; q?: number };
+  const go = useNavigate();
+  const year = search.year ?? now.getFullYear();
+  const q = search.q ?? Math.floor(now.getMonth() / 3) + 1;
+  const setYear = (y: number) =>
+    go({ to: ".", search: (p: object) => ({ ...p, year: y }), replace: true } as never);
+  const setQ = (n: number) =>
+    go({ to: ".", search: (p: object) => ({ ...p, q: n }), replace: true } as never);
   const r = useQuery(vatReportQuery(year, q));
   const [settings, setSettings] = useState(false);
   const years = Array.from({ length: 4 }, (_, i) => now.getFullYear() - i);

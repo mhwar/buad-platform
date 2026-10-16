@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { Copy, FolderPlus, Plus, Printer } from "lucide-react";
 import { useState } from "react";
+import { StatTile } from "../../components/StatTile";
 import {
   Badge,
   Button,
@@ -274,22 +275,6 @@ export function QuotesPage() {
   );
 }
 
-function Stat({
-  label,
-  value,
-  hint,
-  tone,
-}: {
-  label: string;
-  value: string;
-  hint?: string;
-  tone?: "warn";
-}) {
-  return (
-    <Card className="p-4">
-      <p className="text-xs text-muted">{label}</p>
-      <p className={`mt-1 text-xl font-bold ${tone === "warn" ? "text-amber-600" : ""}`}>{value}</p>
-      {hint && <p className="text-[11px] text-muted">{hint}</p>}
-    </Card>
-  );
+function Stat(r: { label: string; value: string; hint?: string; tone?: "warn" }) {
+  return <StatTile {...r} />;
 }

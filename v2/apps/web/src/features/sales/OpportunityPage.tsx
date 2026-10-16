@@ -26,6 +26,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { type ReactNode, useEffect, useRef, useState } from "react";
+import { StatTile } from "../../components/StatTile";
 import { useTrackRecent } from "../../components/shell/useRecent";
 import {
   Avatar,
@@ -658,24 +659,8 @@ function Stepper({
   );
 }
 
-function Fact({
-  label,
-  value,
-  hint,
-  tone,
-}: {
-  label: string;
-  value: string;
-  hint?: string;
-  tone?: "warn";
-}) {
-  return (
-    <li className="bg-surface p-3">
-      <p className="text-xs text-muted">{label}</p>
-      <p className={cx("mt-0.5 text-lg font-bold", tone === "warn" && "text-amber-600")}>{value}</p>
-      {hint && <p className="text-[11px] text-muted">{hint}</p>}
-    </li>
-  );
+function Fact(r: { label: string; value: string; hint?: string; tone?: "warn" }) {
+  return <StatTile {...r} as="cell" />;
 }
 
 function Row({ label, children }: { label: string; children: ReactNode }) {

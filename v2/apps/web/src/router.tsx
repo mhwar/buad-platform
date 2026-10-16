@@ -290,7 +290,7 @@ const printFinanceRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/print/finance/$projectId",
   validateSearch: z.object({ mode: z.enum(["client", "detailed"]).optional() }),
-  beforeLoad: authed,
+  beforeLoad: needs("finance.view"),
   component: function PrintFinance() {
     const { projectId } = printFinanceRoute.useParams();
     const { mode = "client" } = printFinanceRoute.useSearch();
@@ -366,6 +366,12 @@ const teamRoute = createRoute({
 const activityRoute = createRoute({
   getParentRoute: () => settingsRoute,
   path: "/activity",
+  validateSearch: z.object({
+    entity: z.string().max(30).optional(),
+    user: z.string().max(60).optional(),
+    from: z.string().optional(),
+    to: z.string().optional(),
+  }),
   beforeLoad: needs("audit.view"),
   component: ActivityPage,
 });
