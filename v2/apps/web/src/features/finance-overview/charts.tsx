@@ -19,15 +19,17 @@ const compact = new Intl.NumberFormat("ar-SA-u-nu-latn", {
   maximumFractionDigits: 1,
 });
 
-const SERIES = [
+export type Series = { key: string; label: string; color: string };
+/** Income vs expense: the default pair. */
+const INCOME_EXPENSE: Series[] = [
   { key: "income", label: "الإيرادات", color: "var(--color-series-1)" },
   { key: "expense", label: "المصروفات", color: "var(--color-series-2)" },
-] as const;
+];
 
-function Legend() {
+function Legend({ series }: { series: Series[] }) {
   return (
     <div className="flex gap-4 text-xs text-muted">
-      {SERIES.map((s) => (
+      {series.map((s) => (
         <span key={s.key} className="inline-flex items-center gap-1.5">
           <span className="inline-block size-2.5 rounded-sm" style={{ background: s.color }} />
           {s.label}
@@ -38,26 +40,36 @@ function Legend() {
 }
 
 /**
- * Income vs expense per month: grouped bars, one axis, time flowing right→left (reading
- * direction). Hovering a month shows both values; a table view lists every number.
+ * Amounts per month, one bar per series (income vs expense by default; any series, e.g. «المكسوب»):
+ * one axis, time flowing right→left (reading direction). Hovering a month shows its values; a
+ * table view lists every number. The one monthly chart of the platform.
  */
 export function MonthlyBars({
   data,
+  series = INCOME_EXPENSE,
+  empty = "لا توجد قيود في هذه الفترة.",
+  title = "الإيرادات والمصروفات لكل شهر",
 }: {
-  data: { month: string; income: number; expense: number }[];
+  // biome-ignore lint/suspicious/noExplicitAny: rows carry one number per series key
+  data: ({ month: string } & Record<string, any>)[];
+  series?: Series[];
+  empty?: string;
+  title?: string;
 }) {
+  const SERIES = series;
+  const val = (d: Record<string, unknown>, k: string) => Number(d[k] ?? 0);
   const [hover, setHover] = useState<number | null>(null);
   const [table, setTable] = useState(false);
-  if (data.length === 0)
-    return <p className="py-10 text-center text-sm text-muted">لا توجد قيود في هذه الفترة.</p>;
+  if (data.length === 0 || data.every((d) => SERIES.every((s) => !val(d, s.key))))
+    return <p className="py-10 text-center text-sm text-muted">{empty}</p>;
   const W = 640;
   const H = 220;
   const pad = { top: 12, bottom: 28, left: 8, right: 44 };
-  const max = niceMax(Math.max(...data.map((d) => Math.max(d.income, d.expense))));
+  const max = niceMax(Math.max(...data.map((d) => Math.max(...SERIES.map((s) => val(d, s.key))))));
   const plotW = W - pad.left - pad.right;
   const plotH = H - pad.top - pad.bottom;
   const slot = plotW / data.length;
-  const bar = Math.max(4, Math.min(22, (slot - 10) / 2));
+  const bar = Math.max(4, Math.min(SERIES.length === 1 ? 32 : 22, (slot - 10) / SERIES.length));
   const y = (v: number) => pad.top + plotH - (v / max) * plotH;
   // Right-to-left: the first month sits at the right edge.
   const xSlot = (i: number) => pad.left + plotW - (i + 1) * slot;
@@ -67,7 +79,7 @@ export function MonthlyBars({
   return (
     <div>
       <div className="mb-2 flex items-center justify-between">
-        <Legend />
+        <Legend series={SERIES} />
         <button
           type="button"
           onClick={() => setTable((t) => !t)}
@@ -81,16 +93,22 @@ export function MonthlyBars({
           <thead className="text-xs text-muted">
             <tr>
               <th className="p-1.5 text-right font-medium">الشهر</th>
-              <th className="p-1.5 text-right font-medium">الإيرادات</th>
-              <th className="p-1.5 text-right font-medium">المصروفات</th>
+              {SERIES.map((s) => (
+                <th key={s.key} className="p-1.5 text-right font-medium">
+                  {s.label}
+                </th>
+              ))}
             </tr>
           </thead>
           <tbody>
             {data.map((d) => (
               <tr key={d.month} className="border-t">
                 <td className="p-1.5">{monthLabel(d.month)}</td>
-                <td className="p-1.5">{sar(d.income)}</td>
-                <td className="p-1.5">{sar(d.expense)}</td>
+                {SERIES.map((s) => (
+                  <td key={s.key} className="p-1.5">
+                    {sar(val(d, s.key))}
+                  </td>
+                ))}
               </tr>
             ))}
           </tbody>
@@ -101,7 +119,7 @@ export function MonthlyBars({
             viewBox={`0 0 ${W} ${H}`}
             className="h-auto w-full"
             role="img"
-            aria-label="الإيرادات والمصروفات لكل شهر"
+            aria-label={title}
             onMouseLeave={() => setHover(null)}
           >
             {ticks.map((t) => (
@@ -140,11 +158,11 @@ export function MonthlyBars({
                     />
                   )}
                   {SERIES.map((s, k) => {
-                    const v = d[s.key];
+                    const v = val(d, s.key);
                     const top = y(v);
                     const hgt = Math.max(0, pad.top + plotH - top);
-                    // Income on the right of the pair (reading direction), 2px gap between.
-                    const x = k === 0 ? cx + 1 : cx - 1 - bar;
+                    // Bars side by side, the first on the right (reading direction), 2px apart.
+                    const x = SERIES.length === 1 ? cx - bar / 2 : k === 0 ? cx + 1 : cx - 1 - bar;
                     return (
                       <path
                         key={s.key}
@@ -172,7 +190,7 @@ export function MonthlyBars({
                     onMouseEnter={() => setHover(i)}
                     onFocus={() => setHover(i)}
                     tabIndex={0}
-                    aria-label={`${monthLabel(d.month)}: إيرادات ${sar(d.income)}، مصروفات ${sar(d.expense)}`}
+                    aria-label={`${monthLabel(d.month)}: ${SERIES.map((s) => `${s.label} ${sar(val(d, s.key))}`).join("، ")}`}
                   />
                 </g>
               );
@@ -192,7 +210,7 @@ export function MonthlyBars({
                     className="inline-block size-2 rounded-sm"
                     style={{ background: s.color }}
                   />
-                  {s.label}: <b>{sar(h[s.key])}</b>
+                  {s.label}: <b>{sar(val(h, s.key))}</b>
                 </p>
               ))}
             </div>

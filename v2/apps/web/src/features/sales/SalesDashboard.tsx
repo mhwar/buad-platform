@@ -7,12 +7,11 @@ import { StatTile } from "../../components/StatTile";
 import { Badge, Card, EmptyState } from "../../components/ui";
 import { day, sar } from "../../lib/format";
 import { resolvePeriod } from "../finance-overview/api";
-import { RankBars } from "../finance-overview/charts";
+import { MonthlyBars, RankBars } from "../finance-overview/charts";
 import { PeriodPicker } from "../finance-overview/PeriodPicker";
 import { REQUEST_LABEL, type RequestStatus } from "../products/products-api";
 import { overviewQuery } from "./api";
 import { SalesCrumb } from "./SalesCrumb";
-import { WonBars } from "./WonBars";
 
 const Tile = ({
   tone,
@@ -263,7 +262,12 @@ export function SalesDashboard() {
         </Panel>
 
         <Panel title="المكسوب شهرياً (آخر 12 شهراً)">
-          <WonBars data={o.monthlyWon} />
+          <MonthlyBars
+            data={o.monthlyWon}
+            series={[{ key: "value", label: "المكسوب", color: "var(--color-series-1)" }]}
+            empty="لا مكاسب مسجّلة في آخر 12 شهراً."
+            title="قيمة المكسوب شهرياً"
+          />
         </Panel>
 
         <Panel
