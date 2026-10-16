@@ -100,7 +100,7 @@ export function AppShell() {
             <SectionTabs />
             <Outlet />
           </main>
-          <footer className="mb-16 border-t py-4 text-center text-xs text-muted lg:mb-0">
+          <footer className="mb-16 border-t py-4 print:hidden text-center text-xs text-muted lg:mb-0">
             بُعد التمكين · الإصدار الثاني ·{" "}
             <span data-testid="status">
               {health.isError
@@ -123,7 +123,7 @@ export function AppShell() {
       />
       {/* Pages with their own bottom save bar (site editor, document editor) keep that space. */}
       {!/^\/(website|projects\/[^/]+\/documents)/.test(path) && (
-        <div className="fixed bottom-[calc(4.25rem+env(safe-area-inset-bottom))] left-4 z-30 lg:hidden">
+        <div className="fixed bottom-[calc(4.25rem+env(safe-area-inset-bottom))] left-4 z-30 lg:hidden print:hidden">
           <QuickCreate collapsed fab />
         </div>
       )}

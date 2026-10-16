@@ -323,7 +323,7 @@ function Num({ label, value, hint }: { label: string; value: string; hint?: stri
 }
 
 function SalesNumbers() {
-  const q = useQuery(overviewQuery);
+  const q = useQuery(overviewQuery());
   const o = q.data;
   return (
     <Panel title="المبيعات" icon={<ShoppingCart className="size-4" />} to="/sales" more="الفرص">

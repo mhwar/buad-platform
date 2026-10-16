@@ -386,7 +386,7 @@ export function Sidebar({
       className={cx(
         drawer
           ? "flex h-full w-full flex-col bg-surface"
-          : "sticky top-14 hidden h-[calc(100dvh-3.5rem)] shrink-0 flex-col border-e bg-surface transition-[width] duration-200 motion-reduce:transition-none lg:flex",
+          : "sticky top-14 hidden h-[calc(100dvh-3.5rem)] shrink-0 print:hidden flex-col border-e bg-surface transition-[width] duration-200 motion-reduce:transition-none lg:flex",
         !drawer && (collapsed ? "w-[4.5rem]" : "w-64"),
       )}
     >

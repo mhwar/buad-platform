@@ -22,7 +22,7 @@ export function TargetPanel({
 }) {
   const can = useCan();
   const q = useQuery({ ...seriesQuery(indicator.id), enabled: !indicator.hidden });
-  const sales = useQuery({ ...overviewQuery, enabled: can("sales.view") });
+  const sales = useQuery({ ...overviewQuery(), enabled: can("sales.view") });
   if (indicator.hidden)
     return (
       <Card className="flex items-center gap-3">

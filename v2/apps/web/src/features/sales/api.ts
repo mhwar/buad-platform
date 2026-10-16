@@ -109,11 +109,18 @@ export type SalesOverview = {
   monthlyWon: { month: string; value: number }[];
   topClients: { id: string; name: string; value: number }[];
 };
-export const overviewQuery = queryOptions({
-  queryKey: ["sales-overview"],
-  queryFn: async () => ok<SalesOverview>(await fetch("/api/sales/overview")),
-  staleTime: 30_000,
-});
+/** The sales numbers; a period narrows the results (won, lost, sources). */
+export const overviewQuery = (from?: string, to?: string) =>
+  queryOptions({
+    queryKey: ["sales-overview", from ?? "", to ?? ""],
+    queryFn: async () =>
+      ok<SalesOverview>(
+        await fetch(
+          `/api/sales/overview${from || to ? `?${new URLSearchParams({ ...(from ? { from } : {}), ...(to ? { to } : {}) })}` : ""}`,
+        ),
+      ),
+    staleTime: 30_000,
+  });
 
 export type CatalogItem = {
   productId: string;

@@ -65,8 +65,17 @@ export const salesApp = new Hono<Env>()
     }));
 
     const pipe = pipelineStats(leads);
-    const won = leads.filter((l) => l.status === "won");
-    const lost = leads.filter((l) => l.status === "lost");
+    // An optional period (?from&to) narrows the results and sources to leads that arrived in it;
+    // the open pipeline is always as it stands today.
+    const from = /^\d{4}-\d{2}-\d{2}$/.test(c.req.query("from") ?? "") ? c.req.query("from") : "";
+    const to = /^\d{4}-\d{2}-\d{2}$/.test(c.req.query("to") ?? "") ? c.req.query("to") : "";
+    const inPeriod = (l: { createdAt: number }) => {
+      const d = new Date(l.createdAt * 1000).toISOString().slice(0, 10);
+      return (!from || d >= from) && (!to || d <= to);
+    };
+    const period = leads.filter(inPeriod);
+    const won = period.filter((l) => l.status === "won");
+    const lost = period.filter((l) => l.status === "lost");
     const stale = leads
       .filter((l) => isStale(l, now))
       .sort((a, b) => a.updatedAt - b.updatedAt)
@@ -181,7 +190,8 @@ export const salesApp = new Hono<Env>()
           days: Math.floor((now - f.updatedAt) / 86400),
         })),
       },
-      sources: bySource(leads).map((s) => ({
+      period: { from, to, leads: period.length },
+      sources: bySource(period).map((s) => ({
         source: s.source,
         total: s.total,
         won: s.won,
