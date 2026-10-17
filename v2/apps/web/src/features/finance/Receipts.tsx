@@ -14,7 +14,7 @@ import {
   toast,
 } from "../../components/ui";
 import { day, fromEpoch, sar, today } from "../../lib/format";
-import { financeApi, financeKey, financeQuery, type Receipt } from "./api";
+import { financeApi, financeKey, financeQuery, type Receipt, withOverContractCheck } from "./api";
 
 /**
  * «الاستلامات من العميل»: the money that reached the bank for this project. A project's
@@ -89,6 +89,11 @@ export function ReceiptsCard({
                     {quarterLabelOf(r.date)}
                   </span>
                   {r.note && <span className="block text-xs text-muted">{r.note}</span>}
+                  {!r.approvedAt && (
+                    <span className="ms-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs text-amber-800 dark:bg-amber-950 dark:text-amber-300">
+                      غير معتمد
+                    </span>
+                  )}
                   {r.approvedAt && (
                     <span className="block text-xs text-muted">
                       اعتُمد {fromEpoch(r.approvedAt)}
@@ -181,10 +186,11 @@ export function ReceiptDialog({
       basis: suggestion?.basis ?? receipt?.basis ?? "",
     };
     try {
-      done(
-        receipt ? await api.updateReceipt(receipt.id, body) : await api.addReceipt(body),
-        receipt ? "حُفظ المقبوض" : "سُجّل المقبوض",
+      if (receipt) return done(await api.updateReceipt(receipt.id, body), "حُفظ المقبوض");
+      const fin = await withOverContractCheck((confirmOver) =>
+        api.addReceipt({ ...body, confirmOver }),
       );
+      if (fin) done(fin, "سُجّل المقبوض");
     } catch {
       setErr("تعذّر الحفظ");
     }
@@ -205,13 +211,32 @@ export function ReceiptDialog({
             )
           }
         >
-          <Button onClick={save}>
+          {receipt && !receipt.approvedAt && (
+            <Button
+              onClick={async () => {
+                try {
+                  done(await api.approveReceipt(receipt.id), "اعتُمد المقبوض");
+                } catch {
+                  setErr("تعذّر الاعتماد");
+                }
+              }}
+            >
+              اعتماد
+            </Button>
+          )}
+          <Button variant={receipt && !receipt.approvedAt ? "secondary" : "primary"} onClick={save}>
             {suggestion ? "اعتماد المقبوض" : receipt ? "حفظ" : "تسجيل المقبوض"}
           </Button>
         </DialogActions>
       }
     >
       {err && <Notice>{err}</Notice>}
+      {receipt && !receipt.approvedAt && (
+        <Notice tone="amber">
+          هذا المقبوض غير معتمد، فلا يُحتسب في أي رقم. اعتمدوه إن كان دفعة فعلية، أو احذفوه إن كان
+          مكرراً.
+        </Notice>
+      )}
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label="تاريخ وصوله للبنك" hint="يحدد ربع السنة الذي يتحقق فيه ربحه">
           <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />

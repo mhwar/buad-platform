@@ -81,4 +81,6 @@ export const receiptInput = z.object({
   note: z.string().trim().max(500).default(""),
   /** Where the date came from (kept with the approval). */
   basis: z.string().trim().max(200).default(""),
+  /** Set after the person is warned that this receipt takes the total above the contract. */
+  confirmOver: z.boolean().optional(),
 });

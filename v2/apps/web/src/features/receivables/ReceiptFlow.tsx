@@ -13,6 +13,7 @@ import {
   toast,
 } from "../../components/ui";
 import { day, sar } from "../../lib/format";
+import { withOverContractCheck } from "../finance/api";
 import { projectsQuery } from "../projects/api";
 import { send } from "../team/queries";
 import { type Instalment, scheduleQuery } from "./api";
@@ -86,13 +87,18 @@ export function ReceiptFlow({
     setError("");
     try {
       if (active) await send("POST", `/api/receivables/${active.id}/receive`, { date, amount: n });
-      else
-        await send("POST", `/api/projects/${picked.id}/finance/receipts`, {
-          date,
-          amount: n,
-          note,
-          basis: "",
-        });
+      else if (
+        !(await withOverContractCheck((confirmOver) =>
+          send("POST", `/api/projects/${picked.id}/finance/receipts`, {
+            date,
+            amount: n,
+            note,
+            basis: "",
+            confirmOver,
+          }),
+        ))
+      )
+        return setBusy(false);
       for (const k of [
         "receivables",
         "schedule",

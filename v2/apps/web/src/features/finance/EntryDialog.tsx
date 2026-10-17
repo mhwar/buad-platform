@@ -282,7 +282,8 @@ export function EntryDialog({
             </Field>
             <Field label="التصنيف">
               <Select {...f.register("cat")}>
-                {BUILTIN.map((k) => (
+                {/* VAT paid to ZATCA is not a project cost: kept only on entries that already use it. */}
+                {BUILTIN.filter((k) => k !== "vat" || existing?.cat === "vat").map((k) => (
                   <option key={k} value={k}>
                     {CATEGORY_LABELS[k]}
                   </option>

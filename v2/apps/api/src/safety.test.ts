@@ -171,6 +171,7 @@ describe("one figure everywhere", () => {
           date: "2026-03-01",
           amount: paid,
           note: "",
+          confirmOver: true,
         });
     };
     await mk("active", 10000, 1500); // owes 10,000

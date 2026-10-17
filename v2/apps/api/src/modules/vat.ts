@@ -31,7 +31,7 @@ const periodQuery = z.object({
 const within = (d: string, from: string, to: string) => !!d && d >= from && d <= to;
 
 /** Expenses that are not purchases from a supplier: pay, agreement items, fees and tax paid. */
-const NOT_PURCHASES = new Set(["salary", "exec", "cashback", "cf", "vat"]);
+export const NOT_PURCHASES = new Set(["salary", "exec", "cashback", "cf", "vat"]);
 
 export async function vatReport(db: Db, orgId: string, from: string, to: string, label: string) {
   const rows = await db
@@ -84,7 +84,7 @@ export async function vatReport(db: Db, orgId: string, from: string, to: string,
     const s = fin.summary;
     if (s.grossTotal > 0 && !fin.receipts.length && p.status !== "draft") withoutReceipts++;
     for (const r of fin.receipts) {
-      if (!within(r.date, from, to)) continue;
+      if (!r.approvedAt || !within(r.date, from, to)) continue;
       const parts = receiptParts(r.amount / 100, {
         gross: s.grossTotal,
         net: s.contractNet,
