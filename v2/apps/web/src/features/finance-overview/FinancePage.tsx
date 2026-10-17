@@ -32,6 +32,7 @@ import {
 import { day, pct, sar } from "../../lib/format";
 import { financeApi } from "../finance/api";
 import { label, PROJECT_STATUS_LABELS } from "../labels";
+import { FINANCE_TAB_OF } from "../more/tabs";
 import { ReceivablesPage } from "../receivables/ReceivablesPage";
 import { YearReview } from "../year-review/YearReview";
 import {
@@ -49,12 +50,13 @@ import { FinanceChecks } from "./FinanceChecks";
 import { PartnersTab } from "./PartnersTab";
 import { PeriodPicker } from "./PeriodPicker";
 import { QuarterCentre } from "./QuarterCentre";
+import { ReceiptProposals } from "./ReceiptProposals";
 import { Tile } from "./Tile";
 import { VatTab } from "./VatTab";
 
 const route = getRouteApi("/finance");
 type SortKey = "profit" | "margin" | "gross";
-type Tab = "projects" | "review" | "quarter" | "vat" | "company" | "partners" | "receivables";
+type Tab = "overview" | "receivables" | "vat" | "profit";
 
 /** «المالية»: the organisation's money at a glance, then the detail behind every number. */
 export function FinancePage() {
@@ -64,14 +66,14 @@ export function FinancePage() {
   const r = resolvePeriod(choice);
   const filters = { client: s.client, status: s.status };
   const period: Period = { ...r.period, ...filters };
-  const tab: Tab = s.tab ?? "projects";
-  const q = useQuery({ ...overviewQuery(period), enabled: tab === "projects" });
+  const tab: Tab = FINANCE_TAB_OF[s.tab ?? "overview"] ?? "overview";
+  const q = useQuery({ ...overviewQuery(period), enabled: tab === "overview" });
   // The previous quarter/year, for ▲▼ on the headline numbers.
   const prevQ = useQuery({
     ...overviewQuery({ ...(r.prev ?? {}), ...filters }),
-    enabled: tab === "projects" && !!r.prev,
+    enabled: tab === "overview" && !!r.prev,
   });
-  const clients = useQuery({ ...overviewQuery({}), enabled: tab === "projects" });
+  const clients = useQuery({ ...overviewQuery({}), enabled: tab === "overview" });
   const clientOptions = [
     ...new Map((clients.data?.projects ?? []).map((p) => [p.clientId, p.clientName])).entries(),
   ];
@@ -119,93 +121,106 @@ export function FinancePage() {
         <Segmented<Tab>
           label="أقسام المالية"
           value={tab}
-          onChange={(v) => set({ tab: v === "projects" ? undefined : v })}
+          onChange={(v) => set({ tab: v === "overview" ? undefined : v })}
           items={[
-            { value: "projects", label: "المشاريع", icon: <Briefcase className="size-4" /> },
-            { value: "review", label: "مراجعة السنة", icon: <ClipboardCheck className="size-4" /> },
-            { value: "quarter", label: "توزيع الربع", icon: <PieChart className="size-4" /> },
+            { value: "overview", label: "نظرة عامة", icon: <Briefcase className="size-4" /> },
+            { value: "receivables", label: "التحصيل", icon: <Wallet className="size-4" /> },
             { value: "vat", label: "الضريبة", icon: <Percent className="size-4" /> },
-            { value: "company", label: "الشركة", icon: <Building2 className="size-4" /> },
-            { value: "partners", label: "الشركاء والتوزيع", icon: <Users className="size-4" /> },
-            { value: "receivables", label: "التحصيل والتدفق", icon: <Wallet className="size-4" /> },
+            { value: "profit", label: "الأرباح والتوزيع", icon: <PieChart className="size-4" /> },
           ]}
-        />
-      </div>
-      <div
-        className={`mb-6 flex flex-wrap items-center gap-3 ${tab === "partners" || tab === "quarter" || tab === "vat" || tab === "receivables" || tab === "review" ? "hidden" : ""}`}
-      >
-        <FilterBar
-          leading={
-            <PeriodPicker
-              value={choice}
-              onChange={(c) =>
-                set({ preset: c.preset, year: c.year, q: c.q, from: c.from, to: c.to })
-              }
-            />
-          }
-          fields={
-            tab === "projects"
-              ? [
-                  {
-                    key: "client",
-                    label: "العميل",
-                    value: s.client ?? "",
-                    allLabel: "كل العملاء",
-                    options: clientOptions.map(([id, name]) => ({ value: id, label: name })),
-                  },
-                  {
-                    key: "status",
-                    label: "الحالة",
-                    value: s.status ?? "",
-                    allLabel: "كل الحالات",
-                    options: Object.entries(PROJECT_STATUS_LABELS).map(([k, l]) => ({
-                      value: k,
-                      label: l,
-                    })),
-                  },
-                ]
-              : []
-          }
-          onChange={(k, v) => set({ [k]: v || undefined })}
         />
       </div>
 
       {archive && <ArchiveDialog onClose={() => setArchive(false)} />}
-      {tab === "review" ? (
-        <YearReview
-          year={s.year ?? new Date().getFullYear()}
-          onYear={(y) => set({ year: y === new Date().getFullYear() ? undefined : y })}
-        />
-      ) : tab === "vat" ? (
+      {tab === "vat" ? (
         <VatTab />
-      ) : tab === "quarter" ? (
-        <QuarterCentre />
-      ) : tab === "company" ? (
-        <CompanyTab period={period} />
       ) : tab === "receivables" ? (
-        <ReceivablesPage />
-      ) : tab === "partners" ? (
-        <PartnersTab />
-      ) : q.isPending ? (
-        <div className="h-64 animate-pulse rounded-2xl bg-slate-200 dark:bg-slate-800" />
-      ) : q.isError || !q.data ? (
-        <EmptyState
-          title="تعذّر تحميل المالية"
-          action={<Button onClick={() => q.refetch()}>إعادة المحاولة</Button>}
-        />
-      ) : q.data.totals.projects === 0 ? (
-        <EmptyState
-          title="لا مشاريع في هذه الفترة"
-          text="يدخل المشروع الفترة بتاريخ أول مبلغ استُلم منه (أو تاريخ عقده أو بدايته). جرّبوا «كل الفترات»."
-        />
+        <div className="space-y-6">
+          <ReceiptProposals />
+          <ReceivablesPage />
+        </div>
+      ) : tab === "profit" ? (
+        <div className="space-y-10">
+          <QuarterCentre />
+          <section aria-labelledby="company-ledger" className="space-y-3">
+            <h2 id="company-ledger" className="text-lg font-bold">
+              إيرادات الشركة ومصروفاتها
+            </h2>
+            <p className="text-sm text-muted">
+              ما يدخل الشركة ويخرج منها خارج المشاريع؛ صافيه يدخل في الربح القابل للتوزيع.
+            </p>
+            <CompanyTab period={resolvePeriod({ preset: "year" }).period} />
+          </section>
+          <section aria-labelledby="partners-dist" className="space-y-3">
+            <h2 id="partners-dist" className="text-lg font-bold">
+              الشركاء والتوزيعات
+            </h2>
+            <PartnersTab />
+          </section>
+        </div>
       ) : (
-        <Dashboard
-          data={q.data}
-          prev={r.prev ? prevQ.data : undefined}
-          prevLabel={r.prevLabel}
-          sort={sort}
-          setSort={setSort}
-        />
+        <div className="space-y-10">
+          <YearReview
+            year={s.year ?? new Date().getFullYear()}
+            onYear={(y) => set({ year: y === new Date().getFullYear() ? undefined : y })}
+          />
+          <section aria-labelledby="projects-profit" className="space-y-4">
+            <h2 id="projects-profit" className="text-lg font-bold">
+              ربحية المشاريع
+            </h2>
+            <FilterBar
+              leading={
+                <PeriodPicker
+                  value={choice}
+                  onChange={(c) =>
+                    set({ preset: c.preset, year: c.year, q: c.q, from: c.from, to: c.to })
+                  }
+                />
+              }
+              fields={[
+                {
+                  key: "client",
+                  label: "العميل",
+                  value: s.client ?? "",
+                  allLabel: "كل العملاء",
+                  options: clientOptions.map(([id, name]) => ({ value: id, label: name })),
+                },
+                {
+                  key: "status",
+                  label: "الحالة",
+                  value: s.status ?? "",
+                  allLabel: "كل الحالات",
+                  options: Object.entries(PROJECT_STATUS_LABELS).map(([k, l]) => ({
+                    value: k,
+                    label: l,
+                  })),
+                },
+              ]}
+              onChange={(k, v) => set({ [k]: v || undefined })}
+            />
+            {q.isPending ? (
+              <div className="h-64 animate-pulse rounded-2xl bg-slate-200 dark:bg-slate-800" />
+            ) : q.isError || !q.data ? (
+              <EmptyState
+                title="تعذّر تحميل المالية"
+                action={<Button onClick={() => q.refetch()}>إعادة المحاولة</Button>}
+              />
+            ) : q.data.totals.projects === 0 ? (
+              <EmptyState
+                title="لا مشاريع في هذه الفترة"
+                text="يدخل المشروع الفترة بتاريخ أول مبلغ استُلم منه (أو تاريخ عقده أو بدايته). جرّبوا «كل الفترات»."
+              />
+            ) : (
+              <Dashboard
+                data={q.data}
+                prev={r.prev ? prevQ.data : undefined}
+                prevLabel={r.prevLabel}
+                sort={sort}
+                setSort={setSort}
+              />
+            )}
+          </section>
+        </div>
       )}
     </>
   );
