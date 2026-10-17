@@ -340,3 +340,24 @@ describe("full export", () => {
     expect((await call("acc", "GET", "/api/org/export")).status).toBe(403);
   });
 });
+
+describe("account and storage", () => {
+  it("signs out the other devices and keeps this one", async () => {
+    const other = cookie.own;
+    const r = await app.request(
+      "/api/auth/logout-others",
+      { method: "POST", headers: { cookie: cookie.own ?? "" } },
+      env,
+    );
+    expect(r.status).toBe(200);
+    const fresh = (r.headers.get("set-cookie") ?? "").split(";")[0] ?? "";
+    const me = (c: string) => app.request("/api/me", { headers: { cookie: c } }, env);
+    expect((await me(fresh)).status).toBe(200);
+    expect((await me(other ?? "")).status).toBe(401);
+  });
+
+  it("reports the files' total size for the organisation", async () => {
+    const r = (await call("own", "GET", "/api/org/storage")).body;
+    expect(r).toMatchObject({ ok: true, bytes: 0, files: 0 });
+  });
+});

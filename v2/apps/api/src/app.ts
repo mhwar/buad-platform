@@ -7,7 +7,7 @@ import {
 } from "@buad/schema";
 import { users } from "@buad/schema/db";
 import { zValidator } from "@hono/zod-validator";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
 import { Hono } from "hono";
 import { deleteCookie, setCookie } from "hono/cookie";
@@ -172,6 +172,20 @@ export function createApp(deps: AppDeps = {}) {
           return c.json({ ok: true });
         },
       )
+
+      // Signs out every other device: older tokens stop working, this one is re-issued.
+      .post("/api/auth/logout-others", requireAuth, async (c) => {
+        const db = c.get("db");
+        const me = c.get("user");
+        await db
+          .update(users)
+          .set({ tokenVersion: sql`${users.tokenVersion} + 1` })
+          .where(eq(users.id, me.id));
+        const fresh = await getUser(db, me.id);
+        if (!fresh) return c.json({ ok: false, error: "unauthorized" }, 401);
+        setCookie(c, SESSION_COOKIE, await signSession(c.env.JWT_SECRET, fresh), sessionCookie);
+        return c.json({ ok: true });
+      })
 
       // Admin-issued invite: the only way a pending user gets to choose a first password.
       .post("/api/users/:id/invite", requireAuth, requirePerm("team.manage"), async (c) => {

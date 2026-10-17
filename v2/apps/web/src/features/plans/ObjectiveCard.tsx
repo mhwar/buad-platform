@@ -1,6 +1,7 @@
 import { PLAN_STATUS_LABEL, type PlanStatus } from "@buad/domain";
 import { Link2, ListPlus, MessageSquarePlus, Pencil, Plus, Trash2 } from "lucide-react";
-import { Badge, Button, Card, type Tone } from "../../components/ui";
+import { useState } from "react";
+import { Badge, BadgeMenu, Button, Card, type Tone } from "../../components/ui";
 import { day, sar } from "../../lib/format";
 import { send } from "../team/queries";
 import type { Indicator, Initiative, Objective } from "./queries";
@@ -44,6 +45,12 @@ const INIT_LABEL: Record<Initiative["status"], string> = {
   blocked: "متعثرة",
   done: "منجزة",
 };
+const INIT_TONE: Record<Initiative["status"], Tone> = {
+  todo: "gray",
+  doing: "blue",
+  blocked: "red",
+  done: "green",
+};
 export const fmt = (n: number) =>
   new Intl.NumberFormat("ar-SA-u-nu-latn", { maximumFractionDigits: 1 }).format(n);
 
@@ -78,6 +85,9 @@ export function ObjectiveCard({
   onAddTask?: (i: Initiative) => void;
 }) {
   const last = o.reviews[0];
+  // Finished initiatives fold away; the list shows what is still to do.
+  const [showDone, setShowDone] = useState(false);
+  const doneCount = o.initiatives.filter((i) => i.status === "done").length;
   return (
     <Card className="space-y-4">
       <div className="flex flex-wrap items-start justify-between gap-2">
@@ -164,62 +174,67 @@ export function ObjectiveCard({
         </div>
         {o.initiatives.length === 0 && <p className="text-xs text-muted">لا مبادرات بعد.</p>}
         <ul className="space-y-1.5">
-          {o.initiatives.map((i) => (
-            <li
-              key={i.id}
-              className="flex flex-wrap items-center justify-between gap-2 rounded-lg border px-3 py-2 text-sm"
-            >
-              <button
-                type="button"
-                disabled={!canEdit}
-                onClick={() => onEditInitiative(i)}
-                className="min-w-0 truncate text-start hover:underline disabled:no-underline"
+          {o.initiatives
+            .filter((i) => showDone || i.status !== "done" || doneCount === o.initiatives.length)
+            .map((i) => (
+              <li
+                key={i.id}
+                className="flex flex-wrap items-center justify-between gap-2 rounded-lg border px-3 py-2 text-sm"
               >
-                {i.title}
-              </button>
-              <span className="flex items-center gap-2">
-                {i.dueDate && <span className="text-xs text-muted">حتى {day(i.dueDate)}</span>}
-                {!!i.tasks?.total && (
-                  <Badge tone={i.tasks.done === i.tasks.total ? "green" : "gray"}>
-                    مهام {i.tasks.done}/{i.tasks.total}
-                  </Badge>
-                )}
-                {onAddTask && (
-                  <Button
-                    variant="ghost"
-                    className="px-2"
-                    aria-label={`مهمة لـ ${i.title}`}
-                    title="أضف مهمة لهذه المبادرة"
-                    onClick={() => onAddTask(i)}
-                  >
-                    <ListPlus className="size-4" />
-                  </Button>
-                )}
-                {canEdit ? (
-                  <select
-                    aria-label={`حالة ${i.title}`}
-                    value={i.status}
-                    onChange={async (e) => {
-                      await send("PATCH", `/api/plans/initiatives/${i.id}`, {
-                        status: e.target.value,
-                      });
+                <button
+                  type="button"
+                  disabled={!canEdit}
+                  onClick={() => onEditInitiative(i)}
+                  className="min-w-0 truncate text-start hover:underline disabled:no-underline"
+                >
+                  {i.title}
+                </button>
+                <span className="flex items-center gap-2">
+                  {i.dueDate && <span className="text-xs text-muted">حتى {day(i.dueDate)}</span>}
+                  {!!i.tasks?.total && (
+                    <Badge tone={i.tasks.done === i.tasks.total ? "green" : "gray"}>
+                      مهام {i.tasks.done}/{i.tasks.total}
+                    </Badge>
+                  )}
+                  {onAddTask && (
+                    <Button
+                      variant="ghost"
+                      className="px-2"
+                      aria-label={`مهمة لـ ${i.title}`}
+                      title="أضف مهمة لهذه المبادرة"
+                      onClick={() => onAddTask(i)}
+                    >
+                      <ListPlus className="size-4" />
+                    </Button>
+                  )}
+                  <BadgeMenu
+                    name={i.title}
+                    tone={INIT_TONE[i.status]}
+                    label={INIT_LABEL[i.status]}
+                    disabled={!canEdit}
+                    options={(Object.keys(INIT_LABEL) as Initiative["status"][]).map((v) => ({
+                      value: v,
+                      label: INIT_LABEL[v],
+                      tone: INIT_TONE[v],
+                    }))}
+                    onSelect={async (status) => {
+                      await send("PATCH", `/api/plans/initiatives/${i.id}`, { status });
                       onChanged();
                     }}
-                    className="min-h-11 rounded-lg border bg-surface px-2 text-sm sm:min-h-8"
-                  >
-                    {(Object.keys(INIT_LABEL) as Initiative["status"][]).map((s) => (
-                      <option key={s} value={s}>
-                        {INIT_LABEL[s]}
-                      </option>
-                    ))}
-                  </select>
-                ) : (
-                  <Badge>{INIT_LABEL[i.status]}</Badge>
-                )}
-              </span>
-            </li>
-          ))}
+                  />
+                </span>
+              </li>
+            ))}
         </ul>
+        {doneCount > 0 && doneCount < o.initiatives.length && (
+          <button
+            type="button"
+            className="mt-1.5 text-xs text-muted underline hover:text-ink"
+            onClick={() => setShowDone((v) => !v)}
+          >
+            {showDone ? "إخفاء المنجزة" : `عرض المنجزة (${doneCount})`}
+          </button>
+        )}
       </section>
 
       {(last || canEdit) && (
