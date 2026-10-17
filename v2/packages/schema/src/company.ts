@@ -47,7 +47,11 @@ export const partnerInput = z.object({
 
 export const distributionInput = z.object({
   /** "period": company profit still available; "project": one project's profit. */
-  mode: z.enum(["period", "project", "quarter"]).default("period"),
+  mode: z.enum(["period", "project", "quarter", "manual"]).default("period"),
+  /** mode "manual": a distribution already paid in the past, by its actual amount (riyals). */
+  amount: z.coerce.number().positive().max(1e10).optional(),
+  paidOn: date,
+  paidRef: z.string().trim().max(120).default(""),
   /** mode "quarter": the quarter whose realized profit is distributed. */
   year: z.coerce.number().int().min(2000).max(2100).optional(),
   q: z.coerce.number().int().min(1).max(4).optional(),

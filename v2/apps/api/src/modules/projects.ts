@@ -192,6 +192,7 @@ export const projectsApp = new Hono<Env>()
         /** Contract total incl. VAT (halalas): finance settings if present, else expected value + 15%. */
         contractTotal,
         archivedAt: projects.archivedAt,
+        closedAt: projects.closedAt,
         clientId: projects.clientId,
         clientName: clients.name,
         clientLogoUrl: sql<string>`${logoUrlSql("clients")}`,

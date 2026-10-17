@@ -189,7 +189,31 @@ async function computeDistribution(
   let label = input.label;
   let perProject: { projectId: string; amount: number }[] = [];
   let range = { from: input.from, to: input.to };
-  if (input.mode === "quarter") {
+  if (input.mode === "manual") {
+    // A past distribution by what was actually paid: taken from one project, or spread over a
+    // quarter's projects by what each still had to distribute (the rest counts as company net).
+    if (!input.amount) return null;
+    net = input.amount;
+    if (input.projectId) {
+      const p = figs.find((f) => f.id === input.projectId);
+      if (!p) return null;
+      perProject = [{ projectId: p.id, amount: net }];
+      label ||= `توزيع سابق: ${p.name}`;
+    } else if (input.year && input.q) {
+      const qd = await quarterData(db, orgId, input.year, input.q);
+      const open = qd.rows.filter((r) => r.available > 0);
+      const total = open.reduce((a, r) => a + r.available, 0);
+      const fromProjects = Math.min(net, total);
+      perProject = open.map((r) => ({
+        projectId: r.id,
+        amount: Math.round((r.available / total) * fromProjects * 100) / 100,
+      }));
+      label ||= `توزيع سابق: ${qd.label}`;
+      range = { from: qd.from, to: qd.to };
+    } else return null;
+    grossIncome = net;
+    grossExpenses = 0;
+  } else if (input.mode === "quarter") {
     if (!input.year || !input.q) return null;
     const qd = await quarterData(db, orgId, input.year, input.q);
     const d = quarterDistributable(
@@ -681,7 +705,10 @@ export const companyFinanceApp = new Hono<Env>()
       const db = c.get("db");
       const me = c.get("user");
       const v = c.req.valid("json");
-      if (v.status === "completed" && !sharesOk(await sharesTotal(db, me.orgId)))
+      if (
+        (v.status === "completed" || v.mode === "manual") &&
+        !sharesOk(await sharesTotal(db, me.orgId))
+      )
         return c.json({ ok: false, error: "shares_not_100" }, 409);
       const r = await computeDistribution(db, me.orgId, v);
       if (!r) return c.json({ ok: false, error: "not_found" }, 404);
@@ -694,7 +721,11 @@ export const companyFinanceApp = new Hono<Env>()
           id,
           orgId: me.orgId,
           periodType:
-            v.mode === "project" ? "project" : v.mode === "quarter" ? `q${v.q}` : v.periodType,
+            v.mode === "project" || (v.mode === "manual" && v.projectId)
+              ? "project"
+              : v.mode === "quarter" || v.mode === "manual"
+                ? `q${v.q}`
+                : v.periodType,
           periodLabel: r.label,
           fromDate: r.range.from,
           toDate: r.range.to,
@@ -709,9 +740,12 @@ export const companyFinanceApp = new Hono<Env>()
             v.mode === "project" ? [v.projectId] : r.perProject.map((x) => x.projectId),
           ),
           projectId: v.mode === "project" ? v.projectId : "",
-          status: v.status,
+          // A past distribution is recorded as it happened: approved and paid.
+          status: v.mode === "manual" ? "completed" : v.status,
           note: v.note,
-          completedAt: v.status === "completed" ? t : null,
+          completedAt: v.status === "completed" || v.mode === "manual" ? t : null,
+          paidOn: v.mode === "manual" ? v.paidOn : "",
+          paidBy: v.mode === "manual" ? me.id : "",
           createdBy: me.id,
           createdAt: t,
           updatedBy: me.id,
@@ -740,6 +774,8 @@ export const companyFinanceApp = new Hono<Env>()
               partnerName: s.partnerName,
               sharePct: s.sharePct,
               amount: s.amount,
+              paidOn: v.mode === "manual" ? v.paidOn : "",
+              paidRef: v.mode === "manual" ? v.paidRef : "",
             })),
           ),
         );

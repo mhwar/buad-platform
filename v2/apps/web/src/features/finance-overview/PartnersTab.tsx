@@ -33,6 +33,7 @@ import { Tile } from "./Tile";
 /** «الشركاء والتوزيع»: who owns what, and every profit distribution (draft → completed). */
 export function PartnersTab() {
   const [wizard, setWizard] = useState(false);
+  const [past, setPast] = useState(false);
   return (
     <div className="space-y-6">
       <BalancesCard />
@@ -42,13 +43,19 @@ export function PartnersTab() {
           <h2 className="flex items-center gap-2 font-semibold">
             <PieChart className="size-4" /> توزيعات الأرباح
           </h2>
-          <Button onClick={() => setWizard(true)}>
-            <Plus className="size-4" /> توزيع ربح مشروع
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="secondary" onClick={() => setPast(true)}>
+              توزيع سابق
+            </Button>
+            <Button onClick={() => setWizard(true)}>
+              <Plus className="size-4" /> توزيع ربح مشروع
+            </Button>
+          </div>
         </div>
         <Distributions />
       </Card>
       {wizard && <DistributionWizard onClose={() => setWizard(false)} />}
+      {past && <PastDistributionDialog onClose={() => setPast(false)} />}
     </div>
   );
 }
@@ -293,6 +300,150 @@ function Distributions() {
         </li>
       ))}
     </ul>
+  );
+}
+
+/**
+ * «توزيع سابق»: profit already paid to the partners before the platform recorded it — by its
+ * actual amount, from a quarter or a project. Saved approved and paid; split by today's shares.
+ */
+function PastDistributionDialog({ onClose }: { onClose: () => void }) {
+  const qc = useQueryClient();
+  const o = useQuery(companyOverviewQuery({}));
+  const now = new Date();
+  const [scope, setScope] = useState<"quarter" | "project">("quarter");
+  const [year, setYear] = useState(now.getFullYear());
+  const [q, setQ] = useState(Math.max(1, Math.floor(now.getMonth() / 3)));
+  const [projectId, setProjectId] = useState("");
+  const [amount, setAmount] = useState("");
+  const [paidOn, setPaidOn] = useState(now.toISOString().slice(0, 10));
+  const [paidRef, setPaidRef] = useState("");
+  const [preview, setPreview] = useState<Preview | null>(null);
+  const [err, setErr] = useState("");
+  const input = {
+    mode: "manual" as const,
+    amount: Number(amount) || 0,
+    paidOn,
+    paidRef,
+    ...(scope === "quarter" ? { year, q } : { projectId }),
+  };
+  const key = JSON.stringify(input);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `key` captures every input
+  useEffect(() => {
+    setPreview(null);
+    if (!(input.amount > 0) || (scope === "project" && !projectId)) return;
+    const t = setTimeout(() => {
+      companyApi
+        .preview(input)
+        .then(setPreview)
+        .catch(() => setPreview(null));
+    }, 300);
+    return () => clearTimeout(t);
+  }, [key]);
+  return (
+    <Dialog
+      open
+      onOpenChange={(v) => !v && onClose()}
+      title="تسجيل توزيع سابق"
+      footer={
+        <DialogActions onCancel={onClose}>
+          <Button
+            disabled={!preview}
+            onClick={async () => {
+              try {
+                await companyApi.saveDistribution({ ...input, status: "completed" });
+                await qc.invalidateQueries({ queryKey: companyKeys.all });
+                toast("سُجّل التوزيع السابق");
+                onClose();
+              } catch (x) {
+                const code = (x as { body?: { error?: string } }).body?.error;
+                setErr(
+                  code === "shares_not_100"
+                    ? "مجموع حصص الشركاء ليس 100%؛ صحّحوا الحصص أولاً."
+                    : "تعذّر الحفظ",
+                );
+              }
+            }}
+          >
+            تسجيل
+          </Button>
+        </DialogActions>
+      }
+    >
+      {err && <Notice>{err}</Notice>}
+      <p className="mb-4 text-sm text-muted">
+        أرباح دُفعت فعلاً قبل تسجيلها في المنصة. يُسجَّل المبلغ الفعلي معتمداً ومدفوعاً، ويُقسم على الشركاء
+        بحصصهم، ويُخصم مما بقي من ربح الربع أو المشروع فلا يُوزَّع مرة أخرى.
+      </p>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Field label="من">
+          <Select value={scope} onChange={(e) => setScope(e.target.value as "quarter")}>
+            <option value="quarter">أرباح ربع</option>
+            <option value="project">أرباح مشروع</option>
+          </Select>
+        </Field>
+        {scope === "quarter" ? (
+          <div className="grid grid-cols-2 gap-2">
+            <Field label="السنة">
+              <Input
+                type="number"
+                dir="ltr"
+                value={year}
+                onChange={(e) => setYear(Number(e.target.value) || now.getFullYear())}
+              />
+            </Field>
+            <Field label="الربع">
+              <Select value={q} onChange={(e) => setQ(Number(e.target.value))}>
+                {[1, 2, 3, 4].map((n) => (
+                  <option key={n} value={n}>
+                    ر{n}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+          </div>
+        ) : (
+          <Field label="المشروع">
+            <Select value={projectId} onChange={(e) => setProjectId(e.target.value)}>
+              <option value="">اختاروا المشروع…</option>
+              {(o.data?.projects ?? []).map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+            </Select>
+          </Field>
+        )}
+        <Field label="المبلغ المدفوع فعلاً (ر.س)">
+          <Input
+            type="number"
+            inputMode="decimal"
+            dir="ltr"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+          />
+        </Field>
+        <Field label="تاريخ الدفع">
+          <Input type="date" value={paidOn} onChange={(e) => setPaidOn(e.target.value)} />
+        </Field>
+        <Field label="مرجع التحويل (اختياري)" className="sm:col-span-2">
+          <Input dir="ltr" value={paidRef} onChange={(e) => setPaidRef(e.target.value)} />
+        </Field>
+      </div>
+      {preview && (
+        <ul className="mt-4 space-y-1 rounded-lg border p-3 text-sm">
+          <li className="mb-1 font-semibold">{preview.label}</li>
+          {preview.shares.map((s) => (
+            <li key={`${s.partnerId}-${s.partnerName}`} className="flex justify-between">
+              <span>
+                {s.partnerName} <span className="text-muted">({s.sharePct}%)</span>
+              </span>
+              <b>{sar(s.amount)}</b>
+            </li>
+          ))}
+        </ul>
+      )}
+    </Dialog>
   );
 }
 
