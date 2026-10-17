@@ -167,8 +167,52 @@ test("finance has four tabs, and older links land in their new home", async ({ p
   await page.goto("/finance");
   const tabs = page.getByRole("tablist", { name: "أقسام المالية" });
   await expect(tabs.getByRole("tab")).toHaveCount(4);
-  await expect(page.getByRole("heading", { name: "ربحية المشاريع" })).toBeVisible();
+  await expect(page.locator("#projects-profit")).toBeVisible();
   await page.goto("/finance?tab=partners");
   await expect(page.getByRole("heading", { name: "الشركاء والتوزيعات" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "إيرادات الشركة ومصروفاتها" })).toBeVisible();
+});
+
+test("VAT: the year by quarter, a sent invoice moves output VAT, a company purchase adds input VAT", async ({
+  page,
+  api,
+}) => {
+  const c = await api<{ id: string }>("POST", "/api/clients", { name: `جمعية الضريبة ${uid()}` });
+  const name = `مشروع الضريبة ${uid()}`;
+  const p = await api<{ id: string }>("POST", "/api/projects", { clientId: c.id, name });
+  await api("PATCH", `/api/projects/${p.id}/finance/ctrl`, {
+    version: 0,
+    contractValue: 11500,
+    vatIncluded: true,
+  });
+  await api("POST", `/api/projects/${p.id}/finance/receipts`, {
+    date: `${year}-02-10`,
+    amount: 11500,
+    note: "",
+  });
+
+  // A tax invoice sent in May: the project's output VAT moves from Q1 to Q2.
+  await page.goto(`/projects/${p.id}?view=finance`);
+  await page.getByRole("tab", { name: /الفواتير/ }).click();
+  await page.getByRole("button", { name: "فاتورة ضريبية مرسلة" }).click();
+  const dlg = page.getByRole("dialog");
+  const invNo = `INV-${uid()}`;
+  await dlg.getByLabel("رقم الفاتورة").fill(invNo);
+  await dlg.getByLabel("تاريخ الفاتورة").fill(`${year}-05-03`);
+  await dlg.getByLabel("المبلغ شامل الضريبة (ر.س)").fill("11500");
+  await dlg.getByRole("button", { name: "حفظ" }).click();
+  await expect(page.getByRole("status").filter({ hasText: "سُجّلت الفاتورة" })).toBeVisible();
+
+  await page.goto(`/finance?tab=vat&year=${year}&q=2`);
+  await expect(page.getByRole("heading", { name: `إقرارات سنة ${year}` })).toBeVisible();
+  await expect(page.getByText(invNo)).toBeVisible();
+
+  await page.getByRole("button", { name: "مشترى للشركة" }).click();
+  const buy = page.getByRole("dialog");
+  await buy.getByLabel("البيان").fill(`جهاز ${uid()}`);
+  await buy.getByLabel("تاريخ الفاتورة").fill(`${year}-05-10`);
+  await buy.getByLabel("المبلغ شامل الضريبة (ر.س)").fill("2300");
+  await buy.getByRole("button", { name: "حفظ" }).click();
+  await expect(page.getByRole("status").filter({ hasText: "سُجّل المشترى بفاتورته" })).toBeVisible();
+  await expect(page.getByRole("cell", { name: "الشركة" }).first()).toBeVisible();
 });

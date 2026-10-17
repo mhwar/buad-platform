@@ -3,13 +3,16 @@ import { CalendarClock, FileSignature } from "lucide-react";
 import { useState } from "react";
 import { Badge, Card, cx, Segmented } from "../../components/ui";
 import { day, sar } from "../../lib/format";
+import { useCan } from "../../session";
+import { invoicesQuery } from "../finance-overview/vat-api";
 import { scheduleQuery } from "../receivables/api";
 import { ScheduleCard } from "../receivables/ScheduleCard";
 import { financeQuery } from "./api";
 import { ContractSummary } from "./FinanceTab";
 import { ReceiptsCard } from "./Receipts";
+import { SalesInvoices } from "./SalesInvoices";
 
-type Part = "summary" | "receipts" | "schedule";
+type Part = "summary" | "receipts" | "invoices" | "schedule";
 
 /**
  * «العقد والتحصيل»: one card for the contract and the money owed on it. The head always says
@@ -34,6 +37,10 @@ export function ContractCard({
   const next = pending[0];
   const late = !!next && next.dueDate < today;
   const [part, setPart] = useState<Part | null>(null);
+  const can = useCan();
+  const vatView = can("vat.view");
+  const vatEdit = can("vat.edit");
+  const invoices = useQuery({ ...invoicesQuery(projectId), enabled: vatView });
   if (!f.data) return null;
   const gross = f.data.summary.grossTotal;
   const received = f.data.received;
@@ -83,6 +90,9 @@ export function ContractCard({
         items={[
           { value: "summary", label: "الملخص" },
           { value: "receipts", label: `الاستلامات (${f.data.receipts.length})` },
+          ...(vatView
+            ? [{ value: "invoices" as const, label: `الفواتير (${invoices.data?.length ?? 0})` }]
+            : []),
           { value: "schedule", label: `الدفعات (${pending.length})` },
         ]}
       />
@@ -90,6 +100,7 @@ export function ContractCard({
         <ContractSummary projectId={projectId} canEdit={canEdit} onSettings={onSettings} embedded />
       </div>
       {shown === "receipts" && <ReceiptsCard projectId={projectId} canEdit={canEdit} embedded />}
+      {shown === "invoices" && <SalesInvoices projectId={projectId} canEdit={canEdit && vatEdit} />}
       {shown === "schedule" && <ScheduleCard projectId={projectId} canEdit={canEdit} embedded />}
     </Card>
   );

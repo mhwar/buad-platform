@@ -104,13 +104,21 @@ export async function vatReport(db: Db, orgId: string, from: string, to: string,
     date: string;
     description: string;
     category: string;
+    cat: string;
     amount: number;
     owner: "project" | "company";
   }[] = [];
   let withoutReceipts = 0;
   let invoicesShort = 0;
   let cfUndecided = 0;
-  let vatAsExpense = 0;
+  const vatExpenses: {
+    entryId: string;
+    projectId: string;
+    projectName: string;
+    date: string;
+    description: string;
+    amount: number;
+  }[] = [];
   let reserved = 0;
   const invoices = await db
     .select()
@@ -180,7 +188,15 @@ export async function vatReport(db: Db, orgId: string, from: string, to: string,
         if (e.cfKind === "vat") reserved += e.amount;
         else if (!e.cfKind) cfUndecided++;
       }
-      if (e.cat === "vat") vatAsExpense++;
+      if (e.cat === "vat" && within(e.date, from, to))
+        vatExpenses.push({
+          entryId: e.id,
+          projectId: p.id,
+          projectName: p.name,
+          date: e.date,
+          description: e.description,
+          amount: r2(e.amount / 100),
+        });
       if (e.taxInvoice) {
         const date = e.invoiceDate || e.date;
         if (!within(date, from, to)) continue;
@@ -208,6 +224,7 @@ export async function vatReport(db: Db, orgId: string, from: string, to: string,
           date: e.date,
           description: e.description,
           category: catLabel(e.cat),
+          cat: e.cat,
           amount: r2(e.amount / 100),
           owner: "project",
         });
@@ -253,6 +270,7 @@ export async function vatReport(db: Db, orgId: string, from: string, to: string,
         date: e.date,
         description: e.description,
         category: COMPANY_CAT_LABELS[e.category] ?? "أخرى",
+        cat: e.category,
         amount: r2(e.amount / 100),
         owner: "company",
       });
@@ -279,7 +297,7 @@ export async function vatReport(db: Db, orgId: string, from: string, to: string,
   if (fromReceipts) warnings.push({ code: "sales_without_invoice", count: fromReceipts });
   if (invoicesShort) warnings.push({ code: "invoices_below_receipts", count: invoicesShort });
   if (cfUndecided) warnings.push({ code: "cf_undecided", count: cfUndecided });
-  if (vatAsExpense) warnings.push({ code: "vat_as_expense", count: vatAsExpense });
+  if (vatExpenses.length) warnings.push({ code: "vat_as_expense", count: vatExpenses.length });
 
   return {
     period: { from, to, label },
@@ -300,6 +318,8 @@ export async function vatReport(db: Db, orgId: string, from: string, to: string,
     netPayable: ret.netPayable,
     /** The contract VAT already set aside in projects («cf» entries marked as VAT). */
     reserved: r2(reserved / 100),
+    /** Tax paid to ZATCA that was booked as a project expense: to move to its return. */
+    vatExpenses,
     warnings,
   };
 }

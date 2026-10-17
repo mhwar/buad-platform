@@ -69,10 +69,7 @@
       "indexes": {
         "uq_assets_hash": {
           "name": "uq_assets_hash",
-          "columns": [
-            "org_id",
-            "sha256"
-          ],
+          "columns": ["org_id", "sha256"],
           "isUnique": true
         }
       },
@@ -81,12 +78,8 @@
           "name": "assets_org_id_orgs_id_fk",
           "tableFrom": "assets",
           "tableTo": "orgs",
-          "columnsFrom": [
-            "org_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["org_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -178,19 +171,12 @@
       "indexes": {
         "idx_audit_org_at": {
           "name": "idx_audit_org_at",
-          "columns": [
-            "org_id",
-            "at"
-          ],
+          "columns": ["org_id", "at"],
           "isUnique": false
         },
         "idx_audit_entity": {
           "name": "idx_audit_entity",
-          "columns": [
-            "org_id",
-            "entity",
-            "entity_id"
-          ],
+          "columns": ["org_id", "entity", "entity_id"],
           "isUnique": false
         }
       },
@@ -199,12 +185,8 @@
           "name": "audit_log_org_id_orgs_id_fk",
           "tableFrom": "audit_log",
           "tableTo": "orgs",
-          "columnsFrom": [
-            "org_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["org_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -274,9 +256,7 @@
       "indexes": {
         "idx_contacts_client": {
           "name": "idx_contacts_client",
-          "columns": [
-            "client_id"
-          ],
+          "columns": ["client_id"],
           "isUnique": false
         }
       },
@@ -285,12 +265,8 @@
           "name": "client_contacts_client_id_clients_id_fk",
           "tableFrom": "client_contacts",
           "tableTo": "clients",
-          "columnsFrom": [
-            "client_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["client_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -501,36 +477,24 @@
       "indexes": {
         "uq_clients_code": {
           "name": "uq_clients_code",
-          "columns": [
-            "org_id",
-            "code"
-          ],
+          "columns": ["org_id", "code"],
           "isUnique": true
         },
         "uq_clients_reg": {
           "name": "uq_clients_reg",
-          "columns": [
-            "org_id",
-            "reg_no"
-          ],
+          "columns": ["org_id", "reg_no"],
           "isUnique": true,
           "where": "reg_no <> ''"
         },
         "uq_clients_tax": {
           "name": "uq_clients_tax",
-          "columns": [
-            "org_id",
-            "tax_no"
-          ],
+          "columns": ["org_id", "tax_no"],
           "isUnique": true,
           "where": "tax_no <> ''"
         },
         "idx_clients_org": {
           "name": "idx_clients_org",
-          "columns": [
-            "org_id",
-            "archived_at"
-          ],
+          "columns": ["org_id", "archived_at"],
           "isUnique": false
         }
       },
@@ -539,12 +503,8 @@
           "name": "clients_org_id_orgs_id_fk",
           "tableFrom": "clients",
           "tableTo": "orgs",
-          "columnsFrom": [
-            "org_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["org_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -714,11 +674,7 @@
       "indexes": {
         "idx_company_entries_org": {
           "name": "idx_company_entries_org",
-          "columns": [
-            "org_id",
-            "type",
-            "date"
-          ],
+          "columns": ["org_id", "type", "date"],
           "isUnique": false
         }
       },
@@ -727,12 +683,8 @@
           "name": "company_entries_org_id_orgs_id_fk",
           "tableFrom": "company_entries",
           "tableTo": "orgs",
-          "columnsFrom": [
-            "org_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["org_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -823,18 +775,12 @@
       "indexes": {
         "idx_crm_client": {
           "name": "idx_crm_client",
-          "columns": [
-            "client_id",
-            "at"
-          ],
+          "columns": ["client_id", "at"],
           "isUnique": false
         },
         "idx_crm_org": {
           "name": "idx_crm_org",
-          "columns": [
-            "org_id",
-            "at"
-          ],
+          "columns": ["org_id", "at"],
           "isUnique": false
         }
       },
@@ -843,12 +789,8 @@
           "name": "crm_activities_org_id_orgs_id_fk",
           "tableFrom": "crm_activities",
           "tableTo": "orgs",
-          "columnsFrom": [
-            "org_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["org_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -856,12 +798,8 @@
           "name": "crm_activities_client_id_clients_id_fk",
           "tableFrom": "crm_activities",
           "tableTo": "clients",
-          "columnsFrom": [
-            "client_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["client_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -978,25 +916,17 @@
       "indexes": {
         "idx_decisions_org": {
           "name": "idx_decisions_org",
-          "columns": [
-            "org_id",
-            "status"
-          ],
+          "columns": ["org_id", "status"],
           "isUnique": false
         },
         "idx_decisions_owner": {
           "name": "idx_decisions_owner",
-          "columns": [
-            "owner_id",
-            "status"
-          ],
+          "columns": ["owner_id", "status"],
           "isUnique": false
         },
         "idx_decisions_meeting": {
           "name": "idx_decisions_meeting",
-          "columns": [
-            "meeting_id"
-          ],
+          "columns": ["meeting_id"],
           "isUnique": false
         }
       },
@@ -1005,12 +935,8 @@
           "name": "decisions_org_id_orgs_id_fk",
           "tableFrom": "decisions",
           "tableTo": "orgs",
-          "columnsFrom": [
-            "org_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["org_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1054,16 +980,12 @@
       "indexes": {
         "idx_distribution_projects_d": {
           "name": "idx_distribution_projects_d",
-          "columns": [
-            "distribution_id"
-          ],
+          "columns": ["distribution_id"],
           "isUnique": false
         },
         "idx_distribution_projects_p": {
           "name": "idx_distribution_projects_p",
-          "columns": [
-            "project_id"
-          ],
+          "columns": ["project_id"],
           "isUnique": false
         }
       },
@@ -1072,12 +994,8 @@
           "name": "distribution_projects_distribution_id_distributions_id_fk",
           "tableFrom": "distribution_projects",
           "tableTo": "distributions",
-          "columnsFrom": [
-            "distribution_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["distribution_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1136,9 +1054,7 @@
       "indexes": {
         "idx_distribution_shares": {
           "name": "idx_distribution_shares",
-          "columns": [
-            "distribution_id"
-          ],
+          "columns": ["distribution_id"],
           "isUnique": false
         }
       },
@@ -1147,12 +1063,8 @@
           "name": "distribution_shares_distribution_id_distributions_id_fk",
           "tableFrom": "distribution_shares",
           "tableTo": "distributions",
-          "columnsFrom": [
-            "distribution_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["distribution_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1347,10 +1259,7 @@
       "indexes": {
         "idx_distributions_org": {
           "name": "idx_distributions_org",
-          "columns": [
-            "org_id",
-            "status"
-          ],
+          "columns": ["org_id", "status"],
           "isUnique": false
         }
       },
@@ -1359,12 +1268,8 @@
           "name": "distributions_org_id_orgs_id_fk",
           "tableFrom": "distributions",
           "tableTo": "orgs",
-          "columnsFrom": [
-            "org_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["org_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1456,9 +1361,7 @@
       "indexes": {
         "idx_templates_org": {
           "name": "idx_templates_org",
-          "columns": [
-            "org_id"
-          ],
+          "columns": ["org_id"],
           "isUnique": false
         }
       },
@@ -1467,12 +1370,8 @@
           "name": "doc_templates_org_id_orgs_id_fk",
           "tableFrom": "doc_templates",
           "tableTo": "orgs",
-          "columnsFrom": [
-            "org_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["org_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1567,16 +1466,12 @@
       "indexes": {
         "uq_document_shares_token": {
           "name": "uq_document_shares_token",
-          "columns": [
-            "token_hash"
-          ],
+          "columns": ["token_hash"],
           "isUnique": true
         },
         "idx_document_shares_document": {
           "name": "idx_document_shares_document",
-          "columns": [
-            "document_id"
-          ],
+          "columns": ["document_id"],
           "isUnique": false
         }
       },
@@ -1585,12 +1480,8 @@
           "name": "document_shares_org_id_orgs_id_fk",
           "tableFrom": "document_shares",
           "tableTo": "orgs",
-          "columnsFrom": [
-            "org_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["org_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -1598,12 +1489,8 @@
           "name": "document_shares_document_id_documents_id_fk",
           "tableFrom": "document_shares",
           "tableTo": "documents",
-          "columnsFrom": [
-            "document_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["document_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1661,9 +1548,7 @@
       "indexes": {
         "idx_versions_document": {
           "name": "idx_versions_document",
-          "columns": [
-            "document_id"
-          ],
+          "columns": ["document_id"],
           "isUnique": false
         }
       },
@@ -1672,12 +1557,8 @@
           "name": "document_versions_document_id_documents_id_fk",
           "tableFrom": "document_versions",
           "tableTo": "documents",
-          "columnsFrom": [
-            "document_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["document_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1869,35 +1750,23 @@
       "indexes": {
         "uq_documents_number": {
           "name": "uq_documents_number",
-          "columns": [
-            "org_id",
-            "number"
-          ],
+          "columns": ["org_id", "number"],
           "isUnique": true
         },
         "uq_documents_outgoing": {
           "name": "uq_documents_outgoing",
-          "columns": [
-            "org_id",
-            "outgoing_no"
-          ],
+          "columns": ["org_id", "outgoing_no"],
           "isUnique": true,
           "where": "outgoing_no <> ''"
         },
         "idx_documents_project": {
           "name": "idx_documents_project",
-          "columns": [
-            "project_id",
-            "kind"
-          ],
+          "columns": ["project_id", "kind"],
           "isUnique": false
         },
         "idx_documents_org_status": {
           "name": "idx_documents_org_status",
-          "columns": [
-            "org_id",
-            "status"
-          ],
+          "columns": ["org_id", "status"],
           "isUnique": false
         }
       },
@@ -1906,12 +1775,8 @@
           "name": "documents_org_id_orgs_id_fk",
           "tableFrom": "documents",
           "tableTo": "orgs",
-          "columnsFrom": [
-            "org_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["org_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -1919,12 +1784,8 @@
           "name": "documents_project_id_projects_id_fk",
           "tableFrom": "documents",
           "tableTo": "projects",
-          "columnsFrom": [
-            "project_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["project_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1986,10 +1847,7 @@
       "indexes": {
         "idx_budget_project": {
           "name": "idx_budget_project",
-          "columns": [
-            "project_id",
-            "sort"
-          ],
+          "columns": ["project_id", "sort"],
           "isUnique": false
         }
       },
@@ -1998,12 +1856,8 @@
           "name": "finance_budget_items_project_id_projects_id_fk",
           "tableFrom": "finance_budget_items",
           "tableTo": "projects",
-          "columnsFrom": [
-            "project_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["project_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -2048,9 +1902,7 @@
       "indexes": {
         "idx_categories_project": {
           "name": "idx_categories_project",
-          "columns": [
-            "project_id"
-          ],
+          "columns": ["project_id"],
           "isUnique": false
         }
       },
@@ -2059,12 +1911,8 @@
           "name": "finance_categories_project_id_projects_id_fk",
           "tableFrom": "finance_categories",
           "tableTo": "projects",
-          "columnsFrom": [
-            "project_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["project_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -2266,10 +2114,7 @@
       "indexes": {
         "idx_entries_project": {
           "name": "idx_entries_project",
-          "columns": [
-            "project_id",
-            "date"
-          ],
+          "columns": ["project_id", "date"],
           "isUnique": false
         }
       },
@@ -2278,12 +2123,8 @@
           "name": "finance_entries_org_id_orgs_id_fk",
           "tableFrom": "finance_entries",
           "tableTo": "orgs",
-          "columnsFrom": [
-            "org_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["org_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -2291,12 +2132,8 @@
           "name": "finance_entries_project_id_projects_id_fk",
           "tableFrom": "finance_entries",
           "tableTo": "projects",
-          "columnsFrom": [
-            "project_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["project_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -2342,10 +2179,7 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {
         "legacy_map_kind_legacy_id_pk": {
-          "columns": [
-            "kind",
-            "legacy_id"
-          ],
+          "columns": ["kind", "legacy_id"],
           "name": "legacy_map_kind_legacy_id_pk"
         }
       },
@@ -2491,10 +2325,7 @@
       "indexes": {
         "idx_meetings_org": {
           "name": "idx_meetings_org",
-          "columns": [
-            "org_id",
-            "starts_at"
-          ],
+          "columns": ["org_id", "starts_at"],
           "isUnique": false
         }
       },
@@ -2503,12 +2334,8 @@
           "name": "meetings_org_id_orgs_id_fk",
           "tableFrom": "meetings",
           "tableTo": "orgs",
-          "columnsFrom": [
-            "org_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["org_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -2591,19 +2418,12 @@
       "indexes": {
         "idx_notif_user": {
           "name": "idx_notif_user",
-          "columns": [
-            "user_id",
-            "read_at",
-            "created_at"
-          ],
+          "columns": ["user_id", "read_at", "created_at"],
           "isUnique": false
         },
         "uq_notif_dedupe": {
           "name": "uq_notif_dedupe",
-          "columns": [
-            "user_id",
-            "dedupe_key"
-          ],
+          "columns": ["user_id", "dedupe_key"],
           "isUnique": true,
           "where": "dedupe_key <> ''"
         }
@@ -2613,12 +2433,8 @@
           "name": "notifications_org_id_orgs_id_fk",
           "tableFrom": "notifications",
           "tableTo": "orgs",
-          "columnsFrom": [
-            "org_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["org_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -2626,12 +2442,8 @@
           "name": "notifications_user_id_users_id_fk",
           "tableFrom": "notifications",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -2678,11 +2490,7 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {
         "org_counters_org_id_kind_year_pk": {
-          "columns": [
-            "org_id",
-            "kind",
-            "year"
-          ],
+          "columns": ["org_id", "kind", "year"],
           "name": "org_counters_org_id_kind_year_pk"
         }
       },
@@ -2866,12 +2674,8 @@
           "name": "org_profile_org_id_orgs_id_fk",
           "tableFrom": "org_profile",
           "tableTo": "orgs",
-          "columnsFrom": [
-            "org_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["org_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -2951,22 +2755,15 @@
           "name": "org_roles_org_id_orgs_id_fk",
           "tableFrom": "org_roles",
           "tableTo": "orgs",
-          "columnsFrom": [
-            "org_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["org_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {
         "org_roles_org_id_key_pk": {
-          "columns": [
-            "org_id",
-            "key"
-          ],
+          "columns": ["org_id", "key"],
           "name": "org_roles_org_id_key_pk"
         }
       },
@@ -3020,22 +2817,15 @@
           "name": "org_settings_org_id_orgs_id_fk",
           "tableFrom": "org_settings",
           "tableTo": "orgs",
-          "columnsFrom": [
-            "org_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["org_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {
         "org_settings_org_id_key_pk": {
-          "columns": [
-            "org_id",
-            "key"
-          ],
+          "columns": ["org_id", "key"],
           "name": "org_settings_org_id_key_pk"
         }
       },
@@ -3091,12 +2881,8 @@
           "name": "org_vat_settings_org_id_orgs_id_fk",
           "tableFrom": "org_vat_settings",
           "tableTo": "orgs",
-          "columnsFrom": [
-            "org_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["org_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -3220,9 +3006,7 @@
       "indexes": {
         "idx_partners_org": {
           "name": "idx_partners_org",
-          "columns": [
-            "org_id"
-          ],
+          "columns": ["org_id"],
           "isUnique": false
         }
       },
@@ -3231,12 +3015,8 @@
           "name": "partners_org_id_orgs_id_fk",
           "tableFrom": "partners",
           "tableTo": "orgs",
-          "columnsFrom": [
-            "org_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["org_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -3334,18 +3114,12 @@
       "indexes": {
         "idx_sched_org": {
           "name": "idx_sched_org",
-          "columns": [
-            "org_id",
-            "status",
-            "due_date"
-          ],
+          "columns": ["org_id", "status", "due_date"],
           "isUnique": false
         },
         "idx_sched_project": {
           "name": "idx_sched_project",
-          "columns": [
-            "project_id"
-          ],
+          "columns": ["project_id"],
           "isUnique": false
         }
       },
@@ -3354,12 +3128,8 @@
           "name": "payment_schedule_org_id_orgs_id_fk",
           "tableFrom": "payment_schedule",
           "tableTo": "orgs",
-          "columnsFrom": [
-            "org_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["org_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -3367,12 +3137,8 @@
           "name": "payment_schedule_project_id_projects_id_fk",
           "tableFrom": "payment_schedule",
           "tableTo": "projects",
-          "columnsFrom": [
-            "project_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["project_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -3504,10 +3270,7 @@
       "indexes": {
         "idx_plan_cycles_org": {
           "name": "idx_plan_cycles_org",
-          "columns": [
-            "org_id",
-            "kind"
-          ],
+          "columns": ["org_id", "kind"],
           "isUnique": false
         }
       },
@@ -3516,12 +3279,8 @@
           "name": "plan_cycles_org_id_orgs_id_fk",
           "tableFrom": "plan_cycles",
           "tableTo": "orgs",
-          "columnsFrom": [
-            "org_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["org_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -3613,9 +3372,7 @@
       "indexes": {
         "idx_plan_ind_obj": {
           "name": "idx_plan_ind_obj",
-          "columns": [
-            "objective_id"
-          ],
+          "columns": ["objective_id"],
           "isUnique": false
         }
       },
@@ -3624,12 +3381,8 @@
           "name": "plan_indicators_org_id_orgs_id_fk",
           "tableFrom": "plan_indicators",
           "tableTo": "orgs",
-          "columnsFrom": [
-            "org_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["org_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -3637,12 +3390,8 @@
           "name": "plan_indicators_objective_id_plan_objectives_id_fk",
           "tableFrom": "plan_indicators",
           "tableTo": "plan_objectives",
-          "columnsFrom": [
-            "objective_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["objective_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -3742,9 +3491,7 @@
       "indexes": {
         "idx_plan_init_obj": {
           "name": "idx_plan_init_obj",
-          "columns": [
-            "objective_id"
-          ],
+          "columns": ["objective_id"],
           "isUnique": false
         }
       },
@@ -3753,12 +3500,8 @@
           "name": "plan_initiatives_org_id_orgs_id_fk",
           "tableFrom": "plan_initiatives",
           "tableTo": "orgs",
-          "columnsFrom": [
-            "org_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["org_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -3766,12 +3509,8 @@
           "name": "plan_initiatives_objective_id_plan_objectives_id_fk",
           "tableFrom": "plan_initiatives",
           "tableTo": "plan_objectives",
-          "columnsFrom": [
-            "objective_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["objective_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -3879,9 +3618,7 @@
       "indexes": {
         "idx_plan_obj_cycle": {
           "name": "idx_plan_obj_cycle",
-          "columns": [
-            "cycle_id"
-          ],
+          "columns": ["cycle_id"],
           "isUnique": false
         }
       },
@@ -3890,12 +3627,8 @@
           "name": "plan_objectives_org_id_orgs_id_fk",
           "tableFrom": "plan_objectives",
           "tableTo": "orgs",
-          "columnsFrom": [
-            "org_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["org_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -3903,12 +3636,8 @@
           "name": "plan_objectives_cycle_id_plan_cycles_id_fk",
           "tableFrom": "plan_objectives",
           "tableTo": "plan_cycles",
-          "columnsFrom": [
-            "cycle_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["cycle_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -3985,9 +3714,7 @@
       "indexes": {
         "idx_plan_rev_obj": {
           "name": "idx_plan_rev_obj",
-          "columns": [
-            "objective_id"
-          ],
+          "columns": ["objective_id"],
           "isUnique": false
         }
       },
@@ -3996,12 +3723,8 @@
           "name": "plan_reviews_org_id_orgs_id_fk",
           "tableFrom": "plan_reviews",
           "tableTo": "orgs",
-          "columnsFrom": [
-            "org_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["org_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -4009,12 +3732,8 @@
           "name": "plan_reviews_objective_id_plan_objectives_id_fk",
           "tableFrom": "plan_reviews",
           "tableTo": "plan_objectives",
-          "columnsFrom": [
-            "objective_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["objective_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -4235,19 +3954,12 @@
       "indexes": {
         "idx_requests_org": {
           "name": "idx_requests_org",
-          "columns": [
-            "org_id",
-            "status",
-            "created_at"
-          ],
+          "columns": ["org_id", "status", "created_at"],
           "isUnique": false
         },
         "idx_requests_ip": {
           "name": "idx_requests_ip",
-          "columns": [
-            "ip_hash",
-            "created_at"
-          ],
+          "columns": ["ip_hash", "created_at"],
           "isUnique": false
         }
       },
@@ -4256,12 +3968,8 @@
           "name": "product_requests_org_id_orgs_id_fk",
           "tableFrom": "product_requests",
           "tableTo": "orgs",
-          "columnsFrom": [
-            "org_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["org_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -4393,18 +4101,12 @@
       "indexes": {
         "uq_products_slug": {
           "name": "uq_products_slug",
-          "columns": [
-            "org_id",
-            "slug"
-          ],
+          "columns": ["org_id", "slug"],
           "isUnique": true
         },
         "idx_products_org": {
           "name": "idx_products_org",
-          "columns": [
-            "org_id",
-            "status"
-          ],
+          "columns": ["org_id", "status"],
           "isUnique": false
         }
       },
@@ -4413,12 +4115,8 @@
           "name": "products_org_id_orgs_id_fk",
           "tableFrom": "products",
           "tableTo": "orgs",
-          "columnsFrom": [
-            "org_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["org_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -4651,12 +4349,8 @@
           "name": "project_finance_project_id_projects_id_fk",
           "tableFrom": "project_finance",
           "tableTo": "projects",
-          "columnsFrom": [
-            "project_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["project_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -4664,12 +4358,8 @@
           "name": "project_finance_org_id_orgs_id_fk",
           "tableFrom": "project_finance",
           "tableTo": "orgs",
-          "columnsFrom": [
-            "org_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["org_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -4707,9 +4397,7 @@
       "indexes": {
         "idx_pm_user": {
           "name": "idx_pm_user",
-          "columns": [
-            "user_id"
-          ],
+          "columns": ["user_id"],
           "isUnique": false
         }
       },
@@ -4718,12 +4406,8 @@
           "name": "project_members_project_id_projects_id_fk",
           "tableFrom": "project_members",
           "tableTo": "projects",
-          "columnsFrom": [
-            "project_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["project_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -4731,22 +4415,15 @@
           "name": "project_members_user_id_users_id_fk",
           "tableFrom": "project_members",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {
         "project_members_project_id_user_id_pk": {
-          "columns": [
-            "project_id",
-            "user_id"
-          ],
+          "columns": ["project_id", "user_id"],
           "name": "project_members_project_id_user_id_pk"
         }
       },
@@ -4865,18 +4542,12 @@
       "indexes": {
         "idx_receipts_project": {
           "name": "idx_receipts_project",
-          "columns": [
-            "project_id",
-            "date"
-          ],
+          "columns": ["project_id", "date"],
           "isUnique": false
         },
         "idx_receipts_org_date": {
           "name": "idx_receipts_org_date",
-          "columns": [
-            "org_id",
-            "date"
-          ],
+          "columns": ["org_id", "date"],
           "isUnique": false
         }
       },
@@ -4885,12 +4556,8 @@
           "name": "project_receipts_org_id_orgs_id_fk",
           "tableFrom": "project_receipts",
           "tableTo": "orgs",
-          "columnsFrom": [
-            "org_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["org_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -4898,12 +4565,8 @@
           "name": "project_receipts_project_id_projects_id_fk",
           "tableFrom": "project_receipts",
           "tableTo": "projects",
-          "columnsFrom": [
-            "project_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["project_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -4979,10 +4642,7 @@
       "indexes": {
         "idx_stages_project": {
           "name": "idx_stages_project",
-          "columns": [
-            "project_id",
-            "sort"
-          ],
+          "columns": ["project_id", "sort"],
           "isUnique": false
         }
       },
@@ -4991,12 +4651,8 @@
           "name": "project_stages_org_id_orgs_id_fk",
           "tableFrom": "project_stages",
           "tableTo": "orgs",
-          "columnsFrom": [
-            "org_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["org_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -5004,12 +4660,8 @@
           "name": "project_stages_project_id_projects_id_fk",
           "tableFrom": "project_stages",
           "tableTo": "projects",
-          "columnsFrom": [
-            "project_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["project_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -5211,34 +4863,22 @@
       "indexes": {
         "uq_projects_number": {
           "name": "uq_projects_number",
-          "columns": [
-            "org_id",
-            "number"
-          ],
+          "columns": ["org_id", "number"],
           "isUnique": true
         },
         "idx_projects_client": {
           "name": "idx_projects_client",
-          "columns": [
-            "org_id",
-            "client_id"
-          ],
+          "columns": ["org_id", "client_id"],
           "isUnique": false
         },
         "idx_projects_status": {
           "name": "idx_projects_status",
-          "columns": [
-            "org_id",
-            "status"
-          ],
+          "columns": ["org_id", "status"],
           "isUnique": false
         },
         "idx_projects_product": {
           "name": "idx_projects_product",
-          "columns": [
-            "org_id",
-            "product_id"
-          ],
+          "columns": ["org_id", "product_id"],
           "isUnique": false
         }
       },
@@ -5247,12 +4887,8 @@
           "name": "projects_org_id_orgs_id_fk",
           "tableFrom": "projects",
           "tableTo": "orgs",
-          "columnsFrom": [
-            "org_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["org_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -5260,12 +4896,8 @@
           "name": "projects_client_id_clients_id_fk",
           "tableFrom": "projects",
           "tableTo": "clients",
-          "columnsFrom": [
-            "client_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["client_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -5445,25 +5077,17 @@
       "indexes": {
         "uq_quotes_number": {
           "name": "uq_quotes_number",
-          "columns": [
-            "org_id",
-            "number"
-          ],
+          "columns": ["org_id", "number"],
           "isUnique": true
         },
         "idx_quotes_org": {
           "name": "idx_quotes_org",
-          "columns": [
-            "org_id",
-            "status"
-          ],
+          "columns": ["org_id", "status"],
           "isUnique": false
         },
         "idx_quotes_request": {
           "name": "idx_quotes_request",
-          "columns": [
-            "request_id"
-          ],
+          "columns": ["request_id"],
           "isUnique": false
         }
       },
@@ -5472,12 +5096,8 @@
           "name": "quotes_org_id_orgs_id_fk",
           "tableFrom": "quotes",
           "tableTo": "orgs",
-          "columnsFrom": [
-            "org_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["org_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -5606,10 +5226,7 @@
       "indexes": {
         "idx_sales_invoices_org": {
           "name": "idx_sales_invoices_org",
-          "columns": [
-            "org_id",
-            "date"
-          ],
+          "columns": ["org_id", "date"],
           "isUnique": false
         }
       },
@@ -5618,12 +5235,8 @@
           "name": "sales_invoices_org_id_orgs_id_fk",
           "tableFrom": "sales_invoices",
           "tableTo": "orgs",
-          "columnsFrom": [
-            "org_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["org_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -5631,12 +5244,8 @@
           "name": "sales_invoices_project_id_projects_id_fk",
           "tableFrom": "sales_invoices",
           "tableTo": "projects",
-          "columnsFrom": [
-            "project_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["project_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -5689,10 +5298,7 @@
       "indexes": {
         "idx_site_publishes_org": {
           "name": "idx_site_publishes_org",
-          "columns": [
-            "org_id",
-            "published_at"
-          ],
+          "columns": ["org_id", "published_at"],
           "isUnique": false
         }
       },
@@ -5701,12 +5307,8 @@
           "name": "site_publishes_org_id_orgs_id_fk",
           "tableFrom": "site_publishes",
           "tableTo": "orgs",
-          "columnsFrom": [
-            "org_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["org_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -5788,12 +5390,8 @@
           "name": "site_settings_org_id_orgs_id_fk",
           "tableFrom": "site_settings",
           "tableTo": "orgs",
-          "columnsFrom": [
-            "org_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["org_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -5934,25 +5532,17 @@
       "indexes": {
         "idx_tasks_org": {
           "name": "idx_tasks_org",
-          "columns": [
-            "org_id",
-            "status"
-          ],
+          "columns": ["org_id", "status"],
           "isUnique": false
         },
         "idx_tasks_project": {
           "name": "idx_tasks_project",
-          "columns": [
-            "project_id"
-          ],
+          "columns": ["project_id"],
           "isUnique": false
         },
         "idx_tasks_assignee": {
           "name": "idx_tasks_assignee",
-          "columns": [
-            "assignee_id",
-            "status"
-          ],
+          "columns": ["assignee_id", "status"],
           "isUnique": false
         }
       },
@@ -5961,12 +5551,8 @@
           "name": "tasks_org_id_orgs_id_fk",
           "tableFrom": "tasks",
           "tableTo": "orgs",
-          "columnsFrom": [
-            "org_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["org_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -6048,16 +5634,12 @@
       "indexes": {
         "idx_time_task": {
           "name": "idx_time_task",
-          "columns": [
-            "task_id"
-          ],
+          "columns": ["task_id"],
           "isUnique": false
         },
         "idx_time_project": {
           "name": "idx_time_project",
-          "columns": [
-            "project_id"
-          ],
+          "columns": ["project_id"],
           "isUnique": false
         }
       },
@@ -6066,12 +5648,8 @@
           "name": "time_entries_org_id_orgs_id_fk",
           "tableFrom": "time_entries",
           "tableTo": "orgs",
-          "columnsFrom": [
-            "org_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["org_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -6079,12 +5657,8 @@
           "name": "time_entries_task_id_tasks_id_fk",
           "tableFrom": "time_entries",
           "tableTo": "tasks",
-          "columnsFrom": [
-            "task_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["task_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -6201,16 +5775,12 @@
       "indexes": {
         "users_email_unique": {
           "name": "users_email_unique",
-          "columns": [
-            "email"
-          ],
+          "columns": ["email"],
           "isUnique": true
         },
         "idx_users_org": {
           "name": "idx_users_org",
-          "columns": [
-            "org_id"
-          ],
+          "columns": ["org_id"],
           "isUnique": false
         }
       },
@@ -6219,12 +5789,8 @@
           "name": "users_org_id_orgs_id_fk",
           "tableFrom": "users",
           "tableTo": "orgs",
-          "columnsFrom": [
-            "org_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["org_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -6372,10 +5938,7 @@
       "indexes": {
         "uq_vat_filings_period": {
           "name": "uq_vat_filings_period",
-          "columns": [
-            "org_id",
-            "period_key"
-          ],
+          "columns": ["org_id", "period_key"],
           "isUnique": true
         }
       },
@@ -6384,12 +5947,8 @@
           "name": "vat_filings_org_id_orgs_id_fk",
           "tableFrom": "vat_filings",
           "tableTo": "orgs",
-          "columnsFrom": [
-            "org_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["org_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
