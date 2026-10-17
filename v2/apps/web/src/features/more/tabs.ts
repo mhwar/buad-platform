@@ -337,6 +337,15 @@ export const SECTIONS: Section[] = [
         match: within("/settings/org"),
       },
       {
+        key: "finance",
+        label: "المالية",
+        to: "/settings/finance",
+        perm: "treasury.view",
+        desc: "مستهدف السنة، والرصيد الافتتاحي، وشروط المشاريع الجديدة، والضريبة.",
+        when: "في بداية السنة، أو عند تغيّر سياسة الأتعاب أو الضريبة.",
+        match: within("/settings/finance"),
+      },
+      {
         key: "team",
         label: "الفريق والصلاحيات",
         to: "/settings/team",

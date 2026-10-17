@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { Card } from "../../components/ui";
 import { sar } from "../../lib/format";
@@ -41,7 +42,12 @@ export function YearTargetCard({
               <b className="text-ink">{sar(Math.max(0, t.target - t.revenue))}</b>
             </p>
           ) : (
-            <p className="text-sm text-muted">لا مستهدف إيراد في خطة {year}.</p>
+            <p className="text-sm text-muted">
+              لا مستهدف لسنة {year}.{" "}
+              <Link to="/settings/finance" className="font-semibold text-brand underline">
+                اضبطه من الإعدادات
+              </Link>
+            </p>
           )}
         </div>
         {actions && <div className="flex flex-wrap gap-2">{actions}</div>}

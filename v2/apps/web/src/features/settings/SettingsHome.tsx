@@ -52,16 +52,16 @@ export function SettingsHome() {
         {finance && (
           <Section
             k="finance"
-            to="/finance"
-            search={{ tab: "vat" }}
-            title="المالية والضريبة"
+            to="/settings/finance"
+            title="المالية"
             state={target.data ? (goal ? "ok" : "gap") : undefined}
             meta={vat.data ? `الضريبة ${vat.data.rate}%` : undefined}
           >
             {target.data &&
               (goal ? (
                 <>
-                  مستهدف {year}: <b className="text-ink tabular-nums">{sar(goal)}</b> (من الخطة).
+                  مستهدف {year}: <b className="text-ink tabular-nums">{sar(goal)}</b> (
+                  {target.data.totals.targetSource === "settings" ? "من الإعدادات" : "من الخطة"}).
                 </>
               ) : (
                 <>
@@ -73,7 +73,7 @@ export function SettingsHome() {
                   .
                 </>
               ))}{" "}
-            إعدادات الضريبة في تبويب «الضريبة» بالمالية.
+            الرصيد الافتتاحي، وشروط المشاريع الجديدة، والضريبة.
           </Section>
         )}
         {can("team.view") && (

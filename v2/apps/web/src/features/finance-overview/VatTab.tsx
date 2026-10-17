@@ -56,7 +56,6 @@ export function VatTab() {
   const setQ = (n: number) =>
     go({ to: ".", search: (p: object) => ({ ...p, q: n }), replace: true } as never);
   const r = useQuery(vatReportQuery(year, q));
-  const [settings, setSettings] = useState(false);
   const years = Array.from({ length: 4 }, (_, i) => now.getFullYear() - i);
 
   const bar = (
@@ -90,9 +89,12 @@ export function VatTab() {
         </div>
       </div>
       <div className="flex gap-2">
-        <Button variant="secondary" onClick={() => setSettings(true)}>
+        <Link
+          to="/settings/finance"
+          className="inline-flex items-center gap-2 rounded-lg border border-line bg-surface px-3.5 py-2 text-sm font-semibold text-ink transition hover:bg-brand-soft"
+        >
           <Settings2 className="size-4" /> إعدادات الضريبة
-        </Button>
+        </Link>
         <Link
           to="/finance/vat/report"
           search={{ year, q }}
@@ -152,7 +154,6 @@ export function VatTab() {
       <Sales v={v} />
       <Purchases v={v} />
       <Unidentified v={v} />
-      {settings && <SettingsDialog onClose={() => setSettings(false)} />}
     </div>
   );
 }
@@ -360,77 +361,5 @@ function Unidentified({ v }: { v: VatReport }) {
         />
       )}
     </Card>
-  );
-}
-
-function SettingsDialog({ onClose }: { onClose: () => void }) {
-  const qc = useQueryClient();
-  const s = useQuery(vatSettingsQuery);
-  const [rate, setRate] = useState<string | null>(null);
-  const [period, setPeriod] = useState<"quarterly" | "monthly" | null>(null);
-  const [err, setErr] = useState("");
-  if (!s.data) return null;
-  const r = rate ?? String(s.data.rate);
-  const p = period ?? s.data.period;
-  return (
-    <Dialog
-      open
-      onOpenChange={(o) => !o && onClose()}
-      title="إعدادات الضريبة"
-      footer={
-        <DialogActions onCancel={onClose}>
-          <Button
-            onClick={async () => {
-              const n = Number(r);
-              if (!(n >= 0 && n <= 100)) return setErr("النسبة بين 0 و100");
-              try {
-                await saveVatSettings({ rate: n, period: p });
-                await qc.invalidateQueries({ queryKey: vatKeys.all });
-                onClose();
-              } catch {
-                setErr("تعذّر الحفظ");
-              }
-            }}
-          >
-            حفظ
-          </Button>
-        </DialogActions>
-      }
-    >
-      {err && <Notice>{err}</Notice>}
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="نسبة الضريبة %" hint="تُطبَّق على المشتريات الجديدة؛ لا تتغير فواتير سُجّلت سابقاً">
-          <Input
-            type="number"
-            min={0}
-            max={100}
-            step="0.01"
-            dir="ltr"
-            value={r}
-            onChange={(e) => setRate(e.target.value)}
-          />
-        </Field>
-        <Field label="دورة الإقرار">
-          <Select value={p} onChange={(e) => setPeriod(e.target.value as "quarterly")}>
-            <option value="quarterly">ربع سنوي</option>
-            <option value="monthly">شهري</option>
-          </Select>
-        </Field>
-      </div>
-      <p className="mt-3 text-sm">
-        الرقم الضريبي للجهة:{" "}
-        {s.data.vatNumber ? (
-          <b dir="ltr">{s.data.vatNumber}</b>
-        ) : (
-          <span className="text-amber-700 dark:text-amber-300">غير مسجّل</span>
-        )}{" "}
-        <Link to="/settings/org" className="text-brand underline">
-          تعديله من بيانات الجهة
-        </Link>
-      </p>
-      <p className="mt-2 text-xs text-muted">
-        ضريبة العقد نفسه (النسبة وهل هي شاملة) تُضبط لكل مشروع من «إعدادات العقد» في صفحته.
-      </p>
-    </Dialog>
   );
 }

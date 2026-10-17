@@ -1161,3 +1161,21 @@ export const decisions = sqliteTable(
     index("idx_decisions_meeting").on(t.meetingId),
   ],
 );
+
+/**
+ * Organisation settings that are a value each (key → JSON): the defaults of new projects' contract
+ * terms, the year's revenue target, the cash opening balance. Absent key = not set; never seeded.
+ */
+export const orgSettings = sqliteTable(
+  "org_settings",
+  {
+    orgId: text("org_id")
+      .notNull()
+      .references(() => orgs.id),
+    key: text("key").notNull(),
+    value: text("value").notNull(),
+    updatedBy: text("updated_by").notNull().default(""),
+    updatedAt: integer("updated_at").notNull().default(now),
+  },
+  (t) => [primaryKey({ columns: [t.orgId, t.key] })],
+);

@@ -26,6 +26,8 @@ export type YearReview = {
   totals: {
     revenue: number;
     target: number | null;
+    /** «الإعدادات ← المالية» first, else the year's plan. */
+    targetSource: "settings" | "plan" | null;
     projectReceipts: number;
     receiptsVat: number;
     companyIncome: number;

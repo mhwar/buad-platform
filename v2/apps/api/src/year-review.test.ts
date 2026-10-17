@@ -126,6 +126,18 @@ describe("year review", () => {
     ).toBe(2000000);
   });
 
+  it("takes the target from «الإعدادات ← المالية» first, then the plan", async () => {
+    await call("own", "POST", "/api/plans/from-template/year-one", { year: 2026 });
+    const set = await call("own", "PATCH", "/api/org/settings", { targets: { "2026": 1800000 } });
+    expect(set.status).toBe(200);
+    expect(set.body.targets).toEqual({ "2026": 1800000 });
+    let t = (await call("own", "GET", "/api/finance/year-review?year=2026")).body.totals;
+    expect(t).toMatchObject({ target: 1800000, targetSource: "settings" });
+    await call("own", "PATCH", "/api/org/settings", { targets: { "2026": null } });
+    t = (await call("own", "GET", "/api/finance/year-review?year=2026")).body.totals;
+    expect(t).toMatchObject({ target: 2000000, targetSource: "plan" });
+  });
+
   it("is for those who see the company's money", async () => {
     expect((await call("acc", "GET", "/api/finance/year-review")).status).toBe(200);
     expect((await call("view", "GET", "/api/finance/year-review")).status).toBe(403);
@@ -192,5 +204,60 @@ describe("deleting a receipt", () => {
     );
     expect(del.status).toBe(409);
     expect(del.body.error).toBe("in_distribution");
+  });
+});
+
+describe("organisation settings", () => {
+  it("start empty: built-in defaults, no target, no opening balance", async () => {
+    const r = (await call("own", "GET", "/api/org/settings")).body;
+    expect(r.projectDefaultsSet).toBe(false);
+    expect(r.projectDefaults).toMatchObject({ vatPct: 15, execV: 10, execType: "pct" });
+    expect(r.targets).toEqual({});
+    expect(r.cashOpening).toBeNull();
+  });
+
+  it("apply contract defaults to new projects only, and log the change", async () => {
+    const before = await proj();
+    const base = (await call("own", "GET", "/api/org/settings")).body.projectDefaults;
+    const put = await call("own", "PATCH", "/api/org/settings", {
+      projectDefaults: { ...base, execV: 8, cbV: 2 },
+    });
+    expect(put.status).toBe(200);
+    const after = await proj("own", { expectedValue: 50000 });
+    const fin = (id: string) => call("own", "GET", `/api/projects/${id}/finance`);
+    expect((await fin(after)).body.ctrl).toMatchObject({
+      execV: 8,
+      cbV: 2,
+      contractValue: 5000000,
+    }); // halalas
+    expect((await fin(before)).body.ctrl).toMatchObject({ execV: 10, cbV: 0 });
+    const log = (await call("own", "GET", "/api/audit?entity=org")).body;
+    const entry = (log.items ?? log).find((i: J) => i.summary === "تعديل الإعدادات المالية");
+    expect(entry.detail.changes).toEqual(
+      expect.arrayContaining([
+        { field: "execV", label: "أتعاب التنفيذ", before: "10", after: "8" },
+        { field: "cbV", label: "الكاش باك", before: "0", after: "2" },
+      ]),
+    );
+  });
+
+  it("keep one opening balance for everyone, per organisation", async () => {
+    await call("own", "PATCH", "/api/org/settings", {
+      cashOpening: { amount: 300000, date: "2026-10-01" },
+    });
+    const adm = (await call("adm", "GET", "/api/org/settings")).body.cashOpening;
+    expect(adm).toMatchObject({ amount: 300000, date: "2026-10-01", updatedBy: "own" });
+    expect((await call("x", "GET", "/api/org/settings")).body.cashOpening).toBeNull();
+  });
+
+  it("are read with the company's money and changed by who may edit it", async () => {
+    expect((await call("acc", "GET", "/api/org/settings")).status).toBe(200);
+    expect((await call("view", "GET", "/api/org/settings")).status).toBe(403);
+    expect(
+      (await call("view", "PATCH", "/api/org/settings", { targets: { "2026": 1 } })).status,
+    ).toBe(403);
+    expect((await call("own", "PATCH", "/api/org/settings", { targets: { "26": 1 } })).status).toBe(
+      400,
+    );
   });
 });

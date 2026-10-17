@@ -111,6 +111,7 @@ const TRAIL: { re: RegExp; entity: string; noun: string }[] = [
   { re: /^\/api\/decisions\/?([^/]*)/, entity: "decision", noun: "قرار" },
   { re: /^\/api\/plans/, entity: "plan", noun: "الخطط" },
   { re: /^\/api\/site/, entity: "site", noun: "الموقع" },
+  { re: /^\/api\/org\/settings/, entity: "org", noun: "الإعدادات المالية" },
   { re: /^\/api\/org/, entity: "org", noun: "بيانات المنشأة" },
   { re: /^\/api\/assets/, entity: "asset", noun: "ملف" },
   { re: /^\/api\/import/, entity: "import", noun: "استيراد" },
@@ -293,6 +294,7 @@ export const auditTrail = createMiddleware<{ Variables: Vars }>(async (c, next) 
       if (body[k] !== undefined && body[k] !== "")
         changes.push({ field: k, label: f.label, before: "—", after: show(body[k], f, false) });
   }
+  changes.push(...(c.get("auditChanges") ?? []));
   const hit = TRAIL.find((t) => t.re.test(path));
   if (!hit) return;
   const id = path.match(hit.re)?.[1] ?? "";

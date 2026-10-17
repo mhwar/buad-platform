@@ -6,6 +6,7 @@ import { z } from "zod";
 import { requireAuth, requirePerm, type Vars } from "../auth/middleware";
 import { contractTotalSql } from "./common";
 import { platformMetric } from "./plans";
+import { settingsTarget } from "./settings";
 
 /* ─────────────────────────────────────────────────────────────────────────────
  * «مراجعة السنة»: the year's revenue against its target, and every project that needs a look
@@ -122,6 +123,7 @@ export const yearReviewApp = new Hono<{ Variables: Vars }>()
       | { gross: number; vat: number }
       | undefined;
     const projectReceipts = riyals(Number(receipts?.gross));
+    const setTarget = await settingsTarget(db, me.orgId, year);
     const target = (await db.get(sql`
       SELECT MAX(i.target) AS t FROM plan_indicators i
       JOIN plan_objectives o ON o.id = i.objective_id
@@ -139,7 +141,9 @@ export const yearReviewApp = new Hono<{ Variables: Vars }>()
       year,
       totals: {
         revenue,
-        target: target?.t ?? null,
+        target: setTarget ?? target?.t ?? null,
+        /** Where the target comes from: «الإعدادات ← المالية» first, else the year's plan. */
+        targetSource: setTarget !== null ? "settings" : target?.t ? "plan" : null,
         projectReceipts,
         receiptsVat: riyals(Number(receipts?.vat)),
         companyIncome: Math.round((revenue - projectReceipts) * 100) / 100,

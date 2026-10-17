@@ -2,9 +2,10 @@ import { AGING_BUCKETS, reminderText } from "@buad/domain";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, MessageCircle } from "lucide-react";
 import { useState } from "react";
-import { Badge, Button, Card, EmptyState, Field, Input, Notice } from "../../components/ui";
-import { day, sar, whatsapp } from "../../lib/format";
+import { Badge, Button, Card, EmptyState, Field, Input, Notice, toast } from "../../components/ui";
+import { day, sar, today, whatsapp } from "../../lib/format";
 import { useCan } from "../../session";
+import { orgSettingsQuery, saveOrgSettings } from "../settings/api";
 import { send } from "../team/queries";
 import { type OwedItem, receivablesQuery } from "./api";
 import { ForecastChart } from "./ForecastChart";
@@ -24,17 +25,38 @@ export function ReceivablesPage() {
   const can = useCan();
   const edit = can("finance.edit");
   const qc = useQueryClient();
-  const [opening, setOpening] = useState(read);
+  // One opening balance for everyone (the settings); this device's own figure only for those
+  // who cannot see or set the company's money, and as a value to hand over once.
+  const shared = can("treasury.view");
+  const canShare = can("treasury.edit");
+  const settings = useQuery({ ...orgSettingsQuery, enabled: shared });
+  const server = settings.data?.cashOpening ?? null;
+  const [local, setLocal] = useState(read);
+  const [draft, setDraft] = useState<number | null>(null);
+  const opening = draft ?? (shared ? (server?.amount ?? 0) : local);
   const q = useQuery(receivablesQuery(opening));
   const [error, setError] = useState("");
   const d = q.data;
   const org = "";
   const setOpen = (v: number) => {
-    setOpening(v);
+    if (canShare) return setDraft(v);
+    setLocal(v);
     try {
       localStorage.setItem(KEY, String(v));
     } catch {
       // the figure simply is not remembered
+    }
+  };
+  const share = async (amount: number) => {
+    try {
+      qc.setQueryData(
+        orgSettingsQuery.queryKey,
+        await saveOrgSettings({ cashOpening: { amount, date: today() } }),
+      );
+      setDraft(null);
+      toast("حُفظ الرصيد الافتتاحي للجميع");
+    } catch {
+      setError("تعذّر حفظ الرصيد الافتتاحي");
     }
   };
   const [receiving, setReceiving] = useState<OwedItem | null>(null);
@@ -139,17 +161,40 @@ export function ReceivablesPage() {
               المسجّلة وغير المسدّدة ({sar(d.pendingExpenses)}).
             </p>
           </div>
-          <Field label="رصيدك الحالي (ر.س)" hint="يُحفظ على هذا الجهاز">
+          <Field
+            label="الرصيد الحالي (ر.س)"
+            hint={
+              !canShare
+                ? shared
+                  ? "يضبطه من يملك تعديل المالية"
+                  : "يُحفظ على هذا الجهاز"
+                : server
+                  ? `محفوظ للجميع · ${day(server.date)}`
+                  : "يُحفظ للجميع عند الخروج من الحقل"
+            }
+          >
             <Input
               type="number"
               inputMode="decimal"
               value={opening || ""}
               placeholder="0"
+              readOnly={shared && !canShare}
               onChange={(e) => setOpen(Number(e.target.value) || 0)}
+              onBlur={() => {
+                if (canShare && draft !== null && draft !== (server?.amount ?? 0)) share(draft);
+              }}
               className="w-40"
             />
           </Field>
         </div>
+        {canShare && !server && local !== 0 && draft === null && (
+          <Notice tone="blue">
+            على هذا الجهاز رصيد محفوظ سابقاً ({sar(local)}) لا يراه غيرك.{" "}
+            <button type="button" className="font-semibold underline" onClick={() => share(local)}>
+              اعتماده رصيداً للجميع
+            </button>
+          </Notice>
+        )}
         {d.shortfallWeek && (
           <Notice tone="amber">
             يتوقع أن ينخفض الرصيد عن الصفر في الأسبوع الذي يبدأ {day(d.shortfallWeek)}.
