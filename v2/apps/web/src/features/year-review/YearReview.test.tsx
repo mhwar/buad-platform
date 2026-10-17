@@ -99,6 +99,6 @@ describe("YearReview", () => {
     stubApi(routes("accountant"));
     await renderWithApp(<YearReview year={2026} onYear={() => {}} />);
     await screen.findByText("ملتقى الشباب");
-    expect(screen.queryByRole("button", { name: /تسجيل استلام|إغلاق/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: /تسجيل مقبوض|إغلاق/ })).toBeNull();
   });
 });

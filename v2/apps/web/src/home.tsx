@@ -11,13 +11,15 @@ import {
   ListChecks,
   Phone,
   ShoppingCart,
+  Wallet,
 } from "lucide-react";
-import type { ReactNode } from "react";
+import { type ReactNode, useState } from "react";
 import { SectionBoundary } from "./components/Resilience";
-import { Badge, Card, cx } from "./components/ui";
+import { Badge, Button, Card, cx } from "./components/ui";
 import { followupsQuery } from "./features/clients/api";
 import { AttentionPanel } from "./features/home/AttentionPanel";
 import { projectsQuery } from "./features/projects/api";
+import { ReceiptFlow } from "./features/receivables/ReceiptFlow";
 import { overviewQuery } from "./features/sales/api";
 import { type Task, tasksQuery } from "./features/tasks/queries";
 import { send } from "./features/team/queries";
@@ -29,6 +31,7 @@ import {
   timeOf,
 } from "./features/workspace/api";
 import { DecisionList } from "./features/workspace/DecisionList";
+import { YearTargetCard } from "./features/year-review/YearTargetCard";
 import { day, money, sar } from "./lib/format";
 import { meQuery, useCan } from "./session";
 
@@ -49,6 +52,7 @@ export function Home() {
   const can = useCan();
   const now = new Date();
   const first = me?.name?.split(" ")[0] ?? "";
+  const [receiving, setReceiving] = useState(false);
   return (
     <>
       <header className="mb-6">
@@ -58,6 +62,32 @@ export function Home() {
         </h1>
         <span className="sr-only">أهلاً {me?.name}</span>
       </header>
+      {can("treasury.view") && (
+        <div className="mb-6">
+          <SectionBoundary label="الإيراد مقابل المستهدف">
+            <YearTargetCard
+              compact
+              actions={
+                <>
+                  {can("finance.edit") && (
+                    <Button onClick={() => setReceiving(true)}>
+                      <Wallet className="size-4" /> تسجيل مقبوض
+                    </Button>
+                  )}
+                  <Link
+                    to="/finance"
+                    search={{ tab: "review" }}
+                    className="inline-flex min-h-11 items-center gap-2 rounded-lg border bg-surface px-3.5 text-sm font-semibold hover:bg-brand-soft sm:min-h-10"
+                  >
+                    مراجعة السنة
+                  </Link>
+                </>
+              }
+            />
+          </SectionBoundary>
+        </div>
+      )}
+      {receiving && <ReceiptFlow onClose={() => setReceiving(false)} />}
       {me?.perms.includes("import.run") && <ImportHint />}
       <SectionBoundary label="ما يحتاج انتباهك">
         <AttentionPanel />

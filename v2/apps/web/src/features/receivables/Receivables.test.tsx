@@ -76,13 +76,13 @@ describe("ReceivablesPage", () => {
       "POST /api/receivables/s1/receive": () => ({ ok: true, receiptId: "r" }),
     });
     await renderWithApp(<ReceivablesPage />);
-    await userEvent.click(await screen.findByRole("button", { name: /تم الاستلام/ }));
+    await userEvent.click(await screen.findByRole("button", { name: /تسجيل مقبوض/ }));
     // The day it reached the bank and how much: part of it keeps the rest as a new instalment.
     const amount = await screen.findByLabelText(/المبلغ المستلم/);
     await userEvent.clear(amount);
     await userEvent.type(amount, "1000");
     expect(screen.getByText(/استلام جزئي/)).toBeInTheDocument();
-    await userEvent.click(screen.getByRole("button", { name: "تسجيل الاستلام" }));
+    await userEvent.click(screen.getByRole("button", { name: "تسجيل المقبوض" }));
     await waitFor(() => {
       const post = calls.find((c) => c.method === "POST" && c.path.endsWith("/receive"));
       expect(post?.body).toMatchObject({ amount: 1000 });
@@ -93,7 +93,7 @@ describe("ReceivablesPage", () => {
     stubApi(base("accountant"));
     await renderWithApp(<ReceivablesPage />);
     await screen.findByText("أعمار الديون");
-    expect(screen.queryByRole("button", { name: /تم الاستلام/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: /تسجيل مقبوض/ })).toBeNull();
   });
 });
 

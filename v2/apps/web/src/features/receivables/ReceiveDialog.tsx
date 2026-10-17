@@ -12,7 +12,7 @@ const WARNING = {
 } as const;
 
 /**
- * «تم الاستلام» for one instalment: the day the money reached the bank (it decides the quarter
+ * «تسجيل مقبوض» for one instalment: the day the money reached the bank (it decides the quarter
  * and the VAT period) and how much came — less than the line keeps the rest as a new instalment.
  */
 export function ReceiveDialog({
@@ -45,11 +45,11 @@ export function ReceiveDialog({
       for (const k of ["receivables", "schedule", "attention", "finance", "year-review"])
         qc.invalidateQueries({ queryKey: [k] });
       qc.invalidateQueries({ queryKey: ["company-finance"] });
-      toast(rest > 0 ? "سُجّل الاستلام الجزئي" : "سُجّل الاستلام");
+      toast(rest > 0 ? "سُجّل المقبوض، وبقي الباقي دفعةً منتظرة" : "سُجّل المقبوض");
       onDone?.();
       onClose();
     } catch {
-      setError("تعذّر تسجيل الاستلام.");
+      setError("تعذّر تسجيل المقبوض.");
     } finally {
       setBusy(false);
     }
@@ -58,11 +58,11 @@ export function ReceiveDialog({
     <Dialog
       open
       onOpenChange={(o) => !o && onClose()}
-      title={`استلام ${line.label}`}
+      title={`تسجيل مقبوض — ${line.label}`}
       footer={
         <DialogActions onCancel={onClose}>
           <Button onClick={save} disabled={busy}>
-            تسجيل الاستلام
+            تسجيل المقبوض
           </Button>
         </DialogActions>
       }

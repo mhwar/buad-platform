@@ -19,12 +19,11 @@ import {
 import { exportTable } from "../../lib/export";
 import { day, sar } from "../../lib/format";
 import { useCan } from "../../session";
-import { ReceiptDialog } from "../finance/Receipts";
 import { label, PROJECT_STATUS_LABELS, STATUS_TONE } from "../labels";
 import { updateProject } from "../projects/api";
-import { scheduleQuery } from "../receivables/api";
-import { ReceiveDialog } from "../receivables/ReceiveDialog";
+import { ReceiptFlow } from "../receivables/ReceiptFlow";
 import { type ReviewItem, yearReviewQuery } from "./api";
+import { YearTargetCard } from "./YearTargetCard";
 
 type Show = "review" | ReviewFlag | "all";
 const FLAG_TONE: Record<ReviewFlag, "red" | "amber" | "blue" | "gray"> = {
@@ -46,7 +45,6 @@ export function YearReview({ year, onYear }: { year: number; onYear: (y: number)
   const q = useQuery(yearReviewQuery(year));
   const [show, setShow] = useState<Show>("review");
   const [receipt, setReceipt] = useState<ReviewItem | null>(null);
-  const [lines, setLines] = useState<ReviewItem | null>(null);
   const [error, setError] = useState("");
   const refresh = () => {
     qc.invalidateQueries({ queryKey: ["year-review"] });
@@ -77,7 +75,6 @@ export function YearReview({ year, onYear }: { year: number; onYear: (y: number)
   const shown =
     show === "all" ? all : show === "review" ? flagged : all.filter((i) => i.flags.includes(show));
   const t = d?.totals;
-  const pct = t?.target ? Math.min(100, Math.round((t.revenue / t.target) * 1000) / 10) : null;
 
   return (
     <div className="space-y-6">
@@ -127,39 +124,7 @@ export function YearReview({ year, onYear }: { year: number; onYear: (y: number)
       {q.isError && <EmptyState title="تعذّر تحميل مراجعة السنة" />}
       {t && (
         <>
-          <Card className="space-y-3" aria-label="الإيراد مقابل المستهدف">
-            <div className="flex flex-wrap items-end justify-between gap-2">
-              <div>
-                <p className="text-sm text-muted">المحقق في {year}</p>
-                <p className="text-3xl font-bold tabular-nums">{sar(t.revenue)}</p>
-              </div>
-              {t.target ? (
-                <p className="text-sm text-muted">
-                  من مستهدف <b className="text-ink">{sar(t.target)}</b> ·{" "}
-                  <b className="text-ink">{pct}%</b> · المتبقي{" "}
-                  <b className="text-ink">{sar(Math.max(0, t.target - t.revenue))}</b>
-                </p>
-              ) : (
-                <p className="text-sm text-muted">لا مستهدف إيراد في خطة {year}.</p>
-              )}
-            </div>
-            {pct !== null && (
-              <div
-                role="progressbar"
-                aria-label="نسبة تحقيق المستهدف"
-                aria-valuenow={pct}
-                aria-valuemin={0}
-                aria-valuemax={100}
-                className="h-3 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800"
-              >
-                <div className="h-full rounded-full bg-brand" style={{ width: `${pct}%` }} />
-              </div>
-            )}
-            <p className="text-xs text-muted">
-              شاملة الضريبة: المقبوضات المسجّلة من العملاء ودخل الشركة، بتاريخ وصولها. هو نفس رقم
-              مؤشر «الإيرادات المحصّلة» في الخطة.
-            </p>
-          </Card>
+          <YearTargetCard year={year} />
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <StatTile
               label="مقبوضات المشاريع"
@@ -249,20 +214,14 @@ export function YearReview({ year, onYear }: { year: number; onYear: (y: number)
                   </p>
                   {edit && (
                     <div className="mt-auto flex flex-wrap gap-2">
-                      {p.pendingLines > 0 ? (
-                        <Button variant="secondary" onClick={() => setLines(p)}>
-                          <Wallet className="size-4" /> استلام دفعة
+                      {p.remaining > 0 && (
+                        <Button onClick={() => setReceipt(p)}>
+                          <Wallet className="size-4" /> تسجيل مقبوض
                         </Button>
-                      ) : (
-                        p.remaining > 0 && (
-                          <Button variant="secondary" onClick={() => setReceipt(p)}>
-                            <Wallet className="size-4" /> تسجيل استلام
-                          </Button>
-                        )
                       )}
                       {(p.status === "active" || p.status === "paused") && (
                         <Button
-                          variant={p.flags.includes("paid_not_closed") ? "primary" : "ghost"}
+                          variant={p.flags.includes("paid_not_closed") ? "primary" : "secondary"}
                           onClick={() => close(p)}
                         >
                           <CheckCircle2 className="size-4" /> إغلاق كمكتمل
@@ -278,24 +237,15 @@ export function YearReview({ year, onYear }: { year: number; onYear: (y: number)
       )}
 
       {receipt && (
-        <ReceiptDialog
-          projectId={receipt.id}
-          receipt={null}
-          remaining={receipt.remaining}
-          contractDate={receipt.contractDate}
-          onClose={() => {
-            setReceipt(null);
-            refresh();
+        <ReceiptFlow
+          project={{
+            id: receipt.id,
+            name: receipt.name,
+            remaining: receipt.remaining,
+            contractDate: receipt.contractDate,
           }}
-        />
-      )}
-      {lines && (
-        <LinesDialog
-          project={lines}
-          onClose={() => {
-            setLines(null);
-            refresh();
-          }}
+          onClose={() => setReceipt(null)}
+          onDone={refresh}
         />
       )}
     </div>
@@ -308,53 +258,5 @@ function Fig({ label, value, strong }: { label: string; value: string; strong?: 
       <dt className="text-xs text-muted">{label}</dt>
       <dd className={cx("font-semibold tabular-nums", strong && "text-red-600")}>{value}</dd>
     </div>
-  );
-}
-
-/** A project's waiting instalments, to mark the one that arrived. */
-function LinesDialog({ project, onClose }: { project: ReviewItem; onClose: () => void }) {
-  const q = useQuery(scheduleQuery(project.id));
-  const [line, setLine] = useState<{
-    id: string;
-    label: string;
-    amount: number;
-    dueDate: string;
-  } | null>(null);
-  const today = new Date().toISOString().slice(0, 10);
-  const pending = (q.data ?? []).filter((i) => i.status === "pending");
-  return (
-    <Dialog open onOpenChange={(o) => !o && onClose()} title={`دفعات ${project.name}`}>
-      {pending.length === 0 && q.isSuccess && (
-        <p className="text-sm text-muted">لا دفعات منتظرة.</p>
-      )}
-      <ul className="divide-y">
-        {pending.map((i) => (
-          <li key={i.id} className="flex items-center justify-between gap-2 py-2 text-sm">
-            <span>
-              <span className="font-medium">{i.label}</span>
-              <span
-                className={cx(
-                  "block text-xs",
-                  i.dueDate < today ? "font-semibold text-red-600" : "text-muted",
-                )}
-              >
-                {i.dueDate < today ? "متأخرة · " : "تستحق "}
-                {day(i.dueDate)} · {sar(i.amount)}
-              </span>
-            </span>
-            <Button variant="secondary" onClick={() => setLine(i)}>
-              تم الاستلام
-            </Button>
-          </li>
-        ))}
-      </ul>
-      {line && (
-        <ReceiveDialog
-          line={line}
-          contractDate={project.contractDate}
-          onClose={() => setLine(null)}
-        />
-      )}
-    </Dialog>
   );
 }

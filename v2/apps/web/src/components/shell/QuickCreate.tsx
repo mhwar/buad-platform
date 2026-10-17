@@ -9,10 +9,12 @@ import {
   Plus,
   ShoppingCart,
   Users,
+  Wallet,
 } from "lucide-react";
 import { type ComponentType, useEffect, useState } from "react";
 import { ClientDialog } from "../../features/clients/ClientDialog";
 import { ProjectDialog } from "../../features/projects/ProjectDialog";
+import { ReceiptFlow } from "../../features/receivables/ReceiptFlow";
 import { NewOpportunityDialog } from "../../features/sales/NewOpportunityDialog";
 import { TaskDialog } from "../../features/tasks/TaskDialogs";
 import { DecisionDialog } from "../../features/workspace/DecisionDialog";
@@ -20,7 +22,14 @@ import { MeetingDialog } from "../../features/workspace/MeetingDialog";
 import { useCan } from "../../session";
 import { cx } from "../ui";
 
-export type CreateKind = "client" | "opportunity" | "project" | "task" | "meeting" | "decision";
+export type CreateKind =
+  | "receipt"
+  | "client"
+  | "opportunity"
+  | "project"
+  | "task"
+  | "meeting"
+  | "decision";
 type Kind = CreateKind;
 export const CREATE_ITEMS: {
   kind: Kind;
@@ -28,6 +37,7 @@ export const CREATE_ITEMS: {
   icon: ComponentType<{ className?: string }>;
   perm: string;
 }[] = [
+  { kind: "receipt", label: "تسجيل مقبوض", icon: Wallet, perm: "finance.edit" },
   { kind: "opportunity", label: "فرصة بيع", icon: ShoppingCart, perm: "sales.edit" },
   { kind: "client", label: "عميل", icon: Users, perm: "clients.edit" },
   { kind: "project", label: "مشروع", icon: Briefcase, perm: "projects.edit" },
@@ -125,6 +135,7 @@ export function QuickCreate({
         />
       )}
       {open === "decision" && <DecisionDialog onClose={() => setOpen(null)} />}
+      {open === "receipt" && <ReceiptFlow onClose={() => setOpen(null)} />}
     </>
   );
 }
