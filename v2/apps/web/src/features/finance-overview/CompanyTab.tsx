@@ -14,6 +14,7 @@ import {
   Card,
   confirmAction,
   Dialog,
+  DialogActions,
   EmptyState,
   Field,
   Input,
@@ -279,6 +280,35 @@ function EntryDialog({
       open
       onOpenChange={(o) => !o && onClose()}
       title={`${entry ? "تعديل" : "إضافة"} ${type === "income" ? "إيراد" : "مصروف"} للشركة`}
+      footer={
+        <DialogActions
+          onCancel={onClose}
+          aside={
+            entry && (
+              <Button
+                variant="secondary"
+                onClick={async () => {
+                  if (
+                    !(await confirmAction({
+                      title: "حذف هذا القيد؟",
+                      text: "يمكن استعادته من «المحذوفات».",
+                      action: "حذف القيد",
+                      danger: true,
+                    }))
+                  )
+                    return;
+                  await companyApi.removeEntry(entry.id);
+                  await done();
+                }}
+              >
+                <Trash2 className="size-4" /> حذف
+              </Button>
+            )
+          }
+        >
+          <Button onClick={save}>حفظ</Button>
+        </DialogActions>
+      }
     >
       {err && <Notice>{err}</Notice>}
       <div className="grid gap-4 sm:grid-cols-2">
@@ -314,31 +344,6 @@ function EntryDialog({
         <Field label="ملاحظة" className="sm:col-span-2">
           <Textarea rows={2} value={f.note} onChange={set("note")} />
         </Field>
-      </div>
-      <div className="mt-5 flex flex-wrap justify-between gap-2">
-        {entry ? (
-          <Button
-            variant="secondary"
-            onClick={async () => {
-              if (
-                !(await confirmAction({
-                  title: "حذف هذا القيد؟",
-                  text: "يمكن استعادته من «المحذوفات».",
-                  action: "حذف القيد",
-                  danger: true,
-                }))
-              )
-                return;
-              await companyApi.removeEntry(entry.id);
-              await done();
-            }}
-          >
-            <Trash2 className="size-4" /> حذف
-          </Button>
-        ) : (
-          <span />
-        )}
-        <Button onClick={save}>حفظ</Button>
       </div>
     </Dialog>
   );

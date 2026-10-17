@@ -8,6 +8,7 @@ import {
   Card,
   confirmAction,
   Dialog,
+  DialogActions,
   Field,
   Input,
   Notice,
@@ -115,6 +116,49 @@ function PartnerDialog({ partner, onClose }: { partner: Partner | null; onClose:
       open
       onOpenChange={(o) => !o && onClose()}
       title={partner ? "تعديل شريك" : "إضافة شريك"}
+      footer={
+        <DialogActions
+          onCancel={onClose}
+          aside={
+            partner && (
+              <Button
+                variant="secondary"
+                onClick={async () => {
+                  if (
+                    !(await confirmAction({
+                      title: `حذف الشريك «${partner.name}»؟`,
+                      action: "حذف الشريك",
+                      danger: true,
+                    }))
+                  )
+                    return;
+                  await companyApi.removePartner(partner.id);
+                  await done();
+                }}
+              >
+                <Trash2 className="size-4" /> حذف
+              </Button>
+            )
+          }
+        >
+          <Button
+            onClick={async () => {
+              const body = { name: name.trim(), sharePct: Number(pct), note };
+              if (!body.name || !(body.sharePct > 0) || body.sharePct > 100)
+                return setErr("أدخلوا الاسم وحصة بين 0 و100");
+              try {
+                if (partner) await companyApi.updatePartner(partner.id, body);
+                else await companyApi.addPartner(body);
+                await done();
+              } catch {
+                setErr("تعذّر الحفظ");
+              }
+            }}
+          >
+            حفظ
+          </Button>
+        </DialogActions>
+      }
     >
       {err && <Notice>{err}</Notice>}
       <div className="grid gap-4 sm:grid-cols-2">
@@ -137,45 +181,6 @@ function PartnerDialog({ partner, onClose }: { partner: Partner | null; onClose:
       <p className="mt-3 text-xs text-muted">
         التوزيعات السابقة تحتفظ بالاسم والحصة كما كانت وقت اعتمادها.
       </p>
-      <div className="mt-5 flex justify-between gap-2">
-        {partner ? (
-          <Button
-            variant="secondary"
-            onClick={async () => {
-              if (
-                !(await confirmAction({
-                  title: `حذف الشريك «${partner.name}»؟`,
-                  action: "حذف الشريك",
-                  danger: true,
-                }))
-              )
-                return;
-              await companyApi.removePartner(partner.id);
-              await done();
-            }}
-          >
-            <Trash2 className="size-4" /> حذف
-          </Button>
-        ) : (
-          <span />
-        )}
-        <Button
-          onClick={async () => {
-            const body = { name: name.trim(), sharePct: Number(pct), note };
-            if (!body.name || !(body.sharePct > 0) || body.sharePct > 100)
-              return setErr("أدخلوا الاسم وحصة بين 0 و100");
-            try {
-              if (partner) await companyApi.updatePartner(partner.id, body);
-              else await companyApi.addPartner(body);
-              await done();
-            } catch {
-              setErr("تعذّر الحفظ");
-            }
-          }}
-        >
-          حفظ
-        </Button>
-      </div>
     </Dialog>
   );
 }
@@ -352,6 +357,35 @@ export function DistributionWizard({
       wide
       onOpenChange={(v) => !v && onClose()}
       title={`توزيع أرباح · الخطوة ${step} من 2`}
+      footer={
+        step === 1 ? (
+          <DialogActions onCancel={onClose}>
+            <Button disabled={mode === "project" && !projectId} onClick={() => setStep(2)}>
+              التالي
+            </Button>
+          </DialogActions>
+        ) : (
+          <DialogActions
+            onCancel={onClose}
+            aside={
+              <Button variant="secondary" onClick={() => setStep(1)}>
+                السابق
+              </Button>
+            }
+          >
+            <Button disabled={!preview || preview.netProfit <= 0} onClick={() => save("completed")}>
+              اعتماد التوزيع
+            </Button>
+            <Button
+              variant="secondary"
+              disabled={!preview || preview.netProfit <= 0}
+              onClick={() => save("draft")}
+            >
+              حفظ كمسودة
+            </Button>
+          </DialogActions>
+        )
+      }
     >
       {err && <Notice>{err}</Notice>}
       {step === 1 ? (
@@ -370,11 +404,6 @@ export function DistributionWizard({
               ))}
             </Select>
           </Field>
-          <div className="flex justify-end">
-            <Button disabled={mode === "project" && !projectId} onClick={() => setStep(2)}>
-              التالي
-            </Button>
-          </div>
         </div>
       ) : (
         <div className="space-y-4">
@@ -441,26 +470,6 @@ export function DistributionWizard({
               )}
             </div>
           )}
-          <div className="flex flex-wrap justify-between gap-2">
-            <Button variant="secondary" onClick={() => setStep(1)}>
-              السابق
-            </Button>
-            <div className="flex gap-2">
-              <Button
-                variant="secondary"
-                disabled={!preview || preview.netProfit <= 0}
-                onClick={() => save("draft")}
-              >
-                حفظ كمسودة
-              </Button>
-              <Button
-                disabled={!preview || preview.netProfit <= 0}
-                onClick={() => save("completed")}
-              >
-                اعتماد التوزيع
-              </Button>
-            </div>
-          </div>
         </div>
       )}
     </Dialog>

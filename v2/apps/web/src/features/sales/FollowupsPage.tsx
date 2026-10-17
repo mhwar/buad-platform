@@ -14,6 +14,7 @@ import {
   Button,
   Card,
   Dialog,
+  DialogActions,
   EmptyState,
   Field,
   Input,
@@ -186,7 +187,28 @@ function LogDialog({
   const [summary, setSummary] = useState("");
   const [next, setNext] = useState("");
   return (
-    <Dialog open onOpenChange={(o) => !o && onClose()} title={`تواصل مع ${item.title}`}>
+    <Dialog
+      open
+      onOpenChange={(o) => !o && onClose()}
+      title={`تواصل مع ${item.title}`}
+      footer={
+        <DialogActions onCancel={onClose}>
+          <Button
+            disabled={!summary.trim()}
+            onClick={async () => {
+              await send("POST", `/api/crm/clients/${item.id}/activities`, {
+                type,
+                summary,
+                followUpAt: next,
+              });
+              onSaved();
+            }}
+          >
+            حفظ
+          </Button>
+        </DialogActions>
+      }
+    >
       <div className="space-y-4">
         <Field label="النوع">
           <Select value={type} onChange={(e) => setType(e.target.value as ActivityType)}>
@@ -208,20 +230,6 @@ function LogDialog({
             onChange={(e) => setNext(e.target.value)}
           />
         </Field>
-        <Button
-          className="w-full"
-          disabled={!summary.trim()}
-          onClick={async () => {
-            await send("POST", `/api/crm/clients/${item.id}/activities`, {
-              type,
-              summary,
-              followUpAt: next,
-            });
-            onSaved();
-          }}
-        >
-          حفظ
-        </Button>
       </div>
     </Dialog>
   );

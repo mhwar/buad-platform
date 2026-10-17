@@ -52,8 +52,8 @@ describe("SectionTabs", () => {
       "true",
     );
     expect(within(tabs).getByRole("tab", { name: /مهامي/ })).toHaveTextContent("3");
-    expect(screen.getByText(/مهام الفريق عبر المشاريع/)).toBeInTheDocument();
-    expect(screen.getByText(/متى تستخدمه/)).toBeInTheDocument();
+    // The page's own header says what it is for; the strip does not repeat it.
+    expect(screen.queryByText(/متى تستخدمه/)).toBeNull();
   });
 
   it("offers the planning tabs: plans, products and the website", async () => {

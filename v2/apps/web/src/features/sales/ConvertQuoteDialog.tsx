@@ -1,7 +1,7 @@
 import { SCHEDULE_KINDS, SCHEDULE_LABEL, type ScheduleKind } from "@buad/domain";
 import { Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { Button, Dialog, Field, Input, Notice } from "../../components/ui";
+import { Button, Dialog, DialogActions, Field, Input, Notice } from "../../components/ui";
 import { send } from "../team/queries";
 import type { Quote } from "./api";
 
@@ -47,7 +47,21 @@ export function ConvertQuoteDialog({
   };
 
   return (
-    <Dialog open onOpenChange={(o) => !o && onClose()} title="تحويل إلى مشروع" wide>
+    <Dialog
+      open
+      onOpenChange={(o) => !o && onClose()}
+      title="تحويل إلى مشروع"
+      wide
+      footer={
+        !done && (
+          <DialogActions onCancel={onClose}>
+            <Button disabled={busy || !name.trim()} onClick={() => go()}>
+              تحويل إلى مشروع
+            </Button>
+          </DialogActions>
+        )
+      }
+    >
       {done ? (
         <div className="space-y-3">
           <Notice tone="blue">
@@ -99,9 +113,6 @@ export function ConvertQuoteDialog({
               </label>
             ))}
           </div>
-          <Button className="w-full" disabled={busy || !name.trim()} onClick={() => go()}>
-            تحويل إلى مشروع
-          </Button>
         </div>
       )}
     </Dialog>

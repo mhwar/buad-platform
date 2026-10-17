@@ -36,6 +36,7 @@ import {
   Card,
   cx,
   Dialog,
+  DialogActions,
   EmptyState,
   Field,
   Input,
@@ -548,35 +549,37 @@ export function OpportunityPage() {
         <ConvertQuoteDialog quote={dialog.quote} onClose={close} onDone={refresh} />
       )}
       {dialog?.kind === "win" && (
-        <Dialog open onOpenChange={(v) => !v && close()} title="كسب الفرصة">
-          <div className="space-y-3 text-sm">
-            <p>مبروك! الخطوة التالية عادةً مشروع يبدأ منه التنفيذ والتحصيل.</p>
-            {accepted ? (
+        <Dialog
+          open
+          onOpenChange={(v) => !v && close()}
+          title="كسب الفرصة"
+          footer={
+            <DialogActions onCancel={close}>
+              {accepted ? (
+                <Button onClick={() => setDialog({ kind: "convert-quote", quote: accepted })}>
+                  <FolderPlus className="size-4" />
+                  تحويل العرض المقبول {accepted.number} إلى مشروع
+                </Button>
+              ) : (
+                <Button onClick={() => setDialog({ kind: "convert" })}>
+                  <FolderPlus className="size-4" />
+                  تحويل إلى مشروع
+                </Button>
+              )}
               <Button
-                className="w-full"
-                onClick={() => setDialog({ kind: "convert-quote", quote: accepted })}
+                variant="secondary"
+                onClick={async () => {
+                  await patch({ status: "won" });
+                  close();
+                }}
               >
-                <FolderPlus className="size-4" />
-                تحويل العرض المقبول {accepted.number} إلى مشروع
+                <Check className="size-4" />
+                تعليمها كمكسوبة فقط
               </Button>
-            ) : (
-              <Button className="w-full" onClick={() => setDialog({ kind: "convert" })}>
-                <FolderPlus className="size-4" />
-                تحويل إلى مشروع
-              </Button>
-            )}
-            <Button
-              variant="secondary"
-              className="w-full"
-              onClick={async () => {
-                await patch({ status: "won" });
-                close();
-              }}
-            >
-              <Check className="size-4" />
-              تعليمها كمكسوبة فقط
-            </Button>
-          </div>
+            </DialogActions>
+          }
+        >
+          <p className="text-sm">مبروك! الخطوة التالية عادةً مشروع يبدأ منه التنفيذ والتحصيل.</p>
         </Dialog>
       )}
       {dialog?.kind === "lose" && (
@@ -852,7 +855,18 @@ function LoseDialog({
   const [reason, setReason] = useState("");
   const common = ["السعر", "اختاروا جهة أخرى", "أُجّل المشروع", "لا ميزانية", "لا رد"];
   return (
-    <Dialog open onOpenChange={(v) => !v && onClose()} title="إغلاق الفرصة كخاسرة">
+    <Dialog
+      open
+      onOpenChange={(v) => !v && onClose()}
+      title="إغلاق الفرصة كخاسرة"
+      footer={
+        <DialogActions onCancel={onClose}>
+          <Button disabled={!reason.trim()} onClick={() => onSave(reason.trim())}>
+            إغلاق كخاسرة
+          </Button>
+        </DialogActions>
+      }
+    >
       <div className="space-y-3">
         <p className="text-sm text-muted">السبب يساعدك على فهم ما يفوتك من فرص.</p>
         <div className="flex flex-wrap gap-1.5">
@@ -876,9 +890,6 @@ function LoseDialog({
         <Field label="السبب">
           <Input value={reason} onChange={(e) => setReason(e.target.value)} />
         </Field>
-        <Button className="w-full" disabled={!reason.trim()} onClick={() => onSave(reason.trim())}>
-          إغلاق كخاسرة
-        </Button>
       </div>
     </Dialog>
   );

@@ -7,6 +7,7 @@ import {
   Button,
   Card,
   Dialog,
+  DialogActions,
   EmptyState,
   Field,
   Input,
@@ -372,7 +373,30 @@ function SettingsDialog({ onClose }: { onClose: () => void }) {
   const r = rate ?? String(s.data.rate);
   const p = period ?? s.data.period;
   return (
-    <Dialog open onOpenChange={(o) => !o && onClose()} title="إعدادات الضريبة">
+    <Dialog
+      open
+      onOpenChange={(o) => !o && onClose()}
+      title="إعدادات الضريبة"
+      footer={
+        <DialogActions onCancel={onClose}>
+          <Button
+            onClick={async () => {
+              const n = Number(r);
+              if (!(n >= 0 && n <= 100)) return setErr("النسبة بين 0 و100");
+              try {
+                await saveVatSettings({ rate: n, period: p });
+                await qc.invalidateQueries({ queryKey: vatKeys.all });
+                onClose();
+              } catch {
+                setErr("تعذّر الحفظ");
+              }
+            }}
+          >
+            حفظ
+          </Button>
+        </DialogActions>
+      }
+    >
       {err && <Notice>{err}</Notice>}
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label="نسبة الضريبة %" hint="تُطبَّق على المشتريات الجديدة؛ لا تتغير فواتير سُجّلت سابقاً">
@@ -407,23 +431,6 @@ function SettingsDialog({ onClose }: { onClose: () => void }) {
       <p className="mt-2 text-xs text-muted">
         ضريبة العقد نفسه (النسبة وهل هي شاملة) تُضبط لكل مشروع من «إعدادات العقد» في صفحته.
       </p>
-      <div className="mt-5 flex justify-end">
-        <Button
-          onClick={async () => {
-            const n = Number(r);
-            if (!(n >= 0 && n <= 100)) return setErr("النسبة بين 0 و100");
-            try {
-              await saveVatSettings({ rate: n, period: p });
-              await qc.invalidateQueries({ queryKey: vatKeys.all });
-              onClose();
-            } catch {
-              setErr("تعذّر الحفظ");
-            }
-          }}
-        >
-          حفظ
-        </Button>
-      </div>
     </Dialog>
   );
 }

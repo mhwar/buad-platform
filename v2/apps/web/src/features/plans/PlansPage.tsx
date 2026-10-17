@@ -10,6 +10,7 @@ import {
   Segmented,
   Select,
 } from "../../components/ui";
+import { day } from "../../lib/format";
 import { useCan } from "../../session";
 import { TaskDialog } from "../tasks/TaskDialogs";
 import { send } from "../team/queries";
@@ -194,7 +195,8 @@ export function PlansPage() {
               <div>
                 <h2 className="text-lg font-bold">{d.cycle.name}</h2>
                 <p className="text-xs text-muted">
-                  {d.cycle.startDate} → {d.cycle.endDate} · <Badge>{STATUS[d.cycle.status]}</Badge>
+                  {day(d.cycle.startDate)} – {day(d.cycle.endDate)} ·{" "}
+                  <Badge>{STATUS[d.cycle.status]}</Badge>
                 </p>
               </div>
               <div className="flex items-center gap-2">

@@ -6,6 +6,7 @@ import {
   Button,
   Card,
   Dialog,
+  DialogActions,
   EmptyState,
   Field,
   Input,
@@ -260,7 +261,18 @@ function InviteDialog({
     }
   };
   return (
-    <Dialog open={open} onOpenChange={(o) => !o && onClose()} title="دعوة مستخدم">
+    <Dialog
+      open={open}
+      onOpenChange={(o) => !o && onClose()}
+      title="دعوة مستخدم"
+      footer={
+        <DialogActions onCancel={onClose}>
+          <Button disabled={busy || !name.trim() || !email.includes("@")} onClick={submit}>
+            إنشاء الدعوة
+          </Button>
+        </DialogActions>
+      }
+    >
       <div className="space-y-4">
         {error && <Notice>{error}</Notice>}
         <Field label="الاسم">
@@ -275,13 +287,6 @@ function InviteDialog({
           onChange={setRoleKey}
           canOwner={can("roles.manage")}
         />
-        <Button
-          disabled={busy || !name.trim() || !email.includes("@")}
-          onClick={submit}
-          className="w-full"
-        >
-          إنشاء الدعوة
-        </Button>
       </div>
     </Dialog>
   );
@@ -311,7 +316,19 @@ function EditDialog({
     }
   };
   return (
-    <Dialog open onOpenChange={(o) => !o && onClose()} title="تعديل المستخدم">
+    <Dialog
+      open
+      onOpenChange={(o) => !o && onClose()}
+      title="تعديل المستخدم"
+      footer={
+        <DialogActions onCancel={onClose}>
+          <Button disabled={!name.trim()} onClick={save}>
+            <UserCog className="size-4" />
+            حفظ
+          </Button>
+        </DialogActions>
+      }
+    >
       <div className="space-y-4">
         {error && <Notice>{error}</Notice>}
         <Field label="الاسم">
@@ -323,10 +340,6 @@ function EditDialog({
           onChange={setRoleKey}
           canOwner={can("roles.manage")}
         />
-        <Button disabled={!name.trim()} onClick={save} className="w-full">
-          <UserCog className="size-4" />
-          حفظ
-        </Button>
       </div>
     </Dialog>
   );

@@ -2,7 +2,15 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { Archive, FilePlus2, FileSpreadsheet, Pencil, ReceiptText } from "lucide-react";
 import { type ReactNode, useState } from "react";
-import { Button, confirmAction, Dialog, type MenuItem, Notice, Select } from "../../components/ui";
+import {
+  Button,
+  confirmAction,
+  Dialog,
+  DialogActions,
+  type MenuItem,
+  Notice,
+  Select,
+} from "../../components/ui";
 import { financeQuery } from "../finance/api";
 import { EntryDialog } from "../finance/EntryDialog";
 import { projectKeys } from "../projects/api";
@@ -125,9 +133,25 @@ export function AddEntry({
         projectName={live.find((p) => p.id === projectId)?.name}
       />
     );
+  const loading = q.isPending || (projectId && fin.isPending);
   return (
-    <Dialog open onOpenChange={(v) => !v && onClose()} title={`إضافة قيد · ${clientName}`}>
-      {q.isPending || (projectId && fin.isPending) ? (
+    <Dialog
+      open
+      onOpenChange={(v) => !v && onClose()}
+      title={`إضافة قيد · ${clientName}`}
+      footer={
+        !loading &&
+        !fin.isError &&
+        live.length > 0 && (
+          <DialogActions onCancel={onClose}>
+            <Button type="submit" form="entry-project-form" disabled={!picked}>
+              متابعة
+            </Button>
+          </DialogActions>
+        )
+      }
+    >
+      {loading ? (
         <p className="text-muted">جارٍ التحميل…</p>
       ) : fin.isError ? (
         <Notice>تعذّر تحميل مالية المشروع</Notice>
@@ -135,6 +159,7 @@ export function AddEntry({
         <Notice tone="amber">لا توجد مشاريع حالية لهذا العميل.</Notice>
       ) : (
         <form
+          id="entry-project-form"
           className="space-y-4"
           onSubmit={(e) => {
             e.preventDefault();
@@ -157,11 +182,6 @@ export function AddEntry({
               </option>
             ))}
           </Select>
-          <div className="flex justify-end">
-            <Button type="submit" disabled={!picked}>
-              متابعة
-            </Button>
-          </div>
         </form>
       )}
     </Dialog>

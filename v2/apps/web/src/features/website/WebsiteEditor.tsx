@@ -201,7 +201,6 @@ function Editor({ data }: { data: Draft }) {
               goTab={goTab}
               dirty={dirty}
               busy={busy}
-              onPublish={publish}
               onUnpublish={unpublish}
             />
           )}

@@ -8,6 +8,7 @@ import {
   Button,
   Card,
   Dialog,
+  DialogActions,
   EmptyState,
   Field,
   Input,
@@ -233,8 +234,24 @@ export function AddDialog({
     (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
       setF((x) => ({ ...x, [k]: e.target.value }));
   return (
-    <Dialog open={open} onOpenChange={(v) => !v && onClose()} title="تسجيل طلب">
+    <Dialog
+      open={open}
+      onOpenChange={(v) => !v && onClose()}
+      title="تسجيل طلب"
+      footer={
+        <DialogActions onCancel={onClose}>
+          <Button
+            type="submit"
+            form="request-form"
+            disabled={add.isPending || f.name.trim().length < 2}
+          >
+            حفظ
+          </Button>
+        </DialogActions>
+      }
+    >
       <form
+        id="request-form"
         className="space-y-3"
         onSubmit={(e) => {
           e.preventDefault();
@@ -269,13 +286,6 @@ export function AddDialog({
         <Field label="ملاحظات">
           <Textarea rows={3} value={f.message} onChange={set("message")} />
         </Field>
-        <Button
-          type="submit"
-          className="w-full"
-          disabled={add.isPending || f.name.trim().length < 2}
-        >
-          حفظ
-        </Button>
       </form>
     </Dialog>
   );
@@ -409,7 +419,22 @@ export function PricingDialog({
     onError: () => setError("تعذّر حفظ العرض: أكمل تكاليف الباقة وكمياتها في المنتج أولاً."),
   });
   return (
-    <Dialog open onOpenChange={(v) => !v && onClose()} title="تسعير الطلب" wide>
+    <Dialog
+      open
+      onOpenChange={(v) => !v && onClose()}
+      title="تسعير الطلب"
+      wide
+      footer={
+        <DialogActions onCancel={onClose}>
+          <Button
+            disabled={!preview || preview.status !== "ok" || save.isPending}
+            onClick={() => save.mutate()}
+          >
+            حفظ العرض على الطلب
+          </Button>
+        </DialogActions>
+      }
+    >
       <div className="space-y-4">
         {error && <Notice>{error}</Notice>}
         <div className="grid gap-3 sm:grid-cols-3">
@@ -447,13 +472,6 @@ export function PricingDialog({
           </Field>
         </div>
         {preview && p && <QuoteResult q={preview} lines={p.pricing.lines} />}
-        <Button
-          className="w-full"
-          disabled={!preview || preview.status !== "ok" || save.isPending}
-          onClick={() => save.mutate()}
-        >
-          حفظ العرض على الطلب
-        </Button>
       </div>
     </Dialog>
   );
@@ -493,7 +511,20 @@ export function ConvertRequestDialog({
     },
   });
   return (
-    <Dialog open onOpenChange={(v) => !v && onClose()} title="تحويل إلى عميل ومشروع">
+    <Dialog
+      open
+      onOpenChange={(v) => !v && onClose()}
+      title="تحويل إلى عميل ومشروع"
+      footer={
+        !done && (
+          <DialogActions onCancel={onClose}>
+            <Button disabled={go.isPending} onClick={() => go.mutate()}>
+              {similar ? "متابعة" : "تحويل"}
+            </Button>
+          </DialogActions>
+        )
+      }
+    >
       {done ? (
         <div className="space-y-3 text-sm">
           <Notice tone="blue">تم إنشاء المشروع كمسودة، وسعره المتوقع من عرض السعر.</Notice>
@@ -551,9 +582,6 @@ export function ConvertRequestDialog({
               placeholder={`${r.productName || "طلب"} — ${r.entity || r.name}`}
             />
           </Field>
-          <Button className="w-full" disabled={go.isPending} onClick={() => go.mutate()}>
-            {similar ? "متابعة" : "تحويل"}
-          </Button>
         </div>
       )}
     </Dialog>

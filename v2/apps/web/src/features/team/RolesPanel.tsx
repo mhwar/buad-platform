@@ -10,7 +10,17 @@ import {
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Lock, Plus } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Badge, Button, Card, Dialog, Field, Input, Notice, Select } from "../../components/ui";
+import {
+  Badge,
+  Button,
+  Card,
+  Dialog,
+  DialogActions,
+  Field,
+  Input,
+  Notice,
+  Select,
+} from "../../components/ui";
 import { ApiError } from "../../lib/format";
 import { useCan } from "../../session";
 import { send, type TeamRole, teamRolesQuery } from "./queries";
@@ -277,7 +287,18 @@ function NewRole({
     }
   };
   return (
-    <Dialog open onOpenChange={(o) => !o && onClose()} title="دور جديد">
+    <Dialog
+      open
+      onOpenChange={(o) => !o && onClose()}
+      title="دور جديد"
+      footer={
+        <DialogActions onCancel={onClose}>
+          <Button disabled={!name.trim()} onClick={create}>
+            إنشاء
+          </Button>
+        </DialogActions>
+      }
+    >
       <div className="space-y-4">
         {error && <Notice>{error}</Notice>}
         <p className="text-sm text-muted">
@@ -286,9 +307,6 @@ function NewRole({
         <Field label="اسم الدور">
           <Input value={name} onChange={(e) => setName(e.target.value)} />
         </Field>
-        <Button disabled={!name.trim()} onClick={create} className="w-full">
-          إنشاء
-        </Button>
       </div>
     </Dialog>
   );

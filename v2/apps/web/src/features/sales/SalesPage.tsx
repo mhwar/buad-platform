@@ -9,6 +9,7 @@ import {
   Button,
   Card,
   Dialog,
+  DialogActions,
   EmptyState,
   Field,
   Input,
@@ -53,7 +54,29 @@ export function FollowUpDialog({
   const [lostReason, setLost] = useState(r.lostReason);
   const [notes, setNotes] = useState(r.notes);
   return (
-    <Dialog open onOpenChange={(o) => !o && onClose()} title={`متابعة ${r.name}`}>
+    <Dialog
+      open
+      onOpenChange={(o) => !o && onClose()}
+      title={`متابعة ${r.name}`}
+      footer={
+        <DialogActions onCancel={onClose}>
+          <Button
+            onClick={async () => {
+              await send("PATCH", `/api/product-requests/${r.id}`, {
+                ownerId,
+                followUpAt,
+                value: Number(value) || 0,
+                notes,
+                ...(r.status === "lost" ? { lostReason } : {}),
+              });
+              onSaved();
+            }}
+          >
+            حفظ
+          </Button>
+        </DialogActions>
+      }
+    >
       <div className="space-y-4">
         <Field label="المسؤول">
           <Select value={ownerId} onChange={(e) => setOwnerId(e.target.value)}>
@@ -87,21 +110,6 @@ export function FollowUpDialog({
         <Field label="ملاحظات">
           <Textarea rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} />
         </Field>
-        <Button
-          className="w-full"
-          onClick={async () => {
-            await send("PATCH", `/api/product-requests/${r.id}`, {
-              ownerId,
-              followUpAt,
-              value: Number(value) || 0,
-              notes,
-              ...(r.status === "lost" ? { lostReason } : {}),
-            });
-            onSaved();
-          }}
-        >
-          حفظ
-        </Button>
       </div>
     </Dialog>
   );

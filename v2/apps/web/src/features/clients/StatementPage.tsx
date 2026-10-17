@@ -140,7 +140,7 @@ function statementBlocks(st: Statement): Block[] {
       key: "intro",
       node: (
         <>
-          <h1 className="doc-title">كشف حساب عميل</h1>
+          <h2 className="doc-title">كشف حساب عميل</h2>
           <div className="st-meta">
             <div>
               <p>

@@ -1,7 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useSearch } from "@tanstack/react-router";
-import { Badge, Card, EmptyState, Field, Input, PageHeader, Select } from "../../components/ui";
-import { ago } from "../../lib/format";
+import { FilterBar } from "../../components/FilterBar";
+import { Badge, Card, EmptyState, Field, Input, PageHeader } from "../../components/ui";
+import { ago, day, fromEpoch } from "../../lib/format";
 import { auditQuery, teamUsersQuery } from "./queries";
 
 const ENTITIES: Record<string, string> = {
@@ -24,10 +25,11 @@ const ENTITIES: Record<string, string> = {
   meeting: "الاجتماعات",
   decision: "القرارات",
 };
-const time = new Intl.DateTimeFormat("ar-SA-u-ca-gregory-nu-latn", {
-  dateStyle: "medium",
-  timeStyle: "short",
-});
+const clock = new Intl.DateTimeFormat("ar-SA-u-ca-gregory-nu-latn", { timeStyle: "short" });
+/** «17 أكتوبر 2026، 8:21 ص»: the platform's date, then the time. */
+const when = (s: number) => `${fromEpoch(s)}، ${clock.format(new Date(s * 1000))}`;
+/** Changed values that are dates read like every other date («30 نوفمبر 2026»). */
+const shown = (v: string) => (/^\d{4}-\d{2}-\d{2}$/.test(v) ? day(v) : v);
 
 /** «سجل النشاط»: who changed what and when. Read-only. */
 export function ActivityPage() {
@@ -49,34 +51,38 @@ export function ActivityPage() {
   return (
     <div className="space-y-4">
       <PageHeader title="سجل النشاط" subtitle="من غيّر ماذا ومتى، بالقيم قبل التعديل وبعده." />
-      <Card className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <Field label="القسم">
-          <Select value={entity} onChange={(e) => setEntity(e.target.value)}>
-            <option value="">الكل</option>
-            {Object.entries(ENTITIES).map(([k, l]) => (
-              <option key={k} value={k}>
-                {l}
-              </option>
-            ))}
-          </Select>
-        </Field>
-        <Field label="المستخدم">
-          <Select value={user} onChange={(e) => setUser(e.target.value)}>
-            <option value="">الكل</option>
-            {users.data?.map((u) => (
-              <option key={u.id} value={u.id}>
-                {u.name || u.email}
-              </option>
-            ))}
-          </Select>
-        </Field>
-        <Field label="من تاريخ">
-          <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
-        </Field>
-        <Field label="إلى تاريخ">
-          <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} />
-        </Field>
-      </Card>
+      <FilterBar
+        fields={[
+          {
+            key: "entity",
+            label: "القسم",
+            value: entity,
+            allLabel: "كل الأقسام",
+            options: Object.entries(ENTITIES).map(([value, label]) => ({ value, label })),
+          },
+          {
+            key: "user",
+            label: "المستخدم",
+            value: user,
+            allLabel: "كل المستخدمين",
+            options: (users.data ?? []).map((u) => ({ value: u.id, label: u.name || u.email })),
+          },
+        ]}
+        onChange={(k, v) => (k === "entity" ? setEntity(v) : setUser(v))}
+      />
+      <details open={!!(from || to) || undefined}>
+        <summary className="cursor-pointer text-sm text-muted select-none hover:text-ink">
+          نطاق التاريخ{from || to ? `: ${from ? day(from) : "…"} – ${to ? day(to) : "…"}` : ""}
+        </summary>
+        <div className="mt-2 grid max-w-md grid-cols-2 gap-3">
+          <Field label="من تاريخ">
+            <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
+          </Field>
+          <Field label="إلى تاريخ">
+            <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} />
+          </Field>
+        </div>
+      </details>
       {q.data?.length === 0 && (
         <EmptyState title="لا نشاط مطابق" text="تظهر هنا التغييرات التي يجريها الفريق." />
       )}
@@ -87,7 +93,7 @@ export function ActivityPage() {
               <div className="min-w-0">
                 <p className="font-medium">{i.summary}</p>
                 <p className="text-xs text-muted">
-                  {i.userName || "النظام"} · {time.format(new Date(i.at * 1000))} · {ago(i.at)}
+                  {i.userName || "النظام"} · {when(i.at)} · {ago(i.at)}
                 </p>
                 <Changes detail={i.detail} />
               </div>
@@ -113,12 +119,14 @@ function Changes({ detail }: { detail: Record<string, unknown> }) {
           {c.before !== "—" && (
             <>
               <span className="text-red-700 line-through decoration-1 dark:text-red-400">
-                {c.before}
+                {shown(c.before)}
               </span>
               <span className="mx-1 text-muted">←</span>
             </>
           )}
-          <span className="font-medium text-emerald-700 dark:text-emerald-400">{c.after}</span>
+          <span className="font-medium text-emerald-700 dark:text-emerald-400">
+            {shown(c.after)}
+          </span>
         </li>
       ))}
     </ul>
