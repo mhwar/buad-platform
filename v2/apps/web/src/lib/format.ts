@@ -7,7 +7,16 @@ const sarFmt = new Intl.NumberFormat("ar-SA-u-nu-latn", {
   currency: "SAR",
   maximumFractionDigits: 2,
 });
-export const sar = (riyals: number) => sarFmt.format(Number.isFinite(riyals) ? riyals : 0);
+const sarWholeFmt = new Intl.NumberFormat("ar-SA-u-nu-latn", {
+  style: "currency",
+  currency: "SAR",
+  maximumFractionDigits: 0,
+});
+/** «50,000 ر.س.» for a whole amount, «33,333.33 ر.س.» when there are halalas — never «.00». */
+export const sar = (riyals: number) => {
+  const v = Number.isFinite(riyals) ? riyals : 0;
+  return Math.round(v * 100) % 100 === 0 ? sarWholeFmt.format(v) : sarFmt.format(v);
+};
 export const pct = (v: number) => `${(Number.isFinite(v) ? v : 0).toFixed(1)}%`;
 
 const dateFmt = new Intl.DateTimeFormat("ar-SA-u-ca-gregory-nu-latn", {

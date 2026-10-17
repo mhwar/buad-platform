@@ -215,7 +215,7 @@ export function QuarterCentre() {
         <ReceiptProposals />
         <Card>
           <h2 className="mb-1 flex items-center gap-2 font-semibold">
-            <AlertTriangle className="size-4 text-amber-600" /> قبل التوزيع
+            <AlertTriangle className="size-4 text-amber-700" /> قبل التوزيع
           </h2>
           <ul className="list-disc space-y-1 ps-5 text-sm text-muted">
             <li>الدفعات الجزئية: يُوزَّع من ربح المشروع بقدر المستلم فقط، والباقي في ربعه.</li>

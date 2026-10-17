@@ -7,13 +7,16 @@ import type { z } from "zod";
 import {
   Badge,
   Button,
+  confirmAction,
   Dialog,
+  DialogActions,
   Field,
   Input,
   Notice,
   Select,
   Tabs,
   Textarea,
+  toast,
 } from "../../components/ui";
 import { ApiError, sar, today } from "../../lib/format";
 import { vatSettingsQuery } from "../finance-overview/vat-api";
@@ -129,13 +132,18 @@ export function EntryDialog({
     const body = { ...v, profitMargin: hasProfit ? v.profitMargin : 0, taxInvoice };
     try {
       apply(existing ? await api.updateEntry(existing.id, body) : await api.addEntry(body));
+      toast(existing ? "حُفظ القيد" : "أُضيف القيد");
       close(false);
     } catch {
       setError("تعذّر الحفظ، حاولوا مرة أخرى");
     }
   });
   const remove = async () => {
-    if (!existing || !confirm("حذف هذا القيد؟")) return;
+    if (
+      !existing ||
+      !(await confirmAction({ title: "حذف هذا القيد؟", action: "حذف القيد", danger: true }))
+    )
+      return;
     apply(await api.deleteEntry(existing.id));
     close(false);
   };
@@ -369,22 +377,21 @@ export function EntryDialog({
           <Field label="ملاحظة">
             <Textarea rows={2} {...f.register("note")} />
           </Field>
-          <div className="flex items-center justify-between gap-2 border-t pt-4">
-            {existing ? (
-              <Button variant="ghost" className="text-red-600" onClick={remove}>
-                حذف القيد
-              </Button>
-            ) : (
-              <span />
-            )}
-            <div className="flex gap-2">
-              <Button variant="secondary" onClick={() => close(false)}>
-                إلغاء
-              </Button>
+          <div className="border-t pt-4">
+            <DialogActions
+              onCancel={() => close(false)}
+              aside={
+                existing && (
+                  <Button variant="ghost" className="text-red-600" onClick={remove}>
+                    حذف القيد
+                  </Button>
+                )
+              }
+            >
               <Button type="submit" disabled={f.formState.isSubmitting}>
                 {existing ? "حفظ التعديل" : "إضافة القيد"}
               </Button>
-            </div>
+            </DialogActions>
           </div>
         </form>
       )}

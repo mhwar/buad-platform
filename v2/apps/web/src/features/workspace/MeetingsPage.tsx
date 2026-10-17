@@ -19,6 +19,7 @@ import {
   Badge,
   Button,
   Card,
+  confirmAction,
   cx,
   Dialog,
   EmptyState,
@@ -320,7 +321,15 @@ function MeetingDetail({ id, onClose }: { id: string; onClose: () => void }) {
                     variant="ghost"
                     aria-label="حذف الاجتماع"
                     onClick={async () => {
-                      if (!confirm("حذف الاجتماع؟ تبقى قراراته.")) return;
+                      if (
+                        !(await confirmAction({
+                          title: "حذف الاجتماع؟",
+                          text: "تبقى قراراته.",
+                          action: "حذف الاجتماع",
+                          danger: true,
+                        }))
+                      )
+                        return;
                       await send("DELETE", `/api/meetings/${id}`);
                       refresh();
                       onClose();

@@ -2,7 +2,7 @@ import { DOC_KIND_LABELS } from "@buad/schema/documents";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Copy, Link2, Mail, MessageCircle, Send } from "lucide-react";
 import { useState } from "react";
-import { Button, Dialog, Field, Input, Notice, Select } from "../../components/ui";
+import { Button, confirmAction, Dialog, Field, Input, Notice, Select } from "../../components/ui";
 import { ago, fromEpoch, whatsapp } from "../../lib/format";
 import { type DocDetail, docApi } from "./api";
 
@@ -150,7 +150,15 @@ export function SendDialog({ detail, onClose }: { detail: DocDetail; onClose: ()
               <Button
                 variant="secondary"
                 onClick={async () => {
-                  if (!confirm("إلغاء هذا الرابط؟ لن يفتح بعد الآن.")) return;
+                  if (
+                    !(await confirmAction({
+                      title: "إلغاء هذا الرابط؟",
+                      text: "لن يفتح بعد الآن لمن أُرسل إليه.",
+                      action: "إلغاء الرابط",
+                      danger: true,
+                    }))
+                  )
+                    return;
                   await docApi.revokeShare(d.id, s.id);
                   await qc.invalidateQueries({ queryKey: ["documents", "shares", d.id] });
                 }}

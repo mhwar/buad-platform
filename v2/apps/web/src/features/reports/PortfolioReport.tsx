@@ -164,7 +164,7 @@ export function PortfolioReport() {
                   <td className="p-3 tabular-nums">{w === null ? "—" : pct(w)}</td>
                   <td className="p-3 tabular-nums">
                     {money(p.contractTotal)}
-                    {p.estimated && <span className="ms-1 text-[11px] text-muted">تقديري</span>}
+                    {p.estimated && <span className="ms-1 text-xs text-muted">تقديري</span>}
                   </td>
                   {money_ && (
                     <>

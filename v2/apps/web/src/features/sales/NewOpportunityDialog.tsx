@@ -4,12 +4,14 @@ import { useState } from "react";
 import {
   Button,
   Dialog,
+  DialogActions,
   Field,
   Input,
   Notice,
   Segmented,
   Select,
   Textarea,
+  toast,
 } from "../../components/ui";
 import { ApiError } from "../../lib/format";
 import { clientsQuery } from "../clients/api";
@@ -90,6 +92,7 @@ export function NewOpportunityDialog({
       qc.invalidateQueries({ queryKey: ["product-requests"] });
       qc.invalidateQueries({ queryKey: ["clients"] });
       qc.invalidateQueries({ queryKey: ["sales-overview"] });
+      toast("أُنشئت الفرصة");
       close();
       navigate({ to: "/sales/$id", params: { id: r.id } });
     },
@@ -111,8 +114,20 @@ export function NewOpportunityDialog({
   const ready = mode === "existing" ? !!f.clientId : (f.entity || f.name).trim().length >= 2;
 
   return (
-    <Dialog open={open} onOpenChange={(v) => !v && close()} title="فرصة جديدة">
+    <Dialog
+      open={open}
+      onOpenChange={(v) => !v && close()}
+      title="فرصة جديدة"
+      footer={
+        <DialogActions onCancel={close}>
+          <Button type="submit" form="opportunity-form" disabled={!ready || save.isPending}>
+            إنشاء الفرصة
+          </Button>
+        </DialogActions>
+      }
+    >
       <form
+        id="opportunity-form"
         className="space-y-4"
         onSubmit={(e) => {
           e.preventDefault();
@@ -241,9 +256,6 @@ export function NewOpportunityDialog({
         <Field label="ما الذي يحتاجونه؟">
           <Textarea rows={2} value={f.message} onChange={set("message")} />
         </Field>
-        <Button type="submit" className="w-full" disabled={!ready || save.isPending}>
-          إنشاء الفرصة
-        </Button>
       </form>
     </Dialog>
   );

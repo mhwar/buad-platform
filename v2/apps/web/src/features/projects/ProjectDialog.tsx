@@ -5,7 +5,17 @@ import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import type { z } from "zod";
-import { Button, Dialog, Field, Input, Notice, Select, Textarea } from "../../components/ui";
+import {
+  Button,
+  Dialog,
+  DialogActions,
+  Field,
+  Input,
+  Notice,
+  Select,
+  Textarea,
+  toast,
+} from "../../components/ui";
 import { ApiError, today } from "../../lib/format";
 import { meQuery } from "../../session";
 import { clientKeys, clientsQuery } from "../clients/api";
@@ -111,6 +121,7 @@ export function ProjectDialog({
           qc.invalidateQueries({ queryKey: projectKeys.all }),
           qc.invalidateQueries({ queryKey: clientKeys.all }),
         ]);
+        toast("حُفظ المشروع");
         close(false);
       } else {
         const res = await createProject(body);
@@ -118,6 +129,7 @@ export function ProjectDialog({
           qc.invalidateQueries({ queryKey: projectKeys.all }),
           qc.invalidateQueries({ queryKey: clientKeys.all }),
         ]);
+        toast("أُنشئ المشروع");
         close(false);
         await navigate({ to: "/projects/$id", params: { id: res.id } });
       }
@@ -134,9 +146,21 @@ export function ProjectDialog({
   });
 
   return (
-    <Dialog open={open} onOpenChange={close} title={existing ? "تعديل المشروع" : "مشروع جديد"} wide>
+    <Dialog
+      open={open}
+      onOpenChange={close}
+      title={existing ? "تعديل المشروع" : "مشروع جديد"}
+      wide
+      footer={
+        <DialogActions onCancel={() => close(false)}>
+          <Button type="submit" form="project-form" disabled={f.formState.isSubmitting}>
+            {existing ? "حفظ التعديلات" : "حفظ المشروع"}
+          </Button>
+        </DialogActions>
+      }
+    >
       {error && <Notice>{error}</Notice>}
-      <form onSubmit={save} className="space-y-5" noValidate>
+      <form id="project-form" onSubmit={save} className="space-y-5" noValidate>
         <div className="grid gap-4 sm:grid-cols-2">
           {(pickClient || existing) && (
             <Field label="العميل *" error={err(e.clientId)} className="sm:col-span-2">
@@ -240,14 +264,6 @@ export function ProjectDialog({
         <Field label="ملاحظات">
           <Textarea {...f.register("notes")} />
         </Field>
-        <div className="flex justify-end gap-2 border-t pt-4">
-          <Button variant="secondary" onClick={() => close(false)}>
-            إلغاء
-          </Button>
-          <Button type="submit" disabled={f.formState.isSubmitting}>
-            {existing ? "حفظ التعديلات" : "حفظ المشروع"}
-          </Button>
-        </div>
       </form>
     </Dialog>
   );

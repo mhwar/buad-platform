@@ -330,7 +330,7 @@ function Dashboard({
             <ul className="divide-y rounded-lg border text-sm">
               {data.obligations.unregistered.map((u) => (
                 <li key={`${u.projectId}-${u.item}`} className="flex items-center gap-3 p-3">
-                  <AlertTriangle className="size-4 shrink-0 text-amber-600" />
+                  <AlertTriangle className="size-4 shrink-0 text-amber-700" />
                   <span className="min-w-0 flex-1">
                     <span className="font-medium">{u.item}</span> غير مسجّل ·{" "}
                     <FinanceLink id={u.projectId} name={u.projectName} />
@@ -405,7 +405,7 @@ function QualityCard({ items }: { items: Overview["quality"] }) {
     <Card className="border-amber-300 bg-amber-50/60 dark:border-amber-800 dark:bg-amber-950/30">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-start gap-2">
-          <AlertTriangle className="mt-0.5 size-4 shrink-0 text-amber-600" />
+          <AlertTriangle className="mt-0.5 size-4 shrink-0 text-amber-700" />
           <div>
             <p className="font-semibold">بيانات ناقصة تؤثر على دقة الأرقام</p>
             <p className={`text-xs text-muted ${open ? "" : "line-clamp-2 sm:line-clamp-none"}`}>

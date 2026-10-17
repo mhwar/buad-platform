@@ -2,7 +2,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { Archive, FilePlus2, FileSpreadsheet, Pencil, ReceiptText } from "lucide-react";
 import { type ReactNode, useState } from "react";
-import { Button, Dialog, type MenuItem, Notice, Select } from "../../components/ui";
+import { Button, confirmAction, Dialog, type MenuItem, Notice, Select } from "../../components/ui";
 import { financeQuery } from "../finance/api";
 import { EntryDialog } from "../finance/EntryDialog";
 import { projectKeys } from "../projects/api";
@@ -64,7 +64,14 @@ export function useClientActions({
             icon: <Archive />,
             danger: true,
             onSelect: async () => {
-              if (!confirm(`أرشفة «${name}» ومشاريعه؟ يمكن استعادتها لاحقاً.`)) return;
+              if (
+                !(await confirmAction({
+                  title: `أرشفة «${name}» ومشاريعه؟`,
+                  text: "يمكن استعادتها لاحقاً.",
+                  action: "أرشفة",
+                }))
+              )
+                return;
               await archiveClient(id);
               await Promise.all([
                 qc.invalidateQueries({ queryKey: clientKeys.all }),

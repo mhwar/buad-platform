@@ -70,7 +70,7 @@ export function PipelineBoard({
             <h3 className="text-sm font-semibold">{REQUEST_LABEL[s]}</h3>
             <span className="rounded-full bg-surface px-2 text-xs text-muted">{items.length}</span>
           </div>
-          <p className="text-[11px] text-muted">
+          <p className="text-xs text-muted">
             {sar(value)}
             {!closed && st && st.weighted > 0 && ` · مرجّحة ${sar(st.weighted / 100)}`}
           </p>
@@ -91,7 +91,7 @@ export function PipelineBoard({
                   className="block rounded-lg bg-surface px-2.5 py-1.5 text-sm hover:text-brand"
                 >
                   <span className="block truncate font-medium">{r.entity || r.name}</span>
-                  <span className="block truncate text-[11px] text-muted">
+                  <span className="block truncate text-xs text-muted">
                     {[r.value ? sar(r.value) : "", r.status === "lost" ? r.lostReason : ""]
                       .filter(Boolean)
                       .join(" · ") || "—"}

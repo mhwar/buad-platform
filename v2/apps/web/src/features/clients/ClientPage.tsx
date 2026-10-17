@@ -9,6 +9,7 @@ import {
   Badge,
   Button,
   Card,
+  confirmAction,
   EmptyState,
   Info,
   Menu,
@@ -118,11 +119,13 @@ export function ClientPage() {
               }
             : {
                 label: "أرشفة العميل ومشاريعه",
-                onSelect: () => {
+                onSelect: async () => {
                   if (
-                    confirm(
-                      `أرشفة «${client.name}» و${live.length} من مشاريعه؟ يمكن استعادتها لاحقاً.`,
-                    )
+                    await confirmAction({
+                      title: `أرشفة «${client.name}» و${live.length} من مشاريعه؟`,
+                      text: "يمكن استعادتها لاحقاً.",
+                      action: "أرشفة",
+                    })
                   )
                     act(() => archiveClient(client.id));
                 },

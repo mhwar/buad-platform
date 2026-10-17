@@ -1,5 +1,6 @@
 import { Clock, Pencil, Trash2 } from "lucide-react";
-import { Badge, Button } from "../../components/ui";
+import { Badge, Button, confirmAction } from "../../components/ui";
+import { day } from "../../lib/format";
 import { send } from "../team/queries";
 import { isOverdue, PRIORITY_LABEL, STATUS_LABEL, type Task, type TaskStatus } from "./queries";
 
@@ -48,7 +49,7 @@ export function TaskRow({
             {t.dueDate && (
               <span className={late ? "font-semibold text-red-600" : ""}>
                 {late ? "متأخرة · " : "حتى "}
-                {t.dueDate}
+                {day(t.dueDate)}
               </span>
             )}
             {t.priority === "high" && <Badge tone="red">{PRIORITY_LABEL.high}</Badge>}
@@ -86,7 +87,14 @@ export function TaskRow({
             variant="ghost"
             aria-label={`حذف ${t.title}`}
             onClick={async () => {
-              if (!confirm(`حذف المهمة «${t.title}»؟`)) return;
+              if (
+                !(await confirmAction({
+                  title: `حذف المهمة «${t.title}»؟`,
+                  action: "حذف المهمة",
+                  danger: true,
+                }))
+              )
+                return;
               await send("DELETE", `/api/tasks/${t.id}`);
               onChanged();
             }}

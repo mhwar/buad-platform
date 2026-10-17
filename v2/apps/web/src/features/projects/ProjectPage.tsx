@@ -27,6 +27,7 @@ import {
   BadgeMenu,
   Button,
   Card,
+  confirmAction,
   EmptyState,
   Menu,
   type MenuItem,
@@ -239,8 +240,15 @@ export function ProjectPage() {
             label: "حذف نهائي",
             icon: <Trash2 />,
             danger: true,
-            onSelect: () => {
-              if (confirm(`حذف «${p.name}» نهائياً؟ لا يمكن التراجع.`))
+            onSelect: async () => {
+              if (
+                await confirmAction({
+                  title: `حذف «${p.name}» نهائياً؟`,
+                  text: "لا يمكن التراجع. إن كان للمشروع سجلات فأرشفته أفضل.",
+                  action: "حذف نهائياً",
+                  danger: true,
+                })
+              )
                 act(
                   () => deleteProject(p.id),
                   () => navigate({ to: "/projects" }),

@@ -7,6 +7,7 @@ import { SectionTabs } from "../../features/more/SectionTabs";
 import { meQuery } from "../../session";
 import { MobileTabBar } from "../MobileTabBar";
 import { UpdateBanner, useServerVersion } from "../UpdateBanner";
+import { ConfirmHost, ToastHost } from "../ui";
 import { AppHeader } from "./AppHeader";
 import { MobileDrawer } from "./MobileDrawer";
 import { activeEntry, buildNav, phoneNav } from "./nav-model";
@@ -95,7 +96,7 @@ export function AppShell() {
           <main
             id="main"
             tabIndex={-1}
-            className="mx-auto w-full max-w-[88rem] flex-1 px-4 py-6 pb-28 outline-none sm:px-6 lg:px-8 lg:pb-8"
+            className="mx-auto w-full max-w-[88rem] flex-1 overflow-x-clip px-4 py-6 pb-28 outline-none sm:px-6 lg:px-8 lg:pb-8"
           >
             <SectionTabs />
             <Outlet />
@@ -121,13 +122,16 @@ export function AppShell() {
         user={{ name: me.data.name || me.data.email, role }}
         onLogout={logout}
       />
-      {/* Pages with their own bottom save bar (site editor, document editor) keep that space. */}
-      {!/^\/(website|projects\/[^/]+\/documents)/.test(path) && (
+      {/* On «اليوم» only: every other page has its own «+» in its header, and a floating button
+          there would sit over the cards' menus and the end of the page. */}
+      {path === "/" && (
         <div className="fixed bottom-[calc(4.25rem+env(safe-area-inset-bottom))] left-4 z-30 lg:hidden print:hidden">
           <QuickCreate collapsed fab />
         </div>
       )}
       <QuickCreate collapsed headless />
+      <ConfirmHost />
+      <ToastHost />
       {paletteLoaded && (
         <Suspense fallback={null}>
           <CommandPalette

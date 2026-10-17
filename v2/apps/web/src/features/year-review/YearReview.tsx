@@ -9,6 +9,7 @@ import {
   Badge,
   Button,
   Card,
+  confirmAction,
   cx,
   Dialog,
   EmptyState,
@@ -53,7 +54,14 @@ export function YearReview({ year, onYear }: { year: number; onYear: (y: number)
     qc.invalidateQueries({ queryKey: ["plans"] });
   };
   const close = async (p: ReviewItem) => {
-    if (!confirm(`إغلاق «${p.name}» كمكتمل؟`)) return;
+    if (
+      !(await confirmAction({
+        title: `إغلاق «${p.name}» كمكتمل؟`,
+        text: "يُنقل إلى المشاريع المكتملة، ويمكن إعادة فتحه لاحقاً.",
+        action: "إغلاق كمكتمل",
+      }))
+    )
+      return;
     setError("");
     try {
       await updateProject(p.id, { status: "completed" });

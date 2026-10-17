@@ -204,17 +204,17 @@ export function SalesDashboard() {
         >
           <dl className="grid grid-cols-3 gap-2 text-center">
             <div>
-              <dt className="text-[11px] text-muted">أُرسلت</dt>
+              <dt className="text-xs text-muted">أُرسلت</dt>
               <dd className="font-bold">{o.quotes.sent}</dd>
             </div>
             <div>
-              <dt className="text-[11px] text-muted">نسبة القبول</dt>
+              <dt className="text-xs text-muted">نسبة القبول</dt>
               <dd className="font-bold">
                 {o.quotes.acceptRate === null ? "—" : `${o.quotes.acceptRate}%`}
               </dd>
             </div>
             <div>
-              <dt className="text-[11px] text-muted">متوسط القيمة</dt>
+              <dt className="text-xs text-muted">متوسط القيمة</dt>
               <dd className="font-bold">{o.quotes.avgValue ? sar(o.quotes.avgValue) : "—"}</dd>
             </div>
           </dl>
@@ -225,7 +225,7 @@ export function SalesDashboard() {
                   <span className="truncate">
                     {x.number} · {x.recipient || x.title}
                   </span>
-                  <span className="shrink-0 text-xs text-amber-600">ينتهي {day(x.validUntil)}</span>
+                  <span className="shrink-0 text-xs text-amber-700">ينتهي {day(x.validUntil)}</span>
                 </li>
               ))}
             </ul>

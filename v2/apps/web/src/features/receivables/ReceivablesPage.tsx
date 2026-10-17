@@ -62,7 +62,7 @@ export function ReceivablesPage() {
                 >
                   {sar(v.amount)}
                 </p>
-                <p className="text-[11px] text-muted">{v.count} دفعة</p>
+                <p className="text-xs text-muted">{v.count} دفعة</p>
               </Card>
             );
           })}

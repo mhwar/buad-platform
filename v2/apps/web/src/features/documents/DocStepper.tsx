@@ -45,7 +45,7 @@ export function DocStepper({ doc }: { doc: DocDetail["document"] }) {
               {LABEL[s]}
             </span>
             {when[s] && (past || current) && (
-              <span className={cx("text-[11px]", current ? "opacity-90" : "text-muted")}>
+              <span className={cx("text-xs", current ? "opacity-90" : "text-muted")}>
                 {when[s]}
               </span>
             )}

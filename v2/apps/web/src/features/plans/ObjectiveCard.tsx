@@ -1,7 +1,7 @@
 import { PLAN_STATUS_LABEL, type PlanStatus } from "@buad/domain";
 import { Link2, ListPlus, MessageSquarePlus, Pencil, Plus, Trash2 } from "lucide-react";
 import { Badge, Button, Card, type Tone } from "../../components/ui";
-import { sar } from "../../lib/format";
+import { day, sar } from "../../lib/format";
 import { send } from "../team/queries";
 import type { Indicator, Initiative, Objective } from "./queries";
 
@@ -178,7 +178,7 @@ export function ObjectiveCard({
                 {i.title}
               </button>
               <span className="flex items-center gap-2">
-                {i.dueDate && <span className="text-xs text-muted">حتى {i.dueDate}</span>}
+                {i.dueDate && <span className="text-xs text-muted">حتى {day(i.dueDate)}</span>}
                 {!!i.tasks?.total && (
                   <Badge tone={i.tasks.done === i.tasks.total ? "green" : "gray"}>
                     مهام {i.tasks.done}/{i.tasks.total}

@@ -106,7 +106,7 @@ export function TargetPanel({
                 );
               })}
             </div>
-            <div className="mt-1 flex gap-1 text-[10px] text-muted">
+            <div className="mt-1 flex gap-1 text-xs text-muted">
               {s.months.map((m) => (
                 <span key={m.month} className="flex-1 text-center">
                   {MONTH[Number(m.month.slice(5, 7)) - 1]}
@@ -126,7 +126,7 @@ export function TargetPanel({
             <div key={x.quarter} className="rounded-xl border p-3">
               <p className="text-xs text-muted">الربع {x.quarter}</p>
               <p className="font-bold tabular-nums">{x.current === null ? "—" : sar(x.current)}</p>
-              <p className="text-[11px] text-muted">من {sar(x.target)}</p>
+              <p className="text-xs text-muted">من {sar(x.target)}</p>
               <div className="mt-1.5">
                 <ProgressBar
                   value={x.current === null ? null : Math.min(1, x.current / Math.max(1, x.target))}
@@ -168,12 +168,12 @@ function Fact({
         className={cx(
           "mt-0.5 font-bold tabular-nums",
           tone === "good" && "text-emerald-600",
-          tone === "warn" && "text-amber-600",
+          tone === "warn" && "text-amber-700",
         )}
       >
         {value}
       </p>
-      {hint && <p className="text-[11px] text-muted">{hint}</p>}
+      {hint && <p className="text-xs text-muted">{hint}</p>}
     </li>
   );
 }
@@ -208,7 +208,7 @@ export function FollowUp({ d }: { d: CycleData }) {
                 <td className="p-3 font-medium">
                   {i.name}
                   {i.source !== "manual" && (
-                    <span className="ms-2 text-[11px] text-brand">من المنصة</span>
+                    <span className="ms-2 text-xs text-brand">من المنصة</span>
                   )}
                 </td>
                 <td className="p-3 text-muted">

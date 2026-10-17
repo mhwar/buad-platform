@@ -26,23 +26,23 @@ const btn = {
   ghost: "text-muted hover:bg-brand-soft hover:text-ink",
   danger: "bg-red-600 text-white hover:bg-red-700",
 };
-export function Button({
-  variant = "primary",
-  className,
-  ...p
-}: ComponentProps<"button"> & { variant?: keyof typeof btn }) {
+export const Button = forwardRef<
+  HTMLButtonElement,
+  ComponentProps<"button"> & { variant?: keyof typeof btn }
+>(function Button({ variant = "primary", className, ...p }, ref) {
   return (
     <button
+      ref={ref}
       type="button"
       {...p}
       className={cx(
-        "inline-flex min-h-11 items-center justify-center gap-2 rounded-lg px-3.5 py-2 text-sm font-semibold transition disabled:opacity-60 sm:min-h-0",
+        "inline-flex min-h-11 items-center justify-center gap-2 rounded-lg px-3.5 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 sm:min-h-10",
         btn[variant],
         className,
       )}
     />
   );
-}
+});
 
 /* ── Form fields ─────────────────────────────────────── */
 const control =
@@ -170,7 +170,7 @@ export function Avatar({
     size === "lg"
       ? "size-16 text-2xl rounded-xl"
       : size === "xs"
-        ? "size-6 text-[11px] rounded-md"
+        ? "size-6 text-xs rounded-md"
         : "size-11 text-base rounded-xl";
   if (logo)
     return (
@@ -443,41 +443,221 @@ export function Notice({
 }
 
 /* ── Dialog & menu (Radix: focus trap, Esc, aria) ────── */
+/**
+ * One dialog for the whole platform: a title bar, a body that scrolls, and an optional footer that
+ * stays in place (on a phone it sits at the bottom of the sheet, above the home bar). On a wide
+ * screen the first field takes the focus, so typing starts at once.
+ */
 export function Dialog({
   open,
   onOpenChange,
   title,
   children,
   wide,
+  footer,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   title: string;
   children: ReactNode;
   wide?: boolean;
+  /** Usually a <DialogActions>: shown under the body, never scrolled away. */
+  footer?: ReactNode;
 }) {
+  const ref = useRef<HTMLDivElement>(null);
   return (
     <RDialog.Root open={open} onOpenChange={onOpenChange}>
       <RDialog.Portal>
         <RDialog.Overlay className="fixed inset-0 z-40 bg-black/40 backdrop-blur-[2px]" />
         <RDialog.Content
+          ref={ref}
           dir="rtl"
           aria-describedby={undefined}
+          onOpenAutoFocus={(e) => {
+            // On a phone the keyboard would cover the sheet: let the person tap the field.
+            if (
+              typeof window.matchMedia === "function" &&
+              !window.matchMedia("(min-width: 640px)").matches
+            )
+              return;
+            const first = ref.current?.querySelector<HTMLElement>(
+              "input:not([type=hidden]):not([type=checkbox]):not([disabled]), select:not([disabled]), textarea:not([disabled])",
+            );
+            if (first) {
+              e.preventDefault();
+              first.focus();
+            }
+          }}
           className={cx(
-            "fixed inset-x-0 bottom-0 z-50 max-h-[88dvh] overflow-y-auto rounded-t-2xl border bg-surface p-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] shadow-xl sm:inset-auto sm:top-1/2 sm:left-1/2 sm:w-full sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-2xl",
+            "fixed inset-x-0 bottom-0 z-50 flex max-h-[88dvh] flex-col rounded-t-2xl border bg-surface shadow-xl sm:inset-auto sm:top-1/2 sm:left-1/2 sm:max-h-[85vh] sm:w-full sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-2xl",
             wide ? "sm:max-w-2xl" : "sm:max-w-lg",
           )}
         >
-          <div className="mb-5 flex items-center justify-between">
+          <div className="flex shrink-0 items-center justify-between gap-3 px-6 pt-5 pb-4">
             <RDialog.Title className="text-lg font-bold">{title}</RDialog.Title>
-            <RDialog.Close className="rounded-md p-1 text-muted hover:text-ink" aria-label="إغلاق">
+            <RDialog.Close
+              className="grid size-10 place-items-center rounded-lg text-muted hover:bg-brand-soft hover:text-ink"
+              aria-label="إغلاق"
+            >
               <X className="size-5" />
             </RDialog.Close>
           </div>
-          {children}
+          <div
+            className={cx(
+              "min-h-0 flex-1 overflow-y-auto px-6",
+              footer ? "pb-5" : "pb-[max(1.5rem,env(safe-area-inset-bottom))]",
+            )}
+          >
+            {children}
+          </div>
+          {footer && (
+            <div className="shrink-0 border-t px-6 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:pb-4">
+              {footer}
+            </div>
+          )}
         </RDialog.Content>
       </RDialog.Portal>
     </RDialog.Root>
+  );
+}
+
+/**
+ * The same footer in every dialog: the main action first (rightmost; full width at the bottom of
+ * a phone sheet), «إلغاء» beside it, and a destructive action set apart at the far end.
+ */
+export function DialogActions({
+  children,
+  onCancel,
+  cancelLabel = "إلغاء",
+  aside,
+}: {
+  /** The main action (a primary <Button>), optionally followed by a secondary one. */
+  children: ReactNode;
+  onCancel?: () => void;
+  cancelLabel?: string;
+  /** Kept apart at the far end: a delete, or a hint. */
+  aside?: ReactNode;
+}) {
+  return (
+    <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center [&>button]:w-full sm:[&>button]:w-auto">
+      {children}
+      {onCancel && (
+        <Button variant="ghost" onClick={onCancel}>
+          {cancelLabel}
+        </Button>
+      )}
+      {aside && <div className="flex justify-center sm:me-auto">{aside}</div>}
+    </div>
+  );
+}
+
+/* ── Confirmation: one look for every «are you sure?» ─── */
+type ConfirmAsk = {
+  title: string;
+  text?: string;
+  /** The button names the action («حذف نهائياً»), never «موافق». */
+  action?: string;
+  danger?: boolean;
+};
+type ConfirmReq = ConfirmAsk & { resolve: (ok: boolean) => void };
+let pushConfirm: ((r: ConfirmReq) => void) | null = null;
+
+/**
+ * Asks before something that cannot be taken back; resolves true when the person confirms.
+ * Without the host mounted (a bare test render) it falls back to the browser's own prompt.
+ */
+export function confirmAction(ask: ConfirmAsk): Promise<boolean> {
+  const push = pushConfirm;
+  if (!push)
+    return Promise.resolve(window.confirm(ask.text ? `${ask.title}\n${ask.text}` : ask.title));
+  return new Promise((resolve) => push({ ...ask, resolve }));
+}
+
+/** Mounted once in the shell: shows the confirmation dialogs that confirmAction asks for. */
+export function ConfirmHost() {
+  const [req, setReq] = useState<ConfirmReq | null>(null);
+  const cancelRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    pushConfirm = (r) => setReq(r);
+    return () => {
+      pushConfirm = null;
+    };
+  }, []);
+  const answer = (ok: boolean) => {
+    req?.resolve(ok);
+    setReq(null);
+  };
+  return (
+    <RDialog.Root open={!!req} onOpenChange={(o) => !o && answer(false)}>
+      <RDialog.Portal>
+        <RDialog.Overlay className="fixed inset-0 z-[60] bg-black/40 backdrop-blur-[2px]" />
+        <RDialog.Content
+          dir="rtl"
+          role="alertdialog"
+          aria-describedby={undefined}
+          onOpenAutoFocus={(e) => {
+            // The safe answer has the focus: Enter alone never deletes anything.
+            e.preventDefault();
+            cancelRef.current?.focus();
+          }}
+          className="fixed inset-x-0 bottom-0 z-[60] rounded-t-2xl border bg-surface p-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] shadow-xl sm:inset-auto sm:top-1/2 sm:left-1/2 sm:w-full sm:max-w-md sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-2xl"
+        >
+          <RDialog.Title className="text-lg font-bold">{req?.title}</RDialog.Title>
+          {req?.text && <p className="mt-2 text-sm text-muted">{req.text}</p>}
+          <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:items-center [&>button]:w-full sm:[&>button]:w-auto">
+            <Button variant={req?.danger ? "danger" : "primary"} onClick={() => answer(true)}>
+              {req?.action ?? "تأكيد"}
+            </Button>
+            <Button ref={cancelRef} variant="ghost" onClick={() => answer(false)}>
+              إلغاء
+            </Button>
+          </div>
+        </RDialog.Content>
+      </RDialog.Portal>
+    </RDialog.Root>
+  );
+}
+
+/* ── Toast: a short «done» after saving ─────────────── */
+type Toast = { id: number; text: string; tone: "ok" | "error" };
+let pushToast: ((t: Omit<Toast, "id">) => void) | null = null;
+/** «حُفظ» after a save: a quiet line at the bottom that leaves by itself. */
+export function toast(text: string, tone: Toast["tone"] = "ok") {
+  pushToast?.({ text, tone });
+}
+/** Mounted once in the shell; announced politely to screen readers. */
+export function ToastHost() {
+  const [items, setItems] = useState<Toast[]>([]);
+  useEffect(() => {
+    let n = 0;
+    pushToast = (t) => {
+      const id = ++n;
+      setItems((xs) => [...xs.slice(-2), { ...t, id }]);
+      setTimeout(() => setItems((xs) => xs.filter((x) => x.id !== id)), 3200);
+    };
+    return () => {
+      pushToast = null;
+    };
+  }, []);
+  return (
+    <div
+      aria-live="polite"
+      className="pointer-events-none fixed inset-x-0 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-[70] flex flex-col items-center gap-2 px-4 lg:bottom-6"
+    >
+      {items.map((t) => (
+        <p
+          key={t.id}
+          role="status"
+          className={cx(
+            "pointer-events-auto rounded-xl px-4 py-2.5 text-sm font-medium shadow-lg",
+            t.tone === "ok" ? "bg-ink text-canvas" : "bg-red-600 text-white",
+          )}
+        >
+          {t.tone === "ok" ? "✓ " : ""}
+          {t.text}
+        </p>
+      ))}
+    </div>
   );
 }
 
@@ -515,7 +695,7 @@ export function Menu({ items, label = "المزيد" }: { items: MenuItem[]; lab
             ) : "section" in i ? (
               <RMenu.Label
                 key={`sec-${i.section}`}
-                className="px-3 pt-2 pb-1 text-[11px] font-semibold text-muted"
+                className="px-3 pt-2 pb-1 text-xs font-semibold text-muted"
               >
                 {i.section}
               </RMenu.Label>
@@ -631,7 +811,7 @@ export function Segmented<T extends string>({
           {i.soon && (
             <span
               className={cx(
-                "rounded px-1.5 text-[10px]",
+                "rounded px-1.5 text-xs",
                 value === i.value ? "bg-white/20" : "bg-slate-100 dark:bg-slate-800",
               )}
             >

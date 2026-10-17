@@ -2,7 +2,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { CalendarClock, Check, ListChecks, Pencil, Trash2, Users } from "lucide-react";
 import { useState } from "react";
-import { Badge, Button, cx, Notice } from "../../components/ui";
+import { Badge, Button, confirmAction, cx, Notice } from "../../components/ui";
 import { day, today } from "../../lib/format";
 import { useCan } from "../../session";
 import { send } from "../team/queries";
@@ -139,8 +139,14 @@ export function DecisionList({
                       <Button
                         variant="ghost"
                         aria-label={`حذف ${d.title}`}
-                        onClick={() => {
-                          if (confirm(`حذف القرار «${d.title}»؟`))
+                        onClick={async () => {
+                          if (
+                            await confirmAction({
+                              title: `حذف القرار «${d.title}»؟`,
+                              action: "حذف القرار",
+                              danger: true,
+                            })
+                          )
                             run(() => send("DELETE", `/api/decisions/${d.id}`));
                         }}
                       >

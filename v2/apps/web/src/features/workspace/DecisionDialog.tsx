@@ -1,6 +1,16 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { Button, Dialog, Field, Input, Notice, Select, Textarea } from "../../components/ui";
+import {
+  Button,
+  Dialog,
+  DialogActions,
+  Field,
+  Input,
+  Notice,
+  Select,
+  Textarea,
+  toast,
+} from "../../components/ui";
 import { assigneesQuery } from "../tasks/queries";
 import { send } from "../team/queries";
 import type { Decision } from "./api";
@@ -37,6 +47,7 @@ export function DecisionDialog({
       qc.invalidateQueries({ queryKey: ["decisions"] });
       qc.invalidateQueries({ queryKey: ["meetings"] });
       qc.invalidateQueries({ queryKey: ["attention"] });
+      toast("حُفظ القرار");
       onClose();
     },
     onError: () => setError("تعذّر الحفظ"),
@@ -46,8 +57,16 @@ export function DecisionDialog({
       open
       onOpenChange={(v) => !v && onClose()}
       title={existing ? "تعديل القرار" : "قرار جديد"}
+      footer={
+        <DialogActions onCancel={onClose}>
+          <Button type="submit" form="decision-form" disabled={!f.title.trim() || save.isPending}>
+            حفظ القرار
+          </Button>
+        </DialogActions>
+      }
     >
       <form
+        id="decision-form"
         className="space-y-4"
         onSubmit={(e) => {
           e.preventDefault();
@@ -76,9 +95,6 @@ export function DecisionDialog({
         <Field label="تفاصيل (اختياري)">
           <Textarea rows={3} value={f.details} onChange={set("details")} />
         </Field>
-        <Button type="submit" className="w-full" disabled={!f.title.trim() || save.isPending}>
-          حفظ القرار
-        </Button>
       </form>
     </Dialog>
   );

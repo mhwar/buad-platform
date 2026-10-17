@@ -46,7 +46,7 @@ export function SectionTabs() {
               >
                 {t.label}
                 {n > 0 && (
-                  <span className="min-w-5 rounded-full bg-red-600 px-1.5 text-center text-[11px] font-bold leading-5 text-white">
+                  <span className="min-w-5 rounded-full bg-red-600 px-1.5 text-center text-xs font-bold leading-5 text-white">
                     {n}
                   </span>
                 )}

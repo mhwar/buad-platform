@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { createRoot } from "react-dom/client";
-import type { MenuItem } from "../../components/ui";
+import { confirmAction, type MenuItem } from "../../components/ui";
 import { type DocDetail, docApi, documentQuery } from "./api";
 import { DocumentView, documentUrls } from "./DocumentView";
 import { downloadPdf, downloadWord, fileBase } from "./export";
@@ -171,8 +171,14 @@ export function useDocumentActions(manager: boolean) {
                     label: "اعتماد",
                     hint: "يقفل المستند ويحفظ نسخة منه",
                     icon: <Check />,
-                    onSelect: () => {
-                      if (confirm("اعتماد المستند يقفله عن التعديل ويحفظ نسخة منه. متابعة؟"))
+                    onSelect: async () => {
+                      if (
+                        await confirmAction({
+                          title: "اعتماد المستند؟",
+                          text: "يُقفل عن التعديل وتُحفظ نسخة منه.",
+                          action: "اعتماد",
+                        })
+                      )
                         status("approved");
                     },
                   },
@@ -190,8 +196,14 @@ export function useDocumentActions(manager: boolean) {
                     label: "تسجيل صادر",
                     hint: "رقم من سجل الصادر، نهائي",
                     icon: <Stamp />,
-                    onSelect: () => {
-                      if (confirm("سيُعطى المستند رقم صادر نهائي لا يُعاد استخدامه. متابعة؟"))
+                    onSelect: async () => {
+                      if (
+                        await confirmAction({
+                          title: "تسجيل رقم صادر؟",
+                          text: "يُعطى المستند رقماً من سجل الصادر يظهر في المطبوع. الرقم نهائي ولا يُعاد استخدامه.",
+                          action: "تسجيل الصادر",
+                        })
+                      )
                         run("تسجيل الصادر", async () => {
                           await docApi.outgoing(d.id);
                           await refresh();
@@ -220,8 +232,14 @@ export function useDocumentActions(manager: boolean) {
                     label: "حذف المسودة",
                     icon: <Trash2 />,
                     danger: true,
-                    onSelect: () => {
-                      if (confirm("حذف هذه المسودة نهائياً؟"))
+                    onSelect: async () => {
+                      if (
+                        await confirmAction({
+                          title: "حذف هذه المسودة نهائياً؟",
+                          action: "حذف نهائياً",
+                          danger: true,
+                        })
+                      )
                         run("الحذف (المسودات التي سبق اعتمادها لا تُحذف)", async () => {
                           await docApi.remove(d.id);
                           await refresh();
