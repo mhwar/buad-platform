@@ -49,6 +49,27 @@ export function PipelineBoard({
     const items = reqs.filter((r) => r.status === s);
     const st = statOf(s);
     const closed = s === "won" || s === "lost";
+    // An empty open stage folds to a slim strip, so the stages with work get the width —
+    // and it still takes a dropped card.
+    if (!closed && items.length === 0 && over !== s)
+      return (
+        <section
+          key={s}
+          role="listitem"
+          aria-label={`${REQUEST_LABEL[s]} (فارغة)`}
+          onDragOver={(e) => {
+            if (edit) {
+              e.preventDefault();
+              setOver(s);
+            }
+          }}
+          onDrop={(e) => drop(e, s)}
+          className="flex w-12 shrink-0 flex-col items-center gap-2 self-stretch rounded-2xl border border-dashed bg-slate-50 py-3 text-xs text-muted dark:bg-slate-900/40"
+        >
+          <span className="rounded-full bg-surface px-2">0</span>
+          <span className="[writing-mode:vertical-rl]">{REQUEST_LABEL[s]}</span>
+        </section>
+      );
     const value = closed ? items.reduce((sum, r) => sum + r.value, 0) : (st?.value ?? 0) / 100;
     return (
       <section

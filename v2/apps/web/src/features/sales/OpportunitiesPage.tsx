@@ -20,6 +20,7 @@ import {
   Card,
   cx,
   EmptyState,
+  LayoutToggle,
   PageHeader,
   SearchBox,
   Segmented,
@@ -205,10 +206,11 @@ export function OpportunitiesPage() {
         </li>
       </ul>
 
-      <div className="flex flex-wrap items-start gap-3">
-        <SearchBox value={q} onChange={setQ} placeholder="ابحث باسم العميل أو الجهة أو الخدمة" />
-        <Segmented<View>
-          label="طريقة العرض"
+      <div className="flex items-center gap-2">
+        <div className="min-w-0 flex-1">
+          <SearchBox value={q} onChange={setQ} placeholder="ابحث باسم العميل أو الجهة أو الخدمة" />
+        </div>
+        <LayoutToggle<View>
           value={view}
           onChange={setView}
           items={VIEWS.map((v) => ({

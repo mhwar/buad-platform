@@ -68,14 +68,15 @@ describe("pipeline board", () => {
     expect(col("تفاوض").getByText("خالد")).toBeInTheDocument();
     expect(col("مكسوب").getByText("سارة")).toBeInTheDocument();
     expect(col("خاسر").getByText("ليلى")).toBeInTheDocument();
-    expect(col("جديد").getByText("لا شيء هنا")).toBeInTheDocument();
+    // an empty stage folds to a slim strip
+    expect(board().getByRole("listitem", { name: "جديد (فارغة)" })).toHaveTextContent("0");
   });
 
   it("marks a lead whose follow-up is overdue, and one nobody has touched for a week", async () => {
     stubApi(routes("owner", [lead({ updatedAt: Math.floor(Date.now() / 1000) - 9 * 86400 })]));
     await renderWithApp(<OpportunitiesPage />);
     const col = within(await screen.findByRole("listitem", { name: "عرض سعر" }));
-    expect(col.getByText(/متأخرة · 2020-01-01/)).toBeInTheDocument();
+    expect(col.getByText(/متأخرة · 1 يناير 2020/)).toBeInTheDocument();
     expect(col.getByText("راكدة")).toBeInTheDocument();
   });
 
@@ -93,8 +94,9 @@ describe("pipeline board", () => {
   it("also moves it from the card's own menu (keyboard and touch)", async () => {
     const calls = stubApi({ ...routes(), "PATCH /api/product-requests/r1": () => ({ ok: true }) });
     await renderWithApp(<OpportunitiesPage />);
-    const menus = await screen.findAllByLabelText("مرحلة منى");
-    await userEvent.selectOptions(menus[0]!, "negotiating");
+    const menus = await screen.findAllByRole("button", { name: /حالة منى/ });
+    await userEvent.click(menus[0]!);
+    await userEvent.click(await screen.findByRole("menuitem", { name: "تفاوض" }));
     await waitFor(() =>
       expect(calls.find((c) => c.method === "PATCH")?.body).toEqual({ status: "negotiating" }),
     );
@@ -104,7 +106,7 @@ describe("pipeline board", () => {
     const calls = stubApi({ ...routes("viewer") });
     await renderWithApp(<OpportunitiesPage />);
     const target = await screen.findByRole("listitem", { name: "تفاوض" });
-    expect(screen.queryByLabelText("مرحلة منى")).toBeNull();
+    expect(screen.queryByRole("button", { name: /حالة منى/ })).toBeNull();
     fireEvent.drop(target, { dataTransfer: { getData: () => "r1" } });
     await new Promise((r) => setTimeout(r, 30));
     expect(calls.some((c) => c.method === "PATCH")).toBe(false);

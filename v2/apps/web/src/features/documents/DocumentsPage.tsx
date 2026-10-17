@@ -465,7 +465,7 @@ export function DocumentsPage() {
                     </p>
                   )}
                 </div>
-                <div className="relative z-10 flex flex-col items-end gap-2">
+                <div className="relative z-10 flex shrink-0 items-center gap-1">
                   <Badge tone={e.tone}>{e.statusLabel}</Badge>
                   <Menu items={e.menu} label={`إجراءات ${e.title}`} />
                 </div>

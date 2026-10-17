@@ -309,6 +309,50 @@ export function ScrollRow({
   );
 }
 
+/**
+ * How a list is shown (list / board / table): icons only, so it never takes a row of its own;
+ * each keeps its name for screen readers and as a tooltip.
+ */
+export function LayoutToggle<T extends string>({
+  value,
+  onChange,
+  items,
+  label = "طريقة العرض",
+}: {
+  value: T;
+  onChange: (v: T) => void;
+  items: { value: T; label: string; icon: ReactNode }[];
+  label?: string;
+}) {
+  return (
+    <div
+      role="tablist"
+      aria-label={label}
+      className="inline-flex shrink-0 gap-1 rounded-xl border bg-surface p-1"
+    >
+      {items.map((i) => (
+        <button
+          key={i.value}
+          type="button"
+          role="tab"
+          aria-selected={value === i.value}
+          aria-label={i.label}
+          title={i.label}
+          onClick={() => onChange(i.value)}
+          className={cx(
+            "grid size-10 place-items-center rounded-lg transition sm:size-9",
+            value === i.value
+              ? "bg-brand text-white dark:text-canvas"
+              : "text-muted hover:bg-brand-soft hover:text-ink",
+          )}
+        >
+          {i.icon}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export function Pills<T extends string>({
   value,
   onChange,
@@ -778,18 +822,24 @@ export function Segmented<T extends string>({
   onChange,
   items,
   label,
+  inline = false,
 }: {
   value: T;
   onChange: (v: T) => void;
   items: { value: T; label: string; hint?: string; soon?: boolean; icon?: ReactNode }[];
   label: string;
+  /** Sits beside other controls on a phone too, instead of taking a full row. */
+  inline?: boolean;
 }) {
   return (
     <ScrollRow
       role="tablist"
       aria-label={label}
       activeKey={value}
-      className="flex w-full gap-1 rounded-xl border bg-surface p-1 sm:inline-flex sm:w-auto"
+      className={cx(
+        "flex gap-1 rounded-xl border bg-surface p-1",
+        inline ? "inline-flex w-auto shrink-0" : "w-full sm:inline-flex sm:w-auto",
+      )}
     >
       {items.map((i) => (
         <button
@@ -831,12 +881,15 @@ export function BadgeMenu({
   options,
   onSelect,
   disabled,
+  name,
 }: {
   tone: Tone;
   label: string;
   options: { value: string; label: string; tone: Tone }[];
   onSelect: (v: string) => void;
   disabled?: boolean;
+  /** What the status belongs to, for screen readers («حالة جهّز العرض»). */
+  name?: string;
 }) {
   if (disabled) return <Badge tone={tone}>{label}</Badge>;
   return (
@@ -846,7 +899,7 @@ export function BadgeMenu({
           "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium outline-none ring-accent focus-visible:ring-2",
           tones[tone],
         )}
-        aria-label={`الحالة: ${label} — تغيير`}
+        aria-label={name ? `حالة ${name}: ${label} — تغيير` : `الحالة: ${label} — تغيير`}
       >
         {label}
         <ChevronDown className="size-3" />
