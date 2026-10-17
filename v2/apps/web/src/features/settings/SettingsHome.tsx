@@ -91,9 +91,9 @@ export function SettingsHome() {
             من غيّر ماذا ومتى، بالقيم قبل التعديل وبعده.
           </Section>
         )}
-        {can("import.run") && (
-          <Section k="import" to="/settings/import" title="الاستيراد">
-            نقل العملاء والمشاريع من المنصة السابقة.
+        {can("org.edit") && (
+          <Section k="data" to="/settings/data" title="البيانات">
+            نسخة كاملة تحتفظون بها، والقوائم الأساسية في Excel، والاستيراد.
           </Section>
         )}
         <Section k="account" to="/settings/account" title="حسابي">

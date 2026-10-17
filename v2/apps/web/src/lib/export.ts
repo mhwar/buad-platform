@@ -130,3 +130,31 @@ export async function downloadSheet(file: string, sheet: string, rows: (string |
     `${file}.xlsx`,
   );
 }
+
+/** Several tables in one Excel file, a sheet each (right-to-left, bold header). */
+export async function downloadWorkbook(
+  file: string,
+  sheets: { name: string; header: string[]; rows: (string | number)[][]; money?: number[] }[],
+) {
+  const { default: ExcelJS } = await import("exceljs");
+  const wb = new ExcelJS.Workbook();
+  wb.creator = "بُعد";
+  for (const s of sheets) {
+    const ws = wb.addWorksheet(s.name.slice(0, 31), { views: [{ rightToLeft: true }] });
+    ws.addRow(s.header).font = { bold: true };
+    for (const r of s.rows) ws.addRow(r);
+    for (const i of s.money ?? []) ws.getColumn(i + 1).numFmt = "#,##0.00";
+    ws.columns.forEach((col, i) => {
+      col.width = Math.max(12, (s.header[i]?.length ?? 0) + 4);
+    });
+  }
+  const buf = await wb.xlsx.writeBuffer();
+  save(
+    new Blob([buf], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }),
+    `${file}.xlsx`,
+  );
+}
+
+/** Saves text as a file (e.g. the full JSON export). */
+export const downloadText = (text: string, name: string, type = "application/json") =>
+  save(new Blob([text], { type: `${type};charset=utf-8` }), name);

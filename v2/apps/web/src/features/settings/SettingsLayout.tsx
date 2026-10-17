@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link, Outlet } from "@tanstack/react-router";
 import {
   Building2,
+  Database,
   FileUp,
   History,
   KeyRound,
@@ -20,6 +21,7 @@ export const SETTINGS_ICONS: Record<string, ComponentType<{ className?: string }
   finance: Landmark,
   team: ShieldCheck,
   activity: History,
+  data: Database,
   import: FileUp,
   account: KeyRound,
 };

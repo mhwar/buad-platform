@@ -38,7 +38,7 @@ describe("buildNav", () => {
       "finance",
       "team",
       "activity",
-      "import",
+      "data",
       "account",
     ]);
   });
