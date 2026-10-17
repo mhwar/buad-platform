@@ -1,7 +1,15 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Pencil, Plus, Sparkles } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Badge, Button, Card, EmptyState, Segmented, Select } from "../../components/ui";
+import {
+  Badge,
+  Button,
+  Card,
+  confirmAction,
+  EmptyState,
+  Segmented,
+  Select,
+} from "../../components/ui";
 import { useCan } from "../../session";
 import { TaskDialog } from "../tasks/TaskDialogs";
 import { send } from "../team/queries";
@@ -100,7 +108,15 @@ export function PlansPage() {
     )
     .sort((a, b) => a.quarter - b.quarter);
   const remove = async (o: Objective) => {
-    if (!confirm(`حذف الهدف «${o.title}» بمؤشراته ومبادرته؟`)) return;
+    if (
+      !(await confirmAction({
+        title: `حذف الهدف «${o.title}»؟`,
+        text: "تُحذف معه مؤشراته ومبادراته.",
+        action: "حذف الهدف",
+        danger: true,
+      }))
+    )
+      return;
     await send("DELETE", `/api/plans/objectives/${o.id}`);
     refresh();
   };

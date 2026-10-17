@@ -327,7 +327,7 @@ function CrmLine({ c }: { c: ClientListItem }) {
   const state = followUpState(c.nextFollowUpAt, today());
   const due = state === "overdue" || state === "today";
   return (
-    <div className="-mt-2 space-y-1 text-center text-[11px] text-muted">
+    <div className="-mt-2 space-y-1 text-center text-xs text-muted">
       <p>
         {c.ownerName ? `المسؤول: ${c.ownerName} · ` : ""}
         {c.lastContactAt
@@ -349,7 +349,7 @@ function CrmLine({ c }: { c: ClientListItem }) {
 function Stat({ label: l, value }: { label: string; value: string }) {
   return (
     <div className="min-w-0">
-      <dt className="text-[11px] text-muted">{l}</dt>
+      <dt className="text-xs text-muted">{l}</dt>
       <dd className="truncate text-sm font-semibold">{value}</dd>
     </div>
   );

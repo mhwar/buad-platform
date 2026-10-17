@@ -1,6 +1,17 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { Button, cx, Dialog, Field, Input, Notice, Select, Textarea } from "../../components/ui";
+import {
+  Button,
+  cx,
+  Dialog,
+  DialogActions,
+  Field,
+  Input,
+  Notice,
+  Select,
+  Textarea,
+  toast,
+} from "../../components/ui";
 import { useCan } from "../../session";
 import { clientsQuery } from "../clients/api";
 import { requestsQuery } from "../products/products-api";
@@ -66,6 +77,7 @@ export function MeetingDialog({
     },
     onSuccess: (id) => {
       qc.invalidateQueries({ queryKey: ["meetings"] });
+      toast(existing ? "حُفظ الاجتماع" : "جُدول الاجتماع");
       onSaved(id);
       onClose();
     },
@@ -96,8 +108,20 @@ export function MeetingDialog({
       onOpenChange={(v) => !v && onClose()}
       title={existing ? "تعديل الاجتماع" : "اجتماع جديد"}
       wide
+      footer={
+        <DialogActions onCancel={onClose}>
+          <Button
+            type="submit"
+            form="meeting-form"
+            disabled={!f.title.trim() || !f.day || save.isPending}
+          >
+            {existing ? "حفظ" : "جدولة الاجتماع"}
+          </Button>
+        </DialogActions>
+      }
     >
       <form
+        id="meeting-form"
         className="space-y-4"
         onSubmit={(e) => {
           e.preventDefault();
@@ -198,13 +222,6 @@ export function MeetingDialog({
             placeholder="بند في كل سطر"
           />
         </Field>
-        <Button
-          type="submit"
-          className="w-full"
-          disabled={!f.title.trim() || !f.day || save.isPending}
-        >
-          {existing ? "حفظ" : "جدولة الاجتماع"}
-        </Button>
       </form>
     </Dialog>
   );

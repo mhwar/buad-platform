@@ -37,6 +37,7 @@ import {
   Badge,
   Button,
   Card,
+  confirmAction,
   Dialog,
   Field,
   Input,
@@ -46,6 +47,7 @@ import {
   Segmented,
   Select,
   Textarea,
+  toast,
 } from "../../components/ui";
 import { ApiError, fromEpoch } from "../../lib/format";
 import { meQuery } from "../../session";
@@ -254,13 +256,23 @@ export function DocumentEditor() {
     change({ layout: l }, { layout: { ...draft.layout, ...l } });
 
   const moveStatus = async (to: "draft" | "review" | "approved") => {
-    if (to === "approved" && !confirm("اعتماد المستند يقفله عن التعديل ويحفظ نسخة منه. متابعة؟"))
+    if (
+      to === "approved" &&
+      !(await confirmAction({
+        title: "اعتماد المستند؟",
+        text: "يُقفل عن التعديل وتُحفظ نسخة منه.",
+        action: "اعتماد",
+      }))
+    )
       return;
     clearTimeout(timer.current);
     await flush();
     try {
       const res = await docApi.status(docId, to, version.current);
       version.current = res.document.version;
+      toast(
+        to === "approved" ? "اعتُمد المستند" : to === "review" ? "أُرسل للمراجعة" : "أُعيد للمسودة",
+      );
       qc.setQueryData(docKeys.detail(docId), res);
       await qc.invalidateQueries({ queryKey: docKeys.list(projectId) });
     } catch {
@@ -269,13 +281,16 @@ export function DocumentEditor() {
   };
   const registerOutgoing = async () => {
     if (
-      !confirm(
-        "سيُعطى المستند رقم صادر من سجل الجهة، ويظهر في المطبوع. الرقم نهائي ولا يُعاد استخدامه. متابعة؟",
-      )
+      !(await confirmAction({
+        title: "تسجيل رقم صادر؟",
+        text: "يُعطى المستند رقماً من سجل الصادر يظهر في المطبوع. الرقم نهائي ولا يُعاد استخدامه.",
+        action: "تسجيل الصادر",
+      }))
     )
       return;
     try {
       await docApi.outgoing(docId);
+      toast("سُجّل رقم الصادر");
       await qc.invalidateQueries({ queryKey: docKeys.detail(docId) });
       await qc.invalidateQueries({ queryKey: ["documents"] });
     } catch {
@@ -343,7 +358,14 @@ export function DocumentEditor() {
                   icon: <Trash2 />,
                   danger: true,
                   onSelect: async () => {
-                    if (!confirm("حذف هذه المسودة نهائياً؟")) return;
+                    if (
+                      !(await confirmAction({
+                        title: "حذف هذه المسودة نهائياً؟",
+                        action: "حذف نهائياً",
+                        danger: true,
+                      }))
+                    )
+                      return;
                     await docApi.remove(docId);
                     await qc.invalidateQueries({ queryKey: docKeys.list(projectId) });
                     await navigate({
@@ -694,10 +716,16 @@ function ClausesPanel({
                 </IconBtn>
                 <IconBtn
                   label="حذف"
-                  onClick={() =>
-                    confirm(`حذف «${c.title || c.baseTitle}»؟`) &&
-                    onChange(clauses.filter((x) => x.id !== c.id))
-                  }
+                  onClick={async () => {
+                    if (
+                      await confirmAction({
+                        title: `حذف «${c.title || c.baseTitle}»؟`,
+                        action: "حذف البند",
+                        danger: true,
+                      })
+                    )
+                      onChange(clauses.filter((x) => x.id !== c.id));
+                  }}
                 >
                   <Trash2 className="size-3.5" />
                 </IconBtn>

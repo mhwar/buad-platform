@@ -47,7 +47,7 @@ export function MobileTabBar({
                 aria-expanded={moreOpen}
                 aria-haspopup="dialog"
                 className={cx(
-                  "relative flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 px-1 text-[11px] font-medium transition",
+                  "relative flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 px-1 text-xs font-medium transition",
                   active ? "text-brand" : "text-muted",
                 )}
               >
@@ -62,7 +62,7 @@ export function MobileTabBar({
               to={n.to}
               aria-current={active ? "page" : undefined}
               className={cx(
-                "relative flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 px-1 text-[11px] font-medium transition",
+                "relative flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 px-1 text-xs font-medium transition",
                 active ? "text-brand" : "text-muted",
               )}
             >

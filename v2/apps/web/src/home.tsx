@@ -324,7 +324,7 @@ function MyFollowups() {
                 <span
                   className={cx(
                     "inline-flex shrink-0 items-center gap-1 text-xs",
-                    i.date < t ? "font-semibold text-red-600" : "text-amber-600",
+                    i.date < t ? "font-semibold text-red-600" : "text-amber-700",
                   )}
                 >
                   <CalendarClock className="size-3" />
@@ -344,7 +344,7 @@ function Num({ label, value, hint }: { label: string; value: string; hint?: stri
     <div className="rounded-xl bg-canvas/60 p-3">
       <p className="text-xs text-muted">{label}</p>
       <p className="mt-0.5 text-lg font-bold">{value}</p>
-      {hint && <p className="text-[11px] text-muted">{hint}</p>}
+      {hint && <p className="text-xs text-muted">{hint}</p>}
     </div>
   );
 }

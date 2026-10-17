@@ -592,7 +592,7 @@ function Publish({
               {r.ok ? (
                 <Check className="mt-0.5 size-4 text-emerald-600" />
               ) : (
-                <Circle className="mt-0.5 size-4 text-amber-600" />
+                <Circle className="mt-0.5 size-4 text-amber-700" />
               )}
               <span>
                 {r.label}

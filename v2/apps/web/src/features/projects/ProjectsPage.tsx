@@ -301,7 +301,7 @@ function ProjectCard({ p }: { p: ProjectListItem }) {
           {p.contractTotal > 0 && (
             <span title={p.estimated ? "تقديري: القيمة المتوقعة + 15% حتى يُسجَّل العقد" : undefined}>
               {money(p.contractTotal)}
-              {p.estimated && <span className="ms-1 text-[11px] text-muted">تقديري</span>}
+              {p.estimated && <span className="ms-1 text-xs text-muted">تقديري</span>}
             </span>
           )}
         </div>
@@ -383,7 +383,7 @@ function ProjectTable({ items }: { items: ProjectListItem[] }) {
               <td className="p-3 tabular-nums">
                 {p.contractTotal ? money(p.contractTotal) : "—"}
                 {p.estimated && p.contractTotal > 0 && (
-                  <span className="ms-1 text-[11px] text-muted">تقديري</span>
+                  <span className="ms-1 text-xs text-muted">تقديري</span>
                 )}
               </td>
             </tr>

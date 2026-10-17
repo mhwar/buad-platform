@@ -2,7 +2,17 @@ import { RETAINED_LABELS } from "@buad/schema/company";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { CheckCircle2, PieChart, Plus, Trash2, Users } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Badge, Button, Card, Dialog, Field, Input, Notice, Select } from "../../components/ui";
+import {
+  Badge,
+  Button,
+  Card,
+  confirmAction,
+  Dialog,
+  Field,
+  Input,
+  Notice,
+  Select,
+} from "../../components/ui";
 import { day, fromEpoch, sar } from "../../lib/format";
 import {
   companyApi,
@@ -132,7 +142,14 @@ function PartnerDialog({ partner, onClose }: { partner: Partner | null; onClose:
           <Button
             variant="secondary"
             onClick={async () => {
-              if (!confirm(`حذف الشريك «${partner.name}»؟`)) return;
+              if (
+                !(await confirmAction({
+                  title: `حذف الشريك «${partner.name}»؟`,
+                  action: "حذف الشريك",
+                  danger: true,
+                }))
+              )
+                return;
               await companyApi.removePartner(partner.id);
               await done();
             }}
@@ -233,7 +250,13 @@ function DistributionDetail({ d, onChanged }: { d: Distribution; onChanged: () =
         <div className="mt-3 flex gap-2">
           <Button
             onClick={async () => {
-              if (!confirm("اعتماد التوزيع؟ بعد الاعتماد لا يمكن تعديله أو حذفه، ويُخصم من المتاح."))
+              if (
+                !(await confirmAction({
+                  title: "اعتماد التوزيع؟",
+                  text: "بعد الاعتماد لا يمكن تعديله أو حذفه، ويُخصم من المتاح.",
+                  action: "اعتماد التوزيع",
+                }))
+              )
                 return;
               await companyApi.completeDistribution(d.id);
               onChanged();
@@ -244,7 +267,10 @@ function DistributionDetail({ d, onChanged }: { d: Distribution; onChanged: () =
           <Button
             variant="secondary"
             onClick={async () => {
-              if (!confirm("حذف هذه المسودة؟")) return;
+              if (
+                !(await confirmAction({ title: "حذف هذه المسودة؟", action: "حذف", danger: true }))
+              )
+                return;
               await companyApi.removeDistribution(d.id);
               onChanged();
             }}
@@ -301,7 +327,14 @@ export function DistributionWizard({
   }, [key, step]);
 
   const save = async (status: "draft" | "completed") => {
-    if (status === "completed" && !confirm("اعتماد التوزيع؟ لا يمكن تعديله أو حذفه بعد الاعتماد."))
+    if (
+      status === "completed" &&
+      !(await confirmAction({
+        title: "اعتماد التوزيع؟",
+        text: "لا يمكن تعديله أو حذفه بعد الاعتماد.",
+        action: "اعتماد التوزيع",
+      }))
+    )
       return;
     try {
       await companyApi.saveDistribution({ ...input, status });

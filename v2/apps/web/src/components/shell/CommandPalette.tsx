@@ -300,7 +300,7 @@ export default function CommandPalette({
               placeholder="ابحث عن قسم أو عميل أو مشروع…"
               className="h-14 flex-1 bg-transparent text-base outline-none placeholder:text-muted"
             />
-            <kbd className="hidden rounded border px-1.5 py-0.5 text-[11px] text-muted sm:block">
+            <kbd className="hidden rounded border px-1.5 py-0.5 text-xs text-muted sm:block">
               Esc
             </kbd>
           </div>
@@ -322,7 +322,7 @@ export default function CommandPalette({
               return (
                 <li key={r.id} role="presentation">
                   {header && (
-                    <p className="px-3 pb-1 pt-2 text-[11px] font-semibold text-muted">{r.group}</p>
+                    <p className="px-3 pb-1 pt-2 text-xs font-semibold text-muted">{r.group}</p>
                   )}
                   <div
                     id={`${listId}-${i}`}

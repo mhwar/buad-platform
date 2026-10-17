@@ -79,7 +79,7 @@ export function ProjectPulse({
         ) : running && left < 0 ? (
           <b className="text-red-600">متأخر {-left} يوم</b>
         ) : running ? (
-          <b className={cx(left <= 7 && "text-amber-600")}>متبقٍ {left} يوم</b>
+          <b className={cx(left <= 7 && "text-amber-700")}>متبقٍ {left} يوم</b>
         ) : (
           <b>{day(endDate)}</b>
         )}

@@ -2,7 +2,17 @@ import { quarterLabelOf, receiptWarnings } from "@buad/domain";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus, Trash2, Wallet } from "lucide-react";
 import { useState } from "react";
-import { Button, Card, Dialog, Field, Input, Notice } from "../../components/ui";
+import {
+  Button,
+  Card,
+  confirmAction,
+  Dialog,
+  DialogActions,
+  Field,
+  Input,
+  Notice,
+  toast,
+} from "../../components/ui";
 import { day, fromEpoch, sar, today } from "../../lib/format";
 import { financeApi, financeKey, financeQuery, type Receipt } from "./api";
 
@@ -75,12 +85,12 @@ export function ReceiptsCard({
               >
                 <span>
                   {day(r.date)}{" "}
-                  <span className="rounded-full bg-brand-soft px-2 py-0.5 text-[11px] text-brand">
+                  <span className="rounded-full bg-brand-soft px-2 py-0.5 text-xs text-brand">
                     {quarterLabelOf(r.date)}
                   </span>
                   {r.note && <span className="block text-xs text-muted">{r.note}</span>}
                   {r.approvedAt && (
-                    <span className="block text-[11px] text-muted">
+                    <span className="block text-xs text-muted">
                       اعتُمد {fromEpoch(r.approvedAt)}
                       {r.basis && ` · ${r.basis}`}
                     </span>
@@ -141,17 +151,63 @@ export function ReceiptDialog({
   const [note, setNote] = useState(receipt?.note ?? "");
   const [err, setErr] = useState("");
   const warnings = date ? receiptWarnings(date, contractDate, today()) : [];
-  const done = (fin: unknown) => {
+  const done = (fin: unknown, message = "حُفظ") => {
+    toast(message);
     qc.setQueryData(financeKey(projectId), fin);
     qc.invalidateQueries({ queryKey: ["company-finance"] });
     qc.invalidateQueries({ queryKey: ["finance-overview"] });
     onClose();
+  };
+  const remove = async () => {
+    if (!receipt) return;
+    if (!(await confirmAction({ title: "حذف هذا المقبوض؟", action: "حذف", danger: true }))) return;
+    try {
+      done(await api.deleteReceipt(receipt.id), "حُذف المقبوض");
+    } catch (e) {
+      setErr(
+        e instanceof Error && e.message === "in_distribution"
+          ? "وُزّع ربح هذا المبلغ على الشركاء في توزيع مكتمل؛ ألغِ التوزيع أولاً."
+          : "تعذّر الحذف",
+      );
+    }
+  };
+  const save = async () => {
+    const n = Number(amount);
+    if (!date || !(n > 0)) return setErr("أدخلوا التاريخ والمبلغ");
+    const body = {
+      date,
+      amount: refund ? -n : n,
+      note,
+      basis: suggestion?.basis ?? receipt?.basis ?? "",
+    };
+    try {
+      done(
+        receipt ? await api.updateReceipt(receipt.id, body) : await api.addReceipt(body),
+        receipt ? "حُفظ المقبوض" : "سُجّل المقبوض",
+      );
+    } catch {
+      setErr("تعذّر الحفظ");
+    }
   };
   return (
     <Dialog
       open
       onOpenChange={(o) => !o && onClose()}
       title={receipt ? "تعديل استلام" : "تسجيل استلام من العميل"}
+      footer={
+        <DialogActions
+          onCancel={onClose}
+          aside={
+            receipt && (
+              <Button variant="ghost" className="text-red-600" onClick={remove}>
+                <Trash2 className="size-4" /> حذف
+              </Button>
+            )
+          }
+        >
+          <Button onClick={save}>{suggestion ? "اعتماد الاستلام" : "حفظ"}</Button>
+        </DialogActions>
+      }
     >
       {err && <Notice>{err}</Notice>}
       <div className="grid gap-4 sm:grid-cols-2">
@@ -191,50 +247,6 @@ export function ReceiptDialog({
             placeholder="الدفعة الأولى…"
           />
         </Field>
-      </div>
-      <div className="mt-5 flex justify-between gap-2">
-        {receipt ? (
-          <Button
-            variant="secondary"
-            onClick={async () => {
-              if (!confirm("حذف هذا الاستلام؟")) return;
-              try {
-                done(await api.deleteReceipt(receipt.id));
-              } catch (e) {
-                setErr(
-                  e instanceof Error && e.message === "in_distribution"
-                    ? "وُزّع ربح هذا المبلغ على الشركاء في توزيع مكتمل؛ ألغِ التوزيع أولاً."
-                    : "تعذّر الحذف",
-                );
-              }
-            }}
-          >
-            <Trash2 className="size-4" /> حذف
-          </Button>
-        ) : (
-          <span />
-        )}
-        <Button
-          onClick={async () => {
-            const n = Number(amount);
-            if (!date || !(n > 0)) return setErr("أدخلوا التاريخ والمبلغ");
-            const body = {
-              date,
-              amount: refund ? -n : n,
-              note,
-              basis: suggestion?.basis ?? receipt?.basis ?? "",
-            };
-            try {
-              done(
-                receipt ? await api.updateReceipt(receipt.id, body) : await api.addReceipt(body),
-              );
-            } catch {
-              setErr("تعذّر الحفظ");
-            }
-          }}
-        >
-          {suggestion ? "اعتماد الاستلام" : "حفظ"}
-        </Button>
       </div>
     </Dialog>
   );

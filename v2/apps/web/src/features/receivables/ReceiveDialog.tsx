@@ -1,7 +1,7 @@
 import { quarterLabelOf, receiptWarnings } from "@buad/domain";
 import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { Button, Dialog, Field, Input, Notice } from "../../components/ui";
+import { Button, Dialog, DialogActions, Field, Input, Notice, toast } from "../../components/ui";
 import { sar } from "../../lib/format";
 import { send } from "../team/queries";
 
@@ -45,6 +45,7 @@ export function ReceiveDialog({
       for (const k of ["receivables", "schedule", "attention", "finance", "year-review"])
         qc.invalidateQueries({ queryKey: [k] });
       qc.invalidateQueries({ queryKey: ["company-finance"] });
+      toast(rest > 0 ? "سُجّل الاستلام الجزئي" : "سُجّل الاستلام");
       onDone?.();
       onClose();
     } catch {
@@ -54,7 +55,18 @@ export function ReceiveDialog({
     }
   };
   return (
-    <Dialog open onOpenChange={(o) => !o && onClose()} title={`استلام ${line.label}`}>
+    <Dialog
+      open
+      onOpenChange={(o) => !o && onClose()}
+      title={`استلام ${line.label}`}
+      footer={
+        <DialogActions onCancel={onClose}>
+          <Button onClick={save} disabled={busy}>
+            تسجيل الاستلام
+          </Button>
+        </DialogActions>
+      }
+    >
       {error && <Notice>{error}</Notice>}
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label="تاريخ وصوله للبنك" hint="يحدد ربع السنة وفترة الضريبة">
@@ -86,11 +98,6 @@ export function ReceiveDialog({
             </p>
           ))}
         </div>
-      </div>
-      <div className="mt-5 flex justify-end">
-        <Button onClick={save} disabled={busy}>
-          تسجيل الاستلام
-        </Button>
       </div>
     </Dialog>
   );

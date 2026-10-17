@@ -12,6 +12,7 @@ import {
   Badge,
   Button,
   Card,
+  confirmAction,
   Dialog,
   EmptyState,
   Field,
@@ -319,7 +320,15 @@ function EntryDialog({
           <Button
             variant="secondary"
             onClick={async () => {
-              if (!confirm("حذف هذا القيد؟ يمكن استعادته من «المحذوفات».")) return;
+              if (
+                !(await confirmAction({
+                  title: "حذف هذا القيد؟",
+                  text: "يمكن استعادته من «المحذوفات».",
+                  action: "حذف القيد",
+                  danger: true,
+                }))
+              )
+                return;
               await companyApi.removeEntry(entry.id);
               await done();
             }}

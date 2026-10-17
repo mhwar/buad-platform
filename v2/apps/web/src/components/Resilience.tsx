@@ -78,7 +78,7 @@ function Failed({
 }) {
   return (
     <Card role="alert" className="flex flex-wrap items-center gap-3 border-amber-300 p-4">
-      <AlertTriangle className="size-5 shrink-0 text-amber-600" />
+      <AlertTriangle className="size-5 shrink-0 text-amber-700" />
       <div className="min-w-0 flex-1">
         <p className="font-semibold">{title}</p>
         <p className="text-sm text-muted">

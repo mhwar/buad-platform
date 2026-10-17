@@ -34,12 +34,29 @@ function useAttentionCounts() {
   }, [q.data]);
 }
 
-const Count = ({ n }: { n: number }) =>
-  n > 0 ? (
-    <span className="min-w-5 rounded-full bg-red-600 px-1.5 text-center text-[11px] font-bold leading-5 text-white">
+/**
+ * A count beside an entry: red only when something is late or waiting on you (the feed marks those
+ * «warn»); a calm grey for counts that are just information, so red keeps its meaning.
+ */
+function Count({ n, keys }: { n: number; keys: readonly string[] }) {
+  const q = useQuery(attentionQuery);
+  if (n <= 0) return null;
+  const urgent = (q.data?.items ?? []).some(
+    (i) => i.tone === "warn" && i.count > 0 && keys.includes(i.key),
+  );
+  return (
+    <span
+      className={cx(
+        "min-w-5 rounded-full px-1.5 text-center text-xs font-bold leading-5",
+        urgent
+          ? "bg-red-600 text-white"
+          : "bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-100",
+      )}
+    >
       {n > 99 ? "99+" : n}
     </span>
-  ) : null;
+  );
+}
 
 /**
  * A link whose "current page" mark is ours, not the router's: the router marks every link whose
@@ -161,7 +178,7 @@ function Item({
             sideOffset={8}
             className="z-50 min-w-52 rounded-xl border bg-surface p-1 shadow-lg"
           >
-            <RMenu.Label className="px-3 py-1.5 text-[11px] font-semibold text-muted">
+            <RMenu.Label className="px-3 py-1.5 text-xs font-semibold text-muted">
               {entry.label}
             </RMenu.Label>
             {entry.tabs.map((t) => (
@@ -178,7 +195,7 @@ function Item({
                 className="flex min-h-10 cursor-pointer items-center justify-between gap-3 rounded-lg px-3 text-sm outline-none data-[highlighted]:bg-brand-soft"
               >
                 {t.label}
-                <Count n={badgeFor(t, counts)} />
+                <Count n={badgeFor(t, counts)} keys={t.attention} />
               </RMenu.Item>
             ))}
           </RMenu.Content>
@@ -214,7 +231,7 @@ function Item({
               >
                 {entry.label}
               </span>
-              {!open && <Count n={badge} />}
+              {!open && <Count n={badge} keys={entry.attention} />}
             </>
           )}
           {collapsed && badge > 0 && (
@@ -265,7 +282,7 @@ function Item({
                   )}
                 >
                   <span className="truncate">{t.label}</span>
-                  <Count n={badgeFor(t, counts)} />
+                  <Count n={badgeFor(t, counts)} keys={t.attention} />
                 </NavLink>
               </li>
             );
@@ -324,10 +341,7 @@ function Recent() {
   if (!items.length) return null;
   return (
     <section aria-labelledby="recent-title" className="mt-4 border-t pt-3">
-      <h2
-        id="recent-title"
-        className="px-2 pb-1 text-[11px] font-semibold tracking-wide text-muted"
-      >
+      <h2 id="recent-title" className="px-2 pb-1 text-xs font-semibold tracking-wide text-muted">
         الأخيرة
       </h2>
       <ul className="space-y-0.5">

@@ -4,7 +4,7 @@ export type StatTone = "good" | "bad" | "warn";
 const TONE: Record<StatTone, string> = {
   good: "text-emerald-700 dark:text-emerald-400",
   bad: "text-red-600 dark:text-red-400",
-  warn: "text-amber-600 dark:text-amber-400",
+  warn: "text-amber-700 dark:text-amber-400",
 };
 
 /**
@@ -39,7 +39,7 @@ export function StatTile({
       >
         {value}
       </p>
-      {hint && <p className="mt-0.5 text-[11px] text-muted">{hint}</p>}
+      {hint && <p className="mt-0.5 text-xs text-muted">{hint}</p>}
       {delta && <Delta {...delta} />}
     </>
   );

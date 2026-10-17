@@ -1,6 +1,15 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { Button, Dialog, Field, Input, Notice, Select } from "../../components/ui";
+import {
+  Button,
+  Dialog,
+  DialogActions,
+  Field,
+  Input,
+  Notice,
+  Select,
+  toast,
+} from "../../components/ui";
 import { send } from "../team/queries";
 import {
   assigneesQuery,
@@ -57,6 +66,7 @@ export function TaskDialog({
             projectId: projectId,
             ...(initiativeId ? { initiativeId } : {}),
           }));
+      toast(existing ? "حُفظت المهمة" : "أُضيفت المهمة");
       onSaved();
     } catch {
       setError("تعذّر الحفظ، حاول مرة أخرى.");
@@ -70,6 +80,13 @@ export function TaskDialog({
       onOpenChange={(o) => !o && onClose()}
       title={existing ? "تعديل المهمة" : "مهمة جديدة"}
       wide
+      footer={
+        <DialogActions onCancel={onClose}>
+          <Button disabled={busy || !title.trim()} onClick={save}>
+            {existing ? "حفظ" : "إضافة المهمة"}
+          </Button>
+        </DialogActions>
+      }
     >
       <div className="space-y-4">
         {error && <Notice>{error}</Notice>}
@@ -127,9 +144,6 @@ export function TaskDialog({
             </Field>
           )}
         </div>
-        <Button disabled={busy || !title.trim()} className="w-full" onClick={save}>
-          حفظ
-        </Button>
       </div>
     </Dialog>
   );
@@ -148,7 +162,32 @@ export function TimeDialog({
   const [note, setNote] = useState("");
   const [error, setError] = useState("");
   return (
-    <Dialog open onOpenChange={(o) => !o && onClose()} title={`تسجيل وقت: ${task.title}`}>
+    <Dialog
+      open
+      onOpenChange={(o) => !o && onClose()}
+      title={`تسجيل وقت: ${task.title}`}
+      footer={
+        <DialogActions onCancel={onClose}>
+          <Button
+            disabled={!(Number(hoursText) > 0)}
+            onClick={async () => {
+              try {
+                await send("POST", `/api/tasks/${task.id}/time`, {
+                  minutes: Math.max(1, Math.round(Number(hoursText) * 60)),
+                  date: new Date().toISOString().slice(0, 10),
+                  note,
+                });
+                onSaved();
+              } catch {
+                setError("تعذّر الحفظ.");
+              }
+            }}
+          >
+            تسجيل الوقت
+          </Button>
+        </DialogActions>
+      }
+    >
       <div className="space-y-4">
         {error && <Notice>{error}</Notice>}
         <Field label="عدد الساعات">
@@ -164,24 +203,6 @@ export function TimeDialog({
         <Field label="ملاحظة">
           <Input value={note} onChange={(e) => setNote(e.target.value)} />
         </Field>
-        <Button
-          className="w-full"
-          disabled={!(Number(hoursText) > 0)}
-          onClick={async () => {
-            try {
-              await send("POST", `/api/tasks/${task.id}/time`, {
-                minutes: Math.max(1, Math.round(Number(hoursText) * 60)),
-                date: new Date().toISOString().slice(0, 10),
-                note,
-              });
-              onSaved();
-            } catch {
-              setError("تعذّر الحفظ.");
-            }
-          }}
-        >
-          تسجيل
-        </Button>
       </div>
     </Dialog>
   );

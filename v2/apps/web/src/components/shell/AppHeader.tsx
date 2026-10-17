@@ -26,7 +26,7 @@ export function AppHeader({ onSearch }: { onSearch: () => void }) {
           <Search className="size-4" />
           <span className="flex-1 text-start">ابحث أو انتقل…</span>
           <kbd
-            className="rounded bg-white/15 px-1.5 py-0.5 font-sans text-[11px] text-white/80"
+            className="rounded bg-white/15 px-1.5 py-0.5 font-sans text-xs text-white/80"
             dir="ltr"
           >
             {isMac() ? "⌘ K" : "Ctrl K"}

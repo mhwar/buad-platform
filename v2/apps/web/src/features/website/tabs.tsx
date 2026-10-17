@@ -825,7 +825,7 @@ export function OverviewTab({
               {h.ok ? (
                 <Check className="mt-0.5 size-4 shrink-0 text-emerald-600" />
               ) : (
-                <Circle className="mt-0.5 size-4 shrink-0 text-amber-600" />
+                <Circle className="mt-0.5 size-4 shrink-0 text-amber-700" />
               )}
               <span className="flex-1">
                 {h.label}

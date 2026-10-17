@@ -122,8 +122,8 @@ describe("PricingPanel", () => {
       <PricingPanel pricing={pricing} packages={packages} vatRate={15} onChange={() => {}} />,
     );
     // cost 2,000 → price 2,500 at a 20% margin (shown in the package card and the calculator)
-    expect((await screen.findAllByText(/2,500\.00/)).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/2,000\.00/).length).toBeGreaterThan(0);
+    expect((await screen.findAllByText(/2,500 ر/)).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/2,000 ر/).length).toBeGreaterThan(0);
   });
 
   it("asks for costs instead of showing a price when a used line has none", async () => {
@@ -132,6 +132,6 @@ describe("PricingPanel", () => {
       <PricingPanel pricing={free as never} packages={packages} vatRate={15} onChange={() => {}} />,
     );
     expect((await screen.findAllByText(/يحتاج إدخال تكلفة/)).length).toBeGreaterThan(0);
-    expect(screen.queryByText(/2,500\.00/)).toBeNull();
+    expect(screen.queryByText(/2,500 ر/)).toBeNull();
   });
 });

@@ -6,7 +6,17 @@ import { Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import type { z } from "zod";
-import { Button, Dialog, Field, Input, Notice, Select, Textarea } from "../../components/ui";
+import {
+  Button,
+  Dialog,
+  DialogActions,
+  Field,
+  Input,
+  Notice,
+  Select,
+  Textarea,
+  toast,
+} from "../../components/ui";
 import { ApiError } from "../../lib/format";
 import { CLIENT_TYPE_LABELS } from "../labels";
 import {
@@ -110,10 +120,12 @@ export function ClientDialog({
       if (existing) {
         await updateClient(existing.client.id, { ...v, confirmSimilarName });
         await qc.invalidateQueries({ queryKey: clientKeys.all });
+        toast("حُفظ العميل");
         close(false);
       } else {
         const res = await createClient({ ...(v as ClientInput), confirmSimilarName });
         await qc.invalidateQueries({ queryKey: clientKeys.all });
+        toast("أُضيف العميل");
         close(false);
         await navigate({ to: "/clients/$id", params: { id: res.id } });
       }
@@ -131,6 +143,17 @@ export function ClientDialog({
       open={open}
       onOpenChange={close}
       title={existing ? "تعديل بيانات العميل" : "عميل جديد"}
+      footer={
+        <DialogActions onCancel={() => close(false)}>
+          <Button
+            type="submit"
+            form="client-form"
+            disabled={f.formState.isSubmitting || !!duplicate}
+          >
+            {existing ? "حفظ التعديلات" : "حفظ العميل"}
+          </Button>
+        </DialogActions>
+      }
       wide
     >
       {error && <Notice>{error}</Notice>}
@@ -171,7 +194,12 @@ export function ClientDialog({
           </div>
         </Notice>
       )}
-      <form onSubmit={f.handleSubmit((v) => save(v))} className="space-y-5" noValidate>
+      <form
+        id="client-form"
+        onSubmit={f.handleSubmit((v) => save(v))}
+        className="space-y-5"
+        noValidate
+      >
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="اسم العميل *" error={err(e.name)} className="sm:col-span-2">
             <Input autoFocus {...f.register("name")} />
@@ -295,15 +323,6 @@ export function ClientDialog({
         <Field label="ملاحظات">
           <Textarea {...f.register("notes")} />
         </Field>
-
-        <div className="flex justify-end gap-2 border-t pt-4">
-          <Button variant="secondary" onClick={() => close(false)}>
-            إلغاء
-          </Button>
-          <Button type="submit" disabled={f.formState.isSubmitting || !!duplicate}>
-            {existing ? "حفظ التعديلات" : "حفظ العميل"}
-          </Button>
-        </div>
       </form>
     </Dialog>
   );

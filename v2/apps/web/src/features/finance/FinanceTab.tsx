@@ -3,7 +3,16 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { AlertTriangle, FileUp, Plus, Settings2, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
-import { Badge, Button, Card, Input, Pills, SearchBox, Sheet } from "../../components/ui";
+import {
+  Badge,
+  Button,
+  Card,
+  confirmAction,
+  Input,
+  Pills,
+  SearchBox,
+  Sheet,
+} from "../../components/ui";
 import { csvToRows, downloadSheet } from "../../lib/export";
 import { day, pct, sar } from "../../lib/format";
 import { type Entry, type Finance, financeApi, financeKey, financeQuery } from "./api";
@@ -203,7 +212,7 @@ function Stat({
     tone === "good"
       ? "text-emerald-700 dark:text-emerald-400"
       : tone === "warn"
-        ? "text-amber-600"
+        ? "text-amber-700"
         : tone === "bad"
           ? "text-red-600"
           : "";
@@ -441,7 +450,12 @@ function Budget({
                     const used = (actual[i]?.actual ?? 0) > 0;
                     if (
                       used &&
-                      !confirm("على هذا البند قيود مسجّلة؛ ستبقى القيود لكن دون ربطها بالبند. حذف؟")
+                      !(await confirmAction({
+                        title: "حذف هذا البند؟",
+                        text: "عليه قيود مسجّلة؛ ستبقى القيود لكن دون ربطها بالبند.",
+                        action: "حذف البند",
+                        danger: true,
+                      }))
                     )
                       return;
                     apply(await api.deleteBudget(b.id));

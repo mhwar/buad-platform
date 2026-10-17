@@ -53,7 +53,7 @@ describe("TasksPage", () => {
     stubApi(base());
     await renderWithApp(<TasksPage />);
     expect(await screen.findByText("جهّز العرض")).toBeInTheDocument();
-    expect(screen.getByText(/متأخرة · 2020-01-01/)).toBeInTheDocument();
+    expect(screen.getByText(/متأخرة · 1 يناير 2020/)).toBeInTheDocument();
     expect(screen.queryByText("منجزة قديمة")).toBeNull();
     expect(screen.getByRole("tab", { name: "متأخرة (1)" })).toBeInTheDocument();
     await userEvent.click(screen.getByRole("tab", { name: "منجزة (1)" }));

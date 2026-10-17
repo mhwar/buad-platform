@@ -195,10 +195,10 @@ export function OpportunitiesPage() {
             )}
           >
             <span className="block text-xs text-muted">تحتاج متابعة اليوم</span>
-            <span className={cx("mt-0.5 block text-lg font-bold", due > 0 && "text-amber-600")}>
+            <span className={cx("mt-0.5 block text-lg font-bold", due > 0 && "text-amber-700")}>
               {due}
             </span>
-            <span className="block text-[11px] text-muted">
+            <span className="block text-xs text-muted">
               {filters.state === "follow" ? "اضغط لعرض الكل" : "اضغط للتصفية"}
             </span>
           </button>
@@ -373,7 +373,7 @@ export function OpportunitiesPage() {
                       className={cx(
                         "px-3 py-2.5",
                         fu === "overdue" && "font-semibold text-red-600",
-                        fu === "today" && "font-semibold text-amber-600",
+                        fu === "today" && "font-semibold text-amber-700",
                       )}
                     >
                       {r.followUpAt && isOpen(r) ? day(r.followUpAt) : "—"}

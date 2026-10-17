@@ -4,6 +4,7 @@ import { Columns3, List, Pencil, Plus, Table2 } from "lucide-react";
 import { useState } from "react";
 import { matches } from "../../components/shell/CommandPalette";
 import { Badge, Button, cx, EmptyState, SearchBox, Segmented } from "../../components/ui";
+import { day } from "../../lib/format";
 import { useCan } from "../../session";
 import { send } from "../team/queries";
 import {
@@ -351,7 +352,7 @@ function TaskTable({
                   )}
                 </td>
                 <td className={cx("px-3 py-2 tabular-nums", late && "font-semibold text-red-600")}>
-                  {t.dueDate ? `${late ? "متأخرة · " : ""}${t.dueDate}` : "—"}
+                  {t.dueDate ? `${late ? "متأخرة · " : ""}${day(t.dueDate)}` : "—"}
                 </td>
                 <td className="px-3 py-2">
                   {edit ? (

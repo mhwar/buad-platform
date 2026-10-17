@@ -71,7 +71,7 @@ describe("NotificationBell", () => {
       },
     });
     await renderWithApp(<NotificationBell />);
-    const bell = await screen.findByRole("button", { name: /2 غير مقروءة/ });
+    const bell = await screen.findByRole("button", { name: /2 تحتاج انتباهك/ });
     await userEvent.click(bell);
     expect(await screen.findByText("طلب اعتماد: خطاب")).toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: "تعليم الكل كمقروء" }));
@@ -105,7 +105,7 @@ describe("NotificationBell", () => {
     });
     expect(groupNotices([n("x", "decision", "ق")])[0]?.label).toBe("الاجتماعات والقرارات");
     await renderWithApp(<NotificationBell />);
-    await userEvent.click(await screen.findByRole("button", { name: /2 غير مقروءة/ }));
+    await userEvent.click(await screen.findByRole("button", { name: /2 تحتاج انتباهك/ }));
     const tasks = await screen.findByRole("region", { name: "المهام" });
     expect(within(tasks).getAllByRole("button", { name: /مهمة/ })).toHaveLength(2);
     expect(screen.getByRole("region", { name: "أخرى" })).toHaveTextContent("شيء آخر");
