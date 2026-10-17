@@ -9,28 +9,28 @@ afterEach(() => vi.unstubAllGlobals());
 const me = (role: string) => () => ({ user: meUser(role) });
 
 describe("SettingsLayout", () => {
-  it("shows the import option to the owner", async () => {
+  it("shows «البيانات» (backup and import) to the owner", async () => {
     stubApi({ "GET /api/me": me("owner") });
     await renderWithApp(<SettingsLayout />);
-    expect(await screen.findByRole("link", { name: /الاستيراد/ })).toHaveAttribute(
+    expect(await screen.findByRole("link", { name: /البيانات/ })).toHaveAttribute(
       "href",
-      "/settings/import",
+      "/settings/data",
     );
     expect(screen.getByRole("link", { name: /بيانات الجهة/ })).toBeInTheDocument();
   });
 
-  it("hides import from everyone else", async () => {
-    stubApi({ "GET /api/me": me("admin") });
+  it("hides it from those who do not edit the organisation", async () => {
+    stubApi({ "GET /api/me": me("viewer") });
     await renderWithApp(<SettingsLayout />);
     expect(await screen.findByRole("link", { name: /حسابي/ })).toBeInTheDocument();
     await new Promise((r) => setTimeout(r, 20));
-    expect(screen.queryByRole("link", { name: /الاستيراد/ })).toBeNull();
+    expect(screen.queryByRole("link", { name: /البيانات/ })).toBeNull();
   });
 
   it("lists the same pages, in the same order, as the sidebar", async () => {
     stubApi({ "GET /api/me": me("owner") });
     await renderWithApp(<SettingsLayout />);
-    await screen.findByRole("link", { name: /الاستيراد/ });
+    await screen.findByRole("link", { name: /البيانات/ });
     const nav = screen.getByRole("navigation", { name: "الإعدادات" });
     const names = [...nav.querySelectorAll("a")].map((a) => a.textContent?.trim());
     const settings = SECTIONS.find((s) => s.key === "settings");

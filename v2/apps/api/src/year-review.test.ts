@@ -317,3 +317,26 @@ describe("numbering and document texts", () => {
     ).toBe(400);
   });
 });
+
+describe("full export", () => {
+  it("holds the organisation's records only, without secrets, and is logged", async () => {
+    const pid = await proj("own", { expectedValue: 1000 });
+    await call("x", "POST", "/api/clients", { name: "عميل منشأة أخرى" });
+    const r = await app.request("/api/org/export", { headers: { cookie: cookie.own ?? "" } }, env);
+    expect(r.status).toBe(200);
+    expect(r.headers.get("content-disposition")).toMatch(/buad-backup-\d{4}-\d{2}-\d{2}\.json/);
+    const data = (await r.json()) as J;
+    expect(data.format).toBe("buad-export");
+    expect(data.tables.projects.map((p: J) => p.id)).toContain(pid);
+    expect(data.tables.clients.every((c: J) => c.orgId === "org_platform")).toBe(true);
+    expect(data.tables.users.length).toBeGreaterThan(0);
+    expect(JSON.stringify(data.tables.users)).not.toMatch(/passwordHash|tokenVersion/);
+    expect(data.counts.projects).toBe(data.tables.projects.length);
+    const log = (await call("own", "GET", "/api/audit?entity=org")).body;
+    expect((log.items ?? log).some((i: J) => i.action === "export")).toBe(true);
+  });
+
+  it("is for who may edit the organisation", async () => {
+    expect((await call("acc", "GET", "/api/org/export")).status).toBe(403);
+  });
+});

@@ -28,6 +28,7 @@ import { financeOverviewApp } from "./modules/finance-overview";
 import { importApp } from "./modules/importer";
 import { notificationsApp } from "./modules/notifications";
 import { orgApp } from "./modules/org";
+import { exportApp } from "./modules/org-export";
 import { type BrowserBinding, pdfApp } from "./modules/pdf";
 import { plansApp } from "./modules/plans";
 import { productsApp } from "./modules/products";
@@ -226,6 +227,7 @@ export function createApp(deps: AppDeps = {}) {
       .route("/api/assets", assetsApp)
       .route("/api/org/settings", settingsApp)
       .route("/api/org/preferences", prefsApp)
+      .route("/api/org/export", exportApp)
       .route("/api/org", orgApp)
 
       .onError((err, c) => {

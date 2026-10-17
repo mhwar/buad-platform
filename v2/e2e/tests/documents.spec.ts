@@ -50,3 +50,24 @@ test("«بيانات الجهة» shows how each kind is numbered and the defaul
   await expect(numbering.getByText("الصادر")).toBeVisible();
   await expect(page.getByRole("region", { name: "النصوص الافتراضية" })).toBeVisible();
 });
+
+test("«البيانات» downloads a full copy of the organisation's records", async ({ page }) => {
+  await page.goto("/settings/data");
+  const download = page.waitForEvent("download");
+  await page.getByRole("button", { name: "تنزيل نسخة كاملة (JSON)" }).click();
+  const file = await download;
+  expect(file.suggestedFilename()).toMatch(/^buad-backup-\d{4}-\d{2}-\d{2}\.json$/);
+  const data = JSON.parse(
+    await new Promise<string>((resolve, reject) => {
+      file.createReadStream().then((s) => {
+        let text = "";
+        s.on("data", (c) => (text += c));
+        s.on("end", () => resolve(text));
+        s.on("error", reject);
+      }, reject);
+    }),
+  );
+  expect(data.format).toBe("buad-export");
+  expect(data.counts.clients).toBeGreaterThan(0);
+  await expect(page.getByText(/آخر تنزيل/)).toBeVisible();
+});
