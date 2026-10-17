@@ -735,7 +735,6 @@ export function OverviewTab({
   goTab,
   dirty,
   busy,
-  onPublish,
   onUnpublish,
 }: {
   c: SiteContent;
@@ -748,7 +747,6 @@ export function OverviewTab({
   goTab: (t: EditorTab) => void;
   dirty: boolean;
   busy: string;
-  onPublish: () => void;
   onUnpublish: () => void;
 }) {
   const score = healthScore(health);
@@ -768,16 +766,6 @@ export function OverviewTab({
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button
-              disabled={dirty || busy !== "" || (data.isPublished && !data.changed)}
-              onClick={onPublish}
-            >
-              {busy === "publish"
-                ? "جارٍ النشر…"
-                : data.isPublished
-                  ? "نشر التعديلات"
-                  : "نشر الموقع"}
-            </Button>
             {data.isPublished && (
               <Button variant="ghost" disabled={busy !== ""} onClick={onUnpublish}>
                 إيقاف النشر
@@ -785,7 +773,7 @@ export function OverviewTab({
             )}
           </div>
         </div>
-        {dirty && <Notice tone="amber">احفظ تغييراتك أولاً ثم انشر.</Notice>}
+        {dirty && <Notice tone="amber">احفظ تغييراتك أولاً ثم انشر من زر «نشر» أعلى الصفحة.</Notice>}
         {data.isPublished && overview && overview.changedSections.length > 0 && (
           <div className="text-sm">
             <p className="mb-1 font-medium">تعديلات لم تُنشر بعد:</p>

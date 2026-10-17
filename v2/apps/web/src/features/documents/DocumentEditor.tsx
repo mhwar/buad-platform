@@ -39,6 +39,7 @@ import {
   Card,
   confirmAction,
   Dialog,
+  DialogActions,
   Field,
   Input,
   Menu,
@@ -809,7 +810,17 @@ function ClauseDialog({
     });
   };
   return (
-    <Dialog open onOpenChange={(v) => !v && onClose()} title="تعديل البند" wide>
+    <Dialog
+      open
+      onOpenChange={(v) => !v && onClose()}
+      title="تعديل البند"
+      wide
+      footer={
+        <DialogActions onCancel={onClose}>
+          <Button onClick={() => onSave(c)}>حفظ البند</Button>
+        </DialogActions>
+      }
+    >
       <div className="space-y-4">
         <Field label={c.baseTitle ? "عنوان البند (يُرقَّم تلقائياً)" : "عنوان البند"}>
           <Input
@@ -852,12 +863,6 @@ function ClauseDialog({
             />
             يبدأ في صفحة جديدة
           </label>
-        </div>
-        <div className="flex justify-end gap-2 border-t pt-4">
-          <Button variant="secondary" onClick={onClose}>
-            إلغاء
-          </Button>
-          <Button onClick={() => onSave(c)}>حفظ البند</Button>
         </div>
       </div>
     </Dialog>

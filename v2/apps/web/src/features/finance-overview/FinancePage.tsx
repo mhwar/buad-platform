@@ -20,6 +20,7 @@ import {
   Button,
   Card,
   Dialog,
+  DialogActions,
   EmptyState,
   Input,
   Notice,
@@ -514,7 +515,32 @@ function ArchiveDialog({ onClose }: { onClose: () => void }) {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
   return (
-    <Dialog open onOpenChange={(o) => !o && onClose()} title="أرشيف Excel للمشاريع">
+    <Dialog
+      open
+      onOpenChange={(o) => !o && onClose()}
+      title="أرشيف Excel للمشاريع"
+      footer={
+        <DialogActions onCancel={onClose}>
+          <Button
+            disabled={!chosen.length || busy}
+            onClick={async () => {
+              setBusy(true);
+              setErr("");
+              try {
+                await downloadArchive(all.filter((p) => chosen.includes(p.id)));
+                onClose();
+              } catch {
+                setErr("تعذّر تجهيز الملف");
+              } finally {
+                setBusy(false);
+              }
+            }}
+          >
+            {busy ? "جارٍ التجهيز…" : `تنزيل (${chosen.length} مشروع)`}
+          </Button>
+        </DialogActions>
+      }
+    >
       <p className="mb-3 text-sm text-muted">
         ملف واحد: ورقة ملخص، ثم ورقة لكل مشروع فيها العقد وتقرير الاتفاقية وكل المعاملات.
       </p>
@@ -538,25 +564,6 @@ function ArchiveDialog({ onClose }: { onClose: () => void }) {
             <span className="text-xs text-muted">{label(PROJECT_STATUS_LABELS, p.status)}</span>
           </label>
         ))}
-      </div>
-      <div className="mt-4 flex justify-end">
-        <Button
-          disabled={!chosen.length || busy}
-          onClick={async () => {
-            setBusy(true);
-            setErr("");
-            try {
-              await downloadArchive(all.filter((p) => chosen.includes(p.id)));
-              onClose();
-            } catch {
-              setErr("تعذّر تجهيز الملف");
-            } finally {
-              setBusy(false);
-            }
-          }}
-        >
-          {busy ? "جارٍ التجهيز…" : `تنزيل (${chosen.length} مشروع)`}
-        </Button>
       </div>
     </Dialog>
   );

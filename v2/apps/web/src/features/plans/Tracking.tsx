@@ -1,7 +1,17 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CalendarRange, Sparkles, Target, TrendingDown, TrendingUp } from "lucide-react";
 import { useState } from "react";
-import { Badge, Button, Card, cx, Dialog, Field, Notice, Select } from "../../components/ui";
+import {
+  Badge,
+  Button,
+  Card,
+  cx,
+  Dialog,
+  DialogActions,
+  Field,
+  Notice,
+  Select,
+} from "../../components/ui";
 import { ApiError, sar } from "../../lib/format";
 import { useCan } from "../../session";
 import { overviewQuery } from "../sales/api";
@@ -308,7 +318,24 @@ export function TemplateDialog({
       ),
   });
   return (
-    <Dialog open onOpenChange={(v) => !v && onClose()} title="خطة جاهزة" wide>
+    <Dialog
+      open
+      onOpenChange={(v) => !v && onClose()}
+      title="خطة جاهزة"
+      wide
+      footer={
+        tpl && (
+          <DialogActions onCancel={onClose}>
+            <Button
+              disabled={create.isPending || tpl.usedYears.includes(year)}
+              onClick={() => create.mutate()}
+            >
+              إنشاء الخطة لسنة {year}
+            </Button>
+          </DialogActions>
+        )
+      }
+    >
       {!tpl ? (
         <div className="h-32 animate-pulse rounded-xl bg-slate-100 dark:bg-slate-800" />
       ) : (
@@ -356,13 +383,6 @@ export function TemplateDialog({
             المرتبطة بالمنصة (الإيرادات، العقود، الطلبات، العملاء…) تُحسب تلقائياً، والميزانيات تبقى
             فارغة لتعبّئها.
           </p>
-          <Button
-            className="w-full"
-            disabled={create.isPending || tpl.usedYears.includes(year)}
-            onClick={() => create.mutate()}
-          >
-            إنشاء الخطة لسنة {year}
-          </Button>
         </div>
       )}
     </Dialog>

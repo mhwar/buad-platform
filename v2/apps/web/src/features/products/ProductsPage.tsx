@@ -7,6 +7,7 @@ import {
   Button,
   Card,
   Dialog,
+  DialogActions,
   EmptyState,
   Field,
   Input,
@@ -154,8 +155,20 @@ export function ProductsPage() {
         </>
       )}
 
-      <Dialog open={creating} onOpenChange={setCreating} title="منتج جديد">
+      <Dialog
+        open={creating}
+        onOpenChange={setCreating}
+        title="منتج جديد"
+        footer={
+          <DialogActions onCancel={() => setCreating(false)}>
+            <Button type="submit" form="product-form" disabled={!name.trim() || create.isPending}>
+              إنشاء
+            </Button>
+          </DialogActions>
+        }
+      >
         <form
+          id="product-form"
           onSubmit={(e) => {
             e.preventDefault();
             if (name.trim()) create.mutate();
@@ -165,9 +178,6 @@ export function ProductsPage() {
           <Field label="اسم المنتج">
             <Input autoFocus value={name} onChange={(e) => setName(e.target.value)} />
           </Field>
-          <Button type="submit" disabled={!name.trim() || create.isPending} className="w-full">
-            إنشاء
-          </Button>
         </form>
       </Dialog>
     </div>

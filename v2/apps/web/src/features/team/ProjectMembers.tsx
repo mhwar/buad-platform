@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { Button, Dialog, Notice } from "../../components/ui";
+import { Button, Dialog, DialogActions, Notice } from "../../components/ui";
 import { ok } from "../../lib/format";
 import { send, teamUsersQuery } from "./queries";
 
@@ -33,7 +33,16 @@ export function ProjectMembers({
     }
   };
   return (
-    <Dialog open={open} onOpenChange={(o) => !o && onClose()} title="فريق المشروع">
+    <Dialog
+      open={open}
+      onOpenChange={(o) => !o && onClose()}
+      title="فريق المشروع"
+      footer={
+        <DialogActions onCancel={onClose}>
+          <Button onClick={save}>حفظ</Button>
+        </DialogActions>
+      }
+    >
       <div className="space-y-3">
         {error && <Notice>{error}</Notice>}
         <p className="text-sm text-muted">
@@ -59,9 +68,6 @@ export function ProjectMembers({
               </li>
             ))}
         </ul>
-        <Button onClick={save} className="w-full">
-          حفظ
-        </Button>
       </div>
     </Dialog>
   );

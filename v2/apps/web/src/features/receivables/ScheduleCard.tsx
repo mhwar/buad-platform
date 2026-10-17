@@ -1,7 +1,16 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
-import { Badge, Button, Card, Dialog, Field, Input, Notice } from "../../components/ui";
+import {
+  Badge,
+  Button,
+  Card,
+  Dialog,
+  DialogActions,
+  Field,
+  Input,
+  Notice,
+} from "../../components/ui";
 import { day, sar } from "../../lib/format";
 import { send } from "../team/queries";
 import { type Instalment, scheduleQuery } from "./api";
@@ -102,7 +111,33 @@ export function ScheduleCard({
         <ReceiveDialog line={receiving} onClose={() => setReceiving(null)} onDone={refresh} />
       )}
       {adding && (
-        <Dialog open onOpenChange={(o) => !o && setAdding(false)} title="دفعة منتظرة">
+        <Dialog
+          open
+          onOpenChange={(o) => !o && setAdding(false)}
+          title="دفعة منتظرة"
+          footer={
+            <DialogActions onCancel={() => setAdding(false)}>
+              <Button
+                disabled={!label.trim() || !due || !(Number(amount) > 0)}
+                onClick={async () => {
+                  await run(() =>
+                    send("POST", `/api/receivables/projects/${projectId}`, {
+                      label,
+                      dueDate: due,
+                      amount: Number(amount),
+                    }),
+                  );
+                  setAdding(false);
+                  setLabel("");
+                  setDue("");
+                  setAmount("");
+                }}
+              >
+                إضافة
+              </Button>
+            </DialogActions>
+          }
+        >
           <div className="space-y-4">
             <Field label="الوصف">
               <Input
@@ -125,25 +160,6 @@ export function ScheduleCard({
                 />
               </Field>
             </div>
-            <Button
-              className="w-full"
-              disabled={!label.trim() || !due || !(Number(amount) > 0)}
-              onClick={async () => {
-                await run(() =>
-                  send("POST", `/api/receivables/projects/${projectId}`, {
-                    label,
-                    dueDate: due,
-                    amount: Number(amount),
-                  }),
-                );
-                setAdding(false);
-                setLabel("");
-                setDue("");
-                setAmount("");
-              }}
-            >
-              إضافة
-            </Button>
           </div>
         </Dialog>
       )}

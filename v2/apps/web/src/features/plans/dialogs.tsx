@@ -1,7 +1,7 @@
 import { PLATFORM_METRICS } from "@buad/domain";
 import { useQuery } from "@tanstack/react-query";
 import { type ReactNode, useState } from "react";
-import { Button, Dialog, Field, Input, Notice, Select } from "../../components/ui";
+import { Button, Dialog, DialogActions, Field, Input, Notice, Select } from "../../components/ui";
 import { send } from "../team/queries";
 import {
   type Cycle,
@@ -19,14 +19,22 @@ function Shell({
   onClose,
   children,
   error,
+  action,
 }: {
   title: string;
   onClose: () => void;
   children: ReactNode;
   error: string;
+  action: ReactNode;
 }) {
   return (
-    <Dialog open onOpenChange={(o) => !o && onClose()} title={title} wide>
+    <Dialog
+      open
+      onOpenChange={(o) => !o && onClose()}
+      title={title}
+      wide
+      footer={<DialogActions onCancel={onClose}>{action}</DialogActions>}
+    >
       <div className="space-y-4">
         {error && <Notice>{error}</Notice>}
         {children}
@@ -91,6 +99,24 @@ export function CycleDialog({
       title={kind === "strategic" ? "خطة استراتيجية جديدة" : "خطة تشغيلية جديدة"}
       onClose={onClose}
       error={error}
+      action={
+        <Button
+          disabled={busy || !name.trim()}
+          onClick={() =>
+            run(() =>
+              send("POST", "/api/plans/cycles", {
+                kind,
+                name,
+                startDate: start,
+                endDate: end,
+                parentCycleId: kind === "operational" ? parent : "",
+              }),
+            )
+          }
+        >
+          إنشاء
+        </Button>
+      }
     >
       <Field label="اسم الخطة">
         <Input value={name} onChange={(e) => setName(e.target.value)} />
@@ -115,23 +141,6 @@ export function CycleDialog({
           </Select>
         </Field>
       )}
-      <Button
-        disabled={busy || !name.trim()}
-        className="w-full"
-        onClick={() =>
-          run(() =>
-            send("POST", "/api/plans/cycles", {
-              kind,
-              name,
-              startDate: start,
-              endDate: end,
-              parentCycleId: kind === "operational" ? parent : "",
-            }),
-          )
-        }
-      >
-        إنشاء
-      </Button>
     </Shell>
   );
 }
@@ -145,7 +154,33 @@ export function IdentityDialog({ cycle, onClose, onSaved }: Close & { cycle: Cyc
   const { error, busy, run } = useSave(onSaved);
   const area = "w-full rounded-lg border border-line bg-surface px-3 py-2.5 text-base sm:text-sm";
   return (
-    <Shell title="تعديل الخطة" onClose={onClose} error={error}>
+    <Shell
+      title="تعديل الخطة"
+      onClose={onClose}
+      error={error}
+      action={
+        <Button
+          disabled={busy || !name.trim()}
+          onClick={() =>
+            run(() =>
+              send("PATCH", `/api/plans/cycles/${cycle.id}`, {
+                version: cycle.version,
+                name,
+                vision,
+                mission,
+                status,
+                values: values
+                  .split("\n")
+                  .map((v) => v.trim())
+                  .filter(Boolean),
+              }),
+            )
+          }
+        >
+          حفظ
+        </Button>
+      }
+    >
       <Field label="اسم الخطة">
         <Input value={name} onChange={(e) => setName(e.target.value)} />
       </Field>
@@ -180,27 +215,6 @@ export function IdentityDialog({ cycle, onClose, onSaved }: Close & { cycle: Cyc
           <option value="closed">مغلقة</option>
         </Select>
       </Field>
-      <Button
-        disabled={busy || !name.trim()}
-        className="w-full"
-        onClick={() =>
-          run(() =>
-            send("PATCH", `/api/plans/cycles/${cycle.id}`, {
-              version: cycle.version,
-              name,
-              vision,
-              mission,
-              status,
-              values: values
-                .split("\n")
-                .map((v) => v.trim())
-                .filter(Boolean),
-            }),
-          )
-        }
-      >
-        حفظ
-      </Button>
     </Shell>
   );
 }
@@ -234,7 +248,25 @@ export function ObjectiveDialog({
     ...(operational ? { quarter: Number(quarter), parentId } : {}),
   };
   return (
-    <Shell title={existing ? "تعديل الهدف" : "هدف جديد"} onClose={onClose} error={error}>
+    <Shell
+      title={existing ? "تعديل الهدف" : "هدف جديد"}
+      onClose={onClose}
+      error={error}
+      action={
+        <Button
+          disabled={busy || !title.trim()}
+          onClick={() =>
+            run(() =>
+              existing
+                ? send("PATCH", `/api/plans/objectives/${existing.id}`, body)
+                : send("POST", "/api/plans/objectives", { cycleId: cycle.id, ...body }),
+            )
+          }
+        >
+          حفظ
+        </Button>
+      }
+    >
       <Field label="الهدف">
         <Input value={title} onChange={(e) => setTitle(e.target.value)} />
       </Field>
@@ -287,19 +319,6 @@ export function ObjectiveDialog({
           </Select>
         </Field>
       )}
-      <Button
-        disabled={busy || !title.trim()}
-        className="w-full"
-        onClick={() =>
-          run(() =>
-            existing
-              ? send("PATCH", `/api/plans/objectives/${existing.id}`, body)
-              : send("POST", "/api/plans/objectives", { cycleId: cycle.id, ...body }),
-          )
-        }
-      >
-        حفظ
-      </Button>
     </Shell>
   );
 }
@@ -329,7 +348,25 @@ export function IndicatorDialog({
     direction,
   };
   return (
-    <Shell title={existing ? "تعديل المؤشر" : "مؤشر أداء جديد"} onClose={onClose} error={error}>
+    <Shell
+      title={existing ? "تعديل المؤشر" : "مؤشر أداء جديد"}
+      onClose={onClose}
+      error={error}
+      action={
+        <Button
+          disabled={busy || !name.trim() || target.trim() === ""}
+          onClick={() =>
+            run(() =>
+              existing
+                ? send("PATCH", `/api/plans/indicators/${existing.id}`, body)
+                : send("POST", `/api/plans/objectives/${objectiveId}/indicators`, body),
+            )
+          }
+        >
+          حفظ
+        </Button>
+      }
+    >
       <Field label="اسم المؤشر">
         <Input value={name} onChange={(e) => setName(e.target.value)} />
       </Field>
@@ -394,19 +431,6 @@ export function IndicatorDialog({
           <option value="down">الأقل أفضل</option>
         </Select>
       </Field>
-      <Button
-        disabled={busy || !name.trim() || target.trim() === ""}
-        className="w-full"
-        onClick={() =>
-          run(() =>
-            existing
-              ? send("PATCH", `/api/plans/indicators/${existing.id}`, body)
-              : send("POST", `/api/plans/objectives/${objectiveId}/indicators`, body),
-          )
-        }
-      >
-        حفظ
-      </Button>
     </Shell>
   );
 }
@@ -426,7 +450,25 @@ export function InitiativeDialog({
   const { error, busy, run } = useSave(onSaved);
   const body = { title, ownerId, startDate: start, dueDate: due, budget: num(budget), status };
   return (
-    <Shell title={existing ? "تعديل المبادرة" : "مبادرة جديدة"} onClose={onClose} error={error}>
+    <Shell
+      title={existing ? "تعديل المبادرة" : "مبادرة جديدة"}
+      onClose={onClose}
+      error={error}
+      action={
+        <Button
+          disabled={busy || !title.trim()}
+          onClick={() =>
+            run(() =>
+              existing
+                ? send("PATCH", `/api/plans/initiatives/${existing.id}`, body)
+                : send("POST", `/api/plans/objectives/${objectiveId}/initiatives`, body),
+            )
+          }
+        >
+          حفظ
+        </Button>
+      }
+    >
       <Field label="المبادرة">
         <Input value={title} onChange={(e) => setTitle(e.target.value)} />
       </Field>
@@ -459,19 +501,6 @@ export function InitiativeDialog({
           />
         </Field>
       </div>
-      <Button
-        disabled={busy || !title.trim()}
-        className="w-full"
-        onClick={() =>
-          run(() =>
-            existing
-              ? send("PATCH", `/api/plans/initiatives/${existing.id}`, body)
-              : send("POST", `/api/plans/objectives/${objectiveId}/initiatives`, body),
-          )
-        }
-      >
-        حفظ
-      </Button>
     </Shell>
   );
 }
@@ -481,7 +510,26 @@ export function ReviewDialog({ objective, onClose, onSaved }: Close & { objectiv
   const [quarter, setQuarter] = useState(String(objective.quarter));
   const { error, busy, run } = useSave(onSaved);
   return (
-    <Shell title="مراجعة الهدف" onClose={onClose} error={error}>
+    <Shell
+      title="مراجعة الهدف"
+      onClose={onClose}
+      error={error}
+      action={
+        <Button
+          disabled={busy}
+          onClick={() =>
+            run(() =>
+              send("POST", `/api/plans/objectives/${objective.id}/reviews`, {
+                quarter: Number(quarter),
+                note,
+              }),
+            )
+          }
+        >
+          حفظ المراجعة
+        </Button>
+      }
+    >
       <p className="text-sm text-muted">
         تُحفظ ملاحظتك مع أرقام المؤشرات والمبادرات كما هي الآن، لتقارن بها لاحقاً.
       </p>
@@ -503,20 +551,6 @@ export function ReviewDialog({ objective, onClose, onSaved }: Close & { objectiv
           onChange={(e) => setNote(e.target.value)}
         />
       </Field>
-      <Button
-        disabled={busy}
-        className="w-full"
-        onClick={() =>
-          run(() =>
-            send("POST", `/api/plans/objectives/${objective.id}/reviews`, {
-              quarter: Number(quarter),
-              note,
-            }),
-          )
-        }
-      >
-        حفظ المراجعة
-      </Button>
     </Shell>
   );
 }

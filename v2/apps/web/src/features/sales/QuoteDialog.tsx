@@ -3,7 +3,16 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { Plus, Printer, Trash2 } from "lucide-react";
 import { useState } from "react";
-import { Badge, Button, Dialog, Field, Input, Notice, Textarea } from "../../components/ui";
+import {
+  Badge,
+  Button,
+  Dialog,
+  DialogActions,
+  Field,
+  Input,
+  Notice,
+  Textarea,
+} from "../../components/ui";
 import { ApiError, sar } from "../../lib/format";
 import { send } from "../team/queries";
 import { catalogQuery, QUOTE_LABEL, type Quote, vatRateQuery } from "./api";
@@ -106,6 +115,43 @@ export function QuoteDialog({
       onOpenChange={(o) => !o && onClose()}
       title={existing ? `عرض سعر ${existing.number}` : "عرض سعر جديد"}
       wide
+      footer={
+        !locked && (
+          <DialogActions
+            onCancel={onClose}
+            aside={
+              existing?.status === "draft" && (
+                <Button
+                  variant="ghost"
+                  disabled={busy}
+                  onClick={() => run(() => send("DELETE", `/api/quotes/${existing.id}`))}
+                >
+                  حذف المسودة
+                </Button>
+              )
+            }
+          >
+            <Button disabled={busy || !title.trim()} onClick={save}>
+              حفظ
+            </Button>
+            {existing?.status === "draft" && (
+              <Button variant="secondary" disabled={busy} onClick={() => move("sent")}>
+                حفظ وإرسال
+              </Button>
+            )}
+            {existing?.status === "sent" && (
+              <>
+                <Button variant="secondary" disabled={busy} onClick={() => move("accepted")}>
+                  تم القبول
+                </Button>
+                <Button variant="ghost" disabled={busy} onClick={() => move("rejected")}>
+                  رُفض
+                </Button>
+              </>
+            )}
+          </DialogActions>
+        )
+      }
     >
       <div className="space-y-4">
         {error && <Notice>{error}</Notice>}
@@ -295,37 +341,6 @@ export function QuoteDialog({
           </div>
         </dl>
 
-        {!locked && (
-          <div className="flex flex-wrap gap-2">
-            <Button disabled={busy || !title.trim()} onClick={save}>
-              حفظ
-            </Button>
-            {existing?.status === "draft" && (
-              <Button variant="secondary" disabled={busy} onClick={() => move("sent")}>
-                حفظ وإرسال
-              </Button>
-            )}
-            {existing?.status === "sent" && (
-              <>
-                <Button variant="secondary" disabled={busy} onClick={() => move("accepted")}>
-                  تم القبول
-                </Button>
-                <Button variant="ghost" disabled={busy} onClick={() => move("rejected")}>
-                  رُفض
-                </Button>
-              </>
-            )}
-            {existing?.status === "draft" && (
-              <Button
-                variant="ghost"
-                disabled={busy}
-                onClick={() => run(() => send("DELETE", `/api/quotes/${existing.id}`))}
-              >
-                حذف المسودة
-              </Button>
-            )}
-          </div>
-        )}
         {locked && (
           <Notice tone="blue">
             {existing?.projectId ? (
