@@ -109,7 +109,7 @@ export function ReceivablesPage() {
                   {edit && (
                     <Button variant="secondary" onClick={() => setReceiving(i)}>
                       <Check className="size-4" />
-                      تم الاستلام
+                      تسجيل مقبوض
                     </Button>
                   )}
                   {wa && (

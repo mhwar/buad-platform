@@ -49,7 +49,7 @@ export function ReceiptsCard({
         )}
         {canEdit && (
           <Button variant="secondary" onClick={() => setEditing("new")}>
-            <Plus className="size-4" /> تسجيل استلام
+            <Plus className="size-4" /> تسجيل مقبوض
           </Button>
         )}
       </div>
@@ -193,7 +193,7 @@ export function ReceiptDialog({
     <Dialog
       open
       onOpenChange={(o) => !o && onClose()}
-      title={receipt ? "تعديل استلام" : "تسجيل استلام من العميل"}
+      title={receipt ? "تعديل مقبوض" : "تسجيل مقبوض"}
       footer={
         <DialogActions
           onCancel={onClose}
@@ -205,7 +205,9 @@ export function ReceiptDialog({
             )
           }
         >
-          <Button onClick={save}>{suggestion ? "اعتماد الاستلام" : "حفظ"}</Button>
+          <Button onClick={save}>
+            {suggestion ? "اعتماد المقبوض" : receipt ? "حفظ" : "تسجيل المقبوض"}
+          </Button>
         </DialogActions>
       }
     >

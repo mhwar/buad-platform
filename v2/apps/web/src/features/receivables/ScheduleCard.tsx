@@ -80,7 +80,7 @@ export function ScheduleCard({
                 <>
                   <Button
                     variant="ghost"
-                    aria-label={`تم استلام ${i.label}`}
+                    aria-label={`تسجيل مقبوض ${i.label}`}
                     onClick={() => setReceiving(i)}
                   >
                     <Check className="size-4" />

@@ -8,8 +8,10 @@ export function AttentionPanel() {
   const q = useQuery(attentionQuery);
   const items = q.data?.items ?? [];
   const checklist = q.data?.checklist ?? [];
-  if (!items.length && !checklist.length) return null;
   const done = checklist.filter((c) => c.done).length;
+  // Once the platform is mostly set up, the setup list stops taking the top of «اليوم».
+  const showSetup = checklist.length > 0 && done < Math.ceil(checklist.length / 2);
+  if (!items.length && !showSetup) return null;
   return (
     <div className="mb-8 grid gap-4 lg:grid-cols-2">
       {items.length > 0 && (
@@ -30,7 +32,7 @@ export function AttentionPanel() {
           </ul>
         </Card>
       )}
-      {checklist.length > 0 && (
+      {showSetup && (
         <Card aria-label="خطوات الإعداد">
           <h2 className="mb-1 font-semibold">خطوات إعداد المنصة</h2>
           <p className="mb-3 text-xs text-muted">

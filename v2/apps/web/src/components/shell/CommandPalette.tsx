@@ -31,6 +31,7 @@ import type { NavGroup } from "./nav-model";
 import { CREATE_ITEMS, type CreateKind, requestCreate } from "./QuickCreate";
 
 const CREATE_LABEL: Record<CreateKind, string> = {
+  receipt: "تسجيل مقبوض",
   opportunity: "فرصة جديدة",
   client: "عميل جديد",
   project: "مشروع جديد",

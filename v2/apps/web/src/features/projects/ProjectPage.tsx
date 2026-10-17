@@ -43,6 +43,7 @@ import { type Finance, financeKey } from "../finance/api";
 import { ContractCard } from "../finance/ContractCard";
 import { exportCsv, FinanceSettings, FinanceStrip, Transactions } from "../finance/FinanceTab";
 import { label, PROJECT_STATUS_LABELS, PROJECT_TYPE_LABELS, STATUS_TONE } from "../labels";
+import { ReceiptFlow } from "../receivables/ReceiptFlow";
 import { ExecutionTab } from "../tasks/ExecutionTab";
 import { executionQuery } from "../tasks/queries";
 import { ProjectMembers } from "../team/ProjectMembers";
@@ -90,6 +91,7 @@ export function ProjectPage() {
   const [settings, setSettings] = useState(false);
   const [members, setMembers] = useState(false);
   const [adding, setAdding] = useState<"new" | "agreement" | null>(null);
+  const [receiving, setReceiving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const section: Section = search.view ?? "finance";
 
@@ -331,9 +333,15 @@ export function ProjectPage() {
             )}
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          {/* What the owner does most here: record money that came in. */}
+          {manager && !p.archivedAt && p.status !== "draft" && p.status !== "cancelled" && (
+            <Button onClick={() => setReceiving(true)}>
+              <Wallet className="size-4" /> تسجيل مقبوض
+            </Button>
+          )}
           {manager && section === "finance" && !p.archivedAt && (
-            <Button onClick={() => setAdding("new")}>
+            <Button variant="secondary" onClick={() => setAdding("new")}>
               <Plus className="size-4" /> قيد جديد
             </Button>
           )}
@@ -449,6 +457,13 @@ export function ProjectPage() {
         canEdit={manager}
       />
       <ProjectDialog open={editing} onOpenChange={setEditing} existing={q.data} />
+      {receiving && (
+        <ReceiptFlow
+          project={{ id: p.id, name: p.name }}
+          onClose={() => setReceiving(false)}
+          onDone={() => refresh()}
+        />
+      )}
       <ProjectMembers projectId={p.id} open={members} onClose={() => setMembers(false)} />
     </>
   );

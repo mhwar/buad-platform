@@ -29,6 +29,7 @@ describe("AttentionPanel", () => {
             link: "/settings/org",
           },
           { key: "client", label: "أضف أول عميل", done: false, link: "/clients" },
+          { key: "project", label: "أضف أول مشروع", done: false, link: "/projects" },
         ],
       }),
     });
@@ -36,7 +37,7 @@ describe("AttentionPanel", () => {
     const link = await screen.findByRole("link", { name: /مستندات بانتظار الاعتماد/ });
     expect(link).toHaveAttribute("href", "/documents?status=review");
     expect(link).toHaveTextContent("3");
-    expect(screen.getByText(/أنجزت 1 من 2/)).toBeInTheDocument();
+    expect(screen.getByText(/أنجزت 1 من 3/)).toBeInTheDocument();
   });
 
   it("renders nothing when all is well", async () => {

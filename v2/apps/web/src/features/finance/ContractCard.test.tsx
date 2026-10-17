@@ -51,7 +51,7 @@ describe("the contract and collection card", () => {
     // starts on the summary, and offers receipts and the schedule
     expect(card.getByRole("tab", { name: "الملخص" })).toHaveAttribute("aria-selected", "true");
     await userEvent.click(card.getByRole("tab", { name: /الاستلامات \(1\)/ }));
-    expect(card.getByRole("button", { name: /تسجيل استلام/ })).toBeInTheDocument();
+    expect(card.getByRole("button", { name: /تسجيل مقبوض/ })).toBeInTheDocument();
   });
 
   it("opens on the schedule when a payment is late, and flags it", async () => {

@@ -36,10 +36,10 @@ test("year review: a finished project still owed money is fixed from the list", 
   await expect(card.getByText("مكتمل وعليه متبقٍّ")).toBeVisible();
   await expectNoSideScroll(page);
 
-  await card.getByRole("button", { name: "تسجيل استلام" }).click();
-  const dialog = page.getByRole("dialog");
+  await card.getByRole("button", { name: "تسجيل مقبوض" }).click();
+  const dialog = page.getByRole("dialog", { name: new RegExp(`تسجيل مقبوض — ${name}`) });
   await dialog.getByLabel(/تاريخ وصوله/).fill(`${year}-03-01`);
-  await dialog.getByRole("button", { name: "حفظ" }).click();
+  await dialog.getByRole("button", { name: "تسجيل المقبوض" }).click();
   await expect(card).toHaveCount(0); // settled: nothing left to review
   await expect(page.getByLabel("الإيراد مقابل المستهدف")).not.toHaveText(before);
 });
@@ -58,10 +58,41 @@ test("an instalment can be received in part, keeping the rest", async ({ page, a
   });
   await page.goto("/finance?tab=receivables");
   const row = page.locator("li, tr").filter({ hasText: "الدفعة الأولى" }).first();
-  await row.getByRole("button", { name: /تم الاستلام/ }).click();
+  await row.getByRole("button", { name: /تسجيل مقبوض/ }).click();
   const dialog = page.getByRole("dialog");
   await dialog.getByLabel(/المبلغ المستلم/).fill("4000");
   await expect(dialog.getByText(/استلام جزئي/)).toBeVisible();
-  await dialog.getByRole("button", { name: "تسجيل الاستلام" }).click();
+  await dialog.getByRole("button", { name: "تسجيل المقبوض" }).click();
   await expect(page.getByText("الدفعة الأولى (المتبقي)").first()).toBeVisible();
+});
+
+test("from «اليوم» a receipt is two clicks away, with its instalment suggested", async ({
+  page,
+  api,
+}) => {
+  const c = await api<{ id: string }>("POST", "/api/clients", { name: `عميل ${uid()}` });
+  const name = `مشروع اليوم ${uid()}`;
+  const p = await api<{ id: string }>("POST", "/api/projects", {
+    clientId: c.id,
+    name,
+    expectedValue: 20000,
+  });
+  await api("POST", `/api/receivables/projects/${p.id}`, {
+    label: "الدفعة الأولى",
+    dueDate: `${year}-02-10`,
+    amount: 9000,
+  });
+  await page.goto("/");
+  await expect(page.getByLabel("الإيراد مقابل المستهدف")).toBeVisible();
+  // click 1
+  await page
+    .getByLabel("الإيراد مقابل المستهدف")
+    .getByRole("button", { name: "تسجيل مقبوض" })
+    .click();
+  const dialog = page.getByRole("dialog");
+  await expect(dialog).toBeVisible(); // click 2 is choosing the project
+  await dialog.getByLabel("المشروع").selectOption(p.id);
+  await expect(dialog.getByRole("radio", { name: /الدفعة الأولى/ })).toBeChecked();
+  await dialog.getByRole("button", { name: "تسجيل المقبوض" }).click();
+  await expect(page.getByRole("status").filter({ hasText: "سُجّل المقبوض" })).toBeVisible();
 });

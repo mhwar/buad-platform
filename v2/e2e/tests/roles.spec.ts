@@ -26,7 +26,14 @@ const ROUTES: [path: string, perm: string][] = [
   ["/settings/activity", "audit.view"],
 ];
 /** The «إنشاء جديد» menu offers something to anyone holding one of these. */
-const CREATE_PERMS = ["sales.edit", "clients.edit", "projects.edit", "tasks.edit", "meetings.edit"];
+const CREATE_PERMS = [
+  "finance.edit",
+  "sales.edit",
+  "clients.edit",
+  "projects.edit",
+  "tasks.edit",
+  "meetings.edit",
+];
 
 // What each role may do comes from the role definitions themselves, so the specs follow them.
 for (const role of ROLE_KEYS) {
