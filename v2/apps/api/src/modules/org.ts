@@ -1,7 +1,7 @@
 import { assets, orgProfile, orgs } from "@buad/schema/db";
 import { orgProfilePatch } from "@buad/schema/org";
 import { zValidator } from "@hono/zod-validator";
-import { and, eq, inArray } from "drizzle-orm";
+import { and, count, eq, inArray, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { requireAuth, requirePerm, type Vars } from "../auth/middleware";
 import type { Db } from "../auth/service";
@@ -54,6 +54,16 @@ export async function loadOrgProfile(db: Db, orgId: string) {
 
 export const orgApp = new Hono<Env>()
   .use(requireAuth)
+  // What the uploaded files take up (logos, stamps, attachments).
+  .get("/storage", async (c) => {
+    const row = (await c
+      .get("db")
+      .select({ bytes: sql<number>`COALESCE(SUM(${assets.size}), 0)`, files: count() })
+      .from(assets)
+      .where(eq(assets.orgId, c.get("user").orgId))
+      .get()) as { bytes: number; files: number } | undefined;
+    return c.json({ ok: true, bytes: Number(row?.bytes ?? 0), files: Number(row?.files ?? 0) });
+  })
   .get("/profile", async (c) =>
     c.json({ ok: true, profile: await loadOrgProfile(c.get("db"), c.get("user").orgId) }),
   )

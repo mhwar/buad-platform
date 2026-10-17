@@ -12,6 +12,10 @@ import { auditQuery } from "../team/queries";
 type Row = Record<string, unknown>;
 type Export = { exportedAt: string; counts: Record<string, number>; tables: Record<string, Row[]> };
 
+const size = (b: number) =>
+  b < 1024 * 1024
+    ? `${Math.max(1, Math.round(b / 1024))} KB`
+    : `${(b / 1024 / 1024).toFixed(1)} MB`;
 const riyals = (h: unknown) => Math.round(Number(h ?? 0)) / 100;
 const str = (v: unknown) => (v == null ? "" : String(v));
 
@@ -80,6 +84,10 @@ export function DataPage() {
   const [error, setError] = useState("");
   const log = useQuery({ ...auditQuery({ entity: "org" }), enabled: can("audit.view") });
   const last = log.data?.find((i) => i.action === "export");
+  const storage = useQuery({
+    queryKey: ["org-storage"],
+    queryFn: async () => ok<{ bytes: number; files: number }>(await fetch("/api/org/storage")),
+  });
 
   const run = async (kind: "json" | "xlsx") => {
     setBusy(kind);
@@ -130,6 +138,18 @@ export function DataPage() {
               {busy === "xlsx" ? "جارٍ التجهيز…" : "العملاء والمشاريع والمقبوضات (Excel)"}
             </Button>
           </div>
+        </Card>
+      )}
+      {storage.data && (
+        <Card className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="text-lg font-bold">التخزين المستخدم</h2>
+            <p className="text-sm text-muted">الشعارات والأختام والمرفقات المرفوعة.</p>
+          </div>
+          <p className="text-lg font-bold tabular-nums">
+            {size(storage.data.bytes)}{" "}
+            <span className="text-sm font-normal text-muted">· {storage.data.files} ملف</span>
+          </p>
         </Card>
       )}
       {can("import.run") && (

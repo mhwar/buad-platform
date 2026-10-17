@@ -4,7 +4,16 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import type { z } from "zod";
 import { api } from "./api";
-import { Button, Card, Field, Input, Notice, PageHeader, toast } from "./components/ui";
+import {
+  Button,
+  Card,
+  confirmAction,
+  Field,
+  Input,
+  Notice,
+  PageHeader,
+  toast,
+} from "./components/ui";
 import { AppearanceCard } from "./theme";
 
 type Form = z.input<typeof changePasswordInput>;
@@ -63,6 +72,34 @@ export function AccountPage() {
             </Button>
           </div>
         </form>
+      </Card>
+      <Card className="max-w-xl space-y-3">
+        <div>
+          <h2 className="text-lg font-bold">الأجهزة</h2>
+          <p className="text-sm text-muted">
+            إن فُقد جهاز أو دخلتم من جهاز عام، أخرِجوا كل الأجهزة الأخرى. يبقى هذا الجهاز داخلاً.
+          </p>
+        </div>
+        <div>
+          <Button
+            variant="secondary"
+            onClick={async () => {
+              if (
+                !(await confirmAction({
+                  title: "الخروج من كل الأجهزة الأخرى؟",
+                  text: "سيلزم تسجيل الدخول من جديد في أي جهاز آخر.",
+                  action: "إخراج الأجهزة الأخرى",
+                }))
+              )
+                return;
+              const res = await fetch("/api/auth/logout-others", { method: "POST" });
+              if (res.ok) toast("خرجت كل الأجهزة الأخرى");
+              else setError("تعذّر إخراج الأجهزة الأخرى، حاولوا مرة أخرى.");
+            }}
+          >
+            خروج من كل الأجهزة الأخرى
+          </Button>
+        </div>
       </Card>
       <AppearanceCard />
     </div>

@@ -41,6 +41,25 @@ const toDraft = (r: TeamRole): Draft => ({
   scope: r.scopes.projects ?? "team",
 });
 
+/** The permission cards under four headings, so related ones sit together. */
+const GROUPS: [label: string, keys: string[]][] = [
+  ["العمل اليومي", ["clients", "projects", "documents", "tasks", "meetings"]],
+  ["المالية", ["finance", "treasury", "vat"]],
+  ["المبيعات والتخطيط", ["sales", "products", "site", "plans"]],
+  ["الإدارة", ["team", "roles", "audit", "org", "assets", "import"]],
+];
+const PERM_GROUPS = [
+  ...GROUPS.map(([label, keys]) => ({
+    label,
+    modules: keys.flatMap((k) => PERM_MODULES.filter((m) => m.key === k)),
+  })),
+  // Anything added to the registry later still shows, under «أخرى».
+  {
+    label: "أخرى",
+    modules: PERM_MODULES.filter((m) => !GROUPS.some(([, keys]) => keys.includes(m.key))),
+  },
+].filter((g) => g.modules.length);
+
 /** The permission table: pick a role, tick what it may do. Edits apply to everyone in that role. */
 export function RolesPanel() {
   const can = useCan();
@@ -175,37 +194,42 @@ export function RolesPanel() {
           </div>
         </Card>
 
-        <div className="grid gap-3 md:grid-cols-2">
-          {PERM_MODULES.map((m) => (
-            <Card key={m.key} className="p-4">
-              <p className="font-semibold">{m.label}</p>
-              <p className="mb-2 text-xs text-muted">{m.hint}</p>
-              <div className="flex flex-wrap gap-2">
-                {m.actions.map((a: ActionKey) => {
-                  const perm = `${m.key}.${a}`;
-                  const on = draft.perms.includes(perm);
-                  return (
-                    <label
-                      key={a}
-                      className={`inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-lg border px-3 text-sm sm:min-h-9 ${
-                        on ? "border-brand bg-brand-soft text-brand" : "text-muted"
-                      } ${!edit || fixed ? "opacity-70" : ""}`}
-                    >
-                      <input
-                        type="checkbox"
-                        className="size-4 accent-[var(--color-brand)]"
-                        checked={on}
-                        disabled={!edit || fixed}
-                        onChange={(e) => toggle(perm, e.target.checked)}
-                      />
-                      {ACTIONS[a]}
-                    </label>
-                  );
-                })}
-              </div>
-            </Card>
-          ))}
-        </div>
+        {PERM_GROUPS.map(({ label: group, modules }) => (
+          <section key={group} aria-label={group} className="space-y-2">
+            <h3 className="text-sm font-semibold text-muted">{group}</h3>
+            <div className="grid gap-3 md:grid-cols-2">
+              {modules.map((m) => (
+                <Card key={m.key} className="p-4">
+                  <p className="font-semibold">{m.label}</p>
+                  <p className="mb-2 text-xs text-muted">{m.hint}</p>
+                  <div className="flex flex-wrap gap-2">
+                    {m.actions.map((a: ActionKey) => {
+                      const perm = `${m.key}.${a}`;
+                      const on = draft.perms.includes(perm);
+                      return (
+                        <label
+                          key={a}
+                          className={`inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-lg border px-3 text-sm sm:min-h-9 ${
+                            on ? "border-brand bg-brand-soft text-brand" : "text-muted"
+                          } ${!edit || fixed ? "opacity-70" : ""}`}
+                        >
+                          <input
+                            type="checkbox"
+                            className="size-4 accent-[var(--color-brand)]"
+                            checked={on}
+                            disabled={!edit || fixed}
+                            onChange={(e) => toggle(perm, e.target.checked)}
+                          />
+                          {ACTIONS[a]}
+                        </label>
+                      );
+                    })}
+                  </div>
+                </Card>
+              ))}
+            </div>
+          </section>
+        ))}
 
         <Card>
           <p className="mb-2 font-semibold">ما يراه ويفعله هذا الدور</p>
