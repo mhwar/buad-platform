@@ -7,6 +7,7 @@ import { z } from "zod";
 import { requireAuth, requireRW, type Vars } from "../auth/middleware";
 import type { Db } from "../auth/service";
 import { loadFinance } from "./finance";
+import { financeChecks } from "./finance-checks";
 import { loadOrgProfile } from "./org";
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -147,7 +148,7 @@ export async function financeOverview(
       });
     // Money received from clients in the period, by the day it reached the bank.
     received += fin.receipts
-      .filter((r) => inRange(r.date, from, to))
+      .filter((r) => r.approvedAt && inRange(r.date, from, to))
       .reduce((a, r) => a + r.amount / 100, 0);
 
     // Entries by their own date (cancelled ones never count).
@@ -273,6 +274,9 @@ export async function financeOverview(
 export const financeOverviewApp = new Hono<Env>()
   .use(requireAuth)
   .use(requireRW("treasury.view", "treasury.edit"))
+  .get("/checks", async (c) =>
+    c.json({ ok: true, checks: await financeChecks(c.get("db"), c.get("user").orgId) }),
+  )
   .get("/overview", zValidator("query", periodQuery), async (c) => {
     const { from, to, client, status } = c.req.valid("query");
     return c.json({

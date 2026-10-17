@@ -24,7 +24,7 @@ import {
   type taxInvoiceInput,
 } from "@buad/schema/finance";
 import { zValidator } from "@hono/zod-validator";
-import { and, asc, count, desc, eq, max, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, isNull, max, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { z } from "zod";
 import { requireAuth, requirePerm, requireRW, type Vars } from "../auth/middleware";
@@ -165,8 +165,8 @@ export async function loadFinance(db: Db, project: Pick<Project, "id" | "expecte
     budget,
     categories,
     receipts,
-    /** Money received from the client so far (riyals). */
-    received: receipts.reduce((s, r) => s + r.amount, 0) / 100,
+    /** Money received from the client so far (riyals): approved receipts only, like every report. */
+    received: receipts.reduce((s, r) => s + (r.approvedAt ? r.amount : 0), 0) / 100,
     summary: summarize(stored),
   };
 }
@@ -422,6 +422,12 @@ export const financeApp = new Hono<Env>()
     const me = c.get("user");
     const project = c.get("project");
     const v = c.req.valid("json");
+    if (v.amount > 0 && !v.confirmOver) {
+      const fin = await loadFinance(db, project);
+      const gross = fin.summary.grossTotal;
+      if (gross > 0 && fin.received + v.amount > gross + 0.005)
+        return c.json({ ok: false, error: "over_contract", gross, received: fin.received }, 409);
+    }
     await db.insert(projectReceipts).values({
       id: newId("rcp"),
       orgId: me.orgId,
@@ -456,6 +462,25 @@ export const financeApp = new Hono<Env>()
         and(
           eq(projectReceipts.id, c.req.param("receiptId")),
           eq(projectReceipts.projectId, project.id),
+        ),
+      )
+      .returning({ id: projectReceipts.id });
+    if (!upd.length) return c.json({ ok: false, error: "not_found" }, 404);
+    return c.json({ ok: true, ...(await loadFinance(db, project)) });
+  })
+  // A receipt saved before approvals existed, or proposed elsewhere: approving makes it count.
+  .post("/receipts/:receiptId/approve", manager, async (c) => {
+    const db = c.get("db");
+    const me = c.get("user");
+    const project = c.get("project");
+    const upd = await db
+      .update(projectReceipts)
+      .set({ approvedBy: me.id, approvedAt: nowSec(), updatedBy: me.id, updatedAt: nowSec() })
+      .where(
+        and(
+          eq(projectReceipts.id, c.req.param("receiptId")),
+          eq(projectReceipts.projectId, project.id),
+          isNull(projectReceipts.approvedAt),
         ),
       )
       .returning({ id: projectReceipts.id });

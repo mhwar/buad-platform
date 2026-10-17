@@ -19,6 +19,7 @@ import { and, eq, inArray, isNull, lt, ne, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { requireAuth, type Vars } from "../auth/middleware";
 import { nowSec } from "./common";
+import { financeChecks } from "./finance-checks";
 import { visibleProjects } from "./projects";
 
 type Item = { key: string; tone: "warn" | "info"; title: string; count: number; link: string };
@@ -179,6 +180,16 @@ export const attentionApp = new Hono<{ Variables: Vars }>().use(requireAuth).get
       tone: "info",
       title: "حركات مالية معلّقة تنتظر السداد",
       count: n,
+      link: "/finance",
+    });
+  }
+  if (can("treasury.view")) {
+    const checks = await financeChecks(db, me.orgId);
+    add({
+      key: "finance-checks",
+      tone: "warn",
+      title: "أرقام مالية تحتاج تدخلك",
+      count: checks.reduce((s, c) => s + c.rows.length, 0),
       link: "/finance",
     });
   }

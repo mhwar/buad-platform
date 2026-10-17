@@ -1,4 +1,4 @@
-import { distributionProjects, distributions, orgs, users } from "@buad/schema/db";
+import { distributionProjects, distributions, orgs, projectReceipts, users } from "@buad/schema/db";
 import { beforeEach, describe, expect, it } from "vitest";
 import { createApp, type Env } from "./app";
 import { hashPassword } from "./auth/password";
@@ -359,5 +359,58 @@ describe("account and storage", () => {
   it("reports the files' total size for the organisation", async () => {
     const r = (await call("own", "GET", "/api/org/storage")).body;
     expect(r).toMatchObject({ ok: true, bytes: 0, files: 0 });
+  });
+});
+
+describe("finance checks and guards", () => {
+  it("counts approved receipts only, approves on request, and lists the rest", async () => {
+    const pid = await proj();
+    await contract(pid, 10000); // 11,500 with VAT
+    await ctx.db.insert(projectReceipts).values({
+      id: "rcp_old",
+      orgId: "org_platform",
+      projectId: pid,
+      date: "2026-10-14",
+      amount: 1150000,
+      note: "",
+      basis: "",
+    });
+    const fin = await call("own", "GET", `/api/projects/${pid}/finance`);
+    expect(fin.body.received).toBe(0);
+    const checks = (await call("own", "GET", "/api/finance/checks")).body.checks;
+    expect(checks.find((c: J) => c.key === "unapproved_receipts").rows).toHaveLength(1);
+    const ok = await call("own", "POST", `/api/projects/${pid}/finance/receipts/rcp_old/approve`);
+    expect(ok.status).toBe(200);
+    expect(ok.body.received).toBe(11500);
+  });
+
+  it("warns before a receipt takes the total above the contract", async () => {
+    const pid = await proj();
+    await contract(pid, 10000);
+    await receipt(pid, 11500, "2026-09-01");
+    const again = await receipt(pid, 11500, "2026-10-01");
+    expect(again.status).toBe(409);
+    expect(again.body).toMatchObject({ error: "over_contract", gross: 11500, received: 11500 });
+    const sure = await call("own", "POST", `/api/projects/${pid}/finance/receipts`, {
+      date: "2026-10-01",
+      amount: 100,
+      note: "",
+      confirmOver: true,
+    });
+    expect(sure.status).toBe(201);
+    const checks = (await call("own", "GET", "/api/finance/checks")).body.checks;
+    expect(checks.find((c: J) => c.key === "over_contract").rows).toHaveLength(1);
+  });
+
+  it("keeps partners' shares at most 100% and lists duplicates", async () => {
+    const add = (name: string, sharePct: number) =>
+      call("own", "POST", "/api/finance/company/partners", { name, sharePct });
+    expect((await add("أ", 50)).status).toBe(201);
+    expect((await add("ب", 40)).status).toBe(201);
+    const over = await add("ب", 20);
+    expect(over.status).toBe(409);
+    expect(over.body.error).toBe("shares_over_100");
+    const checks = (await call("own", "GET", "/api/finance/checks")).body.checks;
+    expect(checks.find((c: J) => c.key === "partners").rows[0].detail).toMatch(/90%/);
   });
 });

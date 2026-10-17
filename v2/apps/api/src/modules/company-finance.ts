@@ -120,6 +120,13 @@ async function livePartners(db: Db, orgId: string) {
     .orderBy(desc(partners.sharePct), asc(partners.name));
 }
 
+/** Partners' shares must add up to exactly 100% before any profit leaves the company. */
+const sharesTotal = async (db: Db, orgId: string, without = "") =>
+  (await livePartners(db, orgId))
+    .filter((p) => p.id !== without)
+    .reduce((s, p) => s + p.sharePct, 0);
+const sharesOk = (total: number) => Math.abs(total - 100) < 0.011;
+
 async function orgReceipts(db: Db, orgId: string): Promise<ReceiptLite[]> {
   const rows = await db
     .select({
@@ -128,7 +135,8 @@ async function orgReceipts(db: Db, orgId: string): Promise<ReceiptLite[]> {
       amount: projectReceipts.amount,
     })
     .from(projectReceipts)
-    .where(eq(projectReceipts.orgId, orgId));
+    // Only approved receipts are money the company can count on (and distribute).
+    .where(and(eq(projectReceipts.orgId, orgId), isNotNull(projectReceipts.approvedAt)));
   return rows.map((r) => ({ ...r, amount: riyals(r.amount) }));
 }
 
@@ -483,6 +491,9 @@ export const companyFinanceApp = new Hono<Env>()
   .post("/partners", zValidator("json", partnerInput), async (c) => {
     const me = c.get("user");
     const v = c.req.valid("json");
+    const others = await sharesTotal(c.get("db"), me.orgId);
+    if (others + v.sharePct > 100.011)
+      return c.json({ ok: false, error: "shares_over_100", total: others + v.sharePct }, 409);
     const id = newId("prt");
     await c
       .get("db")
@@ -492,10 +503,14 @@ export const companyFinanceApp = new Hono<Env>()
   })
   .patch("/partners/:id", zValidator("json", partnerInput), async (c) => {
     const me = c.get("user");
+    const v = c.req.valid("json");
+    const others = await sharesTotal(c.get("db"), me.orgId, c.req.param("id"));
+    if (others + v.sharePct > 100.011)
+      return c.json({ ok: false, error: "shares_over_100", total: others + v.sharePct }, 409);
     const upd = await c
       .get("db")
       .update(partners)
-      .set({ ...c.req.valid("json"), updatedBy: me.id, updatedAt: nowSec() })
+      .set({ ...v, updatedBy: me.id, updatedAt: nowSec() })
       .where(and(eq(partners.id, c.req.param("id")), eq(partners.orgId, me.orgId)))
       .returning({ id: partners.id });
     return upd.length ? c.json({ ok: true }) : c.json({ ok: false, error: "not_found" }, 404);
@@ -555,6 +570,8 @@ export const companyFinanceApp = new Hono<Env>()
       const db = c.get("db");
       const me = c.get("user");
       const v = c.req.valid("json");
+      if (v.status === "completed" && !sharesOk(await sharesTotal(db, me.orgId)))
+        return c.json({ ok: false, error: "shares_not_100" }, 409);
       const r = await computeDistribution(db, me.orgId, v);
       if (!r) return c.json({ ok: false, error: "not_found" }, 404);
       if (r.netProfit <= 0) return c.json({ ok: false, error: "nothing_to_distribute" }, 409);
@@ -624,6 +641,8 @@ export const companyFinanceApp = new Hono<Env>()
   .post("/distributions/:id/complete", async (c) => {
     const me = c.get("user");
     const db = c.get("db");
+    if (!sharesOk(await sharesTotal(db, me.orgId)))
+      return c.json({ ok: false, error: "shares_not_100" }, 409);
     const mine = await db
       .select({ projectId: distributionProjects.projectId, amount: distributionProjects.amount })
       .from(distributionProjects)

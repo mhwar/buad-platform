@@ -1,7 +1,8 @@
 import type { summarize } from "@buad/domain";
 import type { CtrlPatch, EntryInput } from "@buad/schema/finance";
 import { queryOptions } from "@tanstack/react-query";
-import { ok } from "../../lib/format";
+import { confirmAction } from "../../components/ui";
+import { ApiError, ok, sar } from "../../lib/format";
 
 export type Ctrl = {
   contractNo: string;
@@ -88,6 +89,26 @@ const send = async (method: string, url: string, body?: unknown) =>
     }),
   );
 
+/**
+ * Records a receipt; when it would take the total above the contract value, asks first and
+ * sends it again only if the person confirms (a duplicate is the usual cause).
+ */
+export async function withOverContractCheck<T>(post: (confirmOver: boolean) => Promise<T>) {
+  try {
+    return await post(false);
+  } catch (x) {
+    if (!(x instanceof ApiError) || x.body.error !== "over_contract") throw x;
+    const b = x.body as { gross: number; received: number };
+    const ok = await confirmAction({
+      title: "المبلغ يتجاوز قيمة العقد",
+      text: `استُلم ${sar(b.received)} من عقد قيمته ${sar(b.gross)}. هل هذه دفعة فعلية وليست مكررة؟`,
+      action: "تسجيله رغم ذلك",
+    });
+    if (!ok) return null;
+    return post(true);
+  }
+}
+
 export const financeQuery = (projectId: string) =>
   queryOptions({ queryKey: financeKey(projectId), queryFn: () => send("GET", base(projectId)) });
 
@@ -98,8 +119,14 @@ export const financeApi = (projectId: string) => ({
     send("PATCH", `${base(projectId)}/entries/${id}`, e),
   markUnsetStatus: (status: "paid" | "pending") =>
     send("POST", `${base(projectId)}/entries/bulk-status`, { status }),
-  addReceipt: (r: { date: string; amount: number; note?: string; basis?: string }) =>
-    send("POST", `${base(projectId)}/receipts`, r),
+  addReceipt: (r: {
+    date: string;
+    amount: number;
+    note?: string;
+    basis?: string;
+    confirmOver?: boolean;
+  }) => send("POST", `${base(projectId)}/receipts`, r),
+  approveReceipt: (id: string) => send("POST", `${base(projectId)}/receipts/${id}/approve`),
   updateReceipt: (id: string, r: { date: string; amount: number; note?: string }) =>
     send("PATCH", `${base(projectId)}/receipts/${id}`, r),
   deleteReceipt: (id: string) => send("DELETE", `${base(projectId)}/receipts/${id}`),

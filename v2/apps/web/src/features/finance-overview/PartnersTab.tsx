@@ -13,6 +13,7 @@ import {
   Input,
   Notice,
   Select,
+  toast,
 } from "../../components/ui";
 import { day, fromEpoch, sar } from "../../lib/format";
 import {
@@ -150,8 +151,13 @@ function PartnerDialog({ partner, onClose }: { partner: Partner | null; onClose:
                 if (partner) await companyApi.updatePartner(partner.id, body);
                 else await companyApi.addPartner(body);
                 await done();
-              } catch {
-                setErr("تعذّر الحفظ");
+              } catch (x) {
+                const b = (x as { body?: { error?: string; total?: number } }).body;
+                setErr(
+                  b?.error === "shares_over_100"
+                    ? `مجموع الحصص سيصبح ${Math.round((b.total ?? 0) * 100) / 100}%، والحد 100%. عدّلوا حصة شريك آخر أو احذفوا المكرر أولاً.`
+                    : "تعذّر الحفظ",
+                );
               }
             }}
           >
@@ -263,8 +269,18 @@ function DistributionDetail({ d, onChanged }: { d: Distribution; onChanged: () =
                 }))
               )
                 return;
-              await companyApi.completeDistribution(d.id);
-              onChanged();
+              try {
+                await companyApi.completeDistribution(d.id);
+                onChanged();
+              } catch (x) {
+                const code = (x as { body?: { error?: string } }).body?.error;
+                toast(
+                  code === "shares_not_100"
+                    ? "مجموع حصص الشركاء ليس 100%؛ صحّحوا الحصص أولاً."
+                    : "تعذّر اعتماد التوزيع",
+                  "error",
+                );
+              }
             }}
           >
             <CheckCircle2 className="size-4" /> اعتماد
@@ -347,7 +363,13 @@ export function DistributionWizard({
       onClose();
     } catch (x) {
       const code = (x as { body?: { error?: string } }).body?.error;
-      setErr(code === "nothing_to_distribute" ? "لا يوجد ربح متاح للتوزيع" : "تعذّر الحفظ");
+      setErr(
+        code === "nothing_to_distribute"
+          ? "لا يوجد ربح متاح للتوزيع"
+          : code === "shares_not_100"
+            ? "مجموع حصص الشركاء ليس 100%؛ صحّحوا الحصص قبل اعتماد التوزيع (يمكن حفظه مسودة)."
+            : "تعذّر الحفظ",
+      );
     }
   };
 

@@ -45,6 +45,7 @@ import {
 import { downloadArchive } from "./archive";
 import { CompanyTab } from "./CompanyTab";
 import { MonthlyBars, RankBars } from "./charts";
+import { FinanceChecks } from "./FinanceChecks";
 import { PartnersTab } from "./PartnersTab";
 import { PeriodPicker } from "./PeriodPicker";
 import { QuarterCentre } from "./QuarterCentre";
@@ -113,6 +114,7 @@ export function FinancePage() {
           },
         ]}
       />
+      <FinanceChecks />
       <div className="mb-4">
         <Segmented<Tab>
           label="أقسام المالية"

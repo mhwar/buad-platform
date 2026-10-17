@@ -126,3 +126,39 @@ test("«الإعدادات ← المالية» keeps a target and one opening b
   expect(s.targets[String(next)]).toBe(2500000);
   await api("PATCH", "/api/org/settings", { targets: { [String(next)]: null }, cashOpening: null });
 });
+
+test("a receipt above the contract asks first, and the overpaid project is flagged", async ({
+  page,
+  api,
+}) => {
+  const c = await api<{ id: string }>("POST", "/api/clients", { name: `جمعية الحد ${uid()}` });
+  const name = `مشروع فوق العقد ${uid()}`;
+  const p = await api<{ id: string }>("POST", "/api/projects", {
+    clientId: c.id,
+    name,
+    expectedValue: 1000,
+  });
+  await api("PATCH", `/api/projects/${p.id}/finance/ctrl`, { version: 0, contractValue: 1000 });
+  await api("POST", `/api/projects/${p.id}/finance/receipts`, {
+    date: `${year}-03-01`,
+    amount: 1150,
+    note: "",
+  });
+  await page.goto(`/projects/${p.id}?view=finance`);
+  await page
+    .getByRole("button", { name: /تسجيل مقبوض/ })
+    .first()
+    .click();
+  const dlg = page.getByRole("dialog");
+  await dlg.getByLabel(/المبلغ/).fill("1150");
+  await dlg.getByRole("button", { name: "تسجيل المقبوض" }).click();
+  const ask = page.getByRole("alertdialog");
+  await expect(ask).toContainText("المبلغ يتجاوز قيمة العقد");
+  await ask.getByRole("button", { name: "تسجيله رغم ذلك" }).click();
+  await expect(page.getByRole("status").filter({ hasText: "سُجّل المقبوض" })).toBeVisible();
+
+  await page.goto("/finance");
+  const checks = page.getByLabel("تحتاج تدخلك");
+  await checks.locator("summary").click();
+  await expect(checks.getByRole("link", { name: new RegExp(name) })).toBeVisible();
+});
