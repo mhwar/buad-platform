@@ -3,7 +3,12 @@ import { createMiddleware } from "hono/factory";
 import { type AuthUser, type Db, getUser } from "./service";
 import { SESSION_COOKIE, verifySession } from "./session";
 
-export type Vars = { db: Db; user: AuthUser };
+export type Vars = {
+  db: Db;
+  user: AuthUser;
+  /** Field-by-field changes a route worked out itself, for the activity log. */
+  auditChanges?: { field: string; label: string; before: string; after: string }[];
+};
 
 /** Resolves the session cookie (or Bearer token), then re-reads the user so revocation takes effect. */
 export const requireAuth = createMiddleware<{ Bindings: { JWT_SECRET: string }; Variables: Vars }>(

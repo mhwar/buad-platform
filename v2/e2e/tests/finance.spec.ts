@@ -96,3 +96,33 @@ test("from «اليوم» a receipt is two clicks away, with its instalment sugg
   await dialog.getByRole("button", { name: "تسجيل المقبوض" }).click();
   await expect(page.getByRole("status").filter({ hasText: "سُجّل المقبوض" })).toBeVisible();
 });
+
+test("«الإعدادات ← المالية» keeps a target and one opening balance for everyone", async ({
+  page,
+  api,
+}) => {
+  const next = year + 1; // next year's target, so the other specs' current-year figures stay put
+  await page.goto("/settings/finance");
+  await expect(page.getByRole("heading", { name: "المالية", level: 1 })).toBeVisible();
+  const target = page.getByLabel(`مستهدف ${next} (ر.س)`);
+  await target.fill("2500000");
+  await page.getByRole("button", { name: `حفظ مستهدف ${next}` }).click();
+  await expect(page.getByRole("status").filter({ hasText: `حُفظ مستهدف ${next}` })).toBeVisible();
+
+  await page.getByLabel("الرصيد (ر.س)").fill("120000");
+  await page.getByLabel("بتاريخ").fill(`${year}-10-01`);
+  await page
+    .getByRole("region", { name: "الرصيد الافتتاحي" })
+    .getByRole("button", { name: "حفظ" })
+    .click();
+  await expect(page.getByRole("status").filter({ hasText: "حُفظ الرصيد الافتتاحي" })).toBeVisible();
+
+  // the same figure starts the cash forecast, saved for everyone rather than on this device
+  await page.goto("/finance?tab=receivables");
+  await expect(page.getByLabel("الرصيد الحالي (ر.س)")).toHaveValue("120000");
+  await expect(page.getByText(/محفوظ للجميع/)).toBeVisible();
+
+  const s = await api<{ targets: Record<string, number> }>("GET", "/api/org/settings");
+  expect(s.targets[String(next)]).toBe(2500000);
+  await api("PATCH", "/api/org/settings", { targets: { [String(next)]: null }, cashOpening: null });
+});

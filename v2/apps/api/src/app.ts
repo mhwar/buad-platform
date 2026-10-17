@@ -37,6 +37,7 @@ import { receivablesApp } from "./modules/receivables";
 import { reportsApp } from "./modules/reports";
 import { requestsApp } from "./modules/requests";
 import { salesApp } from "./modules/sales";
+import { settingsApp } from "./modules/settings";
 import { documentSharesApp, publicShareApp } from "./modules/share";
 import { siteApp } from "./modules/site";
 import { siteMeta } from "./modules/site-meta";
@@ -223,6 +224,7 @@ export function createApp(deps: AppDeps = {}) {
       .route("/api/projects", projectsApp)
       .route("/api/import", importApp)
       .route("/api/assets", assetsApp)
+      .route("/api/org/settings", settingsApp)
       .route("/api/org", orgApp)
 
       .onError((err, c) => {

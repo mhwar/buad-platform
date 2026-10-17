@@ -47,6 +47,7 @@ import { OpportunityPage } from "./features/sales/OpportunityPage";
 import { QuotePrintPage } from "./features/sales/QuotePrint";
 import { SalesDashboard } from "./features/sales/SalesDashboard";
 import { QuotesPage } from "./features/sales/SalesPage";
+import { FinanceSettingsPage } from "./features/settings/FinanceSettings";
 import { SettingsHome } from "./features/settings/SettingsHome";
 import { SettingsLayout } from "./features/settings/SettingsLayout";
 import { ProductPublicPage } from "./features/site/ProductPublicPage";
@@ -350,6 +351,12 @@ const orgRoute = createRoute({
   path: "/org",
   component: OrgSettingsPage,
 });
+const financeSettingsRoute = createRoute({
+  getParentRoute: () => settingsRoute,
+  path: "/finance",
+  beforeLoad: needs("treasury.view"),
+  component: FinanceSettingsPage,
+});
 const importRoute = createRoute({
   getParentRoute: () => settingsRoute,
   path: "/import",
@@ -594,6 +601,7 @@ export const router = createRouter({
     settingsRoute.addChildren([
       settingsIndexRoute,
       orgRoute,
+      financeSettingsRoute,
       importRoute,
       teamRoute,
       activityRoute,

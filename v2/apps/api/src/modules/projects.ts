@@ -1,14 +1,24 @@
 import { formatCode, fromRiyals } from "@buad/domain";
 import { listQuery, projectInput, projectPatch } from "@buad/schema/clients";
 import { clients, legacyMap, products, projectFinance, projects } from "@buad/schema/db";
+import { DEFAULT_CTRL } from "@buad/schema/finance";
 import { zValidator } from "@hono/zod-validator";
 import { and, asc, count, desc, eq, isNotNull, isNull, or, type SQL, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import type { z } from "zod";
 import { requireAuth, requirePerm, requireRW, type Vars } from "../auth/middleware";
 import type { AuthUser, Db } from "../auth/service";
-import { contractTotalSql, likeTerm, logoUrlSql, newId, nextCounter, nowSec } from "./common";
+import {
+  atomic,
+  contractTotalSql,
+  likeTerm,
+  logoUrlSql,
+  newId,
+  nextCounter,
+  nowSec,
+} from "./common";
 import { resolveServiceLink } from "./service-link";
+import { savedProjectDefaults } from "./settings";
 
 type Env = { Bindings: { JWT_SECRET: string }; Variables: Vars };
 
@@ -75,7 +85,8 @@ export async function insertProject(
   const number = formatCode("PRJ", await nextCounter(db, me.orgId, "project", year), year);
   const id = newId("prj");
   const t = nowSec();
-  await db.insert(projects).values({
+  const defaults = await savedProjectDefaults(db, me.orgId);
+  const insert = db.insert(projects).values({
     id,
     orgId: me.orgId,
     clientId: v.clientId,
@@ -99,6 +110,26 @@ export async function insertProject(
     updatedBy: me.id,
     updatedAt: t,
   });
+  // The organisation's contract defaults («الإعدادات ← المالية») apply from the project's start.
+  // Without them nothing is written: the project reads the built-in defaults as before.
+  if (!defaults) await insert;
+  else
+    await atomic(db, [
+      insert,
+      db.insert(projectFinance).values({
+        ...DEFAULT_CTRL,
+        ...defaults,
+        opCats: "[]",
+        contractValue: fromRiyals(v.expectedValue),
+        projectId: id,
+        orgId: me.orgId,
+        version: 1,
+        createdBy: me.id,
+        createdAt: t,
+        updatedBy: me.id,
+        updatedAt: t,
+      }),
+    ]);
   return { id, number };
 }
 
