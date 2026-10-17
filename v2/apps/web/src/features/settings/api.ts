@@ -9,6 +9,7 @@ export type OrgSettings = {
   /** Year → revenue target in riyals with VAT. */
   targets: Record<string, number>;
   cashOpening: { amount: number; date: string; updatedBy: string; updatedAt: number } | null;
+  distributionDefaults: { pct: number; retainedCategory: "ops" | "dev" | "reserve" };
 };
 
 export const orgSettingsQuery = queryOptions({

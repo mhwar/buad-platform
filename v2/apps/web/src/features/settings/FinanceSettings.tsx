@@ -34,6 +34,7 @@ export function FinanceSettingsPage() {
             isSet={q.data.projectDefaultsSet}
             edit={edit}
           />
+          <DistributionCard defaults={q.data.distributionDefaults} edit={edit} />
         </>
       )}
       {can("vat.view") && <VatCard edit={can("vat.edit")} />}
@@ -320,6 +321,61 @@ function DefaultsCard({
           </Button>
         </div>
       )}
+    </Section>
+  );
+}
+
+function DistributionCard({
+  defaults,
+  edit,
+}: {
+  defaults: { pct: number; retainedCategory: "ops" | "dev" | "reserve" };
+  edit: boolean;
+}) {
+  const [pct, setPct] = useState(String(defaults.pct));
+  const [cat, setCat] = useState(defaults.retainedCategory);
+  const { save, error } = useSave();
+  const changed = Number(pct) !== defaults.pct || cat !== defaults.retainedCategory;
+  return (
+    <Section
+      title="توزيع الأرباح"
+      hint="ما يبدأ به كل توزيع جديد: نسبة ما يُدفع للشركاء، وأين يُحتجز الباقي. يمكن تغييرها في كل توزيع."
+    >
+      {error && <Notice>{error}</Notice>}
+      <div className="grid gap-4 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
+        <Field label="نسبة التوزيع للشركاء %">
+          <Input
+            type="number"
+            min={0}
+            max={100}
+            dir="ltr"
+            value={pct}
+            disabled={!edit}
+            onChange={(e) => setPct(e.target.value)}
+          />
+        </Field>
+        <Field label="الباقي يُحتجز لـ">
+          <Select value={cat} disabled={!edit} onChange={(e) => setCat(e.target.value as "ops")}>
+            <option value="reserve">احتياطي</option>
+            <option value="ops">تشغيل</option>
+            <option value="dev">تطوير</option>
+          </Select>
+        </Field>
+        {edit && (
+          <Button
+            variant="secondary"
+            disabled={!changed || !(Number(pct) >= 0 && Number(pct) <= 100)}
+            onClick={() =>
+              save(
+                { distributionDefaults: { pct: Number(pct), retainedCategory: cat } },
+                "حُفظ إعداد التوزيع",
+              )
+            }
+          >
+            حفظ
+          </Button>
+        )}
+      </div>
     </Section>
   );
 }

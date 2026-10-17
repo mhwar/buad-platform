@@ -541,6 +541,9 @@ export const distributions = sqliteTable(
     status: text("status", { enum: DISTRIBUTION_STATUSES }).notNull().default("draft"),
     note: text("note").notNull().default(""),
     completedAt: integer("completed_at"),
+    /** When the partners were actually paid (after approval), and who recorded it. */
+    paidOn: text("paid_on").notNull().default(""),
+    paidBy: text("paid_by").notNull().default(""),
     ...audit,
   },
   (t) => [index("idx_distributions_org").on(t.orgId, t.status)],
@@ -557,6 +560,9 @@ export const distributionShares = sqliteTable(
     partnerName: text("partner_name").notNull(),
     sharePct: real("share_pct").notNull(),
     amount: integer("amount_halalas").notNull(),
+    /** The day this partner was paid, and the transfer reference. */
+    paidOn: text("paid_on").notNull().default(""),
+    paidRef: text("paid_ref").notNull().default(""),
   },
   (t) => [index("idx_distribution_shares").on(t.distributionId)],
 );

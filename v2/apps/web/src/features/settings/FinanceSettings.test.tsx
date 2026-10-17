@@ -28,6 +28,7 @@ const settings = (extra = {}) => ({
   projectDefaultsSet: false,
   targets: {},
   cashOpening: null,
+  distributionDefaults: { pct: 100, retainedCategory: "reserve" },
   ...extra,
 });
 

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   previousQuarter,
+  profitBalances,
   quarterDistributable,
   quarterOf,
   quarterRange,
@@ -94,5 +95,32 @@ describe("realized profit (by money received)", () => {
     expect(quarterRange(2026, 1)).toEqual({ from: "2026-01-01", to: "2026-03-31" });
     expect(quarterRange(2024, 1).to).toBe("2024-03-31");
     expect(previousQuarter(2026, 1)).toEqual({ year: 2025, q: 4 });
+  });
+});
+
+describe("profit balances", () => {
+  it("realized + company net − what distributions settled = undistributed", () => {
+    const b = profitBalances({
+      projects: [
+        { id: "a", status: "completed", profit: 10000, gross: 115000 },
+        { id: "b", status: "active", profit: 6000, gross: 60000 },
+        { id: "c", status: "cancelled", profit: 9000, gross: 9000 },
+      ],
+      receipts: [
+        { projectId: "a", date: "2026-02-01", amount: 115000 },
+        { projectId: "b", date: "2026-05-01", amount: 30000 },
+        { projectId: "c", date: "2026-05-01", amount: 9000 },
+      ],
+      companyIncome: 2000,
+      companyExpenses: 3000,
+      settled: [{ netProfit: 8000, distributed: 6000, retained: 2000 }],
+    });
+    expect(b).toEqual({
+      realized: 13000, // all of a, half of b, nothing of the cancelled c
+      companyNet: -1000,
+      distributed: 6000,
+      retained: 2000,
+      undistributed: 4000,
+    });
   });
 });
