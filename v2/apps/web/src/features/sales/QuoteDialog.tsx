@@ -2,7 +2,7 @@ import { quoteTotals } from "@buad/domain";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { Plus, Printer, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Badge,
   Button,
@@ -14,6 +14,7 @@ import {
   Textarea,
 } from "../../components/ui";
 import { ApiError, sar } from "../../lib/format";
+import { orgPrefsQuery } from "../settings/api";
 import { send } from "../team/queries";
 import { catalogQuery, QUOTE_LABEL, type Quote, vatRateQuery } from "./api";
 
@@ -60,6 +61,20 @@ export function QuoteDialog({
   const [vat, setVat] = useState(String(existing?.vatPct ?? rate));
   const [valid, setValid] = useState(existing?.validUntil ?? "");
   const [terms, setTerms] = useState(existing?.terms ?? "");
+  // A new quote starts from the organisation's default terms and validity («بيانات الجهة»).
+  const prefs = useQuery({ ...orgPrefsQuery, enabled: !existing });
+  const seeded = useRef(false);
+  useEffect(() => {
+    const d = prefs.data?.texts;
+    if (existing || !d || seeded.current) return;
+    seeded.current = true;
+    if (d.quoteTerms) setTerms((v) => v || d.quoteTerms);
+    if (d.quoteValidityDays)
+      setValid(
+        (v) =>
+          v || new Date(Date.now() + d.quoteValidityDays * 86400000).toISOString().slice(0, 10),
+      );
+  }, [prefs.data, existing]);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const t = quoteTotals(

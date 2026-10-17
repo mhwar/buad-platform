@@ -8,6 +8,7 @@ import { z } from "zod";
 import { Button, Card, Field, Input, Notice, PageHeader } from "../../components/ui";
 import { ApiError, ok } from "../../lib/format";
 import { meQuery } from "../../session";
+import { DocTextsCard, NumberingCard } from "./OrgPrefs";
 
 type Profile = z.output<z.ZodObject<Omit<typeof orgProfilePatch.shape, "version">>> & {
   version: number;
@@ -207,6 +208,10 @@ export function OrgSettingsPage() {
           </div>
         </Card>
       </form>
+      <div className="mt-6 grid items-start gap-6 xl:grid-cols-2">
+        <NumberingCard canEdit={canEdit} />
+        <DocTextsCard canEdit={canEdit} />
+      </div>
     </>
   );
 }

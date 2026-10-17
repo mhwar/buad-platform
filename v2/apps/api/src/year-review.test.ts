@@ -261,3 +261,59 @@ describe("organisation settings", () => {
     );
   });
 });
+
+describe("numbering and document texts", () => {
+  it("number new records with the organisation's prefix and next number, never going back", async () => {
+    const year = new Date().getUTCFullYear();
+    const first = await call("own", "POST", "/api/clients", { name: "جمعية الترقيم" });
+    expect(first.body.code ?? "").toMatch(/^CL-\d{4}$/);
+    const set = await call("own", "PATCH", "/api/org/preferences", {
+      numbering: { quote: { prefix: "ع", next: 40 } },
+    });
+    expect(set.status).toBe(200);
+    expect(set.body.numbering.find((n: J) => n.kind === "quote")).toMatchObject({
+      prefix: "ع",
+      next: 40,
+      example: `ع-${year}-0040`,
+    });
+    const q = await call("own", "POST", "/api/quotes", {
+      title: "عرض",
+      recipient: "جهة",
+      items: [{ label: "بند", qty: 1, unit: 100 }],
+      vatPct: 15,
+    });
+    expect(q.status).toBe(201);
+    const shown = await call("own", "GET", `/api/quotes/${q.body.id}`);
+    expect(shown.body.quote.number).toBe(`ع-${year}-0040`);
+    const back = await call("own", "PATCH", "/api/org/preferences", {
+      numbering: { quote: { next: 5 } },
+    });
+    expect(back.status).toBe(409);
+    expect(back.body).toMatchObject({ error: "counter_down", next: 41 });
+  });
+
+  it("keep default texts, read by everyone and set only by who edits the organisation", async () => {
+    const put = await call("own", "PATCH", "/api/org/preferences", {
+      texts: { quoteTerms: "الدفع 50% مقدماً", quoteValidityDays: 30 },
+    });
+    expect(put.body.texts).toMatchObject({
+      quoteTerms: "الدفع 50% مقدماً",
+      quoteValidityDays: 30,
+      letterClosing: "",
+    });
+    expect((await call("sal", "GET", "/api/org/preferences")).body.texts.quoteValidityDays).toBe(
+      30,
+    );
+    expect(
+      (await call("sal", "PATCH", "/api/org/preferences", { texts: { letterClosing: "x" } }))
+        .status,
+    ).toBe(403);
+    expect(
+      (
+        await call("own", "PATCH", "/api/org/preferences", {
+          numbering: { quote: { prefix: "Q-1" } },
+        })
+      ).status,
+    ).toBe(400);
+  });
+});

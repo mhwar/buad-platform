@@ -1,4 +1,4 @@
-import { formatCode, normalizeName, relationshipOf } from "@buad/domain";
+import { normalizeName, relationshipOf } from "@buad/domain";
 import { clientInput, clientPatch, listQuery } from "@buad/schema/clients";
 import { clientContacts, clients, projects } from "@buad/schema/db";
 import { zValidator } from "@hono/zod-validator";
@@ -7,10 +7,11 @@ import { Hono } from "hono";
 import type { z } from "zod";
 import { requireAuth, requirePerm, requireRW, type Vars } from "../auth/middleware";
 import type { Db } from "../auth/service";
-import { contractTotalSql, likeTerm, logoUrlSql, newId, nextCounter, nowSec } from "./common";
+import { contractTotalSql, likeTerm, logoUrlSql, newId, nowSec } from "./common";
 import { loadFinance } from "./finance";
 import { loadOrgProfile } from "./org";
 import { visibleProjects } from "./projects";
+import { nextCode } from "./settings";
 
 type Env = { Bindings: { JWT_SECRET: string }; Variables: Vars };
 type Input = z.output<typeof clientInput>;
@@ -110,7 +111,7 @@ function contactRows(
 export async function insertClient(db: Db, me: { id: string; orgId: string }, v: Input) {
   const nameNorm = normalizeName(v.name);
   const id = newId("cli");
-  const code = formatCode("CL", await nextCounter(db, me.orgId, "client"));
+  const code = await nextCode(db, me.orgId, "client");
   const t = nowSec();
   await db.insert(clients).values({
     id,
@@ -421,7 +422,14 @@ export const clientsApp = new Hono<Env>()
         phone: client.phone,
         email: client.email,
       },
-      org: { name: org.name, reg: org.reg, tax: org.tax, urls: org.urls },
+      org: {
+        name: org.name,
+        reg: org.reg,
+        tax: org.tax,
+        bankName: org.bankName,
+        bankIban: org.bankIban,
+        urls: org.urls,
+      },
       items,
       totals: {
         contractNet: sum("contractNet"),

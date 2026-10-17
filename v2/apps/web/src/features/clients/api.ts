@@ -142,7 +142,14 @@ export type Statement = {
     phone: string;
     email: string;
   };
-  org: { name: string; reg: string; tax: string; urls: Record<string, string> };
+  org: {
+    name: string;
+    reg: string;
+    tax: string;
+    bankName?: string;
+    bankIban?: string;
+    urls: Record<string, string>;
+  };
   items: StatementLine[];
   totals: Record<
     "contractNet" | "vat" | "gross" | "spent" | "income" | "remaining" | "received" | "owed",

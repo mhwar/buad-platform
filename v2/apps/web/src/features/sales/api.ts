@@ -56,6 +56,8 @@ export type OrgPrint = {
   address: string;
   signerName: string;
   signerTitle: string;
+  bankName?: string;
+  bankIban?: string;
   urls: Record<string, string>;
 };
 

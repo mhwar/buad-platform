@@ -120,6 +120,18 @@ export function QuotePrintPage({ id }: { id: string }) {
                 <p className="whitespace-pre-line text-sm">{z.terms}</p>
               </section>
             )}
+            {org.bankIban && (
+              <section className="mt-6 rounded border border-gray-300 p-3 text-sm">
+                <h2 className="mb-1 font-semibold">بيانات التحويل البنكي</h2>
+                <p>
+                  {org.name}
+                  {org.bankName && ` · ${org.bankName}`}
+                </p>
+                <p dir="ltr" className="text-end font-mono tracking-wide">
+                  {org.bankIban}
+                </p>
+              </section>
+            )}
             {(org.signerName || org.signerTitle) && (
               <footer className="mt-10 text-sm">
                 <p className="font-semibold">{org.signerName}</p>

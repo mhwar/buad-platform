@@ -1,4 +1,4 @@
-import type { OrgSettingsPatch, ProjectDefaults } from "@buad/schema/org";
+import type { OrgPrefsPatch, OrgSettingsPatch, ProjectDefaults } from "@buad/schema/org";
 import { queryOptions } from "@tanstack/react-query";
 import { ok } from "../../lib/format";
 
@@ -20,6 +20,35 @@ export const orgSettingsQuery = queryOptions({
 export const saveOrgSettings = async (patch: OrgSettingsPatch) =>
   ok<OrgSettings>(
     await fetch("/api/org/settings", {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(patch),
+    }),
+  );
+
+export type NumberingRow = {
+  kind: string;
+  label: string;
+  prefix: string;
+  defaultPrefix: string;
+  yearly: boolean;
+  next: number;
+  example: string;
+};
+export type OrgPrefs = {
+  numbering: NumberingRow[];
+  texts: { quoteTerms: string; quoteValidityDays: number; letterClosing: string };
+};
+
+export const orgPrefsQuery = queryOptions({
+  queryKey: ["org-preferences"],
+  queryFn: async () => ok<OrgPrefs>(await fetch("/api/org/preferences")),
+  staleTime: 60_000,
+});
+
+export const saveOrgPrefs = async (patch: OrgPrefsPatch) =>
+  ok<OrgPrefs>(
+    await fetch("/api/org/preferences", {
       method: "PATCH",
       headers: { "content-type": "application/json" },
       body: JSON.stringify(patch),
