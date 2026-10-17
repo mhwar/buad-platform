@@ -11,6 +11,7 @@ import {
   Link2,
   ListChecks,
   Lock,
+  LockOpen,
   MapPin,
   Pencil,
   Plus,
@@ -24,6 +25,7 @@ import { PageSkeleton, SectionBoundary } from "../../components/Resilience";
 import { useTrackRecent } from "../../components/shell/useRecent";
 import {
   Avatar,
+  Badge,
   BadgeMenu,
   Button,
   Card,
@@ -56,6 +58,7 @@ import {
   projectQuery,
   updateProject,
 } from "./api";
+import { CloseProjectDialog, ReopenProjectDialog } from "./CloseProjectDialog";
 import { ProjectDialog } from "./ProjectDialog";
 import { ProjectPulse } from "./ProjectPulse";
 
@@ -92,6 +95,8 @@ export function ProjectPage() {
   const [members, setMembers] = useState(false);
   const [adding, setAdding] = useState<"new" | "agreement" | null>(null);
   const [receiving, setReceiving] = useState(false);
+  const [closing, setClosing] = useState(false);
+  const [reopening, setReopening] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const section: Section = search.view ?? "finance";
 
@@ -119,6 +124,9 @@ export function ProjectPage() {
       ? `${exTasks.filter((x) => x.status === "done").length}/${exTasks.length}`
       : "";
   const manager = !!me?.perms.includes("finance.edit");
+  // A closed project's money records are read-only until it is reopened.
+  const closed = !!p.closedAt;
+  const editMoney = manager && !closed;
   const canDelete = !!me?.perms.includes("projects.delete");
   const canArchive = !!me?.perms.includes("projects.archive");
   const canTeam = !!me?.perms.includes("team.view") && !!me?.perms.includes("projects.edit");
@@ -177,6 +185,23 @@ export function ProjectPage() {
       ? [{ label: "فريق المشروع", icon: <Users />, onSelect: () => setMembers(true) }]
       : []),
     { section: "المالية" },
+    ...(manager && !p.archivedAt
+      ? [
+          closed
+            ? {
+                label: "إعادة فتح المشروع",
+                hint: "بسبب يُسجَّل في سجل النشاط",
+                icon: <LockOpen />,
+                onSelect: () => setReopening(true),
+              }
+            : {
+                label: "إغلاق المشروع",
+                hint: "مراجعة نهائية ثم قفل القيود",
+                icon: <Lock />,
+                onSelect: () => setClosing(true),
+              },
+        ]
+      : []),
     {
       label: manager ? "إعدادات العقد والميزانية" : "شروط العقد والميزانية",
       hint: manager ? "القيمة، الضريبة، الأتعاب، التصنيفات" : "للاطلاع",
@@ -295,6 +320,12 @@ export function ProjectPage() {
                 .filter(([k]) => k !== p.status)
                 .map(([k, l]) => ({ value: k, label: l, tone: STATUS_TONE[k] ?? "gray" }))}
             />
+            {closed && (
+              <Badge tone="gray">
+                <Lock className="me-1 inline size-3" />
+                مغلق
+              </Badge>
+            )}
             {p.visibility === "private" && (
               <span className="inline-flex items-center gap-1 text-xs text-muted">
                 <Lock className="size-3" /> خاص
@@ -335,12 +366,17 @@ export function ProjectPage() {
         </div>
         <div className="flex flex-wrap gap-2">
           {/* What the owner does most here: record money that came in. */}
-          {manager && !p.archivedAt && p.status !== "draft" && p.status !== "cancelled" && (
+          {editMoney && !p.archivedAt && p.status !== "draft" && p.status !== "cancelled" && (
             <Button onClick={() => setReceiving(true)}>
               <Wallet className="size-4" /> تسجيل مقبوض
             </Button>
           )}
-          {manager && section === "finance" && !p.archivedAt && (
+          {manager && !closed && p.status === "completed" && !p.archivedAt && (
+            <Button variant="secondary" onClick={() => setClosing(true)}>
+              <Lock className="size-4" /> إغلاق المشروع
+            </Button>
+          )}
+          {editMoney && section === "finance" && !p.archivedAt && (
             <Button variant="secondary" onClick={() => setAdding("new")}>
               <Plus className="size-4" /> قيد جديد
             </Button>
@@ -358,7 +394,7 @@ export function ProjectPage() {
 
       <FinanceStrip
         projectId={p.id}
-        canEdit={manager}
+        canEdit={editMoney}
         isOwner={canDelete}
         fromV1={p.createdBy.startsWith("v1-import") && !q.data.financeImported}
         onSettings={() => setSettings(true)}
@@ -393,7 +429,7 @@ export function ProjectPage() {
           {section === "finance" ? (
             <Transactions
               projectId={p.id}
-              canEdit={manager}
+              canEdit={editMoney}
               adding={adding}
               setAdding={setAdding}
             />
@@ -406,7 +442,11 @@ export function ProjectPage() {
 
         <aside className="flex flex-col gap-4 lg:sticky lg:top-24" aria-label="تفاصيل المشروع">
           <SectionBoundary label="العقد والتحصيل">
-            <ContractCard projectId={p.id} canEdit={manager} onSettings={() => setSettings(true)} />
+            <ContractCard
+              projectId={p.id}
+              canEdit={editMoney}
+              onSettings={() => setSettings(true)}
+            />
           </SectionBoundary>
           {/* On a phone the details come first; on a computer they close the column. */}
           <Card className="order-first lg:order-none">
@@ -454,7 +494,7 @@ export function ProjectPage() {
         projectId={p.id}
         open={settings}
         onOpenChange={setSettings}
-        canEdit={manager}
+        canEdit={editMoney}
       />
       <ProjectDialog open={editing} onOpenChange={setEditing} existing={q.data} />
       {receiving && (
@@ -465,6 +505,20 @@ export function ProjectPage() {
         />
       )}
       <ProjectMembers projectId={p.id} open={members} onClose={() => setMembers(false)} />
+      {closing && (
+        <CloseProjectDialog
+          projectId={p.id}
+          projectName={p.name}
+          onClose={() => setClosing(false)}
+        />
+      )}
+      {reopening && <ReopenProjectDialog projectId={p.id} onClose={() => setReopening(false)} />}
+      {closed && (
+        <p className="mt-6 text-xs text-muted">
+          أُغلق المشروع {fromEpoch(p.closedAt ?? null)}
+          {p.closeNote ? ` · ${p.closeNote}` : ""}. قيوده ومقبوضاته وفواتيره للاطلاع فقط.
+        </p>
+      )}
     </>
   );
 }

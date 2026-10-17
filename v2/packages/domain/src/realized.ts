@@ -20,6 +20,8 @@ export type RealizedProject = {
   /** Agreement items computed but not registered (profit is an estimate). */
   unregistered: boolean;
   pendingExpenses: number;
+  /** Financially closed («إغلاق المشروع»): its profit is final and ready to distribute. */
+  closed?: boolean;
 };
 
 const r2 = (n: number) => Math.round(n * 100) / 100;

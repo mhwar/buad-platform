@@ -51,6 +51,8 @@ export type Project = Omit<
   notes: string;
   createdAt: number;
   updatedAt: number;
+  closedAt?: number | null;
+  closeNote?: string;
 };
 export type ProjectDetail = {
   project: Project;

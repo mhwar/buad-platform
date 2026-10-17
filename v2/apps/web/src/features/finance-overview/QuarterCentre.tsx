@@ -180,6 +180,7 @@ export function QuarterCentre() {
                         {r.clientName} · استُلم {sar(r.receivedToDate)} من {sar(r.gross)}
                       </span>
                       <span className="mt-1 flex flex-wrap gap-1">
+                        {r.closed && <Badge tone="green">مغلق · جاهز للتوزيع</Badge>}
                         {r.flags
                           .filter((f) => f !== "no_receipts")
                           .map((f) => (

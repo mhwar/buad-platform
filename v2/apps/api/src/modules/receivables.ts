@@ -197,8 +197,9 @@ export const receivablesApp = new Hono<Env>()
       const me = c.get("user");
       const db = c.get("db");
       const r = await line(db, me.orgId, c.req.param("id"));
-      if (!r || !(await loadVisible(db, me, r.projectId)))
-        return c.json({ ok: false, error: "not_found" }, 404);
+      const owner = r ? await loadVisible(db, me, r.projectId) : null;
+      if (!r || !owner) return c.json({ ok: false, error: "not_found" }, 404);
+      if (owner.closedAt) return c.json({ ok: false, error: "project_closed" }, 409);
       if (r.status !== "pending") return c.json({ ok: false, error: "not_pending" }, 409);
       const v = c.req.valid("json");
       const date = v.date ?? today();

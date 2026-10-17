@@ -87,6 +87,7 @@ export async function projectFigures(db: Db, orgId: string) {
       hasFinance: fin.ctrl.version > 0 || fin.entries.length > 0,
       unregistered: fin.summary.missingItems.length > 0,
       pendingExpenses: fin.summary.pendingExpenses,
+      closed: !!p.closedAt,
     });
   }
   return out;

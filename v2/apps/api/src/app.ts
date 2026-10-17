@@ -32,6 +32,7 @@ import { exportApp } from "./modules/org-export";
 import { type BrowserBinding, pdfApp } from "./modules/pdf";
 import { plansApp } from "./modules/plans";
 import { productsApp } from "./modules/products";
+import { projectCloseApp } from "./modules/project-close";
 import { projectsApp } from "./modules/projects";
 import { quotesApp } from "./modules/quotes";
 import { receivablesApp } from "./modules/receivables";
@@ -223,6 +224,7 @@ export function createApp(deps: AppDeps = {}) {
       .route("/api/audit", auditApp)
       .route("/api/clients", clientsApp)
       .route("/api/projects/:projectId/finance", financeApp)
+      .route("/api/projects/:projectId/close", projectCloseApp)
       .route("/api/projects/:projectId/documents", projectDocumentsApp)
       .route("/api/documents/:docId/shares", documentSharesApp)
       .route("/api/documents", documentsApp)

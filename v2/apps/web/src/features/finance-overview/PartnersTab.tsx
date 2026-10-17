@@ -395,15 +395,18 @@ function DistributionDetail({ d, onChanged }: { d: Distribution; onChanged: () =
 export function DistributionWizard({
   onClose,
   preset,
+  projectPreset,
 }: {
   onClose: () => void;
   /** From «توزيع الربع»: distribute this quarter's chosen projects (skips step 1). */
   preset?: { year: number; q: number; projectIds: string[]; label: string };
+  /** From closing a project: distribute that project's profit (skips step 1). */
+  projectPreset?: string;
 }) {
   const qc = useQueryClient();
-  const [step, setStep] = useState(preset ? 2 : 1);
+  const [step, setStep] = useState(preset || projectPreset ? 2 : 1);
   const mode: "quarter" | "project" = preset ? "quarter" : "project";
-  const [projectId, setProjectId] = useState("");
+  const [projectId, setProjectId] = useState(projectPreset ?? "");
   const [pct, setPct] = useState(100);
   const [retainedCategory, setRetained] = useState<"ops" | "dev" | "reserve">("reserve");
   // Starts from the organisation's defaults («الإعدادات ← المالية»).

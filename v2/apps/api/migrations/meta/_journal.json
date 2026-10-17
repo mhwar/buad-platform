@@ -211,6 +211,13 @@
       "when": 1792270290778,
       "tag": "0029_wise_ultimates",
       "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "6",
+      "when": 1792274952984,
+      "tag": "0030_giant_dragon_lord",
+      "breakpoints": true
     }
   ]
 }
