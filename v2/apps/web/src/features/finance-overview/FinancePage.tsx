@@ -13,6 +13,7 @@ import {
   Wallet,
 } from "lucide-react";
 import { useState } from "react";
+import { DataTable } from "../../components/DataTable";
 import { FilterBar } from "../../components/FilterBar";
 import {
   Badge,
@@ -221,7 +222,6 @@ function Dashboard({
   setSort: (k: SortKey) => void;
 }) {
   const t = data.totals;
-  const sorted = [...data.projects].sort((a, b) => b[sort] - a[sort]);
   const obligations = data.obligations.pending.length + data.obligations.unregistered.length;
   return (
     <div className="space-y-6">
@@ -280,35 +280,74 @@ function Dashboard({
       <Card className="p-0">
         <div className="flex flex-wrap items-center justify-between gap-3 px-5 pt-5">
           <h2 className="font-semibold">ربحية المشاريع</h2>
-          <Pills<SortKey>
-            value={sort}
-            onChange={(v) => setSort((v || "profit") as SortKey)}
-            items={[
-              { value: "profit", label: "حسب الربح" },
-              { value: "margin", label: "حسب الهامش" },
-              { value: "gross", label: "حسب القيمة" },
+          <p className="text-xs text-muted">رتّب بالنقر على رأس العمود</p>
+        </div>
+        <div className="mt-4">
+          <DataTable
+            caption="ربحية المشاريع"
+            rows={data.projects}
+            initialSort={{ key: "profit", dir: "desc" }}
+            rowKey={(p) => p.id}
+            columns={[
+              {
+                key: "name",
+                header: "المشروع",
+                primary: true,
+                sort: (p) => p.name,
+                cell: (p) => (
+                  <>
+                    <FinanceLink id={p.id} name={p.name} />
+                    <span className="block text-xs text-muted">
+                      <span dir="ltr">{p.number}</span> · {p.clientName} ·{" "}
+                      {label(PROJECT_STATUS_LABELS, p.status)}
+                      {!p.hasFinance && <span className="text-amber-700"> · بلا مالية</span>}
+                    </span>
+                  </>
+                ),
+              },
+              {
+                key: "gross",
+                header: "قيمة العقد",
+                numeric: true,
+                sort: (p) => p.gross,
+                cell: (p) => sar(p.gross),
+              },
+              {
+                key: "spent",
+                header: "المصروف",
+                numeric: true,
+                sort: (p) => p.spent,
+                cell: (p) => sar(p.spent),
+                hideOnCard: true,
+              },
+              {
+                key: "profit",
+                header: "صافي الربح",
+                numeric: true,
+                sort: (p) => p.profit,
+                cell: (p) => <span className="font-semibold">{sar(p.profit)}</span>,
+              },
+              {
+                key: "margin",
+                header: "الهامش",
+                numeric: true,
+                sort: (p) => p.margin,
+                cell: (p) => pct(p.margin),
+              },
+              {
+                key: "remaining",
+                header: "المتبقي",
+                numeric: true,
+                sort: (p) => p.remaining,
+                hideOnCard: true,
+                cell: (p) => (
+                  <span className={p.remaining < 0 ? "text-red-600 dark:text-red-400" : ""}>
+                    {sar(p.remaining)}
+                  </span>
+                ),
+              },
             ]}
           />
-        </div>
-        <div className="mt-4 overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="border-y text-right text-xs text-muted">
-              <tr>
-                <th className="p-3 font-medium">المشروع</th>
-                <th className="p-3 font-medium">العميل</th>
-                <th className="p-3 font-medium">قيمة العقد</th>
-                <th className="p-3 font-medium">المصروف</th>
-                <th className="p-3 font-medium">صافي الربح</th>
-                <th className="p-3 font-medium">الهامش</th>
-                <th className="p-3 font-medium">المتبقي</th>
-              </tr>
-            </thead>
-            <tbody>
-              {sorted.map((p) => (
-                <ProjectRow key={p.id} p={p} />
-              ))}
-            </tbody>
-          </table>
         </div>
       </Card>
 
@@ -367,30 +406,6 @@ function FinanceLink({ id, name }: { id: string; name: string }) {
     >
       {name}
     </Link>
-  );
-}
-
-function ProjectRow({ p }: { p: OverviewProject }) {
-  return (
-    <tr className="border-b last:border-0 hover:bg-brand-soft/50">
-      <td className="p-3">
-        <FinanceLink id={p.id} name={p.name} />
-        <span className="block text-xs text-muted">
-          <span dir="ltr">{p.number}</span> · {label(PROJECT_STATUS_LABELS, p.status)}
-          {!p.hasFinance && <span className="text-amber-700"> · بلا مالية</span>}
-        </span>
-      </td>
-      <td className="p-3">{p.clientName}</td>
-      <td className="p-3 whitespace-nowrap">{sar(p.gross)}</td>
-      <td className="p-3 whitespace-nowrap">{sar(p.spent)}</td>
-      <td className="p-3 whitespace-nowrap font-semibold">{sar(p.profit)}</td>
-      <td className="p-3 whitespace-nowrap">{pct(p.margin)}</td>
-      <td
-        className={`p-3 whitespace-nowrap ${p.remaining < 0 ? "text-red-600 dark:text-red-400" : ""}`}
-      >
-        {sar(p.remaining)}
-      </td>
-    </tr>
   );
 }
 

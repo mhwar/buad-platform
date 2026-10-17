@@ -1,12 +1,20 @@
 import { daysInStage, isStale } from "@buad/domain";
 import { Link } from "@tanstack/react-router";
 import { CalendarClock, FileText, MessageCircle } from "lucide-react";
-import { Badge, Button, Card } from "../../components/ui";
-import { ago, sar, whatsapp } from "../../lib/format";
+import { Badge, BadgeMenu, Button, Card, Menu, type Tone } from "../../components/ui";
+import { ago, day, sar, whatsapp } from "../../lib/format";
 import { type ProductRequest, REQUEST_LABEL, type RequestStatus } from "../products/products-api";
 import { send } from "../team/queries";
 
 export const STAGES: RequestStatus[] = ["new", "contacted", "quoted", "negotiating", "won", "lost"];
+const STAGE_TONE: Record<RequestStatus, Tone> = {
+  new: "gray",
+  contacted: "blue",
+  quoted: "blue",
+  negotiating: "amber",
+  won: "green",
+  lost: "red",
+};
 const today = () => new Date().toISOString().slice(0, 10);
 
 /** One lead as a card: who, how much, how long since anything happened, and what can be done next. */
@@ -79,46 +87,49 @@ export function LeadCard({
           >
             <CalendarClock className="size-3" />
             {late ? "متأخرة · " : "متابعة "}
-            {r.followUpAt}
+            {day(r.followUpAt)}
           </span>
         )}
         {r.status === "lost" && r.lostReason && <span>السبب: {r.lostReason}</span>}
       </p>
       {edit && (
-        <div className="flex flex-wrap items-center gap-1.5">
-          <select
-            aria-label={`مرحلة ${r.name}`}
-            value={r.status}
-            onChange={async (e) => {
-              await send("PATCH", `/api/product-requests/${r.id}`, { status: e.target.value });
+        <div className="flex items-center justify-between gap-2 border-t pt-2">
+          <BadgeMenu
+            name={r.name}
+            tone={STAGE_TONE[r.status]}
+            label={REQUEST_LABEL[r.status]}
+            options={STAGES.map((s) => ({
+              value: s,
+              label: REQUEST_LABEL[s],
+              tone: STAGE_TONE[s],
+            }))}
+            onSelect={async (v) => {
+              await send("PATCH", `/api/product-requests/${r.id}`, { status: v });
               onChanged();
             }}
-            className="min-h-11 rounded-lg border bg-surface px-2 text-sm sm:min-h-9"
-          >
-            {STAGES.map((s) => (
-              <option key={s} value={s}>
-                {REQUEST_LABEL[s]}
-              </option>
-            ))}
-          </select>
-          <Button variant="secondary" onClick={onFollow}>
-            متابعة
-          </Button>
-          <Button variant="secondary" onClick={onQuote}>
-            <FileText className="size-4" />
-            عرض
-          </Button>
-          {wa && (
-            <a
-              href={`https://wa.me/${wa}`}
-              target="_blank"
-              rel="noreferrer"
-              aria-label={`واتساب ${r.name}`}
-              className="inline-flex min-h-11 items-center rounded-lg border px-2.5 text-muted hover:text-ink sm:min-h-9"
-            >
-              <MessageCircle className="size-4" />
-            </a>
-          )}
+          />
+          <span className="flex items-center gap-1">
+            {open && (
+              <Button variant="secondary" className="min-h-9 px-3" onClick={onFollow}>
+                <CalendarClock className="size-4" /> متابعة
+              </Button>
+            )}
+            <Menu
+              label={`إجراءات ${r.entity || r.name}`}
+              items={[
+                { label: "عرض سعر", icon: <FileText />, onSelect: onQuote },
+                ...(wa
+                  ? [
+                      {
+                        label: "واتساب",
+                        icon: <MessageCircle />,
+                        onSelect: () => window.open(`https://wa.me/${wa}`, "_blank", "noreferrer"),
+                      },
+                    ]
+                  : []),
+              ]}
+            />
+          </span>
         </div>
       )}
     </Card>

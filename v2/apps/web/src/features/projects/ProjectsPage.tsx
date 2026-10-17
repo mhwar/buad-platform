@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getRouteApi, Link } from "@tanstack/react-router";
 import { AlertTriangle, CalendarClock, Lock, Plus } from "lucide-react";
 import { useDeferredValue, useState } from "react";
+import { DataTable } from "../../components/DataTable";
 import { FilterBar } from "../../components/FilterBar";
 import { SkeletonGrid } from "../../components/Resilience";
 import {
@@ -16,7 +17,7 @@ import {
   Select,
   ViewToggle,
 } from "../../components/ui";
-import { day, money } from "../../lib/format";
+import { day, money, moneyShort } from "../../lib/format";
 import { label, PROJECT_STATUS_LABELS, PROJECT_TYPE_LABELS, STATUS_TONE } from "../labels";
 import { type ProjectListItem, type ProjectStatus, projectsQuery } from "./api";
 import { ProjectDialog } from "./ProjectDialog";
@@ -300,7 +301,7 @@ function ProjectCard({ p }: { p: ProjectListItem }) {
           </span>
           {p.contractTotal > 0 && (
             <span title={p.estimated ? "تقديري: القيمة المتوقعة + 15% حتى يُسجَّل العقد" : undefined}>
-              {money(p.contractTotal)}
+              {moneyShort(p.contractTotal)}
               {p.estimated && <span className="ms-1 text-xs text-muted">تقديري</span>}
             </span>
           )}
@@ -320,26 +321,22 @@ function ProjectCard({ p }: { p: ProjectListItem }) {
 }
 
 function ProjectTable({ items }: { items: ProjectListItem[] }) {
+  // Hidden when no project uses it: an empty «الخدمة» column is noise.
+  const services = items.some((p) => p.productName);
   return (
-    <Card className="overflow-x-auto p-0">
-      <table className="w-full min-w-[56rem] text-sm">
-        <thead className="border-b text-right text-xs text-muted">
-          <tr>
-            <th className="p-3 font-medium">المشروع</th>
-            <th className="p-3 font-medium">العميل</th>
-            <th className="p-3 font-medium">الحالة</th>
-            <th className="p-3 font-medium">النوع</th>
-            <th className="p-3 font-medium">الخدمة</th>
-            <th className="p-3 font-medium">الانتهاء</th>
-            <th className="p-3 font-medium">التنفيذ</th>
-            <th className="p-3 font-medium">المحصّل</th>
-            <th className="p-3 font-medium">قيمة العقد</th>
-          </tr>
-        </thead>
-        <tbody>
-          {items.map((p) => (
-            <tr key={p.id} className="border-b last:border-0 hover:bg-brand-soft/50">
-              <td className="p-3">
+    <Card className="p-0">
+      <DataTable
+        caption="المشاريع"
+        rows={items}
+        rowKey={(p) => p.id}
+        columns={[
+          {
+            key: "name",
+            header: "المشروع",
+            primary: true,
+            sort: (p) => p.name,
+            cell: (p) => (
+              <>
                 <Link
                   to="/projects/$id"
                   params={{ id: p.id }}
@@ -347,49 +344,81 @@ function ProjectTable({ items }: { items: ProjectListItem[] }) {
                 >
                   {p.name}
                 </Link>
-                <div className="text-xs text-muted" dir="ltr">
-                  {p.number}
+                <div className="text-xs text-muted">
+                  <span dir="ltr">{p.number}</span> · {p.clientName}
                 </div>
-              </td>
-              <td className="p-3">
-                <Link
-                  to="/clients/$id"
-                  params={{ id: p.clientId }}
-                  className="inline-flex items-center gap-1.5 hover:text-brand"
-                >
-                  <Avatar name={p.clientName} logo={p.clientLogoUrl} size="xs" />
-                  {p.clientName}
-                </Link>
-              </td>
-              <td className="p-3">
-                <Badge tone={STATUS_TONE[p.status]}>{label(PROJECT_STATUS_LABELS, p.status)}</Badge>
-              </td>
-              <td className="p-3">{label(PROJECT_TYPE_LABELS, p.type)}</td>
-              <td className="p-3">
-                {p.productName
-                  ? `${p.productName}${p.packageName ? ` · ${p.packageName}` : ""}`
-                  : "—"}
-              </td>
-              <td className="p-3 whitespace-nowrap">{p.endDate ? <Deadline p={p} /> : "—"}</td>
-              <td className="p-3 tabular-nums">
-                {(() => {
-                  const w = workShare(p);
-                  return w ? `${w.done}/${w.total}` : "—";
-                })()}
-              </td>
-              <td className="p-3 tabular-nums">
-                {p.received === null || p.received === undefined ? "—" : money(p.received)}
-              </td>
-              <td className="p-3 tabular-nums">
-                {p.contractTotal ? money(p.contractTotal) : "—"}
+              </>
+            ),
+          },
+          {
+            key: "status",
+            header: "الحالة",
+            sort: (p) => p.status,
+            cell: (p) => (
+              <Badge tone={STATUS_TONE[p.status]}>{label(PROJECT_STATUS_LABELS, p.status)}</Badge>
+            ),
+          },
+          {
+            key: "type",
+            header: "النوع",
+            hideOnCard: true,
+            sort: (p) => p.type,
+            cell: (p) => label(PROJECT_TYPE_LABELS, p.type),
+          },
+          ...(services
+            ? [
+                {
+                  key: "service",
+                  header: "الخدمة",
+                  hideOnCard: true,
+                  cell: (p: ProjectListItem) =>
+                    p.productName
+                      ? `${p.productName}${p.packageName ? ` · ${p.packageName}` : ""}`
+                      : "—",
+                },
+              ]
+            : []),
+          {
+            key: "end",
+            header: "الانتهاء",
+            sort: (p) => p.endDate || "9999",
+            hideOnCard: true,
+            cell: (p) => (p.endDate ? <Deadline p={p} /> : "—"),
+          },
+          {
+            key: "work",
+            header: "التنفيذ",
+            numeric: true,
+            hideOnCard: true,
+            cell: (p) => {
+              const w = workShare(p);
+              return w ? `${w.done}/${w.total}` : "—";
+            },
+          },
+          {
+            key: "received",
+            header: "المحصّل",
+            numeric: true,
+            sort: (p) => p.received ?? -1,
+            cell: (p) =>
+              p.received === null || p.received === undefined ? "—" : moneyShort(p.received),
+          },
+          {
+            key: "value",
+            header: "قيمة العقد",
+            numeric: true,
+            sort: (p) => p.contractTotal,
+            cell: (p) => (
+              <>
+                {p.contractTotal ? moneyShort(p.contractTotal) : "—"}
                 {p.estimated && p.contractTotal > 0 && (
                   <span className="ms-1 text-xs text-muted">تقديري</span>
                 )}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+              </>
+            ),
+          },
+        ]}
+      />
     </Card>
   );
 }

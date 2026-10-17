@@ -63,7 +63,9 @@ describe("TasksPage", () => {
   it("changes a status from the row", async () => {
     const calls = stubApi({ ...base(), "PATCH /api/tasks/t1": () => ({ ok: true }) });
     await renderWithApp(<TasksPage />);
-    await userEvent.selectOptions(await screen.findByLabelText("حالة جهّز العرض"), "done");
+    // the status is a badge menu on the card
+    await userEvent.click(await screen.findByRole("button", { name: /حالة جهّز العرض/ }));
+    await userEvent.click(await screen.findByRole("menuitem", { name: "منجزة" }));
     await waitFor(() =>
       expect(calls.find((c) => c.method === "PATCH")?.body).toEqual({ status: "done" }),
     );
@@ -74,7 +76,8 @@ describe("TasksPage", () => {
     await renderWithApp(<TasksPage />);
     await screen.findByText("جهّز العرض");
     expect(screen.queryByRole("button", { name: "مهمة جديدة" })).toBeNull();
-    expect(screen.queryByLabelText("حالة جهّز العرض")).toBeNull();
+    expect(screen.queryByRole("button", { name: /حالة جهّز العرض/ })).toBeNull();
+    expect(screen.queryByRole("checkbox", { name: /إنجاز/ })).toBeNull();
   });
 
   it("shows a board by status, with done tasks in their own column", async () => {

@@ -3,7 +3,17 @@ import { useNavigate, useSearch } from "@tanstack/react-router";
 import { Columns3, List, Pencil, Plus, Table2 } from "lucide-react";
 import { useState } from "react";
 import { matches } from "../../components/shell/CommandPalette";
-import { Badge, Button, cx, EmptyState, SearchBox, Segmented } from "../../components/ui";
+import {
+  Badge,
+  BadgeMenu,
+  Button,
+  cx,
+  EmptyState,
+  LayoutToggle,
+  Menu,
+  SearchBox,
+  Segmented,
+} from "../../components/ui";
 import { day } from "../../lib/format";
 import { useCan } from "../../session";
 import { send } from "../team/queries";
@@ -16,7 +26,7 @@ import {
   tasksQuery,
 } from "./queries";
 import { TaskDialog, TimeDialog } from "./TaskDialogs";
-import { TaskRow } from "./TaskRow";
+import { STATUS_TONE, TaskRow } from "./TaskRow";
 
 type Scope = "mine" | "all";
 type Show = "open" | "late" | "done";
@@ -87,53 +97,57 @@ export function TasksPage() {
   });
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap gap-2">
-          <Segmented
-            label="النطاق"
-            value={scope}
-            onChange={(v) => set({ scope: v === "mine" ? undefined : v })}
-            items={[
-              { value: "mine", label: "مهامي" },
-              { value: "all", label: "كل الفريق" },
-            ]}
-          />
-          {layout !== "board" && (
-            <Segmented
-              label="العرض"
-              value={view}
-              onChange={(v) => set({ show: v === "open" ? undefined : v })}
-              items={[
-                { value: "open", label: `مفتوحة (${counts.open})` },
-                { value: "late", label: `متأخرة (${counts.late})` },
-                { value: "done", label: `منجزة (${counts.done})` },
-              ]}
-            />
-          )}
-          <Segmented
-            label="طريقة العرض"
-            value={layout}
-            onChange={(v) => set({ layout: v === "list" ? undefined : v })}
-            items={[
-              { value: "list", label: "قائمة", icon: <List className="size-4" /> },
-              { value: "board", label: "لوحة", icon: <Columns3 className="size-4" /> },
-              { value: "table", label: "جدول", icon: <Table2 className="size-4" /> },
-            ]}
-          />
-        </div>
-        {edit && (
+      {/* Three rows at most, on a phone too: action and view · what to show · search. */}
+      <div className="flex items-center justify-between gap-2">
+        {edit ? (
           <Button onClick={() => setDialog({})}>
             <Plus className="size-4" />
             مهمة جديدة
           </Button>
+        ) : (
+          <span />
+        )}
+        <LayoutToggle
+          value={layout}
+          onChange={(v) => set({ layout: v === "list" ? undefined : v })}
+          items={[
+            { value: "list", label: "قائمة", icon: <List className="size-4" /> },
+            { value: "board", label: "لوحة", icon: <Columns3 className="size-4" /> },
+            { value: "table", label: "جدول", icon: <Table2 className="size-4" /> },
+          ]}
+        />
+      </div>
+      <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:px-0">
+        <Segmented
+          inline
+          label="النطاق"
+          value={scope}
+          onChange={(v) => set({ scope: v === "mine" ? undefined : v })}
+          items={[
+            { value: "mine", label: "مهامي" },
+            { value: "all", label: "كل الفريق" },
+          ]}
+        />
+        {layout !== "board" && (
+          <Segmented
+            inline
+            label="العرض"
+            value={view}
+            onChange={(v) => set({ show: v === "open" ? undefined : v })}
+            items={[
+              { value: "open", label: `مفتوحة (${counts.open})` },
+              { value: "late", label: `متأخرة (${counts.late})` },
+              { value: "done", label: `منجزة (${counts.done})` },
+            ]}
+          />
         )}
       </div>
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex items-center gap-2">
         <div className="min-w-0 flex-1">
           <SearchBox
             value={s.q ?? ""}
             onChange={(v) => set({ q: v || undefined })}
-            placeholder="ابحث في المهام بالعنوان أو المشروع أو المسؤول"
+            placeholder="ابحث في المهام"
           />
         </div>
         {projects.length > 0 && (
@@ -141,7 +155,7 @@ export function TasksPage() {
             aria-label="المشروع"
             value={s.project ?? ""}
             onChange={(e) => set({ project: e.target.value || undefined })}
-            className="min-h-11 max-w-full rounded-lg border bg-surface px-2 text-sm"
+            className="min-h-11 w-32 shrink-0 rounded-lg border bg-surface px-2 text-sm sm:w-auto"
           >
             <option value="">كل المشاريع</option>
             {projects.map(([id, name]) => (
@@ -355,35 +369,28 @@ function TaskTable({
                   {t.dueDate ? `${late ? "متأخرة · " : ""}${day(t.dueDate)}` : "—"}
                 </td>
                 <td className="px-3 py-2">
-                  {edit ? (
-                    <select
-                      aria-label={`حالة ${t.title}`}
-                      value={t.status}
-                      onChange={async (e) => {
-                        await setStatus(t.id, e.target.value as TaskStatus);
-                        onChanged();
-                      }}
-                      className="min-h-8 rounded-lg border bg-surface px-2 text-sm"
-                    >
-                      {STATUSES.map((x) => (
-                        <option key={x} value={x}>
-                          {STATUS_LABEL[x]}
-                        </option>
-                      ))}
-                    </select>
-                  ) : (
-                    <Badge>{STATUS_LABEL[t.status]}</Badge>
-                  )}
+                  <BadgeMenu
+                    name={t.title}
+                    tone={STATUS_TONE[t.status]}
+                    label={STATUS_LABEL[t.status]}
+                    options={STATUSES.map((x) => ({
+                      value: x,
+                      label: STATUS_LABEL[x],
+                      tone: STATUS_TONE[x],
+                    }))}
+                    onSelect={async (v) => {
+                      await setStatus(t.id, v as TaskStatus);
+                      onChanged();
+                    }}
+                    disabled={!edit}
+                  />
                 </td>
                 <td className="px-3 py-2">
                   {edit && (
-                    <Button
-                      variant="ghost"
-                      aria-label={`تعديل ${t.title}`}
-                      onClick={() => onEdit(t)}
-                    >
-                      <Pencil className="size-4" />
-                    </Button>
+                    <Menu
+                      label={`إجراءات ${t.title}`}
+                      items={[{ label: "تعديل", icon: <Pencil />, onSelect: () => onEdit(t) }]}
+                    />
                   )}
                 </td>
               </tr>
