@@ -24,6 +24,7 @@ export const BUILT_IN_DEFAULTS: ProjectDefaults = projectDefaults.parse(DEFAULT_
 
 const DEFAULTS_KEY = "project_defaults";
 const CASH_KEY = "cash_opening";
+const DIST_KEY = "distribution_defaults";
 const targetKey = (year: string | number) => `target:${year}`;
 
 async function readKey<T>(db: Db, orgId: string, key: string): Promise<T | null> {
@@ -52,12 +53,16 @@ export async function loadSettings(db: Db, orgId: string) {
   for (const r of rows)
     if (r.key.startsWith("target:")) targets[r.key.slice(7)] = JSON.parse(r.value) as number;
   const cash = get(CASH_KEY);
+  const dist = get(DIST_KEY);
   const defaults = get(DEFAULTS_KEY);
   return {
     projectDefaults: { ...BUILT_IN_DEFAULTS, ...(defaults ? JSON.parse(defaults.value) : {}) },
     /** False while the built-in defaults are in use. */
     projectDefaultsSet: !!defaults,
     targets,
+    distributionDefaults: dist
+      ? (JSON.parse(dist.value) as { pct: number; retainedCategory: "ops" | "dev" | "reserve" })
+      : { pct: 100, retainedCategory: "reserve" as const },
     cashOpening: cash
       ? ({
           ...(JSON.parse(cash.value) as { amount: number; date: string }),
@@ -156,6 +161,17 @@ export const settingsApp = new Hono<Env>()
         before: b ? `${showValue(b.amount)} (${b.date})` : "—",
         after: v.cashOpening ? `${showValue(v.cashOpening.amount)} (${v.cashOpening.date})` : "—",
       });
+    }
+    if (v.distributionDefaults) {
+      put(DIST_KEY, v.distributionDefaults);
+      const b = before.distributionDefaults;
+      if (b.pct !== v.distributionDefaults.pct)
+        changes.push({
+          field: "dist_pct",
+          label: "نسبة التوزيع الافتراضية",
+          before: `${b.pct}%`,
+          after: `${v.distributionDefaults.pct}%`,
+        });
     }
     if (queries.length) await atomic(db, queries);
     c.set("auditChanges", changes);

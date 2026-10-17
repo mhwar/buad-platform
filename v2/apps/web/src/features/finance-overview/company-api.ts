@@ -69,7 +69,18 @@ export type Distribution = {
   note: string;
   createdAt: number;
   completedAt: number | null;
+  /** When the partners were paid ("" = approved, not paid yet). */
+  paidOn?: string;
   shares: Share[];
+};
+export type Balances = {
+  realized: number;
+  companyNet: number;
+  distributed: number;
+  retained: number;
+  undistributed: number;
+  retainedBy: { ops: number; dev: number; reserve: number };
+  approvedUnpaid: number;
 };
 export type Preview = {
   label: string;
@@ -115,6 +126,11 @@ export const distributionsQuery = queryOptions({
   queryFn: async () => (await send<{ items: Distribution[] }>("GET", `${B}/distributions`)).items,
 });
 
+export const balancesQuery = queryOptions({
+  queryKey: [...companyKeys.all, "balances"],
+  queryFn: () => send<Balances>("GET", `${B}/balances`),
+});
+
 export const companyApi = {
   addEntry: (e: CompanyEntryInput) => send<{ id: string }>("POST", `${B}/entries`, e),
   updateEntry: (id: string, e: CompanyEntryInput) => send("PATCH", `${B}/entries/${id}`, e),
@@ -129,6 +145,8 @@ export const companyApi = {
   saveDistribution: (d: DistributionInput & { status: "draft" | "completed" }) =>
     send<{ id: string }>("POST", `${B}/distributions`, d),
   completeDistribution: (id: string) => send("POST", `${B}/distributions/${id}/complete`),
+  payDistribution: (id: string, b: { date: string; ref: string }) =>
+    send("POST", `${B}/distributions/${id}/pay`, b),
   removeDistribution: (id: string) => send("DELETE", `${B}/distributions/${id}`),
 };
 

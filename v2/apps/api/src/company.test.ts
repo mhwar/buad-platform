@@ -123,6 +123,8 @@ describe("مالية الشركة", () => {
 
   it("distributes to partners exactly, keeps the rest, and locks completed ones", async () => {
     await setupProject();
+    // Only realized profit is distributed: the contract is received in full.
+    await call("adm", "POST", `${F()}/receipts`, { date: "2026-10-05", amount: 115000 });
     for (const [name, pct] of [
       ["سلطان", 33.33],
       ["أحمد", 33.33],
@@ -157,7 +159,7 @@ describe("مالية الشركة", () => {
     expect((await call("adm", "POST", `${C}/distributions/${draft}/complete`)).status).toBe(409);
     // Shares stay as they were even if a partner changes later.
     const p = (await call("adm", "GET", `${C}/partners`)).body.items[0];
-    await call("adm", "PATCH", `${C}/partners/${p.id}`, { name: "اسم جديد", sharePct: 50 });
+    await call("adm", "PATCH", `${C}/partners/${p.id}`, { name: "اسم جديد", sharePct: p.sharePct });
     const list = (await call("adm", "GET", `${C}/distributions`)).body.items;
     expect(list[0].shares.map((s: J) => s.partnerName)).not.toContain("اسم جديد");
     // Nothing left to distribute → refused.
@@ -301,5 +303,63 @@ describe("مالية الشركة", () => {
     expect(
       (await call("adm", "GET", `${C}/quarter?year=2026&q=4`)).body.totals.realizedInPeriod,
     ).toBeGreaterThan(0);
+  });
+});
+
+describe("profit balances and paying a distribution", () => {
+  it("nothing is distributable before money arrives; balances follow realized − settled", async () => {
+    await setupProject();
+    for (const [name, pct] of [
+      ["أ", 50],
+      ["ب", 50],
+    ] as const)
+      await call("adm", "POST", `${C}/partners`, { name, sharePct: pct });
+    const input = { mode: "period", periodType: "annual", pct: 80, retainedCategory: "reserve" };
+    expect((await call("adm", "POST", `${C}/distributions/preview`, input)).body.netProfit).toBe(0);
+    // Half the contract received → half the profit realized.
+    await call("adm", "POST", `${F()}/receipts`, { date: "2026-03-05", amount: 57500 });
+    const profit = (await call("adm", "GET", F())).body.summary.profit;
+    let b = (await call("adm", "GET", `${C}/balances`)).body;
+    expect(b.realized).toBeCloseTo(profit / 2, 2);
+    expect(b.undistributed).toBeCloseTo(profit / 2, 2);
+    const saved = await call("adm", "POST", `${C}/distributions`, {
+      ...input,
+      status: "completed",
+    });
+    expect(saved.status).toBe(201);
+    b = (await call("adm", "GET", `${C}/balances`)).body;
+    expect(b.undistributed).toBeCloseTo(0, 2);
+    expect(b.distributed + b.retained).toBeCloseTo(profit / 2, 2);
+    expect(b.approvedUnpaid).toBeCloseTo(b.distributed, 2);
+    // The same profit is never distributed twice.
+    expect(
+      (await call("adm", "POST", `${C}/distributions/preview`, input)).body.netProfit,
+    ).toBeCloseTo(0, 2);
+
+    const pay = await call("adm", "POST", `${C}/distributions/${saved.body.id}/pay`, {
+      date: "2026-04-10",
+      ref: "TRX-9",
+    });
+    expect(pay.status).toBe(200);
+    const d = (await call("adm", "GET", `${C}/distributions`)).body.items[0];
+    expect(d.paidOn).toBe("2026-04-10");
+    expect(d.shares.every((s: J) => s.paidOn === "2026-04-10" && s.paidRef === "TRX-9")).toBe(true);
+    expect((await call("adm", "GET", `${C}/balances`)).body.approvedUnpaid).toBe(0);
+  });
+
+  it("a draft cannot be marked paid", async () => {
+    await setupProject();
+    await call("adm", "POST", `${C}/partners`, { name: "أ", sharePct: 100 });
+    await call("adm", "POST", `${F()}/receipts`, { date: "2026-03-05", amount: 115000 });
+    const draft = await call("adm", "POST", `${C}/distributions`, {
+      mode: "period",
+      periodType: "annual",
+      pct: 100,
+      status: "draft",
+    });
+    const pay = await call("adm", "POST", `${C}/distributions/${draft.body.id}/pay`, {
+      date: "2026-04-10",
+    });
+    expect(pay.status).toBe(409);
   });
 });

@@ -152,3 +152,43 @@ export function previousQuarter(year: number, q: number) {
   return q === 1 ? { year: year - 1, q: 4 } : { year, q: q - 1 };
 }
 export const QUARTER_NAMES = ["", "الربع الأول", "الربع الثاني", "الربع الثالث", "الربع الرابع"];
+
+export type SettledDistribution = {
+  /** What it covered: distributed + retained. */
+  netProfit: number;
+  distributed: number;
+  retained: number;
+};
+
+/**
+ * Where the company's profit stands, from the start: realized by approved receipts, plus the
+ * company's own net, less what completed distributions settled (paid out or retained). What is
+ * left is «أرباح غير موزّعة». Cancelled projects realize nothing.
+ */
+export function profitBalances(input: {
+  projects: { id: string; status: string; profit: number; gross: number }[];
+  receipts: ReceiptLite[];
+  companyIncome: number;
+  companyExpenses: number;
+  settled: SettledDistribution[];
+}) {
+  const realized = r2(
+    input.projects
+      .filter((p) => p.status !== "cancelled")
+      .reduce(
+        (s, p) => s + realizedProfit(p.profit, p.gross, receivedUpTo(input.receipts, p.id)),
+        0,
+      ),
+  );
+  const companyNet = r2(input.companyIncome - input.companyExpenses);
+  const distributed = r2(input.settled.reduce((s, d) => s + d.distributed, 0));
+  const retained = r2(input.settled.reduce((s, d) => s + d.retained, 0));
+  const settled = r2(input.settled.reduce((s, d) => s + d.netProfit, 0));
+  return {
+    realized,
+    companyNet,
+    distributed,
+    retained,
+    undistributed: r2(realized + companyNet - settled),
+  };
+}

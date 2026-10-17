@@ -71,6 +71,13 @@ export const orgSettingsPatch = z.object({
     .object({ amount: z.coerce.number().min(-1e12).max(1e12), date: isoDate })
     .nullable()
     .optional(),
+  /** What a new distribution starts with: the share paid out, and where the rest is kept. */
+  distributionDefaults: z
+    .object({
+      pct: z.coerce.number().min(0).max(100),
+      retainedCategory: z.enum(["ops", "dev", "reserve"]),
+    })
+    .optional(),
 });
 export type OrgSettingsPatch = z.input<typeof orgSettingsPatch>;
 

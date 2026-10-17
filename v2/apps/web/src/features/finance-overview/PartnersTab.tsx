@@ -1,7 +1,7 @@
 import { RETAINED_LABELS } from "@buad/schema/company";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { CheckCircle2, PieChart, Plus, Trash2, Users } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Badge,
   Button,
@@ -16,7 +16,9 @@ import {
   toast,
 } from "../../components/ui";
 import { day, fromEpoch, sar } from "../../lib/format";
+import { orgSettingsQuery } from "../settings/api";
 import {
+  balancesQuery,
   companyApi,
   companyKeys,
   companyOverviewQuery,
@@ -26,12 +28,14 @@ import {
   type Preview,
   partnersQuery,
 } from "./company-api";
+import { Tile } from "./Tile";
 
 /** «الشركاء والتوزيع»: who owns what, and every profit distribution (draft → completed). */
 export function PartnersTab() {
   const [wizard, setWizard] = useState(false);
   return (
     <div className="space-y-6">
+      <BalancesCard />
       <PartnersCard />
       <Card className="p-0">
         <div className="flex flex-wrap items-center justify-between gap-3 px-5 pt-5">
@@ -46,6 +50,56 @@ export function PartnersTab() {
       </Card>
       {wizard && <DistributionWizard onClose={() => setWizard(false)} />}
     </div>
+  );
+}
+
+/**
+ * Where the profit stands, from the start: realized by approved receipts, plus the company's own
+ * net, less what approved distributions settled. What remains is still to distribute.
+ */
+function BalancesCard() {
+  const b = useQuery(balancesQuery).data;
+  if (!b) return null;
+  return (
+    <Card className="space-y-4" aria-label="أرصدة الأرباح">
+      <div>
+        <h2 className="font-semibold">أرصدة الأرباح</h2>
+        <p className="text-xs text-muted">
+          الربح يتحقق بقدر ما استُلم من العقد (نصف الدفع = نصف الربح)، ثم يُضاف صافي الشركة خارج
+          المشاريع. ما اعتُمد توزيعه يُخصم مرة واحدة فقط، والضريبة المحصّلة أمانة للهيئة لا تدخل الربح.
+        </p>
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <Tile title="ربح متحقق من المشاريع" value={sar(b.realized)} sub="بالاستلامات المعتمدة" />
+        <Tile
+          title="صافي الشركة"
+          value={sar(b.companyNet)}
+          sub="إيراداتها − مصروفاتها خارج المشاريع"
+        />
+        <Tile
+          title="وُزّع واحتُجز"
+          value={sar(b.distributed + b.retained)}
+          sub={`للشركاء ${sar(b.distributed)} · محتجز ${sar(b.retained)}`}
+        />
+        <Tile
+          title="أرباح غير موزّعة"
+          value={sar(b.undistributed)}
+          tone={b.undistributed > 0 ? "good" : undefined}
+          sub="جاهزة للتوزيع أو الاحتجاز"
+        />
+      </div>
+      {(b.retained > 0 || b.approvedUnpaid > 0) && (
+        <p className="text-sm text-muted">
+          {b.retained > 0 &&
+            `المحتجز: احتياطي ${sar(b.retainedBy.reserve)} · تشغيل ${sar(b.retainedBy.ops)} · تطوير ${sar(b.retainedBy.dev)}. `}
+          {b.approvedUnpaid > 0 && (
+            <b className="text-amber-700 dark:text-amber-300">
+              معتمد ولم يُدفع للشركاء بعد: {sar(b.approvedUnpaid)}
+            </b>
+          )}
+        </p>
+      )}
+    </Card>
   );
 }
 
@@ -213,9 +267,11 @@ function Distributions() {
             <span>
               <span className="font-medium">{d.periodLabel || "توزيع"}</span>
               <span className="block text-xs text-muted">
-                {d.status === "completed"
-                  ? `اعتُمد ${fromEpoch(d.completedAt)}`
-                  : `مسودة · ${fromEpoch(d.createdAt)}`}
+                {d.paidOn
+                  ? `دُفع ${day(d.paidOn)}`
+                  : d.status === "completed"
+                    ? `اعتُمد ${fromEpoch(d.completedAt)}`
+                    : `مسودة · ${fromEpoch(d.createdAt)}`}
               </span>
             </span>
             <span className="flex items-center gap-3">
@@ -228,8 +284,8 @@ function Distributions() {
                   </span>
                 )}
               </span>
-              <Badge tone={d.status === "completed" ? "green" : "amber"}>
-                {d.status === "completed" ? "معتمد" : "مسودة"}
+              <Badge tone={d.paidOn ? "green" : d.status === "completed" ? "blue" : "amber"}>
+                {d.paidOn ? "مدفوع" : d.status === "completed" ? "معتمد" : "مسودة"}
               </Badge>
             </span>
           </button>
@@ -237,6 +293,36 @@ function Distributions() {
         </li>
       ))}
     </ul>
+  );
+}
+
+/** Approved, then actually paid: the day the transfers went out (and their reference). */
+function PayDistribution({ d, onChanged }: { d: Distribution; onChanged: () => void }) {
+  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const [ref, setRef] = useState("");
+  return (
+    <div className="mt-3 flex flex-wrap items-end gap-2 border-t pt-3">
+      <Field label="تاريخ الدفع للشركاء">
+        <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+      </Field>
+      <Field label="مرجع التحويل (اختياري)">
+        <Input dir="ltr" value={ref} onChange={(e) => setRef(e.target.value)} />
+      </Field>
+      <Button
+        variant="secondary"
+        onClick={async () => {
+          try {
+            await companyApi.payDistribution(d.id, { date, ref });
+            toast("سُجّل دفع التوزيع");
+            onChanged();
+          } catch {
+            toast("تعذّر التسجيل", "error");
+          }
+        }}
+      >
+        تسجيل الدفع
+      </Button>
+    </div>
   );
 }
 
@@ -257,6 +343,7 @@ function DistributionDetail({ d, onChanged }: { d: Distribution; onChanged: () =
           </li>
         ))}
       </ul>
+      {d.status === "completed" && !d.paidOn && <PayDistribution d={d} onChanged={onChanged} />}
       {d.status === "draft" && (
         <div className="mt-3 flex gap-2">
           <Button
@@ -319,6 +406,15 @@ export function DistributionWizard({
   const [projectId, setProjectId] = useState("");
   const [pct, setPct] = useState(100);
   const [retainedCategory, setRetained] = useState<"ops" | "dev" | "reserve">("reserve");
+  // Starts from the organisation's defaults («الإعدادات ← المالية»).
+  const defaults = useQuery(orgSettingsQuery).data?.distributionDefaults;
+  const seeded = useRef(false);
+  useEffect(() => {
+    if (!defaults || seeded.current) return;
+    seeded.current = true;
+    setPct(defaults.pct);
+    setRetained(defaults.retainedCategory);
+  }, [defaults]);
   const [preview, setPreview] = useState<Preview | null>(null);
   const [err, setErr] = useState("");
   const o = useQuery(companyOverviewQuery({}));

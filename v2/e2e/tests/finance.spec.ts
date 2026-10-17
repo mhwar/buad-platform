@@ -216,3 +216,13 @@ test("VAT: the year by quarter, a sent invoice moves output VAT, a company purch
   await expect(page.getByRole("status").filter({ hasText: "سُجّل المشترى بفاتورته" })).toBeVisible();
   await expect(page.getByRole("cell", { name: "الشركة" }).first()).toBeVisible();
 });
+
+test("profit: balances say what was realized, settled and is still to distribute", async ({
+  page,
+}) => {
+  await page.goto("/finance?tab=profit");
+  const card = page.getByLabel("أرصدة الأرباح");
+  await expect(card).toBeVisible();
+  for (const t of ["ربح متحقق من المشاريع", "صافي الشركة", "أرباح غير موزّعة"])
+    await expect(card.getByText(t, { exact: true })).toBeVisible();
+});

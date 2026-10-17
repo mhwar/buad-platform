@@ -7,6 +7,7 @@ import {
   fromRiyals,
   type ProjectProfitLite,
   periodLabel,
+  profitBalances,
   QUARTER_NAMES,
   quarterDistributable,
   quarterLabelOf,
@@ -215,10 +216,25 @@ async function computeDistribution(
     perProject = net > 0 ? [{ projectId: p.id, amount: net }] : [];
     label ||= `أرباح مشروع: ${p.name}`;
   } else {
-    const d = distributable(figs, entries, dists.map(distLite));
-    net = d.available;
-    grossIncome = d.income;
-    grossExpenses = d.companyExpenses;
+    // Everything realized and not yet settled, project by project, plus the company's own net
+    // that earlier distributions have not covered yet. The same money is never distributed twice.
+    const receipts = await orgReceipts(db, orgId);
+    const paid = await distributedByProject(db, orgId);
+    for (const p of figs) {
+      if (p.status === "cancelled") continue;
+      const left =
+        realizedProfit(p.profit, p.gross, receivedUpTo(receipts, p.id)) - (paid[p.id] ?? 0);
+      if (left > 0) perProject.push({ projectId: p.id, amount: Math.round(left * 100) / 100 });
+    }
+    const projectsPart = perProject.reduce((a, x) => a + x.amount, 0);
+    const company = companyCalc([], entries);
+    const done = dists.filter((d) => d.status === "completed");
+    const coveredByProjects = Object.values(paid).reduce((a, x) => a + x, 0);
+    const companyCovered = done.reduce((a, d) => a + riyals(d.netProfit), 0) - coveredByProjects;
+    const companyLeft = company.serviceIncome - company.companyExpenses - companyCovered;
+    net = projectsPart + companyLeft;
+    grossIncome = projectsPart + company.serviceIncome;
+    grossExpenses = company.companyExpenses + companyCovered;
     label ||= periodLabel(input.periodType, input.from, input.to);
   }
   const netH = Math.max(0, fromRiyals(net));
@@ -260,6 +276,7 @@ const viewDistribution = (
   note: d.note,
   createdAt: d.createdAt,
   completedAt: d.completedAt,
+  paidOn: d.paidOn,
   shares: shares
     .filter((s) => s.distributionId === d.id)
     .map((s) => ({
@@ -267,6 +284,8 @@ const viewDistribution = (
       partnerName: s.partnerName,
       sharePct: s.sharePct,
       amount: riyals(s.amount),
+      paidOn: s.paidOn,
+      paidRef: s.paidRef,
     })),
 });
 
@@ -493,6 +512,86 @@ export const companyFinanceApp = new Hono<Env>()
       .returning({ id: companyEntries.id });
     return upd.length ? c.json({ ok: true }) : c.json({ ok: false, error: "not_found" }, 404);
   })
+
+  // ── Where the profit stands: realized − settled = undistributed ────────────────────
+  .get("/balances", async (c) => {
+    const db = c.get("db");
+    const orgId = c.get("user").orgId;
+    const figs = await projectFigures(db, orgId);
+    const receipts = await orgReceipts(db, orgId);
+    const company = companyCalc([], (await liveEntries(db, orgId)).map(lite));
+    const done = (
+      await db
+        .select()
+        .from(distributions)
+        .where(and(eq(distributions.orgId, orgId), eq(distributions.status, "completed")))
+    ).map(distLite);
+    const b = profitBalances({
+      projects: figs,
+      receipts,
+      companyIncome: company.serviceIncome,
+      companyExpenses: company.companyExpenses,
+      settled: done.map((d) => ({
+        netProfit: d.distributed + d.retained,
+        distributed: d.distributed,
+        retained: d.retained,
+      })),
+    });
+    const unpaid = (
+      await db
+        .select({ amount: distributions.distributedAmount })
+        .from(distributions)
+        .where(
+          and(
+            eq(distributions.orgId, orgId),
+            eq(distributions.status, "completed"),
+            eq(distributions.paidOn, ""),
+          ),
+        )
+    ).reduce((a, x) => a + riyals(x.amount), 0);
+    return c.json({
+      ok: true,
+      ...b,
+      retainedBy: retainedTotals(done),
+      /** Approved distributions not paid to the partners yet. */
+      approvedUnpaid: Math.round(unpaid * 100) / 100,
+    });
+  })
+
+  // An approved distribution paid out: the date (and a reference) for every partner.
+  .post(
+    "/distributions/:id/pay",
+    zValidator(
+      "json",
+      z.object({
+        date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+        ref: z.string().trim().max(120).default(""),
+      }),
+    ),
+    async (c) => {
+      const db = c.get("db");
+      const me = c.get("user");
+      const v = c.req.valid("json");
+      const [d] = await db
+        .select()
+        .from(distributions)
+        .where(and(eq(distributions.id, c.req.param("id")), eq(distributions.orgId, me.orgId)))
+        .limit(1);
+      if (!d) return c.json({ ok: false, error: "not_found" }, 404);
+      if (d.status !== "completed") return c.json({ ok: false, error: "not_approved" }, 409);
+      await atomic(db, [
+        db
+          .update(distributions)
+          .set({ paidOn: v.date, paidBy: me.id, updatedBy: me.id, updatedAt: nowSec() })
+          .where(eq(distributions.id, d.id)),
+        db
+          .update(distributionShares)
+          .set({ paidOn: v.date, paidRef: v.ref })
+          .where(eq(distributionShares.distributionId, d.id)),
+      ]);
+      return c.json({ ok: true });
+    },
+  )
 
   // ── Partners ─────────────────────────────────────────────────────────────
   .get("/partners", async (c) => {
