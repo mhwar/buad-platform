@@ -18,6 +18,8 @@ export type ProjectListItem = {
   /** Contract total incl. VAT (halalas), from finance when set up. */
   contractTotal: number;
   archivedAt: number | null;
+  /** Financially closed: no new entries until reopened. */
+  closedAt?: number | null;
   clientId: string;
   clientName: string;
   clientCode: string;

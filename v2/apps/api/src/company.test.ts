@@ -363,3 +363,33 @@ describe("profit balances and paying a distribution", () => {
     expect(pay.status).toBe(409);
   });
 });
+
+describe("a past distribution by its actual amount", () => {
+  it("is saved approved and paid, split by shares, and lowers what is still to distribute", async () => {
+    await setupProject();
+    for (const [name, pct] of [
+      ["أ", 60],
+      ["ب", 40],
+    ] as const)
+      await call("adm", "POST", `${C}/partners`, { name, sharePct: pct });
+    await call("adm", "POST", `${F()}/receipts`, { date: "2026-02-10", amount: 115000 });
+    const before = (await call("adm", "GET", `${C}/balances`)).body.undistributed;
+    const saved = await call("adm", "POST", `${C}/distributions`, {
+      mode: "manual",
+      year: 2026,
+      q: 1,
+      amount: 5000,
+      paidOn: "2026-04-05",
+      paidRef: "TR-1",
+      status: "draft", // ignored: a past distribution is recorded as it happened
+    });
+    expect(saved.status).toBe(201);
+    const d = (await call("adm", "GET", `${C}/distributions`)).body.items[0];
+    expect(d).toMatchObject({ status: "completed", paidOn: "2026-04-05", distributed: 5000 });
+    expect(d.shares.map((s: J) => s.amount)).toEqual([3000, 2000]);
+    expect(d.shares[0].paidRef).toBe("TR-1");
+    const after = (await call("adm", "GET", `${C}/balances`)).body.undistributed;
+    expect(after).toBeCloseTo(before - 5000, 2);
+    expect((await call("adm", "GET", `${C}/balances`)).body.approvedUnpaid).toBe(0);
+  });
+});

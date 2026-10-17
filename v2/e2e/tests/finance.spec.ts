@@ -251,3 +251,32 @@ test("closing a project: final review, then its money records are locked until r
   await expect(page.getByRole("button", { name: "قيد جديد" })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "تسجيل مقبوض" })).toHaveCount(0);
 });
+
+test("a purchase invoice from «+» goes into the project's entries and the VAT return", async ({
+  page,
+  api,
+}) => {
+  const c = await api<{ id: string }>("POST", "/api/clients", { name: `جمعية المشتريات ${uid()}` });
+  const name = `مشروع المشتريات ${uid()}`;
+  const p = await api<{ id: string; number: string }>("POST", "/api/projects", {
+    clientId: c.id,
+    name,
+    status: "active",
+  });
+  const desc = `أدوات ${uid()}`;
+  await page.goto("/");
+  await page.getByRole("button", { name: "إنشاء جديد" }).first().click();
+  await page.getByRole("menuitem", { name: "فاتورة مشتريات / مصروف" }).click();
+  const dlg = page.getByRole("dialog");
+  await dlg.getByLabel("على أي مشروع؟").selectOption(p.id);
+  await dlg.getByLabel("البيان").fill(desc);
+  await dlg.getByLabel("التاريخ").fill(`${year}-06-15`);
+  await dlg.getByLabel("المبلغ شامل الضريبة (ر.س)").fill("1150");
+  await dlg.getByLabel("له فاتورة ضريبية").check();
+  await dlg.getByLabel("اسم المورد").fill("مورد الأدوات");
+  await dlg.getByRole("button", { name: "حفظ" }).click();
+  await expect(page.getByRole("status").filter({ hasText: "دخلت ضريبتها" })).toBeVisible();
+
+  await page.goto(`/finance?tab=vat&year=${year}&q=2`);
+  await expect(page.getByText(desc)).toBeVisible();
+});

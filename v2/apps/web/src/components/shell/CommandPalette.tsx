@@ -32,6 +32,7 @@ import { CREATE_ITEMS, type CreateKind, requestCreate } from "./QuickCreate";
 
 const CREATE_LABEL: Record<CreateKind, string> = {
   receipt: "تسجيل مقبوض",
+  purchase: "فاتورة مشتريات أو مصروف",
   opportunity: "فرصة جديدة",
   client: "عميل جديد",
   project: "مشروع جديد",

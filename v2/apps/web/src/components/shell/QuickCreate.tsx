@@ -7,12 +7,14 @@ import {
   Gavel,
   ListChecks,
   Plus,
+  Receipt,
   ShoppingCart,
   Users,
   Wallet,
 } from "lucide-react";
 import { type ComponentType, useEffect, useState } from "react";
 import { ClientDialog } from "../../features/clients/ClientDialog";
+import { PurchaseDialog } from "../../features/finance/PurchaseDialog";
 import { ProjectDialog } from "../../features/projects/ProjectDialog";
 import { ReceiptFlow } from "../../features/receivables/ReceiptFlow";
 import { NewOpportunityDialog } from "../../features/sales/NewOpportunityDialog";
@@ -24,6 +26,7 @@ import { cx } from "../ui";
 
 export type CreateKind =
   | "receipt"
+  | "purchase"
   | "client"
   | "opportunity"
   | "project"
@@ -38,6 +41,7 @@ export const CREATE_ITEMS: {
   perm: string;
 }[] = [
   { kind: "receipt", label: "تسجيل مقبوض", icon: Wallet, perm: "finance.edit" },
+  { kind: "purchase", label: "فاتورة مشتريات / مصروف", icon: Receipt, perm: "finance.edit" },
   { kind: "opportunity", label: "فرصة بيع", icon: ShoppingCart, perm: "sales.edit" },
   { kind: "client", label: "عميل", icon: Users, perm: "clients.edit" },
   { kind: "project", label: "مشروع", icon: Briefcase, perm: "projects.edit" },
@@ -136,6 +140,7 @@ export function QuickCreate({
       )}
       {open === "decision" && <DecisionDialog onClose={() => setOpen(null)} />}
       {open === "receipt" && <ReceiptFlow onClose={() => setOpen(null)} />}
+      {open === "purchase" && <PurchaseDialog onClose={() => setOpen(null)} />}
     </>
   );
 }
