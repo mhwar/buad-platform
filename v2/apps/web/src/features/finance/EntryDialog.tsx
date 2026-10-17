@@ -74,6 +74,7 @@ export function EntryDialog({
         profitMarginType: existing.profitMarginType,
         status: existing.status,
         note: existing.note,
+        cfKind: existing.cfKind ?? "",
       }
     : {
         date: today(),
@@ -85,6 +86,7 @@ export function EntryDialog({
         profitMarginType: "pct",
         status: "",
         note: "",
+        cfKind: "",
       };
   const f = useForm<Form>({ resolver: zodResolver(entryInput), values: defaults });
   const [hasProfit, setHasProfit] = useState(!!existing?.profitMargin);
@@ -308,6 +310,18 @@ export function EntryDialog({
                 )}
               </Select>
             </Field>
+            {f.watch("cat") === "cf" && (
+              <Field
+                label="ما هذا البند؟"
+                hint="ضريبة العقد المحجوزة للهيئة تظهر في صفحة الضريبة، ولا تُعدّ تكلفة"
+              >
+                <Select {...f.register("cfKind")}>
+                  <option value="">لم يُحدد بعد</option>
+                  <option value="vat">ضريبة العقد المحجوزة للهيئة</option>
+                  <option value="fee">رسوم فعلية (منصات، تحويلات…)</option>
+                </Select>
+              </Field>
+            )}
             <Field label="المبلغ (ر.س) *" error={e.amount ? msg.amount_positive : undefined}>
               <Input
                 type="number"

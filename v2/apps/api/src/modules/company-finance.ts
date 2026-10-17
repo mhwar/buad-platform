@@ -40,7 +40,7 @@ import { z } from "zod";
 import { requireAuth, requireRW, type Vars } from "../auth/middleware";
 import type { Db } from "../auth/service";
 import { atomic, newId, nowSec } from "./common";
-import { loadFinance } from "./finance";
+import { loadFinance, loadVatRate, taxInvoiceColumns } from "./finance";
 import { projectDate } from "./finance-overview";
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -432,6 +432,9 @@ export const companyFinanceApp = new Hono<Env>()
       description: v.description,
       amount: fromRiyals(v.amount),
       note: v.note,
+      ...(v.type === "expense"
+        ? taxInvoiceColumns(v.taxInvoice, fromRiyals(v.amount), await loadVatRate(db, me.orgId))
+        : {}),
       createdBy: me.id,
       createdAt: t,
       updatedBy: me.id,
@@ -453,6 +456,14 @@ export const companyFinanceApp = new Hono<Env>()
         description: v.description,
         amount: fromRiyals(v.amount),
         note: v.note,
+        // Left out = unchanged; null = no invoice any more.
+        ...(v.taxInvoice !== undefined
+          ? taxInvoiceColumns(
+              v.type === "expense" ? v.taxInvoice : null,
+              fromRiyals(v.amount),
+              await loadVatRate(db, me.orgId),
+            )
+          : {}),
         updatedBy: me.id,
         updatedAt: nowSec(),
       })

@@ -25,7 +25,13 @@ export const orgProfilePatch = z
   .partial()
   .extend({ version: z.number().int().min(0) });
 export type OrgProfilePatch = z.input<typeof orgProfilePatch>;
-export const ASSET_MIME = ["image/png", "image/jpeg", "image/webp", "image/svg+xml"] as const;
+export const ASSET_MIME = [
+  "image/png",
+  "image/jpeg",
+  "image/webp",
+  "image/svg+xml",
+  "application/pdf",
+] as const;
 export const MAX_ASSET_BYTES = 2 * 1024 * 1024;
 
 /* ── Organisation settings (org_settings) ─────────────────────────────────────── */

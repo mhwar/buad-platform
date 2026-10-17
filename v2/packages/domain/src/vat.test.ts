@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { invoiceGaps, receiptParts, vatOfGrossHalalas, vatReturn } from "./vat";
+import {
+  filingDueDate,
+  invoiceGaps,
+  receiptParts,
+  vatInsideHalalas,
+  vatOfGrossHalalas,
+  vatPeriodKey,
+  vatReturn,
+} from "./vat";
 
 describe("VAT", () => {
   it("extracts the VAT from a price that includes it, to the halala", () => {
@@ -41,5 +49,15 @@ describe("VAT", () => {
     expect(
       invoiceGaps({ supplierName: "", supplierVatNo: "123", invoiceNo: "", invoiceDate: "" }),
     ).toEqual(["supplier", "vat_no", "invoice_no", "invoice_date"]);
+  });
+});
+
+describe("filing dates", () => {
+  it("are the last day of the month after the quarter", () => {
+    expect(filingDueDate(2026, 1)).toBe("2026-04-30");
+    expect(filingDueDate(2026, 3)).toBe("2026-10-31");
+    expect(filingDueDate(2026, 4)).toBe("2027-01-31");
+    expect(vatPeriodKey(2026, 2)).toBe("2026-Q2");
+    expect(vatInsideHalalas(11500, 15)).toBe(1500);
   });
 });

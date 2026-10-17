@@ -17,10 +17,12 @@ export type FileStore = {
 };
 type Env = { Bindings: { JWT_SECRET: string; FILES?: FileStore }; Variables: Vars };
 
-/** The bytes must really be the image type claimed (never trust the browser's label). */
+/** The bytes must really be the type claimed (never trust the browser's label). */
 export function sniffImage(b: Uint8Array): (typeof ASSET_MIME)[number] | null {
   if (b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4e && b[3] === 0x47) return "image/png";
   if (b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff) return "image/jpeg";
+  // A tax invoice as sent to a client is usually a PDF.
+  if (String.fromCharCode(...b.slice(0, 5)) === "%PDF-") return "application/pdf";
   if (
     String.fromCharCode(...b.slice(0, 4)) === "RIFF" &&
     String.fromCharCode(...b.slice(8, 12)) === "WEBP"

@@ -60,3 +60,22 @@ export function invoiceGaps(p: {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(p.invoiceDate)) gaps.push("invoice_date");
   return gaps;
 }
+
+/** "2026-Q3": the key of a quarter's VAT return. */
+export const vatPeriodKey = (year: number, q: number) => `${year}-Q${q}`;
+
+/**
+ * When a quarter's return is due: filed and paid by the last day of the month after the
+ * quarter (ZATCA, quarterly filers). Q4 falls in January of the next year.
+ */
+export function filingDueDate(year: number, q: number): string {
+  const month = q * 3 + 1; // 1-based month after the quarter
+  const y = month > 12 ? year + 1 : year;
+  const m = month > 12 ? month - 12 : month;
+  const last = new Date(Date.UTC(y, m, 0)).getUTCDate();
+  return `${y}-${String(m).padStart(2, "0")}-${String(last).padStart(2, "0")}`;
+}
+
+/** The VAT inside an amount that includes it, in halalas (e.g. 15% → 15/115 of it). */
+export const vatInsideHalalas = (grossHalalas: number, ratePct: number) =>
+  Math.round((grossHalalas * ratePct) / (100 + ratePct));
