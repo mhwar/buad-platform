@@ -57,7 +57,11 @@ export async function loadVatRate(db: Db, orgId: string) {
 
 type TaxInvoice = NonNullable<z.output<typeof taxInvoiceInput>>;
 /** The columns that hold an entry's tax invoice (all cleared when there is none). */
-function taxInvoiceColumns(ti: TaxInvoice | null | undefined, amountHalalas: number, rate: number) {
+export function taxInvoiceColumns(
+  ti: TaxInvoice | null | undefined,
+  amountHalalas: number,
+  rate: number,
+) {
   if (!ti)
     return {
       taxInvoice: false,

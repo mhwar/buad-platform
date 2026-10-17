@@ -87,6 +87,8 @@ const entryFields = {
   profitMarginType: z.enum(FEE_TYPES),
   status: z.enum(ENTRY_STATUSES),
   note: z.string().trim().max(2000),
+  /** «cf» entries: the contract's VAT held for ZATCA ("vat") or a real fee ("fee"). */
+  cfKind: z.enum(["", "vat", "fee"]),
 };
 export const entryInput = z.object({
   ...entryFields,
@@ -96,6 +98,7 @@ export const entryInput = z.object({
   profitMarginType: entryFields.profitMarginType.default("pct"),
   status: entryFields.status.default(""),
   note: entryFields.note.default(""),
+  cfKind: entryFields.cfKind.default(""),
   /** null/absent = no tax invoice. */
   taxInvoice: taxInvoiceInput.nullable().optional(),
 });

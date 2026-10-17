@@ -190,3 +190,103 @@ describe("الضريبة", () => {
     expect((await call("adm", "GET", `${V}/report`)).status).toBe(400);
   });
 });
+
+describe("the VAT year", () => {
+  const setup = async () => {
+    await call("adm", "PATCH", `${F()}/ctrl`, {
+      version: 0,
+      contractValue: 115000,
+      vatIncluded: true,
+    });
+    await call("adm", "POST", `${F()}/receipts`, { date: "2026-08-20", amount: 57500 });
+  };
+
+  it("takes output VAT from the tax invoices issued, by their date, once a project has one", async () => {
+    await setup();
+    let q3 = (await call("adm", "GET", `${V}/report?year=2026&q=3`)).body;
+    expect(q3.sales.rows[0]).toMatchObject({ source: "receipt", vat: 7500 });
+    expect(q3.warnings.map((w: J) => w.code)).toContain("sales_without_invoice");
+    // The invoice was issued in October: its VAT moves to Q4.
+    const inv = await call("adm", "POST", `${V}/invoices`, {
+      projectId: pid,
+      number: "S-1",
+      date: "2026-10-02",
+      amount: 57500,
+    });
+    expect(inv.status).toBe(201);
+    q3 = (await call("adm", "GET", `${V}/report?year=2026&q=3`)).body;
+    expect(q3.sales.rows).toHaveLength(0);
+    const q4 = (await call("adm", "GET", `${V}/report?year=2026&q=4`)).body;
+    expect(q4.sales.rows[0]).toMatchObject({ source: "invoice", invoiceNo: "S-1", vat: 7500 });
+    const year = (await call("adm", "GET", `${V}/report?year=2026`)).body;
+    expect(year.period.label).toBe("سنة 2026");
+    expect(year.outputVat).toBe(7500);
+  });
+
+  it("counts the company's own purchases with a tax invoice as input VAT", async () => {
+    await setup();
+    const add = await call("adm", "POST", "/api/finance/company/entries", {
+      type: "expense",
+      category: "asset",
+      date: "2026-08-25",
+      description: "حاسب محمول",
+      amount: 4600,
+      taxInvoice: { supplierName: "متجر", supplierVatNo: "300000000000003", invoiceNo: "A-9" },
+    });
+    expect(add.status).toBe(201);
+    const q3 = (await call("adm", "GET", `${V}/report?year=2026&q=3`)).body;
+    expect(q3.purchases.rows[0]).toMatchObject({ owner: "company", vat: 600 });
+    expect(q3.inputVat).toBe(600);
+  });
+
+  it("records a quarter filed and paid, and sums the year", async () => {
+    await setup();
+    const put = await call("adm", "PUT", `${V}/filings/2026-Q3`, {
+      status: "paid",
+      filedOn: "2026-10-20",
+      paidOn: "2026-10-25",
+      paidAmount: 7500,
+      reference: "ZATCA-1",
+    });
+    expect(put.status).toBe(200);
+    const y = (await call("adm", "GET", `${V}/year?year=2026`)).body;
+    const q3 = y.quarters.find((q: J) => q.q === 3);
+    expect(q3).toMatchObject({ outputVat: 7500, dueDate: "2026-10-31" });
+    expect(q3.filing).toMatchObject({ status: "paid", paidAmount: 7500, net: 7500 });
+    expect(y.totals).toMatchObject({ netPayable: 7500, paid: 7500, balance: 0 });
+    expect((await call("adm", "PUT", `${V}/filings/2026-Q5`, { status: "open" })).status).toBe(400);
+  });
+
+  it("moves tax paid booked as a project expense to its return, and cf marked VAT is shown as held", async () => {
+    await setup();
+    await call(
+      "adm",
+      "POST",
+      `${F()}/entries`,
+      ent({ cat: "vat", description: "سداد ضريبة", amount: 3000 }),
+    );
+    await call(
+      "adm",
+      "POST",
+      `${F()}/entries`,
+      ent({ cat: "cf", description: "ضريبة العقد", amount: 7500, cfKind: "vat" }),
+    );
+    let q3 = (await call("adm", "GET", `${V}/report?year=2026&q=3`)).body;
+    expect(q3.warnings.map((w: J) => w.code)).toContain("vat_as_expense");
+    expect(q3.reserved).toBe(7500);
+    const fin = (await call("adm", "GET", F())).body;
+    const vatEntry = fin.entries.find((e: J) => e.cat === "vat");
+    const conv = await call("adm", "POST", `${V}/convert-entry`, {
+      projectId: pid,
+      entryId: vatEntry.id,
+      periodKey: "2026-Q2",
+    });
+    expect(conv.status).toBe(200);
+    q3 = (await call("adm", "GET", `${V}/report?year=2026&q=3`)).body;
+    expect(q3.warnings.map((w: J) => w.code)).not.toContain("vat_as_expense");
+    const y = (await call("adm", "GET", `${V}/year?year=2026`)).body;
+    expect(y.quarters[1].filing).toMatchObject({ status: "paid", paidAmount: 3000 });
+    const after = (await call("adm", "GET", F())).body.entries.find((e: J) => e.id === vatEntry.id);
+    expect(after.status).toBe("cancelled");
+  });
+});

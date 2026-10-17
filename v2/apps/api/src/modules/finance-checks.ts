@@ -115,6 +115,25 @@ export async function financeChecks(db: Db, orgId: string): Promise<Check[]> {
     rows: entryRows(vatPaid),
   });
 
+  const cfOpen = await db
+    .select(entryCols)
+    .from(financeEntries)
+    .innerJoin(projects, eq(projects.id, financeEntries.projectId))
+    .where(
+      and(
+        live,
+        eq(financeEntries.cat, "cf"),
+        eq(financeEntries.cfKind, ""),
+        ne(financeEntries.status, "cancelled"),
+      ),
+    );
+  checks.push({
+    key: "cf_undecided",
+    title: "بنود «الرسوم الإضافية» تنتظر تحديد نوعها",
+    hint: "افتحوا القيد واختاروا: ضريبة العقد المحجوزة للهيئة، أم رسوم فعلية. يظهر ما يُعلَّم ضريبة في صفحة الضريبة.",
+    rows: entryRows(cfOpen),
+  });
+
   const noInvoice = await db
     .select(entryCols)
     .from(financeEntries)

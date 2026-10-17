@@ -43,6 +43,10 @@ export const COMPANY_EXPENSE_CATS = [
   "tools",
   "legal",
   "other",
+  "asset",
+  "purchase",
+  "zakat",
+  "gov_fees",
 ] as const;
 export const RETAINED_CATS = ["ops", "dev", "reserve"] as const;
 export const DISTRIBUTION_STATUSES = ["draft", "completed"] as const;

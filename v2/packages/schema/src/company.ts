@@ -17,6 +17,17 @@ export const companyEntryInput = z
     description: z.string().trim().min(1).max(300),
     amount: money,
     note: z.string().trim().max(2000).default(""),
+    /** A purchase with a tax invoice: its VAT is claimed in the VAT return. */
+    taxInvoice: z
+      .object({
+        vatAmount: z.coerce.number().min(0).max(1e10).optional(),
+        supplierName: z.string().trim().max(200).default(""),
+        supplierVatNo: z.string().trim().max(20).default(""),
+        invoiceNo: z.string().trim().max(60).default(""),
+        invoiceDate: date,
+      })
+      .nullable()
+      .optional(),
   })
   .refine(
     (v) =>
@@ -63,6 +74,10 @@ export const COMPANY_CAT_LABELS: Record<string, string> = {
   payroll: "رواتب وأجور",
   tools: "خدمات وأدوات",
   legal: "قانونية وإدارية",
+  asset: "أصل رأسمالي (أجهزة، أثاث…)",
+  purchase: "مشتريات عامة",
+  zakat: "زكاة",
+  gov_fees: "رسوم حكومية",
   other: "أخرى",
 };
 export const RETAINED_LABELS: Record<string, string> = {

@@ -274,6 +274,8 @@ export const financeEntries = sqliteTable(
     supplierVatNo: text("supplier_vat_no").notNull().default(""),
     invoiceNo: text("invoice_no").notNull().default(""),
     invoiceDate: text("invoice_date").notNull().default(""),
+    /** For «cf» entries: "vat" (the contract's VAT, held for ZATCA), "fee" (a real fee), "" = not yet said. */
+    cfKind: text("cf_kind").notNull().default(""),
     /** "agreement" = registered from the contract («من الاتفاقية»). */
     source: text("source", { enum: ["manual", "agreement"] })
       .notNull()
@@ -484,6 +486,13 @@ export const companyEntries = sqliteTable(
     description: text("description").notNull(),
     amount: integer("amount_halalas").notNull(),
     note: text("note").notNull().default(""),
+    /** A purchase with a tax invoice (same fields as a project entry's): its VAT is claimable. */
+    taxInvoice: integer("tax_invoice", { mode: "boolean" }).notNull().default(false),
+    vatAmount: integer("vat_amount_halalas").notNull().default(0),
+    supplierName: text("supplier_name").notNull().default(""),
+    supplierVatNo: text("supplier_vat_no").notNull().default(""),
+    invoiceNo: text("invoice_no").notNull().default(""),
+    invoiceDate: text("invoice_date").notNull().default(""),
     ...audit,
   },
   (t) => [index("idx_company_entries_org").on(t.orgId, t.type, t.date)],
@@ -1178,4 +1187,60 @@ export const orgSettings = sqliteTable(
     updatedAt: integer("updated_at").notNull().default(now),
   },
   (t) => [primaryKey({ columns: [t.orgId, t.key] })],
+);
+
+/**
+ * Tax invoices issued to clients: their date decides the quarter of the output VAT. A project with
+ * none falls back to its approved receipts (flagged), so nothing goes missing meanwhile.
+ */
+export const salesInvoices = sqliteTable(
+  "sales_invoices",
+  {
+    id: text("id").primaryKey(),
+    orgId: text("org_id")
+      .notNull()
+      .references(() => orgs.id),
+    projectId: text("project_id")
+      .notNull()
+      .references(() => projects.id),
+    /** The receipt it was paid by, if known. */
+    receiptId: text("receipt_id").notNull().default(""),
+    number: text("number").notNull().default(""),
+    date: text("date").notNull(),
+    /** With VAT. */
+    amount: integer("amount_halalas").notNull(),
+    vat: integer("vat_halalas").notNull(),
+    /** The invoice as sent (PDF or image), in assets. */
+    assetId: text("asset_id").notNull().default(""),
+    note: text("note").notNull().default(""),
+    ...audit,
+  },
+  (t) => [index("idx_sales_invoices_org").on(t.orgId, t.date)],
+);
+
+/** Each VAT period's return: filed, then paid to ZATCA. A settlement, never an expense. */
+export const vatFilings = sqliteTable(
+  "vat_filings",
+  {
+    id: text("id").primaryKey(),
+    orgId: text("org_id")
+      .notNull()
+      .references(() => orgs.id),
+    /** "2026-Q3". */
+    periodKey: text("period_key").notNull(),
+    status: text("status", { enum: ["open", "filed", "paid"] })
+      .notNull()
+      .default("open"),
+    /** The figures as filed (halalas), kept even if entries change later. */
+    outputVat: integer("output_vat_halalas").notNull().default(0),
+    inputVat: integer("input_vat_halalas").notNull().default(0),
+    net: integer("net_halalas").notNull().default(0),
+    filedOn: text("filed_on").notNull().default(""),
+    paidOn: text("paid_on").notNull().default(""),
+    paidAmount: integer("paid_amount_halalas").notNull().default(0),
+    reference: text("reference").notNull().default(""),
+    note: text("note").notNull().default(""),
+    ...audit,
+  },
+  (t) => [uniqueIndex("uq_vat_filings_period").on(t.orgId, t.periodKey)],
 );
