@@ -16,6 +16,7 @@ import { useState } from "react";
 import { createRoot } from "react-dom/client";
 import { confirmAction, type MenuItem } from "../../components/ui";
 import { type DocDetail, docApi, documentQuery } from "./api";
+import { confirmApprove } from "./approve";
 import { DocumentView, documentUrls } from "./DocumentView";
 import { downloadPdf, downloadWord, fileBase } from "./export";
 import { SendDialog } from "./SendDialog";
@@ -172,14 +173,7 @@ export function useDocumentActions(manager: boolean) {
                     hint: "يقفل المستند ويحفظ نسخة منه",
                     icon: <Check />,
                     onSelect: async () => {
-                      if (
-                        await confirmAction({
-                          title: "اعتماد المستند؟",
-                          text: "يُقفل عن التعديل وتُحفظ نسخة منه.",
-                          action: "اعتماد",
-                        })
-                      )
-                        status("approved");
+                      if (await confirmApprove(qc)) status("approved");
                     },
                   },
                 ]

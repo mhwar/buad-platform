@@ -1,58 +1,61 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link, Outlet } from "@tanstack/react-router";
-import { Building2, FileUp, History, KeyRound, Palette, ShieldCheck } from "lucide-react";
+import {
+  Building2,
+  FileUp,
+  History,
+  KeyRound,
+  Landmark,
+  LayoutGrid,
+  ShieldCheck,
+} from "lucide-react";
+import type { ComponentType } from "react";
+import { ScrollRow } from "../../components/ui";
 import { meQuery } from "../../session";
+import { sectionByKey, visibleTabs } from "../more/tabs";
 
-const ITEMS = [
-  { to: "/settings/org", label: "بيانات الجهة", hint: "الهوية والترويسة والختم", icon: Building2 },
-  {
-    to: "/settings/import",
-    label: "استيراد البيانات",
-    hint: "نقل العملاء والمشاريع من المنصة الحالية",
-    icon: FileUp,
-    perm: "import.run",
-  },
-  {
-    to: "/settings/team",
-    label: "الفريق والصلاحيات",
-    hint: "المستخدمون والأدوار وما يراه كل دور",
-    icon: ShieldCheck,
-    perm: "team.view",
-  },
-  {
-    to: "/settings/activity",
-    label: "سجل النشاط",
-    hint: "من غيّر ماذا ومتى",
-    icon: History,
-    perm: "audit.view",
-  },
-  { to: "/settings/appearance", label: "المظهر", hint: "نمط الألوان", icon: Palette },
-  { to: "/settings/account", label: "حسابي", hint: "كلمة المرور", icon: KeyRound },
-] as const;
+export const SETTINGS_ICONS: Record<string, ComponentType<{ className?: string }>> = {
+  overview: LayoutGrid,
+  org: Building2,
+  finance: Landmark,
+  team: ShieldCheck,
+  activity: History,
+  import: FileUp,
+  account: KeyRound,
+};
 
-/** «الإعدادات»: one home for organisation-wide options, each a sub-page. */
+/**
+ * «الإعدادات»: one home for organisation-wide options, each a sub-page. The pages are the
+ * settings section's tabs, so this strip (phones and tablets) and the sidebar list the same
+ * pages in the same order; on a wide screen the sidebar alone navigates.
+ */
 export function SettingsLayout() {
   const perms = useQuery(meQuery).data?.perms ?? [];
-  const items = ITEMS.filter((i) => !("perm" in i) || perms.includes(i.perm));
+  const section = sectionByKey("settings");
+  const items = section ? visibleTabs(section, perms) : [];
   const link =
-    "flex shrink-0 items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-muted transition hover:bg-brand-soft hover:text-ink";
+    "flex min-h-10 shrink-0 snap-start items-center gap-2 rounded-lg px-3 py-2 text-sm text-muted transition hover:bg-brand-soft hover:text-ink";
   const active = "bg-brand-soft font-semibold text-brand";
   return (
-    <div className="flex flex-col gap-6 xl:flex-row">
-      <nav
-        aria-label="الإعدادات"
-        className="flex gap-1 overflow-x-auto border-b pb-2 lg:hidden xl:sticky xl:top-20 xl:w-56 xl:shrink-0 xl:flex-col xl:self-start xl:border-b-0 xl:border-l xl:pb-0 xl:pl-4"
-      >
-        <p className="mb-2 hidden px-3 text-xs font-semibold text-muted xl:block">الإعدادات</p>
-        {items.map((i) => (
-          <Link key={i.to} to={i.to} className={link} activeProps={{ className: active }}>
-            <i.icon className="size-4 shrink-0" />
-            <span>
-              {i.label}
-              <span className="hidden text-xs font-normal text-muted xl:block">{i.hint}</span>
-            </span>
-          </Link>
-        ))}
+    <div className="flex flex-col gap-6">
+      <nav aria-label="الإعدادات" className="border-b pb-2 lg:hidden">
+        <ScrollRow className="flex gap-1">
+          {items.map((i) => {
+            const Icon = SETTINGS_ICONS[i.key] ?? Building2;
+            return (
+              <Link
+                key={i.key}
+                to={i.to}
+                className={link}
+                activeOptions={{ exact: i.key === "overview" }}
+                activeProps={{ className: active }}
+              >
+                <Icon className="size-4 shrink-0" />
+                {i.label}
+              </Link>
+            );
+          })}
+        </ScrollRow>
       </nav>
       <div className="min-w-0 flex-1">
         <Outlet />

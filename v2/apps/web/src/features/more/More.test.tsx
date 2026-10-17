@@ -65,10 +65,7 @@ describe("MoreIndex", () => {
     const planning = await screen.findByRole("link", { name: /التخطيط/ });
     expect(planning).toHaveAttribute("href", "/plans");
     expect(within(planning).getByText(/ما نقدّمه من خدمات/)).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /الإعدادات/ })).toHaveAttribute(
-      "href",
-      "/settings/org",
-    );
+    expect(screen.getByRole("link", { name: /الإعدادات/ })).toHaveAttribute("href", "/settings");
     expect(screen.queryByRole("button", { name: /المظهر/ })).toBeNull();
   });
 });

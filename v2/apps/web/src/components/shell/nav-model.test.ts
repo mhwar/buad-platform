@@ -32,7 +32,7 @@ describe("buildNav", () => {
       "receivables",
     ]);
     expect(tabs("planning")).toEqual(["plans", "products", "website"]);
-    expect(tabs("settings")).toEqual(["org", "team", "activity", "import", "appearance"]);
+    expect(tabs("settings")).toEqual(["overview", "org", "team", "activity", "import", "account"]);
   });
 
   it("each section has its own colour tile", () => {

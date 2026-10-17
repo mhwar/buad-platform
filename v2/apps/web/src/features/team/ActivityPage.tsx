@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useSearch } from "@tanstack/react-router";
-import { Badge, Card, EmptyState, Field, Input, Select } from "../../components/ui";
+import { Badge, Card, EmptyState, Field, Input, PageHeader, Select } from "../../components/ui";
 import { ago } from "../../lib/format";
 import { auditQuery, teamUsersQuery } from "./queries";
 
@@ -48,6 +48,7 @@ export function ActivityPage() {
   const users = useQuery(teamUsersQuery);
   return (
     <div className="space-y-4">
+      <PageHeader title="سجل النشاط" subtitle="من غيّر ماذا ومتى، بالقيم قبل التعديل وبعده." />
       <Card className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <Field label="القسم">
           <Select value={entity} onChange={(e) => setEntity(e.target.value)}>

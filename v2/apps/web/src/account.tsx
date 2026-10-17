@@ -4,73 +4,67 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import type { z } from "zod";
 import { api } from "./api";
+import { Button, Card, Field, Input, Notice, PageHeader, toast } from "./components/ui";
 import { AppearanceCard } from "./theme";
-import { button, card, field } from "./ui";
 
 type Form = z.input<typeof changePasswordInput>;
 
-/** «المظهر»: the colour mode. */
-export function AppearancePage() {
-  return <AppearanceCard />;
-}
+const FAIL: Record<number, string> = {
+  403: "كلمة المرور الحالية غير صحيحة.",
+  429: "محاولات كثيرة متتالية. انتظروا دقيقة ثم أعيدوا المحاولة.",
+};
 
+/** «حسابي»: the person's own password, and the colour mode of this device. */
 export function AccountPage() {
   const form = useForm<Form>({ resolver: zodResolver(changePasswordInput) });
-  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const submit = form.handleSubmit(async (values) => {
+    setError(null);
     const res = await api.api.auth["change-password"].$post({ json: values });
     if (res.ok) {
       form.reset();
-      return setMsg({ ok: true, text: "تم تغيير كلمة المرور" });
+      return toast("تم تغيير كلمة المرور");
     }
-    setMsg({
-      ok: false,
-      text: res.status === 403 ? "كلمة المرور الحالية غير صحيحة" : "تعذّر التغيير",
-    });
+    setError(FAIL[res.status] ?? "تعذّر تغيير كلمة المرور، حاولوا مرة أخرى.");
   });
 
   return (
     <div className="space-y-6">
-      <section className={`max-w-sm ${card}`}>
-        <h1 className="mb-4 text-xl font-bold">تغيير كلمة المرور</h1>
-        {msg && (
-          <p
-            role="alert"
-            className={`mb-3 rounded-md px-3 py-2 text-sm ${msg.ok ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"}`}
-          >
-            {msg.text}
-          </p>
-        )}
-        <form onSubmit={submit} className="space-y-4" noValidate>
-          <label className="block text-sm">
-            كلمة المرور الحالية
-            <input
+      <PageHeader title="حسابي" subtitle="كلمة مرورك، ونمط الألوان على هذا الجهاز." />
+      <Card className="max-w-xl">
+        <h2 className="mb-1 text-lg font-bold">تغيير كلمة المرور</h2>
+        <p className="mb-4 text-sm text-muted">تُسجَّل بعدها خارج المنصة في أجهزتك الأخرى.</p>
+        {error && <Notice>{error}</Notice>}
+        <form onSubmit={submit} className="grid gap-4" noValidate>
+          <Field label="كلمة المرور الحالية">
+            <Input
               type="password"
               autoComplete="current-password"
               dir="ltr"
-              className={field}
               {...form.register("current")}
             />
-          </label>
-          <label className="block text-sm">
-            كلمة المرور الجديدة (8 أحرف على الأقل)
-            <input
+          </Field>
+          <Field
+            label="كلمة المرور الجديدة"
+            hint="8 أحرف على الأقل"
+            error={form.formState.errors.password ? "8 أحرف على الأقل" : undefined}
+          >
+            <Input
               type="password"
               autoComplete="new-password"
               dir="ltr"
-              className={field}
               {...form.register("password")}
             />
-            {form.formState.errors.password && (
-              <span className="text-xs text-red-600">8 أحرف على الأقل</span>
-            )}
-          </label>
-          <button type="submit" disabled={form.formState.isSubmitting} className={button}>
-            حفظ
-          </button>
+          </Field>
+          <div>
+            <Button type="submit" disabled={form.formState.isSubmitting}>
+              تغيير كلمة المرور
+            </Button>
+          </div>
         </form>
-      </section>
+      </Card>
+      <AppearanceCard />
     </div>
   );
 }

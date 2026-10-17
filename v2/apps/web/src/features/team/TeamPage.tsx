@@ -12,6 +12,7 @@ import {
   Menu,
   type MenuItem,
   Notice,
+  PageHeader,
   Segmented,
   Select,
 } from "../../components/ui";
@@ -35,6 +36,7 @@ export function TeamPage() {
   const [tab, setTab] = useState<"users" | "roles">("users");
   return (
     <div className="space-y-5">
+      <PageHeader title="الفريق والصلاحيات" subtitle="من يدخل المنصة، وبأي دور، وما يراه كل دور." />
       {can("roles.manage") || can("team.view") ? (
         <Segmented
           label="الفريق"
