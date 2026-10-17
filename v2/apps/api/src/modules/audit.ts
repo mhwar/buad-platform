@@ -112,6 +112,7 @@ const TRAIL: { re: RegExp; entity: string; noun: string }[] = [
   { re: /^\/api\/plans/, entity: "plan", noun: "الخطط" },
   { re: /^\/api\/site/, entity: "site", noun: "الموقع" },
   { re: /^\/api\/org\/settings/, entity: "org", noun: "الإعدادات المالية" },
+  { re: /^\/api\/org\/preferences/, entity: "org", noun: "الترقيم والنصوص" },
   { re: /^\/api\/org/, entity: "org", noun: "بيانات المنشأة" },
   { re: /^\/api\/assets/, entity: "asset", noun: "ملف" },
   { re: /^\/api\/import/, entity: "import", noun: "استيراد" },

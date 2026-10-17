@@ -1,4 +1,4 @@
-import { formatCode, fromRiyals } from "@buad/domain";
+import { fromRiyals } from "@buad/domain";
 import { listQuery, projectInput, projectPatch } from "@buad/schema/clients";
 import { clients, legacyMap, products, projectFinance, projects } from "@buad/schema/db";
 import { DEFAULT_CTRL } from "@buad/schema/finance";
@@ -8,17 +8,9 @@ import { Hono } from "hono";
 import type { z } from "zod";
 import { requireAuth, requirePerm, requireRW, type Vars } from "../auth/middleware";
 import type { AuthUser, Db } from "../auth/service";
-import {
-  atomic,
-  contractTotalSql,
-  likeTerm,
-  logoUrlSql,
-  newId,
-  nextCounter,
-  nowSec,
-} from "./common";
+import { atomic, contractTotalSql, likeTerm, logoUrlSql, newId, nowSec } from "./common";
 import { resolveServiceLink } from "./service-link";
-import { savedProjectDefaults } from "./settings";
+import { nextCode, savedProjectDefaults } from "./settings";
 
 type Env = { Bindings: { JWT_SECRET: string }; Variables: Vars };
 
@@ -81,8 +73,7 @@ export async function insertProject(
     packageName: "",
   },
 ) {
-  const year = new Date().getUTCFullYear();
-  const number = formatCode("PRJ", await nextCounter(db, me.orgId, "project", year), year);
+  const number = await nextCode(db, me.orgId, "project");
   const id = newId("prj");
   const t = nowSec();
   const defaults = await savedProjectDefaults(db, me.orgId);

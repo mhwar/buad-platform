@@ -42,3 +42,11 @@ test("«الإعدادات» opens on an overview that names what «بيانات
   await expect(page).toHaveURL(/\/settings\/account$/);
   await expect(page.getByRole("radiogroup", { name: "المظهر" })).toBeVisible();
 });
+
+test("«بيانات الجهة» shows how each kind is numbered and the default texts", async ({ page }) => {
+  await page.goto("/settings/org");
+  const numbering = page.getByRole("region", { name: "الترقيم" });
+  await expect(numbering.getByText(/^PRJ-\d{4}-\d{4}$/)).toBeVisible();
+  await expect(numbering.getByText("الصادر")).toBeVisible();
+  await expect(page.getByRole("region", { name: "النصوص الافتراضية" })).toBeVisible();
+});

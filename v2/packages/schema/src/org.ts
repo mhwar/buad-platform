@@ -67,3 +67,36 @@ export const orgSettingsPatch = z.object({
     .optional(),
 });
 export type OrgSettingsPatch = z.input<typeof orgSettingsPatch>;
+
+/** Fixed texts new documents start from (empty = the platform's own wording). */
+export const docTexts = z.object({
+  quoteTerms: z.string().trim().max(4000),
+  /** Days a new quote stays valid; 0 = no validity date filled in. */
+  quoteValidityDays: z.coerce.number().int().min(0).max(365),
+  letterClosing: z.string().trim().max(300),
+});
+export type DocTexts = z.output<typeof docTexts>;
+export const DEFAULT_DOC_TEXTS: DocTexts = {
+  quoteTerms: "",
+  quoteValidityDays: 0,
+  letterClosing: "",
+};
+
+/** Numbering: a new prefix, and/or the next number (which may only move forward). */
+export const orgPrefsPatch = z.object({
+  numbering: z
+    .record(
+      z.string(),
+      z.object({
+        prefix: z
+          .string()
+          .trim()
+          .regex(/^[\p{L}\p{N}]{1,8}$/u)
+          .optional(),
+        next: z.coerce.number().int().min(1).max(999999).optional(),
+      }),
+    )
+    .optional(),
+  texts: docTexts.partial().optional(),
+});
+export type OrgPrefsPatch = z.input<typeof orgPrefsPatch>;

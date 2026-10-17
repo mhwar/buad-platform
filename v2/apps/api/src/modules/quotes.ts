@@ -1,5 +1,4 @@
 import {
-  formatCode,
   normalizeName,
   type PricingIn,
   priceQuote,
@@ -16,13 +15,14 @@ import { Hono } from "hono";
 import { requireAuth, requireRW, type Vars } from "../auth/middleware";
 import type { Db } from "../auth/service";
 import { findSimilarName, insertClient } from "./clients";
-import { atomic, newId, nextCounter, nowSec } from "./common";
+import { atomic, newId, nowSec } from "./common";
 import { loadVatRate } from "./finance";
 import { moveStage } from "./opportunity";
 import { loadOrgProfile } from "./org";
 import { pricingOf } from "./products";
 import { insertProject, liveClient } from "./projects";
 import { resolveServiceLink } from "./service-link";
+import { nextCode } from "./settings";
 
 type Env = { Bindings: { JWT_SECRET: string }; Variables: Vars };
 type Row = typeof quotes.$inferSelect;
@@ -125,8 +125,7 @@ export const quotesApp = new Hono<Env>()
       entity ||= req.entity;
       clientId ||= req.clientId; // an offer follows its opportunity's client
     }
-    const year = new Date().getUTCFullYear();
-    const number = formatCode("QT", await nextCounter(db, me.orgId, "quote", year), year);
+    const number = await nextCode(db, me.orgId, "quote");
     const id = newId("qte");
     await db.insert(quotes).values({
       id,
@@ -277,8 +276,7 @@ export const quotesApp = new Hono<Env>()
     const db = c.get("db");
     const r = await own(db, me.orgId, c.req.param("id"));
     if (!r) return c.json({ ok: false, error: "not_found" }, 404);
-    const year = new Date().getUTCFullYear();
-    const number = formatCode("QT", await nextCounter(db, me.orgId, "quote", year), year);
+    const number = await nextCode(db, me.orgId, "quote");
     const id = newId("qte");
     await db.insert(quotes).values({
       id,

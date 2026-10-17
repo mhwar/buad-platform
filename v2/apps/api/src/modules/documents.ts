@@ -3,7 +3,6 @@ import {
   CONTRACT_TEMPLATES,
   cashbackBody,
   type DocContext,
-  formatCode,
   initialVariables,
   LETTER_TEMPLATES,
   renumberClauses,
@@ -23,11 +22,12 @@ import { Hono } from "hono";
 import { z } from "zod";
 import { requireAuth, requirePerm, type Vars } from "../auth/middleware";
 import type { AuthUser, Db } from "../auth/service";
-import { atomic, likeTerm, logoUrlSql, newId, nextCounter, nowSec } from "./common";
+import { atomic, likeTerm, logoUrlSql, newId, nowSec } from "./common";
 import { loadFinance } from "./finance";
 import { notify, usersWithPerm } from "./notifications";
 import { loadOrgProfile } from "./org";
 import { loadVisible, visibleProjects } from "./projects";
+import { docTextsFor, nextCode } from "./settings";
 
 type Env = { Bindings: { JWT_SECRET: string }; Variables: Vars };
 const manager = requirePerm("documents.edit");
@@ -225,17 +225,11 @@ export const projectDocumentsApp = new Hono<Env>()
         letter_to: ctx.client?.name ?? "",
         letter_to_suffix: "المحترمين",
         letter_salutation: t.salutation,
-        letter_closing: t.closing,
+        letter_closing: (await docTextsFor(db, me.orgId)).letterClosing || t.closing,
         letter_date: ctx.today,
       });
     }
-    const year = new Date().getUTCFullYear();
-    const prefix = input.kind === "contract" ? "CT" : "LT";
-    const number = formatCode(
-      prefix,
-      await nextCounter(db, me.orgId, `doc_${input.kind}`, year),
-      year,
-    );
+    const number = await nextCode(db, me.orgId, `doc_${input.kind}`);
     // A new contract number goes into the contract itself unless finance already has one.
     if (input.kind === "contract" && !variables.contract_no) variables.contract_no = number;
     const t = nowSec();
@@ -472,7 +466,7 @@ export const documentsApp = new Hono<Env>()
     if (doc.outgoingNo) return c.json({ ok: true, outgoingNo: doc.outgoingNo, created: false });
     if (doc.status !== "approved") return c.json({ ok: false, error: "not_approved" }, 409);
     const year = new Date().getUTCFullYear();
-    const outgoingNo = formatCode("ص", await nextCounter(db, me.orgId, "outgoing", year), year);
+    const outgoingNo = await nextCode(db, me.orgId, "outgoing");
     const upd = await db
       .update(documents)
       .set({ outgoingNo, outgoingAt: nowSec(), outgoingBy: me.id })
@@ -518,12 +512,7 @@ export const documentsApp = new Hono<Env>()
     const found = await loadDoc(db, me, c.req.param("id"));
     if (!found) return c.json({ ok: false, error: "not_found" }, 404);
     const { doc } = found;
-    const year = new Date().getUTCFullYear();
-    const number = formatCode(
-      doc.kind === "contract" ? "CT" : "LT",
-      await nextCounter(db, me.orgId, `doc_${doc.kind}`, year),
-      year,
-    );
+    const number = await nextCode(db, me.orgId, `doc_${doc.kind}`);
     const id = newId("doc");
     const t = nowSec();
     await db.insert(documents).values({

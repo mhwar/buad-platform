@@ -230,6 +230,20 @@ function statementBlocks(st: Statement): Block[] {
         </p>
       ),
     },
+    ...(st.org.bankIban
+      ? [
+          {
+            key: "bank",
+            node: (
+              <p className="st-note">
+                <b>بيانات التحويل:</b> {st.org.name}
+                {st.org.bankName && ` · ${st.org.bankName}`} · الآيبان{" "}
+                <span dir="ltr">{st.org.bankIban}</span>
+              </p>
+            ),
+          },
+        ]
+      : []),
   ];
 }
 
