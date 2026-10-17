@@ -22,15 +22,7 @@ describe("buildNav", () => {
     expect(tabs("home")).toEqual(["today", "tasks", "meetings", "decisions"]);
     expect(tabs("projects")).toEqual([]);
     expect(tabs("documents")).toEqual([]);
-    expect(tabs("finance")).toEqual([
-      "projects",
-      "review",
-      "quarter",
-      "vat",
-      "company",
-      "partners",
-      "receivables",
-    ]);
+    expect(tabs("finance")).toEqual(["overview", "receivables", "vat", "profit"]);
     expect(tabs("planning")).toEqual(["plans", "products", "website"]);
     expect(tabs("settings")).toEqual([
       "overview",
@@ -104,7 +96,10 @@ describe("activeEntry and badges", () => {
   });
   it("finds the open page of a section, by path and by ?tab=", () => {
     const get = (k: string) => groups.flatMap((g) => g.items).find((i) => i.key === k)!;
-    expect(activeChild(get("finance"), "/finance", {})?.key).toBe("projects");
+    expect(activeChild(get("finance"), "/finance", {})?.key).toBe("overview");
+    // Older links land in their new home.
+    expect(activeChild(get("finance"), "/finance", { tab: "partners" })?.key).toBe("profit");
+    expect(activeChild(get("finance"), "/finance", { tab: "review" })?.key).toBe("overview");
     expect(activeChild(get("finance"), "/finance", { tab: "receivables" })?.key).toBe(
       "receivables",
     );

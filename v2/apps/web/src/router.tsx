@@ -202,8 +202,19 @@ const financeRoute = createRoute({
     q: z.coerce.number().int().min(1).max(4).optional(),
     client: z.string().optional(),
     status: z.string().optional(),
+    // The four tabs, and the older names that still arrive from saved links.
     tab: z
-      .enum(["projects", "review", "quarter", "vat", "company", "partners", "receivables"])
+      .enum([
+        "overview",
+        "receivables",
+        "vat",
+        "profit",
+        "projects",
+        "review",
+        "quarter",
+        "company",
+        "partners",
+      ])
       .optional(),
   }),
   beforeLoad: needs("treasury.view"),

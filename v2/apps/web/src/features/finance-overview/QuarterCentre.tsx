@@ -6,7 +6,6 @@ import { Badge, Button, Card, EmptyState, Select } from "../../components/ui";
 import { sar } from "../../lib/format";
 import { type QuarterFlag, type QuarterRow, quarterQuery } from "./company-api";
 import { DistributionWizard } from "./PartnersTab";
-import { ReceiptProposals } from "./ReceiptProposals";
 import { Tile } from "./Tile";
 
 const FLAG: Record<QuarterFlag, { text: string; tone: "amber" | "red" | "gray" }> = {
@@ -212,7 +211,6 @@ export function QuarterCentre() {
       </Card>
 
       <div className="grid gap-6 xl:grid-cols-2">
-        <ReceiptProposals />
         <Card>
           <h2 className="mb-1 flex items-center gap-2 font-semibold">
             <AlertTriangle className="size-4 text-amber-700" /> قبل التوزيع

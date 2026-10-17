@@ -162,3 +162,13 @@ test("a receipt above the contract asks first, and the overpaid project is flagg
   await checks.locator("summary").click();
   await expect(checks.getByRole("link", { name: new RegExp(name) })).toBeVisible();
 });
+
+test("finance has four tabs, and older links land in their new home", async ({ page }) => {
+  await page.goto("/finance");
+  const tabs = page.getByRole("tablist", { name: "أقسام المالية" });
+  await expect(tabs.getByRole("tab")).toHaveCount(4);
+  await expect(page.getByRole("heading", { name: "ربحية المشاريع" })).toBeVisible();
+  await page.goto("/finance?tab=partners");
+  await expect(page.getByRole("heading", { name: "الشركاء والتوزيعات" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "إيرادات الشركة ومصروفاتها" })).toBeVisible();
+});
