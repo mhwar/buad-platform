@@ -290,3 +290,56 @@ describe("the VAT year", () => {
     expect(after.status).toBe("cancelled");
   });
 });
+
+describe("closing a project", () => {
+  it("lists what to finish, closes and locks the money records, and reopens with a reason", async () => {
+    await call("adm", "PATCH", `${F()}/ctrl`, {
+      version: 0,
+      contractValue: 115000,
+      vatIncluded: true,
+    });
+    await call("adm", "POST", `${F()}/receipts`, { date: "2026-08-20", amount: 57500 });
+    await call(
+      "adm",
+      "POST",
+      `${F()}/entries`,
+      ent({ description: "مواد بلا فاتورة", amount: 2000 }),
+    );
+    const check = (await call("adm", "GET", `/api/projects/${pid}/close`)).body;
+    expect(check.figures).toMatchObject({ gross: 115000, received: 57500, remaining: 57500 });
+    expect(check.vat).toMatchObject({ outputVat: 7500, source: "receipts" });
+    expect(check.warnings.map((w: J) => w.code)).toEqual(
+      expect.arrayContaining(["remaining", "no_sales_invoice", "purchases_without_invoice"]),
+    );
+    const closed = await call("adm", "POST", `/api/projects/${pid}/close`, { note: "انتهى" });
+    expect(closed.status).toBe(200);
+    expect(closed.body.closed).toBeTruthy();
+    // Locked: no new entries, receipts, terms or invoices.
+    expect((await call("adm", "POST", `${F()}/entries`, ent({}))).status).toBe(409);
+    expect(
+      (await call("adm", "POST", `${F()}/receipts`, { date: "2026-09-01", amount: 100 })).status,
+    ).toBe(409);
+    expect(
+      (
+        await call("adm", "POST", `${V}/invoices`, {
+          projectId: pid,
+          date: "2026-09-01",
+          amount: 100,
+        })
+      ).status,
+    ).toBe(409);
+    expect((await call("adm", "GET", F())).status).toBe(200); // still readable
+    expect(
+      (await call("adm", "POST", `/api/projects/${pid}/close/reopen`, { reason: "" })).status,
+    ).toBe(400);
+    expect(
+      (await call("adm", "POST", `/api/projects/${pid}/close/reopen`, { reason: "مصروف متأخر" }))
+        .status,
+    ).toBe(200);
+    expect((await call("adm", "POST", `${F()}/entries`, ent({}))).status).toBe(201);
+    const log = (await call("adm", "GET", "/api/audit?entity=project")).body;
+    const items = log.items ?? log;
+    expect(items.some((i: J) => i.summary === "إغلاق المشروع")).toBe(true);
+    expect(items.some((i: J) => i.summary === "إعادة فتح المشروع")).toBe(true);
+  });
+});

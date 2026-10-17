@@ -158,6 +158,8 @@ export type QuarterFlag =
   | "cancelled"
   | "inactive";
 export type QuarterRow = {
+  /** Financially closed: profit final, ready to distribute. */
+  closed?: boolean;
   id: string;
   number: string;
   name: string;

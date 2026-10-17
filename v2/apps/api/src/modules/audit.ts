@@ -90,6 +90,7 @@ function safe(text: string) {
 
 /** Route → what it changes, in the words the owner reads in the trail. */
 const TRAIL: { re: RegExp; entity: string; noun: string }[] = [
+  { re: /^\/api\/projects\/([^/]+)\/close/, entity: "project", noun: "المشروع" },
   { re: /^\/api\/projects\/([^/]+)\/finance\/receipts/, entity: "project", noun: "مقبوضة" },
   { re: /^\/api\/projects\/([^/]+)\/finance\/entries/, entity: "project", noun: "حركة مالية" },
   { re: /^\/api\/projects\/([^/]+)\/finance/, entity: "project", noun: "مالية المشروع" },
@@ -125,6 +126,8 @@ const VERBS: Record<string, string> = {
   duplicate: "نسخ",
   publish: "نشر",
   approve: "اعتماد",
+  close: "إغلاق",
+  reopen: "إعادة فتح",
 };
 
 /* ── Money and its paperwork: what a change did, field by field ─────────────────────────

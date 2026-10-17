@@ -226,3 +226,28 @@ test("profit: balances say what was realized, settled and is still to distribute
   for (const t of ["ربح متحقق من المشاريع", "صافي الشركة", "أرباح غير موزّعة"])
     await expect(card.getByText(t, { exact: true })).toBeVisible();
 });
+
+test("closing a project: final review, then its money records are locked until reopened", async ({
+  page,
+  api,
+}) => {
+  const c = await api<{ id: string }>("POST", "/api/clients", { name: `جمعية الإغلاق ${uid()}` });
+  const name = `مشروع للإغلاق ${uid()}`;
+  const p = await api<{ id: string }>("POST", "/api/projects", {
+    clientId: c.id,
+    name,
+    status: "completed",
+  });
+  await api("PATCH", `/api/projects/${p.id}/finance/ctrl`, { version: 0, contractValue: 1000 });
+  await page.goto(`/projects/${p.id}?view=finance`);
+  await page.getByRole("button", { name: "إغلاق المشروع" }).first().click();
+  const dlg = page.getByRole("dialog");
+  await expect(dlg.getByLabel("قبل الإغلاق")).toContainText("متبقٍّ");
+  await expect(dlg.getByLabel("الأرقام النهائية")).toBeVisible();
+  await dlg.getByRole("button", { name: /إغلاق المشروع/ }).click();
+  await expect(dlg).toContainText("أُغلق المشروع وقُفلت قيوده");
+  await dlg.getByRole("button", { name: "لاحقاً ضمن توزيع الربع" }).click();
+  await expect(page.getByText("مغلق", { exact: true }).first()).toBeVisible();
+  await expect(page.getByRole("button", { name: "قيد جديد" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "تسجيل مقبوض" })).toHaveCount(0);
+});

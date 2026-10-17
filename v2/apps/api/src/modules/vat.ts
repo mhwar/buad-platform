@@ -337,15 +337,19 @@ const invoiceInput = z.object({
   note: z.string().trim().max(500).default(""),
 });
 
-/** The project's VAT rate (15 when its contract terms are not saved), or null if not ours. */
+/**
+ * The project's VAT rate (15 when its contract terms are not saved); null if not ours, and
+ * "closed" when its money records are locked.
+ */
 async function projectVatPct(db: Db, orgId: string, projectId: string) {
   const [p] = await db
-    .select({ id: projects.id, vatPct: projectFinance.vatPct })
+    .select({ id: projects.id, vatPct: projectFinance.vatPct, closedAt: projects.closedAt })
     .from(projects)
     .leftJoin(projectFinance, eq(projectFinance.projectId, projects.id))
     .where(and(eq(projects.id, projectId), eq(projects.orgId, orgId)))
     .limit(1);
-  return p ? (p.vatPct ?? 15) : null;
+  if (!p) return null;
+  return p.closedAt ? ("closed" as const) : (p.vatPct ?? 15);
 }
 
 export const vatApp = new Hono<Env>()
@@ -635,6 +639,7 @@ export const vatApp = new Hono<Env>()
     const v = c.req.valid("json");
     const vatPct = await projectVatPct(db, me.orgId, v.projectId);
     if (vatPct === null) return c.json({ ok: false, error: "not_found" }, 404);
+    if (vatPct === "closed") return c.json({ ok: false, error: "project_closed" }, 409);
     const amount = fromRiyals(v.amount);
     const id = newId("sin");
     const t = nowSec();
@@ -665,6 +670,7 @@ export const vatApp = new Hono<Env>()
     const v = c.req.valid("json");
     const vatPct = await projectVatPct(db, me.orgId, v.projectId);
     if (vatPct === null) return c.json({ ok: false, error: "not_found" }, 404);
+    if (vatPct === "closed") return c.json({ ok: false, error: "project_closed" }, 409);
     const amount = fromRiyals(v.amount);
     const upd = await db
       .update(salesInvoices)
@@ -688,6 +694,14 @@ export const vatApp = new Hono<Env>()
   })
   .delete("/invoices/:id", async (c) => {
     const me = c.get("user");
+    const [inv] = await c
+      .get("db")
+      .select({ closedAt: projects.closedAt })
+      .from(salesInvoices)
+      .innerJoin(projects, eq(projects.id, salesInvoices.projectId))
+      .where(and(eq(salesInvoices.id, c.req.param("id")), eq(salesInvoices.orgId, me.orgId)))
+      .limit(1);
+    if (inv?.closedAt) return c.json({ ok: false, error: "project_closed" }, 409);
     const upd = await c
       .get("db")
       .update(salesInvoices)

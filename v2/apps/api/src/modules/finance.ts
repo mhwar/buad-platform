@@ -209,6 +209,9 @@ export const financeApp = new Hono<Env>()
   .use(async (c, next) => {
     const project = await loadVisible(c.get("db"), c.get("user"), c.req.param("projectId") ?? "");
     if (!project) return c.json({ ok: false, error: "not_found" }, 404);
+    // A closed project is read-only until it is reopened (with a reason).
+    if (c.req.method !== "GET" && project.closedAt)
+      return c.json({ ok: false, error: "project_closed" }, 409);
     c.set("project", project);
     await next();
   })

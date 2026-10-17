@@ -182,6 +182,10 @@ export const projects = sqliteTable(
     productId: text("product_id").notNull().default(""),
     packageId: text("package_id").notNull().default(""),
     packageName: text("package_name").notNull().default(""),
+    /** Financially closed: entries, receipts, terms and invoices are locked until reopened. */
+    closedAt: integer("closed_at"),
+    closedBy: text("closed_by").notNull().default(""),
+    closeNote: text("close_note").notNull().default(""),
     ...audit,
     /** Set to the client id when the project was archived together with its client. */
     archivedWith: text("archived_with").notNull().default(""),
