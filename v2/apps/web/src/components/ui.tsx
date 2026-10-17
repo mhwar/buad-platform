@@ -276,7 +276,7 @@ export function ScrollRow({
   // biome-ignore lint/correctness/useExhaustiveDependencies: re-run only when the active item changes
   useEffect(() => {
     const active = ref.current?.querySelector<HTMLElement>(
-      '[aria-selected="true"],[aria-pressed="true"]',
+      '[aria-selected="true"],[aria-pressed="true"],[aria-current="page"]',
     );
     const calm = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
     active?.scrollIntoView?.({

@@ -10,7 +10,7 @@ import {
 } from "@tanstack/react-router";
 import { Briefcase, House as Home_, Landmark, Menu, Users } from "lucide-react";
 import { z } from "zod";
-import { AccountPage, AppearancePage } from "./account";
+import { AccountPage } from "./account";
 import { api } from "./api";
 import { Logo } from "./brand";
 import { PageSkeleton, RouteError } from "./components/Resilience";
@@ -47,6 +47,7 @@ import { OpportunityPage } from "./features/sales/OpportunityPage";
 import { QuotePrintPage } from "./features/sales/QuotePrint";
 import { SalesDashboard } from "./features/sales/SalesDashboard";
 import { QuotesPage } from "./features/sales/SalesPage";
+import { SettingsHome } from "./features/settings/SettingsHome";
 import { SettingsLayout } from "./features/settings/SettingsLayout";
 import { ProductPublicPage } from "./features/site/ProductPublicPage";
 import { SitePage } from "./features/site/SitePage";
@@ -342,9 +343,7 @@ const settingsRoute = createRoute({
 const settingsIndexRoute = createRoute({
   getParentRoute: () => settingsRoute,
   path: "/",
-  beforeLoad: () => {
-    throw redirect({ to: "/settings/org" });
-  },
+  component: SettingsHome,
 });
 const orgRoute = createRoute({
   getParentRoute: () => settingsRoute,
@@ -378,10 +377,13 @@ const activityRoute = createRoute({
   beforeLoad: needs("audit.view"),
   component: ActivityPage,
 });
+// «المظهر» now lives in «حسابي»; the old address still works.
 const appearanceRoute = createRoute({
   getParentRoute: () => settingsRoute,
   path: "/appearance",
-  component: AppearancePage,
+  beforeLoad: () => {
+    throw redirect({ to: "/settings/account" });
+  },
 });
 const accountRoute = createRoute({
   getParentRoute: () => settingsRoute,

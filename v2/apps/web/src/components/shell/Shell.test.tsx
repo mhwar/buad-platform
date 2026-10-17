@@ -96,7 +96,7 @@ describe("Sidebar", () => {
     );
     expect(within(nav).getByRole("link", { name: "الموقع" })).toHaveAttribute("href", "/website");
     await userEvent.click(within(nav).getByRole("button", { name: "فتح الإعدادات" }));
-    for (const l of ["بيانات الجهة", "الفريق والصلاحيات", "سجل النشاط", "المظهر"])
+    for (const l of ["نظرة عامة", "بيانات الجهة", "الفريق والصلاحيات", "سجل النشاط", "حسابي"])
       expect(within(nav).getByRole("link", { name: l })).toBeInTheDocument();
   });
 

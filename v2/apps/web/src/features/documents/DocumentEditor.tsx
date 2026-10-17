@@ -52,6 +52,7 @@ import {
 import { ApiError, fromEpoch } from "../../lib/format";
 import { meQuery } from "../../session";
 import { type DocDetail, docApi, docKeys, documentQuery } from "./api";
+import { confirmApprove } from "./approve";
 import { DocStepper } from "./DocStepper";
 import { exportPdf, exportWord } from "./DocumentActions";
 import { STATUS_TONE } from "./DocumentsSection";
@@ -256,15 +257,7 @@ export function DocumentEditor() {
     change({ layout: l }, { layout: { ...draft.layout, ...l } });
 
   const moveStatus = async (to: "draft" | "review" | "approved") => {
-    if (
-      to === "approved" &&
-      !(await confirmAction({
-        title: "اعتماد المستند؟",
-        text: "يُقفل عن التعديل وتُحفظ نسخة منه.",
-        action: "اعتماد",
-      }))
-    )
-      return;
+    if (to === "approved" && !(await confirmApprove(qc))) return;
     clearTimeout(timer.current);
     await flush();
     try {

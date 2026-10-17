@@ -8,6 +8,7 @@ import { FitToWidth } from "../documents/FitToWidth";
 import { type Block, PagedSheets } from "../documents/Pages";
 import { PdfButton } from "../documents/PdfButton";
 import { label, PROJECT_STATUS_LABELS } from "../labels";
+import { IDENTITY_FIELDS, missingFields } from "../org/completeness";
 import { type Statement, statementQuery } from "./api";
 
 const route = getRouteApi("/clients/$id/statement");
@@ -16,6 +17,9 @@ const SHEET_STYLE = {
   "--doc-lh": 1.6,
   "--doc-mx": "1.6cm",
 } as React.CSSProperties;
+
+// The statement prints the organisation's name and numbers, not its signer.
+const STATEMENT_FIELDS = IDENTITY_FIELDS.filter(([k]) => k !== "signerName");
 
 // What the client sees: the contract, what they paid, and what they still owe.
 const COLUMNS = [
@@ -39,6 +43,7 @@ export function StatementPage() {
       />
     );
   const st = q.data;
+  const gaps = missingFields(st.org, STATEMENT_FIELDS);
   return (
     <>
       <div className="mb-4 flex flex-wrap items-start justify-between gap-3 print:hidden">
@@ -63,6 +68,16 @@ export function StatementPage() {
           <PdfButton path={`/clients/${id}/statement`} name={`statement-${st.client.code}`} />
         </div>
       </div>
+      {gaps.length > 0 && (
+        <div className="print:hidden">
+          <Notice tone="amber">
+            بيانات الجهة ناقصة ({gaps.join("، ")})، فلن تظهر في الكشف.{" "}
+            <Link to="/settings/org" className="font-semibold underline">
+              أكملوها من بيانات الجهة
+            </Link>
+          </Notice>
+        </div>
+      )}
       {st.items.some((i) => !i.hasFinance) && (
         <div className="print:hidden">
           <Notice tone="amber">
