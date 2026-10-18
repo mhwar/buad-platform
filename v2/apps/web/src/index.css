@@ -10,23 +10,40 @@
    <html data-theme="dark">, so `dark:` utilities follow that choice, not only the OS. */
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
-/* Identity: logo navy is the brand; v1's teal (hue 185) is the accent. */
+/* Identity: neutral surfaces with one warm accent (orange); the logo keeps its navy.
+   Primary actions are ink on light and light on dark, so the accent stays for "you are here",
+   progress and highlights. */
 @theme {
   --font-sans: "IBM Plex Sans Arabic", "Segoe UI", Tahoma, system-ui, sans-serif;
-  --color-brand: #00197d;
-  --color-brand-strong: #000f4f;
-  --color-brand-soft: oklch(0.96 0.02 265);
-  --color-accent: oklch(0.6 0.15 185);
+  --color-brand: #171717;
+  --color-brand-strong: #000000;
+  --color-brand-soft: #eeece8;
+  --color-accent: #f5a524;
+  --color-accent-soft: #fdf0d9;
+  /* Orange that reads as text on light surfaces (AA). */
+  --color-accent-ink: #9a5800;
   --color-surface: #ffffff;
-  --color-canvas: oklch(0.962 0.007 255);
-  /* The header and other brand-coloured chrome. */
-  --color-chrome: #00197d;
-  --color-ink: oklch(0.22 0.03 265);
-  --color-muted: oklch(0.45 0.02 265);
-  --color-line: oklch(0.92 0.008 265);
+  --color-canvas: #f4f3f1;
+  /* The header and other chrome: neutral, like the surfaces. */
+  --color-chrome: #ffffff;
+  --color-ink: #171717;
+  --color-muted: #66635e;
+  --color-line: #e7e4df;
   /* Chart series (validated for colour-blind separation in light and dark). */
   --color-series-1: #2a78d6;
   --color-series-2: #eb6834;
+  /* Greys without the blue cast: every slate-* utility follows the neutral palette. */
+  --color-slate-50: #faf9f7;
+  --color-slate-100: #f1f0ed;
+  --color-slate-200: #e4e2de;
+  --color-slate-300: #d1cec8;
+  --color-slate-400: #a19d96;
+  --color-slate-500: #77736c;
+  --color-slate-600: #5a5752;
+  --color-slate-700: #3d3b38;
+  --color-slate-800: #262524;
+  --color-slate-900: #1a1a1a;
+  --color-slate-950: #0f0f0f;
 }
 
 :root {
@@ -35,15 +52,18 @@
 
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --color-brand: oklch(0.72 0.12 265);
-  --color-brand-strong: oklch(0.8 0.1 265);
-  --color-brand-soft: oklch(0.26 0.05 265);
-  --color-surface: oklch(0.2 0.02 265);
-  --color-canvas: oklch(0.15 0.015 265);
-  --color-chrome: oklch(0.21 0.05 265);
-  --color-ink: oklch(0.95 0.005 265);
-  --color-muted: oklch(0.72 0.015 265);
-  --color-line: oklch(0.3 0.02 265);
+  --color-brand: #f2f2f2;
+  --color-brand-strong: #ffffff;
+  --color-brand-soft: #262626;
+  --color-accent: #f5a524;
+  --color-accent-soft: #3a2a10;
+  --color-accent-ink: #f7b955;
+  --color-surface: #1a1a1a;
+  --color-canvas: #0b0b0b;
+  --color-chrome: #141414;
+  --color-ink: #f2f2f2;
+  --color-muted: #a8a6a2;
+  --color-line: #2c2b29;
   --color-series-1: #3987e5;
   --color-series-2: #d95926;
 }

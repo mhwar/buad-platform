@@ -152,7 +152,10 @@ export function Card({ className, ...p }: ComponentProps<"div">) {
   return (
     <div
       {...p}
-      className={cx("rounded-2xl border border-line bg-surface p-5 shadow-sm", className)}
+      className={cx(
+        "rounded-[1.25rem] border border-line bg-surface p-5 shadow-[0_1px_2px_rgb(0_0_0/0.04)]",
+        className,
+      )}
     />
   );
 }
