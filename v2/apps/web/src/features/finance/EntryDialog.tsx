@@ -49,6 +49,7 @@ export function EntryDialog({
   existing,
   startTab = "new",
   projectName,
+  preset,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
@@ -58,6 +59,8 @@ export function EntryDialog({
   startTab?: "new" | "agreement";
   /** Shown in the title when the dialog is opened away from the project (e.g. from a client card). */
   projectName?: string;
+  /** Prefills a new entry (e.g. classifying a project's unclassified amount as an expense). */
+  preset?: Partial<Form>;
 }) {
   const qc = useQueryClient();
   const api = financeApi(projectId);
@@ -87,6 +90,7 @@ export function EntryDialog({
         status: "",
         note: "",
         cfKind: "",
+        ...preset,
       };
   const f = useForm<Form>({ resolver: zodResolver(entryInput), values: defaults });
   const [hasProfit, setHasProfit] = useState(!!existing?.profitMargin);

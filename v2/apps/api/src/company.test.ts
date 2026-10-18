@@ -393,3 +393,29 @@ describe("a past distribution by its actual amount", () => {
     expect((await call("adm", "GET", `${C}/balances`)).body.approvedUnpaid).toBe(0);
   });
 });
+
+describe("quarter and year settlement", () => {
+  it("stamps a quarter distributed once nothing is left, and shows the year by quarter", async () => {
+    await setupProject();
+    await call("adm", "POST", `${C}/partners`, { name: "أ", sharePct: 100 });
+    await call("adm", "POST", `${F()}/receipts`, { date: "2026-02-10", amount: 115000 });
+    let q1 = (await call("adm", "GET", `${C}/quarter?year=2026&q=1`)).body;
+    expect(q1.settlement.stamp).toBe("open");
+    expect(q1.rows[0].unclassified).toBeGreaterThan(0);
+    await call("adm", "POST", `${C}/distributions`, {
+      mode: "quarter",
+      year: 2026,
+      q: 1,
+      projectIds: [pid],
+      pct: 100,
+      status: "completed",
+    });
+    q1 = (await call("adm", "GET", `${C}/quarter?year=2026&q=1`)).body;
+    expect(q1.settlement).toMatchObject({ stamp: "distributed", distributions: 1, leftover: 0 });
+    const year = (await call("adm", "GET", `${C}/quarter?year=2026&q=0`)).body;
+    expect(year.label).toBe("سنة 2026");
+    expect(year.quarters).toHaveLength(4);
+    expect(year.quarters[0]).toMatchObject({ q: 1, stamp: "distributed" });
+    expect(year.quarters[1].stamp).toBe("open");
+  });
+});

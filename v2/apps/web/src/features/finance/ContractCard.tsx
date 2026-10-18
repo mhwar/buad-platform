@@ -1,13 +1,15 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { CalendarClock, FileSignature } from "lucide-react";
 import { useState } from "react";
-import { Badge, Card, cx, Segmented } from "../../components/ui";
-import { day, sar } from "../../lib/format";
+import { Badge, Button, Card, confirmAction, cx, Segmented, toast } from "../../components/ui";
+import { day, sar, today as todayIso } from "../../lib/format";
 import { useCan } from "../../session";
+import { companyKeys } from "../finance-overview/company-api";
 import { invoicesQuery } from "../finance-overview/vat-api";
 import { scheduleQuery } from "../receivables/api";
 import { ScheduleCard } from "../receivables/ScheduleCard";
-import { financeQuery } from "./api";
+import { type Finance, financeApi, financeKey, financeQuery } from "./api";
+import { EntryDialog } from "./EntryDialog";
 import { ContractSummary } from "./FinanceTab";
 import { ReceiptsCard } from "./Receipts";
 import { SalesInvoices } from "./SalesInvoices";
@@ -83,6 +85,12 @@ export function ContractCard({
           )}
         </p>
       </div>
+      <Unclassified
+        projectId={projectId}
+        fin={f.data}
+        canEdit={canEdit}
+        collected={gross > 0 && received >= gross - 0.5}
+      />
       <Segmented<Part>
         label="أقسام العقد"
         value={shown}
@@ -103,5 +111,94 @@ export function ContractCard({
       {shown === "invoices" && <SalesInvoices projectId={projectId} canEdit={canEdit && vatEdit} />}
       {shown === "schedule" && <ScheduleCard projectId={projectId} canEdit={canEdit} embedded />}
     </Card>
+  );
+}
+
+/**
+ * «غير مصنّف»: what is left of the contract after every entry (gross − all entries). Once the
+ * contract is collected it must not stay floating: it becomes profit (an income entry «فائض
+ * المشروع») or a project expense. Before that it is only shown, since costs are still coming.
+ */
+function Unclassified({
+  projectId,
+  fin,
+  canEdit,
+  collected,
+}: {
+  projectId: string;
+  fin: Finance;
+  canEdit: boolean;
+  collected: boolean;
+}) {
+  const qc = useQueryClient();
+  const [expense, setExpense] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const amount = Math.round(fin.summary.remainingFromGross * 100) / 100;
+  if (amount <= 0.5) return null;
+  const toProfit = async () => {
+    const ok = await confirmAction({
+      title: `تحويل ${sar(amount)} إلى أرباح؟`,
+      text: "يُسجَّل قيد إيراد «فائض المشروع» بالمبلغ، فيدخل في ربح المشروع القابل للتوزيع.",
+      action: "تحويل إلى أرباح",
+    });
+    if (!ok) return;
+    setBusy(true);
+    try {
+      const res = await financeApi(projectId).addEntry({
+        type: "income",
+        cat: "other",
+        description: "فائض المشروع",
+        amount,
+        status: "paid",
+        date: todayIso(),
+      });
+      qc.setQueryData(financeKey(projectId), res);
+      qc.invalidateQueries({ queryKey: companyKeys.all });
+      toast("حُوّل المبلغ إلى أرباح");
+    } catch {
+      toast("تعذّر التحويل، حاولوا مرة أخرى", "error");
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <section
+      aria-label="مبلغ غير مصنّف"
+      className={cx(
+        "rounded-xl border p-3 text-sm",
+        collected
+          ? "border-amber-300 bg-amber-50 dark:border-amber-700 dark:bg-amber-950/40"
+          : "border-slate-200 dark:border-slate-700",
+      )}
+    >
+      <p className="flex flex-wrap items-center justify-between gap-2">
+        <span>غير مصنّف من العقد</span>
+        <b className="tabular-nums">{sar(amount)}</b>
+      </p>
+      <p className="mt-1 text-xs text-muted">
+        {collected
+          ? "حُصّل العقد كاملاً وبقي هذا المبلغ بلا قيد: صنّفوه أرباحاً أو مصروفاً للمشروع."
+          : "العقد ناقص كل القيود. يُصنَّف بعد اكتمال التحصيل والمصروفات."}
+      </p>
+      {collected && canEdit && (
+        <div className="mt-2 flex flex-wrap gap-2">
+          <Button onClick={toProfit} disabled={busy}>
+            تحويل إلى أرباح
+          </Button>
+          <Button variant="ghost" onClick={() => setExpense(true)} disabled={busy}>
+            تحويل إلى مصروف
+          </Button>
+        </div>
+      )}
+      {expense && (
+        <EntryDialog
+          open={expense}
+          onOpenChange={setExpense}
+          projectId={projectId}
+          fin={fin}
+          preset={{ type: "expense", amount, description: "", date: todayIso() }}
+        />
+      )}
+    </section>
   );
 }

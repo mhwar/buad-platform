@@ -158,6 +158,10 @@ export type QuarterFlag =
   | "cancelled"
   | "inactive";
 export type QuarterRow = {
+  /** Closed, and all it realized has been distributed. */
+  fullyDistributed?: boolean;
+  /** Contract money not yet booked as an expense, fee or income. */
+  unclassified?: number;
   /** Financially closed: profit final, ready to distribute. */
   closed?: boolean;
   id: string;
@@ -194,6 +198,21 @@ export type QuarterData = {
   retained: { ops: number; dev: number; reserve: number; total: number };
   partnersPct: number;
   defaultSelected: string[];
+  settlement: Settlement;
+  /** q = 0 (the year): each quarter's line. */
+  quarters?: ({
+    q: number;
+    label: string;
+    receivedInPeriod: number;
+    realizedInPeriod: number;
+    companyNet: number;
+  } & Settlement)[];
+};
+export type Settlement = {
+  distributions: number;
+  settled: number;
+  leftover: number;
+  stamp: "open" | "distributed" | "partial";
 };
 export const quarterQuery = (year: number, q: number) =>
   queryOptions({

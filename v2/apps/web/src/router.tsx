@@ -281,6 +281,9 @@ const financeRoute = createRoute({
     q: z.coerce.number().int().min(1).max(4).optional(),
     client: z.string().optional(),
     status: z.string().optional(),
+    // «الأرباح والتوزيع» has its own period (pq = 0: the whole year), apart from the other tabs'.
+    py: z.coerce.number().int().min(2000).max(2100).optional(),
+    pq: z.coerce.number().int().min(0).max(4).optional(),
     // The four tabs, and the older names that still arrive from saved links.
     tab: z
       .enum([

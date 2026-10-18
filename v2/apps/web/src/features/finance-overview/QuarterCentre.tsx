@@ -2,9 +2,9 @@ import { useQuery } from "@tanstack/react-query";
 import { Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { AlertTriangle, PieChart, Wallet } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Badge, Button, Card, EmptyState, Select } from "../../components/ui";
+import { Badge, Button, Card, EmptyState, Stamp } from "../../components/ui";
 import { sar } from "../../lib/format";
-import { type QuarterFlag, type QuarterRow, quarterQuery } from "./company-api";
+import { type QuarterData, type QuarterFlag, type QuarterRow, quarterQuery } from "./company-api";
 import { DistributionWizard } from "./PartnersTab";
 import { Tile } from "./Tile";
 
@@ -24,59 +24,26 @@ const thisQ = Math.floor(now.getMonth() / 3) + 1;
  * «توزيع الربع»: profit realized in a quarter (by money received), project by project —
  * what was already distributed, what is left, every warning — then «توزيع هذا الربع».
  */
-export function QuarterCentre() {
-  // The year and quarter live in the address, so the view can be shared and survives a reload.
-  const search = useSearch({ strict: false }) as { year?: number; q?: number };
-  const go = useNavigate();
-  const year = search.year ?? now.getFullYear();
-  const q = search.q ?? thisQ;
-  const setYear = (y: number) =>
-    go({ to: ".", search: (p: object) => ({ ...p, year: y }), replace: true } as never);
-  const setQ = (n: number) =>
-    go({ to: ".", search: (p: object) => ({ ...p, q: n }), replace: true } as never);
+export function QuarterCentre({
+  year,
+  q,
+  onQuarter,
+}: {
+  year: number;
+  /** 0 = the whole year. */
+  q: number;
+  onQuarter: (q: number) => void;
+}) {
   const d = useQuery(quarterQuery(year, q));
   const [selected, setSelected] = useState<string[] | null>(null);
   const [wizard, setWizard] = useState(false);
-  // A different quarter starts from its own default selection.
+  // A different period starts from its own default selection.
   // biome-ignore lint/correctness/useExhaustiveDependencies: reset on period change
   useEffect(() => setSelected(null), [year, q]);
-
-  const years = Array.from({ length: 4 }, (_, i) => now.getFullYear() - i);
-  const picker = (
-    <div className="flex flex-wrap items-center gap-2">
-      <Select
-        aria-label="السنة"
-        value={year}
-        onChange={(e) => setYear(Number(e.target.value))}
-        className="w-auto"
-      >
-        {years.map((y) => (
-          <option key={y} value={y}>
-            {y}
-          </option>
-        ))}
-      </Select>
-      <div className="flex rounded-lg border bg-surface p-0.5" role="tablist" aria-label="الربع">
-        {[1, 2, 3, 4].map((n) => (
-          <button
-            key={n}
-            type="button"
-            role="tab"
-            aria-selected={q === n}
-            onClick={() => setQ(n)}
-            className={`rounded-md px-3 py-1.5 text-sm ${q === n ? "bg-brand text-white dark:text-canvas" : "text-muted hover:text-ink"}`}
-          >
-            ر{n}
-          </button>
-        ))}
-      </div>
-    </div>
-  );
 
   if (d.isPending)
     return (
       <div className="space-y-4">
-        {picker}
         <div className="h-64 animate-pulse rounded-2xl bg-slate-200 dark:bg-slate-800" />
       </div>
     );
@@ -98,10 +65,18 @@ export function QuarterCentre() {
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        {picker}
-        <Button disabled={total <= 0 || v.partnersPct <= 0} onClick={() => setWizard(true)}>
-          <PieChart className="size-4" /> توزيع {v.label}
-        </Button>
+        <span className="flex flex-wrap items-center gap-2">
+          <h2 className="text-lg font-bold">{v.label}</h2>
+          {v.settlement.stamp === "distributed" && <Stamp kind="distributed">موزّع</Stamp>}
+          {v.settlement.stamp === "partial" && (
+            <Stamp kind="partial">موزّع جزئياً · بقي {sar(v.settlement.leftover)}</Stamp>
+          )}
+        </span>
+        {q > 0 && (
+          <Button disabled={total <= 0 || v.partnersPct <= 0} onClick={() => setWizard(true)}>
+            <PieChart className="size-4" /> توزيع {v.label}
+          </Button>
+        )}
       </div>
       {v.partnersPct <= 0 && (
         <p className="text-sm text-amber-700 dark:text-amber-300">
@@ -111,9 +86,13 @@ export function QuarterCentre() {
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <Tile title={`المستلم في ${v.label}`} value={sar(v.totals.receivedInPeriod)} />
-        <Tile title="الربح المتحقق في الربع" value={sar(v.totals.realizedInPeriod)} tone="good" />
         <Tile
-          title="صافي مالية الشركة في الربع"
+          title={q ? "الربح المتحقق في الربع" : "الربح المتحقق في السنة"}
+          value={sar(v.totals.realizedInPeriod)}
+          tone="good"
+        />
+        <Tile
+          title={q ? "صافي مالية الشركة في الربع" : "صافي مالية الشركة في السنة"}
           value={sar(v.company.income - v.company.expenses)}
           sub={`إيرادات ${sar(v.company.income)} · مصروفات ${sar(v.company.expenses)}`}
         />
@@ -124,6 +103,17 @@ export function QuarterCentre() {
           sub={v.totals.carried < 0 ? `منه خصم تجاوزات سابقة ${sar(v.totals.carried)}` : undefined}
         />
       </div>
+
+      {v.settlement.stamp === "partial" && (
+        <div
+          role="status"
+          className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:bg-amber-950/40 dark:text-amber-200"
+        >
+          بعد توزيعات {v.label} بقي <b>{sar(v.settlement.leftover)}</b> غير مصنّف. لا يُرحَّل: إما يُوزَّع
+          أرباحاً («توزيع {v.label}»)، أو تُقيَّد له مصروفات في مشاريعه (من صفوف المشاريع أدناه).
+        </div>
+      )}
+      {v.quarters && <YearQuarters quarters={v.quarters} onQuarter={onQuarter} />}
 
       <Card className="p-0">
         <div className="px-5 pt-5">
@@ -144,8 +134,12 @@ export function QuarterCentre() {
                 <tr className="border-b">
                   <th className="px-3 py-2" />
                   <th className="px-2 py-2 font-medium">المشروع</th>
-                  <th className="px-2 py-2 font-medium">المستلم في الربع</th>
-                  <th className="px-2 py-2 font-medium">متحقق في الربع</th>
+                  <th className="px-2 py-2 font-medium">
+                    {q ? "المستلم في الربع" : "المستلم في السنة"}
+                  </th>
+                  <th className="px-2 py-2 font-medium">
+                    {q ? "متحقق في الربع" : "متحقق في السنة"}
+                  </th>
                   <th className="px-2 py-2 font-medium">متحقق حتى نهايته</th>
                   <th className="px-2 py-2 font-medium">وُزّع سابقاً</th>
                   <th className="px-3 py-2 font-medium">المتبقي للتوزيع</th>
@@ -180,7 +174,14 @@ export function QuarterCentre() {
                         {r.clientName} · استُلم {sar(r.receivedToDate)} من {sar(r.gross)}
                       </span>
                       <span className="mt-1 flex flex-wrap gap-1">
-                        {r.closed && <Badge tone="green">مغلق · جاهز للتوزيع</Badge>}
+                        {r.fullyDistributed ? (
+                          <Stamp kind="distributed">موزّع بالكامل</Stamp>
+                        ) : (
+                          r.closed && <Stamp kind="closed">مغلق · جاهز للتوزيع</Stamp>
+                        )}
+                        {(r.unclassified ?? 0) > 0.5 && r.status === "completed" && (
+                          <Badge tone="amber">غير مصنّف {sar(r.unclassified ?? 0)}</Badge>
+                        )}
                         {r.flags
                           .filter((f) => f !== "no_receipts")
                           .map((f) => (
@@ -236,5 +237,54 @@ export function QuarterCentre() {
         />
       )}
     </div>
+  );
+}
+
+const STAMP_TEXT = { distributed: "موزّع", partial: "موزّع جزئياً", open: "لم يُوزَّع" } as const;
+
+/** The year by quarter: what each realized, what is left, and whether it was distributed. */
+function YearQuarters({
+  quarters,
+  onQuarter,
+}: {
+  quarters: NonNullable<QuarterData["quarters"]>;
+  onQuarter: (q: number) => void;
+}) {
+  return (
+    <Card className="p-0" aria-label="أرباع السنة">
+      <div className="px-5 pt-5">
+        <h2 className="font-semibold">الأرباع</h2>
+        <p className="text-xs text-muted">اختاروا ربعاً لترى مشاريعه وتوزّعه.</p>
+      </div>
+      <ul className="mt-3 divide-y border-t">
+        {quarters.map((x) => (
+          <li key={x.q}>
+            <button
+              type="button"
+              onClick={() => onQuarter(x.q)}
+              className="flex w-full flex-wrap items-center justify-between gap-3 px-5 py-3 text-right hover:bg-brand-soft/50"
+            >
+              <span className="min-w-0">
+                <span className="font-medium">{x.label}</span>
+                <span className="block text-xs text-muted">
+                  استُلم {sar(x.receivedInPeriod)} · متحقق {sar(x.realizedInPeriod)} · صافي الشركة{" "}
+                  {sar(x.companyNet)}
+                </span>
+              </span>
+              <span className="flex items-center gap-2">
+                {x.stamp === "open" ? (
+                  <Badge tone="gray">{STAMP_TEXT.open}</Badge>
+                ) : (
+                  <Stamp kind={x.stamp}>
+                    {STAMP_TEXT[x.stamp]}
+                    {x.stamp === "partial" ? ` · بقي ${sar(x.leftover)}` : ""}
+                  </Stamp>
+                )}
+              </span>
+            </button>
+          </li>
+        ))}
+      </ul>
+    </Card>
   );
 }

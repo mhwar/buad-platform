@@ -924,3 +924,32 @@ export function BadgeMenu({
     </RMenu.Root>
   );
 }
+
+/**
+ * A stamp: a finished state that should stand out at a glance — «مغلق», «موزّع بالكامل»,
+ * a quarter «موزّع». Slightly tilted, double-ruled, like an office stamp.
+ */
+export function Stamp({
+  kind,
+  children,
+}: {
+  kind: "closed" | "distributed" | "partial";
+  children: ReactNode;
+}) {
+  const look = {
+    closed: "border-slate-500 text-slate-600 dark:border-slate-400 dark:text-slate-300",
+    distributed:
+      "border-emerald-600 text-emerald-700 dark:border-emerald-400 dark:text-emerald-300",
+    partial: "border-amber-500 text-amber-700 dark:border-amber-400 dark:text-amber-300",
+  }[kind];
+  return (
+    <span
+      className={cx(
+        "inline-flex -rotate-3 items-center rounded-md border-2 border-double px-2 py-0.5 text-xs font-bold tracking-wide",
+        look,
+      )}
+    >
+      {children}
+    </span>
+  );
+}

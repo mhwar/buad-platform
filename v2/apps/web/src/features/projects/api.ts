@@ -20,6 +20,8 @@ export type ProjectListItem = {
   archivedAt: number | null;
   /** Financially closed: no new entries until reopened. */
   closedAt?: number | null;
+  /** Closed, and all it realized has been distributed. */
+  fullyDistributed?: boolean;
   clientId: string;
   clientName: string;
   clientCode: string;

@@ -22,6 +22,8 @@ export type RealizedProject = {
   pendingExpenses: number;
   /** Financially closed («إغلاق المشروع»): its profit is final and ready to distribute. */
   closed?: boolean;
+  /** Contract money not yet booked as an expense, a fee or income (riyals). */
+  unclassified?: number;
 };
 
 const r2 = (n: number) => Math.round(n * 100) / 100;

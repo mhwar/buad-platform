@@ -31,7 +31,7 @@ import {
 import { Tile } from "./Tile";
 
 /** «الشركاء والتوزيع»: who owns what, and every profit distribution (draft → completed). */
-export function PartnersTab() {
+export function PartnersTab({ range }: { range?: { from: string; to: string } } = {}) {
   const [wizard, setWizard] = useState(false);
   const [past, setPast] = useState(false);
   return (
@@ -52,7 +52,7 @@ export function PartnersTab() {
             </Button>
           </div>
         </div>
-        <Distributions />
+        <Distributions range={range} />
       </Card>
       {wizard && <DistributionWizard onClose={() => setWizard(false)} />}
       {past && <PastDistributionDialog onClose={() => setPast(false)} />}
@@ -252,16 +252,26 @@ function PartnerDialog({ partner, onClose }: { partner: Partner | null; onClose:
   );
 }
 
-function Distributions() {
+function Distributions({ range }: { range?: { from: string; to: string } }) {
   const q = useQuery(distributionsQuery);
   const qc = useQueryClient();
   const [open, setOpen] = useState<string | null>(null);
   const refresh = () => qc.invalidateQueries({ queryKey: companyKeys.all });
   if (q.isPending)
     return <div className="m-5 h-24 animate-pulse rounded-xl bg-slate-100 dark:bg-slate-800" />;
-  const items = q.data ?? [];
+  // Within the period: distributions whose range overlaps it (or, without one, made in it).
+  const items = (q.data ?? []).filter((d) => {
+    if (!range) return true;
+    const from = d.from || new Date(d.createdAt * 1000).toISOString().slice(0, 10);
+    const to = d.to || from;
+    return from <= range.to && to >= range.from;
+  });
   if (!items.length)
-    return <p className="px-5 py-10 text-center text-sm text-muted">لم يُسجَّل أي توزيع بعد.</p>;
+    return (
+      <p className="px-5 py-10 text-center text-sm text-muted">
+        {range && q.data?.length ? "لا توزيعات في هذه الفترة." : "لم يُسجَّل أي توزيع بعد."}
+      </p>
+    );
   return (
     <ul className="mt-4 divide-y border-t">
       {items.map((d) => (
