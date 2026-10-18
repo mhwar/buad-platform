@@ -414,3 +414,25 @@ describe("finance checks and guards", () => {
     expect(checks.find((c: J) => c.key === "partners").rows[0].detail).toMatch(/90%/);
   });
 });
+
+describe("loading finance in bulk", () => {
+  it("gives exactly what loading each project gives", async () => {
+    const { loadFinance, loadFinanceMany } = await import("./modules/finance");
+    const { projects: P } = await import("@buad/schema/db");
+    const a = await proj("own", { expectedValue: 5000 });
+    await contract(a, 10000);
+    await receipt(a, 4000, "2026-03-01");
+    await call("own", "POST", `/api/projects/${a}/finance/entries`, {
+      description: "مواد",
+      type: "expense",
+      cat: "materials",
+      amount: 700,
+      date: "2026-03-02",
+    });
+    await proj("own", { expectedValue: 3000 }); // no finance row yet
+    const list = await ctx.db.select().from(P);
+    const many = await loadFinanceMany(ctx.db, "org_platform", list);
+    for (const p of list.filter((x) => x.orgId === "org_platform"))
+      expect(many.get(p.id)).toEqual(await loadFinance(ctx.db, p));
+  });
+});

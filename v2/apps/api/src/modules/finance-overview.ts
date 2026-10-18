@@ -6,7 +6,7 @@ import { Hono } from "hono";
 import { z } from "zod";
 import { requireAuth, requireRW, type Vars } from "../auth/middleware";
 import type { Db } from "../auth/service";
-import { loadFinance } from "./finance";
+import { loadFinanceMany } from "./finance";
 import { financeChecks } from "./finance-checks";
 import { loadOrgProfile } from "./org";
 
@@ -128,10 +128,16 @@ export async function financeOverview(
   const unregistered: { projectId: string; projectName: string; item: string; amount: number }[] =
     [];
 
+  const finOf = await loadFinanceMany(
+    db,
+    orgId,
+    rows.map((r) => r.p),
+  );
   for (const { p, clientName } of rows) {
     if (filter.clientId && p.clientId !== filter.clientId) continue;
     if (filter.status && p.status !== filter.status) continue;
-    const fin = await loadFinance(db, p);
+    const fin = finOf.get(p.id);
+    if (!fin) continue;
     const s = fin.summary;
     const hasFinance = fin.ctrl.version > 0 || fin.entries.length > 0;
     const date = projectDate(p, fin);

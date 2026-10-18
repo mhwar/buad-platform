@@ -41,7 +41,7 @@ import { z } from "zod";
 import { requireAuth, requireRW, type Vars } from "../auth/middleware";
 import type { Db } from "../auth/service";
 import { atomic, newId, nowSec } from "./common";
-import { loadFinance, loadVatRate, taxInvoiceColumns } from "./finance";
+import { loadFinanceMany, loadVatRate, taxInvoiceColumns } from "./finance";
 import { projectDate } from "./finance-overview";
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -72,8 +72,14 @@ export async function projectFigures(db: Db, orgId: string) {
     .orderBy(asc(projects.number));
   const out: (ProjectProfitLite &
     RealizedProject & { number: string; name: string; clientName: string })[] = [];
+  const finOf = await loadFinanceMany(
+    db,
+    orgId,
+    rows.map((r) => r.p),
+  );
   for (const { p, clientName } of rows) {
-    const fin = await loadFinance(db, p);
+    const fin = finOf.get(p.id);
+    if (!fin) continue;
     out.push({
       id: p.id,
       number: p.number,
@@ -404,9 +410,15 @@ export const companyFinanceApp = new Hono<Env>()
       .orderBy(asc(projects.number));
     const today = new Date().toISOString().slice(0, 10);
     const items = [];
+    const finOf = await loadFinanceMany(
+      db,
+      orgId,
+      rows.map((r) => r.p),
+    );
     for (const { p, clientName } of rows) {
       if (p.status === "draft") continue;
-      const fin = await loadFinance(db, p);
+      const fin = finOf.get(p.id);
+      if (!fin) continue;
       const gross = fin.summary.grossTotal;
       if (gross <= 0 || fin.receipts.length) continue;
       const execIncome = fin.entries

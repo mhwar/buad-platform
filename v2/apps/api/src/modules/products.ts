@@ -22,7 +22,7 @@ import { z } from "zod";
 import { requireAuth, requireRW, type Vars } from "../auth/middleware";
 import type { Db } from "../auth/service";
 import { newId, nowSec } from "./common";
-import { loadFinance, loadVatRate } from "./finance";
+import { loadFinanceMany, loadVatRate } from "./finance";
 
 /* ─────────────────────────────────────────────────────────────────────────────
  * «المنتجات والخدمات» (owner and managers only). A product is public-safe `content` plus a
@@ -94,8 +94,14 @@ async function statRows(db: Db, orgId: string, where: SQL | undefined): Promise<
     .where(and(eq(projects.orgId, orgId), isNull(projects.archivedAt), where))
     .orderBy(asc(projects.number));
   const out: StatRow[] = [];
+  const finOf = await loadFinanceMany(
+    db,
+    orgId,
+    rows.map((r) => r.p),
+  );
   for (const { p, clientName } of rows) {
-    const fin = await loadFinance(db, p);
+    const fin = finOf.get(p.id);
+    if (!fin) continue;
     const m = {
       contractNet: fin.summary.contractNet,
       gross: fin.summary.grossTotal,

@@ -29,7 +29,7 @@ import { z } from "zod";
 import { requireAuth, requireRW, type Vars } from "../auth/middleware";
 import type { Db } from "../auth/service";
 import { atomic, newId, nowSec } from "./common";
-import { loadFinance, loadVatRate } from "./finance";
+import { loadFinanceMany, loadVatRate } from "./finance";
 
 /* ─────────────────────────────────────────────────────────────────────────────
  * VAT («الضريبة»): settings and the quarterly return, from what the platform records.
@@ -56,13 +56,53 @@ export const NOT_PURCHASES = new Set(["salary", "exec", "cashback", "cf", "vat"]
 /** Company expenses that never carry a supplier's tax invoice. */
 const COMPANY_NOT_PURCHASES = new Set(["payroll", "zakat", "gov_fees"]);
 
-export async function vatReport(db: Db, orgId: string, from: string, to: string, label: string) {
+/** Everything a VAT report reads, loaded once (a year view reuses it for its four quarters). */
+export async function loadVatData(db: Db, orgId: string) {
   const rows = await db
     .select({ p: projects, clientName: clients.name })
     .from(projects)
     .innerJoin(clients, eq(clients.id, projects.clientId))
     .where(and(eq(projects.orgId, orgId), isNull(projects.archivedAt)))
     .orderBy(asc(projects.number));
+  const [fins, invoices, company, [prof], rate] = await Promise.all([
+    loadFinanceMany(
+      db,
+      orgId,
+      rows.map((r) => r.p),
+    ),
+    db
+      .select()
+      .from(salesInvoices)
+      .where(and(eq(salesInvoices.orgId, orgId), isNull(salesInvoices.archivedAt))),
+    db
+      .select()
+      .from(companyEntries)
+      .where(
+        and(
+          eq(companyEntries.orgId, orgId),
+          eq(companyEntries.type, "expense"),
+          isNull(companyEntries.archivedAt),
+        ),
+      ),
+    db
+      .select({ name: orgProfile.name, tax: orgProfile.tax })
+      .from(orgProfile)
+      .where(eq(orgProfile.orgId, orgId))
+      .limit(1),
+    loadVatRate(db, orgId),
+  ]);
+  return { rows, fins, invoices, company, prof, rate };
+}
+
+export async function vatReport(
+  db: Db,
+  orgId: string,
+  from: string,
+  to: string,
+  label: string,
+  data?: Awaited<ReturnType<typeof loadVatData>>,
+) {
+  const { rows, fins, invoices, company, prof, rate } = data ?? (await loadVatData(db, orgId));
 
   const sales: {
     receiptId: string;
@@ -120,13 +160,10 @@ export async function vatReport(db: Db, orgId: string, from: string, to: string,
     amount: number;
   }[] = [];
   let reserved = 0;
-  const invoices = await db
-    .select()
-    .from(salesInvoices)
-    .where(and(eq(salesInvoices.orgId, orgId), isNull(salesInvoices.archivedAt)));
 
   for (const { p, clientName } of rows) {
-    const fin = await loadFinance(db, p);
+    const fin = fins.get(p.id);
+    if (!fin) continue;
     const s = fin.summary;
     if (s.grossTotal > 0 && !fin.receipts.length && p.status !== "draft") withoutReceipts++;
     // Output VAT follows the tax invoices issued to the client, by their date. A project with
@@ -232,16 +269,6 @@ export async function vatReport(db: Db, orgId: string, from: string, to: string,
     }
   }
   // The company's own purchases (outside projects): equipment, general purchases…
-  const company = await db
-    .select()
-    .from(companyEntries)
-    .where(
-      and(
-        eq(companyEntries.orgId, orgId),
-        eq(companyEntries.type, "expense"),
-        isNull(companyEntries.archivedAt),
-      ),
-    );
   for (const e of company) {
     if (e.taxInvoice) {
       const date = e.invoiceDate || e.date;
@@ -280,11 +307,6 @@ export async function vatReport(db: Db, orgId: string, from: string, to: string,
   purchases.sort((a, b) => a.date.localeCompare(b.date));
   unidentified.sort((a, b) => a.date.localeCompare(b.date));
 
-  const [prof] = await db
-    .select({ name: orgProfile.name, tax: orgProfile.tax })
-    .from(orgProfile)
-    .where(eq(orgProfile.orgId, orgId))
-    .limit(1);
   const ret = vatReturn(sales, purchases);
   const warnings: { code: string; count?: number }[] = [];
   if (!prof?.tax) warnings.push({ code: "no_vat_number" });
@@ -301,7 +323,7 @@ export async function vatReport(db: Db, orgId: string, from: string, to: string,
 
   return {
     period: { from, to, label },
-    rate: await loadVatRate(db, orgId),
+    rate,
     vatNumber: prof?.tax ?? "",
     sales: { rows: sales, ...ret.sales, total: r2(ret.sales.base + ret.sales.vat) },
     purchases: {
