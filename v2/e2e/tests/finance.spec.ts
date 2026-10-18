@@ -280,3 +280,53 @@ test("a purchase invoice from «+» goes into the project's entries and the VAT 
   await page.goto(`/finance?tab=vat&year=${year}&q=2`);
   await expect(page.getByText(desc)).toBeVisible();
 });
+
+test("unclassified: a collected contract's leftover becomes project profit", async ({
+  page,
+  api,
+}) => {
+  const c = await api<{ id: string }>("POST", "/api/clients", { name: `جمعية الفائض ${uid()}` });
+  const name = `مشروع بفائض ${uid()}`;
+  const p = await api<{ id: string }>("POST", "/api/projects", {
+    clientId: c.id,
+    name,
+    status: "completed",
+  });
+  await api("PATCH", `/api/projects/${p.id}/finance/ctrl`, { version: 0, contractValue: 1000 });
+  // 1,150 with VAT, all of it collected and nothing booked against it
+  await api("POST", `/api/projects/${p.id}/finance/receipts`, {
+    date: new Date().toISOString().slice(0, 10),
+    amount: 1150,
+    note: "",
+  });
+  await page.goto(`/projects/${p.id}?view=finance`);
+  const box = page.getByLabel("مبلغ غير مصنّف");
+  await expect(box).toContainText("1,150");
+  await box.getByRole("button", { name: "تحويل إلى أرباح" }).click();
+  await page.getByRole("alertdialog").getByRole("button", { name: "تحويل إلى أرباح" }).click();
+  await expect(page.getByText("حُوّل المبلغ إلى أرباح")).toBeVisible();
+  await expect(box).toHaveCount(0);
+  const fin = await api<{ entries: { description: string; type: string }[] }>(
+    "GET",
+    `/api/projects/${p.id}/finance`,
+  );
+  expect(fin.entries.some((e) => e.type === "income" && e.description === "فائض المشروع")).toBe(
+    true,
+  );
+});
+
+test("profit page: the year view lists its quarters and picking one filters to it", async ({
+  page,
+}) => {
+  await page.goto(`/finance?tab=profit&py=${year}&pq=0`);
+  const quarters = page.getByLabel("أرباع السنة");
+  await expect(quarters.getByRole("button")).toHaveCount(4);
+  await expect(page.getByRole("heading", { name: `سنة ${year}` })).toBeVisible();
+  await quarters.getByRole("button").nth(1).click();
+  await expect(page).toHaveURL(/pq=2/);
+  await expect(page.getByRole("tab", { name: "ر2" })).toHaveAttribute("aria-selected", "true");
+  await expect(quarters).toHaveCount(0);
+  await page.getByRole("tab", { name: "السنة كاملة" }).click();
+  await expect(page).toHaveURL(/pq=0/);
+  await expectNoSideScroll(page);
+});

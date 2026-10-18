@@ -1,6 +1,14 @@
-import { fromRiyals } from "@buad/domain";
+import { fromRiyals, realizedProfit } from "@buad/domain";
 import { listQuery, projectInput, projectPatch } from "@buad/schema/clients";
-import { clients, legacyMap, products, projectFinance, projects } from "@buad/schema/db";
+import {
+  clients,
+  distributionProjects,
+  distributions,
+  legacyMap,
+  products,
+  projectFinance,
+  projects,
+} from "@buad/schema/db";
 import { DEFAULT_CTRL } from "@buad/schema/finance";
 import { zValidator } from "@hono/zod-validator";
 import { and, asc, count, desc, eq, isNotNull, isNull, or, type SQL, sql } from "drizzle-orm";
@@ -9,6 +17,7 @@ import type { z } from "zod";
 import { requireAuth, requirePerm, requireRW, type Vars } from "../auth/middleware";
 import type { AuthUser, Db } from "../auth/service";
 import { atomic, contractTotalSql, likeTerm, logoUrlSql, newId, nowSec } from "./common";
+import { loadFinanceMany } from "./finance";
 import { resolveServiceLink } from "./service-link";
 import { nextCode, savedProjectDefaults } from "./settings";
 
@@ -228,10 +237,30 @@ export const projectsApp = new Hono<Env>()
       .groupBy(projects.status);
     // Money in and money due are finance figures: only for those who may see project finance.
     const money = me.perms.includes("finance.view");
+    // «موزّع بالكامل»: closed, and all it realized has gone out in approved distributions.
+    const closed = items.filter((p) => p.closedAt);
+    const done = new Set<string>();
+    if (money && closed.length) {
+      const fins = await loadFinanceMany(db, me.orgId, closed);
+      const paid = await db
+        .select({ projectId: distributionProjects.projectId, amount: distributionProjects.amount })
+        .from(distributionProjects)
+        .innerJoin(distributions, eq(distributions.id, distributionProjects.distributionId))
+        .where(and(eq(distributions.orgId, me.orgId), eq(distributions.status, "completed")));
+      for (const p of closed) {
+        const fin = fins.get(p.id);
+        if (!fin) continue;
+        const realized = realizedProfit(fin.summary.profit, fin.summary.grossTotal, fin.received);
+        const out =
+          paid.filter((x) => x.projectId === p.id).reduce((a, x) => a + x.amount, 0) / 100;
+        if (realized > 0 && realized - out <= 0.5) done.add(p.id);
+      }
+    }
     return c.json({
       ok: true,
       items: items.map((p) => ({
         ...p,
+        fullyDistributed: done.has(p.id),
         estimated: !!p.estimated,
         late: !!p.late,
         received: money ? Number(p.received) : null,

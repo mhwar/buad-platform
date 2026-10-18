@@ -108,6 +108,7 @@ export async function closeCheck(db: Db, project: typeof projects.$inferSelect) 
       realized: r2(realized),
       distributed: r2(distributed),
       undistributed: r2(realized - distributed),
+      unclassified: r2(s.remainingFromGross),
     },
     vat: {
       outputVat: r2(outputVat),

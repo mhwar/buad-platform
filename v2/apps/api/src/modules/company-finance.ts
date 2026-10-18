@@ -94,6 +94,7 @@ export async function projectFigures(db: Db, orgId: string) {
       unregistered: fin.summary.missingItems.length > 0,
       pendingExpenses: fin.summary.pendingExpenses,
       closed: !!p.closedAt,
+      unclassified: Math.round(fin.summary.remainingFromGross * 100) / 100,
     });
   }
   return out;
@@ -161,22 +162,60 @@ async function distributedByProject(db: Db, orgId: string) {
 }
 
 /** The quarter centre: realized profit per project, the quarter's company result, warnings. */
+/** The quarter's range, or the whole year when q = 0. */
+const periodOf = (year: number, q: number) =>
+  q ? quarterRange(year, q) : { from: `${year}-01-01`, to: `${year}-12-31` };
+const periodName = (year: number, q: number) => (q ? `${QUARTER_NAMES[q]} ${year}` : `سنة ${year}`);
+
+/**
+ * A quarter (or, q = 0, a whole year) of realized profit, project by project, with what the
+ * company earned and spent in it, and whether approved distributions settled it:
+ * «distributed» when nothing is left to distribute, «partial» when something is.
+ */
 export async function quarterData(db: Db, orgId: string, year: number, q: number) {
-  const { from, to } = quarterRange(year, q);
-  const figs = await projectFigures(db, orgId);
-  const receipts = await orgReceipts(db, orgId);
-  const paid = await distributedByProject(db, orgId);
+  const { from, to } = periodOf(year, q);
+  const [figs, receipts, paid, rawEntries, dists] = await Promise.all([
+    projectFigures(db, orgId),
+    orgReceipts(db, orgId),
+    distributedByProject(db, orgId),
+    liveEntries(db, orgId),
+    db
+      .select()
+      .from(distributions)
+      .where(and(eq(distributions.orgId, orgId), eq(distributions.status, "completed"))),
+  ]);
   const view = quarterView(figs, receipts, paid, from, to);
-  const entries = (await liveEntries(db, orgId)).map(lite);
-  const company = companyCalc([], entries, from, to);
+  const company = companyCalc([], rawEntries.map(lite), from, to);
+  const covering = dists.filter((d) => d.fromDate >= from && d.toDate <= to && d.fromDate);
+  const settled = covering.reduce((a, d) => a + riyals(d.netProfit), 0);
+  const leftover = Math.max(
+    0,
+    view.totals.positive + company.serviceIncome - company.companyExpenses,
+  );
   return {
     year,
     q,
     from,
     to,
-    label: `${QUARTER_NAMES[q]} ${year}`,
+    label: periodName(year, q),
     ...view,
+    rows: view.rows.map((r) => ({
+      ...r,
+      // Closed, and everything it realized has been distributed.
+      fullyDistributed: !!r.closed && r.realizedToDate > 0 && r.available <= 0.5,
+    })),
     company: { income: company.serviceIncome, expenses: company.companyExpenses },
+    settlement: {
+      distributions: covering.length,
+      settled: Math.round(settled * 100) / 100,
+      leftover: Math.round(leftover * 100) / 100,
+      stamp:
+        covering.length === 0
+          ? ("open" as const)
+          : leftover <= 0.5
+            ? ("distributed" as const)
+            : ("partial" as const),
+    },
   };
 }
 
@@ -374,7 +413,7 @@ export const companyFinanceApp = new Hono<Env>()
       "query",
       z.object({
         year: z.coerce.number().int().min(2000).max(2100),
-        q: z.coerce.number().int().min(1).max(4),
+        q: z.coerce.number().int().min(0).max(4),
       }),
     ),
     async (c) => {
@@ -382,6 +421,22 @@ export const companyFinanceApp = new Hono<Env>()
       const orgId = c.get("user").orgId;
       const { year, q } = c.req.valid("query");
       const d = await quarterData(db, orgId, year, q);
+      // The year view also shows each quarter's line, with its stamp.
+      const quarters = q
+        ? undefined
+        : await Promise.all(
+            [1, 2, 3, 4].map(async (n) => {
+              const x = await quarterData(db, orgId, year, n);
+              return {
+                q: n,
+                label: x.label,
+                receivedInPeriod: x.totals.receivedInPeriod,
+                realizedInPeriod: x.totals.realizedInPeriod,
+                companyNet: Math.round((x.company.income - x.company.expenses) * 100) / 100,
+                ...x.settlement,
+              };
+            }),
+          );
       const dists = (
         await db.select().from(distributions).where(eq(distributions.orgId, orgId))
       ).map(distLite);
@@ -393,6 +448,7 @@ export const companyFinanceApp = new Hono<Env>()
         partnersPct: ps.reduce((s, p) => s + p.sharePct, 0),
         // Chosen by default: projects with profit realized and not yet distributed.
         defaultSelected: d.rows.filter((r) => r.available > 0).map((r) => r.id),
+        quarters,
       });
     },
   )

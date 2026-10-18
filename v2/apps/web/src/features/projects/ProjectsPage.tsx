@@ -15,6 +15,7 @@ import {
   Pills,
   SearchBox,
   Select,
+  Stamp,
   ViewToggle,
 } from "../../components/ui";
 import { day, money, moneyShort } from "../../lib/format";
@@ -245,6 +246,11 @@ function ProjectCard({ p }: { p: ProjectListItem }) {
         <div className="flex items-start justify-between gap-2">
           <span className="flex flex-wrap items-center gap-1.5">
             <Badge tone={STATUS_TONE[p.status]}>{label(PROJECT_STATUS_LABELS, p.status)}</Badge>
+            {p.fullyDistributed ? (
+              <Stamp kind="distributed">موزّع بالكامل</Stamp>
+            ) : (
+              p.closedAt && <Stamp kind="closed">مغلق</Stamp>
+            )}
             <Deadline p={p} />
           </span>
           <span className="flex items-center gap-1 text-xs text-muted" dir="ltr">
@@ -355,7 +361,14 @@ function ProjectTable({ items }: { items: ProjectListItem[] }) {
             header: "الحالة",
             sort: (p) => p.status,
             cell: (p) => (
-              <Badge tone={STATUS_TONE[p.status]}>{label(PROJECT_STATUS_LABELS, p.status)}</Badge>
+              <span className="flex flex-wrap items-center gap-1.5">
+                <Badge tone={STATUS_TONE[p.status]}>{label(PROJECT_STATUS_LABELS, p.status)}</Badge>
+                {p.fullyDistributed ? (
+                  <Stamp kind="distributed">موزّع بالكامل</Stamp>
+                ) : (
+                  p.closedAt && <Stamp kind="closed">مغلق</Stamp>
+                )}
+              </span>
             ),
           },
           {

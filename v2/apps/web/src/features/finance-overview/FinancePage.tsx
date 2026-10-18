@@ -140,24 +140,11 @@ export function FinancePage() {
           <ReceivablesPage />
         </div>
       ) : tab === "profit" ? (
-        <div className="space-y-10">
-          <QuarterCentre />
-          <section aria-labelledby="company-ledger" className="space-y-3">
-            <h2 id="company-ledger" className="text-lg font-bold">
-              إيرادات الشركة ومصروفاتها
-            </h2>
-            <p className="text-sm text-muted">
-              ما يدخل الشركة ويخرج منها خارج المشاريع؛ صافيه يدخل في الربح القابل للتوزيع.
-            </p>
-            <CompanyTab period={resolvePeriod({ preset: "year" }).period} />
-          </section>
-          <section aria-labelledby="partners-dist" className="space-y-3">
-            <h2 id="partners-dist" className="text-lg font-bold">
-              الشركاء والتوزيعات
-            </h2>
-            <PartnersTab />
-          </section>
-        </div>
+        <ProfitTab
+          year={s.py ?? new Date().getFullYear()}
+          q={s.pq ?? 0}
+          onChange={(py, pq) => set({ py, pq })}
+        />
       ) : (
         <div className="space-y-10">
           <YearReview
@@ -223,6 +210,77 @@ export function FinancePage() {
         </div>
       )}
     </>
+  );
+}
+
+/**
+ * «الأرباح والتوزيع»: one period at the top (a year, or one of its quarters) drives every part —
+ * realized profit and its stamps, the company's own income and expenses, the distributions.
+ * The balances above stay «since the start».
+ */
+function ProfitTab({
+  year,
+  q,
+  onChange,
+}: {
+  year: number;
+  q: number;
+  onChange: (year: number, q: number) => void;
+}) {
+  const range = q
+    ? {
+        from: `${year}-${String((q - 1) * 3 + 1).padStart(2, "0")}-01`,
+        to: new Date(Date.UTC(year, q * 3, 0)).toISOString().slice(0, 10),
+      }
+    : { from: `${year}-01-01`, to: `${year}-12-31` };
+  const years = Array.from({ length: 4 }, (_, i) => new Date().getFullYear() - i);
+  return (
+    <div className="space-y-8">
+      <div className="flex flex-wrap items-center gap-2" aria-label="فترة الأرباح">
+        <Select
+          aria-label="السنة"
+          value={year}
+          onChange={(e) => onChange(Number(e.target.value), q)}
+          className="w-auto"
+        >
+          {years.map((y) => (
+            <option key={y} value={y}>
+              {y}
+            </option>
+          ))}
+        </Select>
+        <div className="flex rounded-lg border bg-surface p-0.5" role="tablist" aria-label="الفترة">
+          {[0, 1, 2, 3, 4].map((n) => (
+            <button
+              key={n}
+              type="button"
+              role="tab"
+              aria-selected={q === n}
+              onClick={() => onChange(year, n)}
+              className={`min-h-10 rounded-md px-3 py-1.5 text-sm sm:min-h-0 ${q === n ? "bg-brand text-white dark:text-canvas" : "text-muted hover:text-ink"}`}
+            >
+              {n ? `ر${n}` : "السنة كاملة"}
+            </button>
+          ))}
+        </div>
+      </div>
+      <QuarterCentre year={year} q={q} onQuarter={(n) => onChange(year, n)} />
+      <section aria-labelledby="company-ledger" className="space-y-3">
+        <h2 id="company-ledger" className="text-lg font-bold">
+          إيرادات الشركة ومصروفاتها
+        </h2>
+        <p className="text-sm text-muted">
+          ما يدخل الشركة ويخرج منها خارج المشاريع في الفترة؛ صافيه يدخل في الربح القابل للتوزيع.
+        </p>
+        <CompanyTab period={range} />
+      </section>
+      <section aria-labelledby="partners-dist" className="space-y-3">
+        <h2 id="partners-dist" className="text-lg font-bold">
+          الشركاء والتوزيعات
+        </h2>
+        <PartnersTab range={range} />
+      </section>
+    </div>
   );
 }
 

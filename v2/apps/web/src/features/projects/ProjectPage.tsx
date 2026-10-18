@@ -25,7 +25,6 @@ import { PageSkeleton, SectionBoundary } from "../../components/Resilience";
 import { useTrackRecent } from "../../components/shell/useRecent";
 import {
   Avatar,
-  Badge,
   BadgeMenu,
   Button,
   Card,
@@ -35,6 +34,7 @@ import {
   type MenuItem,
   Notice,
   Segmented,
+  Stamp,
 } from "../../components/ui";
 import { day, fromEpoch } from "../../lib/format";
 import { meQuery } from "../../session";
@@ -58,7 +58,7 @@ import {
   projectQuery,
   updateProject,
 } from "./api";
-import { CloseProjectDialog, ReopenProjectDialog } from "./CloseProjectDialog";
+import { CloseProjectDialog, closeCheckQuery, ReopenProjectDialog } from "./CloseProjectDialog";
 import { ProjectDialog } from "./ProjectDialog";
 import { ProjectPulse } from "./ProjectPulse";
 
@@ -99,6 +99,11 @@ export function ProjectPage() {
   const [reopening, setReopening] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const section: Section = search.view ?? "finance";
+  // Hooks stay above the early returns: the stamp needs the close figures of a closed project.
+  const closeCheck = useQuery({
+    ...closeCheckQuery(id),
+    enabled: !!q.data?.project.closedAt && !!me?.perms.includes("finance.edit"),
+  });
 
   if (q.isPending) return <PageSkeleton />;
   if (q.isError || !q.data)
@@ -320,12 +325,14 @@ export function ProjectPage() {
                 .filter(([k]) => k !== p.status)
                 .map(([k, l]) => ({ value: k, label: l, tone: STATUS_TONE[k] ?? "gray" }))}
             />
-            {closed && (
-              <Badge tone="gray">
-                <Lock className="me-1 inline size-3" />
-                مغلق
-              </Badge>
-            )}
+            {closed &&
+              (closeCheck.data &&
+              closeCheck.data.figures.undistributed <= 0.5 &&
+              closeCheck.data.figures.realized > 0 ? (
+                <Stamp kind="distributed">موزّع بالكامل</Stamp>
+              ) : (
+                <Stamp kind="closed">مغلق</Stamp>
+              ))}
             {p.visibility === "private" && (
               <span className="inline-flex items-center gap-1 text-xs text-muted">
                 <Lock className="size-3" /> خاص

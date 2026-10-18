@@ -103,20 +103,26 @@ export function CompanyTab({ period }: { period: Period }) {
         </Card>
       </div>
 
-      <Ledger />
+      <Ledger period={period} />
 
       {idle.length > 0 && <IdleProjects items={idle} />}
     </div>
   );
 }
 
-function Ledger() {
+function Ledger({ period }: { period?: Period }) {
   const [filter, setFilter] = useState<Filter>("all");
   const [archived, setArchived] = useState(false);
   const [editing, setEditing] = useState<CompanyEntry | "new-income" | "new-expense" | null>(null);
   const q = useQuery(companyEntriesQuery(archived));
   const qc = useQueryClient();
-  const rows = (q.data ?? []).filter((e) => filter === "all" || e.type === filter);
+  const inPeriod = (d: string) =>
+    !period?.from || !period?.to || (!!d && d >= period.from && d <= period.to);
+  const rows = (q.data ?? []).filter(
+    (e) =>
+      (filter === "all" || e.type === filter) &&
+      inPeriod(e.type === "income" ? e.paymentDate || e.date : e.date),
+  );
   const restore = async (id: string) => {
     await companyApi.restoreEntry(id);
     await qc.invalidateQueries({ queryKey: companyKeys.all });
