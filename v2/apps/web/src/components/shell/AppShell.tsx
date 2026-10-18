@@ -12,7 +12,7 @@ import { AppHeader } from "./AppHeader";
 import { MobileDrawer } from "./MobileDrawer";
 import { activeEntry, buildNav, phoneNav } from "./nav-model";
 import { QuickCreate } from "./QuickCreate";
-import { Sidebar } from "./Sidebar";
+import { RailSidebar } from "./RailSidebar";
 
 // Loaded the first time it is opened: the palette brings its own queries and list logic.
 const CommandPalette = lazy(() => import("./CommandPalette"));
@@ -84,15 +84,15 @@ export function AppShell() {
         تخطَّ إلى المحتوى
       </a>
       <UpdateBanner />
-      <AppHeader onSearch={openPalette} />
       <div className="flex flex-1">
-        <Sidebar
+        <RailSidebar
           groups={groups}
           activeKey={active?.key ?? null}
           user={{ name: me.data.name || me.data.email, role }}
           onLogout={logout}
         />
         <div className="flex min-w-0 flex-1 flex-col">
+          <AppHeader onSearch={openPalette} />
           <main
             id="main"
             tabIndex={-1}

@@ -335,7 +335,7 @@ const KIND_ICON = {
 };
 
 /** «الأخيرة»: the last records opened, to get back to them in one click. */
-function Recent() {
+export function Recent() {
   const items = useRecent();
   const path = useRouterState({ select: (s) => s.location.pathname });
   if (!items.length) return null;

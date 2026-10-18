@@ -51,7 +51,9 @@ export function MobileTabBar({
                   active ? "text-brand" : "text-muted",
                 )}
               >
-                {active && <span className="absolute inset-x-5 top-0 h-0.5 rounded-b bg-brand" />}
+                {active && (
+                  <span className="absolute inset-x-5 top-0 h-[3px] rounded-b bg-accent" />
+                )}
                 <n.icon className="size-5" />
                 {n.label}
               </button>
@@ -66,7 +68,7 @@ export function MobileTabBar({
                 active ? "text-brand" : "text-muted",
               )}
             >
-              {active && <span className="absolute inset-x-5 top-0 h-0.5 rounded-b bg-brand" />}
+              {active && <span className="absolute inset-x-5 top-0 h-[3px] rounded-b bg-accent" />}
               <n.icon className="size-5" />
               {n.label}
             </Link>
