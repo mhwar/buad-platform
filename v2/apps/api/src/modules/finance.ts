@@ -11,6 +11,7 @@ import {
   paymentSchedule,
   projectFinance,
   projectReceipts,
+  projects,
 } from "@buad/schema/db";
 import {
   AGREEMENT_ITEMS,
@@ -24,7 +25,7 @@ import {
   type taxInvoiceInput,
 } from "@buad/schema/finance";
 import { zValidator } from "@hono/zod-validator";
-import { and, asc, count, desc, eq, isNull, max, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, inArray, isNull, max, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { z } from "zod";
 import { requireAuth, requirePerm, requireRW, type Vars } from "../auth/middleware";
@@ -103,32 +104,107 @@ async function inCompletedDistribution(db: Db, projectId: string, date: string) 
   return !!hit;
 }
 
+type FinanceRows = {
+  row: typeof projectFinance.$inferSelect | undefined;
+  entries: (typeof financeEntries.$inferSelect)[];
+  budget: (typeof financeBudgetItems.$inferSelect)[];
+  categories: (typeof financeCategories.$inferSelect)[];
+  receipts: (typeof projectReceipts.$inferSelect)[];
+};
+
 export async function loadFinance(db: Db, project: Pick<Project, "id" | "expectedValue">) {
-  const [row] = await db
-    .select()
-    .from(projectFinance)
-    .where(eq(projectFinance.projectId, project.id))
-    .limit(1);
-  const entries = await db
-    .select()
-    .from(financeEntries)
-    .where(eq(financeEntries.projectId, project.id))
-    .orderBy(desc(financeEntries.date), desc(financeEntries.createdAt));
-  const budget = await db
-    .select()
-    .from(financeBudgetItems)
-    .where(eq(financeBudgetItems.projectId, project.id))
-    .orderBy(asc(financeBudgetItems.sort));
-  const categories = await db
-    .select()
-    .from(financeCategories)
-    .where(eq(financeCategories.projectId, project.id))
-    .orderBy(asc(financeCategories.label));
-  const receipts = await db
-    .select()
-    .from(projectReceipts)
-    .where(eq(projectReceipts.projectId, project.id))
-    .orderBy(asc(projectReceipts.date), asc(projectReceipts.createdAt));
+  // The five reads go out together, not one after another.
+  const [[row], entries, budget, categories, receipts] = await Promise.all([
+    db.select().from(projectFinance).where(eq(projectFinance.projectId, project.id)).limit(1),
+    db
+      .select()
+      .from(financeEntries)
+      .where(eq(financeEntries.projectId, project.id))
+      .orderBy(desc(financeEntries.date), desc(financeEntries.createdAt)),
+    db
+      .select()
+      .from(financeBudgetItems)
+      .where(eq(financeBudgetItems.projectId, project.id))
+      .orderBy(asc(financeBudgetItems.sort)),
+    db
+      .select()
+      .from(financeCategories)
+      .where(eq(financeCategories.projectId, project.id))
+      .orderBy(asc(financeCategories.label)),
+    db
+      .select()
+      .from(projectReceipts)
+      .where(eq(projectReceipts.projectId, project.id))
+      .orderBy(asc(projectReceipts.date), asc(projectReceipts.createdAt)),
+  ]);
+  return assembleFinance(project, { row, entries, budget, categories, receipts });
+}
+
+/**
+ * Every project's finance of an organisation in five reads (instead of five per project), for
+ * the pages that add projects up. Same result as loadFinance, project by project.
+ */
+export async function loadFinanceMany(
+  db: Db,
+  orgId: string,
+  list: Pick<Project, "id" | "expectedValue">[],
+) {
+  const ofOrg = db.select({ id: projects.id }).from(projects).where(eq(projects.orgId, orgId));
+  const [rows, entries, budget, categories, receipts] = await Promise.all([
+    db.select().from(projectFinance).where(eq(projectFinance.orgId, orgId)),
+    db
+      .select()
+      .from(financeEntries)
+      .where(eq(financeEntries.orgId, orgId))
+      .orderBy(desc(financeEntries.date), desc(financeEntries.createdAt)),
+    db
+      .select()
+      .from(financeBudgetItems)
+      .where(inArray(financeBudgetItems.projectId, ofOrg))
+      .orderBy(asc(financeBudgetItems.sort)),
+    db
+      .select()
+      .from(financeCategories)
+      .where(inArray(financeCategories.projectId, ofOrg))
+      .orderBy(asc(financeCategories.label)),
+    db
+      .select()
+      .from(projectReceipts)
+      .where(eq(projectReceipts.orgId, orgId))
+      .orderBy(asc(projectReceipts.date), asc(projectReceipts.createdAt)),
+  ]);
+  const by = <T extends { projectId: string }>(xs: T[]) => {
+    const m = new Map<string, T[]>();
+    for (const x of xs) {
+      const l = m.get(x.projectId);
+      if (l) l.push(x);
+      else m.set(x.projectId, [x]);
+    }
+    return m;
+  };
+  const e = by(entries);
+  const b = by(budget);
+  const c = by(categories);
+  const r = by(receipts);
+  const out = new Map<string, ReturnType<typeof assembleFinance>>();
+  for (const p of list)
+    out.set(
+      p.id,
+      assembleFinance(p, {
+        row: rows.find((x) => x.projectId === p.id),
+        entries: e.get(p.id) ?? [],
+        budget: b.get(p.id) ?? [],
+        categories: c.get(p.id) ?? [],
+        receipts: r.get(p.id) ?? [],
+      }),
+    );
+  return out;
+}
+
+function assembleFinance(
+  project: Pick<Project, "id" | "expectedValue">,
+  { row, entries, budget, categories, receipts }: FinanceRows,
+) {
   // No row yet: v1 defaults, contract value from the project's expected value. Nothing is written until a save.
   const ctrl = row
     ? { ...row, opCats: JSON.parse(row.opCats) as string[] }

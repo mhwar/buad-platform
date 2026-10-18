@@ -8,7 +8,7 @@ import type { z } from "zod";
 import { requireAuth, requirePerm, requireRW, type Vars } from "../auth/middleware";
 import type { Db } from "../auth/service";
 import { contractTotalSql, likeTerm, logoUrlSql, newId, nowSec } from "./common";
-import { loadFinance } from "./finance";
+import { loadFinanceMany } from "./finance";
 import { loadOrgProfile } from "./org";
 import { visibleProjects } from "./projects";
 import { nextCode } from "./settings";
@@ -379,8 +379,10 @@ export const clientsApp = new Hono<Env>()
       )
       .orderBy(asc(projects.createdAt));
     const items: StatementLine[] = [];
+    const finOf = await loadFinanceMany(db, me.orgId, rows);
     for (const p of rows) {
-      const fin = await loadFinance(db, p);
+      const fin = finOf.get(p.id);
+      if (!fin) continue;
       const s = fin.summary;
       items.push({
         id: p.id,

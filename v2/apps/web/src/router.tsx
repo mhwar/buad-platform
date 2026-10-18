@@ -4,6 +4,7 @@ import {
   createRoute,
   createRouter,
   Link,
+  lazyRouteComponent,
   Outlet,
   redirect,
   useRouterState,
@@ -18,46 +19,16 @@ import { AppShell } from "./components/shell/AppShell";
 import { UpdateBanner, useServerVersion } from "./components/UpdateBanner";
 import { ClientPage } from "./features/clients/ClientPage";
 import { ClientsPage } from "./features/clients/ClientsPage";
-import { StatementPage } from "./features/clients/StatementPage";
-import { PrintDocumentPage } from "./features/documents/DocumentActions";
-import { DocumentEditor } from "./features/documents/DocumentEditor";
 import { DocumentsPage } from "./features/documents/DocumentsPage";
-import { PublicDocumentPage } from "./features/documents/PublicDocument";
-import { ProjectFinanceReport } from "./features/finance/ProjectFinanceReport";
-import { FinancePage } from "./features/finance-overview/FinancePage";
-import { ReportPage } from "./features/finance-overview/ReportPage";
-import { VatReportPage } from "./features/finance-overview/VatReportPage";
 import { NotificationBell } from "./features/home/NotificationBell";
-import { ImportPage } from "./features/import/ImportPage";
 import { ComingSoon, SoonPage } from "./features/more/ComingSoon";
 import { MoreIndex } from "./features/more/MoreIndex";
-import { OrgSettingsPage } from "./features/org/OrgSettings";
-import { PlansPage } from "./features/plans/PlansPage";
-import { ProductBrochurePage, PublicBrochurePage } from "./features/products/BrochurePages";
-import { ProductBuilderPage } from "./features/products/ProductBuilder";
-import { ProductsPage } from "./features/products/ProductsPage";
 import { ProjectPage } from "./features/projects/ProjectPage";
 import { ProjectsPage } from "./features/projects/ProjectsPage";
-import { ExecutionReport } from "./features/reports/ExecutionReport";
-import { PortfolioReport } from "./features/reports/PortfolioReport";
-import { ReportsPage } from "./features/reports/ReportsPage";
-import { FollowupsPage } from "./features/sales/FollowupsPage";
 import { OpportunitiesPage } from "./features/sales/OpportunitiesPage";
-import { OpportunityPage } from "./features/sales/OpportunityPage";
-import { QuotePrintPage } from "./features/sales/QuotePrint";
-import { SalesDashboard } from "./features/sales/SalesDashboard";
-import { QuotesPage } from "./features/sales/SalesPage";
-import { DataPage } from "./features/settings/DataPage";
-import { FinanceSettingsPage } from "./features/settings/FinanceSettings";
 import { SettingsHome } from "./features/settings/SettingsHome";
 import { SettingsLayout } from "./features/settings/SettingsLayout";
-import { ProductPublicPage } from "./features/site/ProductPublicPage";
-import { SitePage } from "./features/site/SitePage";
 import { TasksPage } from "./features/tasks/TasksPage";
-import { ActivityPage } from "./features/team/ActivityPage";
-import { TeamPage } from "./features/team/TeamPage";
-import { WebsiteEditorPage } from "./features/website/WebsiteEditor";
-import { DecisionsPage } from "./features/workspace/DecisionsPage";
 import { MeetingsPage } from "./features/workspace/MeetingsPage";
 import { Home } from "./home";
 import { LoginPage } from "./login";
@@ -65,6 +36,114 @@ import { queryClient } from "./query-client";
 import { meQuery, setupStatusQuery } from "./session";
 import { SetupPage } from "./setup";
 import { ThemeToggle } from "./theme";
+
+// Heavier pages load when first opened, not with the app.
+const DocumentEditor = lazyRouteComponent(
+  () => import("./features/documents/DocumentEditor"),
+  "DocumentEditor",
+);
+const ProjectFinanceReport = lazyRouteComponent(
+  () => import("./features/finance/ProjectFinanceReport"),
+  "ProjectFinanceReport",
+);
+const FinancePage = lazyRouteComponent(
+  () => import("./features/finance-overview/FinancePage"),
+  "FinancePage",
+);
+const ReportPage = lazyRouteComponent(
+  () => import("./features/finance-overview/ReportPage"),
+  "ReportPage",
+);
+const VatReportPage = lazyRouteComponent(
+  () => import("./features/finance-overview/VatReportPage"),
+  "VatReportPage",
+);
+const ImportPage = lazyRouteComponent(() => import("./features/import/ImportPage"), "ImportPage");
+const PlansPage = lazyRouteComponent(() => import("./features/plans/PlansPage"), "PlansPage");
+const ProductsPage = lazyRouteComponent(
+  () => import("./features/products/ProductsPage"),
+  "ProductsPage",
+);
+const ExecutionReport = lazyRouteComponent(
+  () => import("./features/reports/ExecutionReport"),
+  "ExecutionReport",
+);
+const PortfolioReport = lazyRouteComponent(
+  () => import("./features/reports/PortfolioReport"),
+  "PortfolioReport",
+);
+const ReportsPage = lazyRouteComponent(
+  () => import("./features/reports/ReportsPage"),
+  "ReportsPage",
+);
+const SalesDashboard = lazyRouteComponent(
+  () => import("./features/sales/SalesDashboard"),
+  "SalesDashboard",
+);
+const StatementPage = lazyRouteComponent(
+  () => import("./features/clients/StatementPage"),
+  "StatementPage",
+);
+const SitePage = lazyRouteComponent(() => import("./features/site/SitePage"), "SitePage");
+const ProductPublicPage = lazyRouteComponent(
+  () => import("./features/site/ProductPublicPage"),
+  "ProductPublicPage",
+);
+const ActivityPage = lazyRouteComponent(
+  () => import("./features/team/ActivityPage"),
+  "ActivityPage",
+);
+const TeamPage = lazyRouteComponent(() => import("./features/team/TeamPage"), "TeamPage");
+const DataPage = lazyRouteComponent(() => import("./features/settings/DataPage"), "DataPage");
+const DecisionsPage = lazyRouteComponent(
+  () => import("./features/workspace/DecisionsPage"),
+  "DecisionsPage",
+);
+const FollowupsPage = lazyRouteComponent(
+  () => import("./features/sales/FollowupsPage"),
+  "FollowupsPage",
+);
+const OpportunityPage = lazyRouteComponent(
+  () => import("./features/sales/OpportunityPage"),
+  "OpportunityPage",
+);
+const PrintDocumentPage = lazyRouteComponent(
+  () => import("./features/documents/DocumentActions"),
+  "PrintDocumentPage",
+);
+const PublicDocumentPage = lazyRouteComponent(
+  () => import("./features/documents/PublicDocument"),
+  "PublicDocumentPage",
+);
+const ProductBrochurePage = lazyRouteComponent(
+  () => import("./features/products/BrochurePages"),
+  "ProductBrochurePage",
+);
+const PublicBrochurePage = lazyRouteComponent(
+  () => import("./features/products/BrochurePages"),
+  "PublicBrochurePage",
+);
+const ProductBuilderPage = lazyRouteComponent(
+  () => import("./features/products/ProductBuilder"),
+  "ProductBuilderPage",
+);
+const QuotePrintPage = lazyRouteComponent(
+  () => import("./features/sales/QuotePrint"),
+  "QuotePrintPage",
+);
+const WebsiteEditorPage = lazyRouteComponent(
+  () => import("./features/website/WebsiteEditor"),
+  "WebsiteEditorPage",
+);
+const FinanceSettingsPage = lazyRouteComponent(
+  () => import("./features/settings/FinanceSettings"),
+  "FinanceSettingsPage",
+);
+const OrgSettingsPage = lazyRouteComponent(
+  () => import("./features/org/OrgSettings"),
+  "OrgSettingsPage",
+);
+const QuotesPage = lazyRouteComponent(() => import("./features/sales/SalesPage"), "QuotesPage");
 
 const rootRoute = createRootRoute({ component: AppShell });
 
@@ -635,6 +714,9 @@ export const router = createRouter({
   // A slow page shows its outline (title line and blocks) instead of a blank screen.
   defaultPendingComponent: PageSkeleton,
   defaultPendingMs: 150,
+  // Hovering or focusing a link starts loading its page, so the click opens it at once.
+  defaultPreload: "intent",
+  defaultPreloadStaleTime: 0,
 });
 
 declare module "@tanstack/react-router" {
