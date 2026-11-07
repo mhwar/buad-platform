@@ -12,13 +12,14 @@ import { drizzle } from "drizzle-orm/d1";
 import { Hono } from "hono";
 import { deleteCookie, setCookie } from "hono/cookie";
 import { secureHeaders } from "hono/secure-headers";
+import { z } from "zod";
 import { requireAuth, requirePerm, type Vars } from "./auth/middleware";
 import { type Db, getUser, login, setPassword } from "./auth/service";
 import { SESSION_COOKIE, SESSION_TTL, signSession, signSetup, verifySetup } from "./auth/session";
 import { claimOwner, ownerExists, setupEnabled, tokenMatches } from "./auth/setup";
 import { assetsApp, type FileStore } from "./modules/assets";
 import { attentionApp } from "./modules/attention";
-import { auditApp, auditTrail } from "./modules/audit";
+import { audit, auditApp, auditTrail } from "./modules/audit";
 import { clientsApp } from "./modules/clients";
 import { companyFinanceApp } from "./modules/company-finance";
 import { crmApp } from "./modules/crm";
@@ -187,6 +188,29 @@ export function createApp(deps: AppDeps = {}) {
         setCookie(c, SESSION_COOKIE, await signSession(c.env.JWT_SECRET, fresh), sessionCookie);
         return c.json({ ok: true });
       })
+
+      // Every download (Excel, CSV, PDF, print) leaves a line in the audit log: who took what.
+      .post(
+        "/api/exports",
+        requireAuth,
+        zValidator(
+          "json",
+          z.object({
+            what: z.string().trim().min(1).max(160),
+            format: z.enum(["xlsx", "csv", "pdf", "print", "json"]),
+          }),
+        ),
+        async (c) => {
+          const { what, format } = c.req.valid("json");
+          await audit(c.get("db"), c.get("user"), {
+            entity: "export",
+            action: "export",
+            summary: `تصدير ${what} (${format.toUpperCase()})`,
+            detail: { what, format },
+          });
+          return c.json({ ok: true });
+        },
+      )
 
       // Admin-issued invite: the only way a pending user gets to choose a first password.
       .post("/api/users/:id/invite", requireAuth, requirePerm("team.manage"), async (c) => {

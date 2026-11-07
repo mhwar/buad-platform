@@ -34,20 +34,28 @@ test("a missing record says so instead of failing", async ({ page }) => {
 
 test("phone: no squeezed tables, no text under 12px, no raw dates", async ({ page, api }) => {
   test.skip((page.viewportSize()?.width ?? 0) >= 768, "phone layout");
-  await clientWithProject(api);
+  const { projectId } = await clientWithProject(api);
   await api("POST", "/api/tasks", { title: "مهمة بتاريخ", dueDate: "2026-09-30" });
   for (const path of [
+    "/",
     "/finance",
+    "/finance?tab=profit",
+    "/finance?tab=receivables",
     "/projects?view=list",
+    `/projects/${projectId}`,
     "/clients?view=list",
+    "/sales",
+    "/documents",
     "/tasks?layout=table&scope=all",
+    "/plans",
   ]) {
     await page.goto(path);
     await page.waitForLoadState("networkidle");
     await expect(page.locator("main table:visible"), `table on ${path}`).toHaveCount(0);
     const tiny = await page.evaluate(
       () =>
-        [...document.querySelectorAll("main *")].filter((el) => {
+        // The whole screen, the bottom bar included, not only the page body.
+        [...document.querySelectorAll("body *")].filter((el) => {
           const t = (el as HTMLElement).innerText?.trim();
           if (!t || el.children.length) return false;
           const r = el.getBoundingClientRect();

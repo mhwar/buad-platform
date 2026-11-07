@@ -50,6 +50,7 @@ import {
   Textarea,
   toast,
 } from "../../components/ui";
+import { printPage } from "../../lib/export";
 import { ApiError, fromEpoch } from "../../lib/format";
 import { meQuery } from "../../session";
 import { type DocDetail, docApi, docKeys, documentQuery } from "./api";
@@ -294,7 +295,7 @@ export function DocumentEditor() {
   const print = async () => {
     clearTimeout(timer.current);
     await flush();
-    window.print();
+    printPage();
   };
 
   const download = async (kind: "pdf" | "word") => {

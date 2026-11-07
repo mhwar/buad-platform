@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getRouteApi, Link } from "@tanstack/react-router";
 import { Download, Printer } from "lucide-react";
 import { Button, EmptyState } from "../../components/ui";
-import { csvToRows, downloadSheet } from "../../lib/export";
+import { csvToRows, downloadSheet, printPage } from "../../lib/export";
 import { day, fromEpoch, sar } from "../../lib/format";
 import { FitToWidth } from "../documents/FitToWidth";
 import { type Block, PagedSheets } from "../documents/Pages";
@@ -46,7 +46,7 @@ export function VatReportPage() {
           <Button variant="secondary" onClick={() => downloadCsv(v)}>
             <Download className="size-4" /> Excel
           </Button>
-          <Button variant="secondary" onClick={() => window.print()}>
+          <Button variant="secondary" onClick={() => printPage()}>
             <Printer className="size-4" /> طباعة
           </Button>
           <PdfButton path={`/finance/vat/report?year=${year}&q=${q}`} name={`vat-${year}-Q${q}`} />

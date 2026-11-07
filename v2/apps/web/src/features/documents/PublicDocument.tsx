@@ -5,6 +5,7 @@ import { FileDown, Printer } from "lucide-react";
 import { useRef, useState } from "react";
 import { Logo } from "../../brand";
 import { Button } from "../../components/ui";
+import { printPage } from "../../lib/export";
 import { fromEpoch, ok } from "../../lib/format";
 import type { PublicDocument } from "./api";
 import { DocumentView } from "./DocumentView";
@@ -82,7 +83,7 @@ export function PublicDocumentPage() {
             >
               <FileDown className="size-4" /> {busy ? "جارٍ التجهيز…" : "تنزيل PDF"}
             </Button>
-            <Button variant="secondary" onClick={() => window.print()}>
+            <Button variant="secondary" onClick={() => printPage()}>
               <Printer className="size-4" /> طباعة
             </Button>
           </div>

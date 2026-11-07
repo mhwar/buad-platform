@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getRouteApi, Link } from "@tanstack/react-router";
 import { Download, Printer } from "lucide-react";
 import { Button, EmptyState, Notice } from "../../components/ui";
-import { csvToRows, downloadSheet } from "../../lib/export";
+import { csvToRows, downloadSheet, printPage } from "../../lib/export";
 import { fromEpoch, sar } from "../../lib/format";
 import { FitToWidth } from "../documents/FitToWidth";
 import { type Block, PagedSheets } from "../documents/Pages";
@@ -62,7 +62,7 @@ export function StatementPage() {
           <Button variant="secondary" onClick={() => downloadCsv(st)}>
             <Download className="size-4" /> تصدير Excel
           </Button>
-          <Button variant="secondary" onClick={() => window.print()}>
+          <Button variant="secondary" onClick={() => printPage()}>
             <Printer className="size-4" /> طباعة
           </Button>
           <PdfButton path={`/clients/${id}/statement`} name={`statement-${st.client.code}`} />

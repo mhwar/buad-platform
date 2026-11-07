@@ -3,6 +3,7 @@ import { ChevronLeft, FileSpreadsheet, Printer } from "lucide-react";
 import type { ReactNode } from "react";
 import { StatTile } from "../../components/StatTile";
 import { Button } from "../../components/ui";
+import { printPage } from "../../lib/export";
 
 /** The frame of a report page: the way back to «التقارير», its title and period, and its exports. */
 export function ReportFrame({
@@ -41,7 +42,7 @@ export function ReportFrame({
               Excel
             </Button>
           )}
-          <Button variant="secondary" onClick={() => window.print()}>
+          <Button variant="secondary" onClick={() => printPage()}>
             <Printer className="size-4" />
             طباعة / PDF
           </Button>

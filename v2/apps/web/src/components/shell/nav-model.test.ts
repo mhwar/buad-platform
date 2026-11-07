@@ -31,6 +31,7 @@ describe("buildNav", () => {
       "team",
       "activity",
       "data",
+      "quality",
       "account",
     ]);
   });
