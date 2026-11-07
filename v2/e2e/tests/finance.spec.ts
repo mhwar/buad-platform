@@ -403,3 +403,20 @@ test("project page: name, actions and tabs stay in reach while scrolling", async
   await expect(page).toHaveURL(/view=execution/);
   await expectNoSideScroll(page);
 });
+
+test("phone: a project page opens at its top, not scrolled to a row of tabs", async ({
+  page,
+  api,
+}) => {
+  test.skip((page.viewportSize()?.width ?? 0) >= 768, "phone layout");
+  const c = await api<{ id: string }>("POST", "/api/clients", { name: `جمعية الأعلى ${uid()}` });
+  const p = await api<{ id: string }>("POST", "/api/projects", {
+    clientId: c.id,
+    name: `مشروع ${uid()}`,
+    status: "active",
+  });
+  await page.goto(`/projects/${p.id}`);
+  await expect(page.getByLabel("أقسام العقد")).toBeAttached();
+  await page.waitForTimeout(800);
+  expect(await page.evaluate(() => window.scrollY)).toBeLessThan(10);
+});
