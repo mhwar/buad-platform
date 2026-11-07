@@ -1,7 +1,7 @@
 import { financeEntries, partners, projectReceipts, projects } from "@buad/schema/db";
 import { and, eq, isNull, ne, notInArray, sql } from "drizzle-orm";
 import type { Db } from "../auth/service";
-import { contractTotalSql } from "./common";
+import { contractTotalSql, inFinance } from "./common";
 import { NOT_PURCHASES } from "./vat";
 
 export type CheckRow = { label: string; detail: string; link: string };
@@ -17,7 +17,7 @@ const projectLink = (id: string) => `/projects/${id}?view=finance`;
  */
 export async function financeChecks(db: Db, orgId: string): Promise<Check[]> {
   const checks: Check[] = [];
-  const live = and(eq(projects.orgId, orgId), isNull(projects.archivedAt));
+  const live = and(eq(projects.orgId, orgId), inFinance());
 
   const unapproved = await db
     .select({

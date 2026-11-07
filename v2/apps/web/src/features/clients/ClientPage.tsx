@@ -70,7 +70,7 @@ export function ClientPage() {
   const { client, contacts, projects } = q.data;
   const manager = !!me?.perms.includes("clients.archive");
   const live = projects.filter((p) => !p.archivedAt);
-  const totalValue = live.reduce((a, p) => a + p.contractTotal, 0);
+  const totalValue = live.filter((p) => !p.external).reduce((a, p) => a + p.contractTotal, 0);
   const byStatus = live.reduce<Record<string, number>>(
     (a, p) => ({ ...a, [p.status]: (a[p.status] ?? 0) + 1 }),
     {},

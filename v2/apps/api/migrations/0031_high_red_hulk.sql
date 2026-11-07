@@ -1,0 +1,1 @@
+ALTER TABLE `projects` ADD `external` integer DEFAULT false NOT NULL;

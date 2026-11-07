@@ -30,7 +30,7 @@ import { Hono } from "hono";
 import { z } from "zod";
 import { requireAuth, requirePerm, requireRW, type Vars } from "../auth/middleware";
 import type { Db } from "../auth/service";
-import { atomic, newId, nowSec } from "./common";
+import { atomic, moneyLock, newId, nowSec } from "./common";
 import { loadVisible } from "./projects";
 
 type Project = NonNullable<Awaited<ReturnType<typeof loadVisible>>>;
@@ -285,9 +285,9 @@ export const financeApp = new Hono<Env>()
   .use(async (c, next) => {
     const project = await loadVisible(c.get("db"), c.get("user"), c.req.param("projectId") ?? "");
     if (!project) return c.json({ ok: false, error: "not_found" }, 404);
-    // A closed project is read-only until it is reopened (with a reason).
-    if (c.req.method !== "GET" && project.closedAt)
-      return c.json({ ok: false, error: "project_closed" }, 409);
+    // A closed project is read-only until it is reopened (with a reason); an external one always.
+    const locked = c.req.method !== "GET" ? moneyLock(project) : null;
+    if (locked) return c.json({ ok: false, error: locked }, 409);
     c.set("project", project);
     await next();
   })

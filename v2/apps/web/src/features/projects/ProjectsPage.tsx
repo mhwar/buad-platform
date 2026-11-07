@@ -21,6 +21,7 @@ import {
 import { day, money, moneyShort } from "../../lib/format";
 import { label, PROJECT_STATUS_LABELS, PROJECT_TYPE_LABELS, STATUS_TONE } from "../labels";
 import { type ProjectListItem, type ProjectStatus, projectsQuery } from "./api";
+import { ExternalBadge } from "./ExternalBadge";
 import { ProjectDialog } from "./ProjectDialog";
 
 const route = getRouteApi("/projects");
@@ -38,6 +39,7 @@ export function ProjectsPage() {
       product: s.product,
       type: s.type,
       flag: s.flag,
+      external: s.external,
       sort: s.sort,
       archived: s.archived ? "1" : "0",
     }),
@@ -108,6 +110,16 @@ export function ProjectsPage() {
               ],
             },
             {
+              key: "external",
+              label: "المالية",
+              allLabel: "داخلية وخارجية",
+              value: s.external ?? "",
+              options: [
+                { value: "0", label: "داخلية (تدخل في المالية)" },
+                { value: "1", label: "خارجية (لا تدخل في المالية)" },
+              ],
+            },
+            {
               key: "type",
               label: "النوع",
               allLabel: "كل الأنواع",
@@ -150,7 +162,7 @@ export function ProjectsPage() {
           action={<Button onClick={() => list.refetch()}>إعادة المحاولة</Button>}
         />
       ) : items.length === 0 ? (
-        q || s.status || s.product || s.type || s.flag ? (
+        q || s.status || s.product || s.type || s.flag || s.external ? (
           <EmptyState title="لا نتائج" text="جرّبوا كلمة بحث أخرى أو أزيلوا عامل التصفية." />
         ) : s.archived ? (
           <EmptyState title="لا توجد مشاريع مؤرشفة" />
@@ -246,6 +258,7 @@ function ProjectCard({ p }: { p: ProjectListItem }) {
         <div className="flex items-start justify-between gap-2">
           <span className="flex flex-wrap items-center gap-1.5">
             <Badge tone={STATUS_TONE[p.status]}>{label(PROJECT_STATUS_LABELS, p.status)}</Badge>
+            {p.external && <ExternalBadge />}
             {p.fullyDistributed ? (
               <Stamp kind="distributed">موزّع بالكامل</Stamp>
             ) : (
@@ -305,11 +318,17 @@ function ProjectCard({ p }: { p: ProjectListItem }) {
             {label(PROJECT_TYPE_LABELS, p.type)}
             {p.startDate && ` · ${day(p.startDate)}`}
           </span>
-          {p.contractTotal > 0 && (
-            <span title={p.estimated ? "تقديري: القيمة المتوقعة + 15% حتى يُسجَّل العقد" : undefined}>
-              {moneyShort(p.contractTotal)}
-              {p.estimated && <span className="ms-1 text-xs text-muted">تقديري</span>}
-            </span>
+          {p.external ? (
+            <span className="text-xs text-muted">لا يدخل في المالية</span>
+          ) : (
+            p.contractTotal > 0 && (
+              <span
+                title={p.estimated ? "تقديري: القيمة المتوقعة + 15% حتى يُسجَّل العقد" : undefined}
+              >
+                {moneyShort(p.contractTotal)}
+                {p.estimated && <span className="ms-1 text-xs text-muted">تقديري</span>}
+              </span>
+            )
           )}
         </div>
         {p.nextDueDate && p.nextDueAmount !== null && (
@@ -363,6 +382,7 @@ function ProjectTable({ items }: { items: ProjectListItem[] }) {
             cell: (p) => (
               <span className="flex flex-wrap items-center gap-1.5">
                 <Badge tone={STATUS_TONE[p.status]}>{label(PROJECT_STATUS_LABELS, p.status)}</Badge>
+                {p.external && <ExternalBadge />}
                 {p.fullyDistributed ? (
                   <Stamp kind="distributed">موزّع بالكامل</Stamp>
                 ) : (
@@ -414,21 +434,26 @@ function ProjectTable({ items }: { items: ProjectListItem[] }) {
             numeric: true,
             sort: (p) => p.received ?? -1,
             cell: (p) =>
-              p.received === null || p.received === undefined ? "—" : moneyShort(p.received),
+              p.external || p.received === null || p.received === undefined
+                ? "—"
+                : moneyShort(p.received),
           },
           {
             key: "value",
             header: "قيمة العقد",
             numeric: true,
             sort: (p) => p.contractTotal,
-            cell: (p) => (
-              <>
-                {p.contractTotal ? moneyShort(p.contractTotal) : "—"}
-                {p.estimated && p.contractTotal > 0 && (
-                  <span className="ms-1 text-xs text-muted">تقديري</span>
-                )}
-              </>
-            ),
+            cell: (p) =>
+              p.external ? (
+                <span className="text-xs text-muted">خارجي</span>
+              ) : (
+                <>
+                  {p.contractTotal ? moneyShort(p.contractTotal) : "—"}
+                  {p.estimated && p.contractTotal > 0 && (
+                    <span className="ms-1 text-xs text-muted">تقديري</span>
+                  )}
+                </>
+              ),
           },
         ]}
       />

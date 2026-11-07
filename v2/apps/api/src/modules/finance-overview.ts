@@ -6,6 +6,7 @@ import { Hono } from "hono";
 import { z } from "zod";
 import { requireAuth, requireRW, type Vars } from "../auth/middleware";
 import type { Db } from "../auth/service";
+import { inFinance } from "./common";
 import { loadFinanceMany } from "./finance";
 import { financeChecks } from "./finance-checks";
 import { loadOrgProfile } from "./org";
@@ -101,7 +102,7 @@ export async function financeOverview(
     .select({ p: projects, clientName: clients.name })
     .from(projects)
     .innerJoin(clients, eq(clients.id, projects.clientId))
-    .where(and(eq(projects.orgId, orgId), isNull(projects.archivedAt)))
+    .where(and(eq(projects.orgId, orgId), inFinance()))
     .orderBy(asc(projects.number));
 
   const list: ProjectRow[] = [];

@@ -90,6 +90,8 @@ export type ClientProject = {
   expectedValue: number;
   contractTotal: number;
   archivedAt: number | null;
+  /** Outside finance: listed, never added to the client's value. */
+  external?: boolean;
 };
 export type ClientDetail = { client: Client; contacts: Contact[]; projects: ClientProject[] };
 export type ClientFilters = {

@@ -71,6 +71,27 @@ export async function liveClient(db: Db, orgId: string, clientId: string) {
   return row ?? null;
 }
 
+/** Which kinds of money records a project holds (entries, receipts, invoices, instalments). */
+async function financeRecords(db: Db, projectId: string) {
+  const n = async (table: string) =>
+    Number(
+      (
+        (await db.get(
+          sql`SELECT COUNT(*) AS n FROM ${sql.raw(table)} WHERE project_id = ${projectId}`,
+        )) as { n: number } | undefined
+      )?.n ?? 0,
+    );
+  const kinds = [
+    ["entries", "finance_entries"],
+    ["receipts", "project_receipts"],
+    ["invoices", "sales_invoices"],
+    ["instalments", "payment_schedule"],
+  ] as const;
+  const held: string[] = [];
+  for (const [k, t] of kinds) if (await n(t)) held.push(k);
+  return held;
+}
+
 /** Inserts a project for a client the caller has already checked. */
 export async function insertProject(
   db: Db,
@@ -105,6 +126,7 @@ export async function insertProject(
     productId: link.productId,
     packageId: link.packageId,
     packageName: link.packageName,
+    external: v.external,
     createdBy: me.id,
     createdAt: t,
     updatedBy: me.id,
@@ -112,7 +134,8 @@ export async function insertProject(
   });
   // The organisation's contract defaults («الإعدادات ← المالية») apply from the project's start.
   // Without them nothing is written: the project reads the built-in defaults as before.
-  if (!defaults) await insert;
+  // An external project never has money records, so it gets no contract terms either.
+  if (!defaults || v.external) await insert;
   else
     await atomic(db, [
       insert,
@@ -156,6 +179,7 @@ export const projectsApp = new Hono<Env>()
       q.clientId ? eq(projects.clientId, q.clientId) : undefined,
       q.product ? eq(projects.productId, q.product === "none" ? "" : q.product) : undefined,
       q.type ? eq(projects.type, q.type as never) : undefined,
+      q.external ? eq(projects.external, q.external === "1") : undefined,
       search,
     );
     const contractTotal = sql<number>`${contractTotalSql("projects")}`;
@@ -202,6 +226,7 @@ export const projectsApp = new Hono<Env>()
         contractTotal,
         archivedAt: projects.archivedAt,
         closedAt: projects.closedAt,
+        external: projects.external,
         clientId: projects.clientId,
         clientName: clients.name,
         clientLogoUrl: sql<string>`${logoUrlSql("clients")}`,
@@ -361,6 +386,11 @@ export const projectsApp = new Hono<Env>()
     const start = v.startDate ?? current.startDate;
     const end = v.endDate ?? current.endDate;
     if (start && end && end < start) return c.json({ ok: false, error: "end_before_start" }, 400);
+    // Into «خارجي» only with no money records, so nothing silently leaves the figures.
+    if (v.external && !current.external) {
+      const held = await financeRecords(db, current.id);
+      if (held.length) return c.json({ ok: false, error: "has_finance_records", held }, 409);
+    }
     const { expectedValue, productId, packageId, ...rest } = v;
     // Changing the service without naming a package clears the old package.
     let link: { productId: string; packageId: string; packageName: string } | undefined;

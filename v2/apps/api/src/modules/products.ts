@@ -21,7 +21,7 @@ import { Hono } from "hono";
 import { z } from "zod";
 import { requireAuth, requireRW, type Vars } from "../auth/middleware";
 import type { Db } from "../auth/service";
-import { newId, nowSec } from "./common";
+import { inFinance, newId, nowSec } from "./common";
 import { loadFinanceMany, loadVatRate } from "./finance";
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -91,7 +91,7 @@ async function statRows(db: Db, orgId: string, where: SQL | undefined): Promise<
     .select({ p: projects, clientName: clients.name })
     .from(projects)
     .innerJoin(clients, eq(clients.id, projects.clientId))
-    .where(and(eq(projects.orgId, orgId), isNull(projects.archivedAt), where))
+    .where(and(eq(projects.orgId, orgId), inFinance(), where))
     .orderBy(asc(projects.number));
   const out: StatRow[] = [];
   const finOf = await loadFinanceMany(
@@ -259,9 +259,7 @@ export const productsApp = new Hono<Env>()
     const unlinked = await db
       .select({ id: projects.id })
       .from(projects)
-      .where(
-        and(eq(projects.orgId, orgId), isNull(projects.archivedAt), eq(projects.productId, "")),
-      );
+      .where(and(eq(projects.orgId, orgId), inFinance(), eq(projects.productId, "")));
     const reqs = await db.select().from(productRequests).where(eq(productRequests.orgId, orgId));
     const now = nowSec();
     return c.json({

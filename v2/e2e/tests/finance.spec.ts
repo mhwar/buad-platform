@@ -330,3 +330,36 @@ test("profit page: the year view lists its quarters and picking one filters to i
   await expect(page).toHaveURL(/pq=0/);
   await expectNoSideScroll(page);
 });
+
+test("external project: tracked as work, never in finance", async ({ page, api }) => {
+  const c = await api<{ id: string }>("POST", "/api/clients", { name: `جمعية الخارجي ${uid()}` });
+  const name = `مشروع خارجي ${uid()}`;
+  const before = await api<{ items: { id: string; projectValue: number }[] }>(
+    "GET",
+    "/api/clients",
+  );
+  const valueBefore = before.items.find((x) => x.id === c.id)?.projectValue;
+  await page.goto("/projects");
+  await page
+    .getByRole("button", { name: /مشروع جديد/ })
+    .first()
+    .click();
+  const dlg = page.getByRole("dialog");
+  await dlg.getByLabel("العميل").selectOption(c.id);
+  await dlg.getByLabel("اسم المشروع").fill(name);
+  await dlg.getByRole("spinbutton", { name: /قيمة العقد/ }).fill("50000");
+  await dlg.getByRole("checkbox", { name: /مشروع خارجي/ }).check();
+  await expect(dlg.getByRole("spinbutton", { name: /القيمة التقديرية/ })).toBeVisible();
+  await dlg.getByRole("button", { name: "حفظ المشروع" }).click();
+  await expect(page.getByRole("heading", { name })).toBeVisible();
+  // No finance on it: the badge and the reference card, no money section or receipt button.
+  await expect(page.getByText("خارجي", { exact: true }).first()).toBeVisible();
+  await expect(page.getByLabel("مشروع خارجي")).toContainText("50,000");
+  await expect(page.getByRole("tab", { name: "المالية" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: /تسجيل مقبوض/ })).toHaveCount(0);
+  const after = await api<{ items: { id: string; projectValue: number }[] }>("GET", "/api/clients");
+  expect(after.items.find((x) => x.id === c.id)?.projectValue).toBe(valueBefore);
+  await page.goto("/projects?external=1");
+  await expect(page.getByRole("main").getByText(name).first()).toBeVisible();
+  await expectNoSideScroll(page);
+});

@@ -28,7 +28,7 @@ import { Hono } from "hono";
 import { z } from "zod";
 import { requireAuth, requireRW, type Vars } from "../auth/middleware";
 import type { Db } from "../auth/service";
-import { atomic, newId, nowSec } from "./common";
+import { atomic, inFinance, moneyLock, newId, nowSec } from "./common";
 import { loadFinanceMany, loadVatRate } from "./finance";
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -62,7 +62,7 @@ export async function loadVatData(db: Db, orgId: string) {
     .select({ p: projects, clientName: clients.name })
     .from(projects)
     .innerJoin(clients, eq(clients.id, projects.clientId))
-    .where(and(eq(projects.orgId, orgId), isNull(projects.archivedAt)))
+    .where(and(eq(projects.orgId, orgId), inFinance()))
     .orderBy(asc(projects.number));
   const [fins, invoices, company, [prof], rate] = await Promise.all([
     loadFinanceMany(
@@ -361,17 +361,22 @@ const invoiceInput = z.object({
 
 /**
  * The project's VAT rate (15 when its contract terms are not saved); null if not ours, and
- * "closed" when its money records are locked.
+ * the lock (closed / external) when its money records can't be written.
  */
 async function projectVatPct(db: Db, orgId: string, projectId: string) {
   const [p] = await db
-    .select({ id: projects.id, vatPct: projectFinance.vatPct, closedAt: projects.closedAt })
+    .select({
+      id: projects.id,
+      vatPct: projectFinance.vatPct,
+      closedAt: projects.closedAt,
+      external: projects.external,
+    })
     .from(projects)
     .leftJoin(projectFinance, eq(projectFinance.projectId, projects.id))
     .where(and(eq(projects.id, projectId), eq(projects.orgId, orgId)))
     .limit(1);
   if (!p) return null;
-  return p.closedAt ? ("closed" as const) : (p.vatPct ?? 15);
+  return moneyLock(p) ?? p.vatPct ?? 15;
 }
 
 export const vatApp = new Hono<Env>()
@@ -661,7 +666,7 @@ export const vatApp = new Hono<Env>()
     const v = c.req.valid("json");
     const vatPct = await projectVatPct(db, me.orgId, v.projectId);
     if (vatPct === null) return c.json({ ok: false, error: "not_found" }, 404);
-    if (vatPct === "closed") return c.json({ ok: false, error: "project_closed" }, 409);
+    if (typeof vatPct === "string") return c.json({ ok: false, error: vatPct }, 409);
     const amount = fromRiyals(v.amount);
     const id = newId("sin");
     const t = nowSec();
@@ -692,7 +697,7 @@ export const vatApp = new Hono<Env>()
     const v = c.req.valid("json");
     const vatPct = await projectVatPct(db, me.orgId, v.projectId);
     if (vatPct === null) return c.json({ ok: false, error: "not_found" }, 404);
-    if (vatPct === "closed") return c.json({ ok: false, error: "project_closed" }, 409);
+    if (typeof vatPct === "string") return c.json({ ok: false, error: vatPct }, 409);
     const amount = fromRiyals(v.amount);
     const upd = await db
       .update(salesInvoices)

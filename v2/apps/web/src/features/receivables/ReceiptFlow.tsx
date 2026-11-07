@@ -46,7 +46,7 @@ export function ReceiptFlow({
   const [pickedId, setPickedId] = useState(project?.id ?? "");
   const list = useQuery({ ...projectsQuery({}), enabled: !project });
   const candidates = (list.data?.items ?? []).filter(
-    (p) => p.status !== "draft" && p.status !== "cancelled",
+    (p) => p.status !== "draft" && p.status !== "cancelled" && !p.external,
   );
   const picked =
     project ??

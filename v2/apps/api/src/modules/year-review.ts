@@ -66,7 +66,7 @@ export const yearReviewApp = new Hono<{ Variables: Vars }>()
       FROM projects p
       JOIN clients c ON c.id = p.client_id
       LEFT JOIN project_finance f ON f.project_id = p.id
-      WHERE p.org_id = ${me.orgId} AND p.archived_at IS NULL AND p.status <> 'draft'
+      WHERE p.org_id = ${me.orgId} AND p.archived_at IS NULL AND p.external = 0 AND p.status <> 'draft'
       ORDER BY p.number`)) as Row[];
 
     // A project belongs to the year by its contract (else start) date, by money it brought in

@@ -18,7 +18,7 @@ import {
 import { and, eq, inArray, isNull, lt, ne, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { requireAuth, type Vars } from "../auth/middleware";
-import { nowSec } from "./common";
+import { inFinance, nowSec } from "./common";
 import { financeChecks } from "./finance-checks";
 import { visibleProjects } from "./projects";
 
@@ -168,11 +168,7 @@ export const attentionApp = new Hono<{ Variables: Vars }>().use(requireAuth).get
         .from(financeEntries)
         .innerJoin(projects, eq(projects.id, financeEntries.projectId))
         .where(
-          and(
-            eq(projects.orgId, me.orgId),
-            eq(financeEntries.status, "pending"),
-            isNull(projects.archivedAt),
-          ),
+          and(eq(projects.orgId, me.orgId), eq(financeEntries.status, "pending"), inFinance()),
         ),
     );
     add({
@@ -205,7 +201,7 @@ export const attentionApp = new Hono<{ Variables: Vars }>().use(requireAuth).get
             eq(paymentSchedule.orgId, me.orgId),
             eq(paymentSchedule.status, "pending"),
             lt(paymentSchedule.dueDate, today),
-            isNull(projects.archivedAt),
+            inFinance(),
           ),
         ),
     );

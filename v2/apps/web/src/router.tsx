@@ -228,6 +228,11 @@ const projectsRoute = createRoute({
     product: z.string().optional(),
     type: z.string().optional(),
     flag: z.enum(["late", "due"]).optional(),
+    // The URL may carry it as a number (?external=1) or a string: both mean the same.
+    external: z.preprocess(
+      (v) => (v === undefined || v === null || v === "" ? undefined : String(v)),
+      z.enum(["0", "1"]).optional(),
+    ),
   }),
   beforeLoad: authed,
   component: ProjectsPage,

@@ -409,7 +409,8 @@ function ProjectNumbers() {
   const q = useQuery(projectsQuery({}));
   const items = q.data?.items ?? [];
   const active = items.filter((p) => p.status === "active");
-  const value = active.reduce((a, p) => a + p.contractTotal, 0);
+  // An external project is work, not money: listed here, never added to the value.
+  const value = active.filter((p) => !p.external).reduce((a, p) => a + p.contractTotal, 0);
   return (
     <Panel
       title="المشاريع"
