@@ -2,6 +2,7 @@ import { type ProjectInput, projectInput } from "@buad/schema/clients";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
+import { Plus } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import type { z } from "zod";
@@ -19,6 +20,7 @@ import {
 import { ApiError, today } from "../../lib/format";
 import { meQuery } from "../../session";
 import { clientKeys, clientsQuery } from "../clients/api";
+import { ClientDialog } from "../clients/ClientDialog";
 import { PROJECT_STATUS_LABELS, PROJECT_TYPE_LABELS } from "../labels";
 import { productQuery, productsQuery } from "../products/products-api";
 import { createProject, type ProjectDetail, projectKeys, updateProject } from "./api";
@@ -95,6 +97,8 @@ export function ProjectDialog({
   // Linking a project to a service and package is for managers (who can see the products).
   const me = useQuery(meQuery).data;
   const manager = !!me?.perms.includes("products.view");
+  const canAddClient = !!me?.perms.includes("clients.edit");
+  const [addingClient, setAddingClient] = useState(false);
   const products = useQuery({ ...productsQuery, enabled: open && manager });
   const productId = f.watch("productId") ?? "";
   const external = !!f.watch("external");
@@ -169,16 +173,29 @@ export function ProjectDialog({
       <form id="project-form" onSubmit={save} className="space-y-5" noValidate>
         <div className="grid gap-4 sm:grid-cols-2">
           {(pickClient || existing) && (
-            <Field label="العميل *" error={err(e.clientId)} className="sm:col-span-2">
-              <Select {...f.register("clientId")} disabled={clients.isPending}>
-                <option value="">اختر العميل…</option>
-                {clients.data?.items.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name} ({c.code})
-                  </option>
-                ))}
-              </Select>
-            </Field>
+            <div className="flex items-start gap-2 sm:col-span-2">
+              <Field label="العميل *" error={err(e.clientId)} className="min-w-0 flex-1">
+                <Select {...f.register("clientId")} disabled={clients.isPending}>
+                  <option value="">اختر العميل…</option>
+                  {clients.data?.items.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name} ({c.code})
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+              {/* Not in the list yet: add the client here, without leaving the new project. */}
+              {canAddClient && (
+                <Button
+                  type="button"
+                  variant="secondary"
+                  className="mt-6 shrink-0"
+                  onClick={() => setAddingClient(true)}
+                >
+                  <Plus className="size-4" /> عميل جديد
+                </Button>
+              )}
+            </div>
           )}
           <Field label="اسم المشروع *" error={err(e.name)} className="sm:col-span-2">
             <Input autoFocus {...f.register("name")} />
@@ -283,6 +300,16 @@ export function ProjectDialog({
           <Textarea {...f.register("notes")} />
         </Field>
       </form>
+      {addingClient && (
+        <ClientDialog
+          open={addingClient}
+          onOpenChange={setAddingClient}
+          onCreated={async (id) => {
+            await qc.invalidateQueries({ queryKey: clientKeys.all });
+            f.setValue("clientId", id, { shouldDirty: true, shouldValidate: true });
+          }}
+        />
+      )}
     </Dialog>
   );
 }

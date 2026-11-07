@@ -67,10 +67,13 @@ export function ClientDialog({
   open,
   onOpenChange,
   existing,
+  onCreated,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   existing?: ClientDetail;
+  /** Opened from another form (a new project): hand the new client back instead of opening it. */
+  onCreated?: (id: string) => void;
 }) {
   const qc = useQueryClient();
   const navigate = useNavigate();
@@ -127,7 +130,8 @@ export function ClientDialog({
         await qc.invalidateQueries({ queryKey: clientKeys.all });
         toast("أُضيف العميل");
         close(false);
-        await navigate({ to: "/clients/$id", params: { id: res.id } });
+        if (onCreated) onCreated(res.id);
+        else await navigate({ to: "/clients/$id", params: { id: res.id } });
       }
     } catch (x) {
       if (x instanceof ApiError && x.body.error === "duplicate")

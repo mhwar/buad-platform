@@ -1,4 +1,4 @@
-import { clientWithProject, expect, expectNoSideScroll, test } from "./fixtures";
+import { clientWithProject, expect, expectNoSideScroll, test, uid } from "./fixtures";
 
 test("a client's card and page show what it owes, its late instalment and open opportunity", async ({
   page,
@@ -30,4 +30,25 @@ test("a client's card and page show what it owes, its late instalment and open o
   await pulse.getByRole("button", { name: /الفرص المفتوحة/ }).click();
   await expect(page).toHaveURL(/tab=crm/);
   await expectNoSideScroll(page);
+});
+
+test("a new project can add its client on the spot, and keeps it picked", async ({ page }) => {
+  const client = `جمعية من المشروع ${uid()}`;
+  await page.goto("/projects");
+  await page
+    .getByRole("button", { name: /مشروع جديد/ })
+    .first()
+    .click();
+  const project = page.getByRole("dialog", { name: "مشروع جديد" });
+  await project.getByRole("button", { name: /عميل جديد/ }).click();
+  const add = page.getByRole("dialog", { name: "عميل جديد" });
+  await add.getByLabel("اسم العميل").fill(client);
+  await add.getByRole("button", { name: "حفظ العميل" }).click();
+  await expect(add).toHaveCount(0);
+  // back in the project, with the new client already chosen
+  await expect(project.getByLabel("العميل")).toHaveValue(/.+/);
+  await expect(project.getByLabel("العميل").locator("option:checked")).toContainText(client);
+  await project.getByLabel("اسم المشروع").fill(`مشروع ${uid()}`);
+  await project.getByRole("button", { name: "حفظ المشروع" }).click();
+  await expect(page.getByRole("main").getByRole("link", { name: client }).first()).toBeVisible();
 });
