@@ -303,7 +303,7 @@ export function ControlCentre({
                     type="button"
                     aria-label={`حذف التصنيف ${custom.label}`}
                     onClick={() => removeCategory(custom.id)}
-                    className="text-muted hover:text-red-600"
+                    className="text-muted hover:text-danger-ink"
                   >
                     <X className="size-3.5" />
                   </button>
@@ -355,11 +355,11 @@ function Trail({
 }) {
   const color =
     tone === "good"
-      ? "text-emerald-700 dark:text-emerald-400"
+      ? "text-success-ink"
       : tone === "bad"
-        ? "text-red-600"
+        ? "text-danger-ink"
         : sign === "−"
-          ? "text-red-600"
+          ? "text-danger-ink"
           : "text-ink";
   return (
     <div className={`flex items-center justify-between py-1 ${strong ? "font-semibold" : ""}`}>

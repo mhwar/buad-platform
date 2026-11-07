@@ -189,9 +189,7 @@ export function MeetingCard({ m, onOpen }: { m: Meeting; onOpen: () => void }) {
         </p>
       )}
       {!!m.openDecisions && (
-        <p className="text-xs font-medium text-amber-700 dark:text-amber-400">
-          {m.openDecisions} قرار مفتوح
-        </p>
+        <p className="text-xs font-medium text-warning-ink">{m.openDecisions} قرار مفتوح</p>
       )}
     </Card>
   );

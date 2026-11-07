@@ -177,8 +177,8 @@ function Fact({
       <p
         className={cx(
           "mt-0.5 font-bold tabular-nums",
-          tone === "good" && "text-emerald-600",
-          tone === "warn" && "text-amber-700",
+          tone === "good" && "text-success-ink",
+          tone === "warn" && "text-warning-ink",
         )}
       >
         {value}

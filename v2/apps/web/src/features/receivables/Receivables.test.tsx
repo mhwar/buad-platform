@@ -101,7 +101,7 @@ describe("ForecastChart", () => {
   it("draws a bar per week, red below zero, with the table available", () => {
     const { container } = render(<ForecastChart weeks={[week(0, 1000), week(1, -500)]} />);
     expect(container.querySelectorAll(".bg-brand")).toHaveLength(1);
-    expect(container.querySelectorAll(".bg-red-600")).toHaveLength(1);
+    expect(container.querySelectorAll(".bg-danger")).toHaveLength(1);
     // each bar says its amount
     expect(screen.getAllByText(/1[٬,]?000|1 ألف/).length).toBeGreaterThan(0);
     expect(

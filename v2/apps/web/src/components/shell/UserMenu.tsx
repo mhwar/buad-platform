@@ -65,7 +65,7 @@ export function UserMenu({
             حسابي وكلمة المرور
           </RMenu.Item>
           <RMenu.Separator className="my-1 h-px bg-line" />
-          <RMenu.Item className={`${item} text-red-600`} onSelect={onLogout}>
+          <RMenu.Item className={`${item} text-danger-ink`} onSelect={onLogout}>
             <LogOut className="size-4" />
             تسجيل الخروج
           </RMenu.Item>

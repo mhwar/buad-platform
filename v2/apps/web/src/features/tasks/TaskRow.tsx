@@ -67,7 +67,7 @@ export function TaskRow({
             className={cx(
               "mt-0.5 grid size-6 shrink-0 place-items-center rounded-full border-2 transition before:absolute before:-inset-2.5 relative",
               done
-                ? "border-emerald-600 bg-emerald-600 text-white"
+                ? "border-success bg-success text-white"
                 : "border-slate-300 hover:border-brand dark:border-slate-600",
             )}
           >
@@ -80,7 +80,7 @@ export function TaskRow({
             {t.assigneeName && <span>المسؤول: {t.assigneeName}</span>}
             {showProject && t.projectName && <span>{t.projectName}</span>}
             {t.dueDate && (
-              <span className={late ? "font-semibold text-red-600" : ""}>
+              <span className={late ? "font-semibold text-danger-ink" : ""}>
                 {late ? "متأخرة · " : "حتى "}
                 {day(t.dueDate)}
               </span>

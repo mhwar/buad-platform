@@ -91,7 +91,7 @@ export function LoginPage() {
               {...login.register("email")}
             />
             {login.formState.errors.email && (
-              <span className="text-xs text-red-600">أدخل بريداً إلكترونياً صحيحاً</span>
+              <span className="text-xs text-danger-ink">أدخل بريداً إلكترونياً صحيحاً</span>
             )}
           </label>
           <label className="block text-sm">

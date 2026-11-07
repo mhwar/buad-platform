@@ -365,7 +365,9 @@ function TaskTable({
                     PRIORITY_LABEL[t.priority]
                   )}
                 </td>
-                <td className={cx("px-3 py-2 tabular-nums", late && "font-semibold text-red-600")}>
+                <td
+                  className={cx("px-3 py-2 tabular-nums", late && "font-semibold text-danger-ink")}
+                >
                   {t.dueDate ? `${late ? "متأخرة · " : ""}${day(t.dueDate)}` : "—"}
                 </td>
                 <td className="px-3 py-2">

@@ -196,7 +196,7 @@ export function OpportunitiesPage() {
             )}
           >
             <span className="block text-xs text-muted">تحتاج متابعة اليوم</span>
-            <span className={cx("mt-0.5 block text-lg font-bold", due > 0 && "text-amber-700")}>
+            <span className={cx("mt-0.5 block text-lg font-bold", due > 0 && "text-warning-ink")}>
               {due}
             </span>
             <span className="block text-xs text-muted">
@@ -374,8 +374,8 @@ export function OpportunitiesPage() {
                     <td
                       className={cx(
                         "px-3 py-2.5",
-                        fu === "overdue" && "font-semibold text-red-600",
-                        fu === "today" && "font-semibold text-amber-700",
+                        fu === "overdue" && "font-semibold text-danger-ink",
+                        fu === "today" && "font-semibold text-warning-ink",
                       )}
                     >
                       {r.followUpAt && isOpen(r) ? day(r.followUpAt) : "—"}

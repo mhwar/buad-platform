@@ -108,7 +108,7 @@ export function StepNav<K extends string>({
                 </span>
                 <span className="flex-1">{s.label}</span>
                 {!!s.badge && (
-                  <span className="rounded-full bg-amber-100 px-2 text-xs text-amber-800 dark:bg-amber-950 dark:text-amber-300">
+                  <span className="rounded-full bg-warning-soft px-2 text-xs text-warning-ink">
                     {s.badge}
                   </span>
                 )}

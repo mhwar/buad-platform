@@ -100,9 +100,7 @@ function BalancesCard() {
           {b.retained > 0 &&
             `المحتجز: احتياطي ${sar(b.retainedBy.reserve)} · تشغيل ${sar(b.retainedBy.ops)} · تطوير ${sar(b.retainedBy.dev)}. `}
           {b.approvedUnpaid > 0 && (
-            <b className="text-amber-700 dark:text-amber-300">
-              معتمد ولم يُدفع للشركاء بعد: {sar(b.approvedUnpaid)}
-            </b>
+            <b className="text-warning-ink">معتمد ولم يُدفع للشركاء بعد: {sar(b.approvedUnpaid)}</b>
           )}
         </p>
       )}
@@ -146,9 +144,7 @@ function PartnersCard() {
               </li>
             ))}
           </ul>
-          <p
-            className={`mt-2 text-sm ${okPct ? "text-emerald-700 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}
-          >
+          <p className={`mt-2 text-sm ${okPct ? "text-success-ink" : "text-danger-ink"}`}>
             مجموع الحصص: {total.toFixed(2)}% {okPct ? "✓" : "— يجب أن يكون 100%"}
           </p>
         </>
@@ -732,7 +728,7 @@ export function DistributionWizard({
               </ul>
               <p className="mt-3 mb-1 text-xs font-semibold text-muted">حصص الشركاء</p>
               {preview.shares.length === 0 ? (
-                <p className="text-xs text-red-600">أضيفوا الشركاء أولاً.</p>
+                <p className="text-xs text-danger-ink">أضيفوا الشركاء أولاً.</p>
               ) : (
                 <ul className="space-y-1">
                   {preview.shares.map((s) => (
@@ -746,7 +742,7 @@ export function DistributionWizard({
                 </ul>
               )}
               {Math.abs(preview.sharesPct - 100) > 0.01 && preview.shares.length > 0 && (
-                <p className="mt-2 text-xs text-red-600">
+                <p className="mt-2 text-xs text-danger-ink">
                   مجموع حصص الشركاء {preview.sharesPct.toFixed(2)}% وليس 100%.
                 </p>
               )}

@@ -118,15 +118,11 @@ function Changes({ detail }: { detail: Record<string, unknown> }) {
           <span className="text-muted">{c.label}: </span>
           {c.before !== "—" && (
             <>
-              <span className="text-red-700 line-through decoration-1 dark:text-red-400">
-                {shown(c.before)}
-              </span>
+              <span className="text-danger-ink line-through decoration-1">{shown(c.before)}</span>
               <span className="mx-1 text-muted">←</span>
             </>
           )}
-          <span className="font-medium text-emerald-700 dark:text-emerald-400">
-            {shown(c.after)}
-          </span>
+          <span className="font-medium text-success-ink">{shown(c.after)}</span>
         </li>
       ))}
     </ul>

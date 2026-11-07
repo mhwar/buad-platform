@@ -61,7 +61,7 @@ export function ImagePicker({
           </Button>
         )}
       </div>
-      {error && <p className="text-xs text-red-600">{error}</p>}
+      {error && <p className="text-xs text-danger-ink">{error}</p>}
     </div>
   );
 }

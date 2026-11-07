@@ -126,7 +126,7 @@ export function PricingPanel({ pricing, packages, vatRate, onChange }: Props) {
           </div>
         </div>
         {pricing.method !== "fixed" && !pricing.value && (
-          <p className="mt-2 text-sm text-amber-700 dark:text-amber-300">
+          <p className="mt-2 text-sm text-warning-ink">
             حدّد {pricing.method === "margin" ? "هامش الربح" : "نسبة الإضافة"}، وإلا فسيساوي السعر
             التكلفة تماماً.
           </p>
@@ -205,15 +205,15 @@ export function QuoteResult({ q, lines }: { q: Quote; lines: PricingModel["lines
     return <p className="mt-3 text-sm text-muted">أدخل كميات لحساب السعر.</p>;
   if (q.status === "needs_costs")
     return (
-      <p className="mt-3 text-sm text-amber-700 dark:text-amber-300">
+      <p className="mt-3 text-sm text-warning-ink">
         يحتاج إدخال تكلفة:{" "}
         {q.missing.map((id) => lines.find((l) => l.id === id)?.label || "بند").join("، ")}
       </p>
     );
   if (q.status === "needs_price")
-    return <p className="mt-3 text-sm text-amber-700 dark:text-amber-300">أدخل السعر الثابت.</p>;
+    return <p className="mt-3 text-sm text-warning-ink">أدخل السعر الثابت.</p>;
   if (q.status === "invalid")
-    return <p className="mt-3 text-sm text-red-600">هامش الربح يجب أن يكون أقل من 100%.</p>;
+    return <p className="mt-3 text-sm text-danger-ink">هامش الربح يجب أن يكون أقل من 100%.</p>;
   const risk = q.marginIfCostUp10 < 0;
   return (
     <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2 border-t pt-3 text-sm">
@@ -225,7 +225,7 @@ export function QuoteResult({ q, lines }: { q: Quote; lines: PricingModel["lines
       <Row label="الهامش" value={`${pct(q.marginPct)}`} />
       <div className="col-span-2 text-xs text-muted">
         لو ارتفعت التكاليف 10% بنفس السعر يصبح الهامش{" "}
-        <b className={risk ? "text-red-600" : ""}>{pct(q.marginIfCostUp10)}</b>
+        <b className={risk ? "text-danger-ink" : ""}>{pct(q.marginIfCostUp10)}</b>
       </div>
     </dl>
   );

@@ -52,7 +52,7 @@ export function DecisionList({
                   onClick={() =>
                     run(() => send("PATCH", `/api/decisions/${d.id}`, { status: "done" }))
                   }
-                  className="mt-0.5 grid size-6 shrink-0 place-items-center rounded-full border-2 text-transparent transition hover:border-emerald-500 hover:text-emerald-500"
+                  className="mt-0.5 grid size-6 shrink-0 place-items-center rounded-full border-2 text-transparent transition hover:border-success hover:text-success-ink"
                 >
                   <Check className="size-3.5" />
                 </button>
@@ -60,7 +60,7 @@ export function DecisionList({
                 <span
                   className={cx(
                     "mt-0.5 grid size-6 shrink-0 place-items-center rounded-full",
-                    d.status === "done" ? "bg-emerald-500 text-white" : "border-2",
+                    d.status === "done" ? "bg-success text-white" : "border-2",
                   )}
                 >
                   {d.status === "done" && <Check className="size-3.5" />}
@@ -76,7 +76,7 @@ export function DecisionList({
                     <span
                       className={cx(
                         "inline-flex items-center gap-1",
-                        late && "font-semibold text-red-600",
+                        late && "font-semibold text-danger-ink",
                       )}
                     >
                       <CalendarClock className="size-3" />

@@ -60,7 +60,7 @@ export function NotificationBell({ onDark = false }: { onDark?: boolean }) {
       >
         <Bell className="size-5" />
         {badge > 0 && (
-          <span className="absolute end-1 top-1 min-w-5 rounded-full bg-red-600 px-1 text-center text-xs font-bold leading-5 text-white">
+          <span className="absolute end-1 top-1 min-w-5 rounded-full bg-danger px-1 text-center text-xs font-bold leading-5 text-white">
             {badge > 9 ? "9+" : badge}
           </span>
         )}
@@ -79,7 +79,7 @@ export function NotificationBell({ onDark = false }: { onDark?: boolean }) {
                   >
                     <span>{a.title}</span>
                     <span
-                      className={`min-w-6 rounded-full px-2 text-center text-xs font-bold ${a.tone === "warn" ? "bg-red-600 text-white" : "bg-brand-soft text-brand"}`}
+                      className={`min-w-6 rounded-full px-2 text-center text-xs font-bold ${a.tone === "warn" ? "bg-danger text-white" : "bg-brand-soft text-brand"}`}
                     >
                       {a.count}
                     </span>

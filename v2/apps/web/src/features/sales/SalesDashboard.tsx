@@ -225,7 +225,9 @@ export function SalesDashboard() {
                   <span className="truncate">
                     {x.number} · {x.recipient || x.title}
                   </span>
-                  <span className="shrink-0 text-xs text-amber-700">ينتهي {day(x.validUntil)}</span>
+                  <span className="shrink-0 text-xs text-warning-ink">
+                    ينتهي {day(x.validUntil)}
+                  </span>
                 </li>
               ))}
             </ul>

@@ -424,7 +424,7 @@ function VatCard({ edit }: { edit: boolean }) {
         {s.data.vatNumber ? (
           <b dir="ltr">{s.data.vatNumber}</b>
         ) : (
-          <span className="text-amber-700 dark:text-amber-300">غير مسجّل</span>
+          <span className="text-warning-ink">غير مسجّل</span>
         )}{" "}
         <Link to="/settings/org" className="text-brand underline">
           تعديله من بيانات الجهة

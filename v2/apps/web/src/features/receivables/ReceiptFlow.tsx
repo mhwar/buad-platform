@@ -187,7 +187,7 @@ export function ReceiptFlow({
                   <span
                     className={cx(
                       "block text-xs",
-                      o.late ? "font-semibold text-red-600" : "text-muted",
+                      o.late ? "font-semibold text-danger-ink" : "text-muted",
                     )}
                   >
                     {o.sub}
@@ -236,12 +236,12 @@ export function ReceiptFlow({
                 </p>
               )}
               {active && n > 0 && rest > 0 && (
-                <p className="text-amber-700 dark:text-amber-300">
+                <p className="text-warning-ink">
                   استلام جزئي: يبقى {sar(rest)} دفعةً منتظرة بنفس الموعد.
                 </p>
               )}
               {warnings.map((w) => (
-                <p key={w} className="text-xs text-amber-700 dark:text-amber-300">
+                <p key={w} className="text-xs text-warning-ink">
                   ⚠ {WARNING[w]}
                 </p>
               ))}

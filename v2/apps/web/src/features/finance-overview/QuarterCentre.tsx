@@ -79,7 +79,7 @@ export function QuarterCentre({
         )}
       </div>
       {v.partnersPct <= 0 && (
-        <p className="text-sm text-amber-700 dark:text-amber-300">
+        <p className="text-sm text-warning-ink">
           أضيفوا الشركاء وحصصهم أولاً من تبويب «الشركاء والتوزيع».
         </p>
       )}
@@ -107,7 +107,7 @@ export function QuarterCentre({
       {v.settlement.stamp === "partial" && (
         <div
           role="status"
-          className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:bg-amber-950/40 dark:text-amber-200"
+          className="rounded-lg bg-warning-soft px-3 py-2 text-sm text-warning-ink"
         >
           بعد توزيعات {v.label} بقي <b>{sar(v.settlement.leftover)}</b> غير مصنّف. لا يُرحَّل: إما يُوزَّع
           أرباحاً («توزيع {v.label}»)، أو تُقيَّد له مصروفات في مشاريعه (من صفوف المشاريع أدناه).
@@ -200,7 +200,7 @@ export function QuarterCentre({
                       {sar(r.distributed)}
                     </td>
                     <td
-                      className={`px-3 py-2.5 whitespace-nowrap font-semibold ${r.available < 0 ? "text-red-600 dark:text-red-400" : ""}`}
+                      className={`px-3 py-2.5 whitespace-nowrap font-semibold ${r.available < 0 ? "text-danger-ink" : ""}`}
                     >
                       {sar(r.available)}
                     </td>
@@ -215,7 +215,7 @@ export function QuarterCentre({
       <div className="grid gap-6 xl:grid-cols-2">
         <Card>
           <h2 className="mb-1 flex items-center gap-2 font-semibold">
-            <AlertTriangle className="size-4 text-amber-700" /> قبل التوزيع
+            <AlertTriangle className="size-4 text-warning-ink" /> قبل التوزيع
           </h2>
           <ul className="list-disc space-y-1 ps-5 text-sm text-muted">
             <li>الدفعات الجزئية: يُوزَّع من ربح المشروع بقدر المستلم فقط، والباقي في ربعه.</li>

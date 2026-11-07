@@ -2,9 +2,9 @@ import { Card, cx } from "./ui";
 
 export type StatTone = "good" | "bad" | "warn";
 const TONE: Record<StatTone, string> = {
-  good: "text-emerald-700 dark:text-emerald-400",
-  bad: "text-red-600 dark:text-red-400",
-  warn: "text-amber-700 dark:text-amber-400",
+  good: "text-success-ink",
+  bad: "text-danger-ink",
+  warn: "text-warning-ink",
 };
 
 /**

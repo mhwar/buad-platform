@@ -46,7 +46,7 @@ export function AttentionPanel() {
                   className="flex min-h-11 items-center gap-3 rounded-lg px-2 text-sm hover:bg-brand-soft"
                 >
                   {c.done ? (
-                    <Check className="size-4 text-emerald-600" />
+                    <Check className="size-4 text-success-ink" />
                   ) : (
                     <Circle className="size-4 text-muted" />
                   )}

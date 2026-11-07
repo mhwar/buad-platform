@@ -209,7 +209,7 @@ function ProductCard({ p }: { p: ProductListItem }) {
           />
         </div>
         {p.status === "published" && p.showOnSite && (
-          <p className="mt-3 text-xs text-emerald-700 dark:text-emerald-300">ظاهر في الموقع</p>
+          <p className="mt-3 text-xs text-success-ink">ظاهر في الموقع</p>
         )}
       </Card>
     </Link>

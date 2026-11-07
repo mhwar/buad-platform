@@ -68,10 +68,7 @@ export function ContractCard({
           <span className="tabular-nums">{Math.round(share * 100)}%</span>
         </div>
         <div className="h-2 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
-          <div
-            className="h-full rounded-full bg-emerald-500"
-            style={{ width: `${share * 100}%` }}
-          />
+          <div className="h-full rounded-full bg-success" style={{ width: `${share * 100}%` }} />
         </div>
         <p className="mt-2 flex flex-wrap items-center justify-between gap-2 text-sm">
           <span>
@@ -167,7 +164,7 @@ function Unclassified({
       className={cx(
         "rounded-xl border p-3 text-sm",
         collected
-          ? "border-amber-300 bg-amber-50 dark:border-amber-700 dark:bg-amber-950/40"
+          ? "border-warning-line bg-warning-soft"
           : "border-slate-200 dark:border-slate-700",
       )}
     >

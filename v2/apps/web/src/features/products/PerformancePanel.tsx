@@ -220,7 +220,7 @@ function ProjectsTable({ rows }: { rows: StatProjectRow[] }) {
                 </Badge>
               </td>
               <td className="p-3">{sar(r.contractNet)}</td>
-              <td className={`p-3 ${r.profit < 0 ? "text-red-600" : ""}`}>
+              <td className={`p-3 ${r.profit < 0 ? "text-danger-ink" : ""}`}>
                 {sar(r.profit)}
                 {!r.hasFinance && <span className="ms-1 text-xs text-muted">(تقدير)</span>}
               </td>

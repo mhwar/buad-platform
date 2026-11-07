@@ -131,7 +131,7 @@ export function ExecutionReport() {
               <tr key={l.key || "none"} className="border-b last:border-0">
                 <td className="p-3 font-medium">{l.name}</td>
                 <td className="p-3 tabular-nums">{l.open}</td>
-                <td className={`p-3 tabular-nums ${l.late ? "font-semibold text-red-600" : ""}`}>
+                <td className={`p-3 tabular-nums ${l.late ? "font-semibold text-danger-ink" : ""}`}>
                   {l.late}
                 </td>
                 <td className="p-3 tabular-nums">{l.done}</td>

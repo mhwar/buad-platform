@@ -136,7 +136,7 @@ export function PortfolioReport() {
               return (
                 <tr
                   key={p.id}
-                  className={`border-b last:border-0 ${p.late ? "bg-red-50/60 dark:bg-red-950/20" : ""}`}
+                  className={`border-b last:border-0 ${p.late ? "bg-danger-soft/60" : ""}`}
                 >
                   <td className="p-3">
                     <Link
@@ -157,7 +157,7 @@ export function PortfolioReport() {
                     </Badge>
                   </td>
                   <td
-                    className={`p-3 whitespace-nowrap ${p.late ? "font-semibold text-red-600" : ""}`}
+                    className={`p-3 whitespace-nowrap ${p.late ? "font-semibold text-danger-ink" : ""}`}
                   >
                     {p.endDate ? day(p.endDate) : "—"}
                     {p.late && " · متأخر"}

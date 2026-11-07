@@ -232,7 +232,7 @@ function Bar({ value, tone = "brand" }: { value: number; tone?: "brand" | "green
   return (
     <span className="block h-1.5 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
       <span
-        className={`block h-full rounded-full ${tone === "green" ? "bg-emerald-500" : "bg-brand"}`}
+        className={`block h-full rounded-full ${tone === "green" ? "bg-success" : "bg-brand"}`}
         style={{ width: `${Math.round(Math.min(1, Math.max(0, value)) * 100)}%` }}
       />
     </span>
@@ -253,7 +253,7 @@ function ProjectCard({ p }: { p: ProjectListItem }) {
   return (
     <Link to="/projects/$id" params={{ id: p.id }} className="group block">
       <Card
-        className={`flex h-full flex-col gap-3 transition group-hover:border-brand group-hover:shadow-md ${p.late ? "border-red-200 dark:border-red-900" : ""}`}
+        className={`flex h-full flex-col gap-3 transition group-hover:border-brand group-hover:shadow-md ${p.late ? "border-danger-line" : ""}`}
       >
         <div className="flex items-start justify-between gap-2">
           <span className="flex flex-wrap items-center gap-1.5">
@@ -293,7 +293,9 @@ function ProjectCard({ p }: { p: ProjectListItem }) {
                   <span className="tabular-nums">
                     {work.done}/{work.total}
                     {!!p.tasksOverdue && (
-                      <b className="ms-1.5 font-semibold text-red-600">· {p.tasksOverdue} متأخرة</b>
+                      <b className="ms-1.5 font-semibold text-danger-ink">
+                        · {p.tasksOverdue} متأخرة
+                      </b>
                     )}
                   </span>
                 </span>
@@ -333,7 +335,7 @@ function ProjectCard({ p }: { p: ProjectListItem }) {
         </div>
         {p.nextDueDate && p.nextDueAmount !== null && (
           <p
-            className={`-mt-1 flex items-center gap-1.5 text-xs ${dueLate ? "font-semibold text-red-600" : "text-muted"}`}
+            className={`-mt-1 flex items-center gap-1.5 text-xs ${dueLate ? "font-semibold text-danger-ink" : "text-muted"}`}
           >
             <CalendarClock className="size-3.5" />
             {dueLate ? "دفعة متأخرة" : "الدفعة القادمة"}: {money(p.nextDueAmount ?? 0)} ·{" "}

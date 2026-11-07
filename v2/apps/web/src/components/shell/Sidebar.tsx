@@ -49,7 +49,7 @@ function Count({ n, keys }: { n: number; keys: readonly string[] }) {
       className={cx(
         "min-w-5 rounded-full px-1.5 text-center text-xs font-bold leading-5",
         urgent
-          ? "bg-red-600 text-white"
+          ? "bg-danger text-white"
           : "bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-100",
       )}
     >
@@ -166,7 +166,7 @@ function Item({
             {badge > 0 && (
               <span
                 aria-hidden
-                className="absolute end-2 top-1.5 size-2 rounded-full bg-red-600 ring-2 ring-surface"
+                className="absolute end-2 top-1.5 size-2 rounded-full bg-danger ring-2 ring-surface"
               />
             )}
           </button>
@@ -237,7 +237,7 @@ function Item({
           {collapsed && badge > 0 && (
             <span
               aria-hidden
-              className="absolute end-2 top-1.5 size-2 rounded-full bg-red-600 ring-2 ring-surface"
+              className="absolute end-2 top-1.5 size-2 rounded-full bg-danger ring-2 ring-surface"
             />
           )}
         </NavLink>

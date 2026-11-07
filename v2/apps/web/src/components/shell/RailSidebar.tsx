@@ -92,13 +92,13 @@ function RailItem({
       aria-label={`${entry.label}${badge ? `، ${badge}` : ""}`}
       title={entry.label}
       className={cx(
-        "group relative flex flex-col items-center gap-1 rounded-2xl px-1 py-2 text-[11px] leading-tight transition-colors",
+        "group relative flex flex-col items-center gap-0.5 rounded-2xl px-1 py-1 text-xs leading-tight transition-colors",
         active ? "text-ink" : "text-muted hover:text-ink",
       )}
     >
       <span
         className={cx(
-          "relative flex size-10 items-center justify-center rounded-xl transition-colors",
+          "relative flex size-9 items-center justify-center rounded-xl transition-colors",
           active
             ? "bg-accent text-black shadow-sm"
             : "group-hover:bg-brand-soft dark:group-hover:bg-slate-800",
@@ -109,8 +109,8 @@ function RailItem({
           <span
             aria-hidden
             className={cx(
-              "absolute -end-1 -top-1 min-w-4 rounded-full px-1 text-center text-[10px] font-bold leading-4 ring-2 ring-surface",
-              urgent ? "bg-red-600 text-white" : "bg-ink text-surface",
+              "absolute -end-1 -top-1 min-w-4 rounded-full px-1 text-center text-xs font-bold leading-4 ring-2 ring-surface",
+              urgent ? "bg-danger text-white" : "bg-ink text-surface",
             )}
           >
             {badge > 9 ? "9+" : badge}
@@ -131,7 +131,7 @@ function Count({ n, urgent }: { n: number; urgent: boolean }) {
       className={cx(
         "min-w-5 rounded-full px-1.5 text-center text-xs font-bold leading-5",
         urgent
-          ? "bg-red-600 text-white"
+          ? "bg-danger text-white"
           : "bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-100",
       )}
     >
@@ -187,7 +187,7 @@ export function RailSidebar({
           <Logo variant="icon" className="h-8 w-auto" />
         </Link>
         <nav aria-label="الأقسام" className="flex min-h-0 flex-1 flex-col">
-          <ul className="min-h-0 flex-1 space-y-1 overflow-y-auto px-1.5">
+          <ul className="min-h-0 flex-1 space-y-0.5 overflow-y-auto px-1.5">
             {upper?.items.map(item)}
           </ul>
           {rest.map((g) => (

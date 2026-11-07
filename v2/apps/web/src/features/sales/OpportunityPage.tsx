@@ -434,7 +434,7 @@ export function OpportunityPage() {
                 </Badge>
               )}
             </div>
-            <p className={cx("text-lg font-bold", fu === "overdue" && "text-red-600")}>
+            <p className={cx("text-lg font-bold", fu === "overdue" && "text-danger-ink")}>
               {o.followUpAt && open ? day(o.followUpAt) : "لم تُحدد"}
             </p>
             {edit && open && (
@@ -637,7 +637,7 @@ function Stepper({
                   "flex min-h-11 w-full items-center justify-center gap-1.5 rounded-lg px-2 text-sm transition disabled:cursor-default",
                   current
                     ? s === "won"
-                      ? "bg-emerald-600 font-semibold text-white"
+                      ? "bg-success font-semibold text-white"
                       : "bg-brand font-semibold text-white dark:text-canvas"
                     : past
                       ? "text-brand hover:bg-brand-soft"
@@ -661,7 +661,7 @@ function Stepper({
           "min-h-11 rounded-xl border px-4 text-sm transition disabled:cursor-default",
           status === "lost"
             ? "border-slate-400 bg-slate-500 font-semibold text-white"
-            : "bg-surface text-muted hover:text-red-600",
+            : "bg-surface text-muted hover:text-danger-ink",
         )}
       >
         {STAGE_LABEL.lost}

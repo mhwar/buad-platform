@@ -415,9 +415,7 @@ export function DocumentsPage() {
                   <td className="p-3">
                     <Badge tone={e.tone}>{e.statusLabel}</Badge>
                     {e.waiting && (
-                      <span className="mt-1 block text-xs text-amber-700 dark:text-amber-400">
-                        {e.waiting}
-                      </span>
+                      <span className="mt-1 block text-xs text-warning-ink">{e.waiting}</span>
                     )}
                   </td>
                   <td className="p-3 whitespace-nowrap tabular-nums">
@@ -460,9 +458,7 @@ export function DocumentsPage() {
                     )}
                   </p>
                   {e.waiting && (
-                    <p className="mt-1 text-xs font-medium text-amber-700 dark:text-amber-400">
-                      {e.waiting}
-                    </p>
+                    <p className="mt-1 text-xs font-medium text-warning-ink">{e.waiting}</p>
                   )}
                 </div>
                 <div className="relative z-10 flex shrink-0 items-center gap-1">
@@ -523,9 +519,7 @@ function KindIcon({ kind }: { kind: Kind }) {
     <span
       className={cx(
         "grid size-9 shrink-0 place-items-center rounded-lg",
-        kind === "quote"
-          ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"
-          : "bg-brand-soft text-brand",
+        kind === "quote" ? "bg-success-soft text-success-ink" : "bg-brand-soft text-brand",
       )}
     >
       <Icon className="size-4" />

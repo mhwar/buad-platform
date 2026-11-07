@@ -41,7 +41,7 @@ export function SetupPage() {
     await navigate({ to: "/" });
   });
 
-  const hint = "mt-1 block text-xs text-red-600";
+  const hint = "mt-1 block text-xs text-danger-ink";
   return (
     <AuthLayout title="إعداد حساب المالك">
       <p className="mb-5 text-sm text-muted">

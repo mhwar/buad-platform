@@ -182,7 +182,7 @@ function MyTasks() {
   const group = (label: string, rows: Task[], tone?: "late") =>
     rows.length > 0 && (
       <div>
-        <p className={cx("mb-1 text-xs font-semibold", tone ? "text-red-600" : "text-muted")}>
+        <p className={cx("mb-1 text-xs font-semibold", tone ? "text-danger-ink" : "text-muted")}>
           {label} ({rows.length})
         </p>
         <ul className="divide-y rounded-xl border">
@@ -192,7 +192,7 @@ function MyTasks() {
                 type="button"
                 aria-label={`إنجاز ${x.title}`}
                 onClick={() => done(x)}
-                className="grid size-6 shrink-0 place-items-center rounded-full border-2 text-transparent transition hover:border-emerald-500 hover:text-emerald-500"
+                className="grid size-6 shrink-0 place-items-center rounded-full border-2 text-transparent transition hover:border-success hover:text-success-ink"
               >
                 <Check className="size-3.5" />
               </button>
@@ -201,7 +201,7 @@ function MyTasks() {
                 {x.projectName && <span className="text-xs text-muted">{x.projectName}</span>}
               </span>
               {x.dueDate && (
-                <span className={cx("shrink-0 text-xs", tone ? "text-red-600" : "text-muted")}>
+                <span className={cx("shrink-0 text-xs", tone ? "text-danger-ink" : "text-muted")}>
                   {day(x.dueDate)}
                 </span>
               )}
@@ -354,7 +354,7 @@ function MyFollowups() {
                 <span
                   className={cx(
                     "inline-flex shrink-0 items-center gap-1 text-xs",
-                    i.date < t ? "font-semibold text-red-600" : "text-amber-700",
+                    i.date < t ? "font-semibold text-danger-ink" : "text-warning-ink",
                   )}
                 >
                   <CalendarClock className="size-3" />

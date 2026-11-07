@@ -33,7 +33,7 @@ export function DocStepper({ doc }: { doc: DocDetail["document"] }) {
               "flex min-h-11 min-w-[6.5rem] flex-1 flex-col items-center justify-center rounded-lg px-2 py-1 text-sm",
               current
                 ? s === "review"
-                  ? "bg-amber-500 font-semibold text-white"
+                  ? "bg-warning font-semibold text-white"
                   : "bg-brand font-semibold text-white dark:text-canvas"
                 : past
                   ? "text-brand"

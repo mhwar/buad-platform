@@ -133,12 +133,8 @@ function Section({
           <h2 className="font-bold">{title}</h2>
           {meta && (
             <p className="flex items-center gap-1 text-sm text-muted">
-              {state === "ok" && (
-                <CheckCircle2 className="size-4 text-emerald-600 dark:text-emerald-400" />
-              )}
-              {state === "gap" && (
-                <CircleAlert className="size-4 text-amber-600 dark:text-amber-400" />
-              )}
+              {state === "ok" && <CheckCircle2 className="size-4 text-success-ink" />}
+              {state === "gap" && <CircleAlert className="size-4 text-warning-ink" />}
               {meta}
             </p>
           )}

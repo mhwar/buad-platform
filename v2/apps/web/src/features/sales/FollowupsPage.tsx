@@ -83,7 +83,7 @@ export function FollowupsPage() {
         return (
           <section key={g.state} aria-label={g.title} className="space-y-2">
             <h2
-              className={`text-sm font-semibold ${g.state === "overdue" ? "text-red-600" : "text-muted"}`}
+              className={`text-sm font-semibold ${g.state === "overdue" ? "text-danger-ink" : "text-muted"}`}
             >
               {g.title} ({rows.length})
             </h2>

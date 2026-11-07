@@ -36,7 +36,7 @@ export function PdfButton({ path, name }: { path: string; name: string }) {
         <FileDown className="size-4" /> {busy ? "جارٍ التجهيز…" : "تنزيل PDF"}
       </Button>
       {image && (
-        <span className="self-center text-xs text-amber-700 dark:text-amber-300">
+        <span className="self-center text-xs text-warning-ink">
           نُزّل بجودة الصورة (خدمة PDF غير متاحة مؤقتاً)
         </span>
       )}
