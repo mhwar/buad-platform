@@ -142,6 +142,7 @@ export function ClientDialog({
     <Dialog
       open={open}
       onOpenChange={close}
+      dirty={f.formState.isDirty}
       title={existing ? "تعديل بيانات العميل" : "عميل جديد"}
       footer={
         <DialogActions onCancel={() => close(false)}>

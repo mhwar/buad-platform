@@ -77,8 +77,8 @@ function Failed({
   partial?: boolean;
 }) {
   return (
-    <Card role="alert" className="flex flex-wrap items-center gap-3 border-amber-300 p-4">
-      <AlertTriangle className="size-5 shrink-0 text-amber-700" />
+    <Card role="alert" className="flex flex-wrap items-center gap-3 border-warning-line p-4">
+      <AlertTriangle className="size-5 shrink-0 text-warning-ink" />
       <div className="min-w-0 flex-1">
         <p className="font-semibold">{title}</p>
         <p className="text-sm text-muted">

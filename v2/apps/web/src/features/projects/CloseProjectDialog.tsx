@@ -137,7 +137,7 @@ export function CloseProjectDialog({
         <div className="h-48 animate-pulse rounded-xl bg-slate-100 dark:bg-slate-800" />
       ) : step === "done" ? (
         <div className="space-y-3 text-sm">
-          <p className="flex items-center gap-2 font-semibold text-emerald-700 dark:text-emerald-400">
+          <p className="flex items-center gap-2 font-semibold text-success-ink">
             <CheckCircle2 className="size-5" /> أُغلق المشروع وقُفلت قيوده ومقبوضاته وفواتيره.
           </p>
           <p>
@@ -154,7 +154,7 @@ export function CloseProjectDialog({
           {c.warnings.length > 0 ? (
             <section
               aria-label="قبل الإغلاق"
-              className="rounded-lg bg-amber-50 p-3 text-amber-900 dark:bg-amber-950/40 dark:text-amber-200"
+              className="rounded-lg bg-warning-soft p-3 text-warning-ink"
             >
               <p className="mb-1.5 font-semibold">قبل الإغلاق، راجعوا ({c.warnings.length}):</p>
               <ul className="space-y-1">

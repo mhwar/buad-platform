@@ -32,6 +32,26 @@
   /* Chart series (validated for colour-blind separation in light and dark). */
   --color-series-1: #2a78d6;
   --color-series-2: #eb6834;
+  /* Status colours: what a state means, never a raw palette shade. `soft` is a background,
+     `ink` is text/icons on surfaces and on `soft` (AA), `line` a border, the bare name a fill. */
+  --color-success: #16a34a;
+  --color-success-soft: #ecfdf3;
+  --color-success-ink: #157f3c;
+  --color-success-line: #bbf7d0;
+  --color-warning: #d97706;
+  --color-warning-soft: #fff7e6;
+  --color-warning-ink: #9a5800;
+  --color-warning-line: #fde2b0;
+  --color-danger: #dc2626;
+  --color-danger-strong: #b91c1c;
+  --color-danger-soft: #fef2f2;
+  --color-danger-ink: #b91c1c;
+  --color-danger-line: #fecaca;
+  /* Shape and depth: two radii, one card shadow, one raised shadow. */
+  --radius-card: 1.25rem;
+  --radius-control: 0.75rem;
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.04);
+  --shadow-raised: 0 8px 24px rgb(0 0 0 / 0.12);
   /* Greys without the blue cast: every slate-* utility follows the neutral palette. */
   --color-slate-50: #faf9f7;
   --color-slate-100: #f1f0ed;
@@ -66,6 +86,21 @@
   --color-line: #2c2b29;
   --color-series-1: #3987e5;
   --color-series-2: #d95926;
+  --color-success: #22c55e;
+  --color-success-soft: #0f2a1a;
+  --color-success-ink: #4ade80;
+  --color-success-line: #14532d;
+  --color-warning: #f59e0b;
+  --color-warning-soft: #2e2108;
+  --color-warning-ink: #fbbf24;
+  --color-warning-line: #5a3d0a;
+  --color-danger: #dc2626;
+  --color-danger-strong: #ef4444;
+  --color-danger-soft: #2c1212;
+  --color-danger-ink: #f87171;
+  --color-danger-line: #5c1d1d;
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.4);
+  --shadow-raised: 0 8px 24px rgb(0 0 0 / 0.5);
 }
 
 @layer base {

@@ -653,7 +653,7 @@ function ProductsPanel({ c, patch }: { c: SiteContent; patch: Patch }) {
                 ظاهر في الموقع
               </label>
               {p.showOnSite && p.status !== "published" && (
-                <span className="basis-full text-xs text-amber-700 dark:text-amber-300">
+                <span className="basis-full text-xs text-warning-ink">
                   لن يظهر قبل أن تصبح حالته «منشور».
                 </span>
               )}
@@ -802,7 +802,7 @@ export function OverviewTab({
         <div className="mb-4 flex items-center justify-between gap-3">
           <h3 className="font-bold">جاهزية الموقع</h3>
           <span
-            className={`text-2xl font-bold ${score >= 80 ? "text-emerald-700 dark:text-emerald-300" : score >= 50 ? "text-amber-700 dark:text-amber-300" : "text-red-600"}`}
+            className={`text-2xl font-bold ${score >= 80 ? "text-success-ink" : score >= 50 ? "text-warning-ink" : "text-danger-ink"}`}
           >
             {score}%
           </span>
@@ -811,9 +811,9 @@ export function OverviewTab({
           {[...failing, ...health.filter((h) => h.ok)].map((h) => (
             <li key={h.key} className="flex items-start gap-2">
               {h.ok ? (
-                <Check className="mt-0.5 size-4 shrink-0 text-emerald-600" />
+                <Check className="mt-0.5 size-4 shrink-0 text-success-ink" />
               ) : (
-                <Circle className="mt-0.5 size-4 shrink-0 text-amber-700" />
+                <Circle className="mt-0.5 size-4 shrink-0 text-warning-ink" />
               )}
               <span className="flex-1">
                 {h.label}
@@ -929,13 +929,7 @@ export function FormTab({ c, patch }: TabProps) {
 }
 
 const Counter = ({ n, min, max }: { n: number; min: number; max: number }) => (
-  <span
-    className={
-      n >= min && n <= max
-        ? "text-emerald-700 dark:text-emerald-300"
-        : "text-amber-700 dark:text-amber-300"
-    }
-  >
+  <span className={n >= min && n <= max ? "text-success-ink" : "text-warning-ink"}>
     {n} حرفاً (المثالي {min}–{max})
   </span>
 );

@@ -13,6 +13,7 @@ import {
   Field,
   Input,
   Notice,
+  Segmented,
   Select,
   toast,
 } from "../../components/ui";
@@ -94,20 +95,13 @@ export function VatTab() {
             </option>
           ))}
         </Select>
-        <div className="flex rounded-lg border bg-surface p-0.5" role="tablist" aria-label="الفترة">
-          {[0, 1, 2, 3, 4].map((n) => (
-            <button
-              key={n}
-              type="button"
-              role="tab"
-              aria-selected={q === n}
-              onClick={() => setQ(n)}
-              className={`min-h-10 min-w-11 rounded-md px-3 py-1.5 text-sm sm:min-h-0 sm:min-w-0 ${q === n ? "bg-brand text-white dark:text-canvas" : "text-muted hover:text-ink"}`}
-            >
-              {n ? `ر${n}` : "السنة"}
-            </button>
-          ))}
-        </div>
+        <Segmented
+          inline
+          label="الفترة"
+          value={String(q)}
+          onChange={(v) => setQ(Number(v))}
+          items={[0, 1, 2, 3, 4].map((n) => ({ value: String(n), label: n ? `ر${n}` : "السنة" }))}
+        />
       </div>
       <div className="flex flex-wrap gap-2">
         <Button variant="secondary" onClick={() => setBuying(true)}>
@@ -161,7 +155,7 @@ function Detail({ v }: { v: VatReport }) {
       {v.warnings.length > 0 && (
         <div
           role="status"
-          className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:bg-amber-950/40 dark:text-amber-200"
+          className="rounded-lg bg-warning-soft px-3 py-2 text-sm text-warning-ink"
         >
           <ul className="space-y-1">
             {v.warnings.map((w) => (
@@ -223,7 +217,7 @@ function YearTable({
         <p className="text-sm">
           صافي السنة <b>{sar(y.totals.netPayable)}</b> · سُدِّد <b>{sar(y.totals.paid)}</b> ·{" "}
           {y.totals.balance >= 0 ? "المتبقي" : "رصيد دائن"}{" "}
-          <b className={y.totals.balance > 0 ? "text-amber-700 dark:text-amber-300" : ""}>
+          <b className={y.totals.balance > 0 ? "text-warning-ink" : ""}>
             {sar(Math.abs(y.totals.balance))}
           </b>
         </p>
@@ -260,7 +254,7 @@ function YearTable({
                     </button>
                     {x.warnings > 0 && (
                       <AlertTriangle
-                        className="ms-1 inline size-3.5 text-amber-600"
+                        className="ms-1 inline size-3.5 text-warning-ink"
                         aria-label="فيه تنبيهات"
                       />
                     )}
@@ -270,9 +264,7 @@ function YearTable({
                   <td className="whitespace-nowrap px-2 py-2.5 font-semibold">
                     {sar(x.netPayable)}
                   </td>
-                  <td
-                    className={`whitespace-nowrap px-2 py-2.5 ${late ? "text-red-600 dark:text-red-400" : ""}`}
-                  >
+                  <td className={`whitespace-nowrap px-2 py-2.5 ${late ? "text-danger-ink" : ""}`}>
                     {day(x.dueDate)}
                   </td>
                   <td className="px-2 py-2.5">
@@ -388,7 +380,7 @@ function VatExpenses({ v }: { v: VatReport }) {
     return q === 1 ? `${yy - 1}-Q4` : `${yy}-Q${q - 1}`;
   };
   return (
-    <Card className="space-y-3 border-amber-300 dark:border-amber-800">
+    <Card className="space-y-3 border-warning-line">
       <div>
         <h2 className="font-semibold">سداد ضريبة مسجّل كمصروف مشروع ({v.vatExpenses.length})</h2>
         <p className="text-xs text-muted">

@@ -109,7 +109,7 @@ export function FinanceStrip({
           <span>
             إجمالي المصروف من العقد: {sar(s.totalDeductions)}
             {s.pendingExpenses > 0 && (
-              <span className="text-amber-700 dark:text-amber-300">
+              <span className="text-warning-ink">
                 {" "}
                 · منها معلّق غير مدفوع: {sar(s.pendingExpenses)}
               </span>
@@ -126,7 +126,7 @@ export function FinanceStrip({
           aria-label="نسبة الصرف من قيمة العقد"
         >
           <div
-            className={`h-full rounded-full transition-all ${spent > 90 ? "bg-red-500" : spent > 70 ? "bg-amber-500" : "bg-accent"}`}
+            className={`h-full rounded-full transition-all ${spent > 90 ? "bg-danger" : spent > 70 ? "bg-warning" : "bg-accent"}`}
             style={{ width: `${Math.min(100, spent)}%` }}
           />
         </div>
@@ -164,7 +164,7 @@ export function FinanceStrip({
       ) : s.missingItems.length > 0 ? (
         <div
           role="status"
-          className="flex flex-wrap items-center gap-2 border-t bg-amber-50 px-5 py-2.5 text-sm text-amber-800 dark:bg-amber-950/60 dark:text-amber-300"
+          className="flex flex-wrap items-center gap-2 border-t bg-warning-soft px-5 py-2.5 text-sm text-warning-ink"
         >
           <AlertTriangle className="size-4 shrink-0" />
           <span className="flex-1">لم تُسجَّل بعد: {s.missingItems.join("، ")}</span>
@@ -183,7 +183,7 @@ export function FinanceStrip({
         done && (
           <p
             role="status"
-            className="border-t bg-emerald-50 px-5 py-2.5 text-sm text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300"
+            className="border-t bg-success-soft px-5 py-2.5 text-sm text-success-ink"
           >
             ✓ {done}
           </p>
@@ -210,11 +210,11 @@ function Stat({
 }) {
   const color =
     tone === "good"
-      ? "text-emerald-700 dark:text-emerald-400"
+      ? "text-success-ink"
       : tone === "warn"
-        ? "text-amber-700"
+        ? "text-warning-ink"
         : tone === "bad"
-          ? "text-red-600"
+          ? "text-danger-ink"
           : "";
   const body = (
     <>
@@ -223,7 +223,9 @@ function Stat({
         {value}
       </p>
       {sub && (
-        <p className={`mt-0.5 text-xs ${tone === "bad" ? "text-red-600" : "text-muted"}`}>{sub}</p>
+        <p className={`mt-0.5 text-xs ${tone === "bad" ? "text-danger-ink" : "text-muted"}`}>
+          {sub}
+        </p>
       )}
     </>
   );
@@ -281,7 +283,7 @@ export function ContractSummary({
       </span>
       <span
         dir="ltr"
-        className={`shrink-0 ${tone === "neg" ? "text-red-600" : tone === "pos" ? "text-emerald-700 dark:text-emerald-400" : ""} ${v < 0 ? "text-red-600" : ""}`}
+        className={`shrink-0 ${tone === "neg" ? "text-danger-ink" : tone === "pos" ? "text-success-ink" : ""} ${v < 0 ? "text-danger-ink" : ""}`}
       >
         {sar(v)}
       </span>
@@ -324,8 +326,8 @@ export function ContractSummary({
       </ul>
       <div className="mt-5 space-y-2.5 text-xs">
         {[
-          { label: "الدخل المسجّل", v: s.totalIncome, cls: "bg-emerald-500" },
-          { label: "المصاريف", v: s.totalExpenses, cls: "bg-red-500" },
+          { label: "الدخل المسجّل", v: s.totalIncome, cls: "bg-success" },
+          { label: "المصاريف", v: s.totalExpenses, cls: "bg-danger" },
         ].map((b) => (
           <div key={b.label}>
             <div className="mb-1 flex justify-between">
@@ -468,7 +470,7 @@ function Budget({
               )}
               {/* Planned vs actual (entries registered on this item). */}
               <p
-                className={`col-span-3 text-xs ${(actual[i]?.diff ?? 0) < 0 ? "text-red-600 dark:text-red-400" : "text-muted"}`}
+                className={`col-span-3 text-xs ${(actual[i]?.diff ?? 0) < 0 ? "text-danger-ink" : "text-muted"}`}
               >
                 صُرف {sar(actual[i]?.actual ?? 0)} من {sar(b.amount / 100)}
                 {(actual[i]?.diff ?? 0) < 0 && " · تجاوز المخطط"}
@@ -672,7 +674,7 @@ export function Transactions({
 function Amount({ e }: { e: Entry }) {
   return (
     <span
-      className={`whitespace-nowrap font-medium ${e.type === "income" ? "text-emerald-700 dark:text-emerald-400" : "text-red-600"}`}
+      className={`whitespace-nowrap font-medium ${e.type === "income" ? "text-success-ink" : "text-danger-ink"}`}
       dir="ltr"
     >
       {e.type === "income" ? "+" : "−"}

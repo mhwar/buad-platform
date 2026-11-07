@@ -61,13 +61,11 @@ export function PortfolioOverview() {
                 <td className="p-3">
                   {p.entities}
                   {p.repeatEntities > 0 && (
-                    <span className="block text-xs text-emerald-700 dark:text-emerald-300">
-                      {p.repeatEntities} كررت
-                    </span>
+                    <span className="block text-xs text-success-ink">{p.repeatEntities} كررت</span>
                   )}
                 </td>
                 <td className="p-3">{sar(p.contractNet)}</td>
-                <td className={`p-3 ${p.profit < 0 ? "text-red-600" : ""}`}>{sar(p.profit)}</td>
+                <td className={`p-3 ${p.profit < 0 ? "text-danger-ink" : ""}`}>{sar(p.profit)}</td>
                 <td className="p-3">
                   {p.projects ? pct(p.marginPct) : "—"}
                   <span className="text-muted">

@@ -83,7 +83,7 @@ export function LeadCard({
         {ownerName && <span>المسؤول: {ownerName}</span>}
         {r.followUpAt && (
           <span
-            className={`inline-flex items-center gap-1 ${late ? "font-semibold text-red-600" : ""}`}
+            className={`inline-flex items-center gap-1 ${late ? "font-semibold text-danger-ink" : ""}`}
           >
             <CalendarClock className="size-3" />
             {late ? "متأخرة · " : "متابعة "}

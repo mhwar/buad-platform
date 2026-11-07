@@ -154,6 +154,7 @@ export function ProjectDialog({
     <Dialog
       open={open}
       onOpenChange={close}
+      dirty={f.formState.isDirty}
       title={existing ? "تعديل المشروع" : "مشروع جديد"}
       wide
       footer={

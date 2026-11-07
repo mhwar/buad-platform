@@ -190,6 +190,7 @@ export function EntryDialog({
     <Dialog
       open={open}
       onOpenChange={close}
+      dirty={f.formState.isDirty}
       title={
         (existing ? "تعديل القيد" : "إضافة قيد مالي") + (projectName ? ` · ${projectName}` : "")
       }
@@ -401,7 +402,7 @@ export function EntryDialog({
               onCancel={() => close(false)}
               aside={
                 existing && (
-                  <Button variant="ghost" className="text-red-600" onClick={remove}>
+                  <Button variant="ghost" className="text-danger-ink" onClick={remove}>
                     حذف القيد
                   </Button>
                 )

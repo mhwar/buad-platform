@@ -18,6 +18,7 @@ import {
   Select,
 } from "../../components/ui";
 import { ApiError, ago } from "../../lib/format";
+import { useSearchParam } from "../../lib/url-state";
 import { useCan } from "../../session";
 import { send, type TeamUser, teamRolesQuery, teamUsersQuery } from "./queries";
 import { RolesPanel } from "./RolesPanel";
@@ -34,7 +35,7 @@ const msg = (e: unknown) =>
 /** «الفريق والصلاحيات»: who can sign in, with which role, and what each role may do. */
 export function TeamPage() {
   const can = useCan();
-  const [tab, setTab] = useState<"users" | "roles">("users");
+  const [tab, setTab] = useSearchParam<"users" | "roles">("tab", "users");
   return (
     <div className="space-y-5">
       <PageHeader title="الفريق والصلاحيات" subtitle="من يدخل المنصة، وبأي دور، وما يراه كل دور." />

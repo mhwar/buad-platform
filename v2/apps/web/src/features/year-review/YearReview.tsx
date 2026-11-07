@@ -256,7 +256,7 @@ function Fig({ label, value, strong }: { label: string; value: string; strong?: 
   return (
     <div className="rounded-lg bg-canvas/60 px-2 py-1.5">
       <dt className="text-xs text-muted">{label}</dt>
-      <dd className={cx("font-semibold tabular-nums", strong && "text-red-600")}>{value}</dd>
+      <dd className={cx("font-semibold tabular-nums", strong && "text-danger-ink")}>{value}</dd>
     </div>
   );
 }

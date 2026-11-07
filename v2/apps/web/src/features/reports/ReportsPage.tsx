@@ -147,7 +147,7 @@ function Group({
                     onClick={() => onFav(r.key)}
                     className={cx(
                       "relative z-10 grid size-9 place-items-center rounded-lg hover:bg-brand-soft",
-                      fav ? "text-amber-500" : "text-muted",
+                      fav ? "text-warning-ink" : "text-muted",
                     )}
                   >
                     <Star className={cx("size-4", fav && "fill-current")} />

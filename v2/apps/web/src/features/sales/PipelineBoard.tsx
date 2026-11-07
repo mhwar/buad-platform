@@ -84,7 +84,7 @@ export function PipelineBoard({
         }}
         onDragLeave={() => setOver((o) => (o === s ? null : o))}
         onDrop={(e) => drop(e, s)}
-        className={`flex flex-col rounded-2xl border p-2 transition ${closed ? "min-h-0" : "min-w-[13rem] flex-1"} ${over === s ? "border-brand bg-brand-soft/60" : closed ? (s === "won" ? "bg-emerald-50/60 dark:bg-emerald-950/30" : "bg-slate-50 dark:bg-slate-900/40") : "bg-slate-50 dark:bg-slate-900/40"}`}
+        className={`flex flex-col rounded-2xl border p-2 transition ${closed ? "min-h-0" : "min-w-[13rem] flex-1"} ${over === s ? "border-brand bg-brand-soft/60" : closed ? (s === "won" ? "bg-success-soft/60" : "bg-slate-50 dark:bg-slate-900/40") : "bg-slate-50 dark:bg-slate-900/40"}`}
       >
         <header className="mb-2 px-1">
           <div className="flex items-center justify-between">

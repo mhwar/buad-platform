@@ -69,3 +69,36 @@ describe("Dialog footer", () => {
     expect(cancelled).toBe(true);
   });
 });
+
+describe("Dialog with unsaved changes", () => {
+  it("asks before Esc throws the typing away, and stays open on «إلغاء»", async () => {
+    let closed = 0;
+    render(
+      <>
+        <ConfirmHost />
+        <Dialog open onOpenChange={() => closed++} title="نموذج" dirty>
+          <input aria-label="الاسم" />
+        </Dialog>
+      </>,
+    );
+    await userEvent.keyboard("{Escape}");
+    const ask = await screen.findByRole("alertdialog");
+    expect(ask).toHaveTextContent("تجاهل التعديلات غير المحفوظة؟");
+    await userEvent.click(screen.getByRole("button", { name: "إلغاء" }));
+    expect(closed).toBe(0);
+    await userEvent.keyboard("{Escape}");
+    await userEvent.click(await screen.findByRole("button", { name: "تجاهل التعديلات" }));
+    expect(closed).toBe(1);
+  });
+
+  it("closes at once when nothing changed", async () => {
+    let closed = 0;
+    render(
+      <Dialog open onOpenChange={() => closed++} title="نموذج">
+        <input aria-label="الاسم" />
+      </Dialog>,
+    );
+    await userEvent.keyboard("{Escape}");
+    expect(closed).toBe(1);
+  });
+});

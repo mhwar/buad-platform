@@ -60,11 +60,11 @@ export function ForecastChart({ weeks }: { weeks: Week[] }) {
                       {!up && (
                         <>
                           <div
-                            className="w-full max-w-8 rounded-b bg-red-600"
+                            className="w-full max-w-8 rounded-b bg-danger"
                             style={{ height: h }}
                             title={sar(w.balance)}
                           />
-                          <span className="mt-0.5 tabular-nums text-red-600">
+                          <span className="mt-0.5 tabular-nums text-danger-ink">
                             {compact.format(w.balance)}
                           </span>
                         </>
@@ -105,7 +105,7 @@ export function ForecastChart({ weeks }: { weeks: Week[] }) {
                   <td className="p-2 text-end tabular-nums">{sar(w.inflow)}</td>
                   <td className="p-2 text-end tabular-nums">{sar(w.outflow)}</td>
                   <td
-                    className={`p-2 text-end tabular-nums ${w.balance < 0 ? "text-red-600" : ""}`}
+                    className={`p-2 text-end tabular-nums ${w.balance < 0 ? "text-danger-ink" : ""}`}
                   >
                     {sar(w.balance)}
                   </td>

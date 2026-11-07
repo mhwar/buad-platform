@@ -35,7 +35,7 @@ export function ReceiptProposals() {
         <div className="h-16 animate-pulse rounded-lg bg-slate-100 dark:bg-slate-800" />
       ) : items.length === 0 ? (
         <p className="flex items-center gap-1.5 text-sm text-muted">
-          <CheckCircle2 className="size-4 text-emerald-600" /> لا مقترحات: كل المشاريع لها استلامات
+          <CheckCircle2 className="size-4 text-success-ink" /> لا مقترحات: كل المشاريع لها استلامات
           معتمدة.
         </p>
       ) : (
@@ -61,7 +61,7 @@ export function ReceiptProposals() {
                     <span className="text-muted">{r.suggestion.basis}</span>
                   </span>
                 ) : (
-                  <span className="mt-1 block text-xs text-amber-700 dark:text-amber-300">
+                  <span className="mt-1 block text-xs text-warning-ink">
                     لا تاريخ في بياناتها لاقتراحه، أدخلوا موعد الاستلام يدوياً.
                   </span>
                 )}

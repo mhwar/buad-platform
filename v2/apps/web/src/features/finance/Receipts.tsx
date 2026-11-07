@@ -90,7 +90,7 @@ export function ReceiptsCard({
                   </span>
                   {r.note && <span className="block text-xs text-muted">{r.note}</span>}
                   {!r.approvedAt && (
-                    <span className="ms-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs text-amber-800 dark:bg-amber-950 dark:text-amber-300">
+                    <span className="ms-1 rounded-full bg-warning-soft px-2 py-0.5 text-xs text-warning-ink">
                       غير معتمد
                     </span>
                   )}
@@ -101,7 +101,7 @@ export function ReceiptsCard({
                     </span>
                   )}
                 </span>
-                <b className={r.amount < 0 ? "text-red-600 dark:text-red-400" : ""}>
+                <b className={r.amount < 0 ? "text-danger-ink" : ""}>
                   {r.amount < 0 ? "استرجاع " : ""}
                   {sar(Math.abs(r.amount) / 100)}
                 </b>
@@ -205,7 +205,7 @@ export function ReceiptDialog({
           onCancel={onClose}
           aside={
             receipt && (
-              <Button variant="ghost" className="text-red-600" onClick={remove}>
+              <Button variant="ghost" className="text-danger-ink" onClick={remove}>
                 <Trash2 className="size-4" /> حذف
               </Button>
             )
@@ -249,7 +249,7 @@ export function ReceiptDialog({
             </p>
           )}
           {warnings.map((w) => (
-            <p key={w} className="mt-1 text-xs text-amber-700 dark:text-amber-300">
+            <p key={w} className="mt-1 text-xs text-warning-ink">
               ⚠ {WARNING[w]}
             </p>
           ))}

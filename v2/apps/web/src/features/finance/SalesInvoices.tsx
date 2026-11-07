@@ -135,7 +135,7 @@ function InvoiceDialog({
             invoice && (
               <Button
                 variant="ghost"
-                className="text-red-600"
+                className="text-danger-ink"
                 onClick={async () => {
                   if (
                     !(await confirmAction({

@@ -249,20 +249,16 @@ function ProfitTab({
             </option>
           ))}
         </Select>
-        <div className="flex rounded-lg border bg-surface p-0.5" role="tablist" aria-label="الفترة">
-          {[0, 1, 2, 3, 4].map((n) => (
-            <button
-              key={n}
-              type="button"
-              role="tab"
-              aria-selected={q === n}
-              onClick={() => onChange(year, n)}
-              className={`min-h-10 rounded-md px-3 py-1.5 text-sm sm:min-h-0 ${q === n ? "bg-brand text-white dark:text-canvas" : "text-muted hover:text-ink"}`}
-            >
-              {n ? `ر${n}` : "السنة كاملة"}
-            </button>
-          ))}
-        </div>
+        <Segmented
+          inline
+          label="الفترة"
+          value={String(q)}
+          onChange={(v) => onChange(year, Number(v))}
+          items={[0, 1, 2, 3, 4].map((n) => ({
+            value: String(n),
+            label: n ? `ر${n}` : "السنة كاملة",
+          }))}
+        />
       </div>
       <QuarterCentre year={year} q={q} onQuarter={(n) => onChange(year, n)} />
       <section aria-labelledby="company-ledger" className="space-y-3">
@@ -376,7 +372,7 @@ function Dashboard({
                     <span className="block text-xs text-muted">
                       <span dir="ltr">{p.number}</span> · {p.clientName} ·{" "}
                       {label(PROJECT_STATUS_LABELS, p.status)}
-                      {!p.hasFinance && <span className="text-amber-700"> · بلا مالية</span>}
+                      {!p.hasFinance && <span className="text-warning-ink"> · بلا مالية</span>}
                     </span>
                   </>
                 ),
@@ -417,7 +413,7 @@ function Dashboard({
                 sort: (p) => p.remaining,
                 hideOnCard: true,
                 cell: (p) => (
-                  <span className={p.remaining < 0 ? "text-red-600 dark:text-red-400" : ""}>
+                  <span className={p.remaining < 0 ? "text-danger-ink" : ""}>
                     {sar(p.remaining)}
                   </span>
                 ),
@@ -445,7 +441,7 @@ function Dashboard({
             <ul className="divide-y rounded-lg border text-sm">
               {data.obligations.unregistered.map((u) => (
                 <li key={`${u.projectId}-${u.item}`} className="flex items-center gap-3 p-3">
-                  <AlertTriangle className="size-4 shrink-0 text-amber-700" />
+                  <AlertTriangle className="size-4 shrink-0 text-warning-ink" />
                   <span className="min-w-0 flex-1">
                     <span className="font-medium">{u.item}</span> غير مسجّل ·{" "}
                     <FinanceLink id={u.projectId} name={u.projectName} />
@@ -493,10 +489,10 @@ function QualityCard({ items }: { items: Overview["quality"] }) {
   const statuses = items.reduce((a, i) => a + i.entriesWithoutStatus, 0);
   const refresh = () => qc.invalidateQueries({ queryKey: ["finance-overview"] });
   return (
-    <Card className="border-amber-300 bg-amber-50/60 dark:border-amber-800 dark:bg-amber-950/30">
+    <Card className="border-warning-line bg-warning-soft/60">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-start gap-2">
-          <AlertTriangle className="mt-0.5 size-4 shrink-0 text-amber-700" />
+          <AlertTriangle className="mt-0.5 size-4 shrink-0 text-warning-ink" />
           <div>
             <p className="font-semibold">بيانات ناقصة تؤثر على دقة الأرقام</p>
             <p className={`text-xs text-muted ${open ? "" : "line-clamp-2 sm:line-clamp-none"}`}>
@@ -574,7 +570,7 @@ function QualityRow({
           اعتبار {i.entriesWithoutStatus} قيد مدفوعة
         </Button>
       )}
-      {err && <span className="text-xs text-red-600">{err}</span>}
+      {err && <span className="text-xs text-danger-ink">{err}</span>}
     </li>
   );
 }

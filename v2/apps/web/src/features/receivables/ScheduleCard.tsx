@@ -76,7 +76,7 @@ export function ScheduleCard({
             <span className="min-w-0">
               <span className="font-medium">{i.label}</span>
               <span
-                className={`block text-xs ${i.status === "pending" && i.dueDate < today ? "font-semibold text-red-600" : "text-muted"}`}
+                className={`block text-xs ${i.status === "pending" && i.dueDate < today ? "font-semibold text-danger-ink" : "text-muted"}`}
               >
                 {i.status === "received"
                   ? `استُلمت ${day(i.receivedAt)}`

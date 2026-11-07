@@ -87,7 +87,7 @@ export function Repeater<T>({
                 type="button"
                 aria-label="حذف"
                 onClick={() => onChange(items.filter((_, k) => k !== i))}
-                className="rounded p-1 text-red-600 hover:bg-red-50 dark:hover:bg-red-950"
+                className="rounded p-1 text-danger-ink hover:bg-danger-soft"
               >
                 <Trash2 className="size-4" />
               </button>

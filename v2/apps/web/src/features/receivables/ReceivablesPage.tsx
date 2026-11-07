@@ -70,7 +70,9 @@ export function ReceivablesPage() {
           <h2 className="font-semibold">أعمار الديون</h2>
           <p className="text-sm text-muted">
             المستحق على العملاء: <b className="text-ink">{sar(d.aging.total)}</b> · المتأخر:{" "}
-            <b className={d.aging.overdue ? "text-red-600" : "text-ink"}>{sar(d.aging.overdue)}</b>
+            <b className={d.aging.overdue ? "text-danger-ink" : "text-ink"}>
+              {sar(d.aging.overdue)}
+            </b>
           </p>
         </div>
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
@@ -80,7 +82,7 @@ export function ReceivablesPage() {
               <Card key={b.key} className="p-3">
                 <p className="text-xs text-muted">{b.label}</p>
                 <p
-                  className={`mt-1 text-lg font-bold ${b.key === "d90" && v.amount ? "text-red-600" : ""}`}
+                  className={`mt-1 text-lg font-bold ${b.key === "d90" && v.amount ? "text-danger-ink" : ""}`}
                 >
                   {sar(v.amount)}
                 </p>
@@ -119,7 +121,7 @@ export function ReceivablesPage() {
                     </p>
                     <p className="text-xs text-muted">{i.client}</p>
                     <p
-                      className={`text-xs ${late(i.dueDate) ? "font-semibold text-red-600" : "text-muted"}`}
+                      className={`text-xs ${late(i.dueDate) ? "font-semibold text-danger-ink" : "text-muted"}`}
                     >
                       {late(i.dueDate) ? "متأخرة · " : "تستحق "}
                       {day(i.dueDate)}

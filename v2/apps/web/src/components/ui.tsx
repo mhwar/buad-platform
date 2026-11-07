@@ -24,7 +24,7 @@ const btn = {
   primary: "bg-brand text-white hover:bg-brand-strong dark:text-canvas",
   secondary: "border bg-surface text-ink hover:bg-brand-soft",
   ghost: "text-muted hover:bg-brand-soft hover:text-ink",
-  danger: "bg-red-600 text-white hover:bg-red-700",
+  danger: "bg-danger text-white hover:bg-danger-strong",
 };
 export const Button = forwardRef<
   HTMLButtonElement,
@@ -81,10 +81,7 @@ export function Field({
       {note && (
         <span
           id={noteId}
-          className={cx(
-            "mt-1 block text-xs",
-            error ? "text-red-600 dark:text-red-400" : "text-muted",
-          )}
+          className={cx("mt-1 block text-xs", error ? "text-danger-ink" : "text-muted")}
         >
           {note}
         </span>
@@ -129,10 +126,10 @@ export function SearchBox({
 /* ── Display ─────────────────────────────────────────── */
 const tones = {
   gray: "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300",
-  green: "bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300",
+  green: "bg-success-soft text-success-ink",
   blue: "bg-brand-soft text-brand",
-  amber: "bg-amber-50 text-amber-800 dark:bg-amber-950 dark:text-amber-300",
-  red: "bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300",
+  amber: "bg-warning-soft text-warning-ink",
+  red: "bg-danger-soft text-danger-ink",
 };
 export type Tone = keyof typeof tones;
 export function Badge({ tone = "gray", children }: { tone?: Tone; children: ReactNode }) {
@@ -152,10 +149,7 @@ export function Card({ className, ...p }: ComponentProps<"div">) {
   return (
     <div
       {...p}
-      className={cx(
-        "rounded-[1.25rem] border border-line bg-surface p-5 shadow-[0_1px_2px_rgb(0_0_0/0.04)]",
-        className,
-      )}
+      className={cx("rounded-card border border-line bg-surface p-5 shadow-card", className)}
     />
   );
 }
@@ -502,6 +496,7 @@ export function Dialog({
   children,
   wide,
   footer,
+  dirty = false,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
@@ -510,10 +505,25 @@ export function Dialog({
   wide?: boolean;
   /** Usually a <DialogActions>: shown under the body, never scrolled away. */
   footer?: ReactNode;
+  /**
+   * The form inside has unsaved changes: closing it by Esc, the backdrop or ✕ asks first, so a
+   * stray tap does not throw the typing away. «إلغاء» in the footer stays a deliberate close.
+   */
+  dirty?: boolean;
 }) {
   const ref = useRef<HTMLDivElement>(null);
+  const change = async (v: boolean) => {
+    if (v || !dirty) return onOpenChange(v);
+    const ok = await confirmAction({
+      title: "تجاهل التعديلات غير المحفوظة؟",
+      text: "ما كتبتموه في هذه النافذة لم يُحفظ بعد.",
+      action: "تجاهل التعديلات",
+      danger: true,
+    });
+    if (ok) onOpenChange(false);
+  };
   return (
-    <RDialog.Root open={open} onOpenChange={onOpenChange}>
+    <RDialog.Root open={open} onOpenChange={change}>
       <RDialog.Portal>
         <RDialog.Overlay className="fixed inset-0 z-40 bg-black/40 backdrop-blur-[2px]" />
         <RDialog.Content
@@ -697,7 +707,7 @@ export function ToastHost() {
           role="status"
           className={cx(
             "pointer-events-auto rounded-xl px-4 py-2.5 text-sm font-medium shadow-lg",
-            t.tone === "ok" ? "bg-ink text-canvas" : "bg-red-600 text-white",
+            t.tone === "ok" ? "bg-ink text-canvas" : "bg-danger text-white",
           )}
         >
           {t.tone === "ok" ? "✓ " : ""}
@@ -753,7 +763,7 @@ export function Menu({ items, label = "المزيد" }: { items: MenuItem[]; lab
                 disabled={i.disabled}
                 className={cx(
                   "flex cursor-pointer items-start gap-2.5 rounded-lg px-3 py-2 text-sm outline-none data-[disabled]:cursor-not-allowed data-[highlighted]:bg-brand-soft data-[disabled]:opacity-50",
-                  i.danger && "text-red-600",
+                  i.danger && "text-danger-ink",
                 )}
               >
                 {i.icon && (
@@ -941,9 +951,8 @@ export function Stamp({
 }) {
   const look = {
     closed: "border-slate-500 text-slate-600 dark:border-slate-400 dark:text-slate-300",
-    distributed:
-      "border-emerald-600 text-emerald-700 dark:border-emerald-400 dark:text-emerald-300",
-    partial: "border-amber-500 text-amber-700 dark:border-amber-400 dark:text-amber-300",
+    distributed: "border-success text-success-ink",
+    partial: "border-warning text-warning-ink",
   }[kind];
   return (
     <span

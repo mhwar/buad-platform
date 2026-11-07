@@ -59,15 +59,15 @@ export function ClientPulse({
         {owed === null ? (
           <span className="text-sm text-muted">—</span>
         ) : (
-          <b className={cx("tabular-nums", owed > 0 && "text-amber-700")}>{sar(owed)}</b>
+          <b className={cx("tabular-nums", owed > 0 && "text-warning-ink")}>{sar(owed)}</b>
         )}
       </Cell>
       <Cell icon={<CalendarClock className="size-4" />} label="المتابعة" onClick={onCrm}>
         {next ? (
           <b
             className={cx(
-              state === "overdue" && "text-red-600",
-              state === "today" && "text-amber-700",
+              state === "overdue" && "text-danger-ink",
+              state === "today" && "text-warning-ink",
             )}
           >
             {state === "overdue" ? "متأخرة · " : state === "today" ? "اليوم · " : ""}

@@ -334,7 +334,7 @@ function ResultView({ r, onAgain }: { r: Result; onAgain: () => void }) {
     <>
       <Card className="mb-6">
         <div className="flex items-center gap-3">
-          <CheckCircle2 className="size-8 text-emerald-600" />
+          <CheckCircle2 className="size-8 text-success-ink" />
           <div>
             <p className="text-lg font-bold">تم الاستيراد</p>
             <p className="text-sm text-muted">
@@ -457,7 +457,7 @@ function ParityView({ f }: { f: NonNullable<Result["finance"]> }) {
         لكل مشروع حُسبت أرقامه بمعادلة المنصة الحالية نفسها ثم قورنت بما حُفظ هنا.
       </p>
       <p
-        className={`text-lg font-bold ${mismatch.length ? "text-red-600" : "text-emerald-700 dark:text-emerald-400"}`}
+        className={`text-lg font-bold ${mismatch.length ? "text-danger-ink" : "text-success-ink"}`}
       >
         {mismatch.length
           ? `${mismatch.length} مشروع يحتاج مراجعة`

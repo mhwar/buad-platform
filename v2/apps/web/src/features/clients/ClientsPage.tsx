@@ -337,7 +337,7 @@ function CrmLine({ c }: { c: ClientListItem }) {
             : "لا تواصل بعد"}
       </p>
       {due && (
-        <p className="font-semibold text-red-600">
+        <p className="font-semibold text-danger-ink">
           متابعة {FOLLOW_UP_LABEL[state]} · {c.nextFollowUpAt}
         </p>
       )}

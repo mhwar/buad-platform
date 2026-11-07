@@ -590,9 +590,9 @@ function Publish({
           {product.readiness.map((r) => (
             <li key={r.key} className="flex items-start gap-2">
               {r.ok ? (
-                <Check className="mt-0.5 size-4 text-emerald-600" />
+                <Check className="mt-0.5 size-4 text-success-ink" />
               ) : (
-                <Circle className="mt-0.5 size-4 text-amber-700" />
+                <Circle className="mt-0.5 size-4 text-warning-ink" />
               )}
               <span>
                 {r.label}

@@ -1,4 +1,4 @@
-import { Input, Select } from "../../components/ui";
+import { Input, Segmented, Select } from "../../components/ui";
 import type { PeriodChoice } from "./api";
 
 const now = new Date();
@@ -43,20 +43,13 @@ export function PeriodPicker({
         </Select>
       )}
       {preset === "quarter" && (
-        <div className="flex rounded-lg border bg-surface p-0.5" role="tablist" aria-label="الربع">
-          {[1, 2, 3, 4].map((n) => (
-            <button
-              key={n}
-              type="button"
-              role="tab"
-              aria-selected={q === n}
-              onClick={() => onChange({ preset, year, q: n })}
-              className={`min-h-10 min-w-11 rounded-md px-3 py-1.5 text-sm sm:min-h-0 sm:min-w-0 ${q === n ? "bg-brand text-white dark:text-canvas" : "text-muted hover:text-ink"}`}
-            >
-              ر{n}
-            </button>
-          ))}
-        </div>
+        <Segmented
+          inline
+          label="الربع"
+          value={String(q)}
+          onChange={(v) => onChange({ preset, year, q: Number(v) })}
+          items={[1, 2, 3, 4].map((n) => ({ value: String(n), label: `ر${n}` }))}
+        />
       )}
       {preset === "custom" && (
         <span className="flex items-center gap-2 text-sm">

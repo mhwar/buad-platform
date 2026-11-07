@@ -23,6 +23,7 @@ import {
   Textarea,
 } from "../../components/ui";
 import { day, sar, whatsapp } from "../../lib/format";
+import { useSearchParam } from "../../lib/url-state";
 import { useCan } from "../../session";
 import { type FollowUp, followupsQuery } from "../clients/api";
 import { send } from "../team/queries";
@@ -41,7 +42,7 @@ export function FollowupsPage() {
   const can = useCan();
   const edit = can("clients.edit");
   const qc = useQueryClient();
-  const [scope, setScope] = useState<"mine" | "all">("mine");
+  const [scope, setScope] = useSearchParam<"mine" | "all">("scope", "mine");
   const q = useQuery(followupsQuery(scope));
   const [logging, setLogging] = useState<FollowUp | null>(null);
   const refresh = () => {
@@ -83,7 +84,7 @@ export function FollowupsPage() {
         return (
           <section key={g.state} aria-label={g.title} className="space-y-2">
             <h2
-              className={`text-sm font-semibold ${g.state === "overdue" ? "text-red-600" : "text-muted"}`}
+              className={`text-sm font-semibold ${g.state === "overdue" ? "text-danger-ink" : "text-muted"}`}
             >
               {g.title} ({rows.length})
             </h2>

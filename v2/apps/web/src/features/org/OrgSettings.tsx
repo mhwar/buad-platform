@@ -166,7 +166,7 @@ export function OrgSettingsPage() {
                 حفظ البيانات
               </Button>
               {saved && !f.formState.isDirty && (
-                <span className="text-sm text-emerald-700 dark:text-emerald-400">حُفظ ✓</span>
+                <span className="text-sm text-success-ink">حُفظ ✓</span>
               )}
             </div>
           )}
@@ -270,7 +270,7 @@ function ImageSlot({
         <button
           type="button"
           onClick={onClear}
-          className="mt-1 inline-flex items-center gap-1 text-muted hover:text-red-600"
+          className="mt-1 inline-flex items-center gap-1 text-muted hover:text-danger-ink"
         >
           <Trash2 className="size-3" /> إزالة
         </button>

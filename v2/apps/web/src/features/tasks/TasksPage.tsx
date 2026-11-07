@@ -11,6 +11,7 @@ import {
   EmptyState,
   LayoutToggle,
   Menu,
+  PageHeader,
   SearchBox,
   Segmented,
 } from "../../components/ui";
@@ -97,16 +98,19 @@ export function TasksPage() {
   });
   return (
     <div className="space-y-4">
-      {/* Three rows at most, on a phone too: action and view · what to show · search. */}
-      <div className="flex items-center justify-between gap-2">
-        {edit ? (
-          <Button onClick={() => setDialog({})}>
-            <Plus className="size-4" />
-            مهمة جديدة
-          </Button>
-        ) : (
-          <span />
-        )}
+      <PageHeader
+        title="المهام"
+        actions={
+          edit && (
+            <Button onClick={() => setDialog({})}>
+              <Plus className="size-4" />
+              مهمة جديدة
+            </Button>
+          )
+        }
+      />
+      {/* Then two rows at most, on a phone too: view and what to show · search. */}
+      <div className="-mt-4 flex items-center justify-end gap-2">
         <LayoutToggle
           value={layout}
           onChange={(v) => set({ layout: v === "list" ? undefined : v })}
@@ -365,7 +369,9 @@ function TaskTable({
                     PRIORITY_LABEL[t.priority]
                   )}
                 </td>
-                <td className={cx("px-3 py-2 tabular-nums", late && "font-semibold text-red-600")}>
+                <td
+                  className={cx("px-3 py-2 tabular-nums", late && "font-semibold text-danger-ink")}
+                >
                   {t.dueDate ? `${late ? "متأخرة · " : ""}${day(t.dueDate)}` : "—"}
                 </td>
                 <td className="px-3 py-2">

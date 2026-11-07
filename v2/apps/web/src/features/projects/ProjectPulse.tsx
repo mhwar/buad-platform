@@ -77,9 +77,9 @@ export function ProjectPulse({
         {left === null ? (
           <span className="text-sm text-muted">بلا تاريخ انتهاء</span>
         ) : running && left < 0 ? (
-          <b className="text-red-600">متأخر {-left} يوم</b>
+          <b className="text-danger-ink">متأخر {-left} يوم</b>
         ) : running ? (
-          <b className={cx(left <= 7 && "text-amber-700")}>متبقٍ {left} يوم</b>
+          <b className={cx(left <= 7 && "text-warning-ink")}>متبقٍ {left} يوم</b>
         ) : (
           <b>{day(endDate)}</b>
         )}
@@ -96,7 +96,7 @@ export function ProjectPulse({
             <span
               className={cx(
                 "text-xs",
-                nextTask.dueDate < t ? "font-semibold text-red-600" : "text-muted",
+                nextTask.dueDate < t ? "font-semibold text-danger-ink" : "text-muted",
               )}
             >
               {nextTask.dueDate < t ? "متأخرة · " : ""}
@@ -117,7 +117,7 @@ export function ProjectPulse({
             <span
               className={cx(
                 "block text-xs",
-                nextPay.dueDate < t ? "font-semibold text-red-600" : "text-muted",
+                nextPay.dueDate < t ? "font-semibold text-danger-ink" : "text-muted",
               )}
             >
               {nextPay.dueDate < t ? "متأخرة · " : ""}

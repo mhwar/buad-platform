@@ -211,7 +211,7 @@ export function ClientCrm({ clientId }: { clientId: string }) {
             </div>
             <div className="flex justify-between">
               <dt className="text-muted">المتابعة التالية</dt>
-              <dd className={state === "overdue" ? "font-semibold text-red-600" : ""}>
+              <dd className={state === "overdue" ? "font-semibold text-danger-ink" : ""}>
                 {crm.nextFollowUpAt
                   ? `${day(crm.nextFollowUpAt)}${state === "overdue" || state === "today" ? ` · ${FOLLOW_UP_LABEL[state]}` : ""}`
                   : "—"}

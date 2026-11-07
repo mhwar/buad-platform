@@ -207,7 +207,7 @@ function Ledger({ period }: { period?: Period }) {
                     </Badge>
                   </td>
                   <td
-                    className={`whitespace-nowrap px-5 py-2.5 text-left font-semibold ${e.type === "income" ? "text-emerald-700 dark:text-emerald-400" : ""}`}
+                    className={`whitespace-nowrap px-5 py-2.5 text-left font-semibold ${e.type === "income" ? "text-success-ink" : ""}`}
                   >
                     {e.type === "income" ? "+" : "−"} {sar(e.amount)}
                   </td>
@@ -362,7 +362,7 @@ function IdleProjects({
   items: { id: string; name: string; status: string; profit: number }[];
 }) {
   return (
-    <Card className="border-amber-300 bg-amber-50/60 dark:border-amber-800 dark:bg-amber-950/30">
+    <Card className="border-warning-line bg-warning-soft/60">
       <h2 className="mb-1 font-semibold">مشاريع لا تدخل في أرباح الشركة</h2>
       <p className="mb-3 text-xs text-muted">
         تُحسب أرباح المشاريع الجارية والمكتملة فقط. غيّروا حالة المشروع من صفحته لإدخاله.

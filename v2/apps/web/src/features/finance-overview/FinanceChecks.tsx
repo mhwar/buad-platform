@@ -26,10 +26,10 @@ export function FinanceChecks() {
   const total = checks.reduce((s, c) => s + c.rows.length, 0);
   return (
     <details
-      className="group mb-4 rounded-2xl border border-amber-300 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-950/40"
+      className="group mb-4 rounded-2xl border border-warning-line bg-warning-soft p-4"
       aria-label="تحتاج تدخلك"
     >
-      <summary className="flex cursor-pointer list-none items-center gap-2 font-semibold text-amber-900 dark:text-amber-200">
+      <summary className="flex cursor-pointer list-none items-center gap-2 font-semibold text-warning-ink">
         <AlertTriangle className="size-5 shrink-0" />
         تحتاج تدخلك: {total} {total === 1 ? "ملاحظة" : "ملاحظات"} على الأرقام
         <ChevronDown className="ms-auto size-4 transition group-open:rotate-180" />
