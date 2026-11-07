@@ -1,4 +1,4 @@
-import { loginInput, setPasswordInput } from "@buad/schema";
+import { loginInput, recoverInput, setPasswordInput } from "@buad/schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
@@ -107,6 +107,11 @@ export function LoginPage() {
           <button type="submit" className={button} disabled={login.formState.isSubmitting}>
             دخول
           </button>
+          <p className="text-center text-sm">
+            <Link to="/recover" className="text-muted underline hover:text-ink">
+              نسيت كلمة المرور؟
+            </Link>
+          </p>
         </form>
       )}
       {needsSetup && !setupToken && (
@@ -116,6 +121,104 @@ export function LoginPage() {
           </Link>
         </p>
       )}
+    </AuthLayout>
+  );
+}
+
+type RecoverForm = { email: string; key: string; password: string; confirm: string };
+
+/**
+ * «نسيت كلمة المرور»: the email, the recovery key made in «حسابي» and kept offline, and a new
+ * password. A key works once; afterwards a new one is made from the account page.
+ */
+export function RecoverPage() {
+  const qc = useQueryClient();
+  const navigate = useNavigate();
+  const [error, setError] = useState<string | null>(null);
+  const form = useForm<RecoverForm>();
+
+  const onSubmit = form.handleSubmit(async ({ email, key, password, confirm }) => {
+    setError(null);
+    if (password !== confirm) return setError("كلمتا المرور غير متطابقتين");
+    const parsed = recoverInput.safeParse({ email, key, password });
+    if (!parsed.success) {
+      const field = parsed.error.issues[0]?.path[0];
+      return setError(
+        field === "email"
+          ? "أدخل بريداً إلكترونياً صحيحاً"
+          : field === "key"
+            ? "المفتاح 20 حرفاً ورقماً، كما حفظتموه"
+            : "كلمة المرور يجب ألا تقل عن 8 أحرف",
+      );
+    }
+    const res = await fetch("/api/auth/recover", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ email, key, password }),
+    });
+    if (res.status === 429) return setError("محاولات كثيرة. انتظر دقيقة ثم حاول مجدداً.");
+    if (!res.ok) return setError("البريد أو المفتاح غير صحيح، أو استُخدم المفتاح من قبل.");
+    await qc.fetchQuery({ ...meQuery, staleTime: 0 });
+    await navigate({ to: "/settings/account" });
+  });
+
+  return (
+    <AuthLayout title="استعادة الدخول">
+      {error && <ErrorNote>{error}</ErrorNote>}
+      <form onSubmit={onSubmit} className="space-y-4" noValidate>
+        <label className="block text-sm">
+          البريد الإلكتروني
+          <input
+            type="email"
+            autoComplete="username"
+            dir="ltr"
+            className={field}
+            {...form.register("email")}
+          />
+        </label>
+        <label className="block text-sm">
+          مفتاح الاستعادة
+          <input
+            autoComplete="off"
+            dir="ltr"
+            placeholder="XXXXX-XXXXX-XXXXX-XXXXX"
+            className={`${field} font-mono uppercase`}
+            {...form.register("key")}
+          />
+        </label>
+        <label className="block text-sm">
+          كلمة المرور الجديدة
+          <input
+            type="password"
+            autoComplete="new-password"
+            dir="ltr"
+            className={field}
+            {...form.register("password")}
+          />
+        </label>
+        <label className="block text-sm">
+          تأكيد كلمة المرور
+          <input
+            type="password"
+            autoComplete="new-password"
+            dir="ltr"
+            className={field}
+            {...form.register("confirm")}
+          />
+        </label>
+        <button type="submit" className={button} disabled={form.formState.isSubmitting}>
+          حفظ ودخول
+        </button>
+      </form>
+      <p className="mt-6 text-sm text-muted">
+        المفتاح يُنشأ من «الإعدادات ← حسابي» ويعمل مرة واحدة. لا تملكون مفتاحاً؟ يستطيع مسؤول المنصة
+        إرسال رابط تعيين كلمة مرور لكم من «الفريق والصلاحيات».
+      </p>
+      <p className="mt-3 text-center text-sm">
+        <Link to="/login" className="text-brand underline">
+          العودة إلى الدخول
+        </Link>
+      </p>
     </AuthLayout>
   );
 }

@@ -3,6 +3,7 @@ import {
   healthResponse,
   loginInput,
   ownerSetupInput,
+  recoverInput,
   setPasswordInput,
 } from "@buad/schema";
 import { users } from "@buad/schema/db";
@@ -14,7 +15,14 @@ import { deleteCookie, setCookie } from "hono/cookie";
 import { secureHeaders } from "hono/secure-headers";
 import { z } from "zod";
 import { requireAuth, requirePerm, type Vars } from "./auth/middleware";
-import { type Db, getUser, login, setPassword } from "./auth/service";
+import {
+  type Db,
+  getUser,
+  login,
+  newRecoveryKey,
+  recoverWithKey,
+  setPassword,
+} from "./auth/service";
 import { SESSION_COOKIE, SESSION_TTL, signSession, signSetup, verifySetup } from "./auth/session";
 import { claimOwner, ownerExists, setupEnabled, tokenMatches } from "./auth/setup";
 import { assetsApp, type FileStore } from "./modules/assets";
@@ -174,6 +182,50 @@ export function createApp(deps: AppDeps = {}) {
           return c.json({ ok: true });
         },
       )
+
+      // «مفتاح الاستعادة»: whether one exists, and making a new one (shown once, then hashed).
+      .get("/api/auth/recovery-key", requireAuth, async (c) => {
+        const [row] = await c
+          .get("db")
+          .select({ at: users.recoveryAt, hash: users.recoveryHash })
+          .from(users)
+          .where(eq(users.id, c.get("user").id))
+          .limit(1);
+        return c.json({ ok: true, exists: !!row?.hash, createdAt: row?.hash ? row.at : null });
+      })
+      .post("/api/auth/recovery-key", requireAuth, async (c) => {
+        const db = c.get("db");
+        const me = c.get("user");
+        const key = await newRecoveryKey(db, me.id);
+        await audit(db, me, {
+          entity: "user",
+          entityId: me.id,
+          action: "recovery_key",
+          summary: "أنشأ مفتاح استعادة جديداً",
+        });
+        return c.json({ ok: true, key });
+      })
+      // «نسيت كلمة المرور»: email + recovery key + new password. Slowed like sign-in.
+      .post("/api/auth/recover", zValidator("json", recoverInput), async (c) => {
+        const limiter = c.env.LOGIN_LIMITER;
+        if (limiter) {
+          const key = c.req.header("cf-connecting-ip") ?? "unknown";
+          if (!(await limiter.limit({ key })).success)
+            return c.json({ ok: false, error: "too_many_attempts" }, 429);
+        }
+        const { email, key, password } = c.req.valid("json");
+        const db = c.get("db");
+        const user = await recoverWithKey(db, email, key, password);
+        if (!user) return c.json({ ok: false, error: "invalid_recovery" }, 401);
+        await audit(db, user, {
+          entity: "user",
+          entityId: user.id,
+          action: "recover",
+          summary: "استعاد الدخول بمفتاح الاستعادة واختار كلمة مرور جديدة",
+        });
+        setCookie(c, SESSION_COOKIE, await signSession(c.env.JWT_SECRET, user), sessionCookie);
+        return c.json({ ok: true, user: publicUser(user) });
+      })
 
       // Signs out every other device: older tokens stop working, this one is re-issued.
       .post("/api/auth/logout-others", requireAuth, async (c) => {

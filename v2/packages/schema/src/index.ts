@@ -30,6 +30,19 @@ export const changePasswordInput = z.object({
 });
 export type ChangePasswordInput = z.infer<typeof changePasswordInput>;
 
+/** «نسيت كلمة المرور»: the email, the recovery key kept offline, and the new password. */
+export const recoverInput = z.object({
+  email: emailField,
+  key: z
+    .string()
+    .trim()
+    .toUpperCase()
+    .transform((k) => k.replace(/[^A-Z0-9]/g, ""))
+    .pipe(z.string().length(20)),
+  password: z.string().min(8).max(200),
+});
+export type RecoverInput = z.input<typeof recoverInput>;
+
 export const ownerSetupInput = z.object({
   token: z.string().min(1).max(500),
   name: z.string().trim().min(1).max(100),
