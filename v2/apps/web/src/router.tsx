@@ -31,7 +31,7 @@ import { SettingsLayout } from "./features/settings/SettingsLayout";
 import { TasksPage } from "./features/tasks/TasksPage";
 import { MeetingsPage } from "./features/workspace/MeetingsPage";
 import { Home } from "./home";
-import { LoginPage } from "./login";
+import { LoginPage, RecoverPage } from "./login";
 import { queryClient } from "./query-client";
 import { meQuery, setupStatusQuery } from "./session";
 import { SetupPage } from "./setup";
@@ -169,6 +169,16 @@ const loginRoute = createRoute({
     if (me) throw redirect({ to: "/" });
   },
   component: LoginPage,
+});
+
+const recoverRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/recover",
+  beforeLoad: async () => {
+    const me = await queryClient.ensureQueryData(meQuery);
+    if (me) throw redirect({ to: "/" });
+  },
+  component: RecoverPage,
 });
 
 const setupRoute = createRoute({
@@ -692,6 +702,7 @@ export const router = createRouter({
     soonRoute,
     ...movedRoutes,
     loginRoute,
+    recoverRoute,
     setupRoute,
     clientsRoute,
     clientRoute,

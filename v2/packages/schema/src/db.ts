@@ -57,6 +57,12 @@ export const users = sqliteTable(
     /** A deactivated account cannot sign in; its history stays. */
     active: integer("active", { mode: "boolean" }).notNull().default(true),
     lastLoginAt: integer("last_login_at").notNull().default(0),
+    /**
+     * «مفتاح الاستعادة»: PBKDF2 hash of a one-time key the user keeps offline, to choose a new
+     * password when they forget it (no email involved). "" = none; cleared once used.
+     */
+    recoveryHash: text("recovery_hash").notNull().default(""),
+    recoveryAt: integer("recovery_at"),
     createdAt: integer("created_at").notNull().default(now),
   },
   (t) => [index("idx_users_org").on(t.orgId)],

@@ -225,6 +225,13 @@
       "when": 1794013807389,
       "tag": "0031_high_red_hulk",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "6",
+      "when": 1794072629653,
+      "tag": "0032_workable_daimon_hellstrom",
+      "breakpoints": true
     }
   ]
 }

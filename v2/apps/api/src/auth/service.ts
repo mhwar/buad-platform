@@ -118,6 +118,48 @@ export async function setPassword(db: Db, userId: string, password: string): Pro
     .where(eq(users.id, userId));
 }
 
+const KEY_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no 0/O, 1/I: easy to copy by hand
+
+/**
+ * A new «مفتاح استعادة» for the user: 20 characters shown once (in groups of five) and kept
+ * offline; only its hash is stored. Making a new one replaces the old.
+ */
+export async function newRecoveryKey(db: Db, userId: string): Promise<string> {
+  const bytes = crypto.getRandomValues(new Uint8Array(20));
+  const key = Array.from(bytes, (b) => KEY_ALPHABET[b % KEY_ALPHABET.length]).join("");
+  await db
+    .update(users)
+    .set({ recoveryHash: await hashPassword(key), recoveryAt: Math.floor(Date.now() / 1000) })
+    .where(eq(users.id, userId));
+  return key.match(/.{5}/g)?.join("-") ?? key;
+}
+
+/**
+ * «نسيت كلمة المرور»: a valid key sets the new password, signs every device out, and is used
+ * up (a new key has to be made). Unknown emails cost the same time as wrong keys.
+ */
+export async function recoverWithKey(
+  db: Db,
+  emailIn: string,
+  key: string,
+  password: string,
+): Promise<AuthUser | null> {
+  const [row] = await db
+    .select()
+    .from(users)
+    .where(eq(users.email, normEmail(emailIn)))
+    .limit(1);
+  if (!row?.active || !row.recoveryHash) {
+    dummy ??= hashPassword("not-a-real-password");
+    await verifyPassword(key, await dummy);
+    return null;
+  }
+  if (!(await verifyPassword(key, row.recoveryHash))) return null;
+  await setPassword(db, row.id, password);
+  await db.update(users).set({ recoveryHash: "", recoveryAt: null }).where(eq(users.id, row.id));
+  return getUser(db, row.id);
+}
+
 export async function getUser(db: Db, id: string): Promise<AuthUser | null> {
   const [row] = await db.select().from(users).where(eq(users.id, id)).limit(1);
   return row?.active ? toAuthUser(db, row) : null;

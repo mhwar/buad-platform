@@ -7,6 +7,12 @@ const navigate = vi.fn();
 vi.mock("@tanstack/react-router", async (orig) => ({
   ...(await orig<typeof import("@tanstack/react-router")>()),
   useNavigate: () => navigate,
+  // The page is rendered on its own here, without a router: links become plain anchors.
+  Link: ({ to, children, ...p }: { to: string; children: React.ReactNode }) => (
+    <a href={to} {...p}>
+      {children}
+    </a>
+  ),
 }));
 
 import { LoginPage } from "./login";
