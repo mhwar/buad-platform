@@ -358,6 +358,15 @@ export const SECTIONS: Section[] = [
         match: (p) => within("/settings/data")(p) || within("/settings/import")(p),
       },
       {
+        key: "quality",
+        label: "الجودة والامتثال",
+        to: "/settings/quality",
+        perm: "org.edit",
+        desc: "ما تلتزم به المنصة في الإتاحة والجوال والتصميم والأمان، وأين يقف كل بند.",
+        when: "عند مراجعة جودة المنصة.",
+        match: within("/settings/quality"),
+      },
+      {
         key: "account",
         label: "حسابي",
         to: "/settings/account",

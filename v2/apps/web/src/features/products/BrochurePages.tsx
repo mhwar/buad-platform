@@ -4,6 +4,7 @@ import { Link } from "@tanstack/react-router";
 import { FileDown, Printer } from "lucide-react";
 import { useState } from "react";
 import { Button, EmptyState, Notice } from "../../components/ui";
+import { printPage } from "../../lib/export";
 import { ok } from "../../lib/format";
 import { PdfButton } from "../documents/PdfButton";
 import { siteProductQuery } from "../site/site-api";
@@ -65,7 +66,7 @@ export function ProductBrochurePage({ id }: { id: string }) {
           <p className="text-xs text-muted">يُبنى من محتوى المنتج. لا يحمل أي تكلفة أو سعر.</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button variant="secondary" onClick={() => window.print()}>
+          <Button variant="secondary" onClick={() => printPage()}>
             <Printer className="size-4" /> طباعة
           </Button>
           <PdfButton path={`/print/products/${id}`} name={`${p.data.slug}-profile`} />

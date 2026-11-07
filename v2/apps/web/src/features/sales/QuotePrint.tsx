@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { Printer } from "lucide-react";
 import { Button } from "../../components/ui";
+import { printPage } from "../../lib/export";
 import { day, sar } from "../../lib/format";
 import { PdfButton } from "../documents/PdfButton";
 import { quoteQuery } from "./api";
@@ -20,7 +21,7 @@ export function QuotePrintPage({ id }: { id: string }) {
           ← المبيعات
         </Link>
         <div className="flex gap-2">
-          <Button variant="secondary" onClick={() => window.print()}>
+          <Button variant="secondary" onClick={() => printPage()}>
             <Printer className="size-4" /> طباعة
           </Button>
           <PdfButton path={`/print/quotes/${id}`} name={z.number} />

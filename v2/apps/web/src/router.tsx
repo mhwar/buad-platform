@@ -95,6 +95,10 @@ const ActivityPage = lazyRouteComponent(
 );
 const TeamPage = lazyRouteComponent(() => import("./features/team/TeamPage"), "TeamPage");
 const DataPage = lazyRouteComponent(() => import("./features/settings/DataPage"), "DataPage");
+const QualityPage = lazyRouteComponent(
+  () => import("./features/settings/QualityPage"),
+  "QualityPage",
+);
 const DecisionsPage = lazyRouteComponent(
   () => import("./features/workspace/DecisionsPage"),
   "DecisionsPage",
@@ -462,6 +466,12 @@ const dataRoute = createRoute({
   beforeLoad: needs("org.edit"),
   component: DataPage,
 });
+const qualityRoute = createRoute({
+  getParentRoute: () => settingsRoute,
+  path: "/quality",
+  beforeLoad: needs("org.edit"),
+  component: QualityPage,
+});
 const importRoute = createRoute({
   getParentRoute: () => settingsRoute,
   path: "/import",
@@ -708,6 +718,7 @@ export const router = createRouter({
       orgRoute,
       financeSettingsRoute,
       dataRoute,
+      qualityRoute,
       importRoute,
       teamRoute,
       activityRoute,

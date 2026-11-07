@@ -61,6 +61,51 @@ export function QuarterCentre({
     .reduce((s, r) => s + r.available, 0);
   const total = positive + v.totals.carried + v.company.income - v.company.expenses;
   const active = v.rows.filter((r) => r.receivedToDate !== 0 || r.distributed !== 0);
+  type Row = (typeof active)[number];
+  // One project's checkbox and its name, client and stamps: shared by the table and the cards.
+  const pick = (r: Row) => (
+    <input
+      type="checkbox"
+      aria-label={`تضمين ${r.name}`}
+      disabled={r.available <= 0}
+      checked={r.available > 0 && chosen.includes(r.id)}
+      onChange={(e) =>
+        setSelected(e.target.checked ? [...chosen, r.id] : chosen.filter((x) => x !== r.id))
+      }
+    />
+  );
+  const about = (r: Row) => (
+    <>
+      <Link
+        to="/projects/$id"
+        params={{ id: r.id }}
+        search={{ view: "finance" }}
+        className="font-medium text-brand hover:underline"
+      >
+        {r.name}
+      </Link>
+      <span className="block text-xs text-muted">
+        {r.clientName} · استُلم {sar(r.receivedToDate)} من {sar(r.gross)}
+      </span>
+      <span className="mt-1 flex flex-wrap gap-1">
+        {r.fullyDistributed ? (
+          <Stamp kind="distributed">موزّع بالكامل</Stamp>
+        ) : (
+          r.closed && <Stamp kind="closed">مغلق · جاهز للتوزيع</Stamp>
+        )}
+        {(r.unclassified ?? 0) > 0.5 && r.status === "completed" && (
+          <Badge tone="amber">غير مصنّف {sar(r.unclassified ?? 0)}</Badge>
+        )}
+        {r.flags
+          .filter((f) => f !== "no_receipts")
+          .map((f) => (
+            <Badge key={f} tone={FLAG[f].tone}>
+              {f === "over_distributed" ? `${FLAG[f].text} بـ ${sar(-r.available)}` : FLAG[f].text}
+            </Badge>
+          ))}
+      </span>
+    </>
+  );
 
   return (
     <div className="space-y-6">
@@ -128,87 +173,69 @@ export function QuarterCentre({
             لا استلامات مسجلة حتى نهاية {v.label}. سجّلوا ما استُلم من العملاء ليظهر الربح المتحقق.
           </p>
         ) : (
-          <div className="mt-3 overflow-x-auto border-t">
-            <table className="w-full text-sm">
-              <thead className="text-right text-xs text-muted">
-                <tr className="border-b">
-                  <th className="px-3 py-2" />
-                  <th className="px-2 py-2 font-medium">المشروع</th>
-                  <th className="px-2 py-2 font-medium">
-                    {q ? "المستلم في الربع" : "المستلم في السنة"}
-                  </th>
-                  <th className="px-2 py-2 font-medium">
-                    {q ? "متحقق في الربع" : "متحقق في السنة"}
-                  </th>
-                  <th className="px-2 py-2 font-medium">متحقق حتى نهايته</th>
-                  <th className="px-2 py-2 font-medium">وُزّع سابقاً</th>
-                  <th className="px-3 py-2 font-medium">المتبقي للتوزيع</th>
-                </tr>
-              </thead>
-              <tbody>
-                {active.map((r) => (
-                  <tr key={r.id} className="border-b last:border-0 align-top">
-                    <td className="px-3 py-2.5">
-                      <input
-                        type="checkbox"
-                        aria-label={`تضمين ${r.name}`}
-                        disabled={r.available <= 0}
-                        checked={r.available > 0 && chosen.includes(r.id)}
-                        onChange={(e) =>
-                          setSelected(
-                            e.target.checked ? [...chosen, r.id] : chosen.filter((x) => x !== r.id),
-                          )
-                        }
-                      />
-                    </td>
-                    <td className="px-2 py-2.5">
-                      <Link
-                        to="/projects/$id"
-                        params={{ id: r.id }}
-                        search={{ view: "finance" }}
-                        className="font-medium text-brand hover:underline"
+          <>
+            {/* Phones: a card per project with the figures that decide a distribution. */}
+            <ul className="mt-3 divide-y border-t sm:hidden">
+              {active.map((r) => (
+                <li key={r.id} className="flex gap-3 px-4 py-3">
+                  <span className="pt-0.5">{pick(r)}</span>
+                  <div className="min-w-0 flex-1 space-y-2">
+                    {about(r)}
+                    <dl className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
+                      <dt className="text-muted">{q ? "متحقق في الربع" : "متحقق في السنة"}</dt>
+                      <dd className="tabular-nums">{sar(r.realizedInPeriod)}</dd>
+                      <dt className="text-muted">وُزّع سابقاً</dt>
+                      <dd className="tabular-nums">{sar(r.distributed)}</dd>
+                      <dt className="font-semibold">المتبقي للتوزيع</dt>
+                      <dd
+                        className={`font-semibold tabular-nums ${r.available < 0 ? "text-danger-ink" : ""}`}
                       >
-                        {r.name}
-                      </Link>
-                      <span className="block text-xs text-muted">
-                        {r.clientName} · استُلم {sar(r.receivedToDate)} من {sar(r.gross)}
-                      </span>
-                      <span className="mt-1 flex flex-wrap gap-1">
-                        {r.fullyDistributed ? (
-                          <Stamp kind="distributed">موزّع بالكامل</Stamp>
-                        ) : (
-                          r.closed && <Stamp kind="closed">مغلق · جاهز للتوزيع</Stamp>
-                        )}
-                        {(r.unclassified ?? 0) > 0.5 && r.status === "completed" && (
-                          <Badge tone="amber">غير مصنّف {sar(r.unclassified ?? 0)}</Badge>
-                        )}
-                        {r.flags
-                          .filter((f) => f !== "no_receipts")
-                          .map((f) => (
-                            <Badge key={f} tone={FLAG[f].tone}>
-                              {f === "over_distributed"
-                                ? `${FLAG[f].text} بـ ${sar(-r.available)}`
-                                : FLAG[f].text}
-                            </Badge>
-                          ))}
-                      </span>
-                    </td>
-                    <td className="px-2 py-2.5 whitespace-nowrap">{sar(r.receivedInPeriod)}</td>
-                    <td className="px-2 py-2.5 whitespace-nowrap">{sar(r.realizedInPeriod)}</td>
-                    <td className="px-2 py-2.5 whitespace-nowrap">{sar(r.realizedToDate)}</td>
-                    <td className="px-2 py-2.5 whitespace-nowrap text-muted">
-                      {sar(r.distributed)}
-                    </td>
-                    <td
-                      className={`px-3 py-2.5 whitespace-nowrap font-semibold ${r.available < 0 ? "text-danger-ink" : ""}`}
-                    >
-                      {sar(r.available)}
-                    </td>
+                        {sar(r.available)}
+                      </dd>
+                    </dl>
+                  </div>
+                </li>
+              ))}
+            </ul>
+            <div className="mt-3 hidden overflow-x-auto border-t sm:block">
+              <table className="w-full text-sm">
+                <thead className="text-right text-xs text-muted">
+                  <tr className="border-b">
+                    <th className="px-3 py-2" />
+                    <th className="px-2 py-2 font-medium">المشروع</th>
+                    <th className="px-2 py-2 font-medium">
+                      {q ? "المستلم في الربع" : "المستلم في السنة"}
+                    </th>
+                    <th className="px-2 py-2 font-medium">
+                      {q ? "متحقق في الربع" : "متحقق في السنة"}
+                    </th>
+                    <th className="px-2 py-2 font-medium">متحقق حتى نهايته</th>
+                    <th className="px-2 py-2 font-medium">وُزّع سابقاً</th>
+                    <th className="px-3 py-2 font-medium">المتبقي للتوزيع</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {active.map((r) => (
+                    <tr key={r.id} className="border-b last:border-0 align-top">
+                      <td className="px-3 py-2.5">{pick(r)}</td>
+                      <td className="px-2 py-2.5">{about(r)}</td>
+                      <td className="px-2 py-2.5 whitespace-nowrap">{sar(r.receivedInPeriod)}</td>
+                      <td className="px-2 py-2.5 whitespace-nowrap">{sar(r.realizedInPeriod)}</td>
+                      <td className="px-2 py-2.5 whitespace-nowrap">{sar(r.realizedToDate)}</td>
+                      <td className="px-2 py-2.5 whitespace-nowrap text-muted">
+                        {sar(r.distributed)}
+                      </td>
+                      <td
+                        className={`px-3 py-2.5 whitespace-nowrap font-semibold ${r.available < 0 ? "text-danger-ink" : ""}`}
+                      >
+                        {sar(r.available)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </Card>
 

@@ -171,58 +171,90 @@ function Ledger({ period }: { period?: Period }) {
             : "لا قيود بعد. سجّلوا إيرادات الخدمات ومصروفات الشركة العامة هنا."}
         </p>
       ) : (
-        <div className="mt-3 overflow-x-auto border-t">
-          <table className="w-full text-sm">
-            <thead className="text-right text-xs text-muted">
-              <tr className="border-b">
-                <th className="px-5 py-2 font-medium">التاريخ</th>
-                <th className="px-2 py-2 font-medium">البيان</th>
-                <th className="px-2 py-2 font-medium">التصنيف</th>
-                <th className="px-5 py-2 text-left font-medium">المبلغ</th>
-                {archived && <th className="px-2 py-2" />}
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((e) => (
-                <tr
-                  key={e.id}
-                  className={`border-b last:border-0 ${archived ? "" : "cursor-pointer hover:bg-brand-soft/50"}`}
-                  onClick={() => !archived && setEditing(e)}
-                  onKeyDown={(k) => !archived && k.key === "Enter" && setEditing(e)}
-                  tabIndex={archived ? undefined : 0}
+        <>
+          {/* Phones: one line per entry; computers: the table. */}
+          <ul className="mt-3 divide-y border-t sm:hidden">
+            {rows.map((e) => (
+              <li key={e.id} className="flex items-start justify-between gap-3 px-5 py-3">
+                <button
+                  type="button"
+                  disabled={archived}
+                  onClick={() => setEditing(e)}
+                  className="min-w-0 flex-1 text-right disabled:cursor-default"
                 >
-                  <td className="whitespace-nowrap px-5 py-2.5 text-muted">
-                    {day(e.date)}
-                    {e.paymentDate && e.paymentDate !== e.date && (
-                      <span className="block text-xs">وصل البنك {day(e.paymentDate)}</span>
-                    )}
-                  </td>
-                  <td className="px-2 py-2.5">
-                    {e.description}
-                    {e.note && <span className="block text-xs text-muted">{e.note}</span>}
-                  </td>
-                  <td className="px-2 py-2.5">
-                    <Badge tone={e.type === "income" ? "green" : "gray"}>
-                      {COMPANY_CAT_LABELS[e.category] ?? e.category}
-                    </Badge>
-                  </td>
-                  <td
-                    className={`whitespace-nowrap px-5 py-2.5 text-left font-semibold ${e.type === "income" ? "text-success-ink" : ""}`}
+                  <span className="block truncate font-medium">{e.description}</span>
+                  <span className="text-xs text-muted">
+                    {day(e.date)} · {COMPANY_CAT_LABELS[e.category] ?? e.category}
+                  </span>
+                </button>
+                <span className="flex shrink-0 flex-col items-end gap-1">
+                  <span
+                    className={`whitespace-nowrap font-semibold ${e.type === "income" ? "text-success-ink" : ""}`}
                   >
                     {e.type === "income" ? "+" : "−"} {sar(e.amount)}
-                  </td>
+                  </span>
                   {archived && (
-                    <td className="px-2">
-                      <Button variant="secondary" onClick={() => restore(e.id)}>
-                        <RotateCcw className="size-4" /> استعادة
-                      </Button>
-                    </td>
+                    <Button variant="secondary" onClick={() => restore(e.id)}>
+                      <RotateCcw className="size-4" /> استعادة
+                    </Button>
                   )}
+                </span>
+              </li>
+            ))}
+          </ul>
+          <div className="mt-3 hidden overflow-x-auto border-t sm:block">
+            <table className="w-full text-sm">
+              <thead className="text-right text-xs text-muted">
+                <tr className="border-b">
+                  <th className="px-5 py-2 font-medium">التاريخ</th>
+                  <th className="px-2 py-2 font-medium">البيان</th>
+                  <th className="px-2 py-2 font-medium">التصنيف</th>
+                  <th className="px-5 py-2 text-left font-medium">المبلغ</th>
+                  {archived && <th className="px-2 py-2" />}
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {rows.map((e) => (
+                  <tr
+                    key={e.id}
+                    className={`border-b last:border-0 ${archived ? "" : "cursor-pointer hover:bg-brand-soft/50"}`}
+                    onClick={() => !archived && setEditing(e)}
+                    onKeyDown={(k) => !archived && k.key === "Enter" && setEditing(e)}
+                    tabIndex={archived ? undefined : 0}
+                  >
+                    <td className="whitespace-nowrap px-5 py-2.5 text-muted">
+                      {day(e.date)}
+                      {e.paymentDate && e.paymentDate !== e.date && (
+                        <span className="block text-xs">وصل البنك {day(e.paymentDate)}</span>
+                      )}
+                    </td>
+                    <td className="px-2 py-2.5">
+                      {e.description}
+                      {e.note && <span className="block text-xs text-muted">{e.note}</span>}
+                    </td>
+                    <td className="px-2 py-2.5">
+                      <Badge tone={e.type === "income" ? "green" : "gray"}>
+                        {COMPANY_CAT_LABELS[e.category] ?? e.category}
+                      </Badge>
+                    </td>
+                    <td
+                      className={`whitespace-nowrap px-5 py-2.5 text-left font-semibold ${e.type === "income" ? "text-success-ink" : ""}`}
+                    >
+                      {e.type === "income" ? "+" : "−"} {sar(e.amount)}
+                    </td>
+                    {archived && (
+                      <td className="px-2">
+                        <Button variant="secondary" onClick={() => restore(e.id)}>
+                          <RotateCcw className="size-4" /> استعادة
+                        </Button>
+                      </td>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
       {editing && (
         <EntryDialog

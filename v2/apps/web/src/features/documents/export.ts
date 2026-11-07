@@ -1,4 +1,5 @@
 import { type Resolved, segments } from "@buad/domain";
+import { logExport } from "../../lib/export";
 import type { DocDetail } from "./api";
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -15,6 +16,7 @@ const ascii = (s: string) => s.replace(/[^\w.-]+/g, "-").replace(/^-+|-+$/g, "")
 export const fileBase = (d: DocDetail["document"]) => ascii(d.number);
 
 function save(blob: Blob, name: string) {
+  logExport(name, name.toLowerCase().endsWith(".pdf") ? "pdf" : "xlsx");
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
   a.download = name;

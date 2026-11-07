@@ -1,4 +1,5 @@
 import { ENTRY_STATUS_LABELS } from "@buad/schema/finance";
+import { logExport } from "../../lib/export";
 import { ok } from "../../lib/format";
 import type { Finance } from "../finance/api";
 import { catLabel } from "../finance/labels";
@@ -124,6 +125,7 @@ export async function downloadArchive(projects: OverviewProject[]) {
     new Blob([buf], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }),
   );
   a.download = `projects-archive-${new Date().toISOString().slice(0, 10)}.xlsx`;
+  logExport(a.download, "xlsx");
   document.body.append(a);
   a.click();
   a.remove();

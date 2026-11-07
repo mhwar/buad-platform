@@ -11,7 +11,37 @@ const csvCell = (v: string | number) => {
   return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 };
 
-function save(blob: Blob, name: string) {
+type ExportFormat = "xlsx" | "csv" | "pdf" | "print" | "json";
+
+/**
+ * Leaves a line in the audit log for a download or a print: who took what. Fire and forget, so a
+ * slow or failed log never blocks the file.
+ */
+export function logExport(what: string, format: ExportFormat) {
+  try {
+    void fetch("/api/exports", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ what: what.slice(0, 160) || "ملف", format }),
+    }).catch(() => undefined);
+  } catch {
+    // no network (tests, offline): the file still downloads
+  }
+}
+
+/** Prints the page, and says so in the audit log. */
+export function printPage(what = document.title) {
+  logExport(what, "print");
+  window.print();
+}
+
+const formatOf = (name: string): ExportFormat => {
+  const ext = name.split(".").pop()?.toLowerCase();
+  return ext === "csv" || ext === "pdf" || ext === "json" ? ext : "xlsx";
+};
+
+export function save(blob: Blob, name: string) {
+  logExport(name, formatOf(name));
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
   a.download = name;

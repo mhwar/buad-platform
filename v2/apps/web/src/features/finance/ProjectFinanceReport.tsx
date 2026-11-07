@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { Download, Printer } from "lucide-react";
 import { Button, Segmented } from "../../components/ui";
-import { csvToRows, downloadSheet } from "../../lib/export";
+import { csvToRows, downloadSheet, printPage } from "../../lib/export";
 import { day, fromEpoch, pct, sar } from "../../lib/format";
 import { FitToWidth } from "../documents/FitToWidth";
 import { type Block, PagedSheets } from "../documents/Pages";
@@ -63,7 +63,7 @@ export function ProjectFinanceReport({
               ]}
             />
           )}
-          <Button variant="secondary" onClick={() => window.print()}>
+          <Button variant="secondary" onClick={() => printPage()}>
             <Printer className="size-4" /> طباعة
           </Button>
           <PdfButton path={`/print/finance/${projectId}?mode=${mode}`} name={name} />
