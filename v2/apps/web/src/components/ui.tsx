@@ -496,6 +496,7 @@ export function Dialog({
   children,
   wide,
   footer,
+  dirty = false,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
@@ -504,10 +505,25 @@ export function Dialog({
   wide?: boolean;
   /** Usually a <DialogActions>: shown under the body, never scrolled away. */
   footer?: ReactNode;
+  /**
+   * The form inside has unsaved changes: closing it by Esc, the backdrop or ✕ asks first, so a
+   * stray tap does not throw the typing away. «إلغاء» in the footer stays a deliberate close.
+   */
+  dirty?: boolean;
 }) {
   const ref = useRef<HTMLDivElement>(null);
+  const change = async (v: boolean) => {
+    if (v || !dirty) return onOpenChange(v);
+    const ok = await confirmAction({
+      title: "تجاهل التعديلات غير المحفوظة؟",
+      text: "ما كتبتموه في هذه النافذة لم يُحفظ بعد.",
+      action: "تجاهل التعديلات",
+      danger: true,
+    });
+    if (ok) onOpenChange(false);
+  };
   return (
-    <RDialog.Root open={open} onOpenChange={onOpenChange}>
+    <RDialog.Root open={open} onOpenChange={change}>
       <RDialog.Portal>
         <RDialog.Overlay className="fixed inset-0 z-40 bg-black/40 backdrop-blur-[2px]" />
         <RDialog.Content

@@ -13,6 +13,7 @@ import {
   Field,
   Input,
   Notice,
+  Segmented,
   Select,
   toast,
 } from "../../components/ui";
@@ -94,20 +95,13 @@ export function VatTab() {
             </option>
           ))}
         </Select>
-        <div className="flex rounded-lg border bg-surface p-0.5" role="tablist" aria-label="الفترة">
-          {[0, 1, 2, 3, 4].map((n) => (
-            <button
-              key={n}
-              type="button"
-              role="tab"
-              aria-selected={q === n}
-              onClick={() => setQ(n)}
-              className={`min-h-10 min-w-11 rounded-md px-3 py-1.5 text-sm sm:min-h-0 sm:min-w-0 ${q === n ? "bg-brand text-white dark:text-canvas" : "text-muted hover:text-ink"}`}
-            >
-              {n ? `ر${n}` : "السنة"}
-            </button>
-          ))}
-        </div>
+        <Segmented
+          inline
+          label="الفترة"
+          value={String(q)}
+          onChange={(v) => setQ(Number(v))}
+          items={[0, 1, 2, 3, 4].map((n) => ({ value: String(n), label: n ? `ر${n}` : "السنة" }))}
+        />
       </div>
       <div className="flex flex-wrap gap-2">
         <Button variant="secondary" onClick={() => setBuying(true)}>

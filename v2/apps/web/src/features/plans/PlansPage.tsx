@@ -7,10 +7,12 @@ import {
   Card,
   confirmAction,
   EmptyState,
+  PageHeader,
   Segmented,
   Select,
 } from "../../components/ui";
 import { day } from "../../lib/format";
+import { useSearchParam } from "../../lib/url-state";
 import { useCan } from "../../session";
 import { TaskDialog } from "../tasks/TaskDialogs";
 import { send } from "../team/queries";
@@ -55,15 +57,15 @@ export function PlansPage() {
   const can = useCan();
   const edit = can("plans.edit");
   const qc = useQueryClient();
-  const [kind, setKind] = useState<"strategic" | "operational">("operational");
+  const [kind, setKind] = useSearchParam<"strategic" | "operational">("kind", "operational");
   const cycles = useQuery(cyclesQuery);
   const owners = useQuery(ownersQuery);
   const mine = cycles.data?.filter((c) => c.kind === kind) ?? [];
   const strategic = cycles.data?.filter((c) => c.kind === "strategic") ?? [];
-  const [picked, setPicked] = useState("");
-  const [quarter, setQuarter] = useState<"all" | "1" | "2" | "3" | "4">("all");
+  const [picked, setPicked] = useSearchParam("cycle", "");
+  const [quarter, setQuarter] = useSearchParam<"all" | "1" | "2" | "3" | "4">("quarter", "all");
   const [modal, setModal] = useState<Modal | null>(null);
-  const [view, setView] = useState<"goals" | "follow">("goals");
+  const [view, setView] = useSearchParam<"goals" | "follow">("view", "goals");
   const cycleId =
     mine.find((c) => c.id === picked)?.id ??
     mine.find((c) => c.status === "active")?.id ??
@@ -124,7 +126,8 @@ export function PlansPage() {
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <PageHeader title="الخطط" subtitle="الاستراتيجية والتشغيلية: الأهداف ومؤشراتها ومتابعتها" />
+      <div className="-mt-4 flex flex-wrap items-center justify-between gap-3">
         <Segmented
           label="نوع الخطة"
           value={kind}

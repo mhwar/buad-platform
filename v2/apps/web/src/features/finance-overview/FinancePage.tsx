@@ -249,20 +249,16 @@ function ProfitTab({
             </option>
           ))}
         </Select>
-        <div className="flex rounded-lg border bg-surface p-0.5" role="tablist" aria-label="الفترة">
-          {[0, 1, 2, 3, 4].map((n) => (
-            <button
-              key={n}
-              type="button"
-              role="tab"
-              aria-selected={q === n}
-              onClick={() => onChange(year, n)}
-              className={`min-h-10 rounded-md px-3 py-1.5 text-sm sm:min-h-0 ${q === n ? "bg-brand text-white dark:text-canvas" : "text-muted hover:text-ink"}`}
-            >
-              {n ? `ر${n}` : "السنة كاملة"}
-            </button>
-          ))}
-        </div>
+        <Segmented
+          inline
+          label="الفترة"
+          value={String(q)}
+          onChange={(v) => onChange(year, Number(v))}
+          items={[0, 1, 2, 3, 4].map((n) => ({
+            value: String(n),
+            label: n ? `ر${n}` : "السنة كاملة",
+          }))}
+        />
       </div>
       <QuarterCentre year={year} q={q} onQuarter={(n) => onChange(year, n)} />
       <section aria-labelledby="company-ledger" className="space-y-3">

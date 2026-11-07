@@ -26,6 +26,7 @@ import {
   Segmented,
 } from "../../components/ui";
 import { day, sar } from "../../lib/format";
+import { useSearchParam } from "../../lib/url-state";
 import { useCan } from "../../session";
 import { type ProductRequest, type RequestStatus, requestsQuery } from "../products/products-api";
 import { assigneesQuery } from "../tasks/queries";
@@ -70,9 +71,20 @@ export function OpportunitiesPage() {
   const all = useQuery(requestsQuery(""));
   const people = useQuery(assigneesQuery);
   const [view, setViewState] = useState<View>(readView);
-  const [q, setQ] = useState("");
-  const [filters, setFilters] = useState({ owner: "", source: "", service: "", state: "" });
-  const [stage, setStage] = useState<RequestStatus>("new");
+  // Search, filters and the open stage live in the address: reload or a shared link keeps them.
+  const [q, setQ] = useSearchParam("q", "");
+  const [fOwner, setOwner] = useSearchParam("owner", "");
+  const [fSource, setSource] = useSearchParam("source", "");
+  const [fService, setService] = useSearchParam("service", "");
+  const [fState, setState] = useSearchParam("state", "");
+  const filters = { owner: fOwner, source: fSource, service: fService, state: fState };
+  const setFilter: Record<string, (v: string) => void> = {
+    owner: setOwner,
+    source: setSource,
+    service: setService,
+    state: setState,
+  };
+  const [stage, setStage] = useSearchParam<RequestStatus>("stage", "new");
   const [adding, setAdding] = useState(false);
   const [following, setFollowing] = useState<ProductRequest | null>(null);
   const [quoting, setQuoting] = useState<ProductRequest | null>(null);
@@ -186,9 +198,7 @@ export function OpportunitiesPage() {
         <li className="col-span-2 bg-surface sm:col-span-1">
           <button
             type="button"
-            onClick={() =>
-              setFilters((f) => ({ ...f, state: f.state === "follow" ? "" : "follow" }))
-            }
+            onClick={() => setState(filters.state === "follow" ? "" : "follow")}
             aria-pressed={filters.state === "follow"}
             className={cx(
               "block h-full w-full p-3 text-start transition hover:bg-brand-soft",
@@ -221,7 +231,7 @@ export function OpportunitiesPage() {
         />
       </div>
       <FilterBar
-        onChange={(k, v) => setFilters((f) => ({ ...f, [k]: v }))}
+        onChange={(k, v) => setFilter[k]?.(v)}
         fields={[
           {
             key: "owner",

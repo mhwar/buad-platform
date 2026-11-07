@@ -190,6 +190,7 @@ export function EntryDialog({
     <Dialog
       open={open}
       onOpenChange={close}
+      dirty={f.formState.isDirty}
       title={
         (existing ? "تعديل القيد" : "إضافة قيد مالي") + (projectName ? ` · ${projectName}` : "")
       }

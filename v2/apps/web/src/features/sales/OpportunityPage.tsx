@@ -48,6 +48,7 @@ import {
   Textarea,
 } from "../../components/ui";
 import { ago, day, sar, today, whatsapp } from "../../lib/format";
+import { useSearchParam } from "../../lib/url-state";
 import { useCan } from "../../session";
 import type { ProductRequest, RequestStatus } from "../products/products-api";
 import { productsQuery } from "../products/products-api";
@@ -87,7 +88,7 @@ export function OpportunityPage() {
   useTrackRecent(
     o ? { kind: "opportunity", id, title: o.entity || o.name, href: `/sales/${id}` } : null,
   );
-  const [tab, setTab] = useState<Tab>("activity");
+  const [tab, setTab] = useSearchParam<Tab>("tab", "activity");
   const [noting, setNoting] = useState(false);
   const [dialog, setDialog] = useState<
     | null
