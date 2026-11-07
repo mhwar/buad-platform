@@ -243,6 +243,19 @@ export function PageHeader({
 }
 
 /**
+ * Brings `item` to the middle of the horizontal `row` by scrolling the row sideways only.
+ * (scrollIntoView would also scroll the page down to a row below the fold, so a page opened in
+ * the middle on phones.)
+ */
+export function centreInRow(row: HTMLElement, item: HTMLElement) {
+  const calm = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+  const a = item.getBoundingClientRect();
+  const r = row.getBoundingClientRect();
+  const delta = a.left + a.width / 2 - (r.left + r.width / 2);
+  if (Math.abs(delta) > 1) row.scrollBy?.({ left: delta, behavior: calm ? "auto" : "smooth" });
+}
+
+/**
  * A horizontally scrolling row (tabs, segmented switchers, chips) that tells you there is more:
  * the edge that still has content fades out, and the active item is brought into view.
  * RTL-aware (scrollLeft is negative there). `activeKey` changes re-centre the active item.
@@ -275,12 +288,9 @@ export function ScrollRow({
     const active = ref.current?.querySelector<HTMLElement>(
       '[aria-selected="true"],[aria-pressed="true"],[aria-current="page"]',
     );
-    const calm = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-    active?.scrollIntoView?.({
-      inline: "center",
-      block: "nearest",
-      behavior: calm ? "auto" : "smooth",
-    });
+    const el = ref.current;
+    if (!active || !el) return;
+    centreInRow(el, active);
   }, [activeKey]);
   const fade = edge.start && edge.end ? undefined : 28;
   return (

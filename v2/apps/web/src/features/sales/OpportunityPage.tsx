@@ -34,6 +34,7 @@ import {
   Badge,
   Button,
   Card,
+  centreInRow,
   cx,
   Dialog,
   DialogActions,
@@ -612,9 +613,8 @@ function Stepper({
   const list = useRef<HTMLOListElement>(null);
   // On a phone the steps scroll: bring the current one into view.
   useEffect(() => {
-    list.current
-      ?.querySelector<HTMLElement>('[aria-current="step"]')
-      ?.scrollIntoView?.({ inline: "center", block: "nearest" });
+    const step = list.current?.querySelector<HTMLElement>('[aria-current="step"]');
+    if (list.current && step) centreInRow(list.current, step);
   }, [status]);
   return (
     <div className="flex flex-wrap items-stretch gap-2">
