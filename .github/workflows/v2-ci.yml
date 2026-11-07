@@ -6,7 +6,8 @@ on:
     paths: ["v2/**", ".github/workflows/v2-ci.yml"]
 jobs:
   verify:
-    runs-on: ubuntu-latest
+    # Pinned: Playwright 1.56 cannot install Chromium on ubuntu-latest (26.04) yet.
+    runs-on: ubuntu-24.04
     defaults:
       run:
         working-directory: v2
