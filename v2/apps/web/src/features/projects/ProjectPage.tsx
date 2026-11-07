@@ -36,7 +36,7 @@ import {
   Segmented,
   Stamp,
 } from "../../components/ui";
-import { day, fromEpoch } from "../../lib/format";
+import { day, fromEpoch, sar } from "../../lib/format";
 import { meQuery } from "../../session";
 import { clientKeys } from "../clients/api";
 import { documentsQuery } from "../documents/api";
@@ -59,6 +59,7 @@ import {
   updateProject,
 } from "./api";
 import { CloseProjectDialog, closeCheckQuery, ReopenProjectDialog } from "./CloseProjectDialog";
+import { ExternalBadge } from "./ExternalBadge";
 import { ProjectDialog } from "./ProjectDialog";
 import { ProjectPulse } from "./ProjectPulse";
 
@@ -131,7 +132,10 @@ export function ProjectPage() {
   const manager = !!me?.perms.includes("finance.edit");
   // A closed project's money records are read-only until it is reopened.
   const closed = !!p.closedAt;
-  const editMoney = manager && !closed;
+  // An external project is outside finance altogether: no money records, no finance views.
+  const external = !!p.external;
+  const editMoney = manager && !closed && !external;
+  const view: Section = external && section === "finance" ? "execution" : section;
   const canDelete = !!me?.perms.includes("projects.delete");
   const canArchive = !!me?.perms.includes("projects.archive");
   const canTeam = !!me?.perms.includes("team.view") && !!me?.perms.includes("projects.edit");
@@ -182,6 +186,70 @@ export function ProjectPage() {
     const fin = qc.getQueryData<Finance>(financeKey(p.id));
     if (fin) exportCsv(fin);
   };
+  function financeMenu(): MenuItem[] {
+    return [
+      { section: "المالية" },
+      ...(manager && !p.archivedAt
+        ? [
+            closed
+              ? {
+                  label: "إعادة فتح المشروع",
+                  hint: "بسبب يُسجَّل في سجل النشاط",
+                  icon: <LockOpen />,
+                  onSelect: () => setReopening(true),
+                }
+              : {
+                  label: "إغلاق المشروع",
+                  hint: "مراجعة نهائية ثم قفل القيود",
+                  icon: <Lock />,
+                  onSelect: () => setClosing(true),
+                },
+          ]
+        : []),
+      {
+        label: manager ? "إعدادات العقد والميزانية" : "شروط العقد والميزانية",
+        hint: manager ? "القيمة، الضريبة، الأتعاب، التصنيفات" : "للاطلاع",
+        icon: <Settings2 />,
+        onSelect: () => setSettings(true),
+      },
+      ...(manager
+        ? [
+            {
+              label: "تسجيل بنود الاتفاقية",
+              icon: <FileCheck2 />,
+              onSelect: () => setAdding("agreement"),
+            },
+          ]
+        : []),
+      {
+        label: "التقرير المالي للعميل",
+        hint: "كشف المعاملات · PDF",
+        icon: <FileText />,
+        onSelect: () =>
+          navigate({
+            to: "/print/finance/$projectId",
+            params: { projectId: p.id },
+            search: { mode: "client" },
+          }),
+      },
+      ...(manager
+        ? [
+            {
+              label: "التقرير المالي التفصيلي",
+              hint: "الأرباح، تقرير الاتفاقية، الميزانية",
+              icon: <FileBarChart2 />,
+              onSelect: () =>
+                navigate({
+                  to: "/print/finance/$projectId",
+                  params: { projectId: p.id },
+                  search: { mode: "detailed" },
+                }),
+            },
+          ]
+        : []),
+      { label: "تصدير المعاملات (Excel)", icon: <Download />, onSelect: exportEntries },
+    ];
+  }
   const menu: MenuItem[] = [
     { section: "المشروع" },
     { label: "تعديل بيانات المشروع", icon: <Pencil />, onSelect: () => setEditing(true) },
@@ -189,66 +257,7 @@ export function ProjectPage() {
     ...(canTeam
       ? [{ label: "فريق المشروع", icon: <Users />, onSelect: () => setMembers(true) }]
       : []),
-    { section: "المالية" },
-    ...(manager && !p.archivedAt
-      ? [
-          closed
-            ? {
-                label: "إعادة فتح المشروع",
-                hint: "بسبب يُسجَّل في سجل النشاط",
-                icon: <LockOpen />,
-                onSelect: () => setReopening(true),
-              }
-            : {
-                label: "إغلاق المشروع",
-                hint: "مراجعة نهائية ثم قفل القيود",
-                icon: <Lock />,
-                onSelect: () => setClosing(true),
-              },
-        ]
-      : []),
-    {
-      label: manager ? "إعدادات العقد والميزانية" : "شروط العقد والميزانية",
-      hint: manager ? "القيمة، الضريبة، الأتعاب، التصنيفات" : "للاطلاع",
-      icon: <Settings2 />,
-      onSelect: () => setSettings(true),
-    },
-    ...(manager
-      ? [
-          {
-            label: "تسجيل بنود الاتفاقية",
-            icon: <FileCheck2 />,
-            onSelect: () => setAdding("agreement"),
-          },
-        ]
-      : []),
-    {
-      label: "التقرير المالي للعميل",
-      hint: "كشف المعاملات · PDF",
-      icon: <FileText />,
-      onSelect: () =>
-        navigate({
-          to: "/print/finance/$projectId",
-          params: { projectId: p.id },
-          search: { mode: "client" },
-        }),
-    },
-    ...(manager
-      ? [
-          {
-            label: "التقرير المالي التفصيلي",
-            hint: "الأرباح، تقرير الاتفاقية، الميزانية",
-            icon: <FileBarChart2 />,
-            onSelect: () =>
-              navigate({
-                to: "/print/finance/$projectId",
-                params: { projectId: p.id },
-                search: { mode: "detailed" },
-              }),
-          },
-        ]
-      : []),
-    { label: "تصدير المعاملات (Excel)", icon: <Download />, onSelect: exportEntries },
+    ...(external ? [] : financeMenu()),
     ...(canArchive || canDelete ? (["separator"] as MenuItem[]) : []),
     ...(canArchive
       ? [
@@ -333,6 +342,7 @@ export function ProjectPage() {
               ) : (
                 <Stamp kind="closed">مغلق</Stamp>
               ))}
+            {external && <ExternalBadge />}
             {p.visibility === "private" && (
               <span className="inline-flex items-center gap-1 text-xs text-muted">
                 <Lock className="size-3" /> خاص
@@ -378,12 +388,12 @@ export function ProjectPage() {
               <Wallet className="size-4" /> تسجيل مقبوض
             </Button>
           )}
-          {manager && !closed && p.status === "completed" && !p.archivedAt && (
+          {manager && !closed && !external && p.status === "completed" && !p.archivedAt && (
             <Button variant="secondary" onClick={() => setClosing(true)}>
               <Lock className="size-4" /> إغلاق المشروع
             </Button>
           )}
-          {editMoney && section === "finance" && !p.archivedAt && (
+          {editMoney && view === "finance" && !p.archivedAt && (
             <Button variant="secondary" onClick={() => setAdding("new")}>
               <Plus className="size-4" /> قيد جديد
             </Button>
@@ -399,26 +409,36 @@ export function ProjectPage() {
         onExecution={() => nav({ search: { view: "execution" }, replace: true })}
       />
 
-      <FinanceStrip
-        projectId={p.id}
-        canEdit={editMoney}
-        isOwner={canDelete}
-        fromV1={p.createdBy.startsWith("v1-import") && !q.data.financeImported}
-        onSettings={() => setSettings(true)}
-        onRegister={() => setAdding("agreement")}
-      />
+      {!external && (
+        <FinanceStrip
+          projectId={p.id}
+          canEdit={editMoney}
+          isOwner={canDelete}
+          fromV1={p.createdBy.startsWith("v1-import") && !q.data.financeImported}
+          onSettings={() => setSettings(true)}
+          onRegister={() => setAdding("agreement")}
+        />
+      )}
 
       {/* ── Work area + context column ───────────────────────── */}
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
         <div className="min-w-0 space-y-4">
           <Segmented<Section>
             label="أقسام المشروع"
-            value={section}
+            value={view}
             onChange={(v) =>
               nav({ search: { view: v === "finance" ? undefined : v }, replace: true })
             }
             items={[
-              { value: "finance", label: "المالية", icon: <Wallet className="size-4" /> },
+              ...(external
+                ? []
+                : [
+                    {
+                      value: "finance" as const,
+                      label: "المالية",
+                      icon: <Wallet className="size-4" />,
+                    },
+                  ]),
               {
                 value: "documents",
                 label: docCount ? `المستندات (${docCount})` : "المستندات",
@@ -433,14 +453,14 @@ export function ProjectPage() {
               },
             ]}
           />
-          {section === "finance" ? (
+          {view === "finance" ? (
             <Transactions
               projectId={p.id}
               canEdit={editMoney}
               adding={adding}
               setAdding={setAdding}
             />
-          ) : section === "documents" ? (
+          ) : view === "documents" ? (
             <DocumentsSection projectId={p.id} canEdit={manager} />
           ) : (
             <ExecutionTab projectId={p.id} />
@@ -448,13 +468,17 @@ export function ProjectPage() {
         </div>
 
         <aside className="flex flex-col gap-4 lg:sticky lg:top-24" aria-label="تفاصيل المشروع">
-          <SectionBoundary label="العقد والتحصيل">
-            <ContractCard
-              projectId={p.id}
-              canEdit={editMoney}
-              onSettings={() => setSettings(true)}
-            />
-          </SectionBoundary>
+          {external ? (
+            <ExternalCard expectedValue={p.expectedValue} />
+          ) : (
+            <SectionBoundary label="العقد والتحصيل">
+              <ContractCard
+                projectId={p.id}
+                canEdit={editMoney}
+                onSettings={() => setSettings(true)}
+              />
+            </SectionBoundary>
+          )}
           {/* On a phone the details come first; on a computer they close the column. */}
           <Card className="order-first lg:order-none">
             <div className="mb-3 flex items-center justify-between">
@@ -545,5 +569,26 @@ function Detail({ label, value, icon }: { label: string; value: string; icon?: R
         )}
       </dd>
     </div>
+  );
+}
+
+/** In place of «العقد والتحصيل» on an external project: its value, for reference only. */
+function ExternalCard({ expectedValue }: { expectedValue: number }) {
+  return (
+    <Card aria-label="مشروع خارجي" className="space-y-2">
+      <h2 className="font-semibold">مشروع خارجي</h2>
+      <p className="text-sm text-muted">
+        لا يدخل في أي رقم مالي: لا قيود ولا استلامات ولا فواتير، ولا يُحسب في الإيرادات أو الضريبة أو
+        الأرباح أو المستهدف.
+      </p>
+      {expectedValue > 0 && (
+        <p className="text-sm">
+          القيمة التقديرية (للاطلاع): <b className="tabular-nums">{sar(expectedValue / 100)}</b>
+        </p>
+      )}
+      <p className="text-xs text-muted">
+        لإدخاله في المالية: «تعديل بيانات المشروع» ثم ألغوا «مشروع خارجي».
+      </p>
+    </Card>
   );
 }

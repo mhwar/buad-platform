@@ -143,7 +143,7 @@ export const salesApp = new Hono<Env>()
       .select({
         id: clients.id,
         name: clients.name,
-        value: sql<number>`(SELECT coalesce(sum(${contractTotalSql("p")}), 0) FROM projects p WHERE p.client_id = "clients"."id" AND p.archived_at IS NULL AND p.status IN ('active','completed'))`,
+        value: sql<number>`(SELECT coalesce(sum(${contractTotalSql("p")}), 0) FROM projects p WHERE p.client_id = "clients"."id" AND p.archived_at IS NULL AND p.external = 0 AND p.status IN ('active','completed'))`,
       })
       .from(clients)
       .where(and(eq(clients.orgId, me.orgId), isNull(clients.archivedAt)))

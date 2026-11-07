@@ -20,6 +20,8 @@ export type ProjectListItem = {
   archivedAt: number | null;
   /** Financially closed: no new entries until reopened. */
   closedAt?: number | null;
+  /** «مشروع خارجي»: tracked for work only, never in any financial figure. */
+  external?: boolean;
   /** Closed, and all it realized has been distributed. */
   fullyDistributed?: boolean;
   clientId: string;
@@ -86,6 +88,8 @@ export type ProjectFilters = {
   product?: string;
   type?: string;
   flag?: "late" | "due";
+  /** "1" external only, "0" internal only. */
+  external?: "0" | "1";
   sort?: "newest" | "name" | "value" | "deadline";
   archived?: "0" | "1";
 };
@@ -111,6 +115,7 @@ export const projectsQuery = (f: ProjectFilters) =>
             ...(f.product ? { product: f.product } : {}),
             ...(f.type ? { type: f.type } : {}),
             ...(f.flag ? { flag: f.flag } : {}),
+            ...(f.external ? { external: f.external } : {}),
           },
         }),
       ),

@@ -140,6 +140,7 @@ export const projectCloseApp = new Hono<Env>()
       const project = await loadVisible(db, me, c.req.param("projectId") ?? "");
       if (!project) return c.json({ ok: false, error: "not_found" }, 404);
       if (project.closedAt) return c.json({ ok: false, error: "already_closed" }, 409);
+      if (project.external) return c.json({ ok: false, error: "project_external" }, 409);
       const t = nowSec();
       await db
         .update(projects)

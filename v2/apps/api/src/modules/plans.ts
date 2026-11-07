@@ -84,7 +84,7 @@ export async function platformMetric(
     case "contracts": {
       const row = (await db.get(sql`
         SELECT COALESCE(SUM(${contractTotalSql("p")}), 0) AS v FROM projects p
-        WHERE p.org_id = ${orgId} AND p.archived_at IS NULL AND p.status IN ('active','completed','paused')
+        WHERE p.org_id = ${orgId} AND p.archived_at IS NULL AND p.external = 0 AND p.status IN ('active','completed','paused')
           AND p.start_date >= ${start} AND p.start_date <= ${end}`)) as { v: number } | undefined;
       return Math.round(Number(row?.v ?? 0)) / 100;
     }

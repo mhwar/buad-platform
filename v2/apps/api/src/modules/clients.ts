@@ -7,7 +7,7 @@ import { Hono } from "hono";
 import type { z } from "zod";
 import { requireAuth, requirePerm, requireRW, type Vars } from "../auth/middleware";
 import type { Db } from "../auth/service";
-import { contractTotalSql, likeTerm, logoUrlSql, newId, nowSec } from "./common";
+import { contractTotalSql, inFinance, likeTerm, logoUrlSql, newId, nowSec } from "./common";
 import { loadFinanceMany } from "./finance";
 import { loadOrgProfile } from "./org";
 import { visibleProjects } from "./projects";
@@ -171,7 +171,7 @@ export const clientsApp = new Hono<Env>()
     // Per-client project count and expected value, over the projects this user may see.
     const vis = visibleProjects(me);
     const projectCount = sql<number>`(SELECT count(*) FROM projects p WHERE p.client_id = "clients"."id" AND p.archived_at IS NULL AND ${vis.sqlFor("p")})`;
-    const projectValue = sql<number>`(SELECT coalesce(sum(${contractTotalSql("p")}), 0) FROM projects p WHERE p.client_id = "clients"."id" AND p.archived_at IS NULL AND ${vis.sqlFor("p")})`;
+    const projectValue = sql<number>`(SELECT coalesce(sum(${contractTotalSql("p")}), 0) FROM projects p WHERE p.client_id = "clients"."id" AND p.archived_at IS NULL AND p.external = 0 AND ${vis.sqlFor("p")})`;
     const liveVisible = sql`p.client_id = "clients"."id" AND p.archived_at IS NULL AND ${vis.sqlFor("p")}`;
     // Up to three most recently touched projects, for the card.
     const recentProjects = sql<string>`(SELECT coalesce(json_group_array(json_object('id', x.id, 'name', x.name)), '[]') FROM (SELECT p.id, p.name FROM projects p WHERE ${liveVisible} ORDER BY p.updated_at DESC LIMIT 3) x)`;
@@ -220,7 +220,7 @@ export const clientsApp = new Hono<Env>()
         // What the client still owes on its running and finished work, and instalments past due.
         // Per project, never below zero: the same figure as the client's statement.
         owed: sql<number>`(SELECT coalesce(sum(max(${contractTotalSql("p")} - coalesce((SELECT sum(r.amount_halalas) FROM project_receipts r WHERE r.project_id = p.id AND r.approved_at IS NOT NULL), 0), 0)), 0)
-          FROM projects p WHERE ${liveVisible} AND p.status IN ('active','completed','paused'))`,
+          FROM projects p WHERE ${liveVisible} AND p.external = 0 AND p.status IN ('active','completed','paused'))`,
         lateInstalments: sql<number>`(SELECT count(*) FROM payment_schedule s JOIN projects p ON p.id = s.project_id
           WHERE ${liveVisible} AND s.status = 'pending' AND s.due_date < ${new Date().toISOString().slice(0, 10)})`,
       })
@@ -353,6 +353,7 @@ export const clientsApp = new Hono<Env>()
         expectedValue: projects.expectedValue,
         contractTotal: sql<number>`${contractTotalSql("projects")}`,
         archivedAt: projects.archivedAt,
+        external: projects.external,
       })
       .from(projects)
       .where(and(eq(projects.orgId, me.orgId), eq(projects.clientId, client.id), vis.where))
@@ -373,7 +374,7 @@ export const clientsApp = new Hono<Env>()
         and(
           eq(projects.orgId, me.orgId),
           eq(projects.clientId, client.id),
-          isNull(projects.archivedAt),
+          inFinance(),
           visibleProjects(me).where,
         ),
       )

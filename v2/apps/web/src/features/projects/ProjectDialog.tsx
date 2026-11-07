@@ -43,6 +43,7 @@ function toForm(clientId?: string, d?: ProjectDetail): Form {
       expectedValue: 0,
       productId: "",
       packageId: "",
+      external: false,
     };
   const p = d.project;
   return {
@@ -59,6 +60,7 @@ function toForm(clientId?: string, d?: ProjectDetail): Form {
     notes: p.notes,
     productId: d.service?.productId ?? "",
     packageId: d.service?.packageId ?? "",
+    external: !!p.external,
   };
 }
 
@@ -95,6 +97,7 @@ export function ProjectDialog({
   const manager = !!me?.perms.includes("products.view");
   const products = useQuery({ ...productsQuery, enabled: open && manager });
   const productId = f.watch("productId") ?? "";
+  const external = !!f.watch("external");
   const product = useQuery({ ...productQuery(productId), enabled: open && manager && !!productId });
   const services = (products.data ?? []).filter((x) => x.status !== "archived");
 
@@ -140,7 +143,9 @@ export function ProjectDialog({
           ? "العميل مؤرشف. استعيدوه أولاً لإضافة مشروع له."
           : code === "end_before_start"
             ? "تاريخ الانتهاء قبل تاريخ البداية"
-            : "تعذّر الحفظ، حاولوا مرة أخرى",
+            : code === "has_finance_records"
+              ? "للمشروع قيود أو استلامات أو فواتير أو دفعات؛ احذفوها أولاً ليصير خارجياً."
+              : "تعذّر الحفظ، حاولوا مرة أخرى",
       );
     }
   });
@@ -242,12 +247,14 @@ export function ProjectDialog({
             <Input type="date" {...f.register("payDate")} />
           </Field>
           <Field
-            label="قيمة العقد المتوقعة (ر.س)"
+            label={external ? "القيمة التقديرية (ر.س)" : "قيمة العقد المتوقعة (ر.س)"}
             error={e.expectedValue ? "أدخلوا رقماً صحيحاً" : undefined}
             hint={
-              existing?.financeExists
-                ? "تُدار الآن من «إعدادات العقد والميزانية»"
-                : "قبل الضريبة؛ تصبح قيمة العقد في المالية"
+              external
+                ? "للاطلاع داخل المشروع فقط؛ لا تُجمع في أي رقم"
+                : existing?.financeExists
+                  ? "تُدار الآن من «إعدادات العقد والميزانية»"
+                  : "قبل الضريبة؛ تصبح قيمة العقد في المالية"
             }
           >
             <Input
@@ -256,11 +263,21 @@ export function ProjectDialog({
               min={0}
               step="0.01"
               dir="ltr"
-              disabled={existing?.financeExists}
+              disabled={existing?.financeExists && !external}
               {...f.register("expectedValue")}
             />
           </Field>
         </div>
+        <label className="flex items-start gap-2.5 rounded-xl border p-3 text-sm">
+          <input type="checkbox" className="mt-1 size-4" {...f.register("external")} />
+          <span>
+            <b>مشروع خارجي</b>
+            <span className="block text-xs text-muted">
+              للمتابعة فقط: لا يدخل في أي رقم مالي، ولا تُسجَّل له قيود أو استلامات. القيمة أعلاه تبقى
+              تقديرية للاطلاع.
+            </span>
+          </span>
+        </label>
         <Field label="ملاحظات">
           <Textarea {...f.register("notes")} />
         </Field>

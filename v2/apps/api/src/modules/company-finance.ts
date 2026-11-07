@@ -40,7 +40,7 @@ import { Hono } from "hono";
 import { z } from "zod";
 import { requireAuth, requireRW, type Vars } from "../auth/middleware";
 import type { Db } from "../auth/service";
-import { atomic, newId, nowSec } from "./common";
+import { atomic, inFinance, newId, nowSec } from "./common";
 import { loadFinanceMany, loadVatRate, taxInvoiceColumns } from "./finance";
 import { projectDate } from "./finance-overview";
 
@@ -68,7 +68,7 @@ export async function projectFigures(db: Db, orgId: string) {
     .select({ p: projects, clientName: clients.name })
     .from(projects)
     .innerJoin(clients, eq(clients.id, projects.clientId))
-    .where(and(eq(projects.orgId, orgId), isNull(projects.archivedAt)))
+    .where(and(eq(projects.orgId, orgId), inFinance()))
     .orderBy(asc(projects.number));
   const out: (ProjectProfitLite &
     RealizedProject & { number: string; name: string; clientName: string })[] = [];
@@ -462,7 +462,7 @@ export const companyFinanceApp = new Hono<Env>()
       .select({ p: projects, clientName: clients.name })
       .from(projects)
       .innerJoin(clients, eq(clients.id, projects.clientId))
-      .where(and(eq(projects.orgId, orgId), isNull(projects.archivedAt)))
+      .where(and(eq(projects.orgId, orgId), inFinance()))
       .orderBy(asc(projects.number));
     const today = new Date().toISOString().slice(0, 10);
     const items = [];

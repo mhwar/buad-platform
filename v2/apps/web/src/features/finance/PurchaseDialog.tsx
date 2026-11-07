@@ -43,7 +43,12 @@ export function PurchaseDialog({ onClose }: { onClose: () => void }) {
   const list = useQuery(projectsQuery({}));
   const rate = useQuery(vatSettingsQuery).data?.rate ?? 15;
   const projects = (list.data?.items ?? []).filter(
-    (p) => !p.closedAt && !p.archivedAt && p.status !== "draft" && p.status !== "cancelled",
+    (p) =>
+      !p.closedAt &&
+      !p.external &&
+      !p.archivedAt &&
+      p.status !== "draft" &&
+      p.status !== "cancelled",
   );
   const [target, setTarget] = useState("");
   const [description, setDescription] = useState("");

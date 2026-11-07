@@ -1,4 +1,5 @@
-import { sql } from "drizzle-orm";
+import { projects } from "@buad/schema/db";
+import { and, eq, isNull, sql } from "drizzle-orm";
 import type { Db } from "../auth/service";
 
 /** Atomically takes the next number for (org, kind, year). One UPSERT … RETURNING: never repeats. */
@@ -30,6 +31,20 @@ export const contractTotalSql = (p: string) =>
       ELSE f.contract_value_halalas + CAST(ROUND(f.contract_value_halalas * f.vat_pct / 100.0) AS INTEGER) END
     FROM project_finance f WHERE f.project_id = ${p}.id),
     ${p}.expected_value_halalas + CAST(ROUND(${p}.expected_value_halalas * 15 / 100.0) AS INTEGER))`);
+
+/**
+ * The one rule for «يدخل في المالية»: a live project that is not external. Every total, report,
+ * check and statement selects projects through this (or `inFinanceSql` in raw SQL).
+ */
+export const inFinance = () => and(isNull(projects.archivedAt), eq(projects.external, false));
+/**
+ * Why a project's money records can't be written: closed (until reopened) or external (never).
+ */
+export const moneyLock = (p: { closedAt: number | null; external: boolean }) =>
+  p.external ? ("project_external" as const) : p.closedAt ? ("project_closed" as const) : null;
+/** Raw-SQL form of `inFinance` for the alias `p`. */
+export const inFinanceSql = (p: string) =>
+  sql.raw(`${p}.archived_at IS NULL AND ${p}.external = 0`);
 
 /** URL of a client's logo (versioned by updated_at so browsers can cache it forever), or "". */
 export const logoUrlSql = (c: string) =>

@@ -186,6 +186,8 @@ export const projects = sqliteTable(
     closedAt: integer("closed_at"),
     closedBy: text("closed_by").notNull().default(""),
     closeNote: text("close_note").notNull().default(""),
+    /** «مشروع خارجي»: tracked for work only; it never enters any financial figure or record. */
+    external: integer("external", { mode: "boolean" }).notNull().default(false),
     ...audit,
     /** Set to the client id when the project was archived together with its client. */
     archivedWith: text("archived_with").notNull().default(""),

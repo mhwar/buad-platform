@@ -95,6 +95,8 @@ const projectFields = {
   /** The service (product) and package this project was contracted on; both optional. */
   productId: z.string().max(60),
   packageId: z.string().max(40),
+  /** Outside finance: no entries, receipts or invoices; never counted in any total. */
+  external: z.boolean(),
 };
 
 export const projectInput = z
@@ -111,6 +113,7 @@ export const projectInput = z
     notes: str(5000).default(""),
     productId: projectFields.productId.default(""),
     packageId: projectFields.packageId.default(""),
+    external: projectFields.external.default(false),
   })
   .refine((p) => !p.startDate || !p.endDate || p.endDate >= p.startDate, {
     path: ["endDate"],
@@ -129,6 +132,8 @@ export const listQuery = z.object({
   /** Projects needing attention: running past their end date, or with an instalment overdue. */
   flag: z.enum(["late", "due"]).optional(),
   archived: z.enum(["0", "1"]).default("0"),
+  /** Projects only: "1" external, "0" internal; absent = both. */
+  external: z.enum(["0", "1"]).optional(),
   /** CRM filters: "me" or a user id; a relationship; a source; a tag; follow-ups that are due. */
   owner: z.string().max(60).optional(),
   rel: z.enum(["active", "prospect", "former", "dormant", "new"]).optional(),
