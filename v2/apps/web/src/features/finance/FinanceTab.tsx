@@ -14,7 +14,7 @@ import {
   Sheet,
 } from "../../components/ui";
 import { csvToRows, downloadSheet } from "../../lib/export";
-import { day, pct, sar } from "../../lib/format";
+import { day, monthOf, pct, sar } from "../../lib/format";
 import { type Entry, type Finance, financeApi, financeKey, financeQuery } from "./api";
 import { ControlCentre } from "./ControlCentre";
 import { EntryDialog } from "./EntryDialog";
@@ -78,12 +78,15 @@ export function FinanceStrip({
   return (
     <Card className="mb-6 p-0">
       <div className="grid grid-cols-2 divide-line sm:grid-cols-4 sm:divide-x sm:divide-x-reverse">
+        {/* The contract value and its collection live in «العقد والتحصيل»; this strip is what
+            the project earns and spends, so no figure appears twice on the page. */}
         <Stat
-          label="قيمة العقد الإجمالية"
-          value={sar(s.grossTotal)}
-          sub={ctrl.vatIncluded ? "شاملة الضريبة" : `+ ضريبة ${ctrl.vatPct}%`}
-          onClick={onSettings}
-          action="إعدادات العقد"
+          label="المصروف من العقد"
+          value={sar(s.totalDeductions)}
+          sub={
+            s.pendingExpenses > 0 ? `منه معلّق ${sar(s.pendingExpenses)}` : `${pct(spent)} من العقد`
+          }
+          tone={s.pendingExpenses > 0 ? "warn" : undefined}
         />
         <Stat
           label="صافي الربح"
@@ -91,7 +94,7 @@ export function FinanceStrip({
           tone={q.data.profitHidden ? undefined : "good"}
         />
         <Stat
-          label="غير المصروف من العقد"
+          label="غير المصنّف من العقد"
           value={sar(s.remaining)}
           tone={s.remaining < 0 ? "bad" : undefined}
           sub={s.remaining < 0 ? "▲ تجاوز قيمة العقد" : undefined}
@@ -106,15 +109,8 @@ export function FinanceStrip({
       </div>
       <div className="border-t px-5 py-3">
         <div className="mb-1.5 flex justify-between text-xs text-muted">
-          <span>
-            إجمالي المصروف من العقد: {sar(s.totalDeductions)}
-            {s.pendingExpenses > 0 && (
-              <span className="text-warning-ink">
-                {" "}
-                · منها معلّق غير مدفوع: {sar(s.pendingExpenses)}
-              </span>
-            )}
-          </span>
+          {/* The amounts are in the tiles above; the bar says how much of the contract is used. */}
+          <span>نسبة الصرف من العقد</span>
           <span>{pct(spent)}</span>
         </div>
         <div
@@ -525,6 +521,25 @@ export function Transactions({
     expense: fin.entries.filter((e) => e.type === "expense").length,
   };
 
+  // Rows by month (newest first, as listed), each with its own net, so a long log reads in parts.
+  const months: { key: string; net: number; rows: Entry[] }[] = [];
+  for (const e of rows) {
+    const key = e.date.slice(0, 7);
+    let m = months[months.length - 1];
+    if (!m || m.key !== key) months.push((m = { key, net: 0, rows: [] }));
+    m.rows.push(e);
+    if (e.status !== "cancelled") m.net += (e.type === "income" ? 1 : -1) * e.amount;
+  }
+  const monthHead = (m: (typeof months)[number]) => (
+    <>
+      <span>{monthOf(`${m.key}-01`) || "بلا تاريخ"}</span>
+      <span className="tabular-nums" dir="ltr">
+        {m.rows.length} · {m.net >= 0 ? "+" : "−"}
+        {sar(Math.abs(m.net) / 100)}
+      </span>
+    </>
+  );
+
   return (
     <Card className="p-0">
       {/* «قيد جديد» and Excel export live in the page header and its menu (one place each). */}
@@ -565,37 +580,46 @@ export function Transactions({
         <>
           {/* Phones: cards. Larger screens: a table. */}
           <ul className="divide-y border-t sm:hidden">
-            {rows.map((e) => (
-              <li key={e.id}>
-                <button
-                  type="button"
-                  disabled={!canEdit}
-                  onClick={() => setEditing(e)}
-                  className="flex w-full items-start justify-between gap-3 px-5 py-3 text-right disabled:cursor-default"
-                >
-                  <span className="min-w-0">
-                    <span
-                      className={`block truncate font-medium ${e.status === "cancelled" ? "text-muted line-through" : ""}`}
-                    >
-                      {e.description}
+            {months.flatMap((m) => [
+              <li
+                key={`m-${m.key}`}
+                className="flex justify-between gap-2 bg-canvas px-5 py-1.5 text-xs font-semibold text-muted"
+              >
+                {monthHead(m)}
+              </li>,
+              ...m.rows.map((e) => (
+                <li key={e.id}>
+                  <button
+                    type="button"
+                    disabled={!canEdit}
+                    onClick={() => setEditing(e)}
+                    className="flex w-full items-start justify-between gap-3 px-5 py-3 text-right disabled:cursor-default"
+                  >
+                    <span className="min-w-0">
+                      <span
+                        className={`block truncate font-medium ${e.status === "cancelled" ? "text-muted line-through" : ""}`}
+                      >
+                        {e.description}
+                      </span>
+                      <span className="text-xs text-muted">
+                        {day(e.date)} · {label(e.cat)}
+                        {e.source === "agreement" && " · اتفاقية"}
+                        {e.taxInvoice && " · فاتورة ضريبية"}
+                        {e.status === "cancelled" && " · ملغى، لا يُحتسب"}
+                        {e.status === "pending" && " · معلّق"}
+                      </span>
                     </span>
-                    <span className="text-xs text-muted">
-                      {day(e.date)} · {label(e.cat)}
-                      {e.source === "agreement" && " · اتفاقية"}
-                      {e.taxInvoice && " · فاتورة ضريبية"}
-                      {e.status === "cancelled" && " · ملغى، لا يُحتسب"}
-                      {e.status === "pending" && " · معلّق"}
-                    </span>
-                  </span>
-                  <Amount e={e} />
-                </button>
-              </li>
-            ))}
+                    <Amount e={e} />
+                  </button>
+                </li>
+              )),
+            ])}
           </ul>
-          <div className="hidden overflow-x-auto border-t sm:block">
+          {/* No overflow wrapper: the column titles stay in view under the page header while scrolling. */}
+          <div className="hidden border-t sm:block">
             <table className="w-full text-sm">
-              <thead className="text-right text-xs text-muted">
-                <tr className="border-b">
+              <thead className="sticky top-[var(--sticky-top,3.5rem)] z-10 bg-surface text-right text-xs text-muted shadow-[0_1px_0_var(--color-line)]">
+                <tr>
                   <th className="px-5 py-2 font-medium">التاريخ</th>
                   <th className="px-2 py-2 font-medium">البيان</th>
                   <th className="px-2 py-2 font-medium">التصنيف</th>
@@ -604,40 +628,47 @@ export function Transactions({
                 </tr>
               </thead>
               <tbody>
-                {rows.map((e) => (
-                  <tr
-                    key={e.id}
-                    className={`border-b last:border-0 ${canEdit ? "cursor-pointer hover:bg-brand-soft/50 focus-visible:bg-brand-soft/50" : ""} ${e.status === "cancelled" ? "text-muted" : ""}`}
-                    onClick={() => canEdit && setEditing(e)}
-                    onKeyDown={(k) => canEdit && k.key === "Enter" && setEditing(e)}
-                    tabIndex={canEdit ? 0 : undefined}
-                  >
-                    <td className="whitespace-nowrap px-5 py-2.5 text-muted">{day(e.date)}</td>
-                    <td className="px-2 py-2.5">
-                      <span className={e.status === "cancelled" ? "line-through" : undefined}>
-                        {e.description}
-                      </span>{" "}
-                      {e.source === "agreement" && <Badge tone="blue">اتفاقية</Badge>}
-                      {e.taxInvoice && <Badge tone="green">فاتورة ضريبية</Badge>}
-                      {e.note && <span className="block text-xs text-muted">{e.note}</span>}
+                {months.flatMap((m) => [
+                  <tr key={`m-${m.key}`} className="bg-canvas">
+                    <td colSpan={5} className="px-5 py-1.5 text-xs font-semibold text-muted">
+                      <span className="flex justify-between gap-2">{monthHead(m)}</span>
                     </td>
-                    <td className="px-2 py-2.5">{label(e.cat)}</td>
-                    <td className="px-2 py-2.5 text-xs">
-                      {e.status === "pending" ? (
-                        <Badge tone="amber">{ENTRY_STATUS_LABELS.pending}</Badge>
-                      ) : e.status === "cancelled" ? (
-                        <span title="لا يُحتسب في أرقام المشروع">
-                          {ENTRY_STATUS_LABELS.cancelled} · لا يُحتسب
-                        </span>
-                      ) : (
-                        ENTRY_STATUS_LABELS[e.status] || "—"
-                      )}
-                    </td>
-                    <td className="px-5 py-2.5 text-left">
-                      <Amount e={e} />
-                    </td>
-                  </tr>
-                ))}
+                  </tr>,
+                  ...m.rows.map((e) => (
+                    <tr
+                      key={e.id}
+                      className={`border-b last:border-0 ${canEdit ? "cursor-pointer hover:bg-brand-soft/50 focus-visible:bg-brand-soft/50" : ""} ${e.status === "cancelled" ? "text-muted" : ""}`}
+                      onClick={() => canEdit && setEditing(e)}
+                      onKeyDown={(k) => canEdit && k.key === "Enter" && setEditing(e)}
+                      tabIndex={canEdit ? 0 : undefined}
+                    >
+                      <td className="whitespace-nowrap px-5 py-2.5 text-muted">{day(e.date)}</td>
+                      <td className="px-2 py-2.5">
+                        <span className={e.status === "cancelled" ? "line-through" : undefined}>
+                          {e.description}
+                        </span>{" "}
+                        {e.source === "agreement" && <Badge tone="blue">اتفاقية</Badge>}
+                        {e.taxInvoice && <Badge tone="green">فاتورة ضريبية</Badge>}
+                        {e.note && <span className="block text-xs text-muted">{e.note}</span>}
+                      </td>
+                      <td className="px-2 py-2.5">{label(e.cat)}</td>
+                      <td className="px-2 py-2.5 text-xs">
+                        {e.status === "pending" ? (
+                          <Badge tone="amber">{ENTRY_STATUS_LABELS.pending}</Badge>
+                        ) : e.status === "cancelled" ? (
+                          <span title="لا يُحتسب في أرقام المشروع">
+                            {ENTRY_STATUS_LABELS.cancelled} · لا يُحتسب
+                          </span>
+                        ) : (
+                          ENTRY_STATUS_LABELS[e.status] || "—"
+                        )}
+                      </td>
+                      <td className="px-5 py-2.5 text-left">
+                        <Amount e={e} />
+                      </td>
+                    </tr>
+                  )),
+                ])}
               </tbody>
             </table>
           </div>

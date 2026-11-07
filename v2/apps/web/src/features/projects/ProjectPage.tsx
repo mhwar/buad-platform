@@ -20,11 +20,12 @@ import {
   Users,
   Wallet,
 } from "lucide-react";
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useRef, useState } from "react";
 import { PageSkeleton, SectionBoundary } from "../../components/Resilience";
 import { useTrackRecent } from "../../components/shell/useRecent";
 import {
   Avatar,
+  Badge,
   BadgeMenu,
   Button,
   Card,
@@ -62,6 +63,7 @@ import { CloseProjectDialog, closeCheckQuery, ReopenProjectDialog } from "./Clos
 import { ExternalBadge } from "./ExternalBadge";
 import { ProjectDialog } from "./ProjectDialog";
 import { ProjectPulse } from "./ProjectPulse";
+import { StickyProjectBar } from "./StickyProjectBar";
 
 const route = getRouteApi("/projects/$id");
 type Section = "finance" | "documents" | "execution";
@@ -99,6 +101,7 @@ export function ProjectPage() {
   const [closing, setClosing] = useState(false);
   const [reopening, setReopening] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const headerRef = useRef<HTMLElement>(null);
   const section: Section = search.view ?? "finance";
   // Hooks stay above the early returns: the stamp needs the close figures of a closed project.
   const closeCheck = useQuery({
@@ -300,6 +303,33 @@ export function ProjectPage() {
       : []),
   ];
 
+  const setView = (v: Section) =>
+    nav({ search: { view: v === "finance" ? undefined : v }, replace: true });
+  const sectionItems: { value: Section; label: string; icon: ReactNode; hint?: string }[] = [
+    ...(external
+      ? []
+      : [
+          {
+            value: "finance" as const,
+            label: "المالية",
+            icon: <Wallet className="size-4" />,
+          },
+        ]),
+    {
+      value: "documents",
+      label: docCount ? `المستندات (${docCount})` : "المستندات",
+      icon: <FileText className="size-4" />,
+      hint: "العقود والخطابات",
+    },
+    {
+      value: "execution",
+      label: workLabel ? `التنفيذ (${workLabel})` : "التنفيذ",
+      icon: <ListChecks className="size-4" />,
+      hint: "المراحل والمهام والوقت",
+    },
+  ];
+  const canReceive = editMoney && !p.archivedAt && p.status !== "draft" && p.status !== "cancelled";
+
   return (
     <>
       {/* ── Header ───────────────────────────────────────────── */}
@@ -321,7 +351,7 @@ export function ProjectPage() {
         <Notice tone="amber">هذا المشروع مؤرشف منذ {fromEpoch(p.archivedAt)}.</Notice>
       )}
 
-      <header className="mb-5 flex flex-wrap items-start justify-between gap-4">
+      <header ref={headerRef} className="mb-5 flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2.5">
             <h1 className="text-2xl font-bold leading-tight sm:text-3xl">{p.name}</h1>
@@ -383,7 +413,7 @@ export function ProjectPage() {
         </div>
         <div className="flex flex-wrap gap-2">
           {/* What the owner does most here: record money that came in. */}
-          {editMoney && !p.archivedAt && p.status !== "draft" && p.status !== "cancelled" && (
+          {canReceive && (
             <Button onClick={() => setReceiving(true)}>
               <Wallet className="size-4" /> تسجيل مقبوض
             </Button>
@@ -401,6 +431,42 @@ export function ProjectPage() {
           <Menu items={menu} label="إجراءات المشروع" />
         </div>
       </header>
+
+      <StickyProjectBar
+        watch={headerRef}
+        title={p.name}
+        status={
+          <Badge tone={STATUS_TONE[p.status] ?? "gray"}>
+            {label(PROJECT_STATUS_LABELS, p.status)}
+          </Badge>
+        }
+        tabs={
+          <Segmented<Section>
+            inline
+            label="أقسام المشروع (الشريط الثابت)"
+            value={view}
+            onChange={setView}
+            items={sectionItems}
+          />
+        }
+        actions={
+          <>
+            {canReceive && (
+              <Button onClick={() => setReceiving(true)} aria-label="تسجيل مقبوض">
+                <Wallet className="size-4" />
+                <span className="hidden sm:inline">تسجيل مقبوض</span>
+              </Button>
+            )}
+            {editMoney && view === "finance" && !p.archivedAt && (
+              <Button variant="secondary" onClick={() => setAdding("new")} aria-label="قيد جديد">
+                <Plus className="size-4" />
+                <span className="hidden sm:inline">قيد جديد</span>
+              </Button>
+            )}
+            <Menu items={menu} label="إجراءات المشروع (الشريط الثابت)" />
+          </>
+        }
+      />
 
       <ProjectPulse
         projectId={p.id}
@@ -422,36 +488,13 @@ export function ProjectPage() {
 
       {/* ── Work area + context column ───────────────────────── */}
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
-        <div className="min-w-0 space-y-4">
+        {/* On a phone the contract and its money come first, then the work area, then the details. */}
+        <div className="min-w-0 space-y-4 max-lg:order-2">
           <Segmented<Section>
             label="أقسام المشروع"
             value={view}
-            onChange={(v) =>
-              nav({ search: { view: v === "finance" ? undefined : v }, replace: true })
-            }
-            items={[
-              ...(external
-                ? []
-                : [
-                    {
-                      value: "finance" as const,
-                      label: "المالية",
-                      icon: <Wallet className="size-4" />,
-                    },
-                  ]),
-              {
-                value: "documents",
-                label: docCount ? `المستندات (${docCount})` : "المستندات",
-                icon: <FileText className="size-4" />,
-                hint: "العقود والخطابات",
-              },
-              {
-                value: "execution",
-                label: workLabel ? `التنفيذ (${workLabel})` : "التنفيذ",
-                icon: <ListChecks className="size-4" />,
-                hint: "المراحل والمهام والوقت",
-              },
-            ]}
+            onChange={setView}
+            items={sectionItems}
           />
           {view === "finance" ? (
             <Transactions
@@ -467,20 +510,24 @@ export function ProjectPage() {
           )}
         </div>
 
-        <aside className="flex flex-col gap-4 lg:sticky lg:top-24" aria-label="تفاصيل المشروع">
-          {external ? (
-            <ExternalCard expectedValue={p.expectedValue} />
-          ) : (
-            <SectionBoundary label="العقد والتحصيل">
-              <ContractCard
-                projectId={p.id}
-                canEdit={editMoney}
-                onSettings={() => setSettings(true)}
-              />
-            </SectionBoundary>
-          )}
-          {/* On a phone the details come first; on a computer they close the column. */}
-          <Card className="order-first lg:order-none">
+        <aside
+          className="flex flex-col gap-4 max-lg:contents lg:sticky lg:top-24"
+          aria-label="تفاصيل المشروع"
+        >
+          <div className="max-lg:order-1">
+            {external ? (
+              <ExternalCard expectedValue={p.expectedValue} />
+            ) : (
+              <SectionBoundary label="العقد والتحصيل">
+                <ContractCard
+                  projectId={p.id}
+                  canEdit={editMoney}
+                  onSettings={() => setSettings(true)}
+                />
+              </SectionBoundary>
+            )}
+          </div>
+          <Card className="max-lg:order-3">
             <div className="mb-3 flex items-center justify-between">
               <h2 className="font-semibold">بيانات المشروع</h2>
               <Button
@@ -512,12 +559,14 @@ export function ProjectPage() {
               أُضيف {fromEpoch(p.createdAt)} · آخر تعديل {fromEpoch(p.updatedAt)}
             </p>
           </Card>
-          <SectionBoundary label="الاجتماعات">
-            <RecordMeetings
-              link={{ projectId: p.id, clientId: p.clientId }}
-              title={`اجتماع ${p.name}`}
-            />
-          </SectionBoundary>
+          <div className="max-lg:order-4">
+            <SectionBoundary label="الاجتماعات">
+              <RecordMeetings
+                link={{ projectId: p.id, clientId: p.clientId }}
+                title={`اجتماع ${p.name}`}
+              />
+            </SectionBoundary>
+          </div>
         </aside>
       </div>
 
@@ -554,19 +603,15 @@ export function ProjectPage() {
   );
 }
 
+/** One line of «بيانات المشروع»; an empty field is left out rather than shown as «—». */
 function Detail({ label, value, icon }: { label: string; value: string; icon?: ReactNode }) {
+  if (!value) return null;
   return (
     <div className="flex justify-between gap-3">
       <dt className="text-muted">{label}</dt>
       <dd className="inline-flex items-center gap-1 text-left">
-        {value ? (
-          <>
-            {icon}
-            {value}
-          </>
-        ) : (
-          <span className="text-muted">—</span>
-        )}
+        {icon}
+        {value}
       </dd>
     </div>
   );

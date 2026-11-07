@@ -836,6 +836,7 @@ export function Segmented<T extends string>({
   items,
   label,
   inline = false,
+  fill = false,
 }: {
   value: T;
   onChange: (v: T) => void;
@@ -843,6 +844,8 @@ export function Segmented<T extends string>({
   label: string;
   /** Sits beside other controls on a phone too, instead of taking a full row. */
   inline?: boolean;
+  /** In a narrow box (a side card): always as wide as the box, scrolling inside it, never past it. */
+  fill?: boolean;
 }) {
   return (
     <ScrollRow
@@ -851,7 +854,11 @@ export function Segmented<T extends string>({
       activeKey={value}
       className={cx(
         "flex gap-1 rounded-xl border bg-surface p-1",
-        inline ? "inline-flex w-auto shrink-0" : "w-full sm:inline-flex sm:w-auto",
+        fill
+          ? "w-full"
+          : inline
+            ? "inline-flex w-auto shrink-0"
+            : "w-full sm:inline-flex sm:w-auto",
       )}
     >
       {items.map((i) => (
@@ -863,7 +870,9 @@ export function Segmented<T extends string>({
           title={i.hint}
           onClick={() => onChange(i.value)}
           className={cx(
-            "inline-flex min-h-11 flex-1 shrink-0 snap-center items-center justify-center gap-1.5 whitespace-nowrap rounded-lg px-3 py-2 text-sm transition sm:min-h-0 sm:flex-none sm:gap-2 sm:px-4",
+            "inline-flex min-h-11 flex-1 shrink-0 snap-center items-center justify-center gap-1.5 whitespace-nowrap rounded-lg px-3 py-2 text-sm transition sm:min-h-0 sm:gap-2",
+            // In a narrow box the items share its width; elsewhere each keeps its own.
+            fill ? "px-2.5 sm:px-2.5" : "sm:flex-none sm:px-4",
             value === i.value
               ? "bg-brand text-white shadow-sm dark:text-canvas"
               : "text-muted hover:bg-brand-soft hover:text-ink",
