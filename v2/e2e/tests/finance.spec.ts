@@ -102,6 +102,8 @@ test("«الإعدادات ← المالية» keeps a target and one opening b
   api,
 }) => {
   const next = year + 1; // next year's target, so the other specs' current-year figures stay put
+  // Start clean, so a retry after a half-finished run can save the same figures again.
+  await api("PATCH", "/api/org/settings", { targets: { [String(next)]: null }, cashOpening: null });
   await page.goto("/settings/finance");
   await expect(page.getByRole("heading", { name: "المالية", level: 1 })).toBeVisible();
   const target = page.getByLabel(`مستهدف ${next} (ر.س)`);
@@ -119,7 +121,8 @@ test("«الإعدادات ← المالية» keeps a target and one opening b
 
   // the same figure starts the cash forecast, saved for everyone rather than on this device
   await page.goto("/finance?tab=receivables");
-  await expect(page.getByLabel("الرصيد الحالي (ر.س)")).toHaveValue("120000");
+  // The page waits for the whole receivables list first; slow on a busy CI machine.
+  await expect(page.getByLabel("الرصيد الحالي (ر.س)")).toHaveValue("120000", { timeout: 20_000 });
   await expect(page.getByText(/محفوظ للجميع/)).toBeVisible();
 
   const s = await api<{ targets: Record<string, number> }>("GET", "/api/org/settings");
