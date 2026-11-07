@@ -366,3 +366,40 @@ test("external project: tracked as work, never in finance", async ({ page, api }
   await expect(page.getByRole("main").getByText(name).first()).toBeVisible();
   await expectNoSideScroll(page);
 });
+
+test("project page: name, actions and tabs stay in reach while scrolling", async ({
+  page,
+  api,
+}) => {
+  const c = await api<{ id: string }>("POST", "/api/clients", { name: `جمعية الشريط ${uid()}` });
+  const name = `مشروع طويل ${uid()}`;
+  const p = await api<{ id: string }>("POST", "/api/projects", {
+    clientId: c.id,
+    name,
+    status: "active",
+  });
+  for (let i = 1; i <= 25; i++)
+    await api("POST", `/api/projects/${p.id}/finance/entries`, {
+      type: "expense",
+      description: `بند ${i}`,
+      amount: 100 * i,
+      date: `${year}-0${1 + (i % 9)}-10`,
+    });
+  await page.goto(`/projects/${p.id}`);
+  const bar = page.getByRole("tablist", { name: "أقسام المشروع (الشريط الثابت)" });
+  await expect(bar).not.toBeInViewport();
+  // the log has loaded (the page is long), then scroll to its end
+  await expect(page.getByText("بند 25", { exact: true }).filter({ visible: true })).toBeVisible();
+  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+  await expect(bar).toBeInViewport();
+  // entries are grouped by month, and the section switch works from the bar
+  await expect(
+    page
+      .getByText(new RegExp(`مارس ${year}`))
+      .filter({ visible: true })
+      .first(),
+  ).toBeVisible();
+  await bar.getByRole("tab", { name: /التنفيذ/ }).click();
+  await expect(page).toHaveURL(/view=execution/);
+  await expectNoSideScroll(page);
+});

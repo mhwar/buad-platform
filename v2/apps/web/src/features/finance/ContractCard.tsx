@@ -89,16 +89,25 @@ export function ContractCard({
         collected={gross > 0 && received >= gross - 0.5}
       />
       <Segmented<Part>
+        fill
         label="أقسام العقد"
         value={shown}
         onChange={setPart}
         items={[
           { value: "summary", label: "الملخص" },
-          { value: "receipts", label: `الاستلامات (${f.data.receipts.length})` },
+          {
+            value: "receipts",
+            label: f.data.receipts.length ? `الاستلامات (${f.data.receipts.length})` : "الاستلامات",
+          },
           ...(vatView
-            ? [{ value: "invoices" as const, label: `الفواتير (${invoices.data?.length ?? 0})` }]
+            ? [
+                {
+                  value: "invoices" as const,
+                  label: invoices.data?.length ? `الفواتير (${invoices.data.length})` : "الفواتير",
+                },
+              ]
             : []),
-          { value: "schedule", label: `الدفعات (${pending.length})` },
+          { value: "schedule", label: pending.length ? `الدفعات (${pending.length})` : "الدفعات" },
         ]}
       />
       <div className={cx(shown !== "summary" && "hidden")}>
@@ -131,7 +140,9 @@ function Unclassified({
   const [expense, setExpense] = useState(false);
   const [busy, setBusy] = useState(false);
   const amount = Math.round(fin.summary.remainingFromGross * 100) / 100;
-  if (amount <= 0.5) return null;
+  // Before the contract is collected the figure is only information, shown once in the top
+  // strip; here it appears when there is something to do with it.
+  if (amount <= 0.5 || !collected) return null;
   const toProfit = async () => {
     const ok = await confirmAction({
       title: `تحويل ${sar(amount)} إلى أرباح؟`,
@@ -161,23 +172,16 @@ function Unclassified({
   return (
     <section
       aria-label="مبلغ غير مصنّف"
-      className={cx(
-        "rounded-xl border p-3 text-sm",
-        collected
-          ? "border-warning-line bg-warning-soft"
-          : "border-slate-200 dark:border-slate-700",
-      )}
+      className="rounded-xl border border-warning-line bg-warning-soft p-3 text-sm"
     >
       <p className="flex flex-wrap items-center justify-between gap-2">
         <span>غير مصنّف من العقد</span>
         <b className="tabular-nums">{sar(amount)}</b>
       </p>
       <p className="mt-1 text-xs text-muted">
-        {collected
-          ? "حُصّل العقد كاملاً وبقي هذا المبلغ بلا قيد: صنّفوه أرباحاً أو مصروفاً للمشروع."
-          : "العقد ناقص كل القيود. يُصنَّف بعد اكتمال التحصيل والمصروفات."}
+        حُصّل العقد كاملاً وبقي هذا المبلغ بلا قيد: صنّفوه أرباحاً أو مصروفاً للمشروع.
       </p>
-      {collected && canEdit && (
+      {canEdit && (
         <div className="mt-2 flex flex-wrap gap-2">
           <Button onClick={toProfit} disabled={busy}>
             تحويل إلى أرباح
