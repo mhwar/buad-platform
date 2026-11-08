@@ -16,6 +16,7 @@ test("the main pages open without errors or sideways scrolling", async ({ page, 
     "/finance?tab=vat",
     "/finance?tab=profit",
     "/finance?tab=receivables",
+    "/finance?tab=vat",
     "/reports",
     "/plans",
   ]) {
@@ -48,9 +49,14 @@ test("phone: no squeezed tables, no text under 12px, no raw dates", async ({ pag
     "/documents",
     "/tasks?layout=table&scope=all",
     "/plans",
+    // Old or hand-typed links with a value the page no longer knows fall back to its default.
+    "/clients?view=table",
+    "/documents?view=table",
+    "/products?tab=performance",
   ]) {
     await page.goto(path);
     await page.waitForLoadState("networkidle");
+    await expect(page.getByText("تعذّر عرض هذه الصفحة"), `error on ${path}`).toHaveCount(0);
     await expect(page.locator("main table:visible"), `table on ${path}`).toHaveCount(0);
     const tiny = await page.evaluate(
       () =>

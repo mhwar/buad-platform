@@ -222,7 +222,51 @@ function YearTable({
           </b>
         </p>
       </div>
-      <div className="mt-3 overflow-x-auto border-t">
+      {/* Phone: one card per quarter instead of a table to scroll sideways. */}
+      <ul className="mt-3 divide-y border-t sm:hidden">
+        {y.quarters.map((x) => {
+          const st = STATUS[x.filing?.status ?? "open"];
+          const late = !x.filing?.paidOn && x.dueDate < today && x.netPayable > 0;
+          return (
+            <li
+              key={x.key}
+              className={`space-y-1.5 px-4 py-3 text-sm ${active === x.q ? "bg-brand-soft/60" : ""}`}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <button
+                  type="button"
+                  className="font-medium text-brand hover:underline"
+                  onClick={() => onPick(x.q)}
+                >
+                  ر{x.q}
+                  {x.warnings > 0 && (
+                    <AlertTriangle
+                      className="ms-1 inline size-3.5 text-warning-ink"
+                      aria-label="فيه تنبيهات"
+                    />
+                  )}
+                </button>
+                <Badge tone={st.tone}>{st.label}</Badge>
+              </div>
+              <p className="text-muted">
+                المخرجات {sar(x.outputVat)} · المدخلات {sar(x.inputVat)}
+              </p>
+              <div className="flex items-center justify-between gap-2">
+                <p>
+                  الصافي <b>{sar(x.netPayable)}</b>
+                  <span className={`ms-2 text-xs ${late ? "text-danger-ink" : "text-muted"}`}>
+                    الموعد {day(x.dueDate)}
+                  </span>
+                </p>
+                <Button variant="ghost" onClick={() => setEditing(x)}>
+                  {x.filing?.status === "paid" ? "تعديل" : "تسجيل"}
+                </Button>
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+      <div className="mt-3 hidden overflow-x-auto border-t sm:block">
         <table className="w-full text-sm">
           <thead className="text-right text-xs text-muted">
             <tr className="border-b">

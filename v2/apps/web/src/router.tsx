@@ -209,7 +209,7 @@ const listSearch = {
 const clientsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/clients",
-  validateSearch: z.object({
+  validateSearch: lenient({
     ...listSearch,
     type: z.string().optional(),
     rel: z.enum(["active", "prospect", "former", "dormant", "new"]).optional(),
@@ -222,7 +222,7 @@ const clientsRoute = createRoute({
 const clientRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/clients/$id",
-  validateSearch: z.object({ tab: z.enum(["overview", "projects", "crm"]).optional() }),
+  validateSearch: lenient({ tab: z.enum(["overview", "projects", "crm"]).optional() }),
   beforeLoad: authed,
   component: ClientPage,
 });
@@ -235,7 +235,7 @@ const statementRoute = createRoute({
 const projectsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/projects",
-  validateSearch: z.object({
+  validateSearch: lenient({
     ...listSearch,
     sort: z.enum(["newest", "name", "value", "deadline"]).optional(),
     status: z.string().optional(),
@@ -255,7 +255,7 @@ const projectRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/projects/$id",
   // ?view= picks the section; the old ?tab= links keep working (they land on finance).
-  validateSearch: z.object({
+  validateSearch: lenient({
     view: z.enum(["finance", "documents", "execution"]).optional(),
     tab: z.string().optional(),
   }),
@@ -286,6 +286,25 @@ const needs = (perm: string) => async () => {
   if (!me) throw redirect({ to: "/login" });
   if (!me.perms.includes(perm)) throw redirect({ to: "/" });
 };
+/**
+ * A page's address is read field by field: a value that does not fit (an old link, a typed
+ * address, a filter that was renamed) is dropped and that field falls back to its default,
+ * instead of the whole page failing.
+ */
+function lenient<S extends z.ZodRawShape>(
+  shape: S,
+): (raw: Record<string, unknown>) => z.output<z.ZodObject<S>> {
+  const schema = z.object(shape);
+  return (raw) => {
+    const out: Record<string, unknown> = {};
+    for (const [key, field] of Object.entries(shape)) {
+      const r = (field as z.ZodType).safeParse(raw[key]);
+      if (r.success && r.data !== undefined) out[key] = r.data;
+    }
+    return schema.parse(out);
+  };
+}
+
 const periodSearch = {
   from: z.string().optional(),
   to: z.string().optional(),
@@ -293,7 +312,7 @@ const periodSearch = {
 const financeRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/finance",
-  validateSearch: z.object({
+  validateSearch: lenient({
     ...periodSearch,
     preset: z.enum(["all", "year", "last", "quarter", "custom"]).optional(),
     year: z.coerce.number().int().min(2000).max(2100).optional(),
@@ -324,7 +343,7 @@ const financeRoute = createRoute({
 const vatReportRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/finance/vat/report",
-  validateSearch: z.object({
+  validateSearch: lenient({
     year: z.coerce.number().int().min(2000).max(2100).catch(new Date().getFullYear()),
     q: z.coerce.number().int().min(1).max(4).catch(1),
   }),
@@ -335,7 +354,7 @@ const vatReportRoute = createRoute({
 const siteRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/site",
-  validateSearch: z.object({
+  validateSearch: lenient({
     preview: z.coerce.boolean().optional(),
     fonts: z.coerce.boolean().optional(),
   }),
@@ -366,10 +385,10 @@ const printProductRoute = createRoute({
 const productsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/products",
-  validateSearch: z.object({ tab: z.enum(["products", "overview", "requests"]).optional() }),
+  validateSearch: lenient({ tab: z.enum(["products", "overview", "requests"]).optional() }),
   // The requests inbox became «الفرص» under المبيعات; old links still land there.
   beforeLoad: async ({ search }) => {
-    if (search.tab === "requests") throw redirect({ to: "/sales" });
+    if ((search as { tab?: string }).tab === "requests") throw redirect({ to: "/sales" });
     await needs("products.view")();
   },
   component: ProductsPage,
@@ -377,7 +396,7 @@ const productsRoute = createRoute({
 const websiteRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/website",
-  validateSearch: z.object({
+  validateSearch: lenient({
     tab: z
       .enum(["overview", "identity", "home", "services", "works", "form", "seo", "history"])
       .optional(),
@@ -388,7 +407,7 @@ const websiteRoute = createRoute({
 const productRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/products/$id",
-  validateSearch: z.object({
+  validateSearch: lenient({
     step: z
       .enum(["identity", "packages", "pricing", "performance", "intake", "content", "publish"])
       .optional(),
@@ -399,7 +418,7 @@ const productRoute = createRoute({
 const financeReportRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/finance/report",
-  validateSearch: z.object(periodSearch),
+  validateSearch: lenient(periodSearch),
   beforeLoad: needs("treasury.view"),
   component: ReportPage,
 });
@@ -407,7 +426,7 @@ const financeReportRoute = createRoute({
 const printFinanceRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/print/finance/$projectId",
-  validateSearch: z.object({ mode: z.enum(["client", "detailed"]).optional() }),
+  validateSearch: lenient({ mode: z.enum(["client", "detailed"]).optional() }),
   beforeLoad: needs("finance.view"),
   component: function PrintFinance() {
     const { projectId } = printFinanceRoute.useParams();
@@ -426,7 +445,7 @@ const printFinanceRoute = createRoute({
 const documentsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/documents",
-  validateSearch: z.object({
+  validateSearch: lenient({
     q: z.string().optional(),
     kind: z.enum(["contract", "letter", "quote"]).optional(),
     status: z
@@ -500,7 +519,7 @@ const teamRoute = createRoute({
 const activityRoute = createRoute({
   getParentRoute: () => settingsRoute,
   path: "/activity",
-  validateSearch: z.object({
+  validateSearch: lenient({
     entity: z.string().max(30).optional(),
     user: z.string().max(60).optional(),
     from: z.string().optional(),
@@ -538,7 +557,7 @@ const plansRoute = createRoute({
 const tasksRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/tasks",
-  validateSearch: z.object({
+  validateSearch: lenient({
     mine: z.string().optional(),
     scope: z.enum(["mine", "all"]).optional().catch(undefined),
     show: z.enum(["open", "late", "done"]).optional().catch(undefined),
@@ -552,14 +571,14 @@ const tasksRoute = createRoute({
 const meetingsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/meetings",
-  validateSearch: z.object({ open: z.string().max(60).optional() }),
+  validateSearch: lenient({ open: z.string().max(60).optional() }),
   beforeLoad: needs("meetings.view"),
   component: MeetingsPage,
 });
 const decisionsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/decisions",
-  validateSearch: z.object({
+  validateSearch: lenient({
     mine: z.enum(["1"]).optional(),
     show: z.enum(["open", "late", "done"]).optional(),
   }),
@@ -575,7 +594,7 @@ const salesRoute = createRoute({
 const reportsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/reports",
-  validateSearch: z.object({
+  validateSearch: lenient({
     ...periodSearch,
     preset: z.enum(["all", "year", "last", "quarter", "custom"]).optional(),
     year: z.coerce.number().int().min(2000).max(2100).optional(),
@@ -593,14 +612,14 @@ const portfolioRoute = createRoute({
 const executionReportRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/reports/execution",
-  validateSearch: z.object(periodSearch),
+  validateSearch: lenient(periodSearch),
   beforeLoad: needs("tasks.view"),
   component: ExecutionReport,
 });
 const analyticsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/sales/analytics",
-  validateSearch: z.object(periodSearch),
+  validateSearch: lenient(periodSearch),
   beforeLoad: needs("sales.view"),
   component: SalesDashboard,
 });
