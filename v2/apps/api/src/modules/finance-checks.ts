@@ -155,5 +155,42 @@ export async function financeChecks(db: Db, orgId: string): Promise<Check[]> {
     rows: entryRows(noInvoice),
   });
 
+  // Drafts are left out of every figure; say so, with what each one already holds.
+  const drafts = await db
+    .select({
+      id: projects.id,
+      number: projects.number,
+      name: projects.name,
+      gross: sql<number>`${contractTotalSql("projects")}`,
+      received: sql<number>`COALESCE((SELECT SUM(r.amount_halalas) FROM project_receipts r
+        WHERE r.project_id = projects.id), 0)`,
+      entries: sql<number>`(SELECT COUNT(*) FROM finance_entries e
+        WHERE e.project_id = projects.id AND e.status <> 'cancelled')`,
+    })
+    .from(projects)
+    .where(
+      and(
+        eq(projects.orgId, orgId),
+        isNull(projects.archivedAt),
+        eq(projects.external, false),
+        eq(projects.status, "draft"),
+      ),
+    );
+  checks.push({
+    key: "drafts",
+    title: "مشاريع مسودة لا تُحسب في المالية",
+    hint: "المسودة لا تدخل في أي رقم مالي: الأرباح والضريبة والتحصيل والمستهدف. غيّروا حالتها إلى «جاري التنفيذ» إن بدأ العمل فيها، أو ألغوها إن لم تعد قائمة.",
+    rows: drafts.map((p) => {
+      const parts = [`العقد ${sar(Number(p.gross))}`];
+      if (Number(p.received)) parts.push(`فيها استلامات ${sar(Number(p.received))}`);
+      if (Number(p.entries)) parts.push(`${Number(p.entries)} قيد`);
+      return {
+        label: `${p.number} · ${p.name}`,
+        detail: parts.join(" · "),
+        link: projectLink(p.id),
+      };
+    }),
+  });
+
   return checks.filter((c) => c.rows.length);
 }

@@ -43,7 +43,7 @@ import { Hono } from "hono";
 import { z } from "zod";
 import { requireAuth, requireRW, type Vars } from "../auth/middleware";
 import type { Db } from "../auth/service";
-import { contractTotalSql, newId, nowSec } from "./common";
+import { contractTotalSql, inFinanceSql, newId, nowSec } from "./common";
 
 type Env = { Bindings: { JWT_SECRET: string }; Variables: Vars };
 const today = () => new Date().toISOString().slice(0, 10);
@@ -125,10 +125,10 @@ export async function platformMetric(
     case "revenue": {
       // Cash actually in: approved client receipts, plus the company's own service income.
       const r = (await db.get(sql`
-        SELECT COALESCE(SUM(amount_halalas), 0) AS v FROM project_receipts
-        WHERE org_id = ${orgId} AND approved_at IS NOT NULL AND date >= ${start} AND date <= ${end}`)) as
-        | { v: number }
-        | undefined;
+        SELECT COALESCE(SUM(r.amount_halalas), 0) AS v FROM project_receipts r
+          JOIN projects p ON p.id = r.project_id
+        WHERE r.org_id = ${orgId} AND r.approved_at IS NOT NULL AND ${inFinanceSql("p")}
+          AND r.date >= ${start} AND r.date <= ${end}`)) as { v: number } | undefined;
       const e = (await db.get(sql`
         SELECT COALESCE(SUM(amount_halalas), 0) AS v FROM company_entries
         WHERE org_id = ${orgId} AND type = 'income' AND category <> 'project_fee'
