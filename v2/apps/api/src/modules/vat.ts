@@ -165,7 +165,7 @@ export async function vatReport(
     const fin = fins.get(p.id);
     if (!fin) continue;
     const s = fin.summary;
-    if (s.grossTotal > 0 && !fin.receipts.length && p.status !== "draft") withoutReceipts++;
+    if (s.grossTotal > 0 && !fin.receipts.length && p.status !== "cancelled") withoutReceipts++;
     // Output VAT follows the tax invoices issued to the client, by their date. A project with
     // none yet falls back to its approved receipts (flagged), so nothing goes missing meanwhile.
     const mine = invoices.filter((i) => i.projectId === p.id);
