@@ -350,6 +350,12 @@ export function ProjectPage() {
       {p.archivedAt && (
         <Notice tone="amber">هذا المشروع مؤرشف منذ {fromEpoch(p.archivedAt)}.</Notice>
       )}
+      {p.status === "draft" && !external && !p.archivedAt && (
+        <Notice tone="amber">
+          مسودة: أرقام هذا المشروع لا تُحسب في المالية (الأرباح والضريبة والتحصيل) حتى تتغير حالته
+          إلى «جاري التنفيذ».
+        </Notice>
+      )}
 
       <header ref={headerRef} className="mb-5 flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0">

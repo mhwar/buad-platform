@@ -7,7 +7,15 @@ import { Hono } from "hono";
 import type { z } from "zod";
 import { requireAuth, requirePerm, requireRW, type Vars } from "../auth/middleware";
 import type { Db } from "../auth/service";
-import { contractTotalSql, inFinance, likeTerm, logoUrlSql, newId, nowSec } from "./common";
+import {
+  contractTotalSql,
+  inFinance,
+  inFinanceSql,
+  likeTerm,
+  logoUrlSql,
+  newId,
+  nowSec,
+} from "./common";
 import { loadFinanceMany } from "./finance";
 import { loadOrgProfile } from "./org";
 import { visibleProjects } from "./projects";
@@ -171,7 +179,7 @@ export const clientsApp = new Hono<Env>()
     // Per-client project count and expected value, over the projects this user may see.
     const vis = visibleProjects(me);
     const projectCount = sql<number>`(SELECT count(*) FROM projects p WHERE p.client_id = "clients"."id" AND p.archived_at IS NULL AND ${vis.sqlFor("p")})`;
-    const projectValue = sql<number>`(SELECT coalesce(sum(${contractTotalSql("p")}), 0) FROM projects p WHERE p.client_id = "clients"."id" AND p.archived_at IS NULL AND p.external = 0 AND ${vis.sqlFor("p")})`;
+    const projectValue = sql<number>`(SELECT coalesce(sum(${contractTotalSql("p")}), 0) FROM projects p WHERE p.client_id = "clients"."id" AND ${inFinanceSql("p")} AND ${vis.sqlFor("p")})`;
     const liveVisible = sql`p.client_id = "clients"."id" AND p.archived_at IS NULL AND ${vis.sqlFor("p")}`;
     // Up to three most recently touched projects, for the card.
     const recentProjects = sql<string>`(SELECT coalesce(json_group_array(json_object('id', x.id, 'name', x.name)), '[]') FROM (SELECT p.id, p.name FROM projects p WHERE ${liveVisible} ORDER BY p.updated_at DESC LIMIT 3) x)`;

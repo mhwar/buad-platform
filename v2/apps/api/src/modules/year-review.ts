@@ -4,7 +4,7 @@ import { sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { z } from "zod";
 import { requireAuth, requirePerm, type Vars } from "../auth/middleware";
-import { contractTotalSql } from "./common";
+import { contractTotalSql, inFinanceSql } from "./common";
 import { platformMetric } from "./plans";
 import { settingsTarget } from "./settings";
 
@@ -66,7 +66,7 @@ export const yearReviewApp = new Hono<{ Variables: Vars }>()
       FROM projects p
       JOIN clients c ON c.id = p.client_id
       LEFT JOIN project_finance f ON f.project_id = p.id
-      WHERE p.org_id = ${me.orgId} AND p.archived_at IS NULL AND p.external = 0 AND p.status <> 'draft'
+      WHERE p.org_id = ${me.orgId} AND ${inFinanceSql("p")}
       ORDER BY p.number`)) as Row[];
 
     // A project belongs to the year by its contract (else start) date, by money it brought in
@@ -118,7 +118,8 @@ export const yearReviewApp = new Hono<{ Variables: Vars }>()
       SELECT COALESCE(SUM(r.amount_halalas), 0) AS gross,
         COALESCE(SUM(ROUND(r.amount_halalas * COALESCE(f.vat_pct, 15) / (100.0 + COALESCE(f.vat_pct, 15)))), 0) AS vat
       FROM project_receipts r LEFT JOIN project_finance f ON f.project_id = r.project_id
-      WHERE r.org_id = ${me.orgId} AND r.approved_at IS NOT NULL
+        JOIN projects p ON p.id = r.project_id
+      WHERE r.org_id = ${me.orgId} AND r.approved_at IS NOT NULL AND ${inFinanceSql("p")}
         AND r.date >= ${start} AND r.date <= ${end}`)) as
       | { gross: number; vat: number }
       | undefined;

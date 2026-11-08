@@ -21,8 +21,9 @@ export function PortfolioReport() {
   const q = useQuery(
     projectsQuery({ sort: "deadline", status: scope === "running" ? "active" : undefined }),
   );
-  // External projects are work only: the portfolio's money is the internal ones'.
-  const items = (q.data?.items ?? []).filter((p) => !p.external);
+  // External projects are work only and drafts are not counted yet: the portfolio's money is
+  // the projects that are in finance.
+  const items = (q.data?.items ?? []).filter((p) => !p.external && p.status !== "draft");
   const money_ = items.some((p) => p.received !== null && p.received !== undefined);
   const contract = items.reduce((s, p) => s + p.contractTotal, 0);
   const received = items.reduce((s, p) => s + (p.received ?? 0), 0);

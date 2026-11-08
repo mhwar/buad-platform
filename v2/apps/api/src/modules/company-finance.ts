@@ -144,8 +144,11 @@ async function orgReceipts(db: Db, orgId: string): Promise<ReceiptLite[]> {
       amount: projectReceipts.amount,
     })
     .from(projectReceipts)
-    // Only approved receipts are money the company can count on (and distribute).
-    .where(and(eq(projectReceipts.orgId, orgId), isNotNull(projectReceipts.approvedAt)));
+    .innerJoin(projects, eq(projects.id, projectReceipts.projectId))
+    // Only approved receipts of projects in finance are money the company can count on.
+    .where(
+      and(eq(projectReceipts.orgId, orgId), isNotNull(projectReceipts.approvedAt), inFinance()),
+    );
   return rows.map((r) => ({ ...r, amount: riyals(r.amount) }));
 }
 
