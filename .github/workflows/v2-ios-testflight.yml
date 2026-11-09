@@ -53,6 +53,12 @@ jobs:
           missing=""
           for v in KEY_ID ISSUER_ID TEAM_ID; do [ -n "${!v}" ] || missing="$missing $v"; done
           if [ -n "$missing" ]; then echo "::error::Missing repository secrets for:$missing"; exit 1; fi
+          # Copies of the ids without stray spaces or line breaks pasted with them.
+          {
+            echo "TEAM=$(printf %s "$TEAM_ID" | tr -d '[:space:]')"
+            echo "KID=$(printf %s "$KEY_ID" | tr -d '[:space:]')"
+            echo "ISSUER=$(printf %s "$ISSUER_ID" | tr -d '[:space:]')"
+          } >> "$GITHUB_ENV"
           echo "Xcode: $(xcodebuild -version | head -1)"
           echo "API base set: $([ -n "$API_BASE" ] && echo yes || echo no — the sign-in screen will ask)"
 
@@ -62,8 +68,8 @@ jobs:
         run: |
           [ -n "$PRIVATE_KEY" ] || { echo "::error::Missing secret APPSTORE_API_PRIVATE_KEY"; exit 1; }
           mkdir -p "$RUNNER_TEMP/keys"
-          printf '%s\n' "$PRIVATE_KEY" > "$RUNNER_TEMP/keys/AuthKey_$KEY_ID.p8"
-          chmod 600 "$RUNNER_TEMP/keys/AuthKey_$KEY_ID.p8"
+          printf '%s\n' "$PRIVATE_KEY" > "$RUNNER_TEMP/keys/AuthKey_$KID.p8"
+          chmod 600 "$RUNNER_TEMP/keys/AuthKey_$KID.p8"
 
       - name: Project file matches the sources
         run: |
@@ -78,7 +84,7 @@ jobs:
         run: |
           python3 -m venv "$RUNNER_TEMP/venv"
           "$RUNNER_TEMP/venv/bin/pip" install --quiet "pyjwt[crypto]==2.9.0"
-          ASC_KEY_PATH="$RUNNER_TEMP/keys/AuthKey_$KEY_ID.p8" "$RUNNER_TEMP/venv/bin/python" ci/asc_signing.py setup
+          ASC_KEY_PATH="$RUNNER_TEMP/keys/AuthKey_$KID.p8" "$RUNNER_TEMP/venv/bin/python" ci/asc_signing.py setup
 
       - name: Archive (manual signing with the temporary profile)
         run: >
@@ -88,7 +94,7 @@ jobs:
           -configuration Release
           -destination 'generic/platform=iOS'
           -archivePath "$RUNNER_TEMP/Buad.xcarchive"
-          DEVELOPMENT_TEAM="$TEAM_ID"
+          DEVELOPMENT_TEAM="$TEAM"
           CODE_SIGN_STYLE=Manual
           CODE_SIGN_IDENTITY="Apple Distribution"
           PROVISIONING_PROFILE_SPECIFIER="$PROFILE_NAME"
@@ -105,7 +111,7 @@ jobs:
           <dict>
             <key>method</key><string>app-store-connect</string>
             <key>destination</key><string>upload</string>
-            <key>teamID</key><string>$TEAM_ID</string>
+            <key>teamID</key><string>$TEAM</string>
             <key>signingStyle</key><string>manual</string>
             <key>signingCertificate</key><string>Apple Distribution</string>
             <key>provisioningProfiles</key>
@@ -122,9 +128,9 @@ jobs:
             -archivePath "$RUNNER_TEMP/Buad.xcarchive" \
             -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" \
             -exportPath "$RUNNER_TEMP/export" \
-            -authenticationKeyPath "$RUNNER_TEMP/keys/AuthKey_$KEY_ID.p8" \
-            -authenticationKeyID "$KEY_ID" \
-            -authenticationKeyIssuerID "$ISSUER_ID"
+            -authenticationKeyPath "$RUNNER_TEMP/keys/AuthKey_$KID.p8" \
+            -authenticationKeyID "$KID" \
+            -authenticationKeyIssuerID "$ISSUER"
           echo "### Uploaded build $((100 + BUILD_NUMBER)) to TestFlight" >> "$GITHUB_STEP_SUMMARY"
           echo "It appears in App Store Connect → Buad → TestFlight after Apple finishes processing (usually 5–20 minutes)." >> "$GITHUB_STEP_SUMMARY"
 
@@ -134,7 +140,7 @@ jobs:
           ASC_KEY_ID: ${{ secrets.APPSTORE_API_KEY_ID }}
           ASC_ISSUER_ID: ${{ secrets.APPSTORE_API_ISSUER_ID }}
         run: |
-          if [ -x "$RUNNER_TEMP/venv/bin/python" ] && [ -f "$RUNNER_TEMP/keys/AuthKey_$KEY_ID.p8" ]; then
-            ASC_KEY_PATH="$RUNNER_TEMP/keys/AuthKey_$KEY_ID.p8" "$RUNNER_TEMP/venv/bin/python" ci/asc_signing.py cleanup
+          if [ -x "$RUNNER_TEMP/venv/bin/python" ] && [ -f "$RUNNER_TEMP/keys/AuthKey_$KID.p8" ]; then
+            ASC_KEY_PATH="$RUNNER_TEMP/keys/AuthKey_$KID.p8" "$RUNNER_TEMP/venv/bin/python" ci/asc_signing.py cleanup
           fi
           rm -rf "$RUNNER_TEMP/keys" "$RUNNER_TEMP/ExportOptions.plist"

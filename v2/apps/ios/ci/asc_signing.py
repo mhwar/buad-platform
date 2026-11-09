@@ -33,10 +33,10 @@ def token():
     with open(os.environ["ASC_KEY_PATH"]) as f:
         key = f.read()
     return jwt.encode(
-        {"iss": os.environ["ASC_ISSUER_ID"], "iat": now, "exp": now + 1000, "aud": "appstoreconnect-v1"},
+        {"iss": os.environ["ASC_ISSUER_ID"].strip(), "iat": now, "exp": now + 1000, "aud": "appstoreconnect-v1"},
         key,
         algorithm="ES256",
-        headers={"kid": os.environ["ASC_KEY_ID"], "typ": "JWT"},
+        headers={"kid": os.environ["ASC_KEY_ID"].strip(), "typ": "JWT"},
     )
 
 
@@ -87,7 +87,9 @@ def setup():
     sh("openssl", "x509", "-inform", "DER", "-in", der, "-out", pem)
     p12 = os.path.join(WORK, "dist.p12")
     password = "buad-ci"
-    sh("openssl", "pkcs12", "-export", "-inkey", key, "-in", pem, "-out", p12, "-passout", f"pass:{password}")
+    # The macOS keychain only reads the classic PKCS#12 algorithms (OpenSSL 3 defaults to AES + SHA-256).
+    sh("openssl", "pkcs12", "-export", "-inkey", key, "-in", pem, "-out", p12, "-passout", f"pass:{password}",
+       "-keypbe", "PBE-SHA1-3DES", "-certpbe", "PBE-SHA1-3DES", "-macalg", "sha1")
 
     bundle_id = os.environ["BUNDLE_ID"]
     found = api("GET", "/bundleIds?" + urllib.parse.urlencode({"filter[identifier]": bundle_id, "limit": "200"}))["data"]
