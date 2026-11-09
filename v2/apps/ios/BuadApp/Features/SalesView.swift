@@ -589,6 +589,12 @@ struct OpportunityView: View {
     private var details: some View {
         Card {
             Text("بيانات الفرصة").font(.headline)
+            if !o.draftProjectId.isEmpty && o.isOpen {
+                Label("مشروعها المسودة محفوظ: يعود برقمه ومستنداته ومهامه عند قبول العرض و«تحويل إلى مشروع».", systemImage: "briefcase")
+                    .font(.footnote).foregroundStyle(Buad.infoInk)
+                    .padding(10).frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Buad.infoSoft, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+            }
             if let d = detail, !d.clientName.isEmpty { row("العميل", d.clientName) }
             if !o.productName.isEmpty {
                 let pkg = detail?.packageName ?? ""

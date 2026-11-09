@@ -138,5 +138,8 @@ export const archiveProject = async (id: string, restore = false) =>
       ? api.api.projects[":id"].restore.$post({ param: { id } })
       : api.api.projects[":id"].archive.$post({ param: { id } })),
   );
+/** «نقل إلى المبيعات»: a draft project goes back to the pipeline as an opportunity (its id). */
+export const moveToSales = async (id: string) =>
+  ok<{ ok: true; id: string }>(await api.api.projects[":id"]["to-sales"].$post({ param: { id } }));
 export const deleteProject = async (id: string) =>
   ok<{ ok: true }>(await api.api.projects[":id"].$delete({ param: { id } }));

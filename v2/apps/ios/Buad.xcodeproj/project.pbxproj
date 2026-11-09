@@ -28,7 +28,11 @@
 		E4AEA7F7909FACED2CEECE7F /* NotificationsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A45104A6141BFBC1B0E4747 /* NotificationsView.swift */; };
 		F532ED040701AB19A54DB4D9 /* OverviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34245588C64BDAE7C90CFCFB /* OverviewView.swift */; };
 		D26BF7A8214E4D68FB3AF938 /* ProjectDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F5CAFFCF496277E305DC4E4 /* ProjectDetailView.swift */; };
+		AF6BF7FDA6078F772D2DFCAD /* ProjectDocs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CBC658E2A3D21EEAF2388EC /* ProjectDocs.swift */; };
 		59E6DDE312BBB17209772C1C /* ProjectModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5A5EF53C6D7B76F4A56FC27 /* ProjectModels.swift */; };
+		D11476E59EC915A8C856AB18 /* ProjectOpsModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F864F26CE1CBE1654BE5B1A /* ProjectOpsModels.swift */; };
+		4967A421A98F5FD90E8AC02D /* ProjectSheets.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF184329246D455F53B1A775 /* ProjectSheets.swift */; };
+		F3C371AC3D727E1F2DCD5302 /* ProjectWork.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3726901C1F6DE6361360AEF5 /* ProjectWork.swift */; };
 		35CF01C60CA46ED759C83A65 /* ProjectsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 118AB449F27FDDD25C375DC5 /* ProjectsView.swift */; };
 		A515A34034E8D5D7CDE7F2DA /* QuoteModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 55C8010DA3674BE55AF99ED6 /* QuoteModels.swift */; };
 		7815121FED1C0694E207C6B5 /* QuotesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E16543CFF108FDC96E0C6B6 /* QuotesView.swift */; };
@@ -69,7 +73,11 @@
 		4A45104A6141BFBC1B0E4747 /* NotificationsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationsView.swift; sourceTree = "<group>"; };
 		34245588C64BDAE7C90CFCFB /* OverviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OverviewView.swift; sourceTree = "<group>"; };
 		4F5CAFFCF496277E305DC4E4 /* ProjectDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectDetailView.swift; sourceTree = "<group>"; };
+		4CBC658E2A3D21EEAF2388EC /* ProjectDocs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectDocs.swift; sourceTree = "<group>"; };
 		C5A5EF53C6D7B76F4A56FC27 /* ProjectModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectModels.swift; sourceTree = "<group>"; };
+		4F864F26CE1CBE1654BE5B1A /* ProjectOpsModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectOpsModels.swift; sourceTree = "<group>"; };
+		AF184329246D455F53B1A775 /* ProjectSheets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectSheets.swift; sourceTree = "<group>"; };
+		3726901C1F6DE6361360AEF5 /* ProjectWork.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectWork.swift; sourceTree = "<group>"; };
 		118AB449F27FDDD25C375DC5 /* ProjectsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectsView.swift; sourceTree = "<group>"; };
 		55C8010DA3674BE55AF99ED6 /* QuoteModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuoteModels.swift; sourceTree = "<group>"; };
 		5E16543CFF108FDC96E0C6B6 /* QuotesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuotesView.swift; sourceTree = "<group>"; };
@@ -135,6 +143,7 @@
 				42671CCBC6E8669BCF2A9F27 /* Format.swift */,
 				00315442E9DAF7B3CC3ED5A9 /* Models.swift */,
 				C5A5EF53C6D7B76F4A56FC27 /* ProjectModels.swift */,
+				4F864F26CE1CBE1654BE5B1A /* ProjectOpsModels.swift */,
 				55C8010DA3674BE55AF99ED6 /* QuoteModels.swift */,
 				9E731ACAA5B22BD0A5DCC8CF /* SalesModels.swift */,
 				29444EB276DB6416EA92B387 /* ScreenMemory.swift */,
@@ -159,6 +168,9 @@
 				4A45104A6141BFBC1B0E4747 /* NotificationsView.swift */,
 				34245588C64BDAE7C90CFCFB /* OverviewView.swift */,
 				4F5CAFFCF496277E305DC4E4 /* ProjectDetailView.swift */,
+				4CBC658E2A3D21EEAF2388EC /* ProjectDocs.swift */,
+				AF184329246D455F53B1A775 /* ProjectSheets.swift */,
+				3726901C1F6DE6361360AEF5 /* ProjectWork.swift */,
 				118AB449F27FDDD25C375DC5 /* ProjectsView.swift */,
 				5E16543CFF108FDC96E0C6B6 /* QuotesView.swift */,
 				92196FB501D5B083E6E7B609 /* ReceiveSheet.swift */,
@@ -270,7 +282,11 @@
 				E4AEA7F7909FACED2CEECE7F /* NotificationsView.swift in Sources */,
 				F532ED040701AB19A54DB4D9 /* OverviewView.swift in Sources */,
 				D26BF7A8214E4D68FB3AF938 /* ProjectDetailView.swift in Sources */,
+				AF6BF7FDA6078F772D2DFCAD /* ProjectDocs.swift in Sources */,
 				59E6DDE312BBB17209772C1C /* ProjectModels.swift in Sources */,
+				D11476E59EC915A8C856AB18 /* ProjectOpsModels.swift in Sources */,
+				4967A421A98F5FD90E8AC02D /* ProjectSheets.swift in Sources */,
+				F3C371AC3D727E1F2DCD5302 /* ProjectWork.swift in Sources */,
 				35CF01C60CA46ED759C83A65 /* ProjectsView.swift in Sources */,
 				A515A34034E8D5D7CDE7F2DA /* QuoteModels.swift in Sources */,
 				7815121FED1C0694E207C6B5 /* QuotesView.swift in Sources */,
@@ -370,7 +386,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.4.0;
+				MARKETING_VERSION = 0.5.0;
 				PRODUCT_BUNDLE_IDENTIFIER = sa.buad.app;
 				PRODUCT_NAME = BuadApp;
 				SDKROOT = iphoneos;
@@ -393,7 +409,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.4.0;
+				MARKETING_VERSION = 0.5.0;
 				PRODUCT_BUNDLE_IDENTIFIER = sa.buad.app;
 				PRODUCT_NAME = BuadApp;
 				SDKROOT = iphoneos;

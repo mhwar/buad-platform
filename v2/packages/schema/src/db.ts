@@ -709,6 +709,11 @@ export const productRequests = sqliteTable(
     packageId: text("package_id").notNull().default(""),
     /** When it last moved between stages (epoch seconds, 0 = never moved). */
     stageChangedAt: integer("stage_changed_at").notNull().default(0),
+    /**
+     * A draft project moved back to sales («نقل إلى المبيعات»): kept archived, with its documents and
+     * tasks, and restored — not created again — when the opportunity is converted. "" = none.
+     */
+    draftProjectId: text("draft_project_id").notNull().default(""),
     /** Hash of (ip, org, day): only used to limit abuse, never shown. */
     ipHash: text("ip_hash").notNull().default(""),
     createdAt: integer("created_at").notNull().default(now),

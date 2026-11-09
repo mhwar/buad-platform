@@ -18,6 +18,7 @@ import {
   Plus,
   Settings2,
   Trash2,
+  Undo2,
   Users,
   Wallet,
 } from "lucide-react";
@@ -55,6 +56,7 @@ import { RecordMeetings } from "../workspace/RecordMeetings";
 import {
   archiveProject,
   deleteProject,
+  moveToSales,
   type ProjectStatus,
   projectKeys,
   projectQuery,
@@ -149,6 +151,7 @@ export function ProjectPage() {
   const canDelete = !!me?.perms.includes("projects.delete");
   const canArchive = !!me?.perms.includes("projects.archive");
   const canTeam = !!me?.perms.includes("team.view") && !!me?.perms.includes("projects.edit");
+  const canSell = !!me?.perms.includes("sales.edit") && !!me?.perms.includes("projects.edit");
   const refresh = () =>
     Promise.all([
       qc.invalidateQueries({ queryKey: projectKeys.all }),
@@ -167,7 +170,9 @@ export function ProjectPage() {
           ? "العميل مؤرشف. استعيدوا العميل أولاً."
           : code === "has_records"
             ? "للمشروع قيود مالية أو مستندات أو مهام، فلا يُحذف نهائياً. أرشِفه بدلاً من ذلك ليبقى سجله."
-            : "تعذّر تنفيذ العملية",
+            : code === "has_finance_records"
+              ? "للمشروع قيود أو مقبوضات أو دفعات، فلا يعود إلى المبيعات."
+              : "تعذّر تنفيذ العملية",
       );
     }
   };
@@ -276,6 +281,32 @@ export function ProjectPage() {
     { label: "نسخ رابط المشروع", icon: <Link2 />, onSelect: copyLink },
     ...(canTeam
       ? [{ label: "فريق المشروع", icon: <Users />, onSelect: () => setMembers(true) }]
+      : []),
+    ...(canSell && p.status === "draft" && !p.external && !p.archivedAt
+      ? [
+          {
+            label: "نقل إلى المبيعات",
+            hint: "فرصة حتى يُتفق على العرض، ثم يعود المشروع نفسه",
+            icon: <Undo2 />,
+            onSelect: async () => {
+              if (
+                await confirmAction({
+                  title: `نقل «${p.name}» إلى المبيعات؟`,
+                  text: "يصبح فرصة لعميله بقيمته وخدمته، ويُخفى المشروع بمستنداته ومهامه حتى يُقبل عرض السعر ويُحوَّل، فيعود هو نفسه برقمه.",
+                  action: "نقل إلى المبيعات",
+                })
+              ) {
+                let opportunity = "";
+                await act(
+                  async () => {
+                    opportunity = (await moveToSales(p.id)).id;
+                  },
+                  () => navigate({ to: "/sales/$id", params: { id: opportunity } }),
+                );
+              }
+            },
+          },
+        ]
       : []),
     ...financeMenu(),
     ...(canArchive || canDelete ? (["separator"] as MenuItem[]) : []),

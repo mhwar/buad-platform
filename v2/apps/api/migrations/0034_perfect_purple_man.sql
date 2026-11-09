@@ -1,0 +1,1 @@
+ALTER TABLE `product_requests` ADD `draft_project_id` text DEFAULT '' NOT NULL;

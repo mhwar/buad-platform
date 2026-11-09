@@ -14,7 +14,7 @@ import { loadVatRate } from "./finance";
 import { notify } from "./notifications";
 import { clientFromLead, ensureClient, moveStage, touchClient } from "./opportunity";
 import { pricingOf } from "./products";
-import { insertProject, liveClient } from "./projects";
+import { insertProject, liveClient, restoreDraftProject } from "./projects";
 import { shapeQuote } from "./quotes";
 import { resolveServiceLink } from "./service-link";
 
@@ -71,6 +71,8 @@ export const shapeRequest = (r: Row, seesProfit = true) => ({
   notes: r.notes,
   clientId: r.clientId,
   projectId: r.projectId,
+  /** A draft project waiting in sales; it is restored when the opportunity is converted. */
+  draftProjectId: r.draftProjectId,
   ownerId: r.ownerId,
   followUpAt: r.followUpAt,
   value: r.valueHalalas / 100,
@@ -493,32 +495,42 @@ requestsApp
     const answers = Object.entries(JSON.parse(row.answers) as Record<string, string>)
       .map(([k, a]) => `${k}: ${a}`)
       .join("\n");
-    const project = await insertProject(
-      db,
-      me,
-      {
-        clientId,
-        name: v.projectName || `${row.productName || "طلب"} — ${row.entity || row.name}`,
-        type: "other",
-        status: "draft",
-        visibility: "team",
-        location: "",
-        startDate: "",
-        endDate: "",
-        payDate: "",
-        expectedValue: r2(quote.price ?? 0),
-        notes: [
-          quote.packageName ? `الباقة: ${quote.packageName} × ${quote.times}` : "",
-          answers,
-          row.message,
-        ]
-          .filter(Boolean)
-          .join("\n"),
-        productId: "",
-        packageId: "",
-      } as Parameters<typeof insertProject>[2],
-      await serviceLinkOf(db, me.orgId, row.productId, quote),
-    );
+    const name = v.projectName || `${row.productName || "طلب"} — ${row.entity || row.name}`;
+    const svc = await serviceLinkOf(db, me.orgId, row.productId, quote);
+    const restored = await restoreDraftProject(db, me, row.draftProjectId, {
+      clientId,
+      name,
+      expectedValue: r2(quote.price ?? 0) || row.valueHalalas / 100,
+      ...svc,
+    });
+    const project =
+      restored ??
+      (await insertProject(
+        db,
+        me,
+        {
+          clientId,
+          name,
+          type: "other",
+          status: "draft",
+          visibility: "team",
+          location: "",
+          startDate: "",
+          endDate: "",
+          payDate: "",
+          expectedValue: r2(quote.price ?? 0),
+          notes: [
+            quote.packageName ? `الباقة: ${quote.packageName} × ${quote.times}` : "",
+            answers,
+            row.message,
+          ]
+            .filter(Boolean)
+            .join("\n"),
+          productId: "",
+          packageId: "",
+        } as Parameters<typeof insertProject>[2],
+        svc,
+      ));
     row.clientId = clientId;
     await moveStage(db, me, row, "won", { clientId, projectId: project.id });
     return c.json({ ok: true, clientId, projectId: project.id, number: project.number }, 201);
