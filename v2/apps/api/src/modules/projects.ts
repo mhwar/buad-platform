@@ -134,8 +134,7 @@ export async function insertProject(
   });
   // The organisation's contract defaults («الإعدادات ← المالية») apply from the project's start.
   // Without them nothing is written: the project reads the built-in defaults as before.
-  // An external project never has money records, so it gets no contract terms either.
-  if (!defaults || v.external) await insert;
+  if (!defaults) await insert;
   else
     await atomic(db, [
       insert,
@@ -386,8 +385,9 @@ export const projectsApp = new Hono<Env>()
     const start = v.startDate ?? current.startDate;
     const end = v.endDate ?? current.endDate;
     if (start && end && end < start) return c.json({ ok: false, error: "end_before_start" }, 400);
-    // Into «خارجي» only with no money records, so nothing silently leaves the figures.
-    if (v.external && !current.external) {
+    // Between internal and external only with no money records: an external project's books
+    // are its own, so moving them would silently add to or take from the company's figures.
+    if (v.external !== undefined && v.external !== current.external) {
       const held = await financeRecords(db, current.id);
       if (held.length) return c.json({ ok: false, error: "has_finance_records", held }, 409);
     }

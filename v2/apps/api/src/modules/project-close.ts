@@ -251,7 +251,6 @@ export const projectCloseApp = new Hono<Env>()
       const project = await loadVisible(db, me, c.req.param("projectId") ?? "");
       if (!project) return c.json({ ok: false, error: "not_found" }, 404);
       if (project.closedAt) return c.json({ ok: false, error: "already_closed" }, 409);
-      if (project.external) return c.json({ ok: false, error: "project_external" }, 409);
       const t = nowSec();
       const settle = await settlement(db, me, project, body, t);
       if ("error" in settle) return c.json({ ok: false, error: settle.error }, 409);
@@ -292,9 +291,7 @@ export const projectCloseApp = new Hono<Env>()
       if (project.status === "cancelled")
         return c.json({ ok: false, error: "already_cancelled" }, 409);
       const t = nowSec();
-      const settle = project.external
-        ? { writes: [], changes: [] }
-        : await settlement(db, me, project, body, t);
+      const settle = await settlement(db, me, project, body, t);
       if ("error" in settle) return c.json({ ok: false, error: settle.error }, 409);
       await atomic(db, [
         ...settle.writes,

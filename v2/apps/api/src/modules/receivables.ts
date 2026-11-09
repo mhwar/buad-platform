@@ -146,7 +146,6 @@ export const receivablesApp = new Hono<Env>()
       const db = c.get("db");
       const p = await loadVisible(db, me, c.req.param("projectId"));
       if (!p) return c.json({ ok: false, error: "not_found" }, 404);
-      if (p.external) return c.json({ ok: false, error: "project_external" }, 409);
       const v = c.req.valid("json");
       const id = newId("psc");
       await db.insert(paymentSchedule).values({

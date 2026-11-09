@@ -320,8 +320,8 @@ function ProjectCard({ p }: { p: ProjectListItem }) {
             {label(PROJECT_TYPE_LABELS, p.type)}
             {p.startDate && ` · ${day(p.startDate)}`}
           </span>
-          {p.external ? (
-            <span className="text-xs text-muted">لا يدخل في المالية</span>
+          {p.external && !p.contractTotal ? (
+            <span className="text-xs text-muted">حسابات منفصلة</span>
           ) : (
             p.contractTotal > 0 && (
               <span
@@ -436,26 +436,21 @@ function ProjectTable({ items }: { items: ProjectListItem[] }) {
             numeric: true,
             sort: (p) => p.received ?? -1,
             cell: (p) =>
-              p.external || p.received === null || p.received === undefined
-                ? "—"
-                : moneyShort(p.received),
+              p.received === null || p.received === undefined ? "—" : moneyShort(p.received),
           },
           {
             key: "value",
             header: "قيمة العقد",
             numeric: true,
             sort: (p) => p.contractTotal,
-            cell: (p) =>
-              p.external ? (
-                <span className="text-xs text-muted">خارجي</span>
-              ) : (
-                <>
-                  {p.contractTotal ? moneyShort(p.contractTotal) : "—"}
-                  {p.estimated && p.contractTotal > 0 && (
-                    <span className="ms-1 text-xs text-muted">تقديري</span>
-                  )}
-                </>
-              ),
+            cell: (p) => (
+              <>
+                {p.contractTotal ? moneyShort(p.contractTotal) : "—"}
+                {p.estimated && p.contractTotal > 0 && (
+                  <span className="ms-1 text-xs text-muted">تقديري</span>
+                )}
+              </>
+            ),
           },
         ]}
       />

@@ -78,10 +78,13 @@ const Row = ({ label, value, strong }: { label: string; value: string; strong?: 
 export function CloseProjectDialog({
   projectId,
   projectName,
+  external = false,
   onClose,
 }: {
   projectId: string;
   projectName: string;
+  /** External books are separate: their profit is never distributed by the company. */
+  external?: boolean;
   onClose: () => void;
 }) {
   const qc = useQueryClient();
@@ -128,6 +131,10 @@ export function CloseProjectDialog({
               تحديث المراجعة
             </Button>
           </DialogActions>
+        ) : external ? (
+          <DialogActions onCancel={onClose} cancelLabel="تم">
+            {null}
+          </DialogActions>
         ) : (
           <DialogActions onCancel={onClose} cancelLabel="لاحقاً ضمن توزيع الربع">
             <Button
@@ -153,8 +160,9 @@ export function CloseProjectDialog({
             والمتبقي للتوزيع <b>{sar(c.figures.undistributed)}</b>.
           </p>
           <p className="text-muted">
-            يظهر المشروع في «الأرباح والتوزيع» بشارة «مغلق · جاهز للتوزيع». وزّعوا ربحه الآن وحده، أو
-            ضمن توزيع الربع لاحقاً.
+            {external
+              ? "مشروع خارجي: أرقامه داخله فقط، ولا يدخل ربحه في توزيعات الشركة."
+              : "يظهر المشروع في «الأرباح والتوزيع» بشارة «مغلق · جاهز للتوزيع». وزّعوا ربحه الآن وحده، أو ضمن توزيع الربع لاحقاً."}
           </p>
         </div>
       ) : (
