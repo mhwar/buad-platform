@@ -78,8 +78,11 @@ struct MainTabs: View {
             if me.can("projects.view") { page(ProjectsView(), .projects) }
             page(MoreView(), .more)
         }
-        .overlay(alignment: .bottom) {
+        // Part of the layout, not drawn over it: every screen, pushed ones included, ends above the dock,
+        // so nothing can be left behind it however far the list is scrolled.
+        .safeAreaInset(edge: .bottom, spacing: 0) {
             Dock(items: items, selection: $tab)
+                .padding(.top, 6)
                 .padding(.bottom, 4)
                 .ignoresSafeArea(.keyboard, edges: .bottom)
         }
@@ -99,7 +102,6 @@ struct MainTabs: View {
 
     private func page(_ content: some View, _ id: Tab) -> some View {
         content
-            .safeAreaInset(edge: .bottom, spacing: 0) { Color.clear.frame(height: Dock.height + 8) }
             .toolbar(.hidden, for: .tabBar)
             .tag(id)
     }

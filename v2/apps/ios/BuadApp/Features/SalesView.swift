@@ -376,7 +376,7 @@ private struct SalesBoard: View {
                 .foregroundStyle(tone?.foreground ?? Buad.ink)
             if let sub { Text(sub).font(.caption2).foregroundStyle(Buad.muted).lineLimit(2) }
         }
-        .joinedCell(minHeight: 78)
+        .joinedCell(minHeight: 62)
     }
 
     private static func pct(_ v: Double) -> String { v == v.rounded() ? "\(Int(v))%" : String(format: "%.1f%%", v) }
@@ -412,6 +412,7 @@ struct OpportunityView: View {
     @State private var movingTo: String?
     @State private var toast: ToastItem?
     @State private var quoting = false
+    @State private var editing = false
 
     private var canEdit: Bool { session.me?.can("sales.edit") ?? false }
     private var o: Opportunity { detail?.opportunity ?? preview }
@@ -421,18 +422,8 @@ struct OpportunityView: View {
             VStack(alignment: .leading, spacing: 16) {
                 header
                 if let error { EmptyNote(text: error, icon: "exclamationmark.triangle") }
-                stepper
-                if canEdit && o.isOpen {
-                    Button { logging = true } label: {
-                        Label("تسجيل تواصل", systemImage: "plus.bubble")
-                            .font(.body.weight(.semibold))
-                            .frame(maxWidth: .infinity).frame(height: 48)
-                            .background(Buad.ink, in: RoundedRectangle(cornerRadius: Buad.control, style: .continuous))
-                            .foregroundStyle(Buad.onInk)
-                    }
-                    .buttonStyle(.plain)
-                }
-                contact
+                track
+                actionRow
                 details
                 if let d = detail, !d.quotes.isEmpty || (canEdit && o.isOpen) { offers(d) }
                 timeline
@@ -462,6 +453,12 @@ struct OpportunityView: View {
                 Task { await load() }
             }
             .presentationDetents([.medium, .large])
+        }
+        .sheet(isPresented: $editing) {
+            OpportunityEditSheet(opportunity: o) {
+                toast = ToastItem(text: "حُفظت الفرصة")
+                Task { await load() }
+            }
         }
         .sheet(isPresented: $quoting) {
             QuoteEditor(opportunity: o) { _ in
@@ -495,100 +492,89 @@ struct OpportunityView: View {
         }
     }
 
-    /// The stage stepper: tap a stage to move the opportunity there (sales.edit).
-    /// «مراحل الفرصة»: the four open steps joined in order (done ones ticked), then «مكسوب», and «خاسر»
-    /// apart. Tapping a step moves the opportunity there (sales.edit): «مكسوب» asks first, «خاسر» asks
-    /// for the reason, and every move can be undone from the confirmation.
-    private var stepper: some View {
-        let current = Sales.stages.firstIndex(of: o.status) ?? 0
-        return VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Text("مراحل الفرصة").font(.subheadline.weight(.semibold))
-                if movingTo != nil { ProgressView().controlSize(.small) }
-                Spacer()
+    /// Where the opportunity is, at a glance: four steps filled up to the current one, each named
+    /// beneath; a won or lost one shows its result instead. Moving it is the «الحالة» action below.
+    @ViewBuilder private var track: some View {
+        let open = Sales.openStages
+        let idx = open.firstIndex(of: o.status)
+        let st = Sales.stage(o.status)
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 8) {
+                Text(st.label).font(.subheadline.weight(.bold)).foregroundStyle(st.tone.foreground)
                 if let hint = Sales.stageHint[o.status] { Text(hint).font(.caption).foregroundStyle(Buad.muted).lineLimit(1) }
+                Spacer()
+                if movingTo != nil { ProgressView().controlSize(.small) }
             }
-            ScrollViewReader { reader in
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 4) {
-                        ForEach(Array(Sales.stages.enumerated()), id: \.element) { i, s in
-                            if s == "lost" {
-                                Rectangle().fill(Buad.line).frame(width: 1, height: 24).padding(.horizontal, 6)
-                            } else if i > 0 {
-                                Rectangle().fill(i <= current && o.status != "lost" ? Buad.success : Buad.line).frame(width: 10, height: 2)
-                            }
-                            step(s, done: o.status != "lost" && s != "lost" && i < current, on: o.status == s).id(s)
+            if let idx {
+                HStack(spacing: 4) {
+                    ForEach(Array(open.enumerated()), id: \.element) { i, s in
+                        VStack(spacing: 5) {
+                            Capsule().fill(i <= idx ? st.tone.foreground : Buad.line).frame(height: 5)
+                            Text(Sales.stage(s).label).font(.system(size: 10.5, weight: i == idx ? .bold : .regular))
+                                .foregroundStyle(i == idx ? Buad.ink : Buad.muted).lineLimit(1).minimumScaleFactor(0.8)
                         }
+                        .frame(maxWidth: .infinity)
                     }
-                    .padding(.horizontal, Buad.gutter)
-                    .padding(.vertical, 2)
                 }
-                .onAppear { reader.scrollTo(o.status, anchor: .center) }
-                .onChange(of: o.status) { _, now in withAnimation { reader.scrollTo(now, anchor: .center) } }
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("المرحلة \(idx + 1) من \(open.count): \(st.label)")
+            } else {
+                Text(o.status == "won" ? "تم الاتفاق وتحويل الفرصة" : o.lostReason.isEmpty ? "لم تكتمل الفرصة" : "لم تكتمل: \(o.lostReason)")
+                    .font(.footnote).foregroundStyle(Buad.muted)
             }
-            .padding(.horizontal, -Buad.gutter)
         }
+        .padding(12)
+        .background(Buad.surface, in: RoundedRectangle(cornerRadius: Buad.radius, style: .continuous))
     }
 
-    @ViewBuilder private func step(_ s: String, done: Bool, on: Bool) -> some View {
-        let st = Sales.stage(s)
-        let look = HStack(spacing: 4) {
-            if done { Image(systemName: "checkmark").font(.caption2.weight(.bold)) }
-            Text(st.label).font(.subheadline.weight(on ? .bold : .medium))
-        }
-        .padding(.horizontal, 12)
-        .frame(minHeight: 34)
-        .background(on ? st.tone.background : done ? Buad.successSoft : Buad.surface, in: Capsule())
-        .overlay(Capsule().stroke(on ? st.tone.foreground : Buad.line))
-        .foregroundStyle(on ? st.tone.foreground : done ? Buad.successInk : Buad.muted)
-        if canEdit && !on {
-            Button {
-                guard movingTo == nil else { return }
-                switch s {
-                case "won": winning = true
-                case "lost": lostReason = o.lostReason; losing = true
-                default: Task { await move(s) }
-                }
-            } label: {
-                look.padding(.vertical, 5).contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .disabled(movingTo != nil)
-            .accessibilityLabel("نقل إلى \(st.label)")
-            .accessibilityHint(Sales.stageHint[s] ?? "")
-        } else {
-            look.padding(.vertical, 5)
-                .accessibilityLabel(on ? "المرحلة الحالية: \(st.label)" : st.label)
-        }
-    }
-
-    @ViewBuilder private var contact: some View {
+    /// Everything to do with the opportunity in one row: log a contact, write an offer, move it to
+    /// another stage, call or write to them. Each opens its own action.
+    @ViewBuilder private var actionRow: some View {
         let phone = o.phone.filter { $0.isNumber || $0 == "+" }
         let wa = ReceiptRules.whatsapp(o.phone)
-        if !phone.isEmpty || !o.email.isEmpty {
-            HStack(spacing: 10) {
-                if !phone.isEmpty, let tel = URL(string: "tel:\(phone)") { contactButton("اتصال", "phone.fill", tel) }
-                if !wa.isEmpty, let url = URL(string: "https://wa.me/\(wa)") { contactButton("واتساب", "message.fill", url) }
-                if !o.email.isEmpty, let mail = URL(string: "mailto:\(o.email)") { contactButton("بريد", "envelope.fill", mail) }
+        let mail = o.email
+        let hasContact = !phone.isEmpty || !wa.isEmpty || !mail.isEmpty
+        if (canEdit) || hasContact {
+            ActionRow {
+                if canEdit && o.isOpen {
+                    ActionTile(icon: "plus.bubble", title: "تسجيل تواصل", primary: true) { logging = true }
+                    ActionTile(icon: "doc.badge.plus", title: "عرض سعر") { quoting = true }
+                }
+                if canEdit {
+                    ActionMenuTile(icon: "arrow.left.arrow.right", title: "الحالة", detail: Sales.stage(o.status).label) {
+                        ForEach(Sales.stages.filter { $0 != o.status }, id: \.self) { s in
+                            Button(Sales.stage(s).label) {
+                                guard movingTo == nil else { return }
+                                switch s {
+                                case "won": winning = true
+                                case "lost": lostReason = o.lostReason; losing = true
+                                default: Task { await move(s) }
+                                }
+                            }
+                        }
+                    }
+                }
+                if hasContact {
+                    ActionMenuTile(icon: "phone.fill", title: "اتصال") {
+                        if !phone.isEmpty, let tel = URL(string: "tel:\(phone)") { Link(destination: tel) { Label("اتصال", systemImage: "phone") } }
+                        if !wa.isEmpty, let url = URL(string: "https://wa.me/\(wa)") { Link(destination: url) { Label("واتساب", systemImage: "message") } }
+                        if !mail.isEmpty, let m = URL(string: "mailto:\(mail)") { Link(destination: m) { Label("بريد", systemImage: "envelope") } }
+                    }
+                }
             }
-        }
-    }
-
-    private func contactButton(_ title: String, _ icon: String, _ url: URL) -> some View {
-        Link(destination: url) {
-            VStack(spacing: 4) {
-                Image(systemName: icon).font(.body)
-                Text(title).font(.caption.weight(.medium))
-            }
-            .frame(maxWidth: .infinity).frame(height: 58)
-            .background(Buad.surface, in: RoundedRectangle(cornerRadius: Buad.control, style: .continuous))
-            .foregroundStyle(Buad.ink)
         }
     }
 
     private var details: some View {
         Card {
-            Text("بيانات الفرصة").font(.headline)
+            HStack {
+                Text("بيانات الفرصة").font(.headline)
+                Spacer()
+                if canEdit {
+                    Button { editing = true } label: { Label("تعديل", systemImage: "pencil").font(.subheadline.weight(.medium)) }
+                        .frame(minHeight: Buad.tap)
+                }
+            }
             if !o.draftProjectId.isEmpty && o.isOpen {
                 Label("مشروعها المسودة محفوظ: يعود برقمه ومستنداته ومهامه عند قبول العرض و«تحويل إلى مشروع».", systemImage: "briefcase")
                     .font(.footnote).foregroundStyle(Buad.infoInk)

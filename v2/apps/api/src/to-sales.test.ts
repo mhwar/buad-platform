@@ -151,6 +151,68 @@ describe("moving a draft project back to sales", () => {
     expect(won).toMatchObject({ status: "won", projectId: project });
   });
 
+  it("carries a project's contract and pending entries as a draft offer and notes, and returns at the agreed price", async () => {
+    const { client, project } = await draft({ expectedValue: 0 });
+    const F = `/api/projects/${project}/finance`;
+    // The contract as رائدات has it: 207,400 with VAT included, a 10% execution fee, one pending cost.
+    expect(
+      (
+        await call("own", "PATCH", `${F}/ctrl`, {
+          version: 0,
+          contractValue: 207400,
+          vatIncluded: true,
+          vatPct: 15,
+          execV: 10,
+        })
+      ).status,
+    ).toBe(200);
+    expect(
+      (
+        await call("own", "POST", `${F}/entries`, {
+          date: addDays(0),
+          description: "تكاليف تنفيذ",
+          cat: "other",
+          type: "expense",
+          amount: 55000,
+          status: "pending",
+        })
+      ).status,
+    ).toBe(201);
+
+    const r = await call("own", "POST", `/api/projects/${project}/to-sales`);
+    expect(r.status).toBe(201);
+    expect(r.body.quoteId).toBeTruthy();
+    const detail = (await call("own", "GET", `/api/product-requests/${r.body.id}`)).body;
+    expect(detail.opportunity.value).toBeCloseTo(180347.83, 1); // 207,400 taken back out of the 15% VAT
+    expect(detail.opportunity.notes).toContain("تكاليف تنفيذ");
+    expect(detail.opportunity.notes).toContain("قيمة العقد");
+    const quote = (await call("own", "GET", `/api/quotes/${r.body.quoteId}`)).body.quote;
+    expect(quote).toMatchObject({
+      status: "draft",
+      requestId: r.body.id,
+      clientId: client,
+      vatPct: 15,
+    });
+    expect(quote.totals.total).toBeCloseTo(207400, 0);
+    expect(quote.items).toHaveLength(1);
+
+    // The deal is struck at 200,000 + VAT; the same project comes back with its contract following it.
+    await call("own", "PATCH", `/api/quotes/${r.body.quoteId}`, {
+      version: 1,
+      items: [{ label: "برنامج رائدات", qty: 1, unit: 200000 }],
+      validUntil: addDays(15),
+    });
+    await call("own", "POST", `/api/quotes/${r.body.quoteId}/status`, { to: "sent" });
+    await call("own", "POST", `/api/quotes/${r.body.quoteId}/status`, { to: "accepted" });
+    const conv = await call("own", "POST", `/api/quotes/${r.body.quoteId}/convert`, {
+      schedule: "none",
+    });
+    expect(conv.body.projectId).toBe(project);
+    const fin = (await call("own", "GET", F)).body;
+    expect(fin.ctrl.contractValue).toBe(23000000); // 200,000 + 15% = 230,000 SAR, in halalas
+    expect(fin.entries).toHaveLength(1); // the pending cost stayed with the project
+  });
+
   it("refuses a project that is not a draft, has money recorded, or is asked by someone who does not sell", async () => {
     const a = await draft({ status: "active" });
     expect((await call("own", "POST", `/api/projects/${a.project}/to-sales`)).body.error).toBe(
@@ -164,6 +226,19 @@ describe("moving a draft project back to sales", () => {
       amount: 1000,
     });
     expect((await call("own", "POST", `/api/projects/${b.project}/to-sales`)).body.error).toBe(
+      "has_finance_records",
+    );
+
+    const paid = await draft();
+    await call("own", "POST", `/api/projects/${paid.project}/finance/entries`, {
+      date: addDays(0),
+      description: "مصروف مدفوع",
+      cat: "other",
+      type: "expense",
+      amount: 100,
+      status: "paid",
+    });
+    expect((await call("own", "POST", `/api/projects/${paid.project}/to-sales`)).body.error).toBe(
       "has_finance_records",
     );
 

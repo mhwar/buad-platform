@@ -90,14 +90,7 @@ struct ProjectWorkTab: View {
     // MARK: stages
 
     @ViewBuilder private func stages(_ x: Execution) -> some View {
-        HStack {
-            Text("المراحل").font(.headline)
-            Spacer()
-            if canEdit {
-                Button { newStage = true } label: { Label("مرحلة", systemImage: "plus").font(.subheadline.weight(.semibold)) }
-                    .frame(minHeight: Buad.tap)
-            }
-        }
+        Text("المراحل").font(.headline)
         if x.stages.isEmpty {
             VStack(alignment: .leading, spacing: 10) {
                 Text("قسّم العمل إلى مراحل تتابع تقدّمها: التحضير، التنفيذ، التسليم…").font(.footnote).foregroundStyle(Buad.muted)
@@ -181,16 +174,9 @@ struct ProjectWorkTab: View {
     @ViewBuilder private func tasks(_ x: Execution) -> some View {
         let open = x.tasks.filter { $0.status != "done" }
         let closed = x.tasks.filter { $0.status == "done" }
-        HStack {
-            Text("المهام").font(.headline)
-            Spacer()
-            if canEdit {
-                Button { newTask = true } label: { Label("مهمة", systemImage: "plus").font(.subheadline.weight(.semibold)) }
-                    .frame(minHeight: Buad.tap)
-            }
-        }
+        Text("المهام").font(.headline)
         if x.tasks.isEmpty {
-            EmptyNote(text: canEdit ? "لا مهام بعد. أضف أول مهمة وأسندها لأحد الفريق." : "لا مهام لهذا المشروع.", icon: "checklist")
+            EmptyNote(text: canEdit ? "لا مهام بعد. أضف أول مهمة من زر «مهمة» أعلاه وأسندها لأحد الفريق." : "لا مهام لهذا المشروع.", icon: "checklist")
         } else {
             let byStage = Dictionary(grouping: open) { $0.stageId }
             let order = x.stages.map(\.id).filter { byStage[$0] != nil } + (byStage[""] != nil ? [""] : [])

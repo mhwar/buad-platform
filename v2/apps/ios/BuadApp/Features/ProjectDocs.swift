@@ -19,28 +19,11 @@ struct ProjectDocumentsTab: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Text("العقود والخطابات").font(.headline)
-                Spacer()
-                if canEdit {
-                    Button { newDocument = true } label: { Label("مستند جديد", systemImage: "plus").font(.subheadline.weight(.semibold)) }
-                        .frame(minHeight: Buad.tap)
-                }
-            }
+            Text("العقود والخطابات").font(.headline)
             if let docs = documents {
                 if docs.isEmpty {
-                    VStack(spacing: 12) {
-                        EmptyNote(text: "لا مستندات بعد. العقد يُنشأ معبأً تلقائياً من بيانات الجهة والعميل والمشروع والمالية.", icon: "doc.text")
-                        if canEdit {
-                            Button { newDocument = true } label: {
-                                Label("إنشاء عقد", systemImage: "signature")
-                                    .font(.body.weight(.semibold)).frame(maxWidth: .infinity, minHeight: 50)
-                                    .background(Buad.ink, in: RoundedRectangle(cornerRadius: Buad.control, style: .continuous))
-                                    .foregroundStyle(Buad.onInk)
-                            }
-                            .buttonStyle(.plain)
-                        }
-                    }
+                    EmptyNote(text: canEdit ? "لا مستندات بعد. اضغط «مستند جديد» أعلاه: العقد يُنشأ معبأً تلقائياً من بيانات الجهة والعميل والمشروع والمالية."
+                                : "لا مستندات لهذا المشروع.", icon: "doc.text")
                 } else {
                     VStack(spacing: 0) {
                         ForEach(Array(docs.enumerated()), id: \.element.id) { i, d in

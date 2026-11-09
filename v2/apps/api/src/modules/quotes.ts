@@ -360,6 +360,8 @@ export const quotesApp = new Hono<Env>()
       clientId,
       name: v.projectName || r.title,
       expectedValue: t.net / 100,
+      agreedNet: t.net,
+      agreedTotal: t.total,
       ...(link && link.ok ? link : {}),
     });
     const project =

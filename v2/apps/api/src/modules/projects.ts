@@ -4,11 +4,13 @@ import {
   clients,
   distributionProjects,
   distributions,
+  financeEntries,
   legacyMap,
   productRequests,
   products,
   projectFinance,
   projects,
+  quotes,
 } from "@buad/schema/db";
 import { DEFAULT_CTRL } from "@buad/schema/finance";
 import { zValidator } from "@hono/zod-validator";
@@ -106,6 +108,9 @@ export async function restoreDraftProject(
     clientId: string;
     name: string;
     expectedValue: number;
+    /** The agreed price in halalas, before and after VAT: the contract value follows it (unless locked). */
+    agreedNet?: number;
+    agreedTotal?: number;
     productId?: string;
     packageId?: string;
     packageName?: string;
@@ -118,6 +123,26 @@ export async function restoreDraftProject(
     .where(and(eq(projects.id, draftId), eq(projects.orgId, me.orgId)))
     .limit(1);
   if (!p || p.status !== "draft" || !p.archivedAt) return null;
+  if (set.agreedNet !== undefined && set.agreedTotal !== undefined) {
+    const [fin] = await db
+      .select()
+      .from(projectFinance)
+      .where(eq(projectFinance.projectId, p.id))
+      .limit(1);
+    if (fin && !fin.cvLocked) {
+      const value = fin.vatIncluded ? set.agreedTotal : set.agreedNet;
+      if (value !== fin.contractValue)
+        await db
+          .update(projectFinance)
+          .set({
+            contractValue: value,
+            version: fin.version + 1,
+            updatedBy: me.id,
+            updatedAt: nowSec(),
+          })
+          .where(eq(projectFinance.projectId, p.id));
+    }
+  }
   await db
     .update(projects)
     .set({
@@ -481,8 +506,21 @@ export const projectsApp = new Hono<Env>()
     if (!p) return c.json({ ok: false, error: "not_found" }, 404);
     if (p.status !== "draft" || p.external || p.archivedAt || p.closedAt)
       return c.json({ ok: false, error: "not_draft" }, 409);
-    if ((await financeRecords(db, p.id)).length)
+    // Settled money keeps a project where it is. Pending entries and the contract terms are still a
+    // proposal, so they travel as the terms under negotiation (and stay on the project).
+    const held = (await financeRecords(db, p.id)).filter((k) => k !== "entries");
+    const entries = await db
+      .select()
+      .from(financeEntries)
+      .where(eq(financeEntries.projectId, p.id))
+      .orderBy(asc(financeEntries.date));
+    if (held.length || entries.some((e) => e.status === "paid"))
       return c.json({ ok: false, error: "has_finance_records" }, 409);
+    const [fin] = await db
+      .select()
+      .from(projectFinance)
+      .where(eq(projectFinance.projectId, p.id))
+      .limit(1);
     const [client] = await db
       .select()
       .from(clients)
@@ -499,7 +537,50 @@ export const projectsApp = new Hono<Env>()
       : [];
     const t = nowSec();
     const id = newId("req");
+    // The negotiated price is before VAT, as an offer is: the contract value when it was set (taken
+    // back out of the VAT when it included it), otherwise the project's expected value.
+    const vatPct = fin?.vatPct ?? 15;
+    const gross = fin?.contractValue || p.expectedValue;
+    const net =
+      fin?.vatIncluded && fin.contractValue ? Math.round(gross / (1 + vatPct / 100)) : gross;
+    const sar = (h: number) => `${(h / 100).toLocaleString("en")} ر.س`;
+    const terms = [
+      fin?.contractValue
+        ? `قيمة العقد ${sar(fin.contractValue)} ${fin.vatIncluded ? `شاملة الضريبة ${vatPct}%` : "قبل الضريبة"}`
+        : "",
+      fin && fin.execV
+        ? `أتعاب التنفيذ ${fin.execType === "pct" ? `${fin.execV}%` : sar(fin.execV * 100)}`
+        : "",
+      ...entries.map(
+        (e) =>
+          `${e.type === "income" ? "دخل" : "مصروف"}: ${e.description} ${sar(e.amount)}${e.status === "pending" ? " (معلّق)" : ""}`,
+      ),
+    ].filter(Boolean);
+    const quoteId = newId("qte");
+    const quoteNumber = net > 0 ? await nextCode(db, me.orgId, "quote") : "";
     await atomic(db, [
+      ...(net > 0
+        ? [
+            db.insert(quotes).values({
+              id: quoteId,
+              orgId: me.orgId,
+              number: quoteNumber,
+              requestId: id,
+              clientId: client.id,
+              productId: p.productId,
+              packageId: p.packageId,
+              recipient: "",
+              entity: client.name,
+              title: p.name,
+              items: JSON.stringify([{ label: p.name, qty: 1, unitHalalas: net }]),
+              discountHalalas: 0,
+              vatPct,
+              validUntil: "",
+              terms: "",
+              createdBy: me.id,
+            }),
+          ]
+        : []),
       db.insert(productRequests).values({
         id,
         orgId: me.orgId,
@@ -513,11 +594,19 @@ export const projectsApp = new Hono<Env>()
         phone: client.phone,
         email: client.email,
         message: p.name,
-        notes: [`نُقل من المشروع ${p.number}`, p.notes].filter(Boolean).join("\n"),
+        notes: [
+          `نُقل من المشروع ${p.number}${quoteNumber ? `، وعرض السعر ${quoteNumber} مسودة بقيمته` : ""}`,
+          terms.length
+            ? `ما كان مسجلاً في المشروع (للتفاوض):\n${terms.map((x) => `• ${x}`).join("\n")}`
+            : "",
+          p.notes,
+        ]
+          .filter(Boolean)
+          .join("\n"),
         clientId: client.id,
         ownerId: me.id,
         followUpAt: new Date(Date.now() + 2 * 86400000).toISOString().slice(0, 10),
-        valueHalalas: p.expectedValue,
+        valueHalalas: net,
         stageChangedAt: t,
         draftProjectId: p.id,
         updatedBy: me.id,
@@ -530,7 +619,7 @@ export const projectsApp = new Hono<Env>()
     c.set("auditChanges", [
       { field: "archived", label: "الأرشفة", before: "ظاهر", after: "نُقل إلى المبيعات" },
     ]);
-    return c.json({ ok: true, id }, 201);
+    return c.json({ ok: true, id, quoteId: net > 0 ? quoteId : "" }, 201);
   })
 
   .post("/:id/archive", requirePerm("projects.archive"), async (c) => {

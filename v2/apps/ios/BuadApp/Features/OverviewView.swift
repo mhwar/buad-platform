@@ -163,7 +163,7 @@ struct OverviewView: View {
             if let sub { Text(sub).font(.caption2).foregroundStyle(Buad.muted).lineLimit(2) }
             if let delta { Text(delta.0).font(.caption2).foregroundStyle(delta.1 == .neutral ? Buad.muted : delta.1.foreground) }
         }
-        .joinedCell(minHeight: 96)
+        .joinedCell(minHeight: 70)
     }
 
     // MARK: الحركة الشهرية
