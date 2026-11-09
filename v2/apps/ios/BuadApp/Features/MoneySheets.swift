@@ -259,6 +259,7 @@ struct InvoiceSheet: View {
     @State private var amount = ""
     @State private var vat = ""
     @State private var receiptId = ""
+    @State private var assetId = ""
     @State private var note = ""
     @State private var error: String?
     @State private var busy = false
@@ -282,7 +283,10 @@ struct InvoiceSheet: View {
                     }
                     TextField("ملاحظة", text: $note, axis: .vertical)
                 } footer: {
-                    Text("تاريخ الفاتورة يحدد ربع ضريبة المبيعات. الضريبة فارغة = تُحسب بنسبة المشروع. رفع ملف الفاتورة من الموقع حالياً.")
+                    Text("تاريخ الفاتورة يحدد ربع ضريبة المبيعات. الضريبة فارغة = تُحسب بنسبة المشروع.")
+                }
+                Section("الفاتورة المرسلة (PDF أو صورة)") {
+                    AttachmentField(assetId: $assetId, canUpload: session.me?.can("assets.edit") ?? false)
                 }
                 if let error { Section { Text(error).foregroundStyle(Buad.dangerInk) } }
                 Section {
@@ -313,6 +317,7 @@ struct InvoiceSheet: View {
         amount = plain(i.amount)
         vat = plain(i.vat)
         receiptId = i.receiptId
+        assetId = i.assetId
         note = i.note
     }
 
@@ -329,7 +334,8 @@ struct InvoiceSheet: View {
         do {
             try await APIClient.shared.saveSalesInvoice(id: invoice?.id, projectId: projectId, number: number.trimmingCharacters(in: .whitespaces),
                                                         date: Fmt.isoDay(date), riyals: (n * 100).rounded() / 100, vat: v,
-                                                        receiptId: receiptId, note: note.trimmingCharacters(in: .whitespacesAndNewlines))
+                                                        receiptId: receiptId, assetId: assetId,
+                                                        note: note.trimmingCharacters(in: .whitespacesAndNewlines))
             saved(invoice == nil ? "سُجّلت الفاتورة" : "حُفظت الفاتورة")
             dismiss()
         } catch {

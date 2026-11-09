@@ -28,8 +28,10 @@
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
+	<key>NSCameraUsageDescription</key>
+	<string>لتصوير الفاتورة أو الإيصال وإرفاقه بسجله في المنصة.</string>
 	<key>NSFaceIDUsageDescription</key>
-	<string>لفتح تطبيق بُعد على هذا الجهاز دون كتابة كلمة المرور.</string>
+	<string>لفتح تطبيق بُعد وتأكيد العمليات المالية على هذا الجهاز.</string>
 	<key>UILaunchScreen</key>
 	<dict/>
 	<key>UISupportedInterfaceOrientations</key>

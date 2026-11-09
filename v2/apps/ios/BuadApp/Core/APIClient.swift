@@ -33,6 +33,9 @@ enum APIError: Error, Equatable {
             case "amount_exceeds_line": return "المبلغ أكبر من الدفعة."
             case "closed", "project_closed": return "المشروع مغلق مالياً. أعد فتحه من الموقع أولاً."
             case "in_distribution": return "وُزّع ربح هذا المبلغ على الشركاء في توزيع مكتمل؛ ألغِ التوزيع أولاً من الموقع."
+            case "too_large": return "الملف أكبر من 2 ميغابايت."
+            case "unsupported_type": return "نوع الملف غير مدعوم. المسموح: صورة أو PDF."
+            case "storage_unavailable": return "تخزين الملفات غير متاح الآن."
             case "already_received": return "استُلمت هذه الدفعة، فلا تُعدَّل ولا تُحذف."
             case "invalid_category": return "التصنيف غير موجود. اسحب للتحديث ثم اختر تصنيفاً آخر."
             case "tax_invoice_on_expense_only": return "الفاتورة الضريبية للمصروفات فقط."
@@ -66,7 +69,19 @@ final class APIClient: @unchecked Sendable {
         return url.absoluteURL
     }
 
-    private func send<T: Decodable>(_ method: String, _ path: String, body: [String: Any]? = nil) async throws -> T {
+    private func send<T: Decodable>(_ method: String, _ path: String, body: [String: Any]? = nil,
+                                    raw: (data: Data, type: String)? = nil) async throws -> T {
+        let data = try await perform(method, path, body: body, raw: raw)
+        do {
+            return try JSONDecoder().decode(T.self, from: data)
+        } catch {
+            throw APIError.decoding
+        }
+    }
+
+    /// The request itself, with the API's status codes turned into APIError; answers the raw bytes.
+    private func perform(_ method: String, _ path: String, body: [String: Any]? = nil,
+                         raw: (data: Data, type: String)? = nil) async throws -> Data {
         var request = URLRequest(url: try url(path))
         request.httpMethod = method
         request.setValue("application/json", forHTTPHeaderField: "Accept")
@@ -74,6 +89,9 @@ final class APIClient: @unchecked Sendable {
         if let body {
             request.setValue("application/json", forHTTPHeaderField: "Content-Type")
             request.httpBody = try JSONSerialization.data(withJSONObject: body)
+        } else if let raw {
+            request.setValue(raw.type, forHTTPHeaderField: "Content-Type")
+            request.httpBody = raw.data
         }
         let data: Data
         let response: URLResponse
@@ -88,7 +106,7 @@ final class APIClient: @unchecked Sendable {
         case 401: throw path == "/api/auth/login" ? APIError.invalidCredentials : APIError.unauthorized
         case 403: throw APIError.forbidden
         case 429: throw APIError.tooManyAttempts
-        case 400, 404, 409, 422:
+        case 400, 404, 409, 413, 415, 422, 503:
             let json = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any]
             let reason = json?["error"] as? String
             if reason == "over_contract" {
@@ -98,11 +116,7 @@ final class APIClient: @unchecked Sendable {
             throw APIError.rejected(reason ?? "")
         default: throw APIError.server(code)
         }
-        do {
-            return try JSONDecoder().decode(T.self, from: data)
-        } catch {
-            throw APIError.decoding
-        }
+        return data
     }
 
     func signIn(email: String, password: String) async throws -> Me {
@@ -268,14 +282,25 @@ final class APIClient: @unchecked Sendable {
     }
 
     /// features/finance/SalesInvoices.tsx. `vat` nil = the server works it out from the project's rate.
-    func saveSalesInvoice(id: String?, projectId: String, number: String, date: String, riyals: Double, vat: Double?, receiptId: String, note: String) async throws {
-        var body: [String: Any] = ["projectId": projectId, "number": number, "date": date, "amount": riyals, "receiptId": receiptId, "note": note]
+    func saveSalesInvoice(id: String?, projectId: String, number: String, date: String, riyals: Double, vat: Double?, receiptId: String, assetId: String, note: String) async throws {
+        var body: [String: Any] = ["projectId": projectId, "number": number, "date": date, "amount": riyals, "receiptId": receiptId, "assetId": assetId, "note": note]
         if let vat { body["vat"] = vat }
         if let id {
             let _: OKEnvelope = try await send("PATCH", "/api/finance/vat/invoices/\(id)", body: body)
         } else {
             let _: OKEnvelope = try await send("POST", "/api/finance/vat/invoices", body: body)
         }
+    }
+
+    /// POST /api/assets: the file's own bytes (PDF or image), as the website's uploadImage. Needs assets.edit.
+    func uploadAsset(_ data: Data, type: String) async throws -> String {
+        let r: AssetEnvelope = try await send("POST", "/api/assets", raw: (data, type))
+        return r.id
+    }
+
+    /// GET /api/assets/:id with this session: the stored file's bytes.
+    func assetData(_ id: String) async throws -> Data {
+        try await perform("GET", "/api/assets/\(id)")
     }
 
     func deleteSalesInvoice(_ id: String) async throws {
