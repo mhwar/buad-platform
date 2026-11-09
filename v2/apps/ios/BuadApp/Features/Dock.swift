@@ -1,11 +1,12 @@
 import SwiftUI
 
-/// The app's floating dock: a glass capsule above the home indicator with the main sections and,
-/// in the middle, «+» for whatever the role may create (opportunity, offer, client).
-///  · The active section sits on a soft accent pill that slides between tabs, with the filled symbol.
+/// The app's floating dock: a glass capsule above the home indicator with the four main sections.
+///  · The active section sits on a soft accent pill that slides between tabs, with the filled symbol
+///    and its name in bold; the others are quiet outlines.
 ///  · Each tap gives a light selection tick; the symbol bounces once.
 ///  · On iOS 26 it is Liquid Glass; earlier, an ultra-thin material with a hairline and soft shadow.
 ///  · It stays put when the keyboard opens and leaves room under every screen's content.
+/// Nothing is created from here: each screen has its own «+» for what belongs to it.
 struct Dock: View {
     struct Item: Identifiable, Equatable {
         let id: MainTabs.Tab
@@ -15,44 +16,20 @@ struct Dock: View {
 
     let items: [Item]
     @Binding var selection: MainTabs.Tab
-    /// nil hides the centre button (nothing this role can create).
-    let create: (() -> Void)?
 
     @Namespace private var pill
     @State private var bounce: MainTabs.Tab?
-    @State private var creates = 0
 
-    static let height: CGFloat = 64
+    static let height: CGFloat = 62
 
     var body: some View {
-        HStack(spacing: 2) {
-            let half = (items.count + 1) / 2
-            ForEach(items.prefix(create == nil ? items.count : half)) { tab($0) }
-            if let create {
-                Button { creates += 1; create() } label: {
-                    Image(systemName: "plus")
-                        .font(.system(size: 20, weight: .bold))
-                        .foregroundStyle(Buad.onInk)
-                        .frame(width: 50, height: 50)
-                        .background(
-                            Circle().fill(Buad.ink)
-                                .shadow(color: Buad.ink.opacity(0.25), radius: 8, y: 4)
-                        )
-                        .overlay(Circle().stroke(Buad.accent.opacity(0.9), lineWidth: 2).padding(-3))
-                        .contentShape(Circle())
-                }
-                .buttonStyle(PressScale())
-                .padding(.horizontal, 6)
-                .accessibilityLabel("إنشاء")
-                .accessibilityHint("فرصة أو عرض سعر أو عميل")
-                .sensoryFeedback(.impact(weight: .medium), trigger: creates)
-                ForEach(items.suffix(items.count - half)) { tab($0) }
-            }
+        HStack(spacing: 4) {
+            ForEach(items) { tab($0) }
         }
-        .padding(.horizontal, 7)
+        .padding(.horizontal, 6)
         .frame(height: Self.height)
         .modifier(DockSurface())
-        .padding(.horizontal, 14)
+        .padding(.horizontal, items.count <= 3 ? 48 : 22)
         .sensoryFeedback(.selection, trigger: selection)
     }
 

@@ -30,7 +30,7 @@ enum APIError: Error, Equatable {
         case .similarName(let name):
             return "يوجد عميل باسم مشابه" + (name.isEmpty ? "" : " («\(name)»)") + ". هل تريد إنشاء عميل جديد رغم ذلك؟"
         case .rejected(let code):
-            if let q = QuoteVocabulary.error(code) { return q }
+            if let q = QuoteVocabulary.error(code) ?? ProjectVocabulary.error(code) { return q }
             switch code {
             case "end_before_start": return "تاريخ الاستحقاق قبل تاريخ البداية."
             case "not_found": return "لم يعد هذا العنصر موجوداً أو لا تملك صلاحية الوصول إليه."
@@ -411,6 +411,145 @@ final class APIClient: @unchecked Sendable {
     /// POST /api/clients (clients.edit).
     func createClient(_ body: [String: Any]) async throws -> CreatedEnvelope {
         try await send("POST", "/api/clients", body: body)
+    }
+
+    // MARK: 0.5.0 — the whole project page (projects.ts, project-close.ts, team.ts, documents.ts, share.ts, tasks.ts)
+
+    /// POST /api/projects (projectInput) → the new project's id.
+    func createProject(_ body: [String: Any]) async throws -> String {
+        let r: CreatedEnvelope = try await send("POST", "/api/projects", body: body)
+        return r.id
+    }
+
+    /// PATCH /api/projects/:id with the changed fields only (expectedValue in riyals).
+    func updateProject(_ id: String, _ fields: [String: Any]) async throws {
+        let _: OKEnvelope = try await send("PATCH", "/api/projects/\(id)", body: fields)
+    }
+
+    func archiveProject(_ id: String) async throws { let _: OKEnvelope = try await send("POST", "/api/projects/\(id)/archive") }
+    func restoreProject(_ id: String) async throws { let _: OKEnvelope = try await send("POST", "/api/projects/\(id)/restore") }
+    func deleteProject(_ id: String) async throws { let _: OKEnvelope = try await send("DELETE", "/api/projects/\(id)") }
+
+    func closeCheck(_ id: String) async throws -> CloseCheck { try await send("GET", "/api/projects/\(id)/close") }
+
+    /// «إغلاق المشروع» (note) / «إلغاء المشروع» (reason), with the contract settlement.
+    func closeProject(_ id: String, cancel: Bool, text: String, finalRiyals: Double?, cancelInstalments: Bool) async throws {
+        var body: [String: Any] = [cancel ? "reason" : "note": text, "cancelInstalments": cancelInstalments]
+        if let finalRiyals { body["finalValue"] = finalRiyals }
+        let _: OKEnvelope = try await send("POST", "/api/projects/\(id)/close" + (cancel ? "/cancel" : ""), body: body)
+    }
+
+    func reopenProject(_ id: String, reason: String) async throws {
+        let _: OKEnvelope = try await send("POST", "/api/projects/\(id)/close/reopen", body: ["reason": reason])
+    }
+
+    func teamUsers() async throws -> [Person] {
+        let r: PeopleEnvelope = try await send("GET", "/api/team/users")
+        return r.users.filter(\.active)
+    }
+
+    func projectMembers(_ id: String) async throws -> [String] {
+        let r: MembersEnvelope = try await send("GET", "/api/team/projects/\(id)/members")
+        return r.userIds
+    }
+
+    func setProjectMembers(_ id: String, _ userIds: [String]) async throws {
+        let _: OKEnvelope = try await send("PUT", "/api/team/projects/\(id)/members", body: ["userIds": userIds])
+    }
+
+    /// The project's financial report as the website prints it (client or detailed), as PDF bytes.
+    func financeReportPDF(_ id: String, detailed: Bool, name: String) async throws -> Data {
+        try await perform("POST", "/api/pdf", body: ["path": "/print/finance/\(id)?mode=\(detailed ? "detailed" : "client")", "name": name])
+    }
+
+    // documents
+
+    func documentTemplates() async throws -> DocTemplates { try await send("GET", "/api/documents/templates") }
+
+    func createDocument(_ projectId: String, kind: String, template: String, title: String?) async throws -> String {
+        var body: [String: Any] = ["kind": kind, "template": template]
+        if let title, !title.isEmpty { body["title"] = title }
+        let r: CreatedEnvelope = try await send("POST", "/api/projects/\(projectId)/documents", body: body)
+        return r.id
+    }
+
+    func document(_ id: String) async throws -> DocumentDetail { try await send("GET", "/api/documents/\(id)") }
+
+    /// PATCH /api/documents/:id with its version (title, number, variables, content).
+    func updateDocument(_ id: String, version: Int, _ fields: [String: Any]) async throws -> DocumentDetail {
+        var b = fields
+        b["version"] = version
+        return try await send("PATCH", "/api/documents/\(id)", body: b)
+    }
+
+    func setDocumentStatus(_ id: String, to: String, version: Int) async throws -> DocumentDetail {
+        try await send("POST", "/api/documents/\(id)/status", body: ["to": to, "version": version])
+    }
+
+    func registerOutgoing(_ id: String) async throws -> String {
+        let r: OutgoingEnvelope = try await send("POST", "/api/documents/\(id)/outgoing")
+        return r.outgoingNo
+    }
+
+    func duplicateDocument(_ id: String) async throws -> String {
+        let r: CreatedEnvelope = try await send("POST", "/api/documents/\(id)/duplicate")
+        return r.id
+    }
+
+    func deleteDocument(_ id: String) async throws { let _: OKEnvelope = try await send("DELETE", "/api/documents/\(id)") }
+
+    func documentPDF(_ id: String, name: String) async throws -> Data {
+        try await perform("POST", "/api/pdf", body: ["path": "/print/documents/\(id)", "name": name])
+    }
+
+    func shares(_ docId: String) async throws -> [DocShare] {
+        let r: SharesEnvelope = try await send("GET", "/api/documents/\(docId)/shares")
+        return r.items
+    }
+
+    /// A client link to the approved document (7 or 30 days) → its full URL.
+    func createShare(_ docId: String, days: Int, channel: String) async throws -> URL? {
+        let r: ShareCreated = try await send("POST", "/api/documents/\(docId)/shares", body: ["days": days, "channel": channel])
+        return webURL(r.path)
+    }
+
+    func revokeShare(_ docId: String, _ shareId: String) async throws {
+        let _: OKEnvelope = try await send("DELETE", "/api/documents/\(docId)/shares/\(shareId)")
+    }
+
+    // execution
+
+    func assignees() async throws -> [Person] {
+        let r: PeopleEnvelope = try await send("GET", "/api/tasks/assignees")
+        return r.users
+    }
+
+    func addStage(_ projectId: String, title: String, dueDate: String) async throws {
+        let _: OKEnvelope = try await send("POST", "/api/tasks/projects/\(projectId)/stages", body: ["title": title, "dueDate": dueDate])
+    }
+
+    func stagesFromService(_ projectId: String) async throws {
+        let _: OKEnvelope = try await send("POST", "/api/tasks/projects/\(projectId)/stages/from-service")
+    }
+
+    func updateStage(_ id: String, _ fields: [String: Any]) async throws {
+        let _: OKEnvelope = try await send("PATCH", "/api/tasks/stages/\(id)", body: fields)
+    }
+
+    func deleteStage(_ id: String) async throws { let _: OKEnvelope = try await send("DELETE", "/api/tasks/stages/\(id)") }
+
+    func createTask(_ body: [String: Any]) async throws {
+        let _: OKEnvelope = try await send("POST", "/api/tasks", body: body)
+    }
+
+    func patchTask(_ id: String, _ fields: [String: Any]) async throws {
+        let _: OKEnvelope = try await send("PATCH", "/api/tasks/\(id)", body: fields)
+    }
+
+    func deleteTask(_ id: String) async throws { let _: OKEnvelope = try await send("DELETE", "/api/tasks/\(id)") }
+
+    func logTime(_ taskId: String, minutes: Int, date: String, note: String) async throws {
+        let _: OKEnvelope = try await send("POST", "/api/tasks/\(taskId)/time", body: ["minutes": minutes, "date": date, "note": note])
     }
 
     func signOut() async {

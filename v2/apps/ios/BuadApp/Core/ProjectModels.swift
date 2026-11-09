@@ -24,36 +24,63 @@ extension KeyedDecodingContainer {
 // MARK: GET /api/projects/:id
 
 struct ProjectDetail: Decodable {
+    let id: String
+    let name: String
+    let number: String
+    let type: String
+    let status: String
+    let clientId: String
+    let external: Bool
+    let closed: Bool
+    let closeNote: String
+    let archived: Bool
+    /// «قيمة العقد المتوقعة», halalas as stored.
+    let expectedValue: Int
+    let productId: String
+    let packageId: String
     let location: String
     let startDate: String
     let endDate: String
     let payDate: String
     let visibility: String
     let notes: String
+    let createdAt: Int
+    let updatedAt: Int
     let serviceName: String
     let packageName: String
     let clientName: String
+    let clientArchived: Bool
     let financeExists: Bool
 
     private enum Keys: String, CodingKey { case project, service, client, financeExists }
-    private enum P: String, CodingKey { case location, startDate, endDate, payDate, visibility, notes }
+    private enum P: String, CodingKey {
+        case id, name, number, type, status, clientId, external, closedAt, closeNote, archivedAt, expectedValue, productId
+        case packageId, location, startDate, endDate, payDate, visibility, notes, createdAt, updatedAt
+    }
     private enum S: String, CodingKey { case productName, packageName }
-    private enum C: String, CodingKey { case name }
+    private enum C: String, CodingKey { case name, archivedAt }
 
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: Keys.self)
         let p = try c.nestedContainer(keyedBy: P.self, forKey: .project)
+        id = p.string(.id); name = p.string(.name); number = p.string(.number); type = p.string(.type)
+        status = p.string(.status); clientId = p.string(.clientId); external = p.bool(.external)
+        closed = (p.optionalInt(.closedAt) ?? 0) > 0; closeNote = p.string(.closeNote)
+        archived = (p.optionalInt(.archivedAt) ?? 0) > 0
+        expectedValue = p.int(.expectedValue); productId = p.string(.productId); packageId = p.string(.packageId)
         location = p.string(.location)
         startDate = p.string(.startDate)
         endDate = p.string(.endDate)
         payDate = p.string(.payDate)
         visibility = p.string(.visibility)
         notes = p.string(.notes)
+        createdAt = p.int(.createdAt); updatedAt = p.int(.updatedAt)
         let s = try? c.nestedContainer(keyedBy: S.self, forKey: .service)
         serviceName = s?.string(.productName) ?? ""
         packageName = s?.string(.packageName) ?? ""
         let cl = try? c.nestedContainer(keyedBy: C.self, forKey: .client)
         clientName = cl?.string(.name) ?? ""
+        clientArchived = (cl?.optionalInt(.archivedAt) ?? 0) > 0
         financeExists = c.bool(.financeExists)
     }
 }
@@ -290,9 +317,10 @@ struct TaskItem: Decodable, Identifiable {
     let assigneeName: String
     let projectId: String
     let projectName: String
+    let description: String
 
     private enum K: String, CodingKey {
-        case id, title, status, priority, dueDate, startDate, stageId, assigneeId, assigneeName, projectId, projectName
+        case id, title, status, priority, dueDate, startDate, stageId, assigneeId, assigneeName, projectId, projectName, description
     }
 
     init(from decoder: Decoder) throws {
@@ -308,6 +336,7 @@ struct TaskItem: Decodable, Identifiable {
         assigneeName = c.string(.assigneeName)
         projectId = c.string(.projectId)
         projectName = c.string(.projectName)
+        description = c.string(.description)
     }
 
     var overdue: Bool { status != "done" && !dueDate.isEmpty && dueDate < Fmt.todayISO }
@@ -317,14 +346,17 @@ struct Execution: Decodable {
     let stages: [Stage]
     let tasks: [TaskItem]
     let minutes: Int
+    /// The project is linked to a service whose «آلية العمل» can generate the stages.
+    let hasService: Bool
 
-    private enum K: String, CodingKey { case stages, tasks, minutes }
+    private enum K: String, CodingKey { case stages, tasks, minutes, hasService }
 
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: K.self)
         stages = (try? c.decode([Stage].self, forKey: .stages)) ?? []
         tasks = (try? c.decode([TaskItem].self, forKey: .tasks)) ?? []
         minutes = c.int(.minutes)
+        hasService = c.bool(.hasService)
     }
 }
 

@@ -6,6 +6,8 @@ struct FinanceView: View {
     enum Part: String { case overview, collection, vat }
     @EnvironmentObject private var session: Session
     @State private var part: Part?
+    /// Opened from «المزيد»: inside its navigation, not a stack of its own.
+    var embedded = false
 
     private var parts: [Part] {
         guard let me = session.me else { return [] }
@@ -13,7 +15,10 @@ struct FinanceView: View {
     }
 
     var body: some View {
-        NavigationStack {
+        if embedded { content } else { NavigationStack { content } }
+    }
+
+    private var content: some View {
             VStack(spacing: 0) {
                 if parts.count > 1 {
                     Picker("أقسام المالية", selection: Binding(get: { part ?? parts.first }, set: { part = $0 })) {
@@ -35,7 +40,6 @@ struct FinanceView: View {
             .background(Buad.canvas.ignoresSafeArea())
             .navigationTitle("المالية")
             .navigationBarTitleDisplayMode(.inline)
-        }
     }
 }
 

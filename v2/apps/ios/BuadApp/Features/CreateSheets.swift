@@ -2,7 +2,7 @@ import SwiftUI
 
 // MARK: - «إنشاء»: one place for every new thing
 
-/// What can be created from the dock's «+» or the Sales «+»: an opportunity, an offer, a client.
+/// What can be created from the Sales «+» or the Clients «+»: an opportunity, an offer, a client.
 /// Each is shown only when the role may write it, and every list that shows the new thing refreshes
 /// when `revision` moves.
 @MainActor
@@ -76,55 +76,6 @@ struct CreateSheet: View {
         case .client:
             NewClientSheet { name in center.done(.client, "أُضيف العميل «\(name)»") }
         }
-    }
-}
-
-/// «ماذا تريد أن تنشئ؟»: a short sheet of large, labelled choices, opened from the dock's «+».
-struct CreateChooser: View {
-    @EnvironmentObject private var session: Session
-    @EnvironmentObject private var center: CreateCenter
-    @Environment(\.dismiss) private var dismiss
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            Text("إنشاء").font(.title3.bold()).padding(.top, 22)
-            ForEach(CreateCenter.kinds(for: session.me)) { k in
-                let tint = CreateCenter.tint(k)
-                Button {
-                    dismiss()
-                    // Present the form once the chooser has gone.
-                    Task { @MainActor in
-                        try? await Task.sleep(for: .milliseconds(350))
-                        center.sheet = k
-                    }
-                } label: {
-                    HStack(spacing: 14) {
-                        Image(systemName: CreateCenter.icon(k))
-                            .font(.title3.weight(.semibold))
-                            .frame(width: 46, height: 46)
-                            .background(tint.0, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-                            .foregroundStyle(tint.1)
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(CreateCenter.title(k)).font(.body.weight(.semibold)).foregroundStyle(Buad.ink)
-                            Text(CreateCenter.subtitle(k)).font(.caption).foregroundStyle(Buad.muted)
-                        }
-                        Spacer()
-                        Chevron()
-                    }
-                    .padding(12)
-                    .background(Buad.surface, in: RoundedRectangle(cornerRadius: Buad.radius, style: .continuous))
-                    .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-            }
-            Spacer(minLength: 0)
-        }
-        .padding(.horizontal, Buad.gutter)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Buad.canvas.ignoresSafeArea())
-        .presentationDetents([.height(CGFloat(110 + 82 * CreateCenter.kinds(for: session.me).count))])
-        .presentationDragIndicator(.visible)
-        .presentationCornerRadius(28)
     }
 }
 

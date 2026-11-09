@@ -52,22 +52,21 @@ struct RootView: View {
 }
 
 /// The phone tabs of the website (PHONE_CORE in features/more/tabs.ts), each shown only when the
-/// role may see it: اليوم، المبيعات، المشاريع، المالية، المزيد. «المهام» and «العملاء» open from «المزيد»,
-/// as on the website. The system tab bar is replaced by the floating `Dock`, whose «+» opens «إنشاء».
+/// role may see it: اليوم، المبيعات، المشاريع، المزيد. «المالية» و«المهام» و«العملاء» open from «المزيد».
+/// The system tab bar is replaced by the floating `Dock`. Creating lives in each screen's own «+»
+/// (Sales, Projects, Clients, the project page), so the same button never appears twice.
 struct MainTabs: View {
-    enum Tab: Hashable { case today, sales, projects, finance, more }
+    enum Tab: Hashable { case today, sales, projects, more }
 
     @EnvironmentObject private var session: Session
     let me: Me
     @StateObject private var center = CreateCenter()
     @State private var tab: Tab = .today
-    @State private var choosing = false
 
     private var items: [Dock.Item] {
         var list = [Dock.Item(id: .today, title: "اليوم", icon: "sun.max")]
         if me.can("sales.view") { list.append(.init(id: .sales, title: "المبيعات", icon: "bag")) }
         if me.can("projects.view") { list.append(.init(id: .projects, title: "المشاريع", icon: "briefcase")) }
-        if me.can("treasury.view") || me.can("vat.view") { list.append(.init(id: .finance, title: "المالية", icon: "banknote")) }
         list.append(.init(id: .more, title: "المزيد", icon: "square.grid.2x2"))
         return list
     }
@@ -77,20 +76,15 @@ struct MainTabs: View {
             page(TodayView(), .today)
             if me.can("sales.view") { page(SalesView(), .sales) }
             if me.can("projects.view") { page(ProjectsView(), .projects) }
-            if me.can("treasury.view") || me.can("vat.view") { page(FinanceView(), .finance) }
             page(MoreView(), .more)
         }
         .overlay(alignment: .bottom) {
-            Dock(items: items, selection: $tab,
-                 create: CreateCenter.kinds(for: me).isEmpty ? nil : { choosing = true })
+            Dock(items: items, selection: $tab)
                 .padding(.bottom, 4)
                 .ignoresSafeArea(.keyboard, edges: .bottom)
         }
         .environmentObject(center)
         .toast($center.toast)
-        .sheet(isPresented: $choosing) {
-            CreateChooser().environmentObject(session).environmentObject(center)
-        }
         .sheet(item: $center.sheet) { kind in
             CreateSheet(kind: kind).environmentObject(session).environmentObject(center)
         }

@@ -26,8 +26,13 @@ struct MoreView: View {
                     }
                 }
 
-                if let me = session.me, me.can("tasks.view") || me.can("clients.view") {
+                if let me = session.me, me.can("tasks.view") || me.can("clients.view") || me.can("treasury.view") || me.can("vat.view") {
                     Section {
+                        if me.can("treasury.view") || me.can("vat.view") {
+                            NavigationLink { FinanceView(embedded: true) } label: {
+                                Label("المالية", systemImage: "banknote")
+                            }
+                        }
                         if me.can("tasks.view") {
                             NavigationLink { TasksView() } label: { Label("المهام", systemImage: "checklist") }
                         }

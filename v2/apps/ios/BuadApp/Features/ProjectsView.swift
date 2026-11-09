@@ -20,6 +20,8 @@ struct ProjectsView: View {
     @State private var money: Money = .all
     @State private var type = ""
     @State private var filtering = false
+    @State private var creating = false
+    @State private var toast: ToastItem?
 
     private let statuses: [(key: String, label: String)] = [
         ("all", "الكل"), ("active", "جاري التنفيذ"), ("draft", "مسودة"),
@@ -67,7 +69,7 @@ struct ProjectsView: View {
                         } else if let error {
                             EmptyNote(text: error, icon: "wifi.exclamationmark")
                         } else if projects.isEmpty {
-                            EmptyNote(text: "لا توجد مشاريع بعد. أضيفوها من الموقع، من صفحة العميل ثم «مشروع جديد».", icon: "briefcase")
+                            EmptyNote(text: "لا توجد مشاريع بعد. أضف أول مشروع من زر «+» في الأعلى.", icon: "briefcase")
                         } else if shown.isEmpty {
                             EmptyNote(text: "لا نتائج. جرّبوا بحثاً أو تصفية أخرى.", icon: "magnifyingglass")
                         } else {
@@ -102,8 +104,18 @@ struct ProjectsView: View {
                         Image(systemName: filtersOn > 0 ? "line.3.horizontal.decrease.circle.fill" : "line.3.horizontal.decrease.circle")
                             .accessibilityLabel(filtersOn > 0 ? "تصفية (\(filtersOn))" : "تصفية")
                     }
+                    if session.me?.can("projects.edit") == true {
+                        Button { creating = true } label: {
+                            Image(systemName: "plus").font(.body.weight(.semibold)).accessibilityLabel("مشروع جديد")
+                        }
+                    }
                 }
             }
+            .sheet(isPresented: $creating) {
+                ProjectEditSheet { _ in toast = ToastItem(text: "أُنشئ المشروع"); Task { await load() } }
+            }
+            .toast($toast)
+            .onReceive(NotificationCenter.default.publisher(for: .projectsChanged)) { _ in Task { await load() } }
             .sheet(isPresented: $filtering) { filterSheet.presentationDetents([.medium, .large]) }
             .refreshable { await load() }
             .task { if !loaded { await load() } }
