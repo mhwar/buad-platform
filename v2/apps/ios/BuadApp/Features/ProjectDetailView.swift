@@ -24,11 +24,19 @@ struct ProjectDetailView: View {
     @State private var workPart: WorkPart?
     @State private var entryKind: EntryKind = .all
     @State private var receiving: ReceiveSheet.LineInfo?
+    @State private var entryTarget: EntryTarget?
+
+    /// A new entry (nil) or one to edit, for the entry sheet.
+    struct EntryTarget: Identifiable {
+        let entry: FinanceEntry?
+        var id: String { entry?.id ?? "new" }
+    }
     @State private var toast: String?
 
     private var me: Me? { session.me }
     private var canFinance: Bool { (me?.can("finance.view") ?? false) && !project.external }
     private var canReceive: Bool { (me?.can("finance.edit") ?? false) && canFinance && !project.closed && project.status != "draft" && project.status != "cancelled" }
+    private var canEditEntries: Bool { (me?.can("finance.edit") ?? false) && canFinance && !project.closed }
     private var canTasks: Bool { me?.can("tasks.view") ?? false }
     private var canDocs: Bool { me?.can("documents.view") ?? false }
 
@@ -46,7 +54,7 @@ struct ProjectDetailView: View {
                 notices
                 if let toast { banner(toast) }
                 if failed { EmptyNote(text: "تعذّر تحميل بعض أقسام المشروع. اسحب للتحديث.", icon: "exclamationmark.triangle") }
-                if canReceive, let next = pending.first { receiveButton(next) }
+                actions
                 pulse
                 if canFinance, let f = finance { financeStrip(f) }
                 if canFinance { contractCard }
@@ -74,6 +82,14 @@ struct ProjectDetailView: View {
         }
         .refreshable { await load() }
         .task { if !loaded { await load() } }
+        .sheet(item: $entryTarget) { target in
+            if let f = finance {
+                EntrySheet(projectId: project.id, projectName: project.name, finance: f, existing: target.entry) { fin, message in
+                    finance = fin
+                    toast = message
+                }
+            }
+        }
         .sheet(item: $receiving) { line in
             ReceiveSheet(line: line) { message in
                 toast = message
@@ -135,15 +151,47 @@ struct ProjectDetailView: View {
             .background(Buad.successSoft, in: RoundedRectangle(cornerRadius: Buad.control, style: .continuous))
     }
 
-    private func receiveButton(_ line: ScheduleItem) -> some View {
-        Button { startReceive(line) } label: {
-            Label("تسجيل مقبوض", systemImage: "banknote")
-                .font(.body.weight(.semibold))
-                .frame(maxWidth: .infinity).frame(height: 48)
-                .background(Buad.ink, in: RoundedRectangle(cornerRadius: Buad.control, style: .continuous))
-                .foregroundStyle(Buad.onInk)
+    /// The website's header actions on the phone: primary «تسجيل مقبوض», secondary «قيد جديد».
+    @ViewBuilder private var actions: some View {
+        let receive = canReceive ? pending.first : nil
+        if receive != nil || (canEditEntries && finance != nil) {
+            HStack(spacing: 10) {
+                if let next = receive {
+                    Button { startReceive(next) } label: {
+                        Label("تسجيل مقبوض", systemImage: "banknote")
+                            .font(.body.weight(.semibold))
+                            .frame(maxWidth: .infinity).frame(height: 48)
+                            .background(Buad.ink, in: RoundedRectangle(cornerRadius: Buad.control, style: .continuous))
+                            .foregroundStyle(Buad.onInk)
+                    }
+                    .buttonStyle(.plain)
+                }
+                if canEditEntries && finance != nil {
+                    Button { toast = nil; entryTarget = EntryTarget(entry: nil) } label: {
+                        Label("قيد جديد", systemImage: "plus")
+                            .font(.body.weight(.semibold))
+                            .frame(maxWidth: .infinity).frame(height: 48)
+                            .background(Buad.surface, in: RoundedRectangle(cornerRadius: Buad.control, style: .continuous))
+                            .overlay(RoundedRectangle(cornerRadius: Buad.control, style: .continuous).stroke(Buad.line))
+                            .foregroundStyle(Buad.ink)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
         }
-        .buttonStyle(.plain)
+    }
+
+    /// «تعليم كمدفوع»: the entry's status only, as the website's quick status change.
+    private func markPaid(_ e: FinanceEntry) async {
+        guard await Confirm.owner("تأكيد تعليم «\(e.description)» كمدفوع") else { return }
+        do {
+            finance = try await APIClient.shared.updateEntry(project.id, e.id, ["status": "paid"])
+            toast = "حُفظ القيد"
+        } catch {
+            session.handle(error)
+            toast = nil
+            failed = true
+        }
     }
 
     private func startReceive(_ line: ScheduleItem) {
@@ -448,7 +496,18 @@ struct ProjectDetailView: View {
                         VStack(spacing: 0) {
                             ForEach(Array(rows.enumerated()), id: \.element.id) { i, e in
                                 if i > 0 { Divider().padding(.leading, 14) }
-                                entryRow(e, f)
+                                if canEditEntries {
+                                    Button { toast = nil; entryTarget = EntryTarget(entry: e) } label: { entryRow(e, f) }
+                                        .buttonStyle(.plain)
+                                        .contextMenu {
+                                            Button { toast = nil; entryTarget = EntryTarget(entry: e) } label: { Label("تعديل", systemImage: "pencil") }
+                                            if e.status == "pending" {
+                                                Button { Task { await markPaid(e) } } label: { Label("تعليم كمدفوع", systemImage: "checkmark.circle") }
+                                            }
+                                        }
+                                } else {
+                                    entryRow(e, f)
+                                }
                             }
                         }
                         .background(Buad.surface, in: RoundedRectangle(cornerRadius: Buad.radius, style: .continuous))
@@ -462,7 +521,7 @@ struct ProjectDetailView: View {
 
     private func entryRow(_ e: FinanceEntry, _ f: ProjectFinance) -> some View {
         let income = e.type == "income"
-        let flags = [Fmt.day(e.date), f.categoryName(e.cat), e.supplierName,
+        let flags = [Fmt.day(e.date), f.categoryName(e.cat), e.supplierName, e.taxInvoice ? "فاتورة ضريبية" : "",
                      e.status == "pending" ? "معلّق" : "", e.status == "cancelled" ? "ملغى، لا يُحتسب" : ""]
         return HStack(alignment: .firstTextBaseline, spacing: 10) {
             VStack(alignment: .leading, spacing: 3) {
@@ -477,6 +536,7 @@ struct ProjectDetailView: View {
                 .strikethrough(e.status == "cancelled")
         }
         .padding(14)
+        .contentShape(Rectangle())
     }
 
     @ViewBuilder private var documentsView: some View {

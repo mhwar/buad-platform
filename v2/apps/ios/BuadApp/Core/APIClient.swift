@@ -28,6 +28,8 @@ enum APIError: Error, Equatable {
             case "not_pending": return "سُجّلت هذه الدفعة من قبل. اسحب للتحديث."
             case "amount_exceeds_line": return "المبلغ أكبر من الدفعة."
             case "closed", "project_closed": return "المشروع مغلق مالياً. أعد فتحه من الموقع أولاً."
+            case "invalid_category": return "التصنيف غير موجود. اسحب للتحديث ثم اختر تصنيفاً آخر."
+            case "tax_invoice_on_expense_only": return "الفاتورة الضريبية للمصروفات فقط."
             default: return "رفضت المنصة هذا التعديل."
             }
         case .network: return "تعذّر الاتصال بالمنصة. تحقق من الإنترنت."
@@ -202,6 +204,21 @@ final class APIClient: @unchecked Sendable {
 
     func vatYear(_ year: Int) async throws -> VatYear {
         try await send("GET", "/api/finance/vat/year?year=\(year)")
+    }
+
+    // MARK: 0.2.4 — entries (features/finance/api.ts addEntry / updateEntry / deleteEntry)
+    // Each answers with the project's whole finance, recomputed by the server.
+
+    func addEntry(_ projectId: String, _ body: [String: Any]) async throws -> ProjectFinance {
+        try await send("POST", "/api/projects/\(projectId)/finance/entries", body: body)
+    }
+
+    func updateEntry(_ projectId: String, _ entryId: String, _ body: [String: Any]) async throws -> ProjectFinance {
+        try await send("PATCH", "/api/projects/\(projectId)/finance/entries/\(entryId)", body: body)
+    }
+
+    func deleteEntry(_ projectId: String, _ entryId: String) async throws -> ProjectFinance {
+        try await send("DELETE", "/api/projects/\(projectId)/finance/entries/\(entryId)")
     }
 
     func signOut() async {
