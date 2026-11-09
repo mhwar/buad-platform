@@ -288,6 +288,8 @@ export const financeEntries = sqliteTable(
     invoiceDate: text("invoice_date").notNull().default(""),
     /** For «cf» entries: "vat" (the contract's VAT, held for ZATCA), "fee" (a real fee), "" = not yet said. */
     cfKind: text("cf_kind").notNull().default(""),
+    /** The receipt or invoice photographed or uploaded for this entry (PDF or image), in assets; "" = none. */
+    assetId: text("asset_id").notNull().default(""),
     /** "agreement" = registered from the contract («من الاتفاقية»). */
     source: text("source", { enum: ["manual", "agreement"] })
       .notNull()

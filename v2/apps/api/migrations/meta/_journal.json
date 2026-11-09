@@ -232,6 +232,13 @@
       "when": 1794072629653,
       "tag": "0032_workable_daimon_hellstrom",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "6",
+      "when": 1794242446496,
+      "tag": "0033_pretty_hannibal_king",
+      "breakpoints": true
     }
   ]
 }

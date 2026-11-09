@@ -605,6 +605,7 @@ export function Transactions({
                         {day(e.date)} · {label(e.cat)}
                         {e.source === "agreement" && " · اتفاقية"}
                         {e.taxInvoice && " · فاتورة ضريبية"}
+                        {e.assetId && " · مرفق"}
                         {e.status === "cancelled" && " · ملغى، لا يُحتسب"}
                         {e.status === "pending" && " · معلّق"}
                       </span>
@@ -649,6 +650,16 @@ export function Transactions({
                         </span>{" "}
                         {e.source === "agreement" && <Badge tone="blue">اتفاقية</Badge>}
                         {e.taxInvoice && <Badge tone="green">فاتورة ضريبية</Badge>}
+                        {e.assetId && (
+                          <a
+                            href={`/api/assets/${e.assetId}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-xs text-brand underline"
+                          >
+                            مرفق
+                          </a>
+                        )}
                         {e.note && <span className="block text-xs text-muted">{e.note}</span>}
                       </td>
                       <td className="px-2 py-2.5">{label(e.cat)}</td>

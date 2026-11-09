@@ -1,0 +1,1 @@
+ALTER TABLE `finance_entries` ADD `asset_id` text DEFAULT '' NOT NULL;

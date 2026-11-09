@@ -52,6 +52,8 @@ export type Entry = {
   invoiceDate: string;
   /** «cf» entries: the contract's VAT held for ZATCA, a real fee, or not yet said. */
   cfKind?: "" | "vat" | "fee";
+  /** The receipt or invoice attached to the entry (an asset id); "" = none. */
+  assetId?: string;
 };
 export type BudgetItem = { id: string; name: string; amount: number; note: string; sort: number };
 export type Category = { id: string; label: string; type: "expense" | "income" | "both" };

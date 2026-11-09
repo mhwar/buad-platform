@@ -2,6 +2,7 @@ import { fromRiyals, type StoredFinance, summarize, vatOfGrossHalalas } from "@b
 import { BUILTIN_CATEGORIES } from "@buad/schema/clients";
 import { receiptInput } from "@buad/schema/company";
 import {
+  assets,
   distributionProjects,
   distributions,
   financeBudgetItems,
@@ -269,6 +270,17 @@ async function validCat(db: Db, projectId: string, cat: string) {
   return !!c;
 }
 
+/** An attached receipt must be a file of this organisation (or none). */
+async function validAsset(db: Db, orgId: string, assetId: string | undefined) {
+  if (!assetId) return true;
+  const [a] = await db
+    .select({ id: assets.id })
+    .from(assets)
+    .where(and(eq(assets.id, assetId), eq(assets.orgId, orgId)))
+    .limit(1);
+  return !!a;
+}
+
 async function entryOf(db: Db, projectId: string, id: string) {
   const [e] = await db
     .select()
@@ -405,6 +417,8 @@ export const financeApp = new Hono<Env>()
     const { taxInvoice, ...v } = c.req.valid("json");
     if (!(await validCat(db, project.id, v.cat)))
       return c.json({ ok: false, error: "invalid_category" }, 400);
+    if (!(await validAsset(db, me.orgId, v.assetId)))
+      return c.json({ ok: false, error: "invalid_asset" }, 400);
     // A tax invoice belongs to a purchase (an expense).
     if (taxInvoice && v.type !== "expense")
       return c.json({ ok: false, error: "tax_invoice_on_expense_only" }, 400);
@@ -436,6 +450,8 @@ export const financeApp = new Hono<Env>()
     const { amount, taxInvoice, ...v } = c.req.valid("json");
     if (v.cat !== undefined && !(await validCat(db, project.id, v.cat)))
       return c.json({ ok: false, error: "invalid_category" }, 400);
+    if (!(await validAsset(db, me.orgId, v.assetId)))
+      return c.json({ ok: false, error: "invalid_asset" }, 400);
     const type = v.type ?? e.type;
     if (taxInvoice && type !== "expense")
       return c.json({ ok: false, error: "tax_invoice_on_expense_only" }, 400);
