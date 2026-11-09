@@ -1,0 +1,121 @@
+name: v2-ios-testflight
+
+# Archives, signs and uploads the iPhone app to TestFlight (internal testing) from a GitHub macOS runner,
+# so no Mac is needed. Signing is automatic through an App Store Connect API key (role: Admin).
+#
+# Runs on: a merge to main that touches the app, or «Run workflow» from the Actions tab.
+# Never runs on pull requests, so the signing secrets are not exposed to branches or forks.
+#
+# Repository secrets (Settings → Secrets and variables → Actions → Secrets):
+#   APPSTORE_API_KEY_ID       Key ID of the App Store Connect API key
+#   APPSTORE_API_ISSUER_ID    Issuer ID shown above the keys list
+#   APPSTORE_API_PRIVATE_KEY  full text of the downloaded AuthKey_XXXX.p8 file
+#   APPLE_TEAM_ID             10-character Team ID (developer.apple.com → Membership details)
+# Repository variable (… → Variables):
+#   BUAD_API_BASE             the platform's https address; empty = the sign-in screen asks for it
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "v2/apps/ios/**"
+      - ".github/workflows/v2-ios-testflight.yml"
+
+concurrency:
+  group: v2-ios-testflight
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  testflight:
+    runs-on: macos-latest
+    timeout-minutes: 45
+    environment: testflight
+    defaults:
+      run:
+        working-directory: v2/apps/ios
+    env:
+      KEY_ID: ${{ secrets.APPSTORE_API_KEY_ID }}
+      ISSUER_ID: ${{ secrets.APPSTORE_API_ISSUER_ID }}
+      TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      API_BASE: ${{ vars.BUAD_API_BASE }}
+      # Build numbers only ever grow: 100 + the run number of this workflow (set in the archive step).
+      BUILD_NUMBER: ${{ github.run_number }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check the secrets are set
+        run: |
+          missing=""
+          for v in KEY_ID ISSUER_ID TEAM_ID; do [ -n "${!v}" ] || missing="$missing $v"; done
+          if [ -n "$missing" ]; then echo "::error::Missing repository secrets for:$missing"; exit 1; fi
+          echo "Xcode: $(xcodebuild -version | head -1)"
+          echo "API base set: $([ -n "$API_BASE" ] && echo yes || echo no — the sign-in screen will ask)"
+
+      - name: Install the API key (removed at the end)
+        env:
+          PRIVATE_KEY: ${{ secrets.APPSTORE_API_PRIVATE_KEY }}
+        run: |
+          [ -n "$PRIVATE_KEY" ] || { echo "::error::Missing secret APPSTORE_API_PRIVATE_KEY"; exit 1; }
+          mkdir -p "$RUNNER_TEMP/keys"
+          printf '%s\n' "$PRIVATE_KEY" > "$RUNNER_TEMP/keys/AuthKey_$KEY_ID.p8"
+          chmod 600 "$RUNNER_TEMP/keys/AuthKey_$KEY_ID.p8"
+
+      - name: Project file matches the sources
+        run: |
+          python3 gen_pbxproj.py
+          git diff --exit-code -- Buad.xcodeproj
+
+      - name: Archive (signed automatically)
+        run: >
+          xcodebuild
+          -project Buad.xcodeproj
+          -scheme BuadApp
+          -configuration Release
+          -destination 'generic/platform=iOS'
+          -archivePath "$RUNNER_TEMP/Buad.xcarchive"
+          -allowProvisioningUpdates
+          -authenticationKeyPath "$RUNNER_TEMP/keys/AuthKey_$KEY_ID.p8"
+          -authenticationKeyID "$KEY_ID"
+          -authenticationKeyIssuerID "$ISSUER_ID"
+          DEVELOPMENT_TEAM="$TEAM_ID"
+          CODE_SIGN_STYLE=Automatic
+          CODE_SIGN_IDENTITY="Apple Distribution"
+          CURRENT_PROJECT_VERSION="$((100 + BUILD_NUMBER))"
+          BUAD_API_BASE="$API_BASE"
+          archive
+
+      - name: Export and upload to TestFlight
+        run: |
+          cat > "$RUNNER_TEMP/ExportOptions.plist" <<PLIST
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key><string>app-store-connect</string>
+            <key>destination</key><string>upload</string>
+            <key>teamID</key><string>$TEAM_ID</string>
+            <key>signingStyle</key><string>automatic</string>
+            <key>uploadSymbols</key><true/>
+            <key>manageAppVersionAndBuildNumber</key><false/>
+            <key>testFlightInternalTestingOnly</key><true/>
+          </dict>
+          </plist>
+          PLIST
+          xcodebuild -exportArchive \
+            -archivePath "$RUNNER_TEMP/Buad.xcarchive" \
+            -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" \
+            -exportPath "$RUNNER_TEMP/export" \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$RUNNER_TEMP/keys/AuthKey_$KEY_ID.p8" \
+            -authenticationKeyID "$KEY_ID" \
+            -authenticationKeyIssuerID "$ISSUER_ID"
+          echo "### Uploaded build $((100 + BUILD_NUMBER)) to TestFlight" >> "$GITHUB_STEP_SUMMARY"
+          echo "It appears in App Store Connect → Buad → TestFlight after Apple finishes processing (usually 5–20 minutes)." >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Remove the API key
+        if: always()
+        run: rm -rf "$RUNNER_TEMP/keys" "$RUNNER_TEMP/ExportOptions.plist"

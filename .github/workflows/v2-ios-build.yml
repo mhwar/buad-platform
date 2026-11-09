@@ -1,0 +1,46 @@
+name: v2-ios-build
+
+# Compiles the iPhone app on every pull request that touches it. Signing and TestFlight are done by
+# Xcode Cloud («Internal TestFlight Build») after merge to main; this job never signs or uploads anything.
+concurrency:
+  group: v2-ios-build-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "v2/apps/ios/**"
+      - ".github/workflows/v2-ios-build.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: macos-latest
+    timeout-minutes: 25
+    defaults:
+      run:
+        working-directory: v2/apps/ios
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Xcode version
+        run: xcodebuild -version
+
+      - name: Project file matches the sources
+        run: |
+          python3 gen_pbxproj.py
+          git diff --exit-code -- Buad.xcodeproj || { echo "::error::Buad.xcodeproj is out of date: run python3 v2/apps/ios/gen_pbxproj.py and commit"; exit 1; }
+
+      - name: Build for the iOS Simulator (unsigned)
+        run: >
+          xcodebuild
+          -project Buad.xcodeproj
+          -scheme BuadApp
+          -configuration Debug
+          -destination 'generic/platform=iOS Simulator'
+          -derivedDataPath DerivedData
+          CODE_SIGNING_ALLOWED=NO
+          build

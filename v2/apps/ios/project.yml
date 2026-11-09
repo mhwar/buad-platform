@@ -1,0 +1,37 @@
+# XcodeGen spec. The committed Buad.xcodeproj is what Xcode Cloud builds; regenerate it with
+# `xcodegen generate` after adding files, and commit both (same arrangement as sult3nali/sultan.works).
+name: Buad
+options:
+  bundleIdPrefix: sa.buad
+  deploymentTarget:
+    iOS: "18.0"
+
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    IPHONEOS_DEPLOYMENT_TARGET: "18.0"
+
+targets:
+  BuadApp:
+    type: application
+    platform: iOS
+    deploymentTarget: "18.0"
+    sources:
+      - path: BuadApp
+        excludes:
+          - Info.plist
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: sa.buad.app
+        PRODUCT_NAME: BuadApp
+        MARKETING_VERSION: 0.1.0
+        CURRENT_PROJECT_VERSION: 1
+        INFOPLIST_FILE: BuadApp/Info.plist
+        TARGETED_DEVICE_FAMILY: "1"
+        CODE_SIGN_STYLE: Automatic
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        # The platform's address (https://…). Empty: the sign-in screen asks for it once.
+        BUAD_API_BASE: ""
+    scheme:
+      gatherCoverageData: false

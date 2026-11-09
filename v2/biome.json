@@ -8,7 +8,8 @@
       "!e2e/.auth",
       "!e2e/.state",
       "!e2e/test-results",
-      "!e2e/playwright-report"
+      "!e2e/playwright-report",
+      "!apps/ios"
     ]
   },
   "formatter": { "indentStyle": "space", "indentWidth": 2, "lineWidth": 100 },
