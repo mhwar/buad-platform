@@ -3,6 +3,7 @@ import { getRouteApi, Link, useNavigate } from "@tanstack/react-router";
 import {
   Archive,
   ArchiveRestore,
+  Ban,
   CalendarDays,
   Download,
   FileBarChart2,
@@ -59,7 +60,12 @@ import {
   projectQuery,
   updateProject,
 } from "./api";
-import { CloseProjectDialog, closeCheckQuery, ReopenProjectDialog } from "./CloseProjectDialog";
+import {
+  CancelProjectDialog,
+  CloseProjectDialog,
+  closeCheckQuery,
+  ReopenProjectDialog,
+} from "./CloseProjectDialog";
 import { ExternalBadge } from "./ExternalBadge";
 import { ProjectDialog } from "./ProjectDialog";
 import { ProjectPulse } from "./ProjectPulse";
@@ -99,6 +105,7 @@ export function ProjectPage() {
   const [adding, setAdding] = useState<"new" | "agreement" | null>(null);
   const [receiving, setReceiving] = useState(false);
   const [closing, setClosing] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
   const [reopening, setReopening] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const headerRef = useRef<HTMLElement>(null);
@@ -207,6 +214,16 @@ export function ProjectPage() {
                   icon: <Lock />,
                   onSelect: () => setClosing(true),
                 },
+            ...(closed || p.status === "cancelled"
+              ? []
+              : [
+                  {
+                    label: "إلغاء المشروع",
+                    hint: "توقّف العمل: تسوية العقد والدفعات",
+                    icon: <Ban />,
+                    onSelect: () => setCancelling(true),
+                  },
+                ]),
           ]
         : []),
       {
@@ -596,6 +613,13 @@ export function ProjectPage() {
           projectId={p.id}
           projectName={p.name}
           onClose={() => setClosing(false)}
+        />
+      )}
+      {cancelling && (
+        <CancelProjectDialog
+          projectId={p.id}
+          projectName={p.name}
+          onClose={() => setCancelling(false)}
         />
       )}
       {reopening && <ReopenProjectDialog projectId={p.id} onClose={() => setReopening(false)} />}

@@ -293,8 +293,9 @@ async function computeDistribution(
     // that earlier distributions have not covered yet. The same money is never distributed twice.
     const receipts = await orgReceipts(db, orgId);
     const paid = await distributedByProject(db, orgId);
+    // A cancelled project's received money is real profit too (its contract is settled at
+    // cancellation), so it is distributed like any other.
     for (const p of figs) {
-      if (p.status === "cancelled") continue;
       const left =
         realizedProfit(p.profit, p.gross, receivedUpTo(receipts, p.id)) - (paid[p.id] ?? 0);
       if (left > 0) perProject.push({ projectId: p.id, amount: Math.round(left * 100) / 100 });
@@ -475,7 +476,7 @@ export const companyFinanceApp = new Hono<Env>()
       rows.map((r) => r.p),
     );
     for (const { p, clientName } of rows) {
-      if (p.status === "draft") continue;
+      if (p.status === "cancelled") continue;
       const fin = finOf.get(p.id);
       if (!fin) continue;
       const gross = fin.summary.grossTotal;

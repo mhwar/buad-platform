@@ -1,12 +1,21 @@
 import { realizedProfit, receiptParts } from "@buad/domain";
-import { distributionProjects, distributions, projects, salesInvoices } from "@buad/schema/db";
+import { PROJECT_STATUS_LABELS } from "@buad/schema/clients";
+import {
+  distributionProjects,
+  distributions,
+  paymentSchedule,
+  projectFinance,
+  projects,
+  salesInvoices,
+} from "@buad/schema/db";
+import { DEFAULT_CTRL } from "@buad/schema/finance";
 import { zValidator } from "@hono/zod-validator";
 import { and, eq, isNull } from "drizzle-orm";
 import { Hono } from "hono";
 import { z } from "zod";
 import { requireAuth, requirePerm, type Vars } from "../auth/middleware";
 import type { Db } from "../auth/service";
-import { nowSec } from "./common";
+import { atomic, nowSec } from "./common";
 import { loadFinance } from "./finance";
 import { loadVisible } from "./projects";
 import { NOT_PURCHASES } from "./vat";
@@ -95,6 +104,12 @@ export async function closeCheck(db: Db, project: typeof projects.$inferSelect) 
     live.filter((e) => e.cat === "vat").length,
   );
 
+  const pending = await db
+    .select({ amount: paymentSchedule.amount })
+    .from(paymentSchedule)
+    .where(and(eq(paymentSchedule.projectId, project.id), eq(paymentSchedule.status, "pending")));
+  const unapproved = fin.receipts.filter((r) => !r.approvedAt);
+
   return {
     closed: project.closedAt
       ? { at: project.closedAt, by: project.closedBy, note: project.closeNote }
@@ -109,6 +124,12 @@ export async function closeCheck(db: Db, project: typeof projects.$inferSelect) 
       distributed: r2(distributed),
       undistributed: r2(realized - distributed),
       unclassified: r2(s.remainingFromGross),
+      unapproved: r2(unapproved.reduce((a, r) => a + r.amount / 100, 0)),
+    },
+    /** Client instalments still waiting to be received. */
+    instalments: {
+      count: pending.length,
+      amount: r2(pending.reduce((a, x) => a + x.amount / 100, 0)),
     },
     vat: {
       outputVat: r2(outputVat),
@@ -122,6 +143,95 @@ export async function closeCheck(db: Db, project: typeof projects.$inferSelect) 
   };
 }
 
+/**
+ * Settling the contract at a close or a cancellation: an agreed final value (e.g. only what was
+ * collected, when the rest is waived) and/or the instalments still pending set aside. Returns
+ * the writes (to run with the status change in one batch) and the audit lines; or an error.
+ */
+const settleInput = {
+  /** Agreed final contract value, VAT included (riyals); omitted = the contract stays. */
+  finalValue: z.number().min(0).max(1e10).nullish(),
+  cancelInstalments: z.boolean().default(false),
+};
+type Settle = { finalValue?: number | null; cancelInstalments: boolean };
+type Change = { field: string; label: string; before: string; after: string };
+const money = (n: number) => `${r2(n).toLocaleString("en")} ر.س`;
+
+async function settlement(
+  db: Db,
+  me: { id: string; orgId: string },
+  project: typeof projects.$inferSelect,
+  { finalValue, cancelInstalments }: Settle,
+  t: number,
+): Promise<{ error: string } | { writes: { run: () => unknown }[]; changes: Change[] }> {
+  const writes: { run: () => unknown }[] = [];
+  const changes: Change[] = [];
+  if (finalValue !== undefined && finalValue !== null) {
+    const fin = await loadFinance(db, project);
+    if (finalValue + 0.5 < fin.received) return { error: "below_received" };
+    const [row] = await db
+      .select()
+      .from(projectFinance)
+      .where(eq(projectFinance.projectId, project.id))
+      .limit(1);
+    const vatIncluded = row?.vatIncluded ?? DEFAULT_CTRL.vatIncluded;
+    const vatPct = row?.vatPct ?? DEFAULT_CTRL.vatPct;
+    const gross = Math.round(finalValue * 100);
+    const cv = vatIncluded ? gross : Math.round((gross * 100) / (100 + vatPct));
+    if (row)
+      writes.push(
+        db
+          .update(projectFinance)
+          .set({ contractValue: cv, version: row.version + 1, updatedBy: me.id, updatedAt: t })
+          .where(eq(projectFinance.projectId, project.id)),
+      );
+    else
+      writes.push(
+        db.insert(projectFinance).values({
+          ...DEFAULT_CTRL,
+          opCats: "[]",
+          contractValue: cv,
+          projectId: project.id,
+          orgId: me.orgId,
+          version: 1,
+          createdBy: me.id,
+          createdAt: t,
+          updatedBy: me.id,
+          updatedAt: t,
+        }),
+      );
+    changes.push({
+      field: "contractValue",
+      label: "القيمة النهائية للعقد",
+      before: money(fin.summary.grossTotal),
+      after: money(finalValue),
+    });
+  }
+  if (cancelInstalments) {
+    const pending = await db
+      .select({ id: paymentSchedule.id })
+      .from(paymentSchedule)
+      .where(and(eq(paymentSchedule.projectId, project.id), eq(paymentSchedule.status, "pending")));
+    if (pending.length) {
+      writes.push(
+        db
+          .update(paymentSchedule)
+          .set({ status: "cancelled" })
+          .where(
+            and(eq(paymentSchedule.projectId, project.id), eq(paymentSchedule.status, "pending")),
+          ),
+      );
+      changes.push({
+        field: "instalments",
+        label: "الدفعات المجدولة",
+        before: `${pending.length} معلّقة`,
+        after: "أُلغيت",
+      });
+    }
+  }
+  return { writes, changes };
+}
+
 /** «إغلاق المشروع»: check, close (locks its money records), reopen with a reason. */
 export const projectCloseApp = new Hono<Env>()
   .use(requireAuth)
@@ -133,30 +243,76 @@ export const projectCloseApp = new Hono<Env>()
   })
   .post(
     "/",
-    zValidator("json", z.object({ note: z.string().trim().max(500).default("") })),
+    zValidator("json", z.object({ note: z.string().trim().max(500).default(""), ...settleInput })),
     async (c) => {
       const db = c.get("db");
       const me = c.get("user");
+      const body = c.req.valid("json");
       const project = await loadVisible(db, me, c.req.param("projectId") ?? "");
       if (!project) return c.json({ ok: false, error: "not_found" }, 404);
       if (project.closedAt) return c.json({ ok: false, error: "already_closed" }, 409);
       if (project.external) return c.json({ ok: false, error: "project_external" }, 409);
       const t = nowSec();
-      await db
-        .update(projects)
-        .set({
-          status: "completed",
-          closedAt: t,
-          closedBy: me.id,
-          closeNote: c.req.valid("json").note,
-          updatedBy: me.id,
-          updatedAt: t,
-        })
-        .where(eq(projects.id, project.id));
+      const settle = await settlement(db, me, project, body, t);
+      if ("error" in settle) return c.json({ ok: false, error: settle.error }, 409);
+      // A cancelled project is closed as it is; anything else is closed as completed.
+      const status = project.status === "cancelled" ? "cancelled" : "completed";
+      await atomic(db, [
+        ...settle.writes,
+        db
+          .update(projects)
+          .set({
+            status,
+            closedAt: t,
+            closedBy: me.id,
+            closeNote: body.note,
+            updatedBy: me.id,
+            updatedAt: t,
+          })
+          .where(eq(projects.id, project.id)),
+      ]);
       c.set("auditChanges", [
         { field: "closed", label: "الإغلاق", before: "مفتوح", after: "مغلق" },
+        ...settle.changes,
       ]);
       return c.json({ ok: true, ...(await closeCheck(db, { ...project, closedAt: t })) });
+    },
+  )
+  // «إلغاء المشروع»: the work stops. What was received stays counted; what is still owed is not.
+  .post(
+    "/cancel",
+    zValidator("json", z.object({ reason: z.string().trim().min(3).max(500), ...settleInput })),
+    async (c) => {
+      const db = c.get("db");
+      const me = c.get("user");
+      const body = c.req.valid("json");
+      const project = await loadVisible(db, me, c.req.param("projectId") ?? "");
+      if (!project) return c.json({ ok: false, error: "not_found" }, 404);
+      if (project.closedAt) return c.json({ ok: false, error: "project_closed" }, 409);
+      if (project.status === "cancelled")
+        return c.json({ ok: false, error: "already_cancelled" }, 409);
+      const t = nowSec();
+      const settle = project.external
+        ? { writes: [], changes: [] }
+        : await settlement(db, me, project, body, t);
+      if ("error" in settle) return c.json({ ok: false, error: settle.error }, 409);
+      await atomic(db, [
+        ...settle.writes,
+        db
+          .update(projects)
+          .set({ status: "cancelled", updatedBy: me.id, updatedAt: t })
+          .where(eq(projects.id, project.id)),
+      ]);
+      c.set("auditChanges", [
+        {
+          field: "status",
+          label: "إلغاء المشروع",
+          before: PROJECT_STATUS_LABELS[project.status],
+          after: `ملغي · ${body.reason}`,
+        },
+        ...settle.changes,
+      ]);
+      return c.json({ ok: true });
     },
   )
   .post(

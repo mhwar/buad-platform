@@ -44,6 +44,8 @@ export const inFinance = () =>
  */
 export const moneyLock = (p: { closedAt: number | null; external: boolean }) =>
   p.external ? ("project_external" as const) : p.closedAt ? ("project_closed" as const) : null;
+/** Money still expected from the client: never from a cancelled project (what it paid stays counted). */
+export const stillOwed = () => ne(projects.status, "cancelled");
 /** Raw-SQL form of `inFinance` for the alias `p`. */
 export const inFinanceSql = (p: string) =>
   sql.raw(`${p}.archived_at IS NULL AND ${p}.external = 0 AND ${p}.status <> 'draft'`);

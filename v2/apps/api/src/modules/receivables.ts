@@ -12,7 +12,7 @@ import { and, asc, eq, isNull } from "drizzle-orm";
 import { Hono } from "hono";
 import { requireAuth, requirePerm, type Vars } from "../auth/middleware";
 import type { Db } from "../auth/service";
-import { atomic, inFinance, moneyLock, newId, nowSec } from "./common";
+import { atomic, inFinance, moneyLock, newId, nowSec, stillOwed } from "./common";
 import { loadVisible } from "./projects";
 
 type Env = { Bindings: { JWT_SECRET: string }; Variables: Vars };
@@ -60,6 +60,7 @@ export const receivablesApp = new Hono<Env>()
           eq(paymentSchedule.orgId, me.orgId),
           eq(paymentSchedule.status, "pending"),
           inFinance(),
+          stillOwed(),
         ),
       )
       .orderBy(asc(paymentSchedule.dueDate));

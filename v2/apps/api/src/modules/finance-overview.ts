@@ -143,7 +143,7 @@ export async function financeOverview(
     const hasFinance = fin.ctrl.version > 0 || fin.entries.length > 0;
     const date = projectDate(p, fin);
     const noStatus = fin.entries.filter((e) => e.status === "").length;
-    const missingReceipts = s.grossTotal > 0 && !fin.receipts.length && p.status !== "draft";
+    const missingReceipts = s.grossTotal > 0 && !fin.receipts.length && p.status !== "cancelled";
     if (missingReceipts || noStatus)
       quality.push({
         projectId: p.id,

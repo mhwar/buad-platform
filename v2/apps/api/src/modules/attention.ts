@@ -18,7 +18,7 @@ import {
 import { and, eq, inArray, isNull, lt, ne, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { requireAuth, type Vars } from "../auth/middleware";
-import { inFinance, nowSec } from "./common";
+import { inFinance, nowSec, stillOwed } from "./common";
 import { financeChecks } from "./finance-checks";
 import { visibleProjects } from "./projects";
 
@@ -202,6 +202,7 @@ export const attentionApp = new Hono<{ Variables: Vars }>().use(requireAuth).get
             eq(paymentSchedule.status, "pending"),
             lt(paymentSchedule.dueDate, today),
             inFinance(),
+            stillOwed(),
           ),
         ),
     );
