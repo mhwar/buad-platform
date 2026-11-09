@@ -103,6 +103,28 @@ final class APIClient: @unchecked Sendable {
         try await send("GET", "/api/projects")
     }
 
+    func project(_ id: String) async throws -> ProjectDetail {
+        try await send("GET", "/api/projects/\(id)")
+    }
+
+    func finance(_ projectId: String) async throws -> ProjectFinance {
+        try await send("GET", "/api/projects/\(projectId)/finance")
+    }
+
+    func schedule(_ projectId: String) async throws -> [ScheduleItem] {
+        let envelope: ScheduleEnvelope = try await send("GET", "/api/receivables/projects/\(projectId)")
+        return envelope.items
+    }
+
+    func execution(_ projectId: String) async throws -> Execution {
+        try await send("GET", "/api/tasks/projects/\(projectId)")
+    }
+
+    func documents(_ projectId: String) async throws -> [DocumentItem] {
+        let envelope: DocumentsEnvelope = try await send("GET", "/api/projects/\(projectId)/documents")
+        return envelope.items
+    }
+
     func signOut() async {
         _ = try? await send("POST", "/api/auth/logout") as OKEnvelope
         if let base = AppConfig.apiBase, let cookies = HTTPCookieStorage.shared.cookies(for: base) {

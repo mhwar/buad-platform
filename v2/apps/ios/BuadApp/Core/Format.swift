@@ -67,6 +67,17 @@ enum Fmt {
     /// "2026-03-01" → «1 مارس».
     static func dayMonth(_ isoDay: String) -> String { date(isoDay).map { dayMonthFormat.string(from: $0) } ?? "" }
 
+    /// Seconds since 1970 (the API's timestamps) → «1 مارس 2026», like the website's fromEpoch.
+    static func epochDay(_ seconds: Int) -> String {
+        seconds > 0 ? dayFormat.string(from: Date(timeIntervalSince1970: TimeInterval(seconds))) : ""
+    }
+
+    /// «12 س 30 د» from minutes.
+    static func hours(_ minutes: Int) -> String {
+        let h = minutes / 60, m = minutes % 60
+        return m == 0 ? "\(h) س" : h == 0 ? "\(m) د" : "\(h) س \(m) د"
+    }
+
     static var todayISO: String { iso.string(from: Date()) }
 
     static func longToday() -> String { longFormat.string(from: Date()) }

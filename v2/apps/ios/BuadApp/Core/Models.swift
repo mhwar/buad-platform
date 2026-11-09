@@ -141,6 +141,54 @@ enum Vocabulary {
         default: return "أخرى"
         }
     }
+
+    /// CATEGORY_LABELS (packages/schema/src/finance.ts).
+    static let entryCategory: [String: String] = [
+        "salary": "رواتب", "logistics": "لوجستيات", "materials": "مواد", "other": "أخرى", "exec": "أتعاب",
+        "mkt": "تسويق", "cashback": "كاش باك", "cf": "رسوم إضافية", "vat": "ضريبة",
+    ]
+
+    /// ENTRY_STATUS_LABELS; an empty status shows nothing.
+    static func entryStatus(_ key: String) -> (label: String, tone: Tone)? {
+        switch key {
+        case "paid": return ("مدفوع", .ok)
+        case "pending": return ("معلق", .warn)
+        case "cancelled": return ("ملغي", .neutral)
+        default: return nil
+        }
+    }
+
+    /// Payment schedule (paymentSchedule.status).
+    static func scheduleStatus(_ key: String, dueDate: String) -> (label: String, tone: Tone) {
+        switch key {
+        case "received": return ("مستلمة", .ok)
+        case "cancelled": return ("ملغاة", .neutral)
+        default: return dueDate < Fmt.todayISO ? ("متأخرة", .bad) : ("قادمة", .info)
+        }
+    }
+
+    /// DOC_KIND_LABELS and DOC_STATUS_LABELS (packages/schema/src/documents.ts) with the website's tones.
+    static func docKind(_ key: String) -> String { key == "contract" ? "عقد" : key == "letter" ? "خطاب" : key }
+
+    static func docStatus(_ key: String) -> (label: String, tone: Tone) {
+        switch key {
+        case "review": return ("قيد المراجعة", .warn)
+        case "approved": return ("معتمد", .ok)
+        default: return ("مسودة", .neutral)
+        }
+    }
+
+    /// STATUS_LABEL (features/tasks/queries.ts) and TaskRow tones.
+    static func taskStatus(_ key: String) -> (label: String, tone: Tone) {
+        switch key {
+        case "doing": return ("قيد التنفيذ", .info)
+        case "blocked": return ("معلّقة", .warn)
+        case "done": return ("منجزة", .ok)
+        default: return ("لم تبدأ", .neutral)
+        }
+    }
+
+    static func priority(_ key: String) -> String? { key == "high" ? "عالية" : key == "low" ? "منخفضة" : nil }
 }
 
 // Lenient reading: SQLite sends booleans as 0/1 and some counts as strings; a missing field never breaks a screen.

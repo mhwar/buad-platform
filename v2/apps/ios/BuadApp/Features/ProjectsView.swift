@@ -82,7 +82,7 @@ struct ProjectsView: View {
 
 struct FilterChip: View {
     let title: String
-    let count: Int
+    var count: Int?
     let on: Bool
     let action: () -> Void
 
@@ -90,7 +90,7 @@ struct FilterChip: View {
         Button(action: action) {
             HStack(spacing: 6) {
                 Text(title).font(.subheadline.weight(.medium))
-                Text("\(count)").font(.caption).monospacedDigit().opacity(0.6)
+                if let count { Text("\(count)").font(.caption).monospacedDigit().opacity(0.6) }
             }
             .padding(.horizontal, 14)
             .frame(height: 34)
@@ -165,94 +165,5 @@ private struct ProjectCard: View {
             ProgressBar(value: progress, color: color)
         }
         .frame(maxWidth: .infinity)
-    }
-}
-
-/// Read-only in this version: everything shown comes from the list row; editing stays on the website.
-struct ProjectDetailView: View {
-    @EnvironmentObject private var session: Session
-    let project: ProjectItem
-
-    var body: some View {
-        let status = Vocabulary.status(project.status)
-        let exec = project.execution
-        ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                VStack(alignment: .leading, spacing: 6) {
-                    Text(project.number).font(.caption.weight(.medium)).foregroundStyle(Buad.faint).environment(\.layoutDirection, .leftToRight)
-                    Text(project.name).font(.title2.bold())
-                    HStack(spacing: 8) {
-                        Pill(text: project.late ? "متأخر" : status.label, tone: project.late ? .bad : status.tone)
-                        Text(project.clientName).font(.subheadline).foregroundStyle(Buad.muted)
-                    }
-                }
-
-                if let received = project.received, !project.external {
-                    let remaining = max(0, project.contractTotal - received)
-                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 1) {
-                        stat("قيمة العقد", Fmt.sar(project.contractTotal) + (project.estimated ? " · تقديري" : ""))
-                        stat("المحصّل", Fmt.sar(received))
-                        stat("المتبقي على العميل", Fmt.sar(remaining))
-                        stat("الدفعة القادمة", project.nextDueAmount.map { $0 > 0 ? Fmt.sar($0) : "—" } ?? "—")
-                    }
-                    .background(Buad.line)
-                    .clipShape(RoundedRectangle(cornerRadius: Buad.radius, style: .continuous))
-                }
-
-                Card {
-                    Text("نبض المشروع").font(.headline)
-                    HStack {
-                        Text("التنفيذ").foregroundStyle(Buad.muted)
-                        Spacer()
-                        Text(exec.total > 0 ? "\(exec.done) من \(exec.total) \(project.stagesTotal > 0 ? "مرحلة" : "مهمة")" : "لم تُضف مراحل أو مهام").monospacedDigit()
-                    }
-                    .font(.subheadline)
-                    ProgressBar(value: exec.total > 0 ? Double(exec.done) / Double(exec.total) : 0)
-                    row("النوع", Vocabulary.type(project.type))
-                    if !project.productName.isEmpty { row("الخدمة", project.productName) }
-                    row("البداية", Fmt.day(project.startDate).isEmpty ? "—" : Fmt.day(project.startDate))
-                    row("الانتهاء المتوقع", Fmt.day(project.endDate).isEmpty ? "مفتوح" : Fmt.day(project.endDate))
-                    if project.tasksOverdue > 0 { row("مهام متأخرة", "\(project.tasksOverdue)") }
-                }
-
-                if let url = APIClient.shared.webURL("/projects/\(project.id)") {
-                    Link(destination: url) {
-                        Label("فتح المشروع في الموقع للتعديل", systemImage: "safari")
-                            .font(.body.weight(.semibold))
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 48)
-                            .background(Buad.brandSoft, in: RoundedRectangle(cornerRadius: Buad.control, style: .continuous))
-                            .foregroundStyle(Buad.ink)
-                    }
-                }
-                Text("هذه النسخة للعرض فقط. التسجيل والتعديل من التطبيق يأتيان في الإصدار التالي، وأي تعديل في الموقع يظهر هنا عند السحب للتحديث.")
-                    .font(.footnote)
-                    .foregroundStyle(Buad.muted)
-            }
-            .padding(.horizontal, Buad.gutter)
-            .padding(.vertical, 12)
-        }
-        .background(Buad.canvas.ignoresSafeArea())
-        .navigationTitle(project.name)
-        .navigationBarTitleDisplayMode(.inline)
-    }
-
-    private func stat(_ title: String, _ value: String) -> some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text(title).font(.footnote).foregroundStyle(Buad.muted)
-            Text(value).font(.body.weight(.semibold)).monospacedDigit().lineLimit(1).minimumScaleFactor(0.7)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(14)
-        .background(Buad.surface)
-    }
-
-    private func row(_ title: String, _ value: String) -> some View {
-        HStack {
-            Text(title).foregroundStyle(Buad.muted)
-            Spacer()
-            Text(value)
-        }
-        .font(.subheadline)
     }
 }

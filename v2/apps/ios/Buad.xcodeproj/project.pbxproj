@@ -14,6 +14,8 @@
 		F37391568EFFD96C654900E3 /* Format.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42671CCBC6E8669BCF2A9F27 /* Format.swift */; };
 		7393F02EC54916C7EDE9A3B4 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00315442E9DAF7B3CC3ED5A9 /* Models.swift */; };
 		A289450366D35817DEC0755B /* MoreView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5BBF222B60004DD31D3FBEB8 /* MoreView.swift */; };
+		D26BF7A8214E4D68FB3AF938 /* ProjectDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F5CAFFCF496277E305DC4E4 /* ProjectDetailView.swift */; };
+		59E6DDE312BBB17209772C1C /* ProjectModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5A5EF53C6D7B76F4A56FC27 /* ProjectModels.swift */; };
 		35CF01C60CA46ED759C83A65 /* ProjectsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 118AB449F27FDDD25C375DC5 /* ProjectsView.swift */; };
 		E1F3EC802D75BAE3B9FEFD79 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23FC1395DDA99163E7BB7487 /* RootView.swift */; };
 		97E0DB3566CB47A3EE899254 /* Session.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3896A30DF892C5060229D8BA /* Session.swift */; };
@@ -31,6 +33,8 @@
 		42671CCBC6E8669BCF2A9F27 /* Format.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Format.swift; sourceTree = "<group>"; };
 		00315442E9DAF7B3CC3ED5A9 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
 		5BBF222B60004DD31D3FBEB8 /* MoreView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoreView.swift; sourceTree = "<group>"; };
+		4F5CAFFCF496277E305DC4E4 /* ProjectDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectDetailView.swift; sourceTree = "<group>"; };
+		C5A5EF53C6D7B76F4A56FC27 /* ProjectModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectModels.swift; sourceTree = "<group>"; };
 		118AB449F27FDDD25C375DC5 /* ProjectsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectsView.swift; sourceTree = "<group>"; };
 		23FC1395DDA99163E7BB7487 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		3896A30DF892C5060229D8BA /* Session.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Session.swift; sourceTree = "<group>"; };
@@ -83,6 +87,7 @@
 				200807A70C4DACF32C5CEBB6 /* APIClient.swift */,
 				42671CCBC6E8669BCF2A9F27 /* Format.swift */,
 				00315442E9DAF7B3CC3ED5A9 /* Models.swift */,
+				C5A5EF53C6D7B76F4A56FC27 /* ProjectModels.swift */,
 				294FBA120B9CEA3394277920 /* Theme.swift */,
 			);
 			path = Core;
@@ -92,6 +97,7 @@
 			isa = PBXGroup;
 			children = (
 				5BBF222B60004DD31D3FBEB8 /* MoreView.swift */,
+				4F5CAFFCF496277E305DC4E4 /* ProjectDetailView.swift */,
 				118AB449F27FDDD25C375DC5 /* ProjectsView.swift */,
 				23FC1395DDA99163E7BB7487 /* RootView.swift */,
 				DCC34F5150334BB07B835095 /* SignInView.swift */,
@@ -184,6 +190,8 @@
 				F37391568EFFD96C654900E3 /* Format.swift in Sources */,
 				7393F02EC54916C7EDE9A3B4 /* Models.swift in Sources */,
 				A289450366D35817DEC0755B /* MoreView.swift in Sources */,
+				D26BF7A8214E4D68FB3AF938 /* ProjectDetailView.swift in Sources */,
+				59E6DDE312BBB17209772C1C /* ProjectModels.swift in Sources */,
 				35CF01C60CA46ED759C83A65 /* ProjectsView.swift in Sources */,
 				E1F3EC802D75BAE3B9FEFD79 /* RootView.swift in Sources */,
 				97E0DB3566CB47A3EE899254 /* Session.swift in Sources */,
@@ -274,7 +282,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.1.0;
+				MARKETING_VERSION = 0.1.1;
 				PRODUCT_BUNDLE_IDENTIFIER = sa.buad.app;
 				PRODUCT_NAME = BuadApp;
 				SDKROOT = iphoneos;
@@ -297,7 +305,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.1.0;
+				MARKETING_VERSION = 0.1.1;
 				PRODUCT_BUNDLE_IDENTIFIER = sa.buad.app;
 				PRODUCT_NAME = BuadApp;
 				SDKROOT = iphoneos;
