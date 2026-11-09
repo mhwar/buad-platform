@@ -181,6 +181,8 @@ struct ProjectFinance: Decodable {
     let vatPct: Double
     let mktInternal: Bool
     let notSetUp: Bool
+    /// The contract settings behind the figures (ControlCentre): fees, their bases, the lock and the version.
+    let settings: ContractSettings
     let entries: [FinanceEntry]
     let receipts: [Receipt]
     /// Custom category id → label, and budget row id → name, for the entry category names.
@@ -195,7 +197,10 @@ struct ProjectFinance: Decodable {
         case grossTotal, totalDeductions, pendingExpenses, profit, remaining, remainingFromGross, execAmt, mkt, cb, cfAmt
         case available, opExpenses, remainingExec, totalIncome, totalExpenses
     }
-    private enum Ctrl: String, CodingKey { case contractNo, contractDate, vatIncluded, vatPct, mktInternal, version }
+    private enum Ctrl: String, CodingKey {
+        case contractNo, contractDate, contractValue, cvLocked, vatIncluded, vatPct, mktInternal, version
+        case execV, execType, execBase, mktV, mktType, mktBase, cbV, cbType, cbBase, cfV, cfType, cfBase
+    }
 
     private struct Named: Decodable {
         let id: String
@@ -238,6 +243,12 @@ struct ProjectFinance: Decodable {
         vatPct = ctrl.double(.vatPct)
         mktInternal = ctrl.bool(.mktInternal)
         notSetUp = ctrl.int(.version) == 0
+        settings = ContractSettings(
+            version: ctrl.int(.version), contractValue: ctrl.int(.contractValue), cvLocked: ctrl.bool(.cvLocked),
+            exec: .init(v: ctrl.double(.execV), type: ctrl.string(.execType), base: ctrl.string(.execBase)),
+            mkt: .init(v: ctrl.double(.mktV), type: ctrl.string(.mktType), base: ctrl.string(.mktBase)),
+            cb: .init(v: ctrl.double(.cbV), type: ctrl.string(.cbType), base: ctrl.string(.cbBase)),
+            cf: .init(v: ctrl.double(.cfV), type: ctrl.string(.cfType), base: ctrl.string(.cfBase)))
         entries = (try? c.decode([FinanceEntry].self, forKey: .entries)) ?? []
         receipts = (try? c.decode([Receipt].self, forKey: .receipts)) ?? []
         let cats = (try? c.decode([Named].self, forKey: .categories)) ?? []
@@ -418,3 +429,16 @@ struct SalesInvoice: Decodable, Identifiable {
 struct AssetEnvelope: Decodable { let id: String }
 
 struct SalesInvoicesEnvelope: Decodable { let items: [SalesInvoice] }
+
+
+/// «إعدادات العقد» as the server holds them. `contractValue` is halalas here (riyals when saved).
+struct ContractSettings {
+    struct Fee { var v: Double; var type: String; var base: String }
+    var version: Int
+    var contractValue: Int
+    var cvLocked: Bool
+    var exec: Fee
+    var mkt: Fee
+    var cb: Fee
+    var cf: Fee
+}

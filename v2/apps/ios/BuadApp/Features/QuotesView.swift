@@ -153,6 +153,7 @@ struct QuoteCard: View {
 /// in its status (send, accept, reject, back to draft, convert to a project, PDF, copy, delete).
 struct QuoteView: View {
     @EnvironmentObject private var session: Session
+    @EnvironmentObject private var nav: Navigator
     @Environment(\.dismiss) private var dismiss
     let id: String
     let preview: SalesQuote?
@@ -295,14 +296,13 @@ struct QuoteView: View {
             }
         case "accepted":
             if q.converted {
-                if let url = APIClient.shared.webURL("/projects/\(q.projectId)") {
-                    Link(destination: url) {
-                        Label("فتح المشروع", systemImage: "briefcase.fill")
-                            .font(.body.weight(.semibold)).frame(maxWidth: .infinity, minHeight: 50)
-                            .background(Buad.successSoft, in: RoundedRectangle(cornerRadius: Buad.control, style: .continuous))
-                            .foregroundStyle(Buad.successInk)
-                    }
+                Button { nav.open("/projects/\(q.projectId)") } label: {
+                    Label("فتح المشروع", systemImage: "briefcase.fill")
+                        .font(.body.weight(.semibold)).frame(maxWidth: .infinity, minHeight: 50)
+                        .background(Buad.successSoft, in: RoundedRectangle(cornerRadius: Buad.control, style: .continuous))
+                        .foregroundStyle(Buad.successInk)
                 }
+                .buttonStyle(.plain)
             } else {
                 primary("تحويل إلى مشروع", "arrow.triangle.branch") { converting = true }
             }

@@ -92,7 +92,7 @@ private struct OpportunitiesList: View {
                     } else if let error {
                         EmptyNote(text: error, icon: "wifi.exclamationmark")
                     } else if shown.isEmpty {
-                        EmptyNote(text: items.isEmpty ? "لا فرص بعد. تصل طلبات الموقع هنا، وتُضاف الفرص من الموقع."
+                        EmptyNote(text: items.isEmpty ? "لا فرص بعد. تصل طلبات الموقع هنا، وتُضاف الفرص من زر «+»."
                                     : dueOnly || !query.isEmpty ? "لا فرص تطابق هذا البحث. غيّر التصفية أو امسح البحث."
                                     : "لا فرص في هذا العرض.",
                                   icon: "target")
@@ -434,16 +434,6 @@ struct OpportunityView: View {
         .background(Buad.canvas.ignoresSafeArea())
         .navigationTitle(o.name.isEmpty ? o.entity : o.name)
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            if let url = APIClient.shared.webURL("/sales/\(id)") {
-                ToolbarItem(placement: .primaryAction) {
-                    Menu {
-                        Link(destination: url) { Label("فتح في الموقع", systemImage: "safari") }
-                        ShareLink(item: url) { Label("مشاركة الرابط", systemImage: "square.and.arrow.up") }
-                    } label: { Image(systemName: "ellipsis.circle").accessibilityLabel("إجراءات الفرصة") }
-                }
-            }
-        }
         .refreshable { await load() }
         .task { if !loaded { await load() } }
         .toast($toast)

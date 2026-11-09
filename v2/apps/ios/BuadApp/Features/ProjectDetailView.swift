@@ -31,6 +31,7 @@ struct ProjectDetailView: View {
     @State private var receiptTarget: ReceiptTarget?
     @State private var invoiceTarget: InvoiceTarget?
     @State private var addingLine = false
+    @State private var editingLine: ScheduleItem?
     @State private var invoices: [SalesInvoice]?
     @State private var writeError: String?
     @State private var lineActions: ScheduleItem?
@@ -48,6 +49,7 @@ struct ProjectDetailView: View {
     @State private var confirm: String?
     @State private var statusBusy = false
     @State private var report: URL?
+    @State private var contract = false
 
     struct ReceiptTarget: Identifiable {
         let receipt: Receipt?
@@ -151,6 +153,7 @@ struct ProjectDetailView: View {
                             isPresented: Binding(get: { lineActions != nil }, set: { if !$0 { lineActions = nil } }),
                             titleVisibility: .visible, presenting: lineActions) { line in
             if canReceive { Button("تسجيل مقبوض") { startReceive(line) } }
+            if canEditEntries { Button("تعديل الدفعة") { editingLine = line } }
             if canEditEntries { Button("حذف الدفعة", role: .destructive) { Task { await deleteLine(line) } } }
             Button("إلغاء", role: .cancel) {}
         } message: { line in
@@ -162,6 +165,7 @@ struct ProjectDetailView: View {
             case "delete": Button("حذف نهائياً", role: .destructive) { Task { await deleteProject() } }
             case "activate": Button("بدء التنفيذ") { Task { await setStatus("active") } }
             case "sales": Button("نقل إلى المبيعات") { Task { await moveToSales() } }
+            case "agreement": Button("تسجيلها كلها") { Task { await registerAgreement() } }
             default: EmptyView()
             }
             Button("إلغاء", role: .cancel) {}
@@ -170,6 +174,7 @@ struct ProjectDetailView: View {
             case "archive": Text("يُخفى من القوائم ويمكن استعادته.")
             case "delete": Text("لا يمكن التراجع. إن كان للمشروع سجلات فأرشفته أفضل.")
             case "activate": Text("تدخل أرقامه في المالية (الأرباح والضريبة والتحصيل) من الآن.")
+            case "agreement": Text("تُسجَّل بنود الاتفاقية غير المسجلة بعد (أتعاب التنفيذ والتسويق والكاش باك والرسوم) كقيود معلّقة بحسب إعدادات العقد.")
             case "sales": Text("يصبح فرصة لعميله بقيمة عقده قبل الضريبة، ويُنشأ لها عرض سعر مسودة، وتُسجَّل قيوده المعلّقة وشروطه في ملاحظات الفرصة للتفاوض. يُخفى المشروع بمستنداته ومهامه، وعند قبول العرض و«تحويل إلى مشروع» يعود هو نفسه برقمه وتتبع قيمة عقده السعر المتفق عليه.")
             default: Text("")
             }
@@ -203,6 +208,12 @@ struct ProjectDetailView: View {
                 Task { await load() }
             }
         }
+        .sheet(item: $editingLine) { line in
+            ScheduleLineSheet(projectId: project.id, existing: line) { message in
+                toast = ToastItem(text: message)
+                Task { await load() }
+            }
+        }
         .sheet(item: $receiving) { line in
             ReceiveSheet(line: line) { message in
                 toast = ToastItem(text: message)
@@ -220,6 +231,11 @@ struct ProjectDetailView: View {
                 Task { await load() }
             }
         }
+        .sheet(isPresented: $contract) {
+            if let f = finance {
+                ContractSettingsSheet(projectId: project.id, finance: f) { toast = ToastItem(text: "حُفظت إعدادات العقد"); Task { await load() } }
+            }
+        }
         .sheet(isPresented: $team) {
             ProjectTeamSheet(projectId: project.id) { toast = ToastItem(text: $0) }
         }
@@ -231,6 +247,7 @@ struct ProjectDetailView: View {
         case "delete": return "حذف «\(name)» نهائياً؟"
         case "activate": return "بدء تنفيذ المشروع؟"
         case "sales": return "نقل «\(name)» إلى المبيعات؟"
+        case "agreement": return "تسجيل بنود الاتفاقية؟"
         default: return ""
         }
     }
@@ -303,6 +320,10 @@ struct ProjectDetailView: View {
             }
             if manager {
                 Section("المالية") {
+                    if !closed {
+                        Button { contract = true } label: { Label("إعدادات العقد", systemImage: "slider.horizontal.3") }
+                        Button { confirm = "agreement" } label: { Label("تسجيل بنود الاتفاقية", systemImage: "checkmark.rectangle.stack") }
+                    }
                     if closed {
                         Button { closing = .reopen } label: { Label("إعادة فتح المشروع", systemImage: "lock.open") }
                     } else {
@@ -771,10 +792,15 @@ struct ProjectDetailView: View {
             .padding(12)
             .background(Buad.surface)
             if f.notSetUp {
-                Text("هذه الأرقام من القيم الافتراضية (ضريبة 15٪، أتعاب تنفيذ 10٪). اضبطوا شروط العقد من الموقع لتكون دقيقة.")
-                    .font(.caption).foregroundStyle(Buad.warningInk)
-                    .padding(12).frame(maxWidth: .infinity, alignment: .leading)
-                    .background(Buad.warningSoft)
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("هذه الأرقام من القيم الافتراضية (ضريبة 15٪، أتعاب تنفيذ 10٪). اضبط شروط العقد لتكون دقيقة.")
+                        .font(.caption).foregroundStyle(Buad.warningInk)
+                    if manager && !closed {
+                        Button("ضبط شروط العقد") { contract = true }.font(.caption.weight(.bold))
+                    }
+                }
+                .padding(12).frame(maxWidth: .infinity, alignment: .leading)
+                .background(Buad.warningSoft)
             }
         }
         .clipShape(RoundedRectangle(cornerRadius: Buad.radius, style: .continuous))
@@ -1090,6 +1116,17 @@ struct ProjectDetailView: View {
         } catch {
             session.handle(error)
             writeError = "تعذّر تغيير الحالة. " + ((error as? APIError)?.message ?? "")
+        }
+    }
+
+    private func registerAgreement() async {
+        do {
+            try await APIClient.shared.registerAgreement(project.id)
+            toast = ToastItem(text: "سُجّلت بنود الاتفاقية")
+            await load()
+        } catch {
+            session.handle(error)
+            writeError = (error as? APIError)?.message ?? "تعذّر التسجيل"
         }
     }
 

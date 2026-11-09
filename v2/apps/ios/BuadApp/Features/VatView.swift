@@ -179,7 +179,7 @@ struct VatView: View {
             }
         }
 
-        Text("تسجيل الإقرارات وسدادها، ومشتريات الشركة، وإعدادات الضريبة من الموقع.").font(.footnote).foregroundStyle(Buad.muted)
+        Text("تسجيل الإقرارات وسدادها ومشتريات الشركة وإعدادات الضريبة تأتي في الإصدار القادم داخل التطبيق.").font(.footnote).foregroundStyle(Buad.muted)
     }
 
     private func section<Rows: View>(_ title: String, note: String, empty: String?, @ViewBuilder rows: () -> Rows) -> some View {

@@ -1,6 +1,9 @@
 import SwiftUI
 
 struct MoreView: View {
+    private static let soonIcon = ["الاجتماعات": "person.3", "القرارات": "checkmark.seal", "الخطط والأهداف": "target",
+                                   "التقارير": "chart.bar.doc.horizontal", "الإعدادات": "gearshape"]
+
     @EnvironmentObject private var session: Session
     @AppStorage("buad.faceid") private var faceID = false
     @AppStorage("buad.theme") private var theme = "system"
@@ -26,21 +29,37 @@ struct MoreView: View {
                     }
                 }
 
-                if let me = session.me, me.can("tasks.view") || me.can("clients.view") || me.can("treasury.view") || me.can("vat.view") {
+                if let me = session.me {
+                    let work = me.can("tasks.view") || me.can("clients.view") || me.can("documents.view")
+                    if work {
+                        Section {
+                            if me.can("tasks.view") { NavigationLink { TasksView().navigationTitle("المهام").navigationBarTitleDisplayMode(.inline) } label: { Label("المهام", systemImage: "checklist") } }
+                            if me.can("clients.view") {
+                                NavigationLink { FollowupsView() } label: { Label("المتابعات", systemImage: "clock.badge.checkmark") }
+                                NavigationLink { ClientsView() } label: { Label("العملاء", systemImage: "person.2") }
+                            }
+                            if me.can("documents.view") { NavigationLink { DocumentsRegisterView() } label: { Label("المستندات", systemImage: "doc.text") } }
+                        } header: { Text("العمل") }
+                    }
+                    if me.can("treasury.view") || me.can("vat.view") {
+                        Section {
+                            NavigationLink { FinanceView(embedded: true) } label: { Label("المالية", systemImage: "banknote") }
+                        } header: { Text("المالية") }
+                    }
                     Section {
-                        if me.can("treasury.view") || me.can("vat.view") {
-                            NavigationLink { FinanceView(embedded: true) } label: {
-                                Label("المالية", systemImage: "banknote")
+                        ForEach(["الاجتماعات", "القرارات", "الخطط والأهداف", "التقارير", "الإعدادات"], id: \.self) { name in
+                            NavigationLink { SoonView(name: name) } label: {
+                                HStack {
+                                    Label(name, systemImage: Self.soonIcon[name] ?? "hammer")
+                                    Spacer()
+                                    Text("قريباً").font(.caption.weight(.semibold)).foregroundStyle(Buad.accentInk)
+                                        .padding(.horizontal, 8).padding(.vertical, 3)
+                                        .background(Buad.accentSoft, in: Capsule())
+                                }
                             }
                         }
-                        if me.can("tasks.view") {
-                            NavigationLink { TasksView() } label: { Label("المهام", systemImage: "checklist") }
-                        }
-                        if me.can("clients.view") {
-                            NavigationLink { ClientsView() } label: { Label("العملاء", systemImage: "person.2") }
-                        }
-                    } header: {
-                        Text("الأقسام")
+                    } header: { Text("قيد النقل إلى التطبيق") } footer: {
+                        Text("أقسام الموقع التي تنتقل إلى التطبيق تباعاً. كل قسم يظهر هنا بمجرد جاهزيته.")
                     }
                 }
 
@@ -60,11 +79,6 @@ struct MoreView: View {
                 }
 
                 Section {
-                    if let url = APIClient.shared.webURL("/") {
-                        Link(destination: url) {
-                            Label("فتح المنصة", systemImage: "safari")
-                        }
-                    }
                     LabeledContent("الخادم", value: AppConfig.serverHost)
                     LabeledContent("الإصدار", value: "\(AppConfig.version) (\(AppConfig.build))")
                 } header: {

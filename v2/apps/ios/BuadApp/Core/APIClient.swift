@@ -36,7 +36,7 @@ enum APIError: Error, Equatable {
             case "not_found": return "لم يعد هذا العنصر موجوداً أو لا تملك صلاحية الوصول إليه."
             case "not_pending": return "سُجّلت هذه الدفعة من قبل. اسحب للتحديث."
             case "amount_exceeds_line": return "المبلغ أكبر من الدفعة."
-            case "closed", "project_closed": return "المشروع مغلق مالياً. أعد فتحه من الموقع أولاً."
+            case "closed", "project_closed": return "المشروع مغلق مالياً. أعد فتحه من «…» في صفحة المشروع أولاً."
             case "in_distribution": return "وُزّع ربح هذا المبلغ على الشركاء في توزيع مكتمل؛ ألغِ التوزيع أولاً من الموقع."
             case "too_large": return "الملف أكبر من 2 ميغابايت."
             case "unsupported_type": return "نوع الملف غير مدعوم. المسموح: صورة أو PDF."
@@ -556,6 +556,65 @@ final class APIClient: @unchecked Sendable {
 
     func logTime(_ taskId: String, minutes: Int, date: String, note: String) async throws {
         let _: OKEnvelope = try await send("POST", "/api/tasks/\(taskId)/time", body: ["minutes": minutes, "date": date, "note": note])
+    }
+
+    // MARK: 0.6.0 — what used to open the website
+
+    /// PATCH /api/projects/:id/finance/ctrl (finance.edit): the contract settings, riyals as typed.
+    func saveContract(_ projectId: String, _ body: [String: Any]) async throws {
+        let _: OKEnvelope = try await send("PATCH", "/api/projects/\(projectId)/finance/ctrl", body: body)
+    }
+
+    /// «تسجيلها كلها»: every agreement item (execution fee, marketing, cashback, fees) as an entry.
+    func registerAgreement(_ projectId: String) async throws {
+        let _: OKEnvelope = try await send("POST", "/api/projects/\(projectId)/finance/agreement-all")
+    }
+
+    /// PATCH /api/receivables/:id — an instalment's label, date or amount (riyals) while it is pending.
+    func updateScheduleLine(_ id: String, _ fields: [String: Any]) async throws {
+        let _: OKEnvelope = try await send("PATCH", "/api/receivables/\(id)", body: fields)
+    }
+
+    /// GET /api/receivables with the bank balance the forecast starts from (riyals).
+    func receivables(opening riyals: Double) async throws -> Receivables {
+        try await send("GET", "/api/receivables?opening=\(riyals)")
+    }
+
+    /// PATCH /api/clients/:id — the client's own fields (contacts are left as they are).
+    func updateClient(_ id: String, _ fields: [String: Any]) async throws {
+        let _: OKEnvelope = try await send("PATCH", "/api/clients/\(id)", body: fields)
+    }
+
+    func updateClientFollowUp(_ id: String, _ date: String) async throws {
+        let _: OKEnvelope = try await send("PATCH", "/api/crm/clients/\(id)", body: ["nextFollowUpAt": date])
+    }
+
+    func followups(all: Bool) async throws -> [Followup] {
+        let r: FollowupsEnvelope = try await send("GET", "/api/crm/followups?scope=\(all ? "all" : "mine")")
+        return r.items
+    }
+
+    /// PATCH on the thing the follow-up belongs to: an opportunity's date, or a client's next contact.
+    func setFollowUp(_ f: Followup, to date: String) async throws {
+        if f.kind == "request" {
+            try await updateOpportunity(f.id, ["followUpAt": date])
+        } else {
+            let _: OKEnvelope = try await send("PATCH", "/api/crm/clients/\(f.id)", body: ["nextFollowUpAt": date])
+        }
+    }
+
+    /// A contact logged for a client (call, meeting, visit, mail, WhatsApp, note).
+    func logClientActivity(_ clientId: String, type: String, summary: String) async throws {
+        let _: OKEnvelope = try await send("POST", "/api/crm/clients/\(clientId)/activities", body: ["type": type, "summary": summary])
+    }
+
+    func documentsRegister(status: String?, query: String) async throws -> [RegisterDocument] {
+        var items: [String] = []
+        if let status, !status.isEmpty { items.append("status=\(status)") }
+        let q = query.trimmingCharacters(in: .whitespaces)
+        if !q.isEmpty, let e = q.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) { items.append("q=\(e)") }
+        let r: RegisterEnvelope = try await send("GET", "/api/documents" + (items.isEmpty ? "" : "?" + items.joined(separator: "&")))
+        return r.items
     }
 
     func signOut() async {
