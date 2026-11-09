@@ -129,7 +129,7 @@ struct OverviewView: View {
         return JoinedGrid {
             GridRow {
                 tile("قيمة العقود (شامل الضريبة)", Fmt.sar(t.gross),
-                     sub: "\(t.projects) مشروع · ضريبة \(Fmt.short(t.vat))" + (t.withoutFinance > 0 ? " · \(t.withoutFinance) بلا مالية" : ""),
+                     sub: "\(Fmt.projects(t.projects)) · ضريبة \(Fmt.short(t.vat))" + (t.withoutFinance > 0 ? " · \(t.withoutFinance) بلا مالية" : ""),
                      delta: p.map { delta(t.gross, $0.gross, label) })
                 tile("صافي الربح", Fmt.sar(t.profit), sub: "هامش \(Self.pct(t.margin))", tone: t.profit > 0 ? .ok : nil,
                      delta: p.map { delta(t.profit, $0.profit, label) })
@@ -141,7 +141,7 @@ struct OverviewView: View {
             }
             GridRow {
                 tile("المتبقي من العقود", Fmt.sar(t.remaining), tone: t.remaining < 0 ? .bad : nil)
-                tile("التزامات قائمة", Fmt.sar(t.pending + t.unregistered), sub: "\(items) بند", tone: items > 0 ? .warn : nil)
+                tile("التزامات قائمة", Fmt.sar(t.pending + t.unregistered), sub: Fmt.items(items), tone: items > 0 ? .warn : nil)
             }
         }
     }
@@ -182,8 +182,8 @@ struct OverviewView: View {
                         HStack {
                             Text(Self.monthName(m.month)).font(.caption.weight(.medium))
                             Spacer()
-                            Text("+ \(Fmt.short(m.income))").foregroundStyle(Buad.successInk)
-                            Text("− \(Fmt.short(m.expense))").foregroundStyle(Buad.dangerInk)
+                            Text(Fmt.ltr("+" + Fmt.short(m.income))).foregroundStyle(Buad.successInk)
+                            Text(Fmt.ltr("−" + Fmt.short(m.expense))).foregroundStyle(Buad.dangerInk)
                         }
                         .font(.caption).monospacedDigit()
                         ProgressBar(value: Double(m.income) / Double(top), color: Buad.success)
@@ -234,7 +234,7 @@ struct OverviewView: View {
                     HStack(alignment: .firstTextBaseline) {
                         VStack(alignment: .leading, spacing: 2) {
                             Text(p.name).font(.subheadline.weight(.medium)).lineLimit(1)
-                            Text("\(p.number) · \(p.clientName)").font(.caption).foregroundStyle(Buad.muted).lineLimit(1)
+                            Text("\(Fmt.ltr(p.number)) · \(p.clientName)").font(.caption).foregroundStyle(Buad.muted).lineLimit(1)
                         }
                         Spacer()
                         VStack(alignment: .trailing, spacing: 2) {
@@ -256,7 +256,7 @@ struct OverviewView: View {
         Text("الالتزامات والمستحقات").font(.headline)
         Text("قيود معلّقة لم تُدفع، وبنود في الاتفاقية لم تُسجَّل في مالية مشروعها بعد.").font(.caption).foregroundStyle(Buad.muted)
         if d.pending.isEmpty && d.unregistered.isEmpty {
-            EmptyNote(text: "لا التزامات قائمة ✓", icon: "checkmark.circle")
+            EmptyNote(text: "لا التزامات قائمة.", icon: "checkmark.circle")
         } else {
             VStack(spacing: 0) {
                 ForEach(Array(d.unregistered.enumerated()), id: \.offset) { i, u in

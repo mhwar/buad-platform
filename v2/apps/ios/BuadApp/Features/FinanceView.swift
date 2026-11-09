@@ -18,7 +18,7 @@ struct FinanceView: View {
                 if parts.count > 1 {
                     Picker("أقسام المالية", selection: Binding(get: { part ?? parts.first }, set: { part = $0 })) {
                         ForEach(parts, id: \.self) { p in
-                            Text(p == .overview ? "النظرة العامة" : p == .collection ? "التحصيل" : "الضريبة").tag(Optional(p))
+                            Text(p == .overview ? "نظرة عامة" : p == .collection ? "التحصيل" : "الضريبة").tag(Optional(p))
                         }
                     }
                     .pickerStyle(.segmented)
@@ -98,7 +98,7 @@ struct CollectionView: View {
                         Text(Fmt.sar(b.amount)).font(.subheadline.weight(.bold)).monospacedDigit()
                             .foregroundStyle(b.key == "d90" && b.amount > 0 ? Buad.dangerInk : Buad.ink)
                             .lineLimit(1).minimumScaleFactor(0.7)
-                        Text("\(b.count) دفعة").font(.caption).foregroundStyle(Buad.muted)
+                        Text(Fmt.instalments(b.count)).font(.caption).foregroundStyle(Buad.muted)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(12)
@@ -172,9 +172,12 @@ struct CollectionView: View {
     @ViewBuilder private func forecast(_ d: Receivables) -> some View {
         if !d.weeks.isEmpty {
             VStack(alignment: .leading, spacing: 10) {
-                Text("التوقّع النقدي (13 أسبوعاً)").font(.headline)
+                Text("التوقّع النقدي لـ13 أسبوعاً").font(.headline)
+                // Read first: every balance below starts from zero, so a shortfall is relative, not an alarm.
+                Text("الرصيد يبدأ من صفر في التطبيق، ويتغيّر بالمستحق من العملاء والمصاريف المعلّقة. لإدخال الرصيد الحالي افتح التحصيل في الموقع.")
+                    .font(.footnote).foregroundStyle(Buad.muted)
                 if !d.shortfallWeek.isEmpty {
-                    Label("يتوقع عجز في أسبوع \(Fmt.dayMonth(d.shortfallWeek))", systemImage: "exclamationmark.triangle.fill")
+                    Label("يتوقع أن ينخفض الرصيد عن الصفر في الأسبوع الذي يبدأ \(Fmt.day(d.shortfallWeek)).", systemImage: "exclamationmark.triangle.fill")
                         .font(.footnote.weight(.medium)).foregroundStyle(Buad.dangerInk)
                 }
                 if d.pendingExpenses > 0 {
@@ -183,24 +186,26 @@ struct CollectionView: View {
                 VStack(spacing: 0) {
                     ForEach(Array(d.weeks.enumerated()), id: \.element.id) { n, w in
                         if n > 0 { Divider().padding(.leading, 14) }
-                        HStack {
-                            Text(Fmt.dayMonth(w.start)).font(.subheadline).frame(width: 70, alignment: .leading)
-                            Spacer()
-                            VStack(alignment: .trailing, spacing: 2) {
-                                HStack(spacing: 10) {
-                                    if w.inflow > 0 { Text("+ \(Fmt.short(w.inflow))").foregroundStyle(Buad.successInk) }
-                                    if w.outflow > 0 { Text("− \(Fmt.short(w.outflow))").foregroundStyle(Buad.dangerInk) }
-                                    if w.inflow == 0 && w.outflow == 0 { Text("—").foregroundStyle(Buad.faint) }
+                        HStack(alignment: .firstTextBaseline) {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(Fmt.dayMonth(w.start)).font(.subheadline).frame(minWidth: 64, alignment: .leading)
+                                HStack(spacing: 8) {
+                                    if w.inflow > 0 { Text(Fmt.ltr("+" + Fmt.short(w.inflow))).foregroundStyle(Buad.successInk) }
+                                    if w.outflow > 0 { Text(Fmt.ltr("−" + Fmt.short(w.outflow))).foregroundStyle(Buad.dangerInk) }
+                                    if w.inflow == 0 && w.outflow == 0 { Text("لا حركة").foregroundStyle(Buad.muted) }
                                 }
                                 .font(.caption).monospacedDigit()
-                                Text("الرصيد \(Fmt.short(w.balance))").font(.caption2).foregroundStyle(w.balance < 0 ? Buad.dangerInk : Buad.muted)
                             }
+                            Spacer()
+                            // The running balance is the figure that matters, so it is the large one.
+                            Text(Fmt.short(w.balance)).font(.subheadline.weight(.semibold)).monospacedDigit()
+                                .foregroundStyle(w.balance < 0 ? Buad.dangerInk : Buad.ink)
+                                .accessibilityLabel("الرصيد \(Fmt.short(w.balance))")
                         }
                         .padding(.horizontal, 14).padding(.vertical, 10)
                     }
                 }
                 .background(Buad.surface, in: RoundedRectangle(cornerRadius: Buad.radius, style: .continuous))
-                Text("الرصيد يبدأ من صفر في التطبيق. لإدخال الرصيد الحالي افتح التحصيل في الموقع.").font(.footnote).foregroundStyle(Buad.muted)
             }
         }
     }

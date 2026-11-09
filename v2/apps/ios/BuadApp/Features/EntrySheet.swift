@@ -35,12 +35,21 @@ struct EntrySheet: View {
     @State private var busy = false
     @State private var confirmDelete = false
     @State private var started = false
+    @State private var baseline: String?
+
+    private var snapshot: String {
+        [type, description, cat, cfKind, amount, Fmt.isoDay(date), status, note, String(hasInvoice), supplierName,
+         supplierVatNo, invoiceNo, Fmt.isoDay(invoiceDate), vatAmount, assetId].joined(separator: "|")
+    }
 
     private static let builtIn = ["salary", "logistics", "materials", "other", "exec", "mkt", "cashback", "cf", "vat"]
 
     var body: some View {
         NavigationStack {
             Form {
+                if let error {
+                    Section { Label(error, systemImage: "exclamationmark.circle").foregroundStyle(Buad.dangerInk) }
+                }
                 Section {
                     Picker("النوع", selection: $type) {
                         Text("مصروف").tag("expense")
@@ -133,9 +142,6 @@ struct EntrySheet: View {
                     TextField("ملاحظة", text: $note, axis: .vertical).lineLimit(2...5)
                 }
 
-                if let error {
-                    Section { Text(error).foregroundStyle(Buad.dangerInk) }
-                }
 
                 Section {
                     Button { Task { await save() } } label: {
@@ -156,8 +162,10 @@ struct EntrySheet: View {
             }
             .navigationTitle((existing == nil ? "إضافة قيد مالي" : "تعديل القيد") + " · " + projectName)
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar { ToolbarItem(placement: .cancellationAction) { Button("إلغاء") { dismiss() } } }
-            .interactiveDismissDisabled(busy || uploading)
+            .formChrome(dirty: baseline.map { $0 != snapshot } ?? false, busy: busy || uploading,
+                        saveTitle: existing == nil ? "إضافة" : "حفظ") {
+                Task { await save() }
+            }
             .confirmationDialog("حذف هذا القيد؟", isPresented: $confirmDelete, titleVisibility: .visible) {
                 Button("حذف القيد", role: .destructive) { Task { await remove() } }
                 Button("إلغاء", role: .cancel) {}
@@ -169,6 +177,7 @@ struct EntrySheet: View {
     private func start() {
         guard !started else { return }
         started = true
+        defer { Task { @MainActor in baseline = snapshot } }
         guard let e = existing else { return }
         type = e.type
         description = e.description

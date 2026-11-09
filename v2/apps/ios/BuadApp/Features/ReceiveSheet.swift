@@ -30,6 +30,9 @@ struct ReceiveSheet: View {
     var body: some View {
         NavigationStack {
             Form {
+                if let error {
+                    Section { Label(error, systemImage: "exclamationmark.circle").foregroundStyle(Buad.dangerInk) }
+                }
                 Section {
                     LabeledContent("الدفعة", value: Fmt.sar(line.amount))
                     if !line.project.isEmpty { LabeledContent("المشروع", value: line.project) }
@@ -56,9 +59,6 @@ struct ReceiveSheet: View {
                     }
                     .font(.footnote)
                 }
-                if let error {
-                    Section { Text(error).foregroundStyle(Buad.dangerInk) }
-                }
                 Section {
                     Button {
                         Task { await save() }
@@ -74,9 +74,10 @@ struct ReceiveSheet: View {
             }
             .navigationTitle("تسجيل مقبوض — \(line.label)")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar { ToolbarItem(placement: .cancellationAction) { Button("إلغاء") { dismiss() } } }
+            .formChrome(dirty: amount != Self.plain(line.amount) || iso != Fmt.todayISO, busy: busy, saveTitle: "تسجيل") {
+                Task { await save() }
+            }
             .onAppear { if amount.isEmpty { amount = Self.plain(line.amount) } }
-            .interactiveDismissDisabled(busy)
         }
     }
 

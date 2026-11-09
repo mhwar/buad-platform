@@ -15,6 +15,18 @@ struct TasksView: View {
     @State private var postponing: TaskItem?
     @State private var notice: String?
     @State private var toast: ToastItem?
+    /// «مهامي» ⇄ «كل الفريق» is loading: the old rows are dimmed so they are not mistaken for the new scope.
+    @State private var switching = false
+
+    /// The website's empty states for each filter (features/tasks/TasksPage.tsx).
+    private var emptyText: String {
+        if !query.trimmingCharacters(in: .whitespaces).isEmpty { return "لا مهام تطابق البحث." }
+        switch view {
+        case "late": return "لا مهام متأخرة."
+        case "done": return "لا مهام منجزة بعد."
+        default: return mine ? "لا مهام مفتوحة. المهام المسندة إليك تظهر هنا." : "لا مهام مفتوحة للفريق."
+        }
+    }
 
     private var canEdit: Bool { session.me?.can("tasks.edit") ?? false }
 
@@ -53,11 +65,12 @@ struct TasksView: View {
 
                 if !loaded {
                     ProgressView().frame(maxWidth: .infinity).padding(.vertical, 28)
-                } else if let error {
+                } else if let error, items.isEmpty {
                     EmptyNote(text: error, icon: "wifi.exclamationmark")
                 } else if shown.isEmpty {
-                    EmptyNote(text: mine ? "المهام المسندة إليك تظهر هنا." : "لا مهام في هذا العرض.", icon: "checklist")
+                    EmptyNote(text: emptyText, icon: query.isEmpty ? "checklist" : "magnifyingglass")
                 } else {
+                    if let error { RefreshBanner(text: error) }
                     VStack(spacing: 0) {
                         ForEach(Array(shown.enumerated()), id: \.element.id) { i, t in
                             if i > 0 { Divider().padding(.leading, 52) }
@@ -65,6 +78,7 @@ struct TasksView: View {
                         }
                     }
                     .background(Buad.surface, in: RoundedRectangle(cornerRadius: Buad.radius, style: .continuous))
+                    .opacity(switching ? 0.4 : 1)
                 }
             }
             .padding(.horizontal, Buad.gutter)
@@ -76,7 +90,10 @@ struct TasksView: View {
         .searchable(text: $query, prompt: "ابحث في المهام")
         .refreshable { await load() }
         .task { if !loaded { await load() } }
-        .onChange(of: mine) { _, _ in Task { await load() } }
+        .onChange(of: mine) { _, _ in
+            switching = true
+            Task { await load(); switching = false }
+        }
         .toast($toast)
         .sheet(item: $postponing) { t in
             PostponeSheet(task: t) { day in
@@ -184,7 +201,10 @@ struct TasksView: View {
 
     private func load() async {
         do {
-            items = try await APIClient.shared.tasks(mine: mine)
+            let scope = mine
+            let fresh = try await APIClient.shared.tasks(mine: scope)
+            guard scope == mine else { return }
+            items = fresh
             error = nil
         } catch {
             session.handle(error)
@@ -224,6 +244,12 @@ private struct PostponeSheet: View {
     @Environment(\.dismiss) private var dismiss
     @State private var date = Date()
 
+    /// The calendar starts from the current due date (or tomorrow), not from today.
+    private var start: Date {
+        if let due = Fmt.date(task.dueDate), due > Date() { return due }
+        return Date().addingTimeInterval(86_400)
+    }
+
     var body: some View {
         NavigationStack {
             Form {
@@ -240,6 +266,7 @@ private struct PostponeSheet: View {
                     Button("حفظ التاريخ") { save(Fmt.isoDay(date)) }.bold()
                 }
             }
+            .onAppear { date = start }
             .navigationTitle("تأجيل المهمة")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

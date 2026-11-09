@@ -43,6 +43,7 @@ struct SignInView: View {
                             .textContentType(.username)
                             .focused($focus, equals: .email)
                             .submitLabel(.next)
+                            .onChange(of: email) { _, _ in session.notice = nil }
                     }
                     labeled("كلمة المرور") {
                         SecureField("", text: $password)
@@ -61,17 +62,24 @@ struct SignInView: View {
                             Text("دخول").font(.body.weight(.semibold))
                         }
                         .frame(maxWidth: .infinity)
-                        .frame(height: 50)
+                        .frame(minHeight: 50)
                     }
                     .buttonStyle(.borderedProminent)
                     .tint(Buad.ink)
                     .foregroundStyle(Buad.onInk)
                     .disabled(busy)
+                    // The website's «/recover»: the e-mail, the recovery key kept offline, a new password.
+                    if let url = APIClient.shared.webURL("/recover") {
+                        Link("نسيت كلمة المرور؟", destination: url)
+                            .font(.subheadline)
+                            .foregroundStyle(Buad.muted)
+                            .frame(maxWidth: .infinity, minHeight: Buad.tap)
+                    }
                 }
 
                 Text("الإصدار \(AppConfig.version) · بيانات المنصة الفعلية")
                     .font(.caption)
-                    .foregroundStyle(Buad.faint)
+                    .foregroundStyle(Buad.muted)
             }
             .padding(.horizontal, 24)
             .padding(.top, 64)
@@ -97,7 +105,7 @@ struct SignInView: View {
                 .environment(\.layoutDirection, .leftToRight)
                 .multilineTextAlignment(.trailing)
                 .padding(.horizontal, 16)
-                .frame(height: 50)
+                .frame(minHeight: 50)
                 .background(Buad.surface, in: RoundedRectangle(cornerRadius: Buad.control, style: .continuous))
         }
     }

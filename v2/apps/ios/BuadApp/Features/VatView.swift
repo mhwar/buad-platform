@@ -19,7 +19,11 @@ struct VatView: View {
         return (0..<4).map { y - $0 }
     }
 
+    /// A quarter row was tapped: once its detail arrives, scroll to it so the tap visibly does something.
+    @State private var showDetail = false
+
     var body: some View {
+        ScrollViewReader { reader in
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
                 HStack(spacing: 8) {
@@ -60,6 +64,12 @@ struct VatView: View {
         .task { await load() }
         .onChange(of: year) { _, now in ScreenMemory.vatYear = now; reloading = true; Task { await load() } }
         .onChange(of: quarter) { _, now in ScreenMemory.vatQuarter = now; reloading = true; Task { await load() } }
+        .onChange(of: reloading) { _, busy in
+            guard !busy, showDetail else { return }
+            showDetail = false
+            withAnimation { reader.scrollTo("detail", anchor: .top) }
+        }
+        }
     }
 
     // MARK: إقرارات السنة
@@ -75,7 +85,7 @@ struct VatView: View {
                 ForEach(Array(y.quarters.enumerated()), id: \.element.id) { i, x in
                     if i > 0 { Divider().padding(.leading, 14) }
                     let st = Self.filing(x.status)
-                    Button { quarter = x.q } label: {
+                    Button { if quarter != x.q { showDetail = true }; quarter = x.q } label: {
                         HStack(alignment: .firstTextBaseline, spacing: 10) {
                             Text("ر\(x.q)").font(.subheadline.weight(.bold))
                                 .frame(width: 32, height: 32)
@@ -142,7 +152,7 @@ struct VatView: View {
                 empty: v.sales.isEmpty ? "لا مبيعات في هذه الفترة." : nil) {
             ForEach(Array(v.sales.enumerated()), id: \.element.id) { i, s in
                 if i > 0 { Divider().padding(.leading, 14) }
-                line(title: s.name, meta: [Fmt.day(s.date), s.clientName, s.source == "invoice" ? (s.invoiceNo.isEmpty ? "فاتورة" : "فاتورة \(s.invoiceNo)") : "بتاريخ الاستلام"],
+                line(title: s.name, meta: [Fmt.day(s.date), s.clientName, s.source == "invoice" ? (s.invoiceNo.isEmpty ? "فاتورة" : "فاتورة \(Fmt.ltr(s.invoiceNo))") : "بتاريخ الاستلام"],
                      amount: s.base, vat: s.vat)
             }
         }

@@ -33,6 +33,8 @@ struct ProjectDetailView: View {
     @State private var writeError: String?
     /// The pending instalment whose actions («تسجيل مقبوض» / «حذف الدفعة») are being offered.
     @State private var lineActions: ScheduleItem?
+    /// Several instalments are pending: «تسجيل مقبوض» asks which one, or another amount.
+    @State private var choosingReceipt = false
 
     struct ReceiptTarget: Identifiable {
         let receipt: Receipt?
@@ -107,6 +109,13 @@ struct ProjectDetailView: View {
         } message: {
             Text(writeError ?? "")
         }
+        .confirmationDialog("أي دفعة استُلمت؟", isPresented: $choosingReceipt, titleVisibility: .visible) {
+            ForEach(pending) { line in
+                Button("\(line.label.isEmpty ? "دفعة" : line.label) · \(Fmt.sar(line.amount)) · \(Fmt.dayMonth(line.dueDate))") { startReceive(line) }
+            }
+            Button("مبلغ آخر") { receiptTarget = ReceiptTarget(receipt: nil) }
+            Button("إلغاء", role: .cancel) {}
+        }
         .confirmationDialog(lineActions.map { "\($0.label.isEmpty ? "دفعة" : $0.label) · \(Fmt.sar($0.amount))" } ?? "",
                             isPresented: Binding(get: { lineActions != nil }, set: { if !$0 { lineActions = nil } }),
                             titleVisibility: .visible, presenting: lineActions) { line in
@@ -164,14 +173,17 @@ struct ProjectDetailView: View {
         return VStack(alignment: .leading, spacing: 8) {
             Text(project.name).font(.title2.bold()).fixedSize(horizontal: false, vertical: true)
             HStack(spacing: 6) {
-                Pill(text: project.late ? "متأخر" : status.label, tone: project.late ? .bad : status.tone)
+                Pill(text: status.label, tone: status.tone)
+                if project.late, let d = Fmt.daysUntil(detail?.endDate ?? project.endDate), d < 0 {
+                    Pill(text: "متأخر \(Fmt.days(-d))", tone: .bad)
+                }
                 if project.fullyDistributed { Pill(text: "موزّع بالكامل", tone: .ok) } else if project.closed { Pill(text: "مغلق") }
                 if project.external { Pill(text: "خارجي") }
                 if project.visibility == "private" { Pill(text: "خاص") }
             }
             VStack(alignment: .leading, spacing: 3) {
                 Label(project.clientName, systemImage: "building.2").font(.subheadline.weight(.medium)).foregroundStyle(Buad.ink)
-                Text([project.number, Vocabulary.type(project.type), service.isEmpty ? "" : (pkg.isEmpty ? service : "\(service) · \(pkg)")]
+                Text([Fmt.ltr(project.number), Vocabulary.type(project.type), service.isEmpty ? "" : (pkg.isEmpty ? service : "\(service) · \(pkg)")]
                     .filter { !$0.isEmpty }.joined(separator: " · "))
                     .font(.footnote).foregroundStyle(Buad.muted)
                 if !start.isEmpty || !end.isEmpty {
@@ -206,7 +218,9 @@ struct ProjectDetailView: View {
             HStack(spacing: 10) {
                 if receive {
                     Button {
-                        if let next = pending.first { startReceive(next) } else { receiptTarget = ReceiptTarget(receipt: nil) }
+                        if pending.count > 1 { choosingReceipt = true }
+                        else if let next = pending.first { startReceive(next) }
+                        else { receiptTarget = ReceiptTarget(receipt: nil) }
                     } label: {
                         Label("تسجيل مقبوض", systemImage: "banknote")
                             .font(.body.weight(.semibold))
@@ -270,7 +284,7 @@ struct ProjectDetailView: View {
                     cell("التنفيذ", exec.1 > 0 ? "\(exec.0)/\(exec.1) \(exec.2)" : "لم تُضف مراحل أو مهام",
                          progress: exec.1 > 0 ? Double(exec.0) / Double(exec.1) : nil)
                     if let d = days, project.status == "active" {
-                        cell("الموعد", d < 0 ? "متأخر \(-d) يوم" : "متبقٍ \(d) يوم",
+                        cell("الموعد", d < 0 ? "متأخر \(Fmt.days(-d))" : "متبقٍ \(Fmt.days(d))",
                              sub: "الانتهاء \(Fmt.day(endISO))", tone: d < 0 ? .bad : d <= 7 ? .warn : nil)
                     } else {
                         cell("الموعد", endISO.isEmpty ? "بلا تاريخ انتهاء" : Fmt.day(endISO))
@@ -372,13 +386,13 @@ struct ProjectDetailView: View {
                 Label("العقد والتحصيل", systemImage: "signature").font(.headline)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(Fmt.sar(gross)).font(.title2.bold()).monospacedDigit()
-                    Text([f.vatIncluded ? "شاملة الضريبة" : "+ ضريبة \(Self.num(f.vatPct))%", f.contractNo, Fmt.day(f.contractDate)]
+                    Text([f.vatIncluded ? "شاملة الضريبة" : "+ ضريبة \(Self.num(f.vatPct))%", Fmt.ltr(f.contractNo), Fmt.day(f.contractDate)]
                         .filter { !$0.isEmpty }.joined(separator: " · "))
                         .font(.caption).foregroundStyle(Buad.muted)
                 }
                 VStack(alignment: .leading, spacing: 6) {
                     HStack {
-                        Text("حُصّل \(Fmt.sar(f.received)) من \(Fmt.sar(gross))")
+                        Text("حُصّل \(Fmt.sar(f.received))")
                         Spacer()
                         Text("\(Int((share * 100).rounded()))%").monospacedDigit()
                     }
@@ -388,9 +402,6 @@ struct ProjectDetailView: View {
                 HStack {
                     Text("المتبقي على العميل: ").foregroundStyle(Buad.muted) + Text(Fmt.sar(max(0, gross - f.received))).bold()
                     Spacer()
-                    if let next = pending.first {
-                        Pill(text: "\(lateDue ? "دفعة متأخرة" : "الدفعة القادمة") · \(Fmt.dayMonth(next.dueDate))", tone: lateDue ? .bad : .info)
-                    }
                 }
                 .font(.subheadline)
 
@@ -403,9 +414,9 @@ struct ProjectDetailView: View {
                 }
                 .pickerStyle(.segmented)
                 Text([
-                    "\(f.receipts.count) استلام",
-                    canInvoices ? "\(invoices?.count ?? 0) فاتورة" : "",
-                    "\(pending.count) دفعة منتظرة" + (lateDue ? " (منها متأخرة)" : ""),
+                    "الاستلامات \(f.receipts.count)",
+                    canInvoices ? "الفواتير \(invoices?.count ?? 0)" : "",
+                    "المنتظرة \(pending.count)" + (lateDue ? " (منها متأخرة)" : ""),
                 ].filter { !$0.isEmpty }.joined(separator: " · "))
                 .font(.caption).foregroundStyle(lateDue ? Buad.dangerInk : Buad.muted)
 
@@ -496,7 +507,7 @@ struct ProjectDetailView: View {
                     if i > 0 { Divider() }
                     let row = HStack(alignment: .firstTextBaseline) {
                         VStack(alignment: .leading, spacing: 2) {
-                            Text("\(Fmt.day(inv.date)) · \(inv.number.isEmpty ? "بلا رقم" : inv.number)").font(.subheadline.weight(.medium))
+                            Text("\(Fmt.day(inv.date)) · \(inv.number.isEmpty ? "بلا رقم" : Fmt.ltr(inv.number))").font(.subheadline.weight(.medium))
                             HStack(spacing: 4) {
                                 Text("منها ضريبة \(Fmt.sar(inv.vat))")
                                 if inv.hasFile { Label("مرفقة", systemImage: "paperclip") }
@@ -641,7 +652,7 @@ struct ProjectDetailView: View {
                         HStack {
                             Text(month.isEmpty ? "بلا تاريخ" : Self.monthName(month)).font(.subheadline.weight(.semibold))
                             Spacer()
-                            Text("\(rows.count) · \(net >= 0 ? "+" : "−")\(Fmt.short(abs(net)))").font(.caption).foregroundStyle(Buad.muted).monospacedDigit()
+                            Text("\(rows.count) · \(Fmt.ltr((net >= 0 ? "+" : "−") + Fmt.short(abs(net))))").font(.caption).foregroundStyle(Buad.muted).monospacedDigit()
                         }
                         VStack(spacing: 0) {
                             ForEach(Array(rows.enumerated()), id: \.element.id) { i, e in
@@ -690,9 +701,9 @@ struct ProjectDetailView: View {
                     .font(.caption).foregroundStyle(e.status == "pending" ? Buad.warningInk : Buad.muted).lineLimit(2)
             }
             Spacer(minLength: 8)
-            Text((income ? "+ " : "− ") + Fmt.sar(e.amount))
+            Text(Fmt.signed(e.amount, positive: income))
                 .font(.subheadline.weight(.semibold)).monospacedDigit()
-                .foregroundStyle(e.status == "cancelled" ? Buad.faint : income ? Buad.successInk : Buad.ink)
+                .foregroundStyle(e.status == "cancelled" ? Buad.muted : income ? Buad.successInk : Buad.ink)
                 .strikethrough(e.status == "cancelled")
             if chevron { Chevron() }
         }
@@ -728,7 +739,7 @@ struct ProjectDetailView: View {
                 .foregroundStyle(Buad.ink)
             VStack(alignment: .leading, spacing: 2) {
                 Text(d.title.isEmpty ? Vocabulary.docKind(d.kind) : d.title).font(.subheadline.weight(.medium)).lineLimit(1)
-                Text([Vocabulary.docKind(d.kind), d.number, Fmt.epochDay(d.updatedAt)].filter { !$0.isEmpty }.joined(separator: " · "))
+                Text([Vocabulary.docKind(d.kind), Fmt.ltr(d.number), Fmt.epochDay(d.updatedAt)].filter { !$0.isEmpty }.joined(separator: " · "))
                     .font(.caption).foregroundStyle(Buad.muted).lineLimit(1)
             }
             Spacer()
@@ -813,8 +824,6 @@ struct ProjectDetailView: View {
     // MARK: ③ بيانات المشروع
 
     private var detailsCard: some View {
-        let service = detail?.serviceName.isEmpty == false ? detail!.serviceName : project.productName
-        let pkg = detail?.packageName ?? project.packageName
         let loc = detail?.location ?? project.location
         return Card {
             HStack {
@@ -822,12 +831,9 @@ struct ProjectDetailView: View {
                 Spacer()
                 if let webURL { Link("تعديل", destination: webURL).font(.subheadline.weight(.medium)) }
             }
-            row("النوع", Vocabulary.type(project.type))
-            if !service.isEmpty { row("الخدمة", pkg.isEmpty ? service : "\(service) · \(pkg)") }
+            // Type, service and dates are in the header above; this card holds the rest.
             if !loc.isEmpty { row("الموقع", loc) }
             if let d = detail {
-                if !d.startDate.isEmpty { row("البداية", Fmt.day(d.startDate)) }
-                if !d.endDate.isEmpty { row("الانتهاء المتوقع", Fmt.day(d.endDate)) }
                 if !d.payDate.isEmpty { row("استلام الدفعة", Fmt.day(d.payDate)) }
                 row("الظهور", d.visibility == "private" ? "خاص" : "الفريق")
                 if !d.notes.isEmpty {

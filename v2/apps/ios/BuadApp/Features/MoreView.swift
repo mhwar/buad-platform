@@ -41,7 +41,7 @@ struct MoreView: View {
 
                 Section {
                     Toggle(isOn: $faceID) {
-                        Label("فتح التطبيق بـ Face ID", systemImage: "faceid")
+                        Label("فتح التطبيق بـ \(Biometry.name)", systemImage: Biometry.icon)
                     }
                     Picker(selection: $theme) {
                         Text("تلقائي").tag("system")
@@ -57,7 +57,7 @@ struct MoreView: View {
                 Section {
                     if let url = APIClient.shared.webURL("/") {
                         Link(destination: url) {
-                            Label("فتح المنصة في المتصفح", systemImage: "safari")
+                            Label("فتح المنصة", systemImage: "safari")
                         }
                     }
                     LabeledContent("الخادم", value: AppConfig.serverHost)
@@ -65,14 +65,14 @@ struct MoreView: View {
                 } header: {
                     Text("المنصة")
                 } footer: {
-                    Text("التطبيق يقرأ من نفس خادم الموقع وقاعدة بياناته، بنفس صلاحيات حسابك. بقية الأقسام تنتقل إلى التطبيق مرحلةً بعد مرحلة.")
+                    Text("نفس بيانات الموقع وصلاحيات حسابك.")
                 }
 
                 Section {
                     Button(role: .destructive) {
                         confirmSignOut = true
                     } label: {
-                        Label("تسجيل الخروج", systemImage: "rectangle.portrait.and.arrow.right")
+                        Label("تسجيل الخروج", systemImage: "rectangle.portrait.and.arrow.forward")
                     }
                 }
             }

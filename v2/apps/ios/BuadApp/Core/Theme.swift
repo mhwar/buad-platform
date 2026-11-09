@@ -126,6 +126,20 @@ struct ProgressBar: View {
     }
 }
 
+/// A refresh that failed while the list was already on screen: the list stays, this says why.
+struct RefreshBanner: View {
+    let text: String
+
+    var body: some View {
+        Label(text, systemImage: "wifi.exclamationmark")
+            .font(.footnote)
+            .foregroundStyle(Buad.dangerInk)
+            .padding(.horizontal, 12).padding(.vertical, 8)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Buad.dangerSoft, in: RoundedRectangle(cornerRadius: Buad.small, style: .continuous))
+    }
+}
+
 /// The trailing hint that a row opens something (mirrors itself in right-to-left).
 struct Chevron: View {
     var body: some View {
