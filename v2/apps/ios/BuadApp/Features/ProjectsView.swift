@@ -7,7 +7,7 @@ import SwiftUI
 struct ProjectsView: View {
     enum Sort: String, CaseIterable { case newest, deadline, name, value }
     enum Attention: String { case all, late, due }
-    enum Money: String { case all, internal, external }
+    enum Money: String { case all, inside, external }
 
     @EnvironmentObject private var session: Session
     @State private var projects: [ProjectItem] = []
@@ -134,7 +134,7 @@ struct ProjectsView: View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 6) {
                 if attention != .all { removable(attention == .late ? "متأخرة عن موعد الانتهاء" : "عليها دفعة متأخرة") { attention = .all } }
-                if money != .all { removable(money == .internal ? "داخلية" : "خارجية") { money = .all } }
+                if money != .all { removable(money == .inside ? "داخلية" : "خارجية") { money = .all } }
                 if !type.isEmpty { removable(Vocabulary.type(type)) { type = "" } }
                 Button("مسح الكل") { attention = .all; money = .all; type = "" }
                     .font(.caption.weight(.semibold)).foregroundStyle(Buad.infoInk)
@@ -167,7 +167,7 @@ struct ProjectsView: View {
                 }
                 Picker("المالية", selection: $money) {
                     Text("داخلية وخارجية").tag(Money.all)
-                    Text("داخلية (تدخل في المالية)").tag(Money.internal)
+                    Text("داخلية (تدخل في المالية)").tag(Money.inside)
                     Text("خارجية (لا تدخل في المالية)").tag(Money.external)
                 }
                 Picker("النوع", selection: $type) {
