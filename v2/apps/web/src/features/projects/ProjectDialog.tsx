@@ -157,7 +157,7 @@ export function ProjectDialog({
           : code === "end_before_start"
             ? "تاريخ الانتهاء قبل تاريخ البداية"
             : code === "has_finance_records"
-              ? "للمشروع قيود أو استلامات أو فواتير أو دفعات؛ احذفوها أولاً ليصير خارجياً."
+              ? "للمشروع قيود أو استلامات أو فواتير أو دفعات؛ لا يتحول بين داخلي وخارجي حتى تُحذف."
               : "تعذّر الحفظ، حاولوا مرة أخرى",
       );
     }
@@ -274,14 +274,12 @@ export function ProjectDialog({
             <Input type="date" {...f.register("payDate")} />
           </Field>
           <Field
-            label={external ? "القيمة التقديرية (ر.س)" : "قيمة العقد المتوقعة (ر.س)"}
+            label="قيمة العقد المتوقعة (ر.س)"
             error={e.expectedValue ? "أدخلوا رقماً صحيحاً" : undefined}
             hint={
-              external
-                ? "للاطلاع داخل المشروع فقط؛ لا تُجمع في أي رقم"
-                : existing?.financeExists
-                  ? "تُدار الآن من «إعدادات العقد والميزانية»"
-                  : "قبل الضريبة؛ تصبح قيمة العقد في المالية"
+              existing?.financeExists
+                ? "تُدار الآن من «إعدادات العقد والميزانية»"
+                : "قبل الضريبة؛ تصبح قيمة العقد في المالية"
             }
           >
             <Input
@@ -290,7 +288,7 @@ export function ProjectDialog({
               min={0}
               step="0.01"
               dir="ltr"
-              disabled={existing?.financeExists && !external}
+              disabled={existing?.financeExists}
               {...f.register("expectedValue")}
             />
           </Field>
@@ -300,8 +298,8 @@ export function ProjectDialog({
           <span>
             <b>مشروع خارجي</b>
             <span className="block text-xs text-muted">
-              للمتابعة فقط: لا يدخل في أي رقم مالي، ولا تُسجَّل له قيود أو استلامات. القيمة أعلاه تبقى
-              تقديرية للاطلاع.
+              حسابات منفصلة: تُسجَّل قيوده ومقبوضاته وفواتيره داخله كأي مشروع، لكنها لا تدخل في مالية
+              الشركة ولا أرباحها ولا ضريبتها ولا تقاريرها. لا يُغيَّر بعد تسجيل حركات مالية فيه.
             </span>
           </span>
         </label>

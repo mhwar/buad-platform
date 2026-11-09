@@ -361,7 +361,7 @@ const invoiceInput = z.object({
 
 /**
  * The project's VAT rate (15 when its contract terms are not saved); null if not ours, and
- * the lock (closed / external) when its money records can't be written.
+ * the lock (closed) when its money records can't be written.
  */
 async function projectVatPct(db: Db, orgId: string, projectId: string) {
   const [p] = await db

@@ -142,10 +142,10 @@ export function ProjectPage() {
   const manager = !!me?.perms.includes("finance.edit");
   // A closed project's money records are read-only until it is reopened.
   const closed = !!p.closedAt;
-  // An external project is outside finance altogether: no money records, no finance views.
+  // An external project keeps full books of its own; they never reach a company figure.
   const external = !!p.external;
-  const editMoney = manager && !closed && !external;
-  const view: Section = external && section === "finance" ? "execution" : section;
+  const editMoney = manager && !closed;
+  const view: Section = section;
   const canDelete = !!me?.perms.includes("projects.delete");
   const canArchive = !!me?.perms.includes("projects.archive");
   const canTeam = !!me?.perms.includes("team.view") && !!me?.perms.includes("projects.edit");
@@ -277,7 +277,7 @@ export function ProjectPage() {
     ...(canTeam
       ? [{ label: "فريق المشروع", icon: <Users />, onSelect: () => setMembers(true) }]
       : []),
-    ...(external ? [] : financeMenu()),
+    ...financeMenu(),
     ...(canArchive || canDelete ? (["separator"] as MenuItem[]) : []),
     ...(canArchive
       ? [
@@ -323,15 +323,7 @@ export function ProjectPage() {
   const setView = (v: Section) =>
     nav({ search: { view: v === "finance" ? undefined : v }, replace: true });
   const sectionItems: { value: Section; label: string; icon: ReactNode; hint?: string }[] = [
-    ...(external
-      ? []
-      : [
-          {
-            value: "finance" as const,
-            label: "المالية",
-            icon: <Wallet className="size-4" />,
-          },
-        ]),
+    { value: "finance", label: "المالية", icon: <Wallet className="size-4" /> },
     {
       value: "documents",
       label: docCount ? `المستندات (${docCount})` : "المستندات",
@@ -366,6 +358,12 @@ export function ProjectPage() {
       {error && <Notice>{error}</Notice>}
       {p.archivedAt && (
         <Notice tone="amber">هذا المشروع مؤرشف منذ {fromEpoch(p.archivedAt)}.</Notice>
+      )}
+      {external && (
+        <Notice tone="blue">
+          مشروع خارجي بحسابات منفصلة: قيوده ومقبوضاته وفواتيره ودفعاته وأرقامه هنا فقط، ولا تدخل في
+          مالية الشركة ولا أرباحها ولا ضريبتها ولا تقاريرها.
+        </Notice>
       )}
       {p.status === "draft" && !external && !p.archivedAt && (
         <Notice tone="amber">
@@ -441,7 +439,7 @@ export function ProjectPage() {
               <Wallet className="size-4" /> تسجيل مقبوض
             </Button>
           )}
-          {manager && !closed && !external && p.status === "completed" && !p.archivedAt && (
+          {manager && !closed && p.status === "completed" && !p.archivedAt && (
             <Button variant="secondary" onClick={() => setClosing(true)}>
               <Lock className="size-4" /> إغلاق المشروع
             </Button>
@@ -498,16 +496,14 @@ export function ProjectPage() {
         onExecution={() => nav({ search: { view: "execution" }, replace: true })}
       />
 
-      {!external && (
-        <FinanceStrip
-          projectId={p.id}
-          canEdit={editMoney}
-          isOwner={canDelete}
-          fromV1={p.createdBy.startsWith("v1-import") && !q.data.financeImported}
-          onSettings={() => setSettings(true)}
-          onRegister={() => setAdding("agreement")}
-        />
-      )}
+      <FinanceStrip
+        projectId={p.id}
+        canEdit={editMoney}
+        isOwner={canDelete}
+        fromV1={p.createdBy.startsWith("v1-import") && !q.data.financeImported}
+        onSettings={() => setSettings(true)}
+        onRegister={() => setAdding("agreement")}
+      />
 
       {/* ── Work area + context column ───────────────────────── */}
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
@@ -538,17 +534,13 @@ export function ProjectPage() {
           aria-label="تفاصيل المشروع"
         >
           <div className="max-lg:order-1">
-            {external ? (
-              <ExternalCard expectedValue={p.expectedValue} />
-            ) : (
-              <SectionBoundary label="العقد والتحصيل">
-                <ContractCard
-                  projectId={p.id}
-                  canEdit={editMoney}
-                  onSettings={() => setSettings(true)}
-                />
-              </SectionBoundary>
-            )}
+            <SectionBoundary label="العقد والتحصيل">
+              <ContractCard
+                projectId={p.id}
+                canEdit={editMoney}
+                onSettings={() => setSettings(true)}
+              />
+            </SectionBoundary>
           </div>
           <Card className="max-lg:order-3">
             <div className="mb-3 flex items-center justify-between">
@@ -611,6 +603,7 @@ export function ProjectPage() {
       {closing && (
         <CloseProjectDialog
           projectId={p.id}
+          external={external}
           projectName={p.name}
           onClose={() => setClosing(false)}
         />
@@ -644,26 +637,5 @@ function Detail({ label, value, icon }: { label: string; value: string; icon?: R
         {value}
       </dd>
     </div>
-  );
-}
-
-/** In place of «العقد والتحصيل» on an external project: its value, for reference only. */
-function ExternalCard({ expectedValue }: { expectedValue: number }) {
-  return (
-    <Card aria-label="مشروع خارجي" className="space-y-2">
-      <h2 className="font-semibold">مشروع خارجي</h2>
-      <p className="text-sm text-muted">
-        لا يدخل في أي رقم مالي: لا قيود ولا استلامات ولا فواتير، ولا يُحسب في الإيرادات أو الضريبة أو
-        الأرباح أو المستهدف.
-      </p>
-      {expectedValue > 0 && (
-        <p className="text-sm">
-          القيمة التقديرية (للاطلاع): <b className="tabular-nums">{sar(expectedValue / 100)}</b>
-        </p>
-      )}
-      <p className="text-xs text-muted">
-        لإدخاله في المالية: «تعديل بيانات المشروع» ثم ألغوا «مشروع خارجي».
-      </p>
-    </Card>
   );
 }

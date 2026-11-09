@@ -107,28 +107,48 @@ describe("مشروع خارجي", () => {
     expect(list[0].external).toBe(true);
   });
 
-  it("refuses money records, and closing", async () => {
-    const id = (await call("POST", "/api/projects", { clientId, name: "خارجي", external: true }))
-      .body.id;
+  it("keeps full books of its own, and none of it reaches a company figure", async () => {
+    const before = await figures();
+    const id = (
+      await call("POST", "/api/projects", {
+        clientId,
+        name: "خارجي بحسابات",
+        status: "active",
+        startDate: today,
+        external: true,
+      })
+    ).body.id;
     const F = `/api/projects/${id}/finance`;
     for (const [m, path, body] of [
-      ["POST", `${F}/entries`, { type: "expense", amount: 100, description: "x" }],
-      ["POST", `${F}/receipts`, { date: today, amount: 100, note: "" }],
-      ["PATCH", `${F}/ctrl`, { version: 0, contractValue: 1000 }],
+      ["PATCH", `${F}/ctrl`, { version: 0, contractValue: 40000 }],
+      ["POST", `${F}/receipts`, { date: today, amount: 15000, note: "" }],
+      [
+        "POST",
+        `${F}/entries`,
+        { type: "expense", cat: "exec", amount: 3000, description: "تنفيذ", date: today },
+      ],
       [
         "POST",
         "/api/finance/vat/invoices",
-        { projectId: id, number: "1", date: today, amount: 100 },
+        { projectId: id, number: "EX-1", date: today, amount: 15000 },
       ],
       ["POST", `/api/receivables/projects/${id}`, { label: "دفعة", dueDate: today, amount: 100 }],
-      ["POST", `/api/projects/${id}/close`, { note: "" }],
     ] as const) {
       const r = await call(m, path, body);
-      expect([m, path, r.status, r.body.error]).toEqual([m, path, 409, "project_external"]);
+      expect([path, r.status]).toEqual([path, r.status < 300 ? r.status : "ok"]);
     }
+    // Its own page has its figures…
+    const own = (await call("GET", F)).body;
+    expect(own.received).toBe(15000);
+    expect(own.entries.length).toBeGreaterThan(0);
+    // …and the company's are as they were.
+    expect(await figures()).toEqual(before);
+    // It can be closed like any project.
+    expect((await call("POST", `/api/projects/${id}/close`, { note: "" })).status).toBe(200);
+    expect(await figures()).toEqual(before);
   });
 
-  it("becomes external only without money records; back to internal any time", async () => {
+  it("switches between internal and external only without money records", async () => {
     const id = (await call("POST", "/api/projects", { clientId, name: "يتحول" })).body.id;
     await call("POST", `/api/projects/${id}/finance/receipts`, {
       date: today,
@@ -139,14 +159,18 @@ describe("مشروع خارجي", () => {
     expect(no.status).toBe(409);
     expect(no.body).toMatchObject({ error: "has_finance_records", held: ["receipts"] });
 
-    const clean = (await call("POST", "/api/projects", { clientId, name: "نظيف" })).body.id;
-    expect((await call("PATCH", `/api/projects/${clean}`, { external: true })).status).toBe(200);
-    expect((await call("PATCH", `/api/projects/${clean}`, { external: false })).status).toBe(200);
-    const r = await call("POST", `/api/projects/${clean}/finance/receipts`, {
+    const ext = (await call("POST", "/api/projects", { clientId, name: "خارجي", external: true }))
+      .body.id;
+    await call("POST", `/api/projects/${ext}/finance/receipts`, {
       date: today,
       amount: 10,
       note: "",
     });
-    expect(r.status).toBe(201);
+    const back = await call("PATCH", `/api/projects/${ext}`, { external: false });
+    expect(back.body).toMatchObject({ error: "has_finance_records" });
+
+    const clean = (await call("POST", "/api/projects", { clientId, name: "نظيف" })).body.id;
+    expect((await call("PATCH", `/api/projects/${clean}`, { external: true })).status).toBe(200);
+    expect((await call("PATCH", `/api/projects/${clean}`, { external: false })).status).toBe(200);
   });
 });
