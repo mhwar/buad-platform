@@ -41,7 +41,7 @@ struct MainTabs: View {
                 ProjectsView()
                     .tabItem { Label("المشاريع", systemImage: "briefcase") }
             }
-            if me.can("treasury.view") {
+            if me.can("treasury.view") || me.can("vat.view") {
                 FinanceView()
                     .tabItem { Label("المالية", systemImage: "banknote") }
             }

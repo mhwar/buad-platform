@@ -30,6 +30,7 @@
 		6E76C629682975782C1393D1 /* TasksView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78067E7E3A51FEED36F0B4AC /* TasksView.swift */; };
 		1F72A5A1A81F7D846E4022AC /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 294FBA120B9CEA3394277920 /* Theme.swift */; };
 		35D0B64E32DD55EB1CA3320C /* TodayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EDED3C9ED002E54E5093676D /* TodayView.swift */; };
+		96CB14CF0F5CFC522D7E291E /* VatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6EA1054592F66534711D98D0 /* VatView.swift */; };
 		6E1392A105CC77CC17EB8A05 /* WorkModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7141BFC28AD41895A81CA744 /* WorkModels.swift */; };
 /* End PBXBuildFile section */
 
@@ -58,6 +59,7 @@
 		78067E7E3A51FEED36F0B4AC /* TasksView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TasksView.swift; sourceTree = "<group>"; };
 		294FBA120B9CEA3394277920 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		EDED3C9ED002E54E5093676D /* TodayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayView.swift; sourceTree = "<group>"; };
+		6EA1054592F66534711D98D0 /* VatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VatView.swift; sourceTree = "<group>"; };
 		7141BFC28AD41895A81CA744 /* WorkModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkModels.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -129,6 +131,7 @@
 				DCC34F5150334BB07B835095 /* SignInView.swift */,
 				78067E7E3A51FEED36F0B4AC /* TasksView.swift */,
 				EDED3C9ED002E54E5093676D /* TodayView.swift */,
+				6EA1054592F66534711D98D0 /* VatView.swift */,
 			);
 			path = Features;
 			sourceTree = "<group>";
@@ -233,6 +236,7 @@
 				6E76C629682975782C1393D1 /* TasksView.swift in Sources */,
 				1F72A5A1A81F7D846E4022AC /* Theme.swift in Sources */,
 				35D0B64E32DD55EB1CA3320C /* TodayView.swift in Sources */,
+				96CB14CF0F5CFC522D7E291E /* VatView.swift in Sources */,
 				6E1392A105CC77CC17EB8A05 /* WorkModels.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -318,7 +322,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.2.1;
+				MARKETING_VERSION = 0.2.2;
 				PRODUCT_BUNDLE_IDENTIFIER = sa.buad.app;
 				PRODUCT_NAME = BuadApp;
 				SDKROOT = iphoneos;
@@ -341,7 +345,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.2.1;
+				MARKETING_VERSION = 0.2.2;
 				PRODUCT_BUNDLE_IDENTIFIER = sa.buad.app;
 				PRODUCT_NAME = BuadApp;
 				SDKROOT = iphoneos;

@@ -195,6 +195,15 @@ final class APIClient: @unchecked Sendable {
         return try await send("GET", "/api/finance/overview?from=\(from)&to=\(to)")
     }
 
+    /// q = 0: the whole year, as the website's VatTab.
+    func vatReport(year: Int, quarter: Int) async throws -> VatReport {
+        try await send("GET", "/api/finance/vat/report?year=\(year)" + (quarter > 0 ? "&q=\(quarter)" : ""))
+    }
+
+    func vatYear(_ year: Int) async throws -> VatYear {
+        try await send("GET", "/api/finance/vat/year?year=\(year)")
+    }
+
     func signOut() async {
         _ = try? await send("POST", "/api/auth/logout") as OKEnvelope
         if let base = AppConfig.apiBase, let cookies = HTTPCookieStorage.shared.cookies(for: base) {
