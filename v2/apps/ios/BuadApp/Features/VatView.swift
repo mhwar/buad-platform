@@ -138,15 +138,15 @@ struct VatView: View {
             .background(Buad.warningSoft, in: RoundedRectangle(cornerRadius: Buad.control, style: .continuous))
         }
 
-        VStack(spacing: 1) {
-            tile("ضريبة المبيعات (المخرجات)", Fmt.sar(v.outputVat), sub: "على مبيعات \(Fmt.sar(v.salesBase)) قبل الضريبة")
-            tile("ضريبة المشتريات القابلة للخصم", Fmt.sar(v.inputVat), sub: "على مشتريات \(Fmt.sar(v.purchasesBase)) قبل الضريبة")
-            tile(v.netPayable >= 0 ? "صافي المستحق للهيئة" : "صافي المسترد من الهيئة", Fmt.sar(abs(v.netPayable)),
-                 sub: v.reserved > 0 ? "محجوز في المشاريع لها: \(Fmt.sar(v.reserved))" : nil,
-                 tone: v.netPayable > 0 ? .warn : .ok)
+        JoinedGrid {
+            GridRow { tile("ضريبة المبيعات (المخرجات)", Fmt.sar(v.outputVat), sub: "على مبيعات \(Fmt.sar(v.salesBase)) قبل الضريبة") }
+            GridRow { tile("ضريبة المشتريات القابلة للخصم", Fmt.sar(v.inputVat), sub: "على مشتريات \(Fmt.sar(v.purchasesBase)) قبل الضريبة") }
+            GridRow {
+                tile(v.netPayable >= 0 ? "صافي المستحق للهيئة" : "صافي المسترد من الهيئة", Fmt.sar(abs(v.netPayable)),
+                     sub: v.reserved > 0 ? "محجوز في المشاريع لها: \(Fmt.sar(v.reserved))" : nil,
+                     tone: v.netPayable > 0 ? .warn : .ok)
+            }
         }
-        .background(Buad.line)
-        .clipShape(RoundedRectangle(cornerRadius: Buad.radius, style: .continuous))
 
         section("المبيعات", note: "الفواتير الضريبية المرسلة للعملاء بتاريخها. المشروع الذي لم تُسجَّل له فاتورة تُحتسب استلاماته المعتمدة بتاريخ وصولها، مؤقتاً.",
                 empty: v.sales.isEmpty ? "لا مبيعات في هذه الفترة." : nil) {

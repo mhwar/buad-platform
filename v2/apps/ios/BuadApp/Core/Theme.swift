@@ -155,9 +155,12 @@ struct Chevron: View {
 /// Tiles that touch with a hairline between them (pulse, finance strip, dashboards). Use inside
 /// `JoinedGrid` rows: every cell fills its row, so a short cell never shows the line colour as a band.
 extension View {
-    func joinedCell(minHeight: CGFloat = 64) -> some View {
+    /// Compact on the phone: 12pt sides, 10pt top and bottom, no icon, and as tall as its text needs
+    /// (the grid gives a short cell the height of the tallest in its row).
+    func joinedCell(minHeight: CGFloat = 52) -> some View {
         frame(maxWidth: .infinity, minHeight: minHeight, maxHeight: .infinity, alignment: .topLeading)
-            .padding(12)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 10)
             .background(Buad.surface)
             .accessibilityElement(children: .combine)
     }
@@ -167,7 +170,10 @@ struct JoinedGrid<Content: View>: View {
     @ViewBuilder var content: Content
 
     var body: some View {
+        // fixedSize: the grid is as tall as its rows need. Without it a cell that may fill any height
+        // grows to the scroll view's whole height and leaves a wide empty band.
         Grid(horizontalSpacing: 1, verticalSpacing: 1) { content }
+            .fixedSize(horizontal: false, vertical: true)
             .background(Buad.line)
             .clipShape(RoundedRectangle(cornerRadius: Buad.radius, style: .continuous))
     }
@@ -249,5 +255,73 @@ struct EmptyNote: View {
         .padding(.vertical, 28)
         .padding(.horizontal, 16)
         .background(Buad.surface, in: RoundedRectangle(cornerRadius: Buad.radius, style: .continuous))
+    }
+}
+
+// MARK: - Action row
+
+/// The actions of a page side by side in one row — an icon over a short name, equal widths, 58pt tall.
+/// A tile either runs its action or (`ActionMenuTile`) opens a menu of choices. The first can be the
+/// primary one (dark). At most four or five fit a phone, so a page shows only what its state allows.
+struct ActionRow<Content: View>: View {
+    @ViewBuilder var content: Content
+    var body: some View { HStack(spacing: 8) { content } }
+}
+
+private struct ActionLook: ViewModifier {
+    let primary: Bool
+    func body(content: Content) -> some View {
+        content
+            .frame(maxWidth: .infinity, minHeight: 58)
+            .background(primary ? Buad.ink : Buad.surface, in: RoundedRectangle(cornerRadius: Buad.control, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: Buad.control, style: .continuous).stroke(primary ? Color.clear : Buad.line))
+            .foregroundStyle(primary ? Buad.onInk : Buad.ink)
+            .contentShape(RoundedRectangle(cornerRadius: Buad.control, style: .continuous))
+    }
+}
+
+private struct ActionLabel: View {
+    let icon: String
+    let title: String
+    var detail: String?
+    var body: some View {
+        VStack(spacing: 4) {
+            Image(systemName: icon).font(.system(size: 18, weight: .semibold))
+            Text(title).font(.caption.weight(.semibold)).lineLimit(1).minimumScaleFactor(0.8)
+            if let detail { Text(detail).font(.system(size: 10)).lineLimit(1).opacity(0.7) }
+        }
+        .padding(.vertical, 6)
+    }
+}
+
+struct ActionTile: View {
+    let icon: String
+    let title: String
+    var primary = false
+    var busy = false
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            ActionLabel(icon: icon, title: title).modifier(ActionLook(primary: primary))
+        }
+        .buttonStyle(PressScale())
+        .disabled(busy)
+        .accessibilityLabel(title)
+    }
+}
+
+struct ActionMenuTile<Items: View>: View {
+    let icon: String
+    let title: String
+    var detail: String?
+    var primary = false
+    @ViewBuilder var items: Items
+
+    var body: some View {
+        Menu { items } label: {
+            ActionLabel(icon: icon, title: title, detail: detail).modifier(ActionLook(primary: primary))
+        }
+        .accessibilityLabel(title)
     }
 }

@@ -89,12 +89,12 @@ struct CollectionView: View {
     private func aging(_ d: Receivables) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("أعمار الديون").font(.headline)
-            HStack(spacing: 1) {
-                total("المستحق على العملاء", Fmt.sar(d.total), tone: nil)
-                total("المتأخر", Fmt.sar(d.overdue), tone: d.overdue > 0 ? .bad : nil)
+            JoinedGrid {
+                GridRow {
+                    total("المستحق على العملاء", Fmt.sar(d.total), tone: nil)
+                    total("المتأخر", Fmt.sar(d.overdue), tone: d.overdue > 0 ? .bad : nil)
+                }
             }
-            .background(Buad.line)
-            .clipShape(RoundedRectangle(cornerRadius: Buad.radius, style: .continuous))
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 8) {
                 ForEach(d.buckets, id: \.key) { b in
                     VStack(alignment: .leading, spacing: 3) {

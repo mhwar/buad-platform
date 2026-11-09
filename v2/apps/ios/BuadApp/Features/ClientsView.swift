@@ -140,15 +140,13 @@ struct ClientDetailView: View {
                 if let error { EmptyNote(text: error, icon: "wifi.exclamationmark") }
 
                 if let s = statement, canFinance {
-                    VStack(spacing: 0) {
-                        HStack(spacing: 1) {
+                    JoinedGrid {
+                        GridRow {
                             tile("قيمة العقود", Fmt.sar(s.gross))
                             tile("المحصّل", Fmt.sar(s.received))
                             tile("المستحق عليه", Fmt.sar(s.owed), tone: s.owed > 0 ? .warn : nil)
                         }
-                        .background(Buad.line)
                     }
-                    .clipShape(RoundedRectangle(cornerRadius: Buad.radius, style: .continuous))
                 }
 
                 Card {

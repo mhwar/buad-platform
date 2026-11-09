@@ -103,6 +103,7 @@ struct ProjectDetailView: View {
                     nextStep
                 }
                 Section {
+                    actionRow
                     switch tab {
                     case .overview: overview
                     case .finance: financeTab
@@ -126,10 +127,7 @@ struct ProjectDetailView: View {
         .navigationTitle(name)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            ToolbarItemGroup(placement: .primaryAction) {
-                if !archived && hasAddMenu { addMenu }
-                moreMenu
-            }
+            ToolbarItem(placement: .primaryAction) { moreMenu }
         }
         .refreshable { await load() }
         .task { if !loaded { await load() } }
@@ -172,7 +170,7 @@ struct ProjectDetailView: View {
             case "archive": Text("يُخفى من القوائم ويمكن استعادته.")
             case "delete": Text("لا يمكن التراجع. إن كان للمشروع سجلات فأرشفته أفضل.")
             case "activate": Text("تدخل أرقامه في المالية (الأرباح والضريبة والتحصيل) من الآن.")
-            case "sales": Text("يصبح فرصة لعميله بقيمته وخدمته لتُنشئ عرض السعر وتتفاوض. يُخفى المشروع بمستنداته ومهامه، وعند قبول العرض و«تحويل إلى مشروع» يعود هو نفسه برقمه.")
+            case "sales": Text("يصبح فرصة لعميله بقيمة عقده قبل الضريبة، ويُنشأ لها عرض سعر مسودة، وتُسجَّل قيوده المعلّقة وشروطه في ملاحظات الفرصة للتفاوض. يُخفى المشروع بمستنداته ومهامه، وعند قبول العرض و«تحويل إلى مشروع» يعود هو نفسه برقمه وتتبع قيمة عقده السعر المتفق عليه.")
             default: Text("")
             }
         }
@@ -259,33 +257,39 @@ struct ProjectDetailView: View {
 
     // MARK: «+» and «…»
 
-    private var hasAddMenu: Bool {
-        canReceive || canEditEntries || canEditInvoices || (can("tasks.edit") && canTasks) || (can("documents.edit") && canDocs)
-    }
-
-    private var addMenu: some View {
-        Menu {
-            if canReceive || canEditEntries || canEditInvoices {
-                Section("المالية") {
-                    if canReceive { Button { receive() } label: { Label("تسجيل مقبوض", systemImage: "banknote") } }
-                    if canEditEntries {
-                        Button { entryTarget = EntryTarget(entry: nil) } label: { Label("قيد مالي", systemImage: "plus.forwardslash.minus") }
-                        Button { addingLine = true } label: { Label("دفعة منتظرة", systemImage: "calendar.badge.plus") }
-                    }
-                    if canEditInvoices { Button { invoiceTarget = InvoiceTarget(invoice: nil) } label: { Label("فاتورة ضريبية مرسلة", systemImage: "doc.text") } }
+    /// What can be added here, side by side, for the tab being looked at (the website's header
+    /// buttons and each tab's «+»). Only what the role and the project's state allow.
+    @ViewBuilder private var actionRow: some View {
+        let r = canReceive && finance != nil
+        let e = canEditEntries && finance != nil
+        let t = can("tasks.edit") && canTasks && !archived
+        let d = can("documents.edit") && canDocs && !archived
+        if !archived {
+            switch tab {
+            case .overview:
+                ActionRow {
+                    if r { ActionTile(icon: "banknote", title: "مقبوض", primary: true) { receive() } }
+                    if e { ActionTile(icon: "plus.forwardslash.minus", title: "قيد") { entryTarget = EntryTarget(entry: nil) } }
+                    if t { ActionTile(icon: "checklist", title: "مهمة", primary: !r) { tab = .work; newTask = true } }
+                    if d { ActionTile(icon: "signature", title: "مستند") { tab = .documents; newDocument = true } }
+                }
+            case .finance:
+                ActionRow {
+                    if r { ActionTile(icon: "banknote", title: "مقبوض", primary: true) { receive() } }
+                    if e { ActionTile(icon: "plus.forwardslash.minus", title: "قيد", primary: !r) { entryTarget = EntryTarget(entry: nil) } }
+                    if e { ActionTile(icon: "calendar.badge.plus", title: "دفعة") { addingLine = true } }
+                    if canEditInvoices { ActionTile(icon: "doc.text", title: "فاتورة") { invoiceTarget = InvoiceTarget(invoice: nil) } }
+                }
+            case .work:
+                ActionRow {
+                    if t { ActionTile(icon: "checklist", title: "مهمة", primary: true) { newTask = true } }
+                    if t { ActionTile(icon: "flag", title: "مرحلة") { newStage = true } }
+                }
+            case .documents:
+                ActionRow {
+                    if d { ActionTile(icon: "signature", title: "مستند جديد", primary: true) { newDocument = true } }
                 }
             }
-            if can("tasks.edit") && canTasks {
-                Section("العمل") {
-                    Button { tab = .work; newTask = true } label: { Label("مهمة", systemImage: "checklist") }
-                    Button { tab = .work; newStage = true } label: { Label("مرحلة", systemImage: "flag") }
-                }
-            }
-            if can("documents.edit") && canDocs {
-                Button { tab = .documents; newDocument = true } label: { Label("مستند (عقد أو خطاب)", systemImage: "signature") }
-            }
-        } label: {
-            Image(systemName: "plus").font(.body.weight(.semibold)).accessibilityLabel("إضافة إلى المشروع")
         }
     }
 
@@ -431,8 +435,6 @@ struct ProjectDetailView: View {
             }
         } else if status == "completed" && manager && !closed {
             bigButton("إغلاق المشروع", "lock.fill") { closing = .close }
-        } else if canReceive && finance != nil {
-            bigButton("تسجيل مقبوض", "banknote") { receive() }
         }
     }
 
@@ -643,7 +645,6 @@ struct ProjectDetailView: View {
                 if pending.contains(where: { $0.dueDate < Fmt.todayISO }) { Pill(text: "متأخرة", tone: .bad) }
             }
             scheduleList
-            if canEditEntries { addButton("دفعة منتظرة") { addingLine = true } }
         }
     }
 
@@ -655,7 +656,6 @@ struct ProjectDetailView: View {
                 Text(String(f.receipts.count)).font(.caption).foregroundStyle(Buad.muted)
             }
             receiptsList(f)
-            if canReceive { addButton("تسجيل مقبوض") { receive() } }
         }
     }
 
@@ -734,7 +734,7 @@ struct ProjectDetailView: View {
             if let sub, !sub.isEmpty { Text(sub).font(.caption2).foregroundStyle(tone == .bad ? Buad.dangerInk : Buad.muted).lineLimit(2) }
             if let progress { ProgressBar(value: progress) }
         }
-        .joinedCell(minHeight: 82)
+        .joinedCell(minHeight: 62)
     }
 
     // MARK: finance strip
@@ -757,6 +757,7 @@ struct ProjectDetailView: View {
                          tone: f.profitHidden ? nil : margin >= 20 ? .ok : margin >= 0 ? .warn : .bad)
                 }
             }
+            .fixedSize(horizontal: false, vertical: true)
             .background(Buad.line)
             VStack(alignment: .leading, spacing: 6) {
                 HStack {
@@ -884,7 +885,6 @@ struct ProjectDetailView: View {
         } else {
             ProgressView().frame(maxWidth: .infinity)
         }
-        if canEditInvoices { addButton("فاتورة ضريبية مرسلة") { invoiceTarget = InvoiceTarget(invoice: nil) } }
     }
 
     @ViewBuilder private var scheduleList: some View {
@@ -956,25 +956,13 @@ struct ProjectDetailView: View {
                 FilterChip(title: "الكل", count: all.count, on: entryKind == .all) { entryKind = .all }
                 FilterChip(title: "دخل", count: incomeN, on: entryKind == .income) { entryKind = .income }
                 FilterChip(title: "مصروف", count: all.count - incomeN, on: entryKind == .expense) { entryKind = .expense }
-                Spacer(minLength: 0)
-                if canEditEntries {
-                    Button { entryTarget = EntryTarget(entry: nil) } label: {
-                        Label("قيد", systemImage: "plus").font(.subheadline.weight(.semibold))
-                            .padding(.horizontal, 12).frame(minHeight: 34)
-                            .background(Buad.brandSoft, in: Capsule())
-                            .padding(.vertical, 5).contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
-                    .foregroundStyle(Buad.ink)
-                    .accessibilityLabel("قيد جديد")
+            }
+            JoinedGrid {
+                GridRow {
+                    tile("الدخل المسجّل", Fmt.sar(f.summary.totalIncome), tone: .ok)
+                    tile("المصاريف", Fmt.sar(f.summary.totalExpenses), tone: .bad)
                 }
             }
-            HStack(spacing: 1) {
-                tile("الدخل المسجّل", Fmt.sar(f.summary.totalIncome), tone: .ok)
-                tile("المصاريف", Fmt.sar(f.summary.totalExpenses), tone: .bad)
-            }
-            .background(Buad.line)
-            .clipShape(RoundedRectangle(cornerRadius: Buad.radius, style: .continuous))
             if list.isEmpty {
                 EmptyNote(text: "لا معاملات مسجّلة بعد.", icon: "list.bullet.rectangle")
             } else {

@@ -392,3 +392,98 @@ struct NewClientSheet: View {
         }
     }
 }
+
+// MARK: - Editing an opportunity
+
+/// What the opportunity page of the website lets you change besides the stage: who owns it, what it
+/// is worth, when to follow up, and the internal notes (PATCH /api/product-requests/:id).
+struct OpportunityEditSheet: View {
+    @EnvironmentObject private var session: Session
+    @Environment(\.dismiss) private var dismiss
+    let opportunity: Opportunity
+    let saved: () -> Void
+
+    @State private var owner = ""
+    @State private var value = ""
+    @State private var follow: Date?
+    @State private var notes = ""
+    @State private var people: [Person] = []
+    @State private var error: String?
+    @State private var busy = false
+    @State private var started = false
+    @State private var baseline: [String] = []
+
+    private var snapshot: [String] { [owner, value.trimmingCharacters(in: .whitespaces), follow.map(Fmt.isoDay) ?? "", notes] }
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                if let error {
+                    Section { Label(error, systemImage: "exclamationmark.circle").foregroundStyle(Buad.dangerInk) }
+                }
+                Section {
+                    Picker("المسؤول", selection: $owner) {
+                        Text("غير مسند").tag("")
+                        ForEach(people) { Text($0.name).tag($0.id) }
+                    }
+                    HStack {
+                        Text("القيمة المتوقعة (ر.س)")
+                        TextField("0", text: $value).keyboardType(.decimalPad).multilineTextAlignment(.trailing)
+                            .environment(\.layoutDirection, .leftToRight)
+                    }
+                    OptionalDateRow(title: "موعد المتابعة", date: $follow)
+                    if follow != nil {
+                        HStack(spacing: 8) {
+                            ForEach([("غداً", 1), ("بعد غد", 2), ("أسبوع", 7)], id: \.1) { label, d in
+                                Button(label) { follow = Calendar.current.date(byAdding: .day, value: d, to: Date()) }
+                                    .buttonStyle(.bordered).tint(Buad.ink)
+                            }
+                        }
+                    }
+                }
+                Section("ملاحظات داخلية") {
+                    TextField("ملاحظات", text: $notes, axis: .vertical).lineLimit(3...8)
+                }
+            }
+            .navigationTitle("تعديل الفرصة")
+            .navigationBarTitleDisplayMode(.inline)
+            .formChrome(dirty: started && snapshot != baseline, busy: busy, saveTitle: "حفظ") { Task { await save() } }
+            .task {
+                if !started {
+                    owner = opportunity.ownerId
+                    value = opportunity.value > 0 ? EntrySheet.plain(opportunity.value) : ""
+                    follow = Fmt.date(opportunity.followUpAt)
+                    notes = opportunity.notes
+                    baseline = snapshot
+                    started = true
+                }
+                people = (try? await APIClient.shared.assignees()) ?? []
+            }
+        }
+    }
+
+    private func save() async {
+        var fields: [String: Any] = [:]
+        let now = snapshot
+        if now[0] != baseline[0] { fields["ownerId"] = owner }
+        if now[1] != baseline[1] {
+            guard value.trimmingCharacters(in: .whitespaces).isEmpty || ReceiptRules.riyals(value) != nil else { error = "القيمة غير صحيحة."; return }
+            fields["value"] = ReceiptRules.riyals(value) ?? 0
+        }
+        if now[2] != baseline[2] { fields["followUpAt"] = follow.map(Fmt.isoDay) ?? "" }
+        if now[3] != baseline[3] { fields["notes"] = notes.trimmingCharacters(in: .whitespacesAndNewlines) }
+        guard !fields.isEmpty else { dismiss(); return }
+        busy = true
+        defer { busy = false }
+        do {
+            try await APIClient.shared.updateOpportunity(opportunity.id, fields)
+            ScreenMemory.opportunities = nil
+            ScreenMemory.salesOverview = nil
+            saved()
+            dismiss()
+        } catch {
+            session.handle(error)
+            self.error = (error as? APIError)?.message ?? "تعذّر الحفظ، حاول مرة أخرى."
+        }
+    }
+}
