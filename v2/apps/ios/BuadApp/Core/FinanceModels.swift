@@ -312,3 +312,137 @@ struct FinancePeriod: Equatable {
         }
     }
 }
+
+// MARK: GET /api/finance/vat/report?year&q and /api/finance/vat/year?year (vat.ts) — riyals → halalas.
+
+struct VatReport: Decodable {
+    struct Sale: Decodable, Identifiable {
+        let id = UUID()
+        let date, name, clientName, source, invoiceNo: String
+        let amount, base, vat: Int
+        private enum K: String, CodingKey { case date, name, clientName, source, invoiceNo, amount, base, vat }
+        init(from decoder: Decoder) throws {
+            let c = try decoder.container(keyedBy: K.self)
+            date = c.string(.date); name = c.string(.name); clientName = c.string(.clientName)
+            source = c.string(.source); invoiceNo = c.string(.invoiceNo)
+            amount = c.halalasFromRiyals(.amount); base = c.halalasFromRiyals(.base); vat = c.halalasFromRiyals(.vat)
+        }
+    }
+
+    struct Purchase: Decodable, Identifiable {
+        let id = UUID()
+        let invoiceDate, date, description, supplierName, projectName, owner: String
+        let base, vat: Int
+        let gaps: Int
+        private enum K: String, CodingKey { case invoiceDate, date, description, supplierName, projectName, owner, base, vat, gaps }
+        init(from decoder: Decoder) throws {
+            let c = try decoder.container(keyedBy: K.self)
+            invoiceDate = c.string(.invoiceDate); date = c.string(.date); description = c.string(.description)
+            supplierName = c.string(.supplierName); projectName = c.string(.projectName); owner = c.string(.owner)
+            base = c.halalasFromRiyals(.base); vat = c.halalasFromRiyals(.vat)
+            gaps = ((try? c.decode([String].self, forKey: .gaps)) ?? []).count
+        }
+    }
+
+    struct Unidentified: Decodable, Identifiable {
+        let id = UUID()
+        let date, description, projectName, category: String
+        let amount: Int
+        private enum K: String, CodingKey { case date, description, projectName, category, amount }
+        init(from decoder: Decoder) throws {
+            let c = try decoder.container(keyedBy: K.self)
+            date = c.string(.date); description = c.string(.description)
+            projectName = c.string(.projectName); category = c.string(.category); amount = c.halalasFromRiyals(.amount)
+        }
+    }
+
+    struct Warning: Decodable, Identifiable {
+        let code: String
+        let count: Int
+        var id: String { code }
+        private enum K: String, CodingKey { case code, count }
+        init(from decoder: Decoder) throws {
+            let c = try decoder.container(keyedBy: K.self)
+            code = c.string(.code); count = c.int(.count)
+        }
+
+        /// WARNING (features/finance-overview/VatTab.tsx), word for word.
+        var text: String {
+            let n = count
+            switch code {
+            case "no_vat_number": return "الرقم الضريبي للجهة غير مسجّل في «الإعدادات ← بيانات الجهة»."
+            case "projects_without_receipts": return "\(n) مشروع له قيمة عقد ولا استلام معتمداً ولا فاتورة: ضريبة مبيعاته لا تظهر بعد."
+            case "invoice_incomplete": return "\(n) فاتورة مشتريات ناقصة البيانات (المورد/رقمه الضريبي/رقم الفاتورة/تاريخها)."
+            case "unidentified_purchases": return "\(n) مصروف بلا فاتورة ضريبية: إن كان له فاتورة سجّلوها لتُخصم ضريبتها."
+            case "sales_without_invoice": return "\(n) مقبوض في مشاريع لم تُسجَّل لها فواتير ضريبية بعد: احتُسبت بتاريخ الاستلام مؤقتاً. سجّلوا الفاتورة المرسلة للعميل من صفحة المشروع لتُحتسب بتاريخها."
+            case "invoices_below_receipts": return "\(n) مشروع فواتيره المسجّلة أقل مما استُلم منه: قد تنقصه فاتورة."
+            case "cf_undecided": return "\(n) بند «رسوم إضافية» لم يُحدَّد: هل هو ضريبة العقد المحجوزة للهيئة أم رسوم فعلية؟"
+            case "vat_as_expense": return "\(n) قيد سداد ضريبة مسجّل كمصروف مشروع: انقلوه إلى سداد الربع (من الموقع)."
+            default: return code
+            }
+        }
+    }
+
+    let label: String
+    let rate: Double
+    let outputVat, inputVat, netPayable, reserved: Int
+    let salesBase, purchasesBase: Int
+    let sales: [Sale]
+    let purchases: [Purchase]
+    let unidentified: [Unidentified]
+    let warnings: [Warning]
+
+    private enum K: String, CodingKey { case period, rate, outputVat, inputVat, netPayable, reserved, sales, purchases, unidentified, warnings }
+    private enum P: String, CodingKey { case label }
+    private enum Part: String, CodingKey { case rows, base }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: K.self)
+        label = (try? c.nestedContainer(keyedBy: P.self, forKey: .period))?.string(.label) ?? ""
+        rate = c.double(.rate)
+        outputVat = c.halalasFromRiyals(.outputVat); inputVat = c.halalasFromRiyals(.inputVat)
+        netPayable = c.halalasFromRiyals(.netPayable); reserved = c.halalasFromRiyals(.reserved)
+        let s = try? c.nestedContainer(keyedBy: Part.self, forKey: .sales)
+        salesBase = s?.halalasFromRiyals(.base) ?? 0
+        sales = (try? s?.decode([Sale].self, forKey: .rows)) ?? []
+        let p = try? c.nestedContainer(keyedBy: Part.self, forKey: .purchases)
+        purchasesBase = p?.halalasFromRiyals(.base) ?? 0
+        purchases = (try? p?.decode([Purchase].self, forKey: .rows)) ?? []
+        let u = try? c.nestedContainer(keyedBy: Part.self, forKey: .unidentified)
+        unidentified = (try? u?.decode([Unidentified].self, forKey: .rows)) ?? []
+        warnings = (try? c.decode([Warning].self, forKey: .warnings)) ?? []
+    }
+}
+
+struct VatYear: Decodable {
+    struct Quarter: Decodable, Identifiable {
+        let q: Int
+        let dueDate: String
+        let outputVat, inputVat, netPayable: Int
+        let warnings: Int
+        let status: String
+        var id: Int { q }
+        private enum K: String, CodingKey { case q, dueDate, outputVat, inputVat, netPayable, warnings, filing }
+        private enum F: String, CodingKey { case status }
+        init(from decoder: Decoder) throws {
+            let c = try decoder.container(keyedBy: K.self)
+            q = c.int(.q); dueDate = c.string(.dueDate)
+            outputVat = c.halalasFromRiyals(.outputVat); inputVat = c.halalasFromRiyals(.inputVat)
+            netPayable = c.halalasFromRiyals(.netPayable); warnings = c.int(.warnings)
+            status = (try? c.nestedContainer(keyedBy: F.self, forKey: .filing))?.string(.status) ?? "open"
+        }
+    }
+
+    let quarters: [Quarter]
+    let netPayable, paid, balance: Int
+
+    private enum K: String, CodingKey { case quarters, totals }
+    private enum T: String, CodingKey { case netPayable, paid, balance }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: K.self)
+        quarters = (try? c.decode([Quarter].self, forKey: .quarters)) ?? []
+        let t = try c.nestedContainer(keyedBy: T.self, forKey: .totals)
+        netPayable = t.halalasFromRiyals(.netPayable); paid = t.halalasFromRiyals(.paid); balance = t.halalasFromRiyals(.balance)
+    }
+}

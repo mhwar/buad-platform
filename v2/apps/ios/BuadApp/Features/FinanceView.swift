@@ -1,23 +1,35 @@
 import SwiftUI
 
-/// «المالية»: the website's sections that the app has so far, «النظرة العامة» and «التحصيل».
+/// «المالية»: the website's sections that the app has so far — «النظرة العامة» and «التحصيل»
+/// (treasury.view) and «الضريبة» (vat.view) — each shown only when the role holds its permission.
 struct FinanceView: View {
-    enum Part: String { case overview, collection }
-    @State private var part: Part = .overview
+    enum Part: String { case overview, collection, vat }
+    @EnvironmentObject private var session: Session
+    @State private var part: Part?
+
+    private var parts: [Part] {
+        guard let me = session.me else { return [] }
+        return (me.can("treasury.view") ? [.overview, .collection] : []) + (me.can("vat.view") ? [.vat] : [])
+    }
 
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                Picker("أقسام المالية", selection: $part) {
-                    Text("النظرة العامة").tag(Part.overview)
-                    Text("التحصيل").tag(Part.collection)
+                if parts.count > 1 {
+                    Picker("أقسام المالية", selection: Binding(get: { part ?? parts.first }, set: { part = $0 })) {
+                        ForEach(parts, id: \.self) { p in
+                            Text(p == .overview ? "النظرة العامة" : p == .collection ? "التحصيل" : "الضريبة").tag(Optional(p))
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    .padding(.horizontal, Buad.gutter)
+                    .padding(.vertical, 8)
                 }
-                .pickerStyle(.segmented)
-                .padding(.horizontal, Buad.gutter)
-                .padding(.vertical, 8)
-                switch part {
+                switch part ?? parts.first {
                 case .overview: OverviewView()
                 case .collection: CollectionView()
+                case .vat: VatView()
+                case nil: EmptyNote(text: APIError.forbidden.message, icon: "lock")
                 }
             }
             .background(Buad.canvas.ignoresSafeArea())
