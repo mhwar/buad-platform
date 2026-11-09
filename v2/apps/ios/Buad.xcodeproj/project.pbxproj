@@ -18,6 +18,7 @@
 		5B505A1F8E5EF105DD69C363 /* FinanceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0E8E8409B2DD629F3FF356C /* FinanceView.swift */; };
 		F37391568EFFD96C654900E3 /* Format.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42671CCBC6E8669BCF2A9F27 /* Format.swift */; };
 		7393F02EC54916C7EDE9A3B4 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00315442E9DAF7B3CC3ED5A9 /* Models.swift */; };
+		51F020F2F35B5FAEF11A13D1 /* MoneySheets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26EB1F0CFB5AA4D4D4FD8C9D /* MoneySheets.swift */; };
 		A289450366D35817DEC0755B /* MoreView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5BBF222B60004DD31D3FBEB8 /* MoreView.swift */; };
 		E4AEA7F7909FACED2CEECE7F /* NotificationsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A45104A6141BFBC1B0E4747 /* NotificationsView.swift */; };
 		F532ED040701AB19A54DB4D9 /* OverviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34245588C64BDAE7C90CFCFB /* OverviewView.swift */; };
@@ -48,6 +49,7 @@
 		F0E8E8409B2DD629F3FF356C /* FinanceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FinanceView.swift; sourceTree = "<group>"; };
 		42671CCBC6E8669BCF2A9F27 /* Format.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Format.swift; sourceTree = "<group>"; };
 		00315442E9DAF7B3CC3ED5A9 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
+		26EB1F0CFB5AA4D4D4FD8C9D /* MoneySheets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoneySheets.swift; sourceTree = "<group>"; };
 		5BBF222B60004DD31D3FBEB8 /* MoreView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoreView.swift; sourceTree = "<group>"; };
 		4A45104A6141BFBC1B0E4747 /* NotificationsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationsView.swift; sourceTree = "<group>"; };
 		34245588C64BDAE7C90CFCFB /* OverviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OverviewView.swift; sourceTree = "<group>"; };
@@ -124,6 +126,7 @@
 				798EC49321C73A148E681BF9 /* ClientsView.swift */,
 				E718E8BC35421FAA341657FC /* EntrySheet.swift */,
 				F0E8E8409B2DD629F3FF356C /* FinanceView.swift */,
+				26EB1F0CFB5AA4D4D4FD8C9D /* MoneySheets.swift */,
 				5BBF222B60004DD31D3FBEB8 /* MoreView.swift */,
 				4A45104A6141BFBC1B0E4747 /* NotificationsView.swift */,
 				34245588C64BDAE7C90CFCFB /* OverviewView.swift */,
@@ -227,6 +230,7 @@
 				5B505A1F8E5EF105DD69C363 /* FinanceView.swift in Sources */,
 				F37391568EFFD96C654900E3 /* Format.swift in Sources */,
 				7393F02EC54916C7EDE9A3B4 /* Models.swift in Sources */,
+				51F020F2F35B5FAEF11A13D1 /* MoneySheets.swift in Sources */,
 				A289450366D35817DEC0755B /* MoreView.swift in Sources */,
 				E4AEA7F7909FACED2CEECE7F /* NotificationsView.swift in Sources */,
 				F532ED040701AB19A54DB4D9 /* OverviewView.swift in Sources */,
@@ -326,7 +330,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.2.4;
+				MARKETING_VERSION = 0.2.5;
 				PRODUCT_BUNDLE_IDENTIFIER = sa.buad.app;
 				PRODUCT_NAME = BuadApp;
 				SDKROOT = iphoneos;
@@ -349,7 +353,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.2.4;
+				MARKETING_VERSION = 0.2.5;
 				PRODUCT_BUNDLE_IDENTIFIER = sa.buad.app;
 				PRODUCT_NAME = BuadApp;
 				SDKROOT = iphoneos;

@@ -351,3 +351,32 @@ struct DocumentItem: Decodable, Identifiable {
 }
 
 struct DocumentsEnvelope: Decodable { let items: [DocumentItem] }
+
+// MARK: GET /api/finance/vat/invoices?projectId (vat.ts) — amount and vat in riyals.
+
+struct SalesInvoice: Decodable, Identifiable {
+    let id: String
+    let number: String
+    let date: String
+    let amount: Int
+    let vat: Int
+    let receiptId: String
+    let note: String
+    let hasFile: Bool
+
+    private enum K: String, CodingKey { case id, number, date, amount, vat, receiptId, note, assetId }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: K.self)
+        id = c.string(.id)
+        number = c.string(.number)
+        date = c.string(.date)
+        amount = c.halalasFromRiyals(.amount)
+        vat = c.halalasFromRiyals(.vat)
+        receiptId = c.string(.receiptId)
+        note = c.string(.note)
+        hasFile = !c.string(.assetId).isEmpty
+    }
+}
+
+struct SalesInvoicesEnvelope: Decodable { let items: [SalesInvoice] }
