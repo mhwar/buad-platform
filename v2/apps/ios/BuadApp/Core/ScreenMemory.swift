@@ -18,6 +18,8 @@ enum ScreenMemory {
     static var salesDueOnly = false
     static var opportunities: [Opportunity]?
     static var salesOverview: SalesOverview?
+    static var quotes: [SalesQuote]?
+    static var salesPart = 0
 
     static func clear() {
         overviewPeriod = FinancePeriod()
@@ -30,5 +32,7 @@ enum ScreenMemory {
         salesDueOnly = false
         opportunities = nil
         salesOverview = nil
+        quotes = nil
+        salesPart = 0
     }
 }

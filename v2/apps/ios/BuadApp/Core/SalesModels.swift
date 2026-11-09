@@ -113,18 +113,6 @@ struct OpportunitiesEnvelope: Decodable {
 }
 
 struct OpportunityDetail: Decodable {
-    struct Quote: Decodable, Identifiable {
-        let id, number, title, status, validUntil: String
-        let expired: Bool
-        let total: Int
-        private enum K: String, CodingKey { case id, number, title, status, validUntil, expired, totalHalalas }
-        init(from decoder: Decoder) throws {
-            let c = try decoder.container(keyedBy: K.self)
-            id = c.string(.id); number = c.string(.number); title = c.string(.title); status = c.string(.status)
-            validUntil = c.string(.validUntil); expired = c.bool(.expired); total = c.int(.totalHalalas)
-        }
-    }
-
     struct Activity: Decodable, Identifiable {
         let id, type, summary, createdByName: String
         let at: Int
@@ -141,7 +129,7 @@ struct OpportunityDetail: Decodable {
     let packageName: String
     let clientName: String
     let clientCode: String
-    let quotes: [Quote]
+    let quotes: [SalesQuote]
     let activities: [Activity]
 
     private enum K: String, CodingKey { case opportunity, client, quotes, activities }
@@ -157,7 +145,7 @@ struct OpportunityDetail: Decodable {
         let cl = try? c.nestedContainer(keyedBy: C.self, forKey: .client)
         clientName = cl?.string(.name) ?? ""
         clientCode = cl?.string(.code) ?? ""
-        quotes = (try? c.decode([Quote].self, forKey: .quotes)) ?? []
+        quotes = (try? c.decode([SalesQuote].self, forKey: .quotes)) ?? []
         activities = (try? c.decode([Activity].self, forKey: .activities)) ?? []
     }
 }

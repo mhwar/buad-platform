@@ -52,29 +52,59 @@ struct RootView: View {
 }
 
 /// The phone tabs of the website (PHONE_CORE in features/more/tabs.ts), each shown only when the
-/// role may see it. Like PHONE_CORE: اليوم، المبيعات، المشاريع، المالية، المزيد. «المهام» and «العملاء» open from «المزيد», as on the website.
+/// role may see it: اليوم، المبيعات، المشاريع، المالية، المزيد. «المهام» and «العملاء» open from «المزيد»,
+/// as on the website. The system tab bar is replaced by the floating `Dock`, whose «+» opens «إنشاء».
 struct MainTabs: View {
+    enum Tab: Hashable { case today, sales, projects, finance, more }
+
+    @EnvironmentObject private var session: Session
     let me: Me
+    @StateObject private var center = CreateCenter()
+    @State private var tab: Tab = .today
+    @State private var choosing = false
+
+    private var items: [Dock.Item] {
+        var list = [Dock.Item(id: .today, title: "اليوم", icon: "sun.max")]
+        if me.can("sales.view") { list.append(.init(id: .sales, title: "المبيعات", icon: "bag")) }
+        if me.can("projects.view") { list.append(.init(id: .projects, title: "المشاريع", icon: "briefcase")) }
+        if me.can("treasury.view") || me.can("vat.view") { list.append(.init(id: .finance, title: "المالية", icon: "banknote")) }
+        list.append(.init(id: .more, title: "المزيد", icon: "square.grid.2x2"))
+        return list
+    }
 
     var body: some View {
-        TabView {
-            TodayView()
-                .tabItem { Label("اليوم", systemImage: "square.grid.2x2") }
-            if me.can("sales.view") {
-                SalesView()
-                    .tabItem { Label("المبيعات", systemImage: "target") }
-            }
-            if me.can("projects.view") {
-                ProjectsView()
-                    .tabItem { Label("المشاريع", systemImage: "briefcase") }
-            }
-            if me.can("treasury.view") || me.can("vat.view") {
-                FinanceView()
-                    .tabItem { Label("المالية", systemImage: "banknote") }
-            }
-            MoreView()
-                .tabItem { Label("المزيد", systemImage: "line.3.horizontal") }
+        TabView(selection: $tab) {
+            page(TodayView(), .today)
+            if me.can("sales.view") { page(SalesView(), .sales) }
+            if me.can("projects.view") { page(ProjectsView(), .projects) }
+            if me.can("treasury.view") || me.can("vat.view") { page(FinanceView(), .finance) }
+            page(MoreView(), .more)
         }
+        .overlay(alignment: .bottom) {
+            Dock(items: items, selection: $tab,
+                 create: CreateCenter.kinds(for: me).isEmpty ? nil : { choosing = true })
+                .padding(.bottom, 4)
+                .ignoresSafeArea(.keyboard, edges: .bottom)
+        }
+        .environmentObject(center)
+        .toast($center.toast)
+        .sheet(isPresented: $choosing) {
+            CreateChooser().environmentObject(session).environmentObject(center)
+        }
+        .sheet(item: $center.sheet) { kind in
+            CreateSheet(kind: kind).environmentObject(session).environmentObject(center)
+        }
+        .onChange(of: center.revision) { _, _ in
+            // Bring forward the section that shows the new thing.
+            if center.lastKind != .client, me.can("sales.view") { tab = .sales }
+        }
+    }
+
+    private func page(_ content: some View, _ id: Tab) -> some View {
+        content
+            .safeAreaInset(edge: .bottom, spacing: 0) { Color.clear.frame(height: Dock.height + 8) }
+            .toolbar(.hidden, for: .tabBar)
+            .tag(id)
     }
 }
 

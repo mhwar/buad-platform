@@ -1,31 +1,54 @@
 import SwiftUI
 
-/// «المبيعات» (features/sales): «الفرص» (OpportunitiesPage) and «اللوحة» (SalesDashboard).
-/// Opportunities: stage pills with counts, search, «تحتاج متابعة», then each opportunity's page with its
+/// «المبيعات» (features/sales): «الفرص» (OpportunitiesPage), «العروض» (QuotesPage) and «اللوحة»
+/// (SalesDashboard), with «+» for a new opportunity, offer or client. Opportunities open on a strip of
+/// the open pipeline by stage (tap a stage to filter), then the list; each opportunity's page has its
 /// timeline, offers, «تسجيل تواصل» and the stage. Reads need sales.view, writes sales.edit.
 struct SalesView: View {
-    enum Part: Hashable { case leads, board }
-    @State private var part: Part = .leads
+    @EnvironmentObject private var session: Session
+    @EnvironmentObject private var center: CreateCenter
+    @State private var part = ScreenMemory.salesPart
 
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
                 Picker("أقسام المبيعات", selection: $part) {
-                    Text("الفرص").tag(Part.leads)
-                    Text("اللوحة").tag(Part.board)
+                    Text("الفرص").tag(0)
+                    Text("العروض").tag(1)
+                    Text("اللوحة").tag(2)
                 }
                 .pickerStyle(.segmented)
                 .padding(.horizontal, Buad.gutter)
                 .padding(.vertical, 8)
                 switch part {
-                case .leads: OpportunitiesList()
-                case .board: SalesBoard()
+                case 1: QuotesList()
+                case 2: SalesBoard()
+                default: OpportunitiesList()
                 }
             }
             .background(Buad.canvas.ignoresSafeArea())
             .navigationTitle("المبيعات")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                if !CreateCenter.kinds(for: session.me).isEmpty {
+                    ToolbarItem(placement: .primaryAction) {
+                        Menu {
+                            ForEach(CreateCenter.kinds(for: session.me)) { k in
+                                Button { center.sheet = k } label: { Label(CreateCenter.title(k), systemImage: CreateCenter.icon(k)) }
+                            }
+                        } label: {
+                            Image(systemName: "plus").font(.body.weight(.semibold)).accessibilityLabel("إنشاء")
+                        }
+                    }
+                }
+            }
             .navigationDestination(for: Opportunity.self) { OpportunityView(id: $0.id, preview: $0) }
+            .navigationDestination(for: SalesQuote.self) { QuoteView(id: $0.id, preview: $0) }
+            .onChange(of: part) { _, now in ScreenMemory.salesPart = now }
+            // A new offer shows in «العروض»; a new opportunity in «الفرص».
+            .onChange(of: center.revision) { _, _ in
+                if center.lastKind == .quote { part = 1 } else if center.lastKind == .opportunity { part = 0 }
+            }
         }
     }
 }
@@ -34,6 +57,7 @@ struct SalesView: View {
 
 private struct OpportunitiesList: View {
     @EnvironmentObject private var session: Session
+    @EnvironmentObject private var center: CreateCenter
     @State private var items: [Opportunity] = ScreenMemory.opportunities ?? []
     @State private var loaded = ScreenMemory.opportunities != nil
     @State private var error: String?
@@ -73,6 +97,7 @@ private struct OpportunitiesList: View {
                                     : "لا فرص في هذا العرض.",
                                   icon: "target")
                     } else {
+                        if query.isEmpty && !dueOnly { strip }
                         let total = shown.reduce(0) { $0 + $1.value }
                         Text(Fmt.opportunities(shown.count) + (total > 0 ? " · \(Fmt.short(total)) ر.س" : ""))
                             .font(.footnote).foregroundStyle(Buad.muted)
@@ -90,8 +115,57 @@ private struct OpportunitiesList: View {
         .searchable(text: $query, prompt: "ابحث بالاسم أو الجهة أو الخدمة")
         .refreshable { await load() }
         .task { await load() }
+        .onChange(of: center.revision) { _, _ in Task { await load() } }
         .onChange(of: stage) { _, now in ScreenMemory.salesStage = now }
         .onChange(of: dueOnly) { _, now in ScreenMemory.salesDueOnly = now }
+    }
+
+    /// The open pipeline at a glance: each open stage with its count and value, the bar showing its
+    /// share of the open value. Tapping a stage filters the list to it; tapping it again shows all open.
+    private var strip: some View {
+        let open = items.filter(\.isOpen)
+        let all = max(1, open.reduce(0) { $0 + $1.value })
+        return ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                ForEach(Sales.openStages, id: \.self) { s in
+                    let list = open.filter { $0.status == s }
+                    let value = list.reduce(0) { $0 + $1.value }
+                    let st = Sales.stage(s)
+                    let on = stage == s
+                    Button {
+                        withAnimation(.snappy) { stage = on ? "open" : s }
+                    } label: {
+                        VStack(alignment: .leading, spacing: 6) {
+                            HStack(spacing: 6) {
+                                Circle().fill(st.tone.foreground).frame(width: 7, height: 7)
+                                Text(st.label).font(.caption.weight(.semibold)).foregroundStyle(on ? Buad.onInk : Buad.muted)
+                            }
+                            Text(verbatim: String(list.count)).font(.title3.bold()).monospacedDigit()
+                                .foregroundStyle(on ? Buad.onInk : Buad.ink)
+                            Text(value > 0 ? Fmt.short(value) : "—").font(.caption2).monospacedDigit()
+                                .foregroundStyle(on ? Buad.onInk.opacity(0.8) : Buad.muted)
+                            GeometryReader { g in
+                                Capsule().fill((on ? Buad.onInk : Buad.line).opacity(on ? 0.3 : 1))
+                                    .overlay(alignment: .leading) {
+                                        Capsule().fill(on ? Buad.onInk : st.tone.foreground)
+                                            .frame(width: g.size.width * CGFloat(value) / CGFloat(all))
+                                    }
+                            }
+                            .frame(height: 4)
+                        }
+                        .padding(12)
+                        .frame(width: 112, alignment: .leading)
+                        .background(on ? Buad.ink : Buad.surface, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("\(st.label)، \(Fmt.opportunities(list.count))، \(Fmt.sar(value))")
+                    .accessibilityAddTraits(on ? .isSelected : [])
+                }
+            }
+            .padding(.horizontal, Buad.gutter)
+        }
+        .padding(.horizontal, -Buad.gutter)
+        .sensoryFeedback(.selection, trigger: stage)
     }
 
     private var pills: some View {
@@ -337,6 +411,7 @@ struct OpportunityView: View {
     /// The stage a move is on its way to (shows a spinner on that step).
     @State private var movingTo: String?
     @State private var toast: ToastItem?
+    @State private var quoting = false
 
     private var canEdit: Bool { session.me?.can("sales.edit") ?? false }
     private var o: Opportunity { detail?.opportunity ?? preview }
@@ -359,7 +434,7 @@ struct OpportunityView: View {
                 }
                 contact
                 details
-                if let d = detail, !d.quotes.isEmpty { offers(d) }
+                if let d = detail, !d.quotes.isEmpty || (canEdit && o.isOpen) { offers(d) }
                 timeline
             }
             .padding(.horizontal, Buad.gutter)
@@ -388,11 +463,17 @@ struct OpportunityView: View {
             }
             .presentationDetents([.medium, .large])
         }
+        .sheet(isPresented: $quoting) {
+            QuoteEditor(opportunity: o) { _ in
+                toast = ToastItem(text: "أُنشئ عرض السعر مسودةً. أرسله من صفحته.")
+                Task { await load() }
+            }
+        }
         .confirmationDialog("كسب الفرصة", isPresented: $winning, titleVisibility: .visible) {
             Button("تعليمها كمكسوبة") { Task { await move("won") } }
             Button("إلغاء", role: .cancel) {}
         } message: {
-            Text("تُعلَّم الفرصة «مكسوب». تحويلها إلى مشروع وإنشاء العقد من الموقع.")
+            Text("تُعلَّم الفرصة «مكسوب». لتحويلها إلى مشروع اقبل عرض سعرها ثم «تحويل إلى مشروع».")
         }
         .alert("إغلاق الفرصة كخاسرة", isPresented: $losing) {
             TextField("السبب: السعر، اختاروا جهة أخرى، لا ميزانية…", text: $lostReason)
@@ -531,28 +612,43 @@ struct OpportunityView: View {
 
     private func offers(_ d: OpportunityDetail) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("العروض").font(.headline)
-            VStack(spacing: 0) {
-                ForEach(Array(d.quotes.enumerated()), id: \.element.id) { i, q in
-                    if i > 0 { Divider().padding(.leading, 14) }
-                    let st = Sales.quote(q.status, expired: q.expired)
-                    HStack(alignment: .firstTextBaseline) {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(q.title.isEmpty ? q.number : q.title).font(.subheadline.weight(.medium)).lineLimit(1)
-                            Text([Fmt.ltr(q.number), q.validUntil.isEmpty ? "" : "صالح حتى \(Fmt.day(q.validUntil))"].filter { !$0.isEmpty }.joined(separator: " · "))
-                                .font(.caption).foregroundStyle(Buad.muted)
-                        }
-                        Spacer()
-                        VStack(alignment: .trailing, spacing: 3) {
-                            Text(Fmt.sar(q.total)).font(.subheadline.weight(.semibold)).monospacedDigit()
-                            Pill(text: st.label, tone: st.tone)
-                        }
-                    }
-                    .padding(14)
+            HStack {
+                Text("العروض").font(.headline)
+                Spacer()
+                if canEdit && o.isOpen {
+                    Button { quoting = true } label: { Label("عرض جديد", systemImage: "plus").font(.subheadline.weight(.semibold)) }
+                        .frame(minHeight: Buad.tap)
                 }
             }
-            .background(Buad.surface, in: RoundedRectangle(cornerRadius: Buad.radius, style: .continuous))
-            Text("إنشاء العروض ومعاينتها PDF في الإصدار التالي، والآن من الموقع.").font(.caption).foregroundStyle(Buad.muted)
+            if d.quotes.isEmpty {
+                Text("لا عروض لهذه الفرصة بعد.").font(.subheadline).foregroundStyle(Buad.muted)
+            } else {
+                VStack(spacing: 0) {
+                    ForEach(Array(d.quotes.enumerated()), id: \.element.id) { i, q in
+                        if i > 0 { Divider().padding(.leading, 14) }
+                        let st = Sales.quote(q.status, expired: q.expired)
+                        NavigationLink(value: q) {
+                            HStack(alignment: .firstTextBaseline) {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(q.title.isEmpty ? q.number : q.title).font(.subheadline.weight(.medium)).lineLimit(1)
+                                    Text([Fmt.ltr(q.number), q.validUntil.isEmpty ? "" : "صالح حتى \(Fmt.day(q.validUntil))"].filter { !$0.isEmpty }.joined(separator: " · "))
+                                        .font(.caption).foregroundStyle(Buad.muted)
+                                }
+                                Spacer()
+                                VStack(alignment: .trailing, spacing: 3) {
+                                    Text(Fmt.sar(q.total)).font(.subheadline.weight(.semibold)).monospacedDigit()
+                                    Pill(text: st.label, tone: st.tone)
+                                }
+                                Chevron()
+                            }
+                            .padding(14)
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .background(Buad.surface, in: RoundedRectangle(cornerRadius: Buad.radius, style: .continuous))
+            }
         }
     }
 
