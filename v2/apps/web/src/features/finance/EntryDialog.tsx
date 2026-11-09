@@ -1,6 +1,7 @@
 import { CATEGORY_LABELS, entryInput, VAT_EXTRACT_PCT } from "@buad/schema/finance";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { FileText } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import type { z } from "zod";
@@ -19,7 +20,9 @@ import {
   toast,
 } from "../../components/ui";
 import { ApiError, sar, today } from "../../lib/format";
+import { useCan } from "../../session";
 import { vatSettingsQuery } from "../finance-overview/vat-api";
+import { uploadImage } from "../org/OrgSettings";
 import { type Entry, type Finance, financeApi, financeKey } from "./api";
 import { type TaxInvoiceForm, TaxInvoiceSection } from "./TaxInvoiceSection";
 
@@ -78,6 +81,7 @@ export function EntryDialog({
         status: existing.status,
         note: existing.note,
         cfKind: existing.cfKind ?? "",
+        assetId: existing.assetId ?? "",
       }
     : {
         date: today(),
@@ -90,6 +94,7 @@ export function EntryDialog({
         status: "",
         note: "",
         cfKind: "",
+        assetId: "",
         ...preset,
       };
   const f = useForm<Form>({ resolver: zodResolver(entryInput), values: defaults });
@@ -394,6 +399,10 @@ export function EntryDialog({
               rate={rate}
             />
           )}
+          <ReceiptFile
+            assetId={f.watch("assetId") ?? ""}
+            onChange={(id) => f.setValue("assetId", id, { shouldDirty: true })}
+          />
           <Field label="ملاحظة">
             <Textarea rows={2} {...f.register("note")} />
           </Field>
@@ -416,5 +425,66 @@ export function EntryDialog({
         </form>
       )}
     </Dialog>
+  );
+}
+
+/** «الإيصال أو الفاتورة»: the paper behind the entry (PDF or image, up to 2MB), as for sales invoices. */
+function ReceiptFile({ assetId, onChange }: { assetId: string; onChange: (id: string) => void }) {
+  const can = useCan();
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+  if (!can("assets.edit") && !assetId) return null;
+  return (
+    <div>
+      <p className="mb-1 text-sm font-medium">الإيصال أو الفاتورة (PDF أو صورة)</p>
+      <div className="flex flex-wrap items-center gap-2">
+        {can("assets.edit") && (
+          <label className="inline-flex min-h-10 cursor-pointer items-center gap-2 rounded-lg border px-3 text-sm hover:bg-brand-soft">
+            <FileText className="size-4" />
+            {busy ? "جارٍ الرفع…" : assetId ? "استبدال الملف" : "رفع الملف"}
+            <input
+              type="file"
+              accept="application/pdf,image/png,image/jpeg,image/webp"
+              className="sr-only"
+              onChange={async (e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                setBusy(true);
+                setErr("");
+                try {
+                  onChange((await uploadImage(file)).id);
+                } catch {
+                  setErr("تعذّر رفع الملف (PDF أو صورة حتى 2MB)");
+                } finally {
+                  setBusy(false);
+                }
+              }}
+            />
+          </label>
+        )}
+        {assetId && (
+          <>
+            <a
+              href={`/api/assets/${assetId}`}
+              target="_blank"
+              rel="noreferrer"
+              className="text-sm text-brand underline"
+            >
+              عرض المرفق
+            </a>
+            {can("assets.edit") && (
+              <button
+                type="button"
+                className="text-sm text-muted underline"
+                onClick={() => onChange("")}
+              >
+                إزالة
+              </button>
+            )}
+          </>
+        )}
+      </div>
+      {err && <p className="mt-1 text-xs text-danger-ink">{err}</p>}
+    </div>
   );
 }

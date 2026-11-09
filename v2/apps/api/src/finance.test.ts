@@ -1,5 +1,5 @@
 import { finCalc } from "@buad/domain";
-import { orgs, users } from "@buad/schema/db";
+import { assets, orgs, users } from "@buad/schema/db";
 import { beforeEach, describe, expect, it } from "vitest";
 import { createApp, type Env } from "./app";
 import { hashPassword } from "./auth/password";
@@ -207,6 +207,59 @@ describe("finance: entries, budget, categories, agreement", () => {
       pendingExpenses: 0,
       pendingIncome: 0,
     });
+  });
+
+  it("an entry can carry an uploaded receipt of this organisation, and only of it", async () => {
+    await ctx.db.insert(assets).values([
+      {
+        id: "ast_1",
+        orgId: "o1",
+        sha256: "a1",
+        mime: "image/jpeg",
+        size: 10,
+        r2Key: "k1",
+        createdBy: "adm",
+        createdAt: 1,
+      },
+      {
+        id: "ast_2",
+        orgId: "o2",
+        sha256: "a2",
+        mime: "image/jpeg",
+        size: 10,
+        r2Key: "k2",
+        createdBy: "x",
+        createdAt: 1,
+      },
+    ]);
+    const base = { description: "إيصال", type: "expense", amount: 50, cat: "materials" };
+    // None by default, and nothing else about an entry changes.
+    const plain = await call("adm", "POST", `${F()}/entries`, base);
+    expect(plain.status).toBe(201);
+    expect(plain.body.entries[0].assetId).toBe("");
+    // Another organisation's file, or one that does not exist, is refused.
+    for (const assetId of ["ast_2", "ast_missing"])
+      expect(
+        (await call("adm", "POST", `${F()}/entries`, { ...base, assetId })).body,
+      ).toMatchObject({
+        ok: false,
+        error: "invalid_asset",
+      });
+    const r = await call("adm", "POST", `${F()}/entries`, { ...base, assetId: "ast_1" });
+    expect(r.status).toBe(201);
+    expect(r.body.entries.find((e: J) => e.id === r.body.id).assetId).toBe("ast_1");
+    // Attached later, replaced, then removed; a foreign file cannot be set on edit either.
+    const id = plain.body.id;
+    expect((await call("adm", "PATCH", `${F()}/entries/${id}`, { assetId: "ast_2" })).status).toBe(
+      400,
+    );
+    const set = await call("adm", "PATCH", `${F()}/entries/${id}`, { assetId: "ast_1" });
+    expect(set.body.entries.find((e: J) => e.id === id).assetId).toBe("ast_1");
+    const cleared = await call("adm", "PATCH", `${F()}/entries/${id}`, { assetId: "" });
+    expect(cleared.body.entries.find((e: J) => e.id === id).assetId).toBe("");
+    // An edit that leaves it out keeps the file.
+    const kept = await call("adm", "PATCH", `${F()}/entries/${r.body.id}`, { amount: 60 });
+    expect(kept.body.entries.find((e: J) => e.id === r.body.id).assetId).toBe("ast_1");
   });
 
   it("editing an entry updates the totals (v1 did not refresh them)", async () => {

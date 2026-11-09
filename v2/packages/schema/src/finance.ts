@@ -89,6 +89,8 @@ const entryFields = {
   note: z.string().trim().max(2000),
   /** «cf» entries: the contract's VAT held for ZATCA ("vat") or a real fee ("fee"). */
   cfKind: z.enum(["", "vat", "fee"]),
+  /** An uploaded receipt or invoice (POST /api/assets); "" = none. */
+  assetId: z.string().trim().max(64),
 };
 export const entryInput = z.object({
   ...entryFields,
@@ -99,6 +101,7 @@ export const entryInput = z.object({
   status: entryFields.status.default(""),
   note: entryFields.note.default(""),
   cfKind: entryFields.cfKind.default(""),
+  assetId: entryFields.assetId.default(""),
   /** null/absent = no tax invoice. */
   taxInvoice: taxInvoiceInput.nullable().optional(),
 });
