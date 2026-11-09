@@ -3,6 +3,13 @@ import SwiftUI
 struct RootView: View {
     @EnvironmentObject private var session: Session
     @Environment(\.scenePhase) private var scenePhase
+    /// A page of the platform's website, opened inside the app so the person comes back to the same place.
+    @State private var browsing: WebPage?
+
+    struct WebPage: Identifiable {
+        let url: URL
+        var id: String { url.absoluteString }
+    }
 
     var body: some View {
         ZStack {
@@ -24,6 +31,17 @@ struct RootView: View {
             }
         }
         .animation(.easeOut(duration: 0.2), value: session.locked)
+        // Links to the platform open in an in-app Safari sheet; phone, mail, WhatsApp and other sites
+        // keep the system's behaviour.
+        .environment(\.openURL, OpenURLAction { url in
+            guard ["http", "https"].contains(url.scheme ?? ""), let host = url.host,
+                  host == AppConfig.apiBase?.host else { return .systemAction }
+            browsing = WebPage(url: url)
+            return .handled
+        })
+        .sheet(item: $browsing) { page in
+            SafariView(url: page.url).ignoresSafeArea()
+        }
         .onChange(of: scenePhase) { _, phase in
             if phase == .background { session.lockIfNeeded() }
             if phase == .active {
@@ -105,14 +123,18 @@ struct LockView: View {
             Button {
                 Task { await session.unlock() }
             } label: {
-                Label("افتح بـ Face ID", systemImage: "faceid")
+                Label(Biometry.unlockTitle, systemImage: Biometry.icon)
                     .font(.body.weight(.semibold))
                     .frame(maxWidth: 260)
-                    .frame(height: 50)
+                    .frame(minHeight: 50)
             }
             .buttonStyle(.borderedProminent)
             .tint(Buad.ink)
             .foregroundStyle(Buad.onInk)
+            Button("تسجيل الخروج") { Task { await session.signOut() } }
+                .font(.subheadline)
+                .foregroundStyle(Buad.muted)
+                .frame(minHeight: Buad.tap)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Buad.canvas.ignoresSafeArea())

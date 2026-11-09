@@ -25,11 +25,12 @@ struct TodayView: View {
                             .padding(.horizontal, 16)
                         if !loaded {
                             ProgressView().frame(maxWidth: .infinity).padding(.vertical, 28)
-                        } else if let error {
+                        } else if let error, items.isEmpty {
                             EmptyNote(text: error, icon: "wifi.exclamationmark")
                         } else if items.isEmpty {
                             EmptyNote(text: "لا شيء يحتاج انتباهك الآن.", icon: "checkmark.circle")
                         } else {
+                            if let error { RefreshBanner(text: error) }
                             VStack(spacing: 0) {
                                 ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
                                     AttentionRow(item: item)
@@ -39,11 +40,6 @@ struct TodayView: View {
                             .background(Buad.surface, in: RoundedRectangle(cornerRadius: Buad.radius, style: .continuous))
                         }
                     }
-
-                    Text("يُفتح كل بند في صفحته على الموقع في هذه النسخة، وتنتقل الصفحات إلى التطبيق مرحلةً بعد مرحلة.")
-                        .font(.footnote)
-                        .foregroundStyle(Buad.muted)
-                        .padding(.horizontal, 16)
                 }
                 .padding(.horizontal, Buad.gutter)
                 .padding(.vertical, 8)

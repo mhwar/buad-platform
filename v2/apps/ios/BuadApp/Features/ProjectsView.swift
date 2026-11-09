@@ -71,7 +71,7 @@ struct ProjectsView: View {
                         } else if shown.isEmpty {
                             EmptyNote(text: "لا نتائج. جرّبوا بحثاً أو تصفية أخرى.", icon: "magnifyingglass")
                         } else {
-                            Text("\(shown.count) مشروع").font(.footnote).foregroundStyle(Buad.muted)
+                            Text(Fmt.projects(shown.count)).font(.footnote).foregroundStyle(Buad.muted)
                             ForEach(shown) { p in
                                 NavigationLink(value: p) { ProjectCard(project: p) }.buttonStyle(.plain)
                             }
@@ -243,7 +243,7 @@ struct ProjectCard: View {
                 deadline
                 Spacer(minLength: 4)
                 if p.visibility == "private" { Image(systemName: "lock.fill").font(.caption2).foregroundStyle(Buad.faint).accessibilityLabel("خاص") }
-                Text(p.number).font(.caption.weight(.medium)).foregroundStyle(Buad.faint).environment(\.layoutDirection, .leftToRight)
+                Text(p.number).font(.caption.weight(.medium)).foregroundStyle(Buad.muted).environment(\.layoutDirection, .leftToRight)
             }
             VStack(alignment: .leading, spacing: 3) {
                 Text(p.name).font(.headline).foregroundStyle(Buad.ink).multilineTextAlignment(.leading).lineLimit(2)
@@ -291,9 +291,9 @@ struct ProjectCard: View {
     @ViewBuilder private var deadline: some View {
         if let d = project.deadline {
             if d < 0 {
-                Text("⚠ متأخر \(-d) يوم").font(.caption.weight(.semibold)).foregroundStyle(Buad.dangerInk)
+                Label("متأخر \(Fmt.days(-d))", systemImage: "exclamationmark.triangle.fill").font(.caption.weight(.semibold)).foregroundStyle(Buad.dangerInk)
             } else if d <= 7 {
-                Text("ينتهي خلال \(d) يوم").font(.caption.weight(.medium)).foregroundStyle(Buad.warningInk)
+                Text(d == 0 ? "ينتهي اليوم" : "ينتهي خلال \(Fmt.days(d))").font(.caption.weight(.medium)).foregroundStyle(Buad.warningInk)
             } else {
                 Text("ينتهي \(Fmt.dayMonth(project.endDate))").font(.caption).foregroundStyle(Buad.muted)
             }

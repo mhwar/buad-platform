@@ -74,7 +74,7 @@ private struct OpportunitiesList: View {
                                   icon: "target")
                     } else {
                         let total = shown.reduce(0) { $0 + $1.value }
-                        Text("\(shown.count) فرصة" + (total > 0 ? " · \(Fmt.short(total)) ر.س" : ""))
+                        Text(Fmt.opportunities(shown.count) + (total > 0 ? " · \(Fmt.short(total)) ر.س" : ""))
                             .font(.footnote).foregroundStyle(Buad.muted)
                         ForEach(shown) { o in
                             NavigationLink(value: o) { LeadRow(o: o) }.buttonStyle(.plain)
@@ -225,7 +225,7 @@ private struct SalesBoard: View {
             GridRow {
                 tile("نسبة الكسب", d.winRate.map { Self.pct($0) } ?? "—", sub: "\(d.won) مكسوبة · \(d.lost) خاسرة",
                      tone: (d.winRate ?? 0) >= 50 ? .ok : nil)
-                tile("مكسوب هذا الربع", Fmt.sar(d.wonThisQuarter), sub: d.avgCycleDays.map { "متوسط الإغلاق \($0) يوم" },
+                tile("مكسوب هذا الربع", Fmt.sar(d.wonThisQuarter), sub: d.avgCycleDays.map { "متوسط الإغلاق \(Fmt.days($0))" },
                      tone: d.wonThisQuarter > 0 ? .ok : nil)
             }
             GridRow {
@@ -262,7 +262,7 @@ private struct SalesBoard: View {
                 HStack {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(l.name.isEmpty ? l.entity : l.name).font(.subheadline.weight(.medium)).lineLimit(1)
-                        Text("\(Sales.stage(l.status).label) · منذ \(l.daysIdle) يوم").font(.caption).foregroundStyle(Buad.muted)
+                        Text("\(Sales.stage(l.status).label) · منذ \(Fmt.days(l.daysIdle))").font(.caption).foregroundStyle(Buad.muted)
                     }
                     Spacer()
                     if l.value > 0 { Text(Fmt.short(l.value)).font(.subheadline).monospacedDigit() }
@@ -275,7 +275,7 @@ private struct SalesBoard: View {
         if !d.waiting.isEmpty || !d.expiring.isEmpty {
             Card {
                 Text("عروض الأسعار").font(.headline)
-                ForEach(d.waiting) { q in quoteRow(q, note: "تنتظر رداً منذ \(q.days) يوم", tone: .info) }
+                ForEach(d.waiting) { q in quoteRow(q, note: "تنتظر رداً منذ \(Fmt.days(q.days))", tone: .info) }
                 ForEach(d.expiring) { q in quoteRow(q, note: "تنتهي \(Fmt.day(q.validUntil))", tone: .warn) }
             }
         }
@@ -285,7 +285,7 @@ private struct SalesBoard: View {
         HStack(alignment: .firstTextBaseline) {
             VStack(alignment: .leading, spacing: 2) {
                 Text(q.title.isEmpty ? q.number : q.title).font(.subheadline.weight(.medium)).lineLimit(1)
-                Text([q.number, q.recipient].filter { !$0.isEmpty }.joined(separator: " · ")).font(.caption).foregroundStyle(Buad.muted).lineLimit(1)
+                Text([Fmt.ltr(q.number), q.recipient].filter { !$0.isEmpty }.joined(separator: " · ")).font(.caption).foregroundStyle(Buad.muted).lineLimit(1)
             }
             Spacer()
             VStack(alignment: .trailing, spacing: 3) {
@@ -518,8 +518,8 @@ struct OpportunityView: View {
             if !o.followUpAt.isEmpty { row("موعد المتابعة", Fmt.day(o.followUpAt)) }
             row("وصلت", Fmt.epochDay(o.createdAt))
             if o.status == "lost" && !o.lostReason.isEmpty { row("سبب عدم الإتمام", o.lostReason) }
-            if !o.phone.isEmpty { row("الجوال", o.phone) }
-            if !o.email.isEmpty { row("البريد", o.email) }
+            if !o.phone.isEmpty { row("الجوال", Fmt.ltr(o.phone)) }
+            if !o.email.isEmpty { row("البريد الإلكتروني", Fmt.ltr(o.email)) }
             if !o.message.isEmpty {
                 Text(o.message).font(.subheadline).foregroundStyle(Buad.muted)
                     .padding(10).frame(maxWidth: .infinity, alignment: .leading)
@@ -539,7 +539,7 @@ struct OpportunityView: View {
                     HStack(alignment: .firstTextBaseline) {
                         VStack(alignment: .leading, spacing: 2) {
                             Text(q.title.isEmpty ? q.number : q.title).font(.subheadline.weight(.medium)).lineLimit(1)
-                            Text([q.number, q.validUntil.isEmpty ? "" : "صالح حتى \(Fmt.day(q.validUntil))"].filter { !$0.isEmpty }.joined(separator: " · "))
+                            Text([Fmt.ltr(q.number), q.validUntil.isEmpty ? "" : "صالح حتى \(Fmt.day(q.validUntil))"].filter { !$0.isEmpty }.joined(separator: " · "))
                                 .font(.caption).foregroundStyle(Buad.muted)
                         }
                         Spacer()
@@ -650,6 +650,9 @@ private struct ActivitySheet: View {
     var body: some View {
         NavigationStack {
             Form {
+                if let error {
+                    Section { Label(error, systemImage: "exclamationmark.circle").foregroundStyle(Buad.dangerInk) }
+                }
                 Section {
                     Picker("النوع", selection: $type) {
                         ForEach(Sales.activityTypes, id: \.self) { Label(Sales.activity($0).label, systemImage: Sales.activity($0).icon).tag($0) }
@@ -667,7 +670,6 @@ private struct ActivitySheet: View {
                 } footer: {
                     if !followUpAt.isEmpty && !setFollowUp { Text("تبقى المتابعة الحالية: \(Fmt.day(followUpAt)).") }
                 }
-                if let error { Section { Text(error).foregroundStyle(Buad.dangerInk) } }
                 Section {
                     Button { Task { await save() } } label: {
                         HStack { Spacer(); if busy { ProgressView() } else { Text("تسجيل").bold() }; Spacer() }
@@ -677,12 +679,9 @@ private struct ActivitySheet: View {
             }
             .navigationTitle("تسجيل تواصل")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) { Button("إلغاء") { dismiss() } }
-                ToolbarItem(placement: .confirmationAction) { Button("حفظ التواصل") { Task { await save() } }.bold().disabled(busy) }
+            .formChrome(dirty: !summary.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty, busy: busy, saveTitle: "حفظ التواصل") {
+                Task { await save() }
             }
-            // A typed note is not thrown away by a stray swipe; «إلغاء» still closes on purpose.
-            .interactiveDismissDisabled(busy || !summary.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
         }
     }
 

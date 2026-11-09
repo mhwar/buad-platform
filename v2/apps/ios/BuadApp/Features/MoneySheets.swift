@@ -65,12 +65,17 @@ struct ReceiptFormSheet: View {
     @State private var askOver = false
     @State private var confirmDelete = false
     @State private var started = false
+    @State private var baseline: String?
 
     private var iso: String { Fmt.isoDay(date) }
+    private var snapshot: String { [iso, amount, String(refund), note].joined(separator: "|") }
 
     var body: some View {
         NavigationStack {
             Form {
+                if let error {
+                    Section { Label(error, systemImage: "exclamationmark.circle").foregroundStyle(Buad.dangerInk) }
+                }
                 if let r = receipt, !r.approved {
                     Section {
                         Text("هذا المقبوض غير معتمد، فلا يُحتسب في أي رقم. اعتمدوه إن كان دفعة فعلية، أو احذفوه إن كان مكرراً.")
@@ -93,7 +98,6 @@ struct ReceiptFormSheet: View {
                     }
                     .font(.footnote)
                 }
-                if let error { Section { Text(error).foregroundStyle(Buad.dangerInk) } }
                 Section {
                     if let r = receipt, !r.approved {
                         SaveButton(title: "اعتماد", busy: busy) { Task { await approve() } }
@@ -107,8 +111,9 @@ struct ReceiptFormSheet: View {
             }
             .navigationTitle(receipt == nil ? "تسجيل مقبوض" : "تعديل مقبوض")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar { ToolbarItem(placement: .cancellationAction) { Button("إلغاء") { dismiss() } } }
-            .interactiveDismissDisabled(busy)
+            .formChrome(dirty: baseline.map { $0 != snapshot } ?? false, busy: busy, saveTitle: receipt == nil ? "تسجيل" : "حفظ") {
+                Task { await save(confirmOver: false) }
+            }
             .alert("المبلغ يتجاوز قيمة العقد", isPresented: $askOver, presenting: overContract) { _ in
                 Button("تسجيله رغم ذلك") { Task { await save(confirmOver: true) } }
                 Button("إلغاء", role: .cancel) {}
@@ -134,6 +139,7 @@ struct ReceiptFormSheet: View {
         } else if remaining > 0 {
             amount = plain(remaining)
         }
+        Task { @MainActor in baseline = snapshot }
     }
 
     private func save(confirmOver: Bool) async {
@@ -207,6 +213,9 @@ struct ScheduleLineSheet: View {
     var body: some View {
         NavigationStack {
             Form {
+                if let error {
+                    Section { Label(error, systemImage: "exclamationmark.circle").foregroundStyle(Buad.dangerInk) }
+                }
                 Section {
                     TextField("الوصف", text: $label, prompt: Text("مثال: الدفعة الأولى"))
                     DatePicker("تاريخ الاستحقاق", selection: $dueDate, displayedComponents: .date)
@@ -215,13 +224,13 @@ struct ScheduleLineSheet: View {
                 } footer: {
                     Text("أضف الدفعات المنتظرة من العميل لتتابعها وتظهر أعمارها.")
                 }
-                if let error { Section { Text(error).foregroundStyle(Buad.dangerInk) } }
                 Section { SaveButton(title: "إضافة الدفعة", busy: busy) { Task { await save() } } }
             }
             .navigationTitle("دفعة منتظرة")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar { ToolbarItem(placement: .cancellationAction) { Button("إلغاء") { dismiss() } } }
-            .interactiveDismissDisabled(busy)
+            .formChrome(dirty: !label.trimmingCharacters(in: .whitespaces).isEmpty || !amount.isEmpty, busy: busy, saveTitle: "إضافة") {
+                Task { await save() }
+            }
         }
     }
 
@@ -266,10 +275,16 @@ struct InvoiceSheet: View {
     @State private var busy = false
     @State private var confirmDelete = false
     @State private var started = false
+    @State private var baseline: String?
+
+    private var snapshot: String { [number, Fmt.isoDay(date), amount, vat, receiptId, assetId, note].joined(separator: "|") }
 
     var body: some View {
         NavigationStack {
             Form {
+                if let error {
+                    Section { Label(error, systemImage: "exclamationmark.circle").foregroundStyle(Buad.dangerInk) }
+                }
                 Section {
                     TextField("رقم الفاتورة", text: $number).environment(\.layoutDirection, .leftToRight)
                     DatePicker("تاريخ الفاتورة", selection: $date, displayedComponents: .date)
@@ -289,7 +304,6 @@ struct InvoiceSheet: View {
                 Section("الفاتورة المرسلة (PDF أو صورة)") {
                     AttachmentField(assetId: $assetId, canUpload: session.me?.can("assets.edit") ?? false, uploading: $uploading)
                 }
-                if let error { Section { Text(error).foregroundStyle(Buad.dangerInk) } }
                 Section {
                     SaveButton(title: invoice == nil ? "تسجيل الفاتورة" : "حفظ", busy: busy || uploading) { Task { await save() } }
                     if invoice != nil {
@@ -300,8 +314,9 @@ struct InvoiceSheet: View {
             }
             .navigationTitle(invoice == nil ? "تسجيل فاتورة ضريبية مرسلة" : "تعديل الفاتورة")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar { ToolbarItem(placement: .cancellationAction) { Button("إلغاء") { dismiss() } } }
-            .interactiveDismissDisabled(busy || uploading)
+            .formChrome(dirty: baseline.map { $0 != snapshot } ?? false, busy: busy || uploading, saveTitle: invoice == nil ? "تسجيل" : "حفظ") {
+                Task { await save() }
+            }
             .confirmationDialog("حذف هذه الفاتورة؟", isPresented: $confirmDelete, titleVisibility: .visible) {
                 Button("حذف", role: .destructive) { Task { await remove() } }
                 Button("إلغاء", role: .cancel) {}
@@ -311,6 +326,7 @@ struct InvoiceSheet: View {
     }
 
     private func start() {
+        defer { Task { @MainActor in baseline = snapshot } }
         guard !started, let i = invoice else { started = true; return }
         started = true
         number = i.number

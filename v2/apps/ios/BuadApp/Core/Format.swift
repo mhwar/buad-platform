@@ -17,9 +17,38 @@ enum Fmt {
 
     /// «115,000 ر.س» for a whole amount, «33,333.33 ر.س» when there are halalas.
     static func sar(_ halalas: Int) -> String {
-        let riyals = Double(halalas) / 100
-        return "\(number.string(from: NSNumber(value: riyals)) ?? "0") ر.س"
+        "\(amount(halalas)) ر.س"
     }
+
+    /// The number alone: «115,000», «33,333.33».
+    static func amount(_ halalas: Int) -> String {
+        number.string(from: NSNumber(value: Double(halalas) / 100)) ?? "0"
+    }
+
+    /// «+ 1,000 ر.س» / «− 1,000 ر.س» with the sign kept on the number's left in Arabic text.
+    static func signed(_ halalas: Int, positive: Bool) -> String {
+        "\(ltr((positive ? "+" : "−") + amount(abs(halalas)))) ر.س"
+    }
+
+    /// Keeps a left-to-right run (a project or quote code, a phone, an e-mail, a signed number)
+    /// whole and in order inside Arabic text (Unicode left-to-right isolate).
+    static func ltr(_ s: String) -> String { s.isEmpty ? s : "\u{2066}\(s)\u{2069}" }
+
+    /// Arabic number agreement: 1 → «يوم واحد», 2 → «يومان», 3–10 → «3 أيام», 11+ (and 0) → «11 يوماً».
+    static func count(_ n: Int, one: String, two: String, few: String, many: String) -> String {
+        switch n {
+        case 1: return one
+        case 2: return two
+        case 3...10: return "\(n) \(few)"
+        default: return "\(n) \(many)"
+        }
+    }
+
+    static func days(_ n: Int) -> String { count(n, one: "يوم واحد", two: "يومان", few: "أيام", many: "يوماً") }
+    static func projects(_ n: Int) -> String { count(n, one: "مشروع واحد", two: "مشروعان", few: "مشاريع", many: "مشروعاً") }
+    static func opportunities(_ n: Int) -> String { count(n, one: "فرصة واحدة", two: "فرصتان", few: "فرص", many: "فرصة") }
+    static func instalments(_ n: Int) -> String { count(n, one: "دفعة واحدة", two: "دفعتان", few: "دفعات", many: "دفعة") }
+    static func items(_ n: Int) -> String { count(n, one: "بند واحد", two: "بندان", few: "بنود", many: "بنداً") }
 
     /// «172.5 ألف», «1.20 مليون» for tight spaces.
     static func short(_ halalas: Int) -> String {
@@ -58,7 +87,7 @@ enum Fmt {
 
     private static let dayFormat = arabic("d MMMM yyyy")
     private static let dayMonthFormat = arabic("d MMMM")
-    private static let longFormat = arabic("EEEE، d MMMM")
+    private static let longFormat = arabic("EEEE، d MMMM yyyy")
 
     static func date(_ isoDay: String) -> Date? { isoDay.isEmpty ? nil : iso.date(from: String(isoDay.prefix(10))) }
 

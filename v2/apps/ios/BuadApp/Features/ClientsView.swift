@@ -21,11 +21,12 @@ struct ClientsView: View {
             LazyVStack(spacing: 12) {
                 if !loaded {
                     ProgressView().frame(maxWidth: .infinity).padding(.vertical, 28)
-                } else if let error {
+                } else if let error, items.isEmpty {
                     EmptyNote(text: error, icon: "wifi.exclamationmark")
                 } else if shown.isEmpty {
-                    EmptyNote(text: query.isEmpty ? "لا عملاء بعد." : "لا نتائج لهذا البحث.", icon: "person.2")
+                    EmptyNote(text: query.isEmpty ? "لا يوجد عملاء بعد." : "لا نتائج. جرّبوا كلمة بحث أخرى.", icon: query.isEmpty ? "person.2" : "magnifyingglass")
                 } else {
+                    if let error { RefreshBanner(text: error) }
                     ForEach(shown) { c in
                         NavigationLink(value: c) { ClientCard(client: c) }.buttonStyle(.plain)
                     }
@@ -37,7 +38,7 @@ struct ClientsView: View {
         .background(Buad.canvas.ignoresSafeArea())
         .navigationTitle("العملاء")
         .navigationBarTitleDisplayMode(.inline)
-        .searchable(text: $query, prompt: "ابحث بالاسم أو الرمز أو المدينة")
+        .searchable(text: $query, prompt: "ابحث بالاسم أو الرقم أو المدينة أو البريد")
         .refreshable { await load() }
         .task { if !loaded { await load() } }
         .navigationDestination(for: ClientItem.self) { ClientDetailView(client: $0) }
@@ -65,7 +66,7 @@ private struct ClientCard: View {
                 Pill(text: rel.label, tone: rel.tone)
                 Pill(text: Vocabulary.clientType(client.type))
                 Spacer()
-                Text(client.code).font(.caption.weight(.medium)).foregroundStyle(Buad.faint).environment(\.layoutDirection, .leftToRight)
+                Text(client.code).font(.caption.weight(.medium)).foregroundStyle(Buad.muted).environment(\.layoutDirection, .leftToRight)
             }
             VStack(alignment: .leading, spacing: 3) {
                 Text(client.name).font(.headline).foregroundStyle(Buad.ink).multilineTextAlignment(.leading)
@@ -107,6 +108,8 @@ struct ClientDetailView: View {
     @State private var statement: Statement?
     @State private var error: String?
     @State private var loaded = false
+    /// The client's projects as the projects list has them, so a row can open the project page.
+    @State private var openable: [String: ProjectItem] = [:]
 
     private var canFinance: Bool { session.me?.can("finance.view") ?? false }
 
@@ -114,7 +117,7 @@ struct ClientDetailView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 VStack(alignment: .leading, spacing: 6) {
-                    Text(client.code).font(.caption.weight(.medium)).foregroundStyle(Buad.faint).environment(\.layoutDirection, .leftToRight)
+                    Text(client.code).font(.caption.weight(.medium)).foregroundStyle(Buad.muted).environment(\.layoutDirection, .leftToRight)
                     Text(client.name).font(.title2.bold())
                     HStack(spacing: 6) {
                         let rel = Vocabulary.relationship(client.relationship)
@@ -140,15 +143,15 @@ struct ClientDetailView: View {
                 Card {
                     Text("بيانات العميل").font(.headline)
                     if !client.phone.isEmpty, let tel = URL(string: "tel:\(client.phone.filter { $0.isNumber || $0 == "+" })") {
-                        Link(destination: tel) { line("الجوال", client.phone, ltr: true) }
+                        Link(destination: tel) { line("رقم الهاتف", client.phone, ltr: true, link: "phone") }
                     }
                     if !client.email.isEmpty, let mail = URL(string: "mailto:\(client.email)") {
-                        Link(destination: mail) { line("البريد", client.email, ltr: true) }
+                        Link(destination: mail) { line("البريد الإلكتروني", client.email, ltr: true, link: "envelope") }
                     }
                     if !client.city.isEmpty { line("المدينة", client.city) }
                     if let d = detail {
-                        if !d.address.isEmpty { line("العنوان", d.address) }
-                        if !d.regNo.isEmpty { line("السجل التجاري", d.regNo, ltr: true) }
+                        if !d.address.isEmpty { line("العنوان الوطني", d.address) }
+                        if !d.regNo.isEmpty { line("رقم السجل / الترخيص", d.regNo, ltr: true) }
                         if !d.taxNo.isEmpty { line("الرقم الضريبي", d.taxNo, ltr: true) }
                         if !d.notes.isEmpty { Text(d.notes).font(.subheadline).foregroundStyle(Buad.muted) }
                     }
@@ -165,7 +168,7 @@ struct ClientDetailView: View {
                                         Text(p.name).font(.subheadline.weight(.medium))
                                         if p.isSignatory { Pill(text: "المفوّض بالتوقيع", tone: .info) }
                                     }
-                                    let meta = [p.title, p.phone, p.email].filter { !$0.isEmpty }.joined(separator: " · ")
+                                    let meta = [p.title, Fmt.ltr(p.phone), Fmt.ltr(p.email)].filter { !$0.isEmpty }.joined(separator: " · ")
                                     if !meta.isEmpty { Text(meta).font(.caption).foregroundStyle(Buad.muted).lineLimit(1) }
                                 }
                                 Spacer()
@@ -195,10 +198,10 @@ struct ClientDetailView: View {
                                 if i > 0 { Divider().padding(.leading, 14) }
                                 let st = Vocabulary.status(p.status)
                                 let owedLine = statement?.items.first(where: { $0.id == p.id })
-                                HStack(alignment: .firstTextBaseline) {
+                                let row = HStack(alignment: .firstTextBaseline) {
                                     VStack(alignment: .leading, spacing: 2) {
                                         Text(p.name).font(.subheadline.weight(.medium))
-                                        Text([p.number, Vocabulary.type(p.type), Fmt.dayMonth(p.startDate)].filter { !$0.isEmpty }.joined(separator: " · "))
+                                        Text([Fmt.ltr(p.number), Vocabulary.type(p.type), Fmt.dayMonth(p.startDate)].filter { !$0.isEmpty }.joined(separator: " · "))
                                             .font(.caption).foregroundStyle(Buad.muted)
                                         if let o = owedLine, canFinance, o.owed > 0 {
                                             Text("المستحق: \(Fmt.sar(o.owed))").font(.caption).foregroundStyle(Buad.warningInk)
@@ -209,8 +212,15 @@ struct ClientDetailView: View {
                                         if canFinance && !p.external { Text(Fmt.short(p.contractTotal)).font(.subheadline.weight(.semibold)).monospacedDigit() }
                                         Pill(text: p.archived ? "مؤرشف" : st.label, tone: p.archived ? .neutral : st.tone)
                                     }
+                                    if openable[p.id] != nil { Chevron() }
                                 }
                                 .padding(14)
+                                .contentShape(Rectangle())
+                                if let item = openable[p.id] {
+                                    NavigationLink(value: item) { row }.buttonStyle(.plain)
+                                } else {
+                                    row
+                                }
                             }
                         }
                         .background(Buad.surface, in: RoundedRectangle(cornerRadius: Buad.radius, style: .continuous))
@@ -236,6 +246,7 @@ struct ClientDetailView: View {
         .background(Buad.canvas.ignoresSafeArea())
         .navigationTitle(client.name)
         .navigationBarTitleDisplayMode(.inline)
+        .navigationDestination(for: ProjectItem.self) { ProjectDetailView(project: $0) }
         .refreshable { await load() }
         .task { if !loaded { await load() } }
     }
@@ -245,7 +256,13 @@ struct ClientDetailView: View {
         let fin = canFinance
         async let d = Self.fetch(true) { try await APIClient.shared.client(id) }
         async let s = Self.fetch(fin) { try await APIClient.shared.statement(id) }
-        let (dr, sr) = await (d, s)
+        let canList = session.me?.can("projects.view") ?? false
+        async let list = Self.fetch(canList) { try await APIClient.shared.projects().items }
+        let (dr, sr, lr) = await (d, s, list)
+        if let lr {
+            let ids = Set(dr?.projects.map(\.id) ?? [])
+            openable = Dictionary(lr.filter { ids.contains($0.id) }.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
+        }
         if let dr { detail = dr }
         if let sr { statement = sr }
         error = dr == nil && detail == nil ? APIError.server(0).message : nil
@@ -268,13 +285,17 @@ struct ClientDetailView: View {
         .background(Buad.surface)
     }
 
-    private func line(_ title: String, _ value: String, ltr: Bool = false) -> some View {
+    /// A label/value row. `link` names an icon for rows that call or e-mail, which are tinted as links.
+    private func line(_ title: String, _ value: String, ltr: Bool = false, link: String? = nil) -> some View {
         HStack(alignment: .firstTextBaseline) {
             Text(title).foregroundStyle(Buad.muted)
             Spacer()
-            Text(value).foregroundStyle(Buad.ink).multilineTextAlignment(.trailing)
+            if let link { Image(systemName: link).font(.caption).foregroundStyle(Buad.accentInk) }
+            Text(value).foregroundStyle(link == nil ? Buad.ink : Buad.accentInk).multilineTextAlignment(.trailing)
                 .environment(\.layoutDirection, ltr ? .leftToRight : .rightToLeft)
         }
         .font(.subheadline)
+        .frame(minHeight: link == nil ? nil : Buad.tap)
+        .contentShape(Rectangle())
     }
 }

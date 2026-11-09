@@ -15,7 +15,7 @@ struct NotificationsView: View {
         List {
             if !loaded {
                 ProgressView().frame(maxWidth: .infinity).listRowBackground(Color.clear)
-            } else if let error {
+            } else if let error, items.isEmpty {
                 EmptyNote(text: error, icon: "wifi.exclamationmark").listRowBackground(Color.clear)
             } else if items.isEmpty {
                 EmptyNote(text: "لا إشعارات بعد.", icon: "bell").listRowBackground(Color.clear)
@@ -29,9 +29,13 @@ struct NotificationsView: View {
                                     .multilineTextAlignment(.leading)
                                 Text(Fmt.epochDay(n.createdAt)).font(.caption).foregroundStyle(Buad.muted)
                             }
+                            Spacer(minLength: 0)
                         }
+                        .frame(maxWidth: .infinity, minHeight: Buad.tap, alignment: .leading)
+                        .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
+                    .accessibilityValue(n.read ? "" : "غير مقروء")
                 }
             }
         }
