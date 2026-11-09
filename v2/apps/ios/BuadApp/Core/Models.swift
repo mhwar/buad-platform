@@ -75,11 +75,16 @@ struct ProjectItem: Decodable, Identifiable, Hashable {
     let tasksOverdue: Int
     let nextDueDate: String
     let nextDueAmount: Int?
+    let visibility: String
+    let packageName: String
+    let location: String
+    /// Position in the server's own order (newest first), for «الأحدث».
+    var order = 0
 
     enum CodingKeys: String, CodingKey {
         case id, number, name, type, status, clientName, productName, startDate, endDate, contractTotal, received
         case estimated, external, late, fullyDistributed, closedAt, stagesTotal, stagesDone, tasksOpen, tasksDone
-        case tasksOverdue, nextDueDate, nextDueAmount
+        case tasksOverdue, nextDueDate, nextDueAmount, visibility, packageName, location
     }
 
     init(from decoder: Decoder) throws {
@@ -107,7 +112,22 @@ struct ProjectItem: Decodable, Identifiable, Hashable {
         tasksOverdue = c.int(.tasksOverdue)
         nextDueDate = c.string(.nextDueDate)
         nextDueAmount = c.optionalInt(.nextDueAmount)
+        visibility = c.string(.visibility)
+        packageName = c.string(.packageName)
+        location = c.string(.location)
     }
+
+    static func == (a: ProjectItem, b: ProjectItem) -> Bool { a.id == b.id }
+    func hash(into h: inout Hasher) { h.combine(id) }
+
+    /// Days past the end date (positive) or left until it (negative), for an active project with an end date.
+    var deadline: Int? {
+        guard status == "active", !endDate.isEmpty, let d = Fmt.daysUntil(endDate) else { return nil }
+        return d
+    }
+
+    /// The first pending instalment is past due (ProjectsPage «عليها دفعة متأخرة»).
+    var paymentLate: Bool { !nextDueDate.isEmpty && nextDueDate < Fmt.todayISO }
 
     /// «التنفيذ»: stages when the project has them, otherwise tasks (as the website's ProjectCard).
     var execution: (done: Int, total: Int) {
