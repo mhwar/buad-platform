@@ -255,6 +255,49 @@ test("closing a project: final review, then its money records are locked until r
   await expect(page.getByRole("button", { name: "تسجيل مقبوض" })).toHaveCount(0);
 });
 
+test("cancelling a project: what it means, settling at what was received, a reason", async ({
+  page,
+  api,
+}) => {
+  const c = await api<{ id: string }>("POST", "/api/clients", { name: `جمعية الإلغاء ${uid()}` });
+  const p = await api<{ id: string }>("POST", "/api/projects", {
+    clientId: c.id,
+    name: `مشروع للإلغاء ${uid()}`,
+    status: "active",
+  });
+  await api("PATCH", `/api/projects/${p.id}/finance/ctrl`, { version: 0, contractValue: 1000 });
+  await api("POST", `/api/projects/${p.id}/finance/receipts`, {
+    date: `${year}-03-01`,
+    amount: 400,
+    note: "",
+  });
+  await api("POST", `/api/receivables/projects/${p.id}`, {
+    label: "الدفعة الأخيرة",
+    dueDate: `${year}-12-01`,
+    amount: 750,
+  });
+  await page.goto(`/projects/${p.id}`);
+  await page.getByRole("button", { name: "إجراءات المشروع" }).click();
+  await page.getByRole("menuitem", { name: /إلغاء المشروع/ }).click();
+  const dlg = page.getByRole("dialog");
+  await expect(dlg.getByLabel("ماذا يعني الإلغاء")).toContainText("يبقى محسوباً");
+  const settle = dlg.getByLabel("تسوية العقد");
+  await settle.getByText(/اعتماد المستلم .* قيمة نهائية للعقد/).click();
+  await expect(settle.getByRole("checkbox", { name: /إلغاء الدفعات المجدولة/ })).toBeChecked();
+  const go = dlg.getByRole("button", { name: "إلغاء المشروع" });
+  await expect(go).toBeDisabled();
+  await dlg.getByLabel("سبب الإلغاء").fill("أوقف العميل العمل");
+  await go.click();
+  await expect(page.getByRole("status").filter({ hasText: "أُلغي المشروع" })).toBeVisible();
+  await expect(page.getByText("ملغي", { exact: true }).first()).toBeVisible();
+  const check = await api<{ figures: { remaining: number }; instalments: { count: number } }>(
+    "GET",
+    `/api/projects/${p.id}/close`,
+  );
+  expect(check.figures.remaining).toBe(0);
+  expect(check.instalments.count).toBe(0);
+});
+
 test("a purchase invoice from «+» goes into the project's entries and the VAT return", async ({
   page,
   api,

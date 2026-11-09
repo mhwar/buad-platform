@@ -102,6 +102,15 @@ export function ProjectDialog({
   const products = useQuery({ ...productsQuery, enabled: open && manager });
   const productId = f.watch("productId") ?? "";
   const external = !!f.watch("external");
+  const status = f.watch("status");
+  // What the chosen status means for the money (drafts and cancellations are easy to miss).
+  const statusHint = external
+    ? undefined
+    : status === "draft"
+      ? "المسودة لا تُحسب في المالية حتى تصير «جاري التنفيذ»."
+      : status === "cancelled"
+        ? "ما استُلم يبقى محسوباً، ولا يُطالَب العميل بالمتبقي. لتسوية العقد والدفعات استخدموا «إلغاء المشروع» من قائمة المشروع."
+        : undefined;
   const product = useQuery({ ...productQuery(productId), enabled: open && manager && !!productId });
   const services = (products.data ?? []).filter((x) => x.status !== "archived");
 
@@ -237,7 +246,7 @@ export function ProjectDialog({
               ))}
             </Select>
           </Field>
-          <Field label="الحالة الحالية">
+          <Field label="الحالة الحالية" hint={statusHint}>
             <Select {...f.register("status")}>
               {Object.entries(PROJECT_STATUS_LABELS).map(([k, v]) => (
                 <option key={k} value={k}>

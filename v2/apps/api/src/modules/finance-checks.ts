@@ -1,4 +1,10 @@
-import { financeEntries, partners, projectReceipts, projects } from "@buad/schema/db";
+import {
+  financeEntries,
+  partners,
+  paymentSchedule,
+  projectReceipts,
+  projects,
+} from "@buad/schema/db";
 import { and, eq, isNull, ne, notInArray, sql } from "drizzle-orm";
 import type { Db } from "../auth/service";
 import { contractTotalSql, inFinance } from "./common";
@@ -190,6 +196,30 @@ export async function financeChecks(db: Db, orgId: string): Promise<Check[]> {
         link: projectLink(p.id),
       };
     }),
+  });
+
+  // Cancelled: what was received counts, the instalments still pending are not expected any more.
+  const leftover = await db
+    .select({
+      id: projects.id,
+      number: projects.number,
+      name: projects.name,
+      n: sql<number>`count(*)`,
+      amount: sql<number>`sum(${paymentSchedule.amount})`,
+    })
+    .from(paymentSchedule)
+    .innerJoin(projects, eq(projects.id, paymentSchedule.projectId))
+    .where(and(live, eq(projects.status, "cancelled"), eq(paymentSchedule.status, "pending")))
+    .groupBy(projects.id);
+  checks.push({
+    key: "cancelled_instalments",
+    title: "مشاريع ملغاة لها دفعات مجدولة معلّقة",
+    hint: "لا تُحسب في التحصيل ولا في التدفق النقدي. احذفوها من جدول الدفعات في المشروع، أو أعيدوا المشروع إلى «جاري التنفيذ» إن كان العميل سيدفعها.",
+    rows: leftover.map((p) => ({
+      label: `${p.number} · ${p.name}`,
+      detail: `${Number(p.n)} دفعة · ${sar(Number(p.amount))}`,
+      link: projectLink(p.id),
+    })),
   });
 
   return checks.filter((c) => c.rows.length);
