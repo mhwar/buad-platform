@@ -27,8 +27,12 @@
 
 - `Buad.xcodeproj` مُلتزم في المستودع، وهو ما يبنيه Xcode Cloud. بعد إضافة ملف Swift أو حذفه شغّل `python3 gen_pbxproj.py` والتزم بالنتيجة. `project.yml` للمطابقة مع XcodeGen على Mac.
 - `v2-ios-build` يجمّع التطبيق على محاكي iOS في كل طلب دمج يمس هذا المجلد، دون توقيع.
-- النشر: بعد الدمج في `main` يبني Xcode Cloud («Internal TestFlight Build») ويرفع إلى TestFlight الداخلي.
-- المعرّف `sa.buad.app`. رقم البناء يديره Xcode Cloud.
+- **النشر إلى TestFlight دون Mac:** `v2-ios-testflight` يعمل على macOS في GitHub Actions. يبني التطبيق ويوقّعه تلقائياً بمفتاح App Store Connect API، ويرفعه إلى TestFlight الداخلي.
+  - يعمل بعد كل دمج في `main` يمس هذا المجلد، أو يدوياً من Actions ← v2-ios-testflight ← Run workflow.
+  - لا يعمل على طلبات الدمج، فلا تصل أسرار التوقيع للفروع.
+  - الأسرار المطلوبة: `APPSTORE_API_KEY_ID`، `APPSTORE_API_ISSUER_ID`، `APPSTORE_API_PRIVATE_KEY` (نص ملف .p8)، `APPLE_TEAM_ID`. والمتغير الاختياري `BUAD_API_BASE`.
+  - رقم البناء = 100 + رقم التشغيل، فيزيد دائماً.
+- المعرّف `sa.buad.app`.
 
 ## المراجع
 
