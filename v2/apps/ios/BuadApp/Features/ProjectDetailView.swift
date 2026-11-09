@@ -636,7 +636,7 @@ struct ProjectDetailView: View {
 
     private func entryRow(_ e: FinanceEntry, _ f: ProjectFinance) -> some View {
         let income = e.type == "income"
-        let flags = [Fmt.day(e.date), f.categoryName(e.cat), e.supplierName, e.taxInvoice ? "فاتورة ضريبية" : "",
+        let flags = [Fmt.day(e.date), f.categoryName(e.cat), e.supplierName, e.taxInvoice ? "فاتورة ضريبية" : "", e.assetId.isEmpty ? "" : "📎 مرفق",
                      e.status == "pending" ? "معلّق" : "", e.status == "cancelled" ? "ملغى، لا يُحتسب" : ""]
         return HStack(alignment: .firstTextBaseline, spacing: 10) {
             VStack(alignment: .leading, spacing: 3) {

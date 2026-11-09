@@ -29,6 +29,7 @@ struct EntrySheet: View {
     @State private var invoiceNo = ""
     @State private var invoiceDate = Date()
     @State private var vatAmount = ""
+    @State private var assetId = ""
     @State private var error: String?
     @State private var busy = false
     @State private var confirmDelete = false
@@ -120,6 +121,13 @@ struct EntrySheet: View {
                     }
                 }
 
+                Section("الإيصال أو الفاتورة (PDF أو صورة)") {
+                    AttachmentField(assetId: $assetId, canUpload: session.me?.can("assets.edit") ?? false)
+                    if !assetId.isEmpty && session.me?.can("assets.edit") == true {
+                        Button("إزالة المرفق", role: .destructive) { assetId = "" }
+                    }
+                }
+
                 Section {
                     TextField("ملاحظة", text: $note, axis: .vertical).lineLimit(2...5)
                 }
@@ -175,6 +183,7 @@ struct EntrySheet: View {
         invoiceNo = e.invoiceNo
         invoiceDate = Fmt.date(e.invoiceDate) ?? Fmt.date(e.date) ?? Date()
         vatAmount = e.taxInvoice ? Self.plain(e.vatAmount) : ""
+        assetId = e.assetId
     }
 
     private func save() async {
@@ -193,6 +202,7 @@ struct EntrySheet: View {
             "type": type, "description": text, "cat": cat, "cfKind": cat == "cf" ? cfKind : "",
             "amount": (riyals * 100).rounded() / 100, "date": Fmt.isoDay(date), "status": status,
             "note": note.trimmingCharacters(in: .whitespacesAndNewlines),
+            "assetId": assetId,
         ]
         // As EntryDialog: an object registers/updates the invoice, null removes it, absent leaves it.
         if type == "expense" && hasInvoice {
