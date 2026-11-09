@@ -6,6 +6,7 @@ struct TodayView: View {
     @State private var items: [AttentionItem] = []
     @State private var loaded = false
     @State private var error: String?
+    @State private var unread = 0
 
     var body: some View {
         NavigationStack {
@@ -50,6 +51,17 @@ struct TodayView: View {
             .background(Buad.canvas.ignoresSafeArea())
             .navigationTitle("اليوم")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .primaryAction) {
+                    NavigationLink {
+                        NotificationsView(onUnreadChange: { unread = $0 })
+                    } label: {
+                        Image(systemName: unread > 0 ? "bell.badge" : "bell")
+                            .symbolRenderingMode(unread > 0 ? .multicolor : .monochrome)
+                            .accessibilityLabel(unread > 0 ? "الإشعارات، \(unread) غير مقروء" : "الإشعارات")
+                    }
+                }
+            }
             .refreshable { await load() }
             .task { if !loaded { await load() } }
         }
@@ -59,6 +71,7 @@ struct TodayView: View {
         do {
             items = try await APIClient.shared.attention()
             error = nil
+            unread = (try? await APIClient.shared.notifications().unread) ?? unread
         } catch {
             session.handle(error)
             self.error = (error as? APIError)?.message ?? APIError.network.message

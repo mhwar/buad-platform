@@ -1,7 +1,7 @@
 name: v2-ios-build
 
 # Compiles the iPhone app on every pull request that touches it. Signing and TestFlight are done by
-# Xcode Cloud («Internal TestFlight Build») after merge to main; this job never signs or uploads anything.
+# v2-ios-testflight after merge to main; this job never signs or uploads anything.
 concurrency:
   group: v2-ios-build-${{ github.ref }}
   cancel-in-progress: true

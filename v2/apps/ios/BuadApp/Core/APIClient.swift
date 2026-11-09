@@ -7,6 +7,8 @@ enum APIError: Error, Equatable {
     case tooManyAttempts
     case forbidden
     case server(Int)
+    /// A 4xx answer with the API's own error code (e.g. "end_before_start").
+    case rejected(String)
     case network
     case decoding
 
@@ -19,6 +21,12 @@ enum APIError: Error, Equatable {
         case .tooManyAttempts: return "محاولات دخول كثيرة. انتظر دقيقة ثم حاول مجدداً."
         case .forbidden: return "دورك لا يسمح بهذه الصفحة."
         case .server: return "تعذّر التحميل. حاول مرة أخرى."
+        case .rejected(let code):
+            switch code {
+            case "end_before_start": return "تاريخ الاستحقاق قبل تاريخ البداية."
+            case "not_found": return "لم يعد هذا العنصر موجوداً أو لا تملك صلاحية الوصول إليه."
+            default: return "رفضت المنصة هذا التعديل."
+            }
         case .network: return "تعذّر الاتصال بالمنصة. تحقق من الإنترنت."
         case .decoding: return "وصل رد غير متوقع من المنصة."
         }
@@ -69,6 +77,9 @@ final class APIClient: @unchecked Sendable {
         case 401: throw path == "/api/auth/login" ? APIError.invalidCredentials : APIError.unauthorized
         case 403: throw APIError.forbidden
         case 429: throw APIError.tooManyAttempts
+        case 400, 404, 409, 422:
+            let reason = (try? JSONSerialization.jsonObject(with: data) as? [String: Any])?["error"] as? String
+            throw APIError.rejected(reason ?? "")
         default: throw APIError.server(code)
         }
         do {
@@ -123,6 +134,43 @@ final class APIClient: @unchecked Sendable {
     func documents(_ projectId: String) async throws -> [DocumentItem] {
         let envelope: DocumentsEnvelope = try await send("GET", "/api/projects/\(projectId)/documents")
         return envelope.items
+    }
+
+    // MARK: 0.1.2 — tasks, notifications, clients
+
+    func tasks(mine: Bool) async throws -> [TaskItem] {
+        let envelope: TasksEnvelope = try await send("GET", mine ? "/api/tasks?mine=1" : "/api/tasks")
+        return envelope.items
+    }
+
+    /// The website's own calls (features/tasks/TaskRow.tsx): PATCH /api/tasks/:id with the changed fields.
+    func updateTask(_ id: String, _ fields: [String: String]) async throws {
+        let _: OKEnvelope = try await send("PATCH", "/api/tasks/\(id)", body: fields)
+    }
+
+    func notifications() async throws -> NotificationsEnvelope {
+        try await send("GET", "/api/notifications")
+    }
+
+    func markRead(_ id: String) async throws {
+        let _: OKEnvelope = try await send("POST", "/api/notifications/\(id)/read")
+    }
+
+    func markAllRead() async throws {
+        let _: OKEnvelope = try await send("POST", "/api/notifications/read-all")
+    }
+
+    func clients() async throws -> [ClientItem] {
+        let envelope: ClientsEnvelope = try await send("GET", "/api/clients")
+        return envelope.items
+    }
+
+    func client(_ id: String) async throws -> ClientDetail {
+        try await send("GET", "/api/clients/\(id)")
+    }
+
+    func statement(_ clientId: String) async throws -> Statement {
+        try await send("GET", "/api/clients/\(clientId)/statement")
     }
 
     func signOut() async {
