@@ -190,6 +190,11 @@ final class APIClient: @unchecked Sendable {
         return r.rest
     }
 
+    func financeOverview(_ period: FinancePeriod) async throws -> FinanceOverview {
+        guard let (from, to) = period.bounds else { return try await send("GET", "/api/finance/overview") }
+        return try await send("GET", "/api/finance/overview?from=\(from)&to=\(to)")
+    }
+
     func signOut() async {
         _ = try? await send("POST", "/api/auth/logout") as OKEnvelope
         if let base = AppConfig.apiBase, let cookies = HTTPCookieStorage.shared.cookies(for: base) {

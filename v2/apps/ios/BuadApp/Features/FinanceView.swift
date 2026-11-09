@@ -1,9 +1,36 @@
 import SwiftUI
 
+/// «المالية»: the website's sections that the app has so far, «النظرة العامة» and «التحصيل».
+struct FinanceView: View {
+    enum Part: String { case overview, collection }
+    @State private var part: Part = .overview
+
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: 0) {
+                Picker("أقسام المالية", selection: $part) {
+                    Text("النظرة العامة").tag(Part.overview)
+                    Text("التحصيل").tag(Part.collection)
+                }
+                .pickerStyle(.segmented)
+                .padding(.horizontal, Buad.gutter)
+                .padding(.vertical, 8)
+                switch part {
+                case .overview: OverviewView()
+                case .collection: CollectionView()
+                }
+            }
+            .background(Buad.canvas.ignoresSafeArea())
+            .navigationTitle("المالية")
+            .navigationBarTitleDisplayMode(.inline)
+        }
+    }
+}
+
 /// «المالية ← التحصيل» (features/receivables/ReceivablesPage.tsx): debt ageing, the instalments still
 /// owed with «تسجيل مقبوض» and a WhatsApp reminder, and the 13-week cash forecast. Every figure is
 /// GET /api/receivables as the server computes it for this organisation.
-struct FinanceView: View {
+struct CollectionView: View {
     @EnvironmentObject private var session: Session
     @State private var data: Receivables?
     @State private var loaded = false
@@ -14,7 +41,6 @@ struct FinanceView: View {
     private var canReceive: Bool { session.me?.can("finance.edit") ?? false }
 
     var body: some View {
-        NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
                     if let toast {
@@ -39,8 +65,6 @@ struct FinanceView: View {
                 .padding(.vertical, 8)
             }
             .background(Buad.canvas.ignoresSafeArea())
-            .navigationTitle("التحصيل")
-            .navigationBarTitleDisplayMode(.inline)
             .refreshable { await load() }
             .task { if !loaded { await load() } }
             .sheet(item: $receiving) { line in
@@ -49,7 +73,6 @@ struct FinanceView: View {
                     Task { await load() }
                 }
             }
-        }
     }
 
     // MARK: أعمار الديون

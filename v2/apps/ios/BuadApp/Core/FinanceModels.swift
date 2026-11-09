@@ -159,3 +159,156 @@ enum ReceiptRules {
         return d.count == 12 && d.hasPrefix("9665") ? d : ""
     }
 }
+
+// MARK: GET /api/finance/overview?from&to (finance-overview.ts) — riyals, turned into halalas.
+
+struct FinanceOverview: Decodable {
+    struct Totals {
+        let gross, vat, profit, spent, received, remaining, pending, unregistered: Int
+        let margin: Double
+        let projects: Int
+        let withoutFinance: Int
+    }
+
+    struct ProjectRow: Decodable, Identifiable {
+        let id, number, name, clientName, status: String
+        let gross, profit, spent, remaining: Int
+        let margin: Double
+        let hasFinance: Bool
+
+        private enum K: String, CodingKey { case id, number, name, clientName, status, gross, profit, spent, remaining, margin, hasFinance }
+
+        init(from decoder: Decoder) throws {
+            let c = try decoder.container(keyedBy: K.self)
+            id = c.string(.id); number = c.string(.number); name = c.string(.name)
+            clientName = c.string(.clientName); status = c.string(.status)
+            gross = c.halalasFromRiyals(.gross); profit = c.halalasFromRiyals(.profit)
+            spent = c.halalasFromRiyals(.spent); remaining = c.halalasFromRiyals(.remaining)
+            margin = c.double(.margin); hasFinance = c.bool(.hasFinance)
+        }
+    }
+
+    struct Month: Decodable, Identifiable {
+        let month: String
+        let income, expense: Int
+        var id: String { month }
+        private enum K: String, CodingKey { case month, income, expense }
+        init(from decoder: Decoder) throws {
+            let c = try decoder.container(keyedBy: K.self)
+            month = c.string(.month); income = c.halalasFromRiyals(.income); expense = c.halalasFromRiyals(.expense)
+        }
+    }
+
+    struct Ranked: Decodable, Identifiable {
+        let label: String
+        let amount: Int
+        var id: String { label }
+        private enum K: String, CodingKey { case label, amount }
+        init(from decoder: Decoder) throws {
+            let c = try decoder.container(keyedBy: K.self)
+            label = c.string(.label); amount = c.halalasFromRiyals(.amount)
+        }
+    }
+
+    struct Pending: Decodable {
+        let projectId, projectName, date, description: String
+        let amount: Int
+        private enum K: String, CodingKey { case projectId, projectName, date, description, amount }
+        init(from decoder: Decoder) throws {
+            let c = try decoder.container(keyedBy: K.self)
+            projectId = c.string(.projectId); projectName = c.string(.projectName)
+            date = c.string(.date); description = c.string(.description); amount = c.halalasFromRiyals(.amount)
+        }
+    }
+
+    struct Unregistered: Decodable {
+        let projectId, projectName, item: String
+        let amount: Int
+        private enum K: String, CodingKey { case projectId, projectName, item, amount }
+        init(from decoder: Decoder) throws {
+            let c = try decoder.container(keyedBy: K.self)
+            projectId = c.string(.projectId); projectName = c.string(.projectName)
+            item = c.string(.item); amount = c.halalasFromRiyals(.amount)
+        }
+    }
+
+    struct Quality: Decodable {
+        let missingReceipts: Bool
+        let entriesWithoutStatus: Int
+        private enum K: String, CodingKey { case missingReceipts, entriesWithoutStatus }
+        init(from decoder: Decoder) throws {
+            let c = try decoder.container(keyedBy: K.self)
+            missingReceipts = c.bool(.missingReceipts); entriesWithoutStatus = c.int(.entriesWithoutStatus)
+        }
+    }
+
+    let totals: Totals
+    let projects: [ProjectRow]
+    let monthly: [Month]
+    let categories: [Ranked]
+    let pending: [Pending]
+    let unregistered: [Unregistered]
+    let quality: [Quality]
+
+    private enum K: String, CodingKey { case totals, projects, monthly, categories, obligations, quality }
+    private enum T: String, CodingKey { case gross, vat, profit, spent, received, remaining, pending, unregistered, margin, projects, withoutFinance }
+    private enum O: String, CodingKey { case pending, unregistered }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: K.self)
+        let t = try c.nestedContainer(keyedBy: T.self, forKey: .totals)
+        totals = Totals(
+            gross: t.halalasFromRiyals(.gross), vat: t.halalasFromRiyals(.vat), profit: t.halalasFromRiyals(.profit),
+            spent: t.halalasFromRiyals(.spent), received: t.halalasFromRiyals(.received),
+            remaining: t.halalasFromRiyals(.remaining), pending: t.halalasFromRiyals(.pending),
+            unregistered: t.halalasFromRiyals(.unregistered), margin: t.double(.margin),
+            projects: t.int(.projects), withoutFinance: t.int(.withoutFinance)
+        )
+        projects = (try? c.decode([ProjectRow].self, forKey: .projects)) ?? []
+        monthly = (try? c.decode([Month].self, forKey: .monthly)) ?? []
+        categories = (try? c.decode([Ranked].self, forKey: .categories)) ?? []
+        let o = try? c.nestedContainer(keyedBy: O.self, forKey: .obligations)
+        pending = (try? o?.decode([Pending].self, forKey: .pending)) ?? []
+        unregistered = (try? o?.decode([Unregistered].self, forKey: .unregistered)) ?? []
+        quality = (try? c.decode([Quality].self, forKey: .quality)) ?? []
+    }
+}
+
+/// The website's period control (features/finance-overview/api.ts resolvePeriod).
+struct FinancePeriod: Equatable {
+    enum Preset: String, CaseIterable { case all, quarter, year }
+    var preset: Preset = .all
+    var year: Int = Calendar(identifier: .gregorian).component(.year, from: Date())
+    var quarter: Int = (Calendar(identifier: .gregorian).component(.month, from: Date()) - 1) / 3 + 1
+
+    private static func range(_ y: Int, _ q: Int) -> (String, String) {
+        let m = (q - 1) * 3 + 1
+        let last = [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][m + 2] + ((m + 2 == 2 && y % 4 == 0 && (y % 100 != 0 || y % 400 == 0)) ? 1 : 0)
+        return (String(format: "%04d-%02d-01", y, m), String(format: "%04d-%02d-%02d", y, m + 2, last))
+    }
+
+    /// (from, to), or nil for every period.
+    var bounds: (String, String)? {
+        switch preset {
+        case .all: return nil
+        case .quarter: return Self.range(year, quarter)
+        case .year: return (String(format: "%04d-01-01", year), String(format: "%04d-12-31", year))
+        }
+    }
+
+    var previous: FinancePeriod? {
+        switch preset {
+        case .all: return nil
+        case .quarter: return quarter == 1 ? .init(preset: .quarter, year: year - 1, quarter: 4) : .init(preset: .quarter, year: year, quarter: quarter - 1)
+        case .year: return .init(preset: .year, year: year - 1, quarter: quarter)
+        }
+    }
+
+    var label: String {
+        switch preset {
+        case .all: return "كل الفترات"
+        case .quarter: return "\(ReceiptRules.quarterNames[quarter]) \(year)"
+        case .year: return "سنة \(year)"
+        }
+    }
+}

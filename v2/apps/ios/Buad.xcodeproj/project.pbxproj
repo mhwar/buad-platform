@@ -19,6 +19,7 @@
 		7393F02EC54916C7EDE9A3B4 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00315442E9DAF7B3CC3ED5A9 /* Models.swift */; };
 		A289450366D35817DEC0755B /* MoreView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5BBF222B60004DD31D3FBEB8 /* MoreView.swift */; };
 		E4AEA7F7909FACED2CEECE7F /* NotificationsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A45104A6141BFBC1B0E4747 /* NotificationsView.swift */; };
+		F532ED040701AB19A54DB4D9 /* OverviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34245588C64BDAE7C90CFCFB /* OverviewView.swift */; };
 		D26BF7A8214E4D68FB3AF938 /* ProjectDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F5CAFFCF496277E305DC4E4 /* ProjectDetailView.swift */; };
 		59E6DDE312BBB17209772C1C /* ProjectModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5A5EF53C6D7B76F4A56FC27 /* ProjectModels.swift */; };
 		35CF01C60CA46ED759C83A65 /* ProjectsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 118AB449F27FDDD25C375DC5 /* ProjectsView.swift */; };
@@ -46,6 +47,7 @@
 		00315442E9DAF7B3CC3ED5A9 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
 		5BBF222B60004DD31D3FBEB8 /* MoreView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoreView.swift; sourceTree = "<group>"; };
 		4A45104A6141BFBC1B0E4747 /* NotificationsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationsView.swift; sourceTree = "<group>"; };
+		34245588C64BDAE7C90CFCFB /* OverviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OverviewView.swift; sourceTree = "<group>"; };
 		4F5CAFFCF496277E305DC4E4 /* ProjectDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectDetailView.swift; sourceTree = "<group>"; };
 		C5A5EF53C6D7B76F4A56FC27 /* ProjectModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectModels.swift; sourceTree = "<group>"; };
 		118AB449F27FDDD25C375DC5 /* ProjectsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectsView.swift; sourceTree = "<group>"; };
@@ -119,6 +121,7 @@
 				F0E8E8409B2DD629F3FF356C /* FinanceView.swift */,
 				5BBF222B60004DD31D3FBEB8 /* MoreView.swift */,
 				4A45104A6141BFBC1B0E4747 /* NotificationsView.swift */,
+				34245588C64BDAE7C90CFCFB /* OverviewView.swift */,
 				4F5CAFFCF496277E305DC4E4 /* ProjectDetailView.swift */,
 				118AB449F27FDDD25C375DC5 /* ProjectsView.swift */,
 				92196FB501D5B083E6E7B609 /* ReceiveSheet.swift */,
@@ -219,6 +222,7 @@
 				7393F02EC54916C7EDE9A3B4 /* Models.swift in Sources */,
 				A289450366D35817DEC0755B /* MoreView.swift in Sources */,
 				E4AEA7F7909FACED2CEECE7F /* NotificationsView.swift in Sources */,
+				F532ED040701AB19A54DB4D9 /* OverviewView.swift in Sources */,
 				D26BF7A8214E4D68FB3AF938 /* ProjectDetailView.swift in Sources */,
 				59E6DDE312BBB17209772C1C /* ProjectModels.swift in Sources */,
 				35CF01C60CA46ED759C83A65 /* ProjectsView.swift in Sources */,
@@ -314,7 +318,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.2.0;
+				MARKETING_VERSION = 0.2.1;
 				PRODUCT_BUNDLE_IDENTIFIER = sa.buad.app;
 				PRODUCT_NAME = BuadApp;
 				SDKROOT = iphoneos;
@@ -337,7 +341,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.2.0;
+				MARKETING_VERSION = 0.2.1;
 				PRODUCT_BUNDLE_IDENTIFIER = sa.buad.app;
 				PRODUCT_NAME = BuadApp;
 				SDKROOT = iphoneos;
