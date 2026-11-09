@@ -3,6 +3,8 @@ import SwiftUI
 extension Notification.Name {
     /// A project was created, edited, archived or deleted: the projects list refreshes.
     static let projectsChanged = Notification.Name("buad.projectsChanged")
+    /// A draft project went back to sales: the app opens «المبيعات» on the new opportunity.
+    static let movedToSales = Notification.Name("buad.movedToSales")
 }
 
 // MARK: - «مشروع جديد» / «تعديل المشروع»

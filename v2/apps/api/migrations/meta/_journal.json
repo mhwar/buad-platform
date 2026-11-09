@@ -239,6 +239,13 @@
       "when": 1794242446496,
       "tag": "0033_pretty_hannibal_king",
       "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "6",
+      "when": 1794256679591,
+      "tag": "0034_perfect_purple_man",
+      "breakpoints": true
     }
   ]
 }

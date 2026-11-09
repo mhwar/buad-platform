@@ -88,6 +88,9 @@ struct MainTabs: View {
         .sheet(item: $center.sheet) { kind in
             CreateSheet(kind: kind).environmentObject(session).environmentObject(center)
         }
+        .onReceive(NotificationCenter.default.publisher(for: .movedToSales)) { _ in
+            center.done(.opportunity, "نُقل المشروع إلى المبيعات كفرصة. أنشئ عرض السعر من صفحتها.")
+        }
         .onChange(of: center.revision) { _, _ in
             // Bring forward the section that shows the new thing.
             if center.lastKind != .client, me.can("sales.view") { tab = .sales }

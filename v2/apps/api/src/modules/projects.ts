@@ -5,6 +5,7 @@ import {
   distributionProjects,
   distributions,
   legacyMap,
+  productRequests,
   products,
   projectFinance,
   projects,
@@ -90,6 +91,53 @@ async function financeRecords(db: Db, projectId: string) {
   const held: string[] = [];
   for (const [k, t] of kinds) if (await n(t)) held.push(k);
   return held;
+}
+
+/**
+ * A draft project that was moved back to sales, brought back when its opportunity is converted:
+ * unarchived, with the agreed client, name, value and service. Returns null when it is gone, no
+ * longer a draft, or already restored, and the caller then creates a project as usual.
+ */
+export async function restoreDraftProject(
+  db: Db,
+  me: { id: string; orgId: string },
+  draftId: string,
+  set: {
+    clientId: string;
+    name: string;
+    expectedValue: number;
+    productId?: string;
+    packageId?: string;
+    packageName?: string;
+  },
+) {
+  if (!draftId) return null;
+  const [p] = await db
+    .select()
+    .from(projects)
+    .where(and(eq(projects.id, draftId), eq(projects.orgId, me.orgId)))
+    .limit(1);
+  if (!p || p.status !== "draft" || !p.archivedAt) return null;
+  await db
+    .update(projects)
+    .set({
+      archivedAt: null,
+      archivedWith: "",
+      clientId: set.clientId,
+      name: set.name || p.name,
+      expectedValue: fromRiyals(set.expectedValue),
+      ...(set.productId
+        ? {
+            productId: set.productId,
+            packageId: set.packageId ?? "",
+            packageName: set.packageName ?? "",
+          }
+        : {}),
+      updatedBy: me.id,
+      updatedAt: nowSec(),
+    })
+    .where(eq(projects.id, p.id));
+  return { id: p.id, number: p.number };
 }
 
 /** Inserts a project for a client the caller has already checked. */
@@ -420,6 +468,69 @@ export const projectsApp = new Hono<Env>()
       })
       .where(eq(projects.id, current.id));
     return c.json({ ok: true });
+  })
+
+  // «نقل إلى المبيعات»: a draft project whose deal is not agreed yet goes back to the pipeline as an
+  // opportunity for its client, at its expected value and service. The project is archived with its
+  // documents and tasks and comes back (the same number) when the opportunity's offer is converted.
+  // Only a draft with no money recorded, by someone who may sell.
+  .post("/:id/to-sales", requirePerm("sales.edit"), async (c) => {
+    const db = c.get("db");
+    const me = c.get("user");
+    const p = await loadVisible(db, me, c.req.param("id"));
+    if (!p) return c.json({ ok: false, error: "not_found" }, 404);
+    if (p.status !== "draft" || p.external || p.archivedAt || p.closedAt)
+      return c.json({ ok: false, error: "not_draft" }, 409);
+    if ((await financeRecords(db, p.id)).length)
+      return c.json({ ok: false, error: "has_finance_records" }, 409);
+    const [client] = await db
+      .select()
+      .from(clients)
+      .where(and(eq(clients.id, p.clientId), eq(clients.orgId, me.orgId)))
+      .limit(1);
+    if (!client) return c.json({ ok: false, error: "client_not_found" }, 404);
+    if (client.archivedAt) return c.json({ ok: false, error: "client_archived" }, 409);
+    const [prod] = p.productId
+      ? await db
+          .select({ name: products.name })
+          .from(products)
+          .where(and(eq(products.id, p.productId), eq(products.orgId, me.orgId)))
+          .limit(1)
+      : [];
+    const t = nowSec();
+    const id = newId("req");
+    await atomic(db, [
+      db.insert(productRequests).values({
+        id,
+        orgId: me.orgId,
+        productId: p.productId,
+        productName: prod?.name ?? "",
+        packageId: p.packageId,
+        source: "manual",
+        status: "contacted",
+        name: client.name,
+        entity: client.name,
+        phone: client.phone,
+        email: client.email,
+        message: p.name,
+        notes: [`نُقل من المشروع ${p.number}`, p.notes].filter(Boolean).join("\n"),
+        clientId: client.id,
+        ownerId: me.id,
+        followUpAt: new Date(Date.now() + 2 * 86400000).toISOString().slice(0, 10),
+        valueHalalas: p.expectedValue,
+        stageChangedAt: t,
+        draftProjectId: p.id,
+        updatedBy: me.id,
+      }),
+      db
+        .update(projects)
+        .set({ archivedAt: t, archivedWith: "", updatedBy: me.id, updatedAt: t })
+        .where(eq(projects.id, p.id)),
+    ]);
+    c.set("auditChanges", [
+      { field: "archived", label: "الأرشفة", before: "ظاهر", after: "نُقل إلى المبيعات" },
+    ]);
+    return c.json({ ok: true, id }, 201);
   })
 
   .post("/:id/archive", requirePerm("projects.archive"), async (c) => {

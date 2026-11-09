@@ -20,7 +20,7 @@ import { loadVatRate } from "./finance";
 import { moveStage } from "./opportunity";
 import { loadOrgProfile } from "./org";
 import { pricingOf } from "./products";
-import { insertProject, liveClient } from "./projects";
+import { insertProject, liveClient, restoreDraftProject } from "./projects";
 import { resolveServiceLink } from "./service-link";
 import { nextCode } from "./settings";
 
@@ -355,27 +355,36 @@ export const quotesApp = new Hono<Env>()
     const link = r.productId
       ? await resolveServiceLink(db, me.orgId, r.productId, r.packageId)
       : null;
-    const project = await insertProject(
-      db,
-      me,
-      {
-        clientId,
-        name: v.projectName || r.title,
-        type: "other",
-        status: "draft",
-        visibility: "team",
-        location: "",
-        startDate: "",
-        endDate: "",
-        payDate: "",
-        // The contract value before VAT: the project adds its own VAT on top.
-        expectedValue: t.net / 100,
-        notes: `من عرض السعر ${r.number}`,
-        productId: "",
-        packageId: "",
-      } as Parameters<typeof insertProject>[2],
-      link && link.ok ? link : undefined,
-    );
+    // A draft project moved to sales comes back (same number, documents and tasks) instead of a new one.
+    const restored = await restoreDraftProject(db, me, req?.draftProjectId ?? "", {
+      clientId,
+      name: v.projectName || r.title,
+      expectedValue: t.net / 100,
+      ...(link && link.ok ? link : {}),
+    });
+    const project =
+      restored ??
+      (await insertProject(
+        db,
+        me,
+        {
+          clientId,
+          name: v.projectName || r.title,
+          type: "other",
+          status: "draft",
+          visibility: "team",
+          location: "",
+          startDate: "",
+          endDate: "",
+          payDate: "",
+          // The contract value before VAT: the project adds its own VAT on top.
+          expectedValue: t.net / 100,
+          notes: `من عرض السعر ${r.number}`,
+          productId: "",
+          packageId: "",
+        } as Parameters<typeof insertProject>[2],
+        link && link.ok ? link : undefined,
+      ));
     const lines = scheduleSplit(v.schedule, t.total, today());
     // The instalments and the quote's link to its project land together.
     await atomic(db, [

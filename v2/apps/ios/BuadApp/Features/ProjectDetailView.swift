@@ -83,6 +83,8 @@ struct ProjectDetailView: View {
     private var canTasks: Bool { can("tasks.view") }
     private var canDocs: Bool { can("documents.view") }
     private var canEditProject: Bool { can("projects.edit") && !archived }
+    /// «نقل إلى المبيعات»: a draft still being negotiated, by someone who may sell.
+    private var canMoveToSales: Bool { canEditProject && can("sales.edit") && status == "draft" && !external && !closed }
 
     private var pending: [ScheduleItem] { schedule.filter { $0.status == "pending" }.sorted { $0.dueDate < $1.dueDate } }
     private var webURL: URL? { APIClient.shared.webURL("/projects/\(project.id)") }
@@ -161,6 +163,7 @@ struct ProjectDetailView: View {
             case "archive": Button("أرشفة المشروع") { Task { await archive() } }
             case "delete": Button("حذف نهائياً", role: .destructive) { Task { await deleteProject() } }
             case "activate": Button("بدء التنفيذ") { Task { await setStatus("active") } }
+            case "sales": Button("نقل إلى المبيعات") { Task { await moveToSales() } }
             default: EmptyView()
             }
             Button("إلغاء", role: .cancel) {}
@@ -169,6 +172,7 @@ struct ProjectDetailView: View {
             case "archive": Text("يُخفى من القوائم ويمكن استعادته.")
             case "delete": Text("لا يمكن التراجع. إن كان للمشروع سجلات فأرشفته أفضل.")
             case "activate": Text("تدخل أرقامه في المالية (الأرباح والضريبة والتحصيل) من الآن.")
+            case "sales": Text("يصبح فرصة لعميله بقيمته وخدمته لتُنشئ عرض السعر وتتفاوض. يُخفى المشروع بمستنداته ومهامه، وعند قبول العرض و«تحويل إلى مشروع» يعود هو نفسه برقمه.")
             default: Text("")
             }
         }
@@ -228,6 +232,7 @@ struct ProjectDetailView: View {
         case "archive": return "أرشفة «\(name)»؟"
         case "delete": return "حذف «\(name)» نهائياً؟"
         case "activate": return "بدء تنفيذ المشروع؟"
+        case "sales": return "نقل «\(name)» إلى المبيعات؟"
         default: return ""
         }
     }
@@ -289,6 +294,7 @@ struct ProjectDetailView: View {
             Section("المشروع") {
                 if canEditProject && detail != nil { Button { editing = true } label: { Label("تعديل بيانات المشروع", systemImage: "pencil") } }
                 if can("team.view") && canEditProject { Button { team = true } label: { Label("فريق المشروع", systemImage: "person.2") } }
+                if canMoveToSales { Button { confirm = "sales" } label: { Label("نقل إلى المبيعات", systemImage: "arrow.uturn.backward.circle") } }
                 if let webURL { ShareLink(item: webURL) { Label("مشاركة رابط المشروع", systemImage: "square.and.arrow.up") } }
             }
             if manager {
@@ -409,7 +415,20 @@ struct ProjectDetailView: View {
         if archived {
             if can("projects.archive") { bigButton("استعادة المشروع", "arrow.uturn.backward") { Task { await restore() } } }
         } else if status == "draft" && canEditProject {
-            bigButton("بدء التنفيذ", "play.fill") { confirm = "activate" }
+            VStack(spacing: 10) {
+                bigButton("بدء التنفيذ", "play.fill") { confirm = "activate" }
+                if canMoveToSales {
+                    Button { confirm = "sales" } label: {
+                        Label("لم يُتفق بعد؟ نقل إلى المبيعات", systemImage: "arrow.uturn.backward.circle")
+                            .font(.subheadline.weight(.semibold))
+                            .frame(maxWidth: .infinity, minHeight: 46)
+                            .background(Buad.surface, in: RoundedRectangle(cornerRadius: Buad.control, style: .continuous))
+                            .overlay(RoundedRectangle(cornerRadius: Buad.control, style: .continuous).stroke(Buad.line))
+                            .foregroundStyle(Buad.ink)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
         } else if status == "completed" && manager && !closed {
             bigButton("إغلاق المشروع", "lock.fill") { closing = .close }
         } else if canReceive && finance != nil {
@@ -1083,6 +1102,20 @@ struct ProjectDetailView: View {
         } catch {
             session.handle(error)
             writeError = "تعذّر تغيير الحالة. " + ((error as? APIError)?.message ?? "")
+        }
+    }
+
+    private func moveToSales() async {
+        do {
+            let opportunity = try await APIClient.shared.moveToSales(project.id)
+            ScreenMemory.opportunities = nil
+            ScreenMemory.salesOverview = nil
+            NotificationCenter.default.post(name: .projectsChanged, object: nil)
+            NotificationCenter.default.post(name: .movedToSales, object: opportunity)
+            dismiss()
+        } catch {
+            session.handle(error)
+            writeError = (error as? APIError)?.message ?? "تعذّر النقل"
         }
     }
 

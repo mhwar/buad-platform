@@ -79,6 +79,8 @@ struct Opportunity: Decodable, Identifiable, Hashable {
     let productName: String
     let clientId: String
     let projectId: String
+    /// A draft project moved here from «المشاريع»; it comes back when the offer is converted.
+    let draftProjectId: String
     let ownerId: String
     let followUpAt: String
     let value: Int
@@ -88,7 +90,7 @@ struct Opportunity: Decodable, Identifiable, Hashable {
     let interest: Bool
 
     private enum K: String, CodingKey {
-        case id, name, entity, phone, email, message, notes, status, source, productName, clientId, projectId, ownerId
+        case id, name, entity, phone, email, message, notes, status, source, productName, clientId, projectId, ownerId, draftProjectId
         case followUpAt, value, lostReason, createdAt, updatedAt, interest
     }
 
@@ -97,7 +99,7 @@ struct Opportunity: Decodable, Identifiable, Hashable {
         id = c.string(.id); name = c.string(.name); entity = c.string(.entity); phone = c.string(.phone)
         email = c.string(.email); message = c.string(.message); notes = c.string(.notes); status = c.string(.status)
         source = c.string(.source); productName = c.string(.productName); clientId = c.string(.clientId)
-        projectId = c.string(.projectId); ownerId = c.string(.ownerId); followUpAt = c.string(.followUpAt)
+        projectId = c.string(.projectId); draftProjectId = c.string(.draftProjectId); ownerId = c.string(.ownerId); followUpAt = c.string(.followUpAt)
         value = c.halalasFromRiyals(.value); lostReason = c.string(.lostReason)
         createdAt = c.int(.createdAt); updatedAt = c.int(.updatedAt); interest = c.bool(.interest)
     }

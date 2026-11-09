@@ -430,6 +430,12 @@ final class APIClient: @unchecked Sendable {
     func restoreProject(_ id: String) async throws { let _: OKEnvelope = try await send("POST", "/api/projects/\(id)/restore") }
     func deleteProject(_ id: String) async throws { let _: OKEnvelope = try await send("DELETE", "/api/projects/\(id)") }
 
+    /// «نقل إلى المبيعات»: a draft project becomes an opportunity (its id) and comes back when converted.
+    func moveToSales(_ id: String) async throws -> String {
+        let r: CreatedEnvelope = try await send("POST", "/api/projects/\(id)/to-sales")
+        return r.id
+    }
+
     func closeCheck(_ id: String) async throws -> CloseCheck { try await send("GET", "/api/projects/\(id)/close") }
 
     /// «إغلاق المشروع» (note) / «إلغاء المشروع» (reason), with the contract settlement.

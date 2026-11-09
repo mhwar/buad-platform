@@ -21,7 +21,7 @@ enum ProjectVocabulary {
         switch code {
         case "has_records": return "للمشروع قيود مالية أو مستندات أو مهام، فلا يُحذف نهائياً. أرشِفه بدلاً من ذلك."
         case "client_archived": return "العميل مؤرشف. استعده أولاً."
-        case "has_finance_records": return "للمشروع سجلات مالية، فلا يتغير كونه خارجياً."
+        case "has_finance_records": return "للمشروع سجلات مالية (قيود أو مقبوضات أو دفعات)، فلا يُنفَّذ هذا التغيير."
         case "package_without_product": return "اختر الخدمة قبل الباقة."
         case "already_closed": return "المشروع مغلق من قبل."
         case "below_received": return "القيمة النهائية أقل من المستلم فعلاً."
