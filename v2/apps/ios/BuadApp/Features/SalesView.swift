@@ -608,8 +608,11 @@ struct OpportunityView: View {
         do {
             try await APIClient.shared.updateOpportunity(id, body)
             await load()
-            toast = ToastItem(text: "نُقلت إلى «\(Sales.stage(stage).label)»",
-                              undo: undoable ? { await move(previous, undoable: false) } : nil)
+            var undo: (@MainActor () async -> Void)? = nil
+            if undoable {
+                undo = { await self.move(previous, undoable: false) }
+            }
+            toast = ToastItem(text: "نُقلت إلى «\(Sales.stage(stage).label)»", undo: undo)
         } catch {
             session.handle(error)
             self.error = (error as? APIError)?.message ?? "تعذّر الحفظ"
