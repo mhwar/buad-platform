@@ -98,6 +98,7 @@ struct ProjectDetailView: View {
         }
         .refreshable { await load() }
         .task { if !loaded { await load() } }
+        .onChange(of: toast) { _, now in CollectionView.settle(now) { if toast == now { withAnimation { toast = nil } } } }
         .sheet(item: $entryTarget) { target in
             if let f = finance {
                 EntrySheet(projectId: project.id, projectName: project.name, finance: f, existing: target.entry) { fin, message in

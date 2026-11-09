@@ -362,7 +362,8 @@ struct SalesInvoice: Decodable, Identifiable {
     let vat: Int
     let receiptId: String
     let note: String
-    let hasFile: Bool
+    let assetId: String
+    var hasFile: Bool { !assetId.isEmpty }
 
     private enum K: String, CodingKey { case id, number, date, amount, vat, receiptId, note, assetId }
 
@@ -375,8 +376,10 @@ struct SalesInvoice: Decodable, Identifiable {
         vat = c.halalasFromRiyals(.vat)
         receiptId = c.string(.receiptId)
         note = c.string(.note)
-        hasFile = !c.string(.assetId).isEmpty
+        assetId = c.string(.assetId)
     }
 }
+
+struct AssetEnvelope: Decodable { let id: String }
 
 struct SalesInvoicesEnvelope: Decodable { let items: [SalesInvoice] }

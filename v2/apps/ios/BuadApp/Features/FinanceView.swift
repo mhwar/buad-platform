@@ -79,6 +79,7 @@ struct CollectionView: View {
             .background(Buad.canvas.ignoresSafeArea())
             .refreshable { await load() }
             .task { if !loaded { await load() } }
+            .onChange(of: toast) { _, now in Self.settle(now) { if toast == now { withAnimation { toast = nil } } } }
             .sheet(item: $receiving) { line in
                 ReceiveSheet(line: line) { message in
                     toast = message
@@ -222,6 +223,16 @@ struct CollectionView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(14)
         .background(Buad.surface)
+    }
+
+    /// A success message: a light haptic, then it clears itself after four seconds.
+    static func settle(_ message: String?, clear: @escaping @MainActor () -> Void) {
+        guard message != nil else { return }
+        Haptic.success()
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(4))
+            clear()
+        }
     }
 
     private func load() async {
