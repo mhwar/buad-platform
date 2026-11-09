@@ -254,10 +254,16 @@ struct TaskItem: Decodable, Identifiable {
     let status: String
     let priority: String
     let dueDate: String
+    let startDate: String
     let stageId: String
+    let assigneeId: String
     let assigneeName: String
+    let projectId: String
+    let projectName: String
 
-    private enum K: String, CodingKey { case id, title, status, priority, dueDate, stageId, assigneeName }
+    private enum K: String, CodingKey {
+        case id, title, status, priority, dueDate, startDate, stageId, assigneeId, assigneeName, projectId, projectName
+    }
 
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: K.self)
@@ -266,8 +272,12 @@ struct TaskItem: Decodable, Identifiable {
         status = c.string(.status)
         priority = c.string(.priority)
         dueDate = c.string(.dueDate)
+        startDate = c.string(.startDate)
         stageId = c.string(.stageId)
+        assigneeId = c.string(.assigneeId)
         assigneeName = c.string(.assigneeName)
+        projectId = c.string(.projectId)
+        projectName = c.string(.projectName)
     }
 
     var overdue: Bool { status != "done" && !dueDate.isEmpty && dueDate < Fmt.todayISO }

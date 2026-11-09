@@ -188,6 +188,22 @@ enum Vocabulary {
         }
     }
 
+    /// CLIENT_TYPE_LABELS (packages/schema/src/clients.ts).
+    static func clientType(_ key: String) -> String {
+        ["company": "شركة", "association": "جمعية", "government": "جهة حكومية", "individual": "فرد"][key] ?? "أخرى"
+    }
+
+    /// RELATIONSHIP_LABEL (packages/domain/src/sales.ts) with the ClientsPage badge tones.
+    static func relationship(_ key: String) -> (label: String, tone: Tone) {
+        switch key {
+        case "active": return ("عميل نشط", .ok)
+        case "prospect": return ("محتمل", .info)
+        case "former": return ("عميل سابق", .neutral)
+        case "dormant": return ("خامل", .warn)
+        default: return ("جديد", .neutral)
+        }
+    }
+
     static func priority(_ key: String) -> String? { key == "high" ? "عالية" : key == "low" ? "منخفضة" : nil }
 }
 

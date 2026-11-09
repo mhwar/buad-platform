@@ -78,6 +78,16 @@ enum Fmt {
         return m == 0 ? "\(h) س" : h == 0 ? "\(m) د" : "\(h) س \(m) د"
     }
 
+    /// A day as the API stores it: "2026-03-01" (Riyadh).
+    static func isoDay(_ date: Date) -> String { iso.string(from: date) }
+
+    /// Today plus a number of days, as an ISO day.
+    static func isoDay(addingDays days: Int) -> String {
+        var cal = Calendar(identifier: .gregorian)
+        cal.timeZone = riyadh
+        return isoDay(cal.date(byAdding: .day, value: days, to: Date()) ?? Date())
+    }
+
     static var todayISO: String { iso.string(from: Date()) }
 
     static func longToday() -> String { longFormat.string(from: Date()) }
