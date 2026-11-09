@@ -249,3 +249,54 @@ struct DocShare: Decodable, Identifiable {
 struct SharesEnvelope: Decodable { let items: [DocShare] }
 struct ShareCreated: Decodable { let path: String }
 struct OutgoingEnvelope: Decodable { let outgoingNo: String }
+
+
+// MARK: follow-ups (GET /api/crm/followups)
+
+struct Followup: Decodable, Identifiable, Hashable {
+    let kind: String
+    let id: String
+    let title: String
+    let subtitle: String
+    let phone: String
+    let date: String
+    let ownerName: String
+    let state: String
+    /// Riyals on the wire, halalas here (opportunities only).
+    let value: Int
+
+    private enum K: String, CodingKey { case kind, id, title, subtitle, phone, date, ownerName, state, value }
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: K.self)
+        kind = c.string(.kind); id = c.string(.id); title = c.string(.title); subtitle = c.string(.subtitle)
+        phone = c.string(.phone); date = c.string(.date); ownerName = c.string(.ownerName); state = c.string(.state)
+        value = c.halalasFromRiyals(.value)
+    }
+    var key: String { kind + ":" + id }
+    var link: String { kind == "request" ? "/sales/\(id)" : "/clients/\(id)" }
+}
+
+struct FollowupsEnvelope: Decodable { let items: [Followup] }
+
+// MARK: documents register (GET /api/documents)
+
+struct RegisterDocument: Decodable, Identifiable {
+    let id: String
+    let kind: String
+    let number: String
+    let title: String
+    let status: String
+    let outgoingNo: String
+    let updatedAt: Int
+    let projectName: String
+    let clientName: String
+    private enum K: String, CodingKey { case id, kind, number, title, status, outgoingNo, updatedAt, projectName, clientName }
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: K.self)
+        id = c.string(.id); kind = c.string(.kind); number = c.string(.number); title = c.string(.title)
+        status = c.string(.status); outgoingNo = c.string(.outgoingNo); updatedAt = c.int(.updatedAt)
+        projectName = c.string(.projectName); clientName = c.string(.clientName)
+    }
+}
+
+struct RegisterEnvelope: Decodable { let items: [RegisterDocument] }

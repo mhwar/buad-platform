@@ -202,6 +202,8 @@ struct ScheduleLineSheet: View {
     @Environment(\.dismiss) private var dismiss
 
     let projectId: String
+    /// An instalment still pending to change; nil adds a new one.
+    var existing: ScheduleItem? = nil
     let saved: (String) -> Void
 
     @State private var label = ""
@@ -209,6 +211,7 @@ struct ScheduleLineSheet: View {
     @State private var amount = ""
     @State private var error: String?
     @State private var busy = false
+    @State private var started = false
 
     var body: some View {
         NavigationStack {
@@ -224,12 +227,18 @@ struct ScheduleLineSheet: View {
                 } footer: {
                     Text("أضف الدفعات المنتظرة من العميل لتتابعها وتظهر أعمارها.")
                 }
-                Section { SaveButton(title: "إضافة الدفعة", busy: busy) { Task { await save() } } }
+                Section { SaveButton(title: existing == nil ? "إضافة الدفعة" : "حفظ التعديل", busy: busy) { Task { await save() } } }
             }
-            .navigationTitle("دفعة منتظرة")
+            .navigationTitle(existing == nil ? "دفعة منتظرة" : "تعديل الدفعة")
             .navigationBarTitleDisplayMode(.inline)
-            .formChrome(dirty: !label.trimmingCharacters(in: .whitespaces).isEmpty || !amount.isEmpty, busy: busy, saveTitle: "إضافة") {
+            .formChrome(dirty: existing != nil || !label.trimmingCharacters(in: .whitespaces).isEmpty || !amount.isEmpty, busy: busy,
+                        saveTitle: existing == nil ? "إضافة" : "حفظ") {
                 Task { await save() }
+            }
+            .onAppear {
+                guard !started, let e = existing else { return }
+                started = true
+                label = e.label; dueDate = Fmt.date(e.dueDate) ?? Date(); amount = EntrySheet.plain(e.amount)
             }
         }
     }
@@ -238,12 +247,17 @@ struct ScheduleLineSheet: View {
         let text = label.trimmingCharacters(in: .whitespaces)
         guard !text.isEmpty else { error = "أدخلوا الوصف."; return }
         guard let n = ReceiptRules.riyals(amount), n > 0 else { error = "أدخلوا المبلغ."; return }
-        guard await Confirm.owner("تأكيد إضافة دفعة «\(text)» بمبلغ \(Fmt.sar(Int((n * 100).rounded())))") else { return }
+        guard await Confirm.owner("تأكيد \(existing == nil ? "إضافة" : "تعديل") دفعة «\(text)» بمبلغ \(Fmt.sar(Int((n * 100).rounded())))") else { return }
         busy = true
         defer { busy = false }
         do {
-            try await APIClient.shared.addScheduleLine(projectId, label: text, dueDate: Fmt.isoDay(dueDate), riyals: (n * 100).rounded() / 100)
-            saved("أُضيفت الدفعة")
+            if let e = existing {
+                try await APIClient.shared.updateScheduleLine(e.id, ["label": text, "dueDate": Fmt.isoDay(dueDate), "amount": (n * 100).rounded() / 100])
+                saved("حُفظت الدفعة")
+            } else {
+                try await APIClient.shared.addScheduleLine(projectId, label: text, dueDate: Fmt.isoDay(dueDate), riyals: (n * 100).rounded() / 100)
+                saved("أُضيفت الدفعة")
+            }
             dismiss()
         } catch {
             session.handle(error)

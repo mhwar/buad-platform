@@ -16,6 +16,8 @@ struct Dock: View {
 
     let items: [Item]
     @Binding var selection: MainTabs.Tab
+    /// Every tap, even on the section already open: it goes back to that section's first page.
+    var onTap: (MainTabs.Tab) -> Void = { _ in }
 
     @Namespace private var pill
     @State private var bounce: MainTabs.Tab?
@@ -37,6 +39,7 @@ struct Dock: View {
         let on = selection == item.id
         return Button {
             if !on { bounce = item.id }
+            onTap(item.id)
             withAnimation(.spring(response: 0.34, dampingFraction: 0.82)) { selection = item.id }
         } label: {
             VStack(spacing: 3) {

@@ -18,6 +18,8 @@ struct ProjectEditSheet: View {
 
     /// nil: a new project.
     var existing: ProjectDetail? = nil
+    /// A new project for this client (from the client's page).
+    var presetClient: ClientItem? = nil
     let saved: (String) -> Void
 
     @State private var clientId = ""
@@ -155,6 +157,7 @@ struct ProjectEditSheet: View {
             value = p.expectedValue > 0 ? EntrySheet.plain(p.expectedValue) : ""
             external = p.external; notes = p.notes
         }
+        if existing == nil, let c = presetClient { clientId = c.id; clientName = c.name }
         baseline = fields
         started = true
         if session.me?.can("sales.view") == true { catalog = (try? await APIClient.shared.catalog()) ?? [] }
@@ -442,6 +445,156 @@ struct ProjectTeamSheet: View {
         } catch {
             session.handle(error)
             self.error = (error as? APIError)?.message ?? "تعذّر الحفظ"
+        }
+    }
+}
+
+// MARK: - «إعدادات العقد»
+
+/// ControlCentre.tsx: the contract's number, date and value (lockable), whether the value includes
+/// VAT and its rate, and the four deductions — execution fee, marketing (internal or not), cashback,
+/// extra fees — each a percentage or a fixed amount, of the net or the gross. Sent as the website sends
+/// it (riyals, with the version it started from); the figures of the project follow it.
+struct ContractSettingsSheet: View {
+    @EnvironmentObject private var session: Session
+    @Environment(\.dismiss) private var dismiss
+    let projectId: String
+    let finance: ProjectFinance
+    let saved: () -> Void
+
+    @State private var contractNo = ""
+    @State private var contractDate: Date?
+    @State private var value = ""
+    @State private var locked = false
+    @State private var vatIncluded = false
+    @State private var vatPct = "15"
+    @State private var exec = Fee()
+    @State private var mkt = Fee()
+    @State private var cb = Fee()
+    @State private var cf = Fee()
+    @State private var mktInternal = false
+    @State private var error: String?
+    @State private var busy = false
+    @State private var started = false
+    @State private var baseline = ""
+
+    struct Fee: Equatable { var v = ""; var type = "pct"; var base = "gross" }
+
+    private var snapshot: String {
+        [contractNo, contractDate.map(Fmt.isoDay) ?? "", value, String(locked), String(vatIncluded), vatPct, String(mktInternal)]
+            .joined(separator: "|") + [exec, mkt, cb, cf].map { "\($0.v)/\($0.type)/\($0.base)" }.joined(separator: "|")
+    }
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                if let error {
+                    Section { Label(error, systemImage: "exclamationmark.circle").foregroundStyle(Buad.dangerInk) }
+                }
+                Section {
+                    TextField("رقم العقد", text: $contractNo).environment(\.layoutDirection, .leftToRight)
+                    OptionalDateRow(title: "تاريخ العقد", date: $contractDate)
+                    HStack {
+                        Text("قيمة العقد (ر.س)")
+                        TextField("0", text: $value).keyboardType(.decimalPad).multilineTextAlignment(.trailing)
+                            .environment(\.layoutDirection, .leftToRight).disabled(locked && finance.settings.cvLocked)
+                    }
+                    Toggle("قفل قيمة العقد", isOn: $locked)
+                } footer: {
+                    Text("المقفلة لا تتغير حتى تُفتح. المسودة لا تدخل المالية حتى تصبح «جاري التنفيذ».")
+                }
+                Section {
+                    Toggle("القيمة شاملة الضريبة", isOn: $vatIncluded)
+                    HStack {
+                        Text("نسبة الضريبة %")
+                        TextField("15", text: $vatPct).keyboardType(.decimalPad).multilineTextAlignment(.trailing)
+                            .environment(\.layoutDirection, .leftToRight)
+                    }
+                }
+                feeSection("أتعاب التنفيذ", $exec, footer: "تُحسب من العقد وتدخل دخلاً للشركة.")
+                feeSection("التسويق", $mkt, footer: nil)
+                Section { Toggle("التسويق داخلي (لا يُخصم من المتاح للتنفيذ)", isOn: $mktInternal) }
+                feeSection("كاش باك", $cb, footer: nil)
+                feeSection("رسوم إضافية", $cf, footer: "كرسوم المنصات والتحويلات.")
+            }
+            .navigationTitle("إعدادات العقد")
+            .navigationBarTitleDisplayMode(.inline)
+            .formChrome(dirty: started && snapshot != baseline, busy: busy, saveTitle: "حفظ") { Task { await save() } }
+            .onAppear(perform: start)
+        }
+    }
+
+    private func feeSection(_ title: String, _ fee: Binding<Fee>, footer: String?) -> some View {
+        Section {
+            HStack {
+                Text("القيمة")
+                TextField("0", text: fee.v).keyboardType(.decimalPad).multilineTextAlignment(.trailing)
+                    .environment(\.layoutDirection, .leftToRight)
+            }
+            Picker("النوع", selection: fee.type) {
+                Text("نسبة %").tag("pct")
+                Text("مبلغ ثابت (ر.س)").tag("fixed")
+            }
+            if fee.wrappedValue.type == "pct" {
+                Picker("من", selection: fee.base) {
+                    Text("إجمالي العقد").tag("gross")
+                    Text("الصافي بعد الضريبة").tag("net")
+                }
+            }
+        } header: { Text(title) } footer: { if let footer { Text(footer) } }
+    }
+
+    private func plain(_ v: Double) -> String { v == 0 ? "" : (v == v.rounded() ? String(Int(v)) : String(v)) }
+
+    private func start() {
+        guard !started else { return }
+        let s = finance.settings
+        contractNo = finance.contractNo; contractDate = Fmt.date(finance.contractDate)
+        value = s.contractValue > 0 ? EntrySheet.plain(s.contractValue) : ""
+        locked = s.cvLocked; vatIncluded = finance.vatIncluded; vatPct = plain(finance.vatPct).isEmpty ? "0" : plain(finance.vatPct)
+        exec = Fee(v: plain(s.exec.v), type: s.exec.type, base: s.exec.base)
+        mkt = Fee(v: plain(s.mkt.v), type: s.mkt.type, base: s.mkt.base)
+        cb = Fee(v: plain(s.cb.v), type: s.cb.type, base: s.cb.base)
+        cf = Fee(v: plain(s.cf.v), type: s.cf.type, base: s.cf.base)
+        mktInternal = finance.mktInternal
+        baseline = snapshot
+        started = true
+    }
+
+    private func save() async {
+        func num(_ t: String) -> Double? { t.trimmingCharacters(in: .whitespaces).isEmpty ? 0 : ReceiptRules.riyals(t) }
+        guard let cv = num(value), cv >= 0 else { error = "قيمة العقد غير صحيحة."; return }
+        guard let vat = num(vatPct), vat >= 0, vat <= 100 else { error = "نسبة الضريبة بين 0 و100."; return }
+        var body: [String: Any] = ["version": finance.settings.version]
+        for (key, fee) in [("exec", exec), ("mkt", mkt), ("cb", cb), ("cf", cf)] {
+            guard let v = num(fee.v), v >= 0 else { error = "قيمة الرسوم غير صحيحة."; return }
+            if fee.type == "pct" && v > 100 { error = "النسبة لا تتجاوز 100%."; return }
+            body["\(key)V"] = v; body["\(key)Type"] = fee.type; body["\(key)Base"] = fee.base
+        }
+        body["contractNo"] = contractNo.trimmingCharacters(in: .whitespaces)
+        body["contractDate"] = contractDate.map(Fmt.isoDay) ?? ""
+        body["contractValue"] = cv
+        body["cvLocked"] = locked
+        body["vatIncluded"] = vatIncluded
+        body["vatPct"] = vat
+        body["mktInternal"] = mktInternal
+        guard await Confirm.owner("تأكيد حفظ إعدادات عقد «\(finance.contractNo.isEmpty ? "المشروع" : finance.contractNo)»") else { return }
+        error = nil
+        busy = true
+        defer { busy = false }
+        do {
+            try await APIClient.shared.saveContract(projectId, body)
+            saved()
+            dismiss()
+        } catch {
+            session.handle(error)
+            if case .rejected(let code) = (error as? APIError) ?? .network, code == "stale" {
+                self.error = "عُدّلت الإعدادات من مكان آخر. أغلق النافذة واسحب للتحديث."
+            } else if case .rejected(let code) = (error as? APIError) ?? .network, code == "cv_locked" {
+                self.error = "قيمة العقد مقفلة. ألغِ القفل أولاً لتغييرها."
+            } else {
+                self.error = (error as? APIError)?.message ?? "تعذّر الحفظ، حاول مرة أخرى."
+            }
         }
     }
 }

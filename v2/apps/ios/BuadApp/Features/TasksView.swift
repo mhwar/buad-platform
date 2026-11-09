@@ -5,6 +5,7 @@ import SwiftUI
 /// own PATCH /api/tasks/:id, allowed only with tasks.edit, and the list reloads from the server after.
 struct TasksView: View {
     @EnvironmentObject private var session: Session
+    @EnvironmentObject private var nav: Navigator
     @State private var mine = true
     @State private var view = "open"
     @State private var query = ""
@@ -177,8 +178,8 @@ struct TasksView: View {
                     Button { Task { await update(t, ["status": "blocked"]) } } label: { Label("معلّقة", systemImage: "pause.circle") }
                 }
             }
-            if !t.projectId.isEmpty, let url = APIClient.shared.webURL("/projects/\(t.projectId)?view=execution") {
-                Link(destination: url) { Label("فتح في الموقع", systemImage: "safari") }
+            if !t.projectId.isEmpty {
+                Button { nav.open("/projects/\(t.projectId)") } label: { Label("فتح المشروع", systemImage: "briefcase") }
             }
         }
     }
@@ -194,8 +195,8 @@ struct TasksView: View {
             Button { Task { await update(t, ["status": "todo"]) } } label: { Label("لم تبدأ", systemImage: "circle") }
         }
         Button { postponing = t } label: { Label("تأجيل", systemImage: "calendar.badge.clock") }
-        if !t.projectId.isEmpty, let url = APIClient.shared.webURL("/projects/\(t.projectId)?view=execution") {
-            Link(destination: url) { Label("فتح في الموقع", systemImage: "safari") }
+        if !t.projectId.isEmpty {
+            Button { nav.open("/projects/\(t.projectId)") } label: { Label("فتح المشروع", systemImage: "briefcase") }
         }
     }
 

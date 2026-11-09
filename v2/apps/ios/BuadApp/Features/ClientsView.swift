@@ -123,6 +123,12 @@ struct ClientDetailView: View {
     @State private var openable: [String: ProjectItem] = [:]
 
     private var canFinance: Bool { session.me?.can("finance.view") ?? false }
+    private var canEditClient: Bool { session.me?.can("clients.edit") ?? false }
+    private var canNewProject: Bool { session.me?.can("projects.edit") ?? false }
+    @State private var editing = false
+    @State private var contacting = false
+    @State private var newProject = false
+    @State private var toast: ToastItem?
 
     var body: some View {
         ScrollView {
@@ -138,6 +144,14 @@ struct ClientDetailView: View {
                 }
 
                 if let error { EmptyNote(text: error, icon: "wifi.exclamationmark") }
+
+                if canEditClient || canNewProject {
+                    ActionRow {
+                        if canEditClient { ActionTile(icon: "pencil", title: "تعديل", primary: true) { editing = true } }
+                        if canEditClient { ActionTile(icon: "plus.bubble", title: "تسجيل تواصل") { contacting = true } }
+                        if canNewProject { ActionTile(icon: "briefcase", title: "مشروع جديد") { newProject = true } }
+                    }
+                }
 
                 if let s = statement, canFinance {
                     JoinedGrid {
@@ -238,16 +252,6 @@ struct ClientDetailView: View {
                     ProgressView().frame(maxWidth: .infinity)
                 }
 
-                if let url = APIClient.shared.webURL("/clients/\(client.id)") {
-                    Link(destination: url) {
-                        Label("فتح العميل في الموقع للتعديل", systemImage: "safari")
-                            .font(.body.weight(.semibold))
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 48)
-                            .background(Buad.brandSoft, in: RoundedRectangle(cornerRadius: Buad.control, style: .continuous))
-                            .foregroundStyle(Buad.ink)
-                    }
-                }
             }
             .padding(.horizontal, Buad.gutter)
             .padding(.vertical, 12)
@@ -258,6 +262,16 @@ struct ClientDetailView: View {
         .navigationDestination(for: ProjectItem.self) { ProjectDetailView(project: $0) }
         .refreshable { await load() }
         .task { if !loaded { await load() } }
+        .toast($toast)
+        .sheet(isPresented: $editing) {
+            ClientEditSheet(client: client, detail: detail) { toast = ToastItem(text: "حُفظت بيانات العميل"); Task { await load() } }
+        }
+        .sheet(isPresented: $contacting) {
+            ClientContactSheet(client: client) { toast = ToastItem(text: "سُجّل التواصل") }
+        }
+        .sheet(isPresented: $newProject) {
+            ProjectEditSheet(presetClient: client) { _ in toast = ToastItem(text: "أُنشئ المشروع"); Task { await load() } }
+        }
     }
 
     private func load() async {

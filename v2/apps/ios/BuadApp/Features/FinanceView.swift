@@ -53,6 +53,7 @@ struct CollectionView: View {
     @State private var error: String?
     @State private var receiving: ReceiveSheet.LineInfo?
     @State private var toast: ToastItem?
+    @State private var opening = ""
 
     private var canReceive: Bool { session.me?.can("finance.edit") ?? false }
 
@@ -117,7 +118,7 @@ struct CollectionView: View {
     @ViewBuilder private func owed(_ d: Receivables) -> some View {
         Text("الدفعات المنتظرة").font(.headline)
         if d.items.isEmpty {
-            EmptyNote(text: "لا دفعات منتظرة. أضف جدول دفعات من صفحة المشروع في الموقع لتظهر هنا وتُحسب أعمارها.", icon: "calendar")
+            EmptyNote(text: "لا دفعات منتظرة. أضف جدول دفعات من تبويب «المالية» في صفحة المشروع لتظهر هنا وتُحسب أعمارها.", icon: "calendar")
         } else {
             VStack(spacing: 10) {
                 ForEach(d.items) { i in
@@ -178,8 +179,16 @@ struct CollectionView: View {
             VStack(alignment: .leading, spacing: 10) {
                 Text("التوقّع النقدي لـ13 أسبوعاً").font(.headline)
                 // Read first: every balance below starts from zero, so a shortfall is relative, not an alarm.
-                Text("الرصيد يبدأ من صفر في التطبيق، ويتغيّر بالمستحق من العملاء والمصاريف المعلّقة. لإدخال الرصيد الحالي افتح التحصيل في الموقع.")
+                Text("يبدأ التوقع من الرصيد الذي تدخله، ويتغيّر بالمستحق من العملاء والمصاريف المعلّقة. بلا رصيد يبدأ من صفر.")
                     .font(.footnote).foregroundStyle(Buad.muted)
+                HStack(spacing: 10) {
+                    Text("رصيد البنك الحالي (ر.س)").font(.subheadline)
+                    TextField("0", text: $opening).keyboardType(.decimalPad).multilineTextAlignment(.trailing)
+                        .environment(\.layoutDirection, .leftToRight)
+                        .padding(.horizontal, 10).frame(minHeight: 40)
+                        .background(Buad.surface, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                    Button("تحديث") { Task { await load() } }.font(.subheadline.weight(.bold)).frame(minHeight: Buad.tap)
+                }
                 if !d.shortfallWeek.isEmpty {
                     Label("يتوقع أن ينخفض الرصيد عن الصفر في الأسبوع الذي يبدأ \(Fmt.day(d.shortfallWeek)).", systemImage: "exclamationmark.triangle.fill")
                         .font(.footnote.weight(.medium)).foregroundStyle(Buad.dangerInk)
@@ -227,7 +236,8 @@ struct CollectionView: View {
 
     private func load() async {
         do {
-            data = try await APIClient.shared.receivables()
+            let balance = ReceiptRules.riyals(opening) ?? 0
+            data = balance == 0 ? try await APIClient.shared.receivables() : try await APIClient.shared.receivables(opening: balance)
             ScreenMemory.receivables = data
             error = nil
         } catch {

@@ -61,7 +61,10 @@ struct MainTabs: View {
     @EnvironmentObject private var session: Session
     let me: Me
     @StateObject private var center = CreateCenter()
+    @StateObject private var nav = Navigator()
     @State private var tab: Tab = .today
+    /// Tapping a section of the dock brings it back to its first page: its screen is made again.
+    @State private var resets: [Tab: Int] = [:]
 
     private var items: [Dock.Item] {
         var list = [Dock.Item(id: .today, title: "اليوم", icon: "sun.max")]
@@ -81,15 +84,27 @@ struct MainTabs: View {
         // Part of the layout, not drawn over it: every screen, pushed ones included, ends above the dock,
         // so nothing can be left behind it however far the list is scrolled.
         .safeAreaInset(edge: .bottom, spacing: 0) {
-            Dock(items: items, selection: $tab)
+            Dock(items: items, selection: $tab) { resets[$0, default: 0] += 1 }
                 .padding(.top, 6)
                 .padding(.bottom, 4)
                 .ignoresSafeArea(.keyboard, edges: .bottom)
         }
         .environmentObject(center)
+        .environmentObject(nav)
         .toast($center.toast)
         .sheet(item: $center.sheet) { kind in
-            CreateSheet(kind: kind).environmentObject(session).environmentObject(center)
+            CreateSheet(kind: kind).environmentObject(session).environmentObject(center).environmentObject(nav)
+        }
+        .sheet(item: $nav.sheet) { route in
+            RouteSheet(route: route).environmentObject(session).environmentObject(center).environmentObject(nav)
+        }
+        .onChange(of: nav.tabRequest) { _, wanted in
+            guard let wanted else { return }
+            if items.contains(where: { $0.id == wanted }) {
+                resets[wanted, default: 0] += 1
+                tab = wanted
+            }
+            nav.tabRequest = nil
         }
         .onReceive(NotificationCenter.default.publisher(for: .movedToSales)) { _ in
             center.done(.opportunity, "نُقل المشروع إلى المبيعات كفرصة. أنشئ عرض السعر من صفحتها.")
@@ -102,6 +117,7 @@ struct MainTabs: View {
 
     private func page(_ content: some View, _ id: Tab) -> some View {
         content
+            .id(resets[id, default: 0])
             .toolbar(.hidden, for: .tabBar)
             .tag(id)
     }

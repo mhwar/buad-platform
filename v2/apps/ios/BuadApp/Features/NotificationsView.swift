@@ -4,7 +4,7 @@ import SwiftUI
 /// Opening one marks it read on the server (POST /api/notifications/:id/read), like the website's bell.
 struct NotificationsView: View {
     @EnvironmentObject private var session: Session
-    @Environment(\.openURL) private var openURL
+    @EnvironmentObject private var nav: Navigator
     @State private var items: [NotificationItem] = []
     @State private var unread = 0
     @State private var loaded = false
@@ -75,7 +75,7 @@ struct NotificationsView: View {
             onUnreadChange(unread)
             Task { try? await APIClient.shared.markRead(n.id) }
         }
-        if !n.link.isEmpty, let url = APIClient.shared.webURL(n.link) { openURL(url) }
+        if !n.link.isEmpty { nav.open(n.link) }
     }
 
     private func readAll() async {

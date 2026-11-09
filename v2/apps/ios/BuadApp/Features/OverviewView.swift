@@ -111,7 +111,7 @@ struct OverviewView: View {
                     statuses > 0 ? "\(statuses) قيد بلا حالة (مدفوع/معلّق)" : "",
                 ].filter { !$0.isEmpty }.joined(separator: " · "))
                 .font(.caption).foregroundStyle(Buad.muted)
-                Text("يُكمَل من الموقع.").font(.caption).foregroundStyle(Buad.muted)
+                Text("يُكمَل من صفحة المشروع.").font(.caption).foregroundStyle(Buad.muted)
             }
             .padding(14)
             .frame(maxWidth: .infinity, alignment: .leading)

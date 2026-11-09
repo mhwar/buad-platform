@@ -160,7 +160,7 @@ enum QuoteVocabulary {
         case "only_drafts": return "تُحذف المسودات فقط."
         case "not_accepted": return "حوّل العرض بعد قبوله."
         case "already_converted": return "حُوّل هذا العرض إلى مشروع من قبل."
-        case "client_archived": return "هذا العميل مؤرشف: استعده أولاً من الموقع."
+        case "client_archived": return "هذا العميل مؤرشف، فلا يُنشأ له عرض أو مشروع."
         case "pdf_unavailable": return "تعذّر إنشاء ملف PDF الآن. حاول بعد قليل."
         case "name_required": return "اكتب اسم الجهة أو الشخص."
         case "contact_required": return "أضف رقم جوال أو بريداً للتواصل، أو اختر «عميل جديد»."
