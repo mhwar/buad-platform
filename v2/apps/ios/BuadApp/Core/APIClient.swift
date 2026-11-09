@@ -25,6 +25,9 @@ enum APIError: Error, Equatable {
             switch code {
             case "end_before_start": return "تاريخ الاستحقاق قبل تاريخ البداية."
             case "not_found": return "لم يعد هذا العنصر موجوداً أو لا تملك صلاحية الوصول إليه."
+            case "not_pending": return "سُجّلت هذه الدفعة من قبل. اسحب للتحديث."
+            case "amount_exceeds_line": return "المبلغ أكبر من الدفعة."
+            case "closed", "project_closed": return "المشروع مغلق مالياً. أعد فتحه من الموقع أولاً."
             default: return "رفضت المنصة هذا التعديل."
             }
         case .network: return "تعذّر الاتصال بالمنصة. تحقق من الإنترنت."
@@ -55,7 +58,7 @@ final class APIClient: @unchecked Sendable {
         return url.absoluteURL
     }
 
-    private func send<T: Decodable>(_ method: String, _ path: String, body: [String: String]? = nil) async throws -> T {
+    private func send<T: Decodable>(_ method: String, _ path: String, body: [String: Any]? = nil) async throws -> T {
         var request = URLRequest(url: try url(path))
         request.httpMethod = method
         request.setValue("application/json", forHTTPHeaderField: "Accept")
@@ -171,6 +174,20 @@ final class APIClient: @unchecked Sendable {
 
     func statement(_ clientId: String) async throws -> Statement {
         try await send("GET", "/api/clients/\(clientId)/statement")
+    }
+
+    // MARK: 0.2.0 — finance and collection
+
+    func receivables() async throws -> Receivables {
+        try await send("GET", "/api/receivables")
+    }
+
+    /// The website's «تسجيل مقبوض» (features/receivables/ReceiveDialog.tsx): POST /api/receivables/:id/receive
+    /// with the bank day and the riyal amount. Less than the line keeps the rest as a new pending line.
+    /// Returns what remains, in halalas.
+    func receive(lineId: String, date: String, riyals: Double) async throws -> Int {
+        let r: ReceiveResult = try await send("POST", "/api/receivables/\(lineId)/receive", body: ["date": date, "amount": riyals])
+        return r.rest
     }
 
     func signOut() async {

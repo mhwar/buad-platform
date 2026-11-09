@@ -12,6 +12,9 @@
 		E3CE357138F6208997C912C7 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A7046795C1B1E42CE3AAA157 /* Assets.xcassets */; };
 		CB60977C5196898E7D4C296C /* BuadApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 127400BDE1AF9943F93E87CB /* BuadApp.swift */; };
 		BAA9A3BD252FDB3E68B82BA2 /* ClientsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 798EC49321C73A148E681BF9 /* ClientsView.swift */; };
+		2A3711E166FDAE66E2620214 /* Confirm.swift in Sources */ = {isa = PBXBuildFile; fileRef = 812AEA46536EF9D0366B74DD /* Confirm.swift */; };
+		AAE37BFB003E83665741C2FB /* FinanceModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = F984DF6F04EBA163D323946D /* FinanceModels.swift */; };
+		5B505A1F8E5EF105DD69C363 /* FinanceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0E8E8409B2DD629F3FF356C /* FinanceView.swift */; };
 		F37391568EFFD96C654900E3 /* Format.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42671CCBC6E8669BCF2A9F27 /* Format.swift */; };
 		7393F02EC54916C7EDE9A3B4 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00315442E9DAF7B3CC3ED5A9 /* Models.swift */; };
 		A289450366D35817DEC0755B /* MoreView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5BBF222B60004DD31D3FBEB8 /* MoreView.swift */; };
@@ -19,6 +22,7 @@
 		D26BF7A8214E4D68FB3AF938 /* ProjectDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F5CAFFCF496277E305DC4E4 /* ProjectDetailView.swift */; };
 		59E6DDE312BBB17209772C1C /* ProjectModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5A5EF53C6D7B76F4A56FC27 /* ProjectModels.swift */; };
 		35CF01C60CA46ED759C83A65 /* ProjectsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 118AB449F27FDDD25C375DC5 /* ProjectsView.swift */; };
+		1DBB3A842F02163614F44FAB /* ReceiveSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92196FB501D5B083E6E7B609 /* ReceiveSheet.swift */; };
 		E1F3EC802D75BAE3B9FEFD79 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23FC1395DDA99163E7BB7487 /* RootView.swift */; };
 		97E0DB3566CB47A3EE899254 /* Session.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3896A30DF892C5060229D8BA /* Session.swift */; };
 		6331940AFC62F21C0F97E46B /* SignInView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCC34F5150334BB07B835095 /* SignInView.swift */; };
@@ -35,6 +39,9 @@
 		A7046795C1B1E42CE3AAA157 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		127400BDE1AF9943F93E87CB /* BuadApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuadApp.swift; sourceTree = "<group>"; };
 		798EC49321C73A148E681BF9 /* ClientsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClientsView.swift; sourceTree = "<group>"; };
+		812AEA46536EF9D0366B74DD /* Confirm.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Confirm.swift; sourceTree = "<group>"; };
+		F984DF6F04EBA163D323946D /* FinanceModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FinanceModels.swift; sourceTree = "<group>"; };
+		F0E8E8409B2DD629F3FF356C /* FinanceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FinanceView.swift; sourceTree = "<group>"; };
 		42671CCBC6E8669BCF2A9F27 /* Format.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Format.swift; sourceTree = "<group>"; };
 		00315442E9DAF7B3CC3ED5A9 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
 		5BBF222B60004DD31D3FBEB8 /* MoreView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoreView.swift; sourceTree = "<group>"; };
@@ -42,6 +49,7 @@
 		4F5CAFFCF496277E305DC4E4 /* ProjectDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectDetailView.swift; sourceTree = "<group>"; };
 		C5A5EF53C6D7B76F4A56FC27 /* ProjectModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectModels.swift; sourceTree = "<group>"; };
 		118AB449F27FDDD25C375DC5 /* ProjectsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectsView.swift; sourceTree = "<group>"; };
+		92196FB501D5B083E6E7B609 /* ReceiveSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReceiveSheet.swift; sourceTree = "<group>"; };
 		23FC1395DDA99163E7BB7487 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		3896A30DF892C5060229D8BA /* Session.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Session.swift; sourceTree = "<group>"; };
 		DCC34F5150334BB07B835095 /* SignInView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignInView.swift; sourceTree = "<group>"; };
@@ -93,6 +101,8 @@
 			isa = PBXGroup;
 			children = (
 				200807A70C4DACF32C5CEBB6 /* APIClient.swift */,
+				812AEA46536EF9D0366B74DD /* Confirm.swift */,
+				F984DF6F04EBA163D323946D /* FinanceModels.swift */,
 				42671CCBC6E8669BCF2A9F27 /* Format.swift */,
 				00315442E9DAF7B3CC3ED5A9 /* Models.swift */,
 				C5A5EF53C6D7B76F4A56FC27 /* ProjectModels.swift */,
@@ -106,10 +116,12 @@
 			isa = PBXGroup;
 			children = (
 				798EC49321C73A148E681BF9 /* ClientsView.swift */,
+				F0E8E8409B2DD629F3FF356C /* FinanceView.swift */,
 				5BBF222B60004DD31D3FBEB8 /* MoreView.swift */,
 				4A45104A6141BFBC1B0E4747 /* NotificationsView.swift */,
 				4F5CAFFCF496277E305DC4E4 /* ProjectDetailView.swift */,
 				118AB449F27FDDD25C375DC5 /* ProjectsView.swift */,
+				92196FB501D5B083E6E7B609 /* ReceiveSheet.swift */,
 				23FC1395DDA99163E7BB7487 /* RootView.swift */,
 				DCC34F5150334BB07B835095 /* SignInView.swift */,
 				78067E7E3A51FEED36F0B4AC /* TasksView.swift */,
@@ -200,6 +212,9 @@
 				1C5F4FC968A0A1565094AAFB /* AppConfig.swift in Sources */,
 				CB60977C5196898E7D4C296C /* BuadApp.swift in Sources */,
 				BAA9A3BD252FDB3E68B82BA2 /* ClientsView.swift in Sources */,
+				2A3711E166FDAE66E2620214 /* Confirm.swift in Sources */,
+				AAE37BFB003E83665741C2FB /* FinanceModels.swift in Sources */,
+				5B505A1F8E5EF105DD69C363 /* FinanceView.swift in Sources */,
 				F37391568EFFD96C654900E3 /* Format.swift in Sources */,
 				7393F02EC54916C7EDE9A3B4 /* Models.swift in Sources */,
 				A289450366D35817DEC0755B /* MoreView.swift in Sources */,
@@ -207,6 +222,7 @@
 				D26BF7A8214E4D68FB3AF938 /* ProjectDetailView.swift in Sources */,
 				59E6DDE312BBB17209772C1C /* ProjectModels.swift in Sources */,
 				35CF01C60CA46ED759C83A65 /* ProjectsView.swift in Sources */,
+				1DBB3A842F02163614F44FAB /* ReceiveSheet.swift in Sources */,
 				E1F3EC802D75BAE3B9FEFD79 /* RootView.swift in Sources */,
 				97E0DB3566CB47A3EE899254 /* Session.swift in Sources */,
 				6331940AFC62F21C0F97E46B /* SignInView.swift in Sources */,
@@ -298,7 +314,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.1.2;
+				MARKETING_VERSION = 0.2.0;
 				PRODUCT_BUNDLE_IDENTIFIER = sa.buad.app;
 				PRODUCT_NAME = BuadApp;
 				SDKROOT = iphoneos;
@@ -321,7 +337,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.1.2;
+				MARKETING_VERSION = 0.2.0;
 				PRODUCT_BUNDLE_IDENTIFIER = sa.buad.app;
 				PRODUCT_NAME = BuadApp;
 				SDKROOT = iphoneos;

@@ -28,9 +28,12 @@ struct ProjectDetailView: View {
     @State private var execution: Execution?
     @State private var documents: [DocumentItem]?
     @State private var failed = false
+    @State private var receiving: ReceiveSheet.LineInfo?
+    @State private var toast: String?
     @State private var loaded = false
 
     private var canFinance: Bool { (session.me?.can("finance.view") ?? false) && !project.external }
+    private var canReceive: Bool { (session.me?.can("finance.edit") ?? false) && !project.closed && !project.external }
     private var canTasks: Bool { session.me?.can("tasks.view") ?? false }
     private var canDocs: Bool { session.me?.can("documents.view") ?? false }
 
@@ -60,6 +63,12 @@ struct ProjectDetailView: View {
                     }
                     .padding(.horizontal, -Buad.gutter)
                 }
+                if let toast {
+                    Label(toast, systemImage: "checkmark.circle.fill")
+                        .font(.subheadline.weight(.medium)).foregroundStyle(Buad.successInk)
+                        .padding(12).frame(maxWidth: .infinity, alignment: .leading)
+                        .background(Buad.successSoft, in: RoundedRectangle(cornerRadius: Buad.control, style: .continuous))
+                }
                 if failed {
                     EmptyNote(text: "تعذّر تحميل بعض أقسام المشروع. اسحب للتحديث.", icon: "exclamationmark.triangle")
                 }
@@ -80,6 +89,12 @@ struct ProjectDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
         .refreshable { await load() }
         .task { if !loaded { await load() } }
+        .sheet(item: $receiving) { line in
+            ReceiveSheet(line: line) { message in
+                toast = message
+                Task { await load() }
+            }
+        }
     }
 
     // MARK: loading
@@ -276,6 +291,16 @@ struct ProjectDetailView: View {
                         VStack(alignment: .trailing, spacing: 4) {
                             Text(Fmt.sar(item.amount)).font(.subheadline.weight(.semibold)).monospacedDigit()
                             Pill(text: st.label, tone: st.tone)
+                            if canReceive && item.status == "pending" {
+                                Button("تسجيل مقبوض") {
+                                    toast = nil
+                                    receiving = .init(id: item.id, label: item.label.isEmpty ? "دفعة" : item.label, amount: item.amount,
+                                                      project: project.name, contractDate: finance?.contractDate ?? "")
+                                }
+                                .font(.caption.weight(.semibold))
+                                .buttonStyle(.bordered)
+                                .controlSize(.small)
+                            }
                         }
                     }
                     .padding(14)

@@ -26,6 +26,19 @@ struct MoreView: View {
                     }
                 }
 
+                if let me = session.me, me.can("tasks.view") || me.can("clients.view") {
+                    Section {
+                        if me.can("tasks.view") {
+                            NavigationLink { TasksView() } label: { Label("المهام", systemImage: "checklist") }
+                        }
+                        if me.can("clients.view") {
+                            NavigationLink { ClientsView() } label: { Label("العملاء", systemImage: "person.2") }
+                        }
+                    } header: {
+                        Text("الأقسام")
+                    }
+                }
+
                 Section {
                     Toggle(isOn: $faceID) {
                         Label("فتح التطبيق بـ Face ID", systemImage: "faceid")
