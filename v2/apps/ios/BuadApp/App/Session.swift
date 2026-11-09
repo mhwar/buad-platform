@@ -8,6 +8,9 @@ final class Session: ObservableObject {
         case loading
         case signedOut
         case signedIn(Me)
+        /// The session could not be checked (no network, server unreachable): the user stays signed in
+        /// on this device and can retry. Only a 401 from the server signs them out.
+        case offline(String)
     }
 
     @Published var phase: Phase = .loading
@@ -24,6 +27,7 @@ final class Session: ObservableObject {
     }
 
     func bootstrap() async {
+        if case .offline = phase { phase = .loading }
         guard AppConfig.apiBase != nil else {
             phase = .signedOut
             return
@@ -36,8 +40,7 @@ final class Session: ObservableObject {
                 phase = .signedOut
             }
         } catch {
-            notice = (error as? APIError)?.message
-            phase = .signedOut
+            phase = .offline((error as? APIError)?.message ?? APIError.network.message)
         }
     }
 
@@ -49,6 +52,7 @@ final class Session: ObservableObject {
 
     func signOut() async {
         await APIClient.shared.signOut()
+        ScreenMemory.clear()
         locked = false
         phase = .signedOut
     }
@@ -63,6 +67,7 @@ final class Session: ObservableObject {
     func handle(_ error: Error) {
         if (error as? APIError) == .unauthorized {
             notice = APIError.unauthorized.message
+            ScreenMemory.clear()
             locked = false
             phase = .signedOut
         }

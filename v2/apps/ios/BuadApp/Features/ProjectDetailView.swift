@@ -29,6 +29,10 @@ struct ProjectDetailView: View {
     @State private var invoiceTarget: InvoiceTarget?
     @State private var addingLine = false
     @State private var invoices: [SalesInvoice]?
+    /// A write that failed (mark paid, delete a line): its own message, not the load error.
+    @State private var writeError: String?
+    /// The pending instalment whose actions («تسجيل مقبوض» / «حذف الدفعة») are being offered.
+    @State private var lineActions: ScheduleItem?
 
     struct ReceiptTarget: Identifiable {
         let receipt: Receipt?
@@ -45,7 +49,7 @@ struct ProjectDetailView: View {
         let entry: FinanceEntry?
         var id: String { entry?.id ?? "new" }
     }
-    @State private var toast: String?
+    @State private var toast: ToastItem?
 
     private var me: Me? { session.me }
     private var canFinance: Bool { (me?.can("finance.view") ?? false) && !project.external }
@@ -68,7 +72,6 @@ struct ProjectDetailView: View {
             VStack(alignment: .leading, spacing: 16) {
                 header
                 notices
-                if let toast { banner(toast) }
                 if failed { EmptyNote(text: "تعذّر تحميل بعض أقسام المشروع. اسحب للتحديث.", icon: "exclamationmark.triangle") }
                 actions
                 pulse
@@ -98,12 +101,26 @@ struct ProjectDetailView: View {
         }
         .refreshable { await load() }
         .task { if !loaded { await load() } }
-        .onChange(of: toast) { _, now in CollectionView.settle(now) { if toast == now { withAnimation { toast = nil } } } }
+        .toast($toast)
+        .alert("تعذّر الحفظ", isPresented: Binding(get: { writeError != nil }, set: { if !$0 { writeError = nil } })) {
+            Button("حسناً", role: .cancel) {}
+        } message: {
+            Text(writeError ?? "")
+        }
+        .confirmationDialog(lineActions.map { "\($0.label.isEmpty ? "دفعة" : $0.label) · \(Fmt.sar($0.amount))" } ?? "",
+                            isPresented: Binding(get: { lineActions != nil }, set: { if !$0 { lineActions = nil } }),
+                            titleVisibility: .visible, presenting: lineActions) { line in
+            if canReceive { Button("تسجيل مقبوض") { startReceive(line) } }
+            if canEditEntries { Button("حذف الدفعة", role: .destructive) { Task { await deleteLine(line) } } }
+            Button("إلغاء", role: .cancel) {}
+        } message: { line in
+            Text("تستحق \(Fmt.day(line.dueDate))")
+        }
         .sheet(item: $entryTarget) { target in
             if let f = finance {
                 EntrySheet(projectId: project.id, projectName: project.name, finance: f, existing: target.entry) { fin, message in
                     finance = fin
-                    toast = message
+                    toast = ToastItem(text: message)
                 }
             }
         }
@@ -112,25 +129,25 @@ struct ProjectDetailView: View {
                              remaining: max(0, (finance?.summary.grossTotal ?? 0) - (finance?.received ?? 0)),
                              contractDate: finance?.contractDate ?? "") { fin, message in
                 finance = fin
-                toast = message
+                toast = ToastItem(text: message)
                 Task { await load() }
             }
         }
         .sheet(item: $invoiceTarget) { target in
             InvoiceSheet(projectId: project.id, invoice: target.invoice, receipts: finance?.receipts ?? []) { message in
-                toast = message
+                toast = ToastItem(text: message)
                 Task { await load() }
             }
         }
         .sheet(isPresented: $addingLine) {
             ScheduleLineSheet(projectId: project.id) { message in
-                toast = message
+                toast = ToastItem(text: message)
                 Task { await load() }
             }
         }
         .sheet(item: $receiving) { line in
             ReceiveSheet(line: line) { message in
-                toast = message
+                toast = ToastItem(text: message)
                 Task { await load() }
             }
         }
@@ -150,7 +167,7 @@ struct ProjectDetailView: View {
                 Pill(text: project.late ? "متأخر" : status.label, tone: project.late ? .bad : status.tone)
                 if project.fullyDistributed { Pill(text: "موزّع بالكامل", tone: .ok) } else if project.closed { Pill(text: "مغلق") }
                 if project.external { Pill(text: "خارجي") }
-                if project.visibility == "private" { Pill(text: "🔒 خاص") }
+                if project.visibility == "private" { Pill(text: "خاص") }
             }
             VStack(alignment: .leading, spacing: 3) {
                 Label(project.clientName, systemImage: "building.2").font(.subheadline.weight(.medium)).foregroundStyle(Buad.ink)
@@ -182,13 +199,6 @@ struct ProjectDetailView: View {
             .background(Buad.warningSoft, in: RoundedRectangle(cornerRadius: Buad.control, style: .continuous))
     }
 
-    private func banner(_ text: String) -> some View {
-        Label(text, systemImage: "checkmark.circle.fill")
-            .font(.subheadline.weight(.medium)).foregroundStyle(Buad.successInk)
-            .padding(12).frame(maxWidth: .infinity, alignment: .leading)
-            .background(Buad.successSoft, in: RoundedRectangle(cornerRadius: Buad.control, style: .continuous))
-    }
-
     /// The website's header actions on the phone: primary «تسجيل مقبوض», secondary «قيد جديد».
     @ViewBuilder private var actions: some View {
         let receive = canReceive && finance != nil
@@ -196,7 +206,7 @@ struct ProjectDetailView: View {
             HStack(spacing: 10) {
                 if receive {
                     Button {
-                        if let next = pending.first { startReceive(next) } else { toast = nil; receiptTarget = ReceiptTarget(receipt: nil) }
+                        if let next = pending.first { startReceive(next) } else { receiptTarget = ReceiptTarget(receipt: nil) }
                     } label: {
                         Label("تسجيل مقبوض", systemImage: "banknote")
                             .font(.body.weight(.semibold))
@@ -207,7 +217,7 @@ struct ProjectDetailView: View {
                     .buttonStyle(.plain)
                 }
                 if canEditEntries && finance != nil {
-                    Button { toast = nil; entryTarget = EntryTarget(entry: nil) } label: {
+                    Button { entryTarget = EntryTarget(entry: nil) } label: {
                         Label("قيد جديد", systemImage: "plus")
                             .font(.body.weight(.semibold))
                             .frame(maxWidth: .infinity).frame(height: 48)
@@ -226,11 +236,12 @@ struct ProjectDetailView: View {
         guard await Confirm.owner("تأكيد تعليم «\(e.description)» كمدفوع") else { return }
         do {
             finance = try await APIClient.shared.updateEntry(project.id, e.id, ["status": "paid"])
-            toast = "حُفظ القيد"
+            toast = ToastItem(text: "عُلّم «\(e.description)» مدفوعاً") { [id = project.id] in
+                if let fin = try? await APIClient.shared.updateEntry(id, e.id, ["status": "pending"]) { finance = fin }
+            }
         } catch {
             session.handle(error)
-            toast = nil
-            failed = true
+            writeError = "تعذّر تعليم القيد كمدفوع. " + ((error as? APIError)?.message ?? "")
         }
     }
 
@@ -254,33 +265,35 @@ struct ProjectDetailView: View {
         let due = pending.first
         return VStack(alignment: .leading, spacing: 8) {
             Text("نبض المشروع").font(.headline)
-            LazyVGrid(columns: [GridItem(.flexible(), spacing: 1), GridItem(.flexible(), spacing: 1)], spacing: 1) {
-                cell("التنفيذ", exec.1 > 0 ? "\(exec.0)/\(exec.1) \(exec.2)" : "لم تُضف مراحل أو مهام",
-                     progress: exec.1 > 0 ? Double(exec.0) / Double(exec.1) : nil)
-                if let d = days, project.status == "active" {
-                    cell("الموعد", d < 0 ? "متأخر \(-d) يوم" : "متبقٍ \(d) يوم",
-                         sub: "الانتهاء \(Fmt.day(endISO))", tone: d < 0 ? .bad : d <= 7 ? .warn : nil)
-                } else {
-                    cell("الموعد", endISO.isEmpty ? "بلا تاريخ انتهاء" : Fmt.day(endISO))
+            JoinedGrid {
+                GridRow {
+                    cell("التنفيذ", exec.1 > 0 ? "\(exec.0)/\(exec.1) \(exec.2)" : "لم تُضف مراحل أو مهام",
+                         progress: exec.1 > 0 ? Double(exec.0) / Double(exec.1) : nil)
+                    if let d = days, project.status == "active" {
+                        cell("الموعد", d < 0 ? "متأخر \(-d) يوم" : "متبقٍ \(d) يوم",
+                             sub: "الانتهاء \(Fmt.day(endISO))", tone: d < 0 ? .bad : d <= 7 ? .warn : nil)
+                    } else {
+                        cell("الموعد", endISO.isEmpty ? "بلا تاريخ انتهاء" : Fmt.day(endISO))
+                    }
                 }
-                if let t = nextTask {
-                    cell("المهمة التالية", t.title,
-                         sub: [t.overdue ? "متأخرة" : "", Fmt.dayMonth(t.dueDate), t.assigneeName].filter { !$0.isEmpty }.joined(separator: " · "),
-                         tone: t.overdue ? .bad : nil)
-                } else {
-                    cell("المهمة التالية", canTasks ? "لا مهام بموعد" : "—")
-                }
-                if canFinance, let d = due {
-                    let late = d.dueDate < Fmt.todayISO
-                    cell("الدفعة القادمة", Fmt.sar(d.amount),
-                         sub: [late ? "متأخرة" : "", d.label, Fmt.dayMonth(d.dueDate)].filter { !$0.isEmpty }.joined(separator: " · "),
-                         tone: late ? .bad : nil)
-                } else {
-                    cell("الدفعة القادمة", canFinance ? "لا دفعات منتظرة" : "—")
+                GridRow {
+                    if let t = nextTask {
+                        cell("المهمة التالية", t.title,
+                             sub: [t.overdue ? "متأخرة" : "", Fmt.dayMonth(t.dueDate), t.assigneeName].filter { !$0.isEmpty }.joined(separator: " · "),
+                             tone: t.overdue ? .bad : nil)
+                    } else {
+                        cell("المهمة التالية", canTasks ? "لا مهام بموعد" : "—")
+                    }
+                    if canFinance, let d = due {
+                        let late = d.dueDate < Fmt.todayISO
+                        cell("الدفعة القادمة", Fmt.sar(d.amount),
+                             sub: [late ? "متأخرة" : "", d.label, Fmt.dayMonth(d.dueDate)].filter { !$0.isEmpty }.joined(separator: " · "),
+                             tone: late ? .bad : nil)
+                    } else {
+                        cell("الدفعة القادمة", canFinance ? "لا دفعات منتظرة" : "—")
+                    }
                 }
             }
-            .background(Buad.line)
-            .clipShape(RoundedRectangle(cornerRadius: Buad.radius, style: .continuous))
         }
     }
 
@@ -292,9 +305,7 @@ struct ProjectDetailView: View {
             if let sub, !sub.isEmpty { Text(sub).font(.caption2).foregroundStyle(tone == .bad ? Buad.dangerInk : Buad.muted).lineLimit(2) }
             if let progress { ProgressBar(value: progress) }
         }
-        .frame(maxWidth: .infinity, minHeight: 82, alignment: .topLeading)
-        .padding(12)
-        .background(Buad.surface)
+        .joinedCell(minHeight: 82)
     }
 
     // MARK: finance strip
@@ -304,14 +315,18 @@ struct ProjectDetailView: View {
         let spent = s.grossTotal > 0 ? Double(s.totalDeductions) / Double(s.grossTotal) : 0
         let margin = s.grossTotal > 0 ? Double(s.profit) / Double(s.grossTotal) * 100 : 0
         return VStack(spacing: 0) {
-            LazyVGrid(columns: [GridItem(.flexible(), spacing: 1), GridItem(.flexible(), spacing: 1)], spacing: 1) {
-                tile("المصروف من العقد", Fmt.sar(s.totalDeductions),
-                     sub: s.pendingExpenses > 0 ? "منه معلّق \(Fmt.sar(s.pendingExpenses))" : "\(Int((spent * 100).rounded()))% من العقد",
-                     tone: s.pendingExpenses > 0 ? .warn : nil)
-                tile("صافي الربح", f.profitHidden ? "مخفي" : Fmt.sar(s.profit), tone: f.profitHidden ? nil : .ok)
-                tile("غير المصنّف من العقد", Fmt.sar(s.remaining), sub: s.remaining < 0 ? "▲ تجاوز قيمة العقد" : nil, tone: s.remaining < 0 ? .bad : nil)
-                tile("هامش الربح", f.profitHidden ? "مخفي" : "\(Int(margin.rounded()))%",
-                     tone: f.profitHidden ? nil : margin >= 20 ? .ok : margin >= 0 ? .warn : .bad)
+            Grid(horizontalSpacing: 1, verticalSpacing: 1) {
+                GridRow {
+                    tile("المصروف من العقد", Fmt.sar(s.totalDeductions),
+                         sub: s.pendingExpenses > 0 ? "منه معلّق \(Fmt.sar(s.pendingExpenses))" : "\(Int((spent * 100).rounded()))% من العقد",
+                         tone: s.pendingExpenses > 0 ? .warn : nil)
+                    tile("صافي الربح", f.profitHidden ? "مخفي" : Fmt.sar(s.profit), tone: f.profitHidden ? nil : .ok)
+                }
+                GridRow {
+                    tile("غير المصنّف من العقد", Fmt.sar(s.remaining), sub: s.remaining < 0 ? "▲ تجاوز قيمة العقد" : nil, tone: s.remaining < 0 ? .bad : nil)
+                    tile("هامش الربح", f.profitHidden ? "مخفي" : "\(Int(margin.rounded()))%",
+                         tone: f.profitHidden ? nil : margin >= 20 ? .ok : margin >= 0 ? .warn : .bad)
+                }
             }
             .background(Buad.line)
             VStack(alignment: .leading, spacing: 6) {
@@ -340,11 +355,9 @@ struct ProjectDetailView: View {
             Text(title).font(.caption).foregroundStyle(Buad.muted)
             Text(value).font(.body.weight(.semibold)).monospacedDigit().lineLimit(1).minimumScaleFactor(0.7)
                 .foregroundStyle(tone?.foreground ?? Buad.ink)
-            if let sub { Text(sub).font(.caption2).foregroundStyle(Buad.muted).lineLimit(1) }
+            if let sub { Text(sub).font(.caption2).foregroundStyle(Buad.muted).lineLimit(2) }
         }
-        .frame(maxWidth: .infinity, minHeight: 64, alignment: .leading)
-        .padding(12)
-        .background(Buad.surface)
+        .joinedCell()
     }
 
     // MARK: ① العقد والتحصيل
@@ -381,13 +394,20 @@ struct ProjectDetailView: View {
                 }
                 .font(.subheadline)
 
+                // Short titles so four segments fit a 375pt phone; the counts sit on the line below.
                 Picker("أقسام العقد", selection: Binding(get: { part }, set: { contractPart = $0 })) {
                     Text("الملخص").tag(ContractPart.summary)
-                    Text("الاستلامات (\(f.receipts.count))").tag(ContractPart.receipts)
-                    if canInvoices { Text("الفواتير (\(invoices?.count ?? 0))").tag(ContractPart.invoices) }
-                    Text("الدفعات (\(pending.count))").tag(ContractPart.schedule)
+                    Text("الاستلام").tag(ContractPart.receipts)
+                    if canInvoices { Text("الفواتير").tag(ContractPart.invoices) }
+                    Text("الدفعات").tag(ContractPart.schedule)
                 }
                 .pickerStyle(.segmented)
+                Text([
+                    "\(f.receipts.count) استلام",
+                    canInvoices ? "\(invoices?.count ?? 0) فاتورة" : "",
+                    "\(pending.count) دفعة منتظرة" + (lateDue ? " (منها متأخرة)" : ""),
+                ].filter { !$0.isEmpty }.joined(separator: " · "))
+                .font(.caption).foregroundStyle(lateDue ? Buad.dangerInk : Buad.muted)
 
                 switch part {
                 case .summary: contractTrail(f)
@@ -426,14 +446,18 @@ struct ProjectDetailView: View {
         } else {
             ForEach(Array(f.receipts.reversed().enumerated()), id: \.element.id) { i, r in
                 if i > 0 { Divider() }
-                Button { if canEditEntries { toast = nil; receiptTarget = ReceiptTarget(receipt: r) } } label: { receiptRow(r) }
-                    .buttonStyle(.plain)
-                    .disabled(!canEditEntries)
+                if canEditEntries {
+                    Button { receiptTarget = ReceiptTarget(receipt: r) } label: { receiptRow(r, chevron: true) }
+                        .buttonStyle(.plain)
+                        .accessibilityHint("لتعديل المقبوض أو اعتماده")
+                } else {
+                    receiptRow(r, chevron: false)
+                }
             }
         }
     }
 
-    private func receiptRow(_ r: Receipt) -> some View {
+    private func receiptRow(_ r: Receipt, chevron: Bool) -> some View {
                 HStack(alignment: .firstTextBaseline) {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(Fmt.day(r.date)).font(.subheadline.weight(.medium))
@@ -444,15 +468,17 @@ struct ProjectDetailView: View {
                         Text((r.amount < 0 ? "استرجاع " : "") + Fmt.sar(abs(r.amount))).font(.subheadline.weight(.semibold)).monospacedDigit()
                         if !r.approved { Pill(text: "غير معتمد", tone: .warn) }
                     }
+                    if chevron { Chevron() }
                 }
+                .frame(minHeight: Buad.tap)
                 .contentShape(Rectangle())
     }
 
     private func addButton(_ title: String, _ action: @escaping () -> Void) -> some View {
-        Button { toast = nil; action() } label: {
+        Button { action() } label: {
             Label(title, systemImage: "plus").font(.subheadline.weight(.semibold))
-                .frame(maxWidth: .infinity).frame(height: 40)
-                .background(Buad.brandSoft, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                .frame(maxWidth: .infinity, minHeight: Buad.tap)
+                .background(Buad.brandSoft, in: RoundedRectangle(cornerRadius: Buad.control, style: .continuous))
                 .foregroundStyle(Buad.ink)
         }
         .buttonStyle(.plain)
@@ -468,19 +494,26 @@ struct ProjectDetailView: View {
             } else {
                 ForEach(Array(list.enumerated()), id: \.element.id) { i, inv in
                     if i > 0 { Divider() }
-                    Button { if canEditInvoices { toast = nil; invoiceTarget = InvoiceTarget(invoice: inv) } } label: {
-                        HStack(alignment: .firstTextBaseline) {
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text("\(Fmt.day(inv.date)) · \(inv.number.isEmpty ? "بلا رقم" : inv.number)").font(.subheadline.weight(.medium))
-                                Text("منها ضريبة \(Fmt.sar(inv.vat))" + (inv.hasFile ? " · مرفقة" : "")).font(.caption).foregroundStyle(Buad.muted)
+                    let row = HStack(alignment: .firstTextBaseline) {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("\(Fmt.day(inv.date)) · \(inv.number.isEmpty ? "بلا رقم" : inv.number)").font(.subheadline.weight(.medium))
+                            HStack(spacing: 4) {
+                                Text("منها ضريبة \(Fmt.sar(inv.vat))")
+                                if inv.hasFile { Label("مرفقة", systemImage: "paperclip") }
                             }
-                            Spacer()
-                            Text(Fmt.sar(inv.amount)).font(.subheadline.weight(.semibold)).monospacedDigit()
+                            .font(.caption).foregroundStyle(Buad.muted)
                         }
-                        .contentShape(Rectangle())
+                        Spacer()
+                        Text(Fmt.sar(inv.amount)).font(.subheadline.weight(.semibold)).monospacedDigit()
+                        if canEditInvoices { Chevron() }
                     }
-                    .buttonStyle(.plain)
-                    .disabled(!canEditInvoices)
+                    .frame(minHeight: Buad.tap)
+                    .contentShape(Rectangle())
+                    if canEditInvoices {
+                        Button { invoiceTarget = InvoiceTarget(invoice: inv) } label: { row }.buttonStyle(.plain)
+                    } else {
+                        row
+                    }
                 }
             }
         } else {
@@ -497,12 +530,13 @@ struct ProjectDetailView: View {
                 if i > 0 { Divider() }
                 let st = Vocabulary.scheduleStatus(item.status, dueDate: item.dueDate)
                 let late = item.status == "pending" && item.dueDate < Fmt.todayISO
-                scheduleRow(item, st: st, late: late)
-                    .contextMenu {
-                        if canEditEntries && item.status == "pending" {
-                            Button(role: .destructive) { Task { await deleteLine(item) } } label: { Label("حذف الدفعة", systemImage: "trash") }
-                        }
-                    }
+                if item.status == "pending" && (canReceive || canEditEntries) {
+                    Button { lineActions = item } label: { scheduleRow(item, st: st, late: late) }
+                        .buttonStyle(.plain)
+                        .accessibilityHint("لتسجيل استلامها أو حذفها")
+                } else {
+                    scheduleRow(item, st: st, late: late)
+                }
             }
         }
     }
@@ -511,11 +545,11 @@ struct ProjectDetailView: View {
         guard await Confirm.owner("تأكيد حذف الدفعة «\(item.label)»") else { return }
         do {
             try await APIClient.shared.deleteScheduleLine(item.id)
-            toast = "حُذفت الدفعة"
+            toast = ToastItem(text: "حُذفت الدفعة")
             await load()
         } catch {
             session.handle(error)
-            failed = true
+            writeError = "تعذّر حذف الدفعة. " + ((error as? APIError)?.message ?? "")
         }
     }
 
@@ -531,15 +565,10 @@ struct ProjectDetailView: View {
                         Text(Fmt.sar(item.amount)).font(.subheadline.weight(.semibold)).monospacedDigit()
                         Pill(text: st.label, tone: st.tone)
                     }
-                    if canReceive && item.status == "pending" {
-                        Button { startReceive(item) } label: {
-                            Image(systemName: "banknote").frame(width: 36, height: 36)
-                                .background(Buad.brandSoft, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
-                        }
-                        .buttonStyle(.plain)
-                        .accessibilityLabel("تسجيل مقبوض \(item.label)")
-                    }
+                    if item.status == "pending" && (canReceive || canEditEntries) { Chevron() }
                 }
+                .frame(minHeight: Buad.tap)
+                .contentShape(Rectangle())
     }
 
     private var externalCard: some View {
@@ -555,17 +584,11 @@ struct ProjectDetailView: View {
 
     private var workArea: some View {
         let part = workPart.flatMap { workParts.contains($0) ? $0 : nil } ?? workParts.first ?? .execution
-        let exec = execution.map { x -> String in
-            let total = x.stages.isEmpty ? x.tasks.count : x.stages.count
-            let done = x.stages.isEmpty ? x.tasks.filter { $0.status == "done" }.count : x.stages.filter { $0.status == "done" }.count
-            return total > 0 ? " (\(done)/\(total))" : ""
-        } ?? ""
-        let docCount = documents.map { $0.isEmpty ? "" : " (\($0.count))" } ?? ""
         return VStack(alignment: .leading, spacing: 12) {
             if workParts.count > 1 {
                 Picker("أقسام المشروع", selection: Binding(get: { part }, set: { workPart = $0 })) {
                     ForEach(workParts, id: \.self) { p in
-                        Text(p == .entries ? "المعاملات" : p == .documents ? "المستندات\(docCount)" : "التنفيذ\(exec)").tag(p)
+                        Text(p == .entries ? "المعاملات" : p == .documents ? "المستندات" : "التنفيذ").tag(p)
                     }
                 }
                 .pickerStyle(.segmented)
@@ -588,6 +611,18 @@ struct ProjectDetailView: View {
                 FilterChip(title: "الكل", count: all.count, on: entryKind == .all) { entryKind = .all }
                 FilterChip(title: "دخل", count: incomeN, on: entryKind == .income) { entryKind = .income }
                 FilterChip(title: "مصروف", count: all.count - incomeN, on: entryKind == .expense) { entryKind = .expense }
+                Spacer(minLength: 0)
+                if canEditEntries {
+                    Button { entryTarget = EntryTarget(entry: nil) } label: {
+                        Label("قيد", systemImage: "plus").font(.subheadline.weight(.semibold))
+                            .padding(.horizontal, 12).frame(minHeight: 34)
+                            .background(Buad.brandSoft, in: Capsule())
+                            .padding(.vertical, 5).contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(Buad.ink)
+                    .accessibilityLabel("قيد جديد")
+                }
             }
             HStack(spacing: 1) {
                 tile("الدخل المسجّل", Fmt.sar(f.summary.totalIncome), tone: .ok)
@@ -612,16 +647,26 @@ struct ProjectDetailView: View {
                             ForEach(Array(rows.enumerated()), id: \.element.id) { i, e in
                                 if i > 0 { Divider().padding(.leading, 14) }
                                 if canEditEntries {
-                                    Button { toast = nil; entryTarget = EntryTarget(entry: e) } label: { entryRow(e, f) }
-                                        .buttonStyle(.plain)
-                                        .contextMenu {
-                                            Button { toast = nil; entryTarget = EntryTarget(entry: e) } label: { Label("تعديل", systemImage: "pencil") }
-                                            if e.status == "pending" {
-                                                Button { Task { await markPaid(e) } } label: { Label("تعليم كمدفوع", systemImage: "checkmark.circle") }
+                                    VStack(alignment: .leading, spacing: 0) {
+                                        Button { entryTarget = EntryTarget(entry: e) } label: { entryRow(e, f, chevron: true) }
+                                            .buttonStyle(.plain)
+                                            .accessibilityHint("لتعديل القيد أو حذفه")
+                                        if e.status == "pending" {
+                                            Button { Task { await markPaid(e) } } label: {
+                                                Label("تعليم كمدفوع", systemImage: "checkmark.circle")
+                                                    .font(.caption.weight(.semibold))
+                                                    .padding(.horizontal, 12).frame(minHeight: 30)
+                                                    .background(Buad.successSoft, in: Capsule())
+                                                    .foregroundStyle(Buad.successInk)
+                                                    .padding(.vertical, 7).contentShape(Rectangle())
                                             }
+                                            .buttonStyle(.plain)
+                                            .padding(.horizontal, 14)
+                                            .padding(.top, -10)
                                         }
+                                    }
                                 } else {
-                                    entryRow(e, f)
+                                    entryRow(e, f, chevron: false)
                                 }
                             }
                         }
@@ -634,9 +679,9 @@ struct ProjectDetailView: View {
         }
     }
 
-    private func entryRow(_ e: FinanceEntry, _ f: ProjectFinance) -> some View {
+    private func entryRow(_ e: FinanceEntry, _ f: ProjectFinance, chevron: Bool) -> some View {
         let income = e.type == "income"
-        let flags = [Fmt.day(e.date), f.categoryName(e.cat), e.supplierName, e.taxInvoice ? "فاتورة ضريبية" : "", e.assetId.isEmpty ? "" : "📎 مرفق",
+        let flags = [Fmt.day(e.date), f.categoryName(e.cat), e.supplierName, e.taxInvoice ? "فاتورة ضريبية" : "", e.assetId.isEmpty ? "" : "مرفق",
                      e.status == "pending" ? "معلّق" : "", e.status == "cancelled" ? "ملغى، لا يُحتسب" : ""]
         return HStack(alignment: .firstTextBaseline, spacing: 10) {
             VStack(alignment: .leading, spacing: 3) {
@@ -649,6 +694,7 @@ struct ProjectDetailView: View {
                 .font(.subheadline.weight(.semibold)).monospacedDigit()
                 .foregroundStyle(e.status == "cancelled" ? Buad.faint : income ? Buad.successInk : Buad.ink)
                 .strikethrough(e.status == "cancelled")
+            if chevron { Chevron() }
         }
         .padding(14)
         .contentShape(Rectangle())

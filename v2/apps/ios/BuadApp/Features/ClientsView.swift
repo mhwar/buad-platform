@@ -170,7 +170,13 @@ struct ClientDetailView: View {
                                 }
                                 Spacer()
                                 if !p.phone.isEmpty, let tel = URL(string: "tel:\(p.phone.filter { $0.isNumber || $0 == "+" })") {
-                                    Link(destination: tel) { Image(systemName: "phone.fill").foregroundStyle(Buad.success) }
+                                    Link(destination: tel) {
+                                        Image(systemName: "phone.fill")
+                                            .frame(width: Buad.tap, height: Buad.tap)
+                                            .background(Buad.successSoft, in: Circle())
+                                            .foregroundStyle(Buad.successInk)
+                                    }
+                                    .accessibilityLabel("اتصال بـ \(p.name)")
                                 }
                             }
                             .padding(14)

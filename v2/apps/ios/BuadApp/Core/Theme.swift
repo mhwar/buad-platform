@@ -48,6 +48,10 @@ enum Buad {
     static let gutter: CGFloat = 16
     static let radius: CGFloat = 16
     static let control: CGFloat = 12
+    /// Small inner corners: pills, icon tiles, buttons inside rows.
+    static let small: CGFloat = 8
+    /// The smallest comfortable tap target (Apple HIG).
+    static let tap: CGFloat = 44
 }
 
 enum Tone {
@@ -83,8 +87,11 @@ struct Pill: View {
     var body: some View {
         Text(text)
             .font(.caption.weight(.semibold))
+            .lineLimit(1)
+            .fixedSize()
             .padding(.horizontal, 8)
-            .frame(height: 22)
+            .padding(.vertical, 3)
+            .frame(minHeight: 22)
             .background(tone.background, in: RoundedRectangle(cornerRadius: 6, style: .continuous))
             .foregroundStyle(tone.foreground)
     }
@@ -114,7 +121,105 @@ struct ProgressBar: View {
         }
         .frame(height: 6)
         .environment(\.layoutDirection, .rightToLeft)
+        .accessibilityElement()
+        .accessibilityValue("\(Int((max(0, min(1, value)) * 100).rounded()))٪")
     }
+}
+
+/// The trailing hint that a row opens something (mirrors itself in right-to-left).
+struct Chevron: View {
+    var body: some View {
+        Image(systemName: "chevron.forward")
+            .font(.caption.weight(.semibold))
+            .foregroundStyle(Buad.faint)
+            .accessibilityHidden(true)
+    }
+}
+
+// MARK: - Joined tiles
+
+/// Tiles that touch with a hairline between them (pulse, finance strip, dashboards). Use inside
+/// `JoinedGrid` rows: every cell fills its row, so a short cell never shows the line colour as a band.
+extension View {
+    func joinedCell(minHeight: CGFloat = 64) -> some View {
+        frame(maxWidth: .infinity, minHeight: minHeight, maxHeight: .infinity, alignment: .topLeading)
+            .padding(12)
+            .background(Buad.surface)
+            .accessibilityElement(children: .combine)
+    }
+}
+
+struct JoinedGrid<Content: View>: View {
+    @ViewBuilder var content: Content
+
+    var body: some View {
+        Grid(horizontalSpacing: 1, verticalSpacing: 1) { content }
+            .background(Buad.line)
+            .clipShape(RoundedRectangle(cornerRadius: Buad.radius, style: .continuous))
+    }
+}
+
+// MARK: - Toast
+
+/// A short confirmation that floats above the bottom edge, where the user is looking, with an
+/// optional «تراجع». It gives a light haptic and clears itself (longer when it can be undone).
+struct ToastItem: Identifiable, Equatable {
+    let id = UUID()
+    let text: String
+    var undo: (@MainActor () async -> Void)? = nil
+
+    static func == (a: ToastItem, b: ToastItem) -> Bool { a.id == b.id }
+}
+
+private struct ToastHost: ViewModifier {
+    @Binding var item: ToastItem?
+
+    func body(content: Content) -> some View {
+        content
+            .overlay(alignment: .bottom) {
+                if let t = item {
+                    HStack(spacing: 12) {
+                        Image(systemName: "checkmark.circle.fill").foregroundStyle(Buad.success)
+                        Text(t.text).font(.subheadline.weight(.medium)).multilineTextAlignment(.leading)
+                        Spacer(minLength: 4)
+                        if let undo = t.undo {
+                            Button {
+                                item = nil
+                                Task { await undo() }
+                            } label: {
+                                Text("تراجع").font(.subheadline.weight(.bold))
+                                    .frame(minWidth: Buad.tap, minHeight: Buad.tap)
+                            }
+                            .foregroundStyle(Buad.accent)
+                        }
+                    }
+                    .padding(.horizontal, 16)
+                    .frame(minHeight: 52)
+                    .background(Buad.ink, in: RoundedRectangle(cornerRadius: Buad.control, style: .continuous))
+                    .foregroundStyle(Buad.onInk)
+                    .shadow(color: .black.opacity(0.18), radius: 12, y: 4)
+                    .padding(.horizontal, Buad.gutter)
+                    .padding(.bottom, 10)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                    .id(t.id)
+                    .accessibilityAddTraits(.isStaticText)
+                }
+            }
+            .animation(.spring(duration: 0.3), value: item)
+            .onChange(of: item) { _, now in
+                guard let now else { return }
+                Haptic.success()
+                UIAccessibility.post(notification: .announcement, argument: now.text)
+                Task { @MainActor in
+                    try? await Task.sleep(for: .seconds(now.undo == nil ? 3.5 : 6))
+                    if item == now { item = nil }
+                }
+            }
+    }
+}
+
+extension View {
+    func toast(_ item: Binding<ToastItem?>) -> some View { modifier(ToastHost(item: item)) }
 }
 
 struct EmptyNote: View {

@@ -11,6 +11,8 @@ import VisionKit
 struct AttachmentField: View {
     @Binding var assetId: String
     let canUpload: Bool
+    /// True while a file is on its way: the form keeps «حفظ» off so nothing is saved without it.
+    var uploading: Binding<Bool> = .constant(false)
 
     @State private var scanning = false
     @State private var picking = false
@@ -97,8 +99,9 @@ struct AttachmentField: View {
 
     private func send(_ data: Data, type: String) async {
         busy = true
+        uploading.wrappedValue = true
         error = nil
-        defer { busy = false }
+        defer { busy = false; uploading.wrappedValue = false }
         do {
             assetId = try await APIClient.shared.uploadAsset(data, type: type)
             Haptic.success()
