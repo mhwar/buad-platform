@@ -23,6 +23,7 @@ enum Fmt {
 
     /// «172.5 ألف», «1.20 مليون» for tight spaces.
     static func short(_ halalas: Int) -> String {
+        if halalas < 0 { return "−" + short(-halalas) }
         let r = Double(halalas) / 100
         if r >= 1_000_000 { return String(format: "%.2f مليون", r / 1_000_000) }
         if r >= 1_000 {

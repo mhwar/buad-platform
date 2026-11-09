@@ -29,7 +29,7 @@ struct RootView: View {
 }
 
 /// The phone tabs of the website (PHONE_CORE in features/more/tabs.ts), each shown only when the
-/// role may see it. 0.1.2: «اليوم» (with notifications), «المشاريع», «المهام», «العملاء»; the rest follow phase by phase.
+/// role may see it. Like PHONE_CORE: اليوم، المشاريع، المالية، المزيد (المبيعات joins in phase 3). «المهام» and «العملاء» open from «المزيد», as on the website.
 struct MainTabs: View {
     let me: Me
 
@@ -41,13 +41,9 @@ struct MainTabs: View {
                 ProjectsView()
                     .tabItem { Label("المشاريع", systemImage: "briefcase") }
             }
-            if me.can("tasks.view") {
-                TasksView()
-                    .tabItem { Label("المهام", systemImage: "checklist") }
-            }
-            if me.can("clients.view") {
-                ClientsView()
-                    .tabItem { Label("العملاء", systemImage: "person.2") }
+            if me.can("treasury.view") {
+                FinanceView()
+                    .tabItem { Label("المالية", systemImage: "banknote") }
             }
             MoreView()
                 .tabItem { Label("المزيد", systemImage: "line.3.horizontal") }

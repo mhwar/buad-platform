@@ -28,62 +28,60 @@ struct TasksView: View {
     }
 
     var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 14) {
-                    Picker("النطاق", selection: $mine) {
-                        Text("مهامي").tag(true)
-                        Text("كل الفريق").tag(false)
-                    }
-                    .pickerStyle(.segmented)
-
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 8) {
-                            FilterChip(title: "مفتوحة", count: pool.filter { $0.status != "done" }.count, on: view == "open") { view = "open" }
-                            FilterChip(title: "متأخرة", count: pool.filter(\.overdue).count, on: view == "late") { view = "late" }
-                            FilterChip(title: "منجزة", count: pool.filter { $0.status == "done" }.count, on: view == "done") { view = "done" }
-                        }
-                        .padding(.horizontal, Buad.gutter)
-                    }
-                    .padding(.horizontal, -Buad.gutter)
-
-                    if let notice {
-                        Text(notice).font(.footnote).foregroundStyle(Buad.dangerInk)
-                    }
-
-                    if !loaded {
-                        ProgressView().frame(maxWidth: .infinity).padding(.vertical, 28)
-                    } else if let error {
-                        EmptyNote(text: error, icon: "wifi.exclamationmark")
-                    } else if shown.isEmpty {
-                        EmptyNote(text: mine ? "المهام المسندة إليك تظهر هنا." : "لا مهام في هذا العرض.", icon: "checklist")
-                    } else {
-                        VStack(spacing: 0) {
-                            ForEach(Array(shown.enumerated()), id: \.element.id) { i, t in
-                                if i > 0 { Divider().padding(.leading, 52) }
-                                row(t)
-                            }
-                        }
-                        .background(Buad.surface, in: RoundedRectangle(cornerRadius: Buad.radius, style: .continuous))
-                    }
+        ScrollView {
+            VStack(alignment: .leading, spacing: 14) {
+                Picker("النطاق", selection: $mine) {
+                    Text("مهامي").tag(true)
+                    Text("كل الفريق").tag(false)
                 }
-                .padding(.horizontal, Buad.gutter)
-                .padding(.vertical, 8)
-            }
-            .background(Buad.canvas.ignoresSafeArea())
-            .navigationTitle("المهام")
-            .navigationBarTitleDisplayMode(.inline)
-            .searchable(text: $query, prompt: "ابحث في المهام")
-            .refreshable { await load() }
-            .task { if !loaded { await load() } }
-            .onChange(of: mine) { _, _ in Task { await load() } }
-            .sheet(item: $postponing) { t in
-                PostponeSheet(task: t) { day in
-                    postponing = nil
-                    Task { await update(t, ["dueDate": day]) }
+                .pickerStyle(.segmented)
+
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        FilterChip(title: "مفتوحة", count: pool.filter { $0.status != "done" }.count, on: view == "open") { view = "open" }
+                        FilterChip(title: "متأخرة", count: pool.filter(\.overdue).count, on: view == "late") { view = "late" }
+                        FilterChip(title: "منجزة", count: pool.filter { $0.status == "done" }.count, on: view == "done") { view = "done" }
+                    }
+                    .padding(.horizontal, Buad.gutter)
                 }
-                .presentationDetents([.medium, .large])
+                .padding(.horizontal, -Buad.gutter)
+
+                if let notice {
+                    Text(notice).font(.footnote).foregroundStyle(Buad.dangerInk)
+                }
+
+                if !loaded {
+                    ProgressView().frame(maxWidth: .infinity).padding(.vertical, 28)
+                } else if let error {
+                    EmptyNote(text: error, icon: "wifi.exclamationmark")
+                } else if shown.isEmpty {
+                    EmptyNote(text: mine ? "المهام المسندة إليك تظهر هنا." : "لا مهام في هذا العرض.", icon: "checklist")
+                } else {
+                    VStack(spacing: 0) {
+                        ForEach(Array(shown.enumerated()), id: \.element.id) { i, t in
+                            if i > 0 { Divider().padding(.leading, 52) }
+                            row(t)
+                        }
+                    }
+                    .background(Buad.surface, in: RoundedRectangle(cornerRadius: Buad.radius, style: .continuous))
+                }
             }
+            .padding(.horizontal, Buad.gutter)
+            .padding(.vertical, 8)
+        }
+        .background(Buad.canvas.ignoresSafeArea())
+        .navigationTitle("المهام")
+        .navigationBarTitleDisplayMode(.inline)
+        .searchable(text: $query, prompt: "ابحث في المهام")
+        .refreshable { await load() }
+        .task { if !loaded { await load() } }
+        .onChange(of: mine) { _, _ in Task { await load() } }
+        .sheet(item: $postponing) { t in
+            PostponeSheet(task: t) { day in
+                postponing = nil
+                Task { await update(t, ["dueDate": day]) }
+            }
+            .presentationDetents([.medium, .large])
         }
     }
 

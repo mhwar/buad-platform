@@ -17,32 +17,30 @@ struct ClientsView: View {
     }
 
     var body: some View {
-        NavigationStack {
-            ScrollView {
-                LazyVStack(spacing: 12) {
-                    if !loaded {
-                        ProgressView().frame(maxWidth: .infinity).padding(.vertical, 28)
-                    } else if let error {
-                        EmptyNote(text: error, icon: "wifi.exclamationmark")
-                    } else if shown.isEmpty {
-                        EmptyNote(text: query.isEmpty ? "لا عملاء بعد." : "لا نتائج لهذا البحث.", icon: "person.2")
-                    } else {
-                        ForEach(shown) { c in
-                            NavigationLink(value: c) { ClientCard(client: c) }.buttonStyle(.plain)
-                        }
+        ScrollView {
+            LazyVStack(spacing: 12) {
+                if !loaded {
+                    ProgressView().frame(maxWidth: .infinity).padding(.vertical, 28)
+                } else if let error {
+                    EmptyNote(text: error, icon: "wifi.exclamationmark")
+                } else if shown.isEmpty {
+                    EmptyNote(text: query.isEmpty ? "لا عملاء بعد." : "لا نتائج لهذا البحث.", icon: "person.2")
+                } else {
+                    ForEach(shown) { c in
+                        NavigationLink(value: c) { ClientCard(client: c) }.buttonStyle(.plain)
                     }
                 }
-                .padding(.horizontal, Buad.gutter)
-                .padding(.vertical, 8)
             }
-            .background(Buad.canvas.ignoresSafeArea())
-            .navigationTitle("العملاء")
-            .navigationBarTitleDisplayMode(.inline)
-            .searchable(text: $query, prompt: "ابحث بالاسم أو الرمز أو المدينة")
-            .refreshable { await load() }
-            .task { if !loaded { await load() } }
-            .navigationDestination(for: ClientItem.self) { ClientDetailView(client: $0) }
+            .padding(.horizontal, Buad.gutter)
+            .padding(.vertical, 8)
         }
+        .background(Buad.canvas.ignoresSafeArea())
+        .navigationTitle("العملاء")
+        .navigationBarTitleDisplayMode(.inline)
+        .searchable(text: $query, prompt: "ابحث بالاسم أو الرمز أو المدينة")
+        .refreshable { await load() }
+        .task { if !loaded { await load() } }
+        .navigationDestination(for: ClientItem.self) { ClientDetailView(client: $0) }
     }
 
     private func load() async {
