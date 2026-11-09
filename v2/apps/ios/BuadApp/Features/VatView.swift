@@ -6,11 +6,12 @@ import SwiftUI
 /// Filing a return, company purchases and the VAT settings stay on the website.
 struct VatView: View {
     @EnvironmentObject private var session: Session
-    @State private var year = Calendar(identifier: .gregorian).component(.year, from: Date())
-    @State private var quarter = 0
-    @State private var report: VatReport?
-    @State private var yearData: VatYear?
-    @State private var loaded = false
+    @State private var year = ScreenMemory.vatYear
+    @State private var quarter = ScreenMemory.vatQuarter
+    @State private var report: VatReport? = ScreenMemory.vat?.report
+    @State private var yearData: VatYear? = ScreenMemory.vat?.yearData
+    @State private var loaded = ScreenMemory.vat != nil
+    @State private var reloading = false
     @State private var error: String?
 
     private var years: [Int] {
@@ -43,8 +44,12 @@ struct VatView: View {
                 } else if let error {
                     EmptyNote(text: error, icon: "wifi.exclamationmark")
                 } else {
-                    if let y = yearData { returns(y) }
-                    if let v = report { detail(v) }
+                    Group {
+                        if let y = yearData { returns(y) }
+                        if let v = report { detail(v).id("detail") }
+                    }
+                    .opacity(reloading ? 0.4 : 1)
+                    .animation(.easeOut(duration: 0.15), value: reloading)
                 }
             }
             .padding(.horizontal, Buad.gutter)
@@ -52,9 +57,9 @@ struct VatView: View {
         }
         .background(Buad.canvas.ignoresSafeArea())
         .refreshable { await load() }
-        .task { if !loaded { await load() } }
-        .onChange(of: year) { _, _ in Task { await load() } }
-        .onChange(of: quarter) { _, _ in Task { await load() } }
+        .task { await load() }
+        .onChange(of: year) { _, now in ScreenMemory.vatYear = now; reloading = true; Task { await load() } }
+        .onChange(of: quarter) { _, now in ScreenMemory.vatQuarter = now; reloading = true; Task { await load() } }
     }
 
     // MARK: إقرارات السنة
@@ -218,11 +223,13 @@ struct VatView: View {
             report = rr
             yearData = yy
             error = nil
+            ScreenMemory.vat = (y, q, rr, yy)
         } catch {
             session.handle(error)
-            self.error = (error as? APIError)?.message ?? APIError.network.message
+            if report == nil { self.error = (error as? APIError)?.message ?? APIError.network.message }
         }
         loaded = true
+        reloading = false
     }
 
     private static func rate(_ v: Double) -> String { v == v.rounded() ? String(Int(v)) : String(format: "%.1f", v) }

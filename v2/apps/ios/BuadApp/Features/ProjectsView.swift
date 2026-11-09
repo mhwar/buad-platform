@@ -149,9 +149,11 @@ struct ProjectsView: View {
                 Image(systemName: "xmark").font(.caption2.weight(.bold))
             }
             .font(.caption.weight(.medium))
-            .padding(.horizontal, 10).frame(height: 28)
+            .padding(.horizontal, 10).frame(minHeight: 28)
             .background(Buad.infoSoft, in: Capsule())
             .foregroundStyle(Buad.infoInk)
+            .padding(.vertical, 8)
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .accessibilityLabel("إزالة \(text)")
@@ -208,15 +210,20 @@ struct FilterChip: View {
     var body: some View {
         Button(action: action) {
             HStack(spacing: 6) {
-                Text(title).font(.subheadline.weight(.medium))
-                if let count { Text("\(count)").font(.caption).monospacedDigit().opacity(0.6) }
+                Text(title).font(.subheadline.weight(.medium)).lineLimit(1)
+                if let count { Text(verbatim: String(count)).font(.caption).monospacedDigit().opacity(0.6) }
             }
             .padding(.horizontal, 14)
-            .frame(height: 34)
+            .frame(minHeight: 34)
             .background(on ? Buad.ink : Buad.surface, in: Capsule())
             .foregroundStyle(on ? Buad.onInk : Buad.ink)
+            // 34pt to the eye, 44pt to the finger.
+            .padding(.vertical, 5)
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .accessibilityAddTraits(on ? .isSelected : [])
+        .accessibilityLabel(count.map { "\(title)، \($0)" } ?? title)
     }
 }
 

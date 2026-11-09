@@ -86,7 +86,7 @@ private struct AttentionRow: View {
     var body: some View {
         let tone: Tone = item.tone == "info" ? .info : .warn
         let content = HStack(spacing: 12) {
-            Text("\(item.count)")
+            Text(verbatim: String(item.count))
                 .font(.body.weight(.bold))
                 .monospacedDigit()
                 .frame(minWidth: 30, minHeight: 30)

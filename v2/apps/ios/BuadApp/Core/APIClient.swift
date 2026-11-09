@@ -37,6 +37,7 @@ enum APIError: Error, Equatable {
             case "unsupported_type": return "نوع الملف غير مدعوم. المسموح: صورة أو PDF."
             case "storage_unavailable": return "تخزين الملفات غير متاح الآن."
             case "already_received": return "استُلمت هذه الدفعة، فلا تُعدَّل ولا تُحذف."
+            case "invalid_asset": return "الملف المرفق غير موجود. ارفعه من جديد."
             case "invalid_category": return "التصنيف غير موجود. اسحب للتحديث ثم اختر تصنيفاً آخر."
             case "tax_invoice_on_expense_only": return "الفاتورة الضريبية للمصروفات فقط."
             default: return "رفضت المنصة هذا التعديل."
@@ -305,6 +306,34 @@ final class APIClient: @unchecked Sendable {
 
     func deleteSalesInvoice(_ id: String) async throws {
         let _: OKEnvelope = try await send("DELETE", "/api/finance/vat/invoices/\(id)")
+    }
+
+    // MARK: 0.3.0 — sales (features/sales/api.ts): opportunities, their timeline, and the dashboard
+
+    func opportunities() async throws -> [Opportunity] {
+        let envelope: OpportunitiesEnvelope = try await send("GET", "/api/product-requests")
+        return envelope.requests
+    }
+
+    func opportunity(_ id: String) async throws -> OpportunityDetail {
+        try await send("GET", "/api/product-requests/\(id)")
+    }
+
+    func salesOverview() async throws -> SalesOverview {
+        try await send("GET", "/api/sales/overview")
+    }
+
+    /// «تسجيل تواصل»: a call, meeting, … on the opportunity, with an optional next follow-up.
+    /// The server moves a «جديد» opportunity to «مؤهَّل» on its first contact, as on the website.
+    func logActivity(_ id: String, type: String, summary: String, on: String, followUpAt: String?) async throws {
+        var body: [String: Any] = ["type": type, "summary": summary, "on": on]
+        if let followUpAt { body["followUpAt"] = followUpAt }
+        let _: OKEnvelope = try await send("POST", "/api/product-requests/\(id)/activities", body: body)
+    }
+
+    /// PATCH /api/product-requests/:id with the changed fields (status, followUpAt, lostReason, value…).
+    func updateOpportunity(_ id: String, _ fields: [String: Any]) async throws {
+        let _: OKEnvelope = try await send("PATCH", "/api/product-requests/\(id)", body: fields)
     }
 
     func signOut() async {

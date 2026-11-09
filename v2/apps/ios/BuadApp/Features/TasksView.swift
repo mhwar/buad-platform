@@ -14,6 +14,7 @@ struct TasksView: View {
     @State private var busy: Set<String> = []
     @State private var postponing: TaskItem?
     @State private var notice: String?
+    @State private var toast: ToastItem?
 
     private var canEdit: Bool { session.me?.can("tasks.edit") ?? false }
 
@@ -76,6 +77,7 @@ struct TasksView: View {
         .refreshable { await load() }
         .task { if !loaded { await load() } }
         .onChange(of: mine) { _, _ in Task { await load() } }
+        .toast($toast)
         .sheet(item: $postponing) { t in
             PostponeSheet(task: t) { day in
                 postponing = nil
@@ -96,13 +98,16 @@ struct TasksView: View {
                     ZStack {
                         Circle().strokeBorder(done ? Buad.success : Buad.faint, lineWidth: 2)
                             .background(Circle().fill(done ? Buad.success : .clear))
-                        if done { Image(systemName: "checkmark").font(.caption.bold()).foregroundStyle(.white) }
+                        if done { Image(systemName: "checkmark").font(.caption.bold()).foregroundStyle(Buad.onInk) }
                         if busy.contains(t.id) { ProgressView().controlSize(.mini) }
                     }
                     .frame(width: 26, height: 26)
-                    .padding(.top, 1)
+                    .frame(width: Buad.tap, height: Buad.tap)
+                    .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
+                .padding(.vertical, -9)
+                .padding(.leading, -9)
                 .disabled(busy.contains(t.id))
                 .accessibilityLabel(done ? "إعادة فتح \(t.title)" : "إنجاز \(t.title)")
             }
@@ -125,7 +130,23 @@ struct TasksView: View {
                 }
             }
             Spacer(minLength: 6)
-            Pill(text: st.label, tone: st.tone)
+            if canEdit && !done {
+                // The status is the menu, as the website's BadgeMenu: status, «تأجيل», and the website.
+                Menu {
+                    statusActions(t)
+                } label: {
+                    HStack(spacing: 3) {
+                        Pill(text: st.label, tone: st.tone)
+                        Image(systemName: "chevron.down").font(.caption2.weight(.bold)).foregroundStyle(Buad.faint)
+                    }
+                    .frame(minHeight: Buad.tap)
+                    .contentShape(Rectangle())
+                }
+                .padding(.vertical, -11)
+                .accessibilityLabel("الحالة: \(st.label). إجراءات \(t.title)")
+            } else {
+                Pill(text: st.label, tone: st.tone)
+            }
         }
         .padding(14)
         .contentShape(Rectangle())
@@ -142,6 +163,22 @@ struct TasksView: View {
             if !t.projectId.isEmpty, let url = APIClient.shared.webURL("/projects/\(t.projectId)?view=execution") {
                 Link(destination: url) { Label("فتح في الموقع", systemImage: "safari") }
             }
+        }
+    }
+
+    @ViewBuilder private func statusActions(_ t: TaskItem) -> some View {
+        if t.status != "doing" {
+            Button { Task { await update(t, ["status": "doing"]) } } label: { Label("قيد التنفيذ", systemImage: "play.circle") }
+        }
+        if t.status != "blocked" {
+            Button { Task { await update(t, ["status": "blocked"]) } } label: { Label("معلّقة", systemImage: "pause.circle") }
+        }
+        if t.status != "todo" {
+            Button { Task { await update(t, ["status": "todo"]) } } label: { Label("لم تبدأ", systemImage: "circle") }
+        }
+        Button { postponing = t } label: { Label("تأجيل", systemImage: "calendar.badge.clock") }
+        if !t.projectId.isEmpty, let url = APIClient.shared.webURL("/projects/\(t.projectId)?view=execution") {
+            Link(destination: url) { Label("فتح في الموقع", systemImage: "safari") }
         }
     }
 
@@ -163,9 +200,19 @@ struct TasksView: View {
             try await APIClient.shared.updateTask(t.id, fields)
             notice = nil
             await load()
+            let previous = ["status": t.status, "dueDate": t.dueDate].filter { fields[$0.key] != nil }
+            let text = fields["status"] == "done" ? "أُنجزت «\(t.title)»"
+                : fields["status"] == "todo" && t.status == "done" ? "أُعيد فتح «\(t.title)»"
+                : fields["dueDate"] != nil ? "أُجّلت إلى \(Fmt.day(fields["dueDate"] ?? ""))" : "حُفظت المهمة"
+            toast = ToastItem(text: text) {
+                try? await APIClient.shared.updateTask(t.id, previous)
+                await load()
+            }
         } catch {
             session.handle(error)
             notice = (error as? APIError)?.message ?? APIError.network.message
+            Haptic.warning()
+            Task { @MainActor in try? await Task.sleep(for: .seconds(6)); notice = nil }
         }
     }
 }

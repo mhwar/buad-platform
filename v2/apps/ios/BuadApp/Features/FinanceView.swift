@@ -44,25 +44,17 @@ struct FinanceView: View {
 /// GET /api/receivables as the server computes it for this organisation.
 struct CollectionView: View {
     @EnvironmentObject private var session: Session
-    @State private var data: Receivables?
-    @State private var loaded = false
+    @State private var data: Receivables? = ScreenMemory.receivables
+    @State private var loaded = ScreenMemory.receivables != nil
     @State private var error: String?
     @State private var receiving: ReceiveSheet.LineInfo?
-    @State private var toast: String?
+    @State private var toast: ToastItem?
 
     private var canReceive: Bool { session.me?.can("finance.edit") ?? false }
 
     var body: some View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
-                    if let toast {
-                        Label(toast, systemImage: "checkmark.circle.fill")
-                            .font(.subheadline.weight(.medium))
-                            .foregroundStyle(Buad.successInk)
-                            .padding(12)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .background(Buad.successSoft, in: RoundedRectangle(cornerRadius: Buad.control, style: .continuous))
-                    }
                     if !loaded {
                         ProgressView().frame(maxWidth: .infinity).padding(.vertical, 28)
                     } else if let error {
@@ -78,11 +70,11 @@ struct CollectionView: View {
             }
             .background(Buad.canvas.ignoresSafeArea())
             .refreshable { await load() }
-            .task { if !loaded { await load() } }
-            .onChange(of: toast) { _, now in Self.settle(now) { if toast == now { withAnimation { toast = nil } } } }
+            .task { await load() }
+            .toast($toast)
             .sheet(item: $receiving) { line in
                 ReceiveSheet(line: line) { message in
-                    toast = message
+                    toast = ToastItem(text: message)
                     Task { await load() }
                 }
             }
@@ -141,12 +133,11 @@ struct CollectionView: View {
                         HStack(spacing: 8) {
                             if canReceive {
                                 Button {
-                                    toast = nil
                                     receiving = .init(id: i.id, label: i.label, amount: i.amount, project: i.project)
                                 } label: {
                                     Label("تسجيل مقبوض", systemImage: "checkmark")
                                         .font(.subheadline.weight(.semibold))
-                                        .padding(.horizontal, 12).frame(height: 36)
+                                        .padding(.horizontal, 12).frame(minHeight: Buad.tap)
                                         .background(Buad.brandSoft, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
                                 }
                                 .buttonStyle(.plain)
@@ -157,7 +148,7 @@ struct CollectionView: View {
                                     Label("تذكير واتساب", systemImage: "message")
                                         .font(.subheadline)
                                         .foregroundStyle(Buad.muted)
-                                        .padding(.horizontal, 12).frame(height: 36)
+                                        .padding(.horizontal, 12).frame(minHeight: Buad.tap)
                                         .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous).stroke(Buad.line))
                                 }
                             }
@@ -225,23 +216,14 @@ struct CollectionView: View {
         .background(Buad.surface)
     }
 
-    /// A success message: a light haptic, then it clears itself after four seconds.
-    static func settle(_ message: String?, clear: @escaping @MainActor () -> Void) {
-        guard message != nil else { return }
-        Haptic.success()
-        Task { @MainActor in
-            try? await Task.sleep(for: .seconds(4))
-            clear()
-        }
-    }
-
     private func load() async {
         do {
             data = try await APIClient.shared.receivables()
+            ScreenMemory.receivables = data
             error = nil
         } catch {
             session.handle(error)
-            self.error = (error as? APIError)?.message ?? APIError.network.message
+            if data == nil { self.error = (error as? APIError)?.message ?? APIError.network.message }
         }
         loaded = true
     }

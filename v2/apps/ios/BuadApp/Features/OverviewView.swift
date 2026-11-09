@@ -6,10 +6,12 @@ import SwiftUI
 /// Every figure is GET /api/finance/overview for the period, as the server computes it.
 struct OverviewView: View {
     @EnvironmentObject private var session: Session
-    @State private var period = FinancePeriod()
-    @State private var data: FinanceOverview?
-    @State private var prev: FinanceOverview?
-    @State private var loaded = false
+    @State private var period = ScreenMemory.overviewPeriod
+    @State private var data: FinanceOverview? = ScreenMemory.overview?.data
+    @State private var prev: FinanceOverview? = ScreenMemory.overview?.prev
+    @State private var loaded = ScreenMemory.overview != nil
+    /// A new period is on its way: the old figures stay, dimmed, until it arrives.
+    @State private var reloading = false
     @State private var error: String?
 
     private var years: [Int] {
@@ -26,6 +28,7 @@ struct OverviewView: View {
                 } else if let error {
                     EmptyNote(text: error, icon: "wifi.exclamationmark")
                 } else if let d = data {
+                    Group {
                     if d.totals.projects == 0 && d.monthly.isEmpty {
                         EmptyNote(text: "لا مشاريع في هذه الفترة.", icon: "chart.bar")
                     } else {
@@ -36,6 +39,9 @@ struct OverviewView: View {
                         profitability(d)
                         obligations(d)
                     }
+                    }
+                    .opacity(reloading ? 0.4 : 1)
+                    .animation(.easeOut(duration: 0.15), value: reloading)
                 }
             }
             .padding(.horizontal, Buad.gutter)
@@ -43,8 +49,12 @@ struct OverviewView: View {
         }
         .background(Buad.canvas.ignoresSafeArea())
         .refreshable { await load() }
-        .task { if !loaded { await load() } }
-        .onChange(of: period) { _, _ in Task { await load() } }
+        .task { await load() }
+        .onChange(of: period) { _, now in
+            ScreenMemory.overviewPeriod = now
+            reloading = true
+            Task { await load() }
+        }
     }
 
     // MARK: الفترة
@@ -72,6 +82,7 @@ struct OverviewView: View {
                 .pickerStyle(.segmented)
             }
             Spacer(minLength: 0)
+            if reloading { ProgressView().controlSize(.small) }
         }
     }
 
@@ -115,20 +126,24 @@ struct OverviewView: View {
         let p = prev?.totals
         let items = d.pending.count + d.unregistered.count
         let label = period.previous?.label ?? ""
-        return LazyVGrid(columns: [GridItem(.flexible(), spacing: 1), GridItem(.flexible(), spacing: 1)], spacing: 1) {
-            tile("قيمة العقود (شامل الضريبة)", Fmt.sar(t.gross),
-                 sub: "\(t.projects) مشروع · ضريبة \(Fmt.sar(t.vat))" + (t.withoutFinance > 0 ? " · \(t.withoutFinance) بلا مالية" : ""),
-                 delta: p.map { delta(t.gross, $0.gross, label) })
-            tile("صافي الربح", Fmt.sar(t.profit), sub: "هامش \(Self.pct(t.margin))", tone: t.profit > 0 ? .ok : nil,
-                 delta: p.map { delta(t.profit, $0.profit, label) })
-            tile("المستلم من العملاء", Fmt.sar(t.received), sub: "بتاريخ وصوله للبنك",
-                 delta: p.map { delta(t.received, $0.received, label) })
-            tile("المصروفات", Fmt.sar(t.spent), delta: p.map { delta(t.spent, $0.spent, label, lowerIsBetter: true) })
-            tile("المتبقي من العقود", Fmt.sar(t.remaining), tone: t.remaining < 0 ? .bad : nil)
-            tile("التزامات قائمة", Fmt.sar(t.pending + t.unregistered), sub: "\(items) بند", tone: items > 0 ? .warn : nil)
+        return JoinedGrid {
+            GridRow {
+                tile("قيمة العقود (شامل الضريبة)", Fmt.sar(t.gross),
+                     sub: "\(t.projects) مشروع · ضريبة \(Fmt.short(t.vat))" + (t.withoutFinance > 0 ? " · \(t.withoutFinance) بلا مالية" : ""),
+                     delta: p.map { delta(t.gross, $0.gross, label) })
+                tile("صافي الربح", Fmt.sar(t.profit), sub: "هامش \(Self.pct(t.margin))", tone: t.profit > 0 ? .ok : nil,
+                     delta: p.map { delta(t.profit, $0.profit, label) })
+            }
+            GridRow {
+                tile("المستلم من العملاء", Fmt.sar(t.received), sub: "بتاريخ وصوله للبنك",
+                     delta: p.map { delta(t.received, $0.received, label) })
+                tile("المصروفات", Fmt.sar(t.spent), delta: p.map { delta(t.spent, $0.spent, label, lowerIsBetter: true) })
+            }
+            GridRow {
+                tile("المتبقي من العقود", Fmt.sar(t.remaining), tone: t.remaining < 0 ? .bad : nil)
+                tile("التزامات قائمة", Fmt.sar(t.pending + t.unregistered), sub: "\(items) بند", tone: items > 0 ? .warn : nil)
+            }
         }
-        .background(Buad.line)
-        .clipShape(RoundedRectangle(cornerRadius: Buad.radius, style: .continuous))
     }
 
     /// StatTile's Delta (components/StatTile.tsx): «▲ 12% عن الربع الثاني 2026».
@@ -148,9 +163,7 @@ struct OverviewView: View {
             if let sub { Text(sub).font(.caption2).foregroundStyle(Buad.muted).lineLimit(2) }
             if let delta { Text(delta.0).font(.caption2).foregroundStyle(delta.1 == .neutral ? Buad.muted : delta.1.foreground) }
         }
-        .frame(maxWidth: .infinity, minHeight: 96, alignment: .topLeading)
-        .padding(12)
-        .background(Buad.surface)
+        .joinedCell(minHeight: 96)
     }
 
     // MARK: الحركة الشهرية
@@ -289,11 +302,13 @@ struct OverviewView: View {
             data = n
             prev = b
             error = nil
+            ScreenMemory.overview = (current, n, b)
         } catch {
             session.handle(error)
-            self.error = (error as? APIError)?.message ?? APIError.network.message
+            if data == nil { self.error = (error as? APIError)?.message ?? APIError.network.message }
         }
         loaded = true
+        reloading = false
     }
 
     private static func optional(_ p: FinancePeriod?) async -> FinanceOverview? {

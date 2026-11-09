@@ -77,10 +77,12 @@ struct FinanceEntry: Decodable, Identifiable {
     let invoiceNo: String
     let invoiceDate: String
     let source: String
+    /// The receipt or invoice attached to the entry (asset id); "" = none.
+    let assetId: String
 
     private enum K: String, CodingKey {
         case id, date, description, cat, type, amount, status, note, supplierName
-        case cfKind, taxInvoice, vatAmount, supplierVatNo, invoiceNo, invoiceDate, source
+        case cfKind, taxInvoice, vatAmount, supplierVatNo, invoiceNo, invoiceDate, source, assetId
     }
 
     init(from decoder: Decoder) throws {
@@ -101,6 +103,7 @@ struct FinanceEntry: Decodable, Identifiable {
         invoiceNo = c.string(.invoiceNo)
         invoiceDate = c.string(.invoiceDate)
         source = c.string(.source)
+        assetId = c.string(.assetId)
     }
 }
 

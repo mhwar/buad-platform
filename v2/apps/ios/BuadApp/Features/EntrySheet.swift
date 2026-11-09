@@ -29,6 +29,8 @@ struct EntrySheet: View {
     @State private var invoiceNo = ""
     @State private var invoiceDate = Date()
     @State private var vatAmount = ""
+    @State private var assetId = ""
+    @State private var uploading = false
     @State private var error: String?
     @State private var busy = false
     @State private var confirmDelete = false
@@ -120,6 +122,13 @@ struct EntrySheet: View {
                     }
                 }
 
+                Section("الإيصال أو الفاتورة (PDF أو صورة)") {
+                    AttachmentField(assetId: $assetId, canUpload: session.me?.can("assets.edit") ?? false, uploading: $uploading)
+                    if !assetId.isEmpty && session.me?.can("assets.edit") == true {
+                        Button("إزالة المرفق", role: .destructive) { assetId = "" }
+                    }
+                }
+
                 Section {
                     TextField("ملاحظة", text: $note, axis: .vertical).lineLimit(2...5)
                 }
@@ -136,19 +145,19 @@ struct EntrySheet: View {
                             Spacer()
                         }
                     }
-                    .disabled(busy)
+                    .disabled(busy || uploading)
                     if existing != nil {
                         Button(role: .destructive) { confirmDelete = true } label: {
                             HStack { Spacer(); Text("حذف القيد"); Spacer() }
                         }
-                        .disabled(busy)
+                        .disabled(busy || uploading)
                     }
                 }
             }
             .navigationTitle((existing == nil ? "إضافة قيد مالي" : "تعديل القيد") + " · " + projectName)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .cancellationAction) { Button("إلغاء") { dismiss() } } }
-            .interactiveDismissDisabled(busy)
+            .interactiveDismissDisabled(busy || uploading)
             .confirmationDialog("حذف هذا القيد؟", isPresented: $confirmDelete, titleVisibility: .visible) {
                 Button("حذف القيد", role: .destructive) { Task { await remove() } }
                 Button("إلغاء", role: .cancel) {}
@@ -175,6 +184,7 @@ struct EntrySheet: View {
         invoiceNo = e.invoiceNo
         invoiceDate = Fmt.date(e.invoiceDate) ?? Fmt.date(e.date) ?? Date()
         vatAmount = e.taxInvoice ? Self.plain(e.vatAmount) : ""
+        assetId = e.assetId
     }
 
     private func save() async {
@@ -193,6 +203,7 @@ struct EntrySheet: View {
             "type": type, "description": text, "cat": cat, "cfKind": cat == "cf" ? cfKind : "",
             "amount": (riyals * 100).rounded() / 100, "date": Fmt.isoDay(date), "status": status,
             "note": note.trimmingCharacters(in: .whitespacesAndNewlines),
+            "assetId": assetId,
         ]
         // As EntryDialog: an object registers/updates the invoice, null removes it, absent leaves it.
         if type == "expense" && hasInvoice {

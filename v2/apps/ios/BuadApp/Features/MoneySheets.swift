@@ -260,6 +260,7 @@ struct InvoiceSheet: View {
     @State private var vat = ""
     @State private var receiptId = ""
     @State private var assetId = ""
+    @State private var uploading = false
     @State private var note = ""
     @State private var error: String?
     @State private var busy = false
@@ -286,11 +287,11 @@ struct InvoiceSheet: View {
                     Text("تاريخ الفاتورة يحدد ربع ضريبة المبيعات. الضريبة فارغة = تُحسب بنسبة المشروع.")
                 }
                 Section("الفاتورة المرسلة (PDF أو صورة)") {
-                    AttachmentField(assetId: $assetId, canUpload: session.me?.can("assets.edit") ?? false)
+                    AttachmentField(assetId: $assetId, canUpload: session.me?.can("assets.edit") ?? false, uploading: $uploading)
                 }
                 if let error { Section { Text(error).foregroundStyle(Buad.dangerInk) } }
                 Section {
-                    SaveButton(title: invoice == nil ? "تسجيل الفاتورة" : "حفظ", busy: busy) { Task { await save() } }
+                    SaveButton(title: invoice == nil ? "تسجيل الفاتورة" : "حفظ", busy: busy || uploading) { Task { await save() } }
                     if invoice != nil {
                         Button(role: .destructive) { confirmDelete = true } label: { HStack { Spacer(); Text("حذف الفاتورة"); Spacer() } }
                             .disabled(busy)
@@ -300,7 +301,7 @@ struct InvoiceSheet: View {
             .navigationTitle(invoice == nil ? "تسجيل فاتورة ضريبية مرسلة" : "تعديل الفاتورة")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .cancellationAction) { Button("إلغاء") { dismiss() } } }
-            .interactiveDismissDisabled(busy)
+            .interactiveDismissDisabled(busy || uploading)
             .confirmationDialog("حذف هذه الفاتورة؟", isPresented: $confirmDelete, titleVisibility: .visible) {
                 Button("حذف", role: .destructive) { Task { await remove() } }
                 Button("إلغاء", role: .cancel) {}
