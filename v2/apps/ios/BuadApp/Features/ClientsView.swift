@@ -5,6 +5,7 @@ import SwiftUI
 /// finance.view; the server already sends null without it.
 struct ClientsView: View {
     @EnvironmentObject private var session: Session
+    @EnvironmentObject private var center: CreateCenter
     @State private var items: [ClientItem] = []
     @State private var query = ""
     @State private var loaded = false
@@ -41,6 +42,16 @@ struct ClientsView: View {
         .searchable(text: $query, prompt: "ابحث بالاسم أو الرقم أو المدينة أو البريد")
         .refreshable { await load() }
         .task { if !loaded { await load() } }
+        .onChange(of: center.revision) { _, _ in Task { await load() } }
+        .toolbar {
+            if session.me?.can("clients.edit") == true {
+                ToolbarItem(placement: .primaryAction) {
+                    Button { center.sheet = .client } label: {
+                        Image(systemName: "plus").font(.body.weight(.semibold)).accessibilityLabel("عميل جديد")
+                    }
+                }
+            }
+        }
         .navigationDestination(for: ClientItem.self) { ClientDetailView(client: $0) }
     }
 

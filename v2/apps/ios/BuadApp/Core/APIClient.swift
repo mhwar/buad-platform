@@ -11,6 +11,8 @@ enum APIError: Error, Equatable {
     case rejected(String)
     /// POST …/receipts answered «over_contract»: received so far and the contract, both in halalas.
     case overContract(received: Int, gross: Int)
+    /// A client with a similar name exists (409 «similar_name»): ask, then send confirmSimilarName.
+    case similarName(String)
     case network
     case decoding
 
@@ -25,7 +27,10 @@ enum APIError: Error, Equatable {
         case .server: return "تعذّر التحميل. حاول مرة أخرى."
         case .overContract(let received, let gross):
             return "استُلم \(Fmt.sar(received)) من عقد قيمته \(Fmt.sar(gross)). هل هذه دفعة فعلية وليست مكررة؟"
+        case .similarName(let name):
+            return "يوجد عميل باسم مشابه" + (name.isEmpty ? "" : " («\(name)»)") + ". هل تريد إنشاء عميل جديد رغم ذلك؟"
         case .rejected(let code):
+            if let q = QuoteVocabulary.error(code) { return q }
             switch code {
             case "end_before_start": return "تاريخ الاستحقاق قبل تاريخ البداية."
             case "not_found": return "لم يعد هذا العنصر موجوداً أو لا تملك صلاحية الوصول إليه."
@@ -110,6 +115,9 @@ final class APIClient: @unchecked Sendable {
         case 400, 404, 409, 413, 415, 422, 503:
             let json = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any]
             let reason = json?["error"] as? String
+            if reason == "similar_name" {
+                throw APIError.similarName(((json?["similar"] as? [String: Any])?["name"] as? String) ?? "")
+            }
             if reason == "over_contract" {
                 let riyals = { (k: String) -> Int in Int((((json?[k] as? NSNumber)?.doubleValue ?? 0) * 100).rounded()) }
                 throw APIError.overContract(received: riyals("received"), gross: riyals("gross"))
@@ -334,6 +342,75 @@ final class APIClient: @unchecked Sendable {
     /// PATCH /api/product-requests/:id with the changed fields (status, followUpAt, lostReason, value…).
     func updateOpportunity(_ id: String, _ fields: [String: Any]) async throws {
         let _: OKEnvelope = try await send("PATCH", "/api/product-requests/\(id)", body: fields)
+    }
+
+    // MARK: 0.4.0 — quotes, new opportunities and clients (features/sales, features/clients)
+
+    func quotes() async throws -> [SalesQuote] {
+        let r: QuotesEnvelope = try await send("GET", "/api/quotes")
+        return r.quotes
+    }
+
+    func quote(_ id: String) async throws -> SalesQuote {
+        let r: QuoteEnvelope = try await send("GET", "/api/quotes/\(id)")
+        return r.quote
+    }
+
+    func catalog() async throws -> [CatalogItem] {
+        let r: CatalogEnvelope = try await send("GET", "/api/quotes/catalog")
+        return r.items
+    }
+
+    func quoteVatRate() async throws -> Double {
+        let r: VatRateEnvelope = try await send("GET", "/api/quotes/vat-rate")
+        return r.rate
+    }
+
+    /// POST /api/quotes (new) or PATCH /api/quotes/:id with the version it started from.
+    func saveQuote(id: String?, version: Int, _ body: [String: Any]) async throws -> String {
+        if let id {
+            var b = body
+            b["version"] = version
+            let _: OKEnvelope = try await send("PATCH", "/api/quotes/\(id)", body: b)
+            return id
+        }
+        let r: CreatedEnvelope = try await send("POST", "/api/quotes", body: body)
+        return r.id
+    }
+
+    func setQuoteStatus(_ id: String, to: String) async throws {
+        let _: OKEnvelope = try await send("POST", "/api/quotes/\(id)/status", body: ["to": to])
+    }
+
+    func duplicateQuote(_ id: String) async throws -> String {
+        let r: CreatedEnvelope = try await send("POST", "/api/quotes/\(id)/duplicate")
+        return r.id
+    }
+
+    func deleteQuote(_ id: String) async throws {
+        let _: OKEnvelope = try await send("DELETE", "/api/quotes/\(id)")
+    }
+
+    /// «تحويل إلى مشروع»: the client (existing, or made from the offer), a project and its payment schedule.
+    func convertQuote(_ id: String, schedule: String, projectName: String, clientId: String?, confirmSimilarName: Bool) async throws -> ConvertResult {
+        var body: [String: Any] = ["schedule": schedule, "projectName": projectName, "confirmSimilarName": confirmSimilarName]
+        if let clientId, !clientId.isEmpty { body["clientId"] = clientId }
+        return try await send("POST", "/api/quotes/\(id)/convert", body: body)
+    }
+
+    /// The offer as the website prints it (POST /api/pdf with /print/quotes/:id), as PDF bytes.
+    func quotePDF(_ id: String, name: String) async throws -> Data {
+        try await perform("POST", "/api/pdf", body: ["path": "/print/quotes/\(id)", "name": name])
+    }
+
+    /// POST /api/product-requests: an opportunity for an existing client, a new one made in the same step, or a contact only.
+    func createOpportunity(_ body: [String: Any]) async throws -> CreatedEnvelope {
+        try await send("POST", "/api/product-requests", body: body)
+    }
+
+    /// POST /api/clients (clients.edit).
+    func createClient(_ body: [String: Any]) async throws -> CreatedEnvelope {
+        try await send("POST", "/api/clients", body: body)
     }
 
     func signOut() async {
