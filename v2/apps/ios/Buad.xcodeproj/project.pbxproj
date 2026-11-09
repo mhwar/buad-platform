@@ -13,6 +13,7 @@
 		CB60977C5196898E7D4C296C /* BuadApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 127400BDE1AF9943F93E87CB /* BuadApp.swift */; };
 		BAA9A3BD252FDB3E68B82BA2 /* ClientsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 798EC49321C73A148E681BF9 /* ClientsView.swift */; };
 		2A3711E166FDAE66E2620214 /* Confirm.swift in Sources */ = {isa = PBXBuildFile; fileRef = 812AEA46536EF9D0366B74DD /* Confirm.swift */; };
+		15A6CB788C32DD6E85C86BBB /* EntrySheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = E718E8BC35421FAA341657FC /* EntrySheet.swift */; };
 		AAE37BFB003E83665741C2FB /* FinanceModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = F984DF6F04EBA163D323946D /* FinanceModels.swift */; };
 		5B505A1F8E5EF105DD69C363 /* FinanceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0E8E8409B2DD629F3FF356C /* FinanceView.swift */; };
 		F37391568EFFD96C654900E3 /* Format.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42671CCBC6E8669BCF2A9F27 /* Format.swift */; };
@@ -42,6 +43,7 @@
 		127400BDE1AF9943F93E87CB /* BuadApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuadApp.swift; sourceTree = "<group>"; };
 		798EC49321C73A148E681BF9 /* ClientsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClientsView.swift; sourceTree = "<group>"; };
 		812AEA46536EF9D0366B74DD /* Confirm.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Confirm.swift; sourceTree = "<group>"; };
+		E718E8BC35421FAA341657FC /* EntrySheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntrySheet.swift; sourceTree = "<group>"; };
 		F984DF6F04EBA163D323946D /* FinanceModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FinanceModels.swift; sourceTree = "<group>"; };
 		F0E8E8409B2DD629F3FF356C /* FinanceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FinanceView.swift; sourceTree = "<group>"; };
 		42671CCBC6E8669BCF2A9F27 /* Format.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Format.swift; sourceTree = "<group>"; };
@@ -120,6 +122,7 @@
 			isa = PBXGroup;
 			children = (
 				798EC49321C73A148E681BF9 /* ClientsView.swift */,
+				E718E8BC35421FAA341657FC /* EntrySheet.swift */,
 				F0E8E8409B2DD629F3FF356C /* FinanceView.swift */,
 				5BBF222B60004DD31D3FBEB8 /* MoreView.swift */,
 				4A45104A6141BFBC1B0E4747 /* NotificationsView.swift */,
@@ -219,6 +222,7 @@
 				CB60977C5196898E7D4C296C /* BuadApp.swift in Sources */,
 				BAA9A3BD252FDB3E68B82BA2 /* ClientsView.swift in Sources */,
 				2A3711E166FDAE66E2620214 /* Confirm.swift in Sources */,
+				15A6CB788C32DD6E85C86BBB /* EntrySheet.swift in Sources */,
 				AAE37BFB003E83665741C2FB /* FinanceModels.swift in Sources */,
 				5B505A1F8E5EF105DD69C363 /* FinanceView.swift in Sources */,
 				F37391568EFFD96C654900E3 /* Format.swift in Sources */,
@@ -322,7 +326,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.2.3;
+				MARKETING_VERSION = 0.2.4;
 				PRODUCT_BUNDLE_IDENTIFIER = sa.buad.app;
 				PRODUCT_NAME = BuadApp;
 				SDKROOT = iphoneos;
@@ -345,7 +349,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.2.3;
+				MARKETING_VERSION = 0.2.4;
 				PRODUCT_BUNDLE_IDENTIFIER = sa.buad.app;
 				PRODUCT_NAME = BuadApp;
 				SDKROOT = iphoneos;

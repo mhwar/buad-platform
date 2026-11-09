@@ -70,8 +70,18 @@ struct FinanceEntry: Decodable, Identifiable {
     let status: String
     let note: String
     let supplierName: String
+    let cfKind: String
+    let taxInvoice: Bool
+    let vatAmount: Int
+    let supplierVatNo: String
+    let invoiceNo: String
+    let invoiceDate: String
+    let source: String
 
-    private enum K: String, CodingKey { case id, date, description, cat, type, amount, status, note, supplierName }
+    private enum K: String, CodingKey {
+        case id, date, description, cat, type, amount, status, note, supplierName
+        case cfKind, taxInvoice, vatAmount, supplierVatNo, invoiceNo, invoiceDate, source
+    }
 
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: K.self)
@@ -84,6 +94,13 @@ struct FinanceEntry: Decodable, Identifiable {
         status = c.string(.status)
         note = c.string(.note)
         supplierName = c.string(.supplierName)
+        cfKind = c.string(.cfKind)
+        taxInvoice = c.bool(.taxInvoice)
+        vatAmount = c.int(.vatAmount)
+        supplierVatNo = c.string(.supplierVatNo)
+        invoiceNo = c.string(.invoiceNo)
+        invoiceDate = c.string(.invoiceDate)
+        source = c.string(.source)
     }
 }
 
@@ -139,6 +156,9 @@ struct ProjectFinance: Decodable {
     /// Custom category id → label, and budget row id → name, for the entry category names.
     let categoryLabels: [String: String]
     let budgetLabels: [String: String]
+    /// The same, in the website's order, for the category picker.
+    let customCategories: [NamedItem]
+    let budgetItems: [NamedItem]
 
     private enum K: String, CodingKey { case summary, received, profitHidden, ctrl, entries, receipts, categories, budget }
     private enum S: String, CodingKey {
@@ -194,6 +214,8 @@ struct ProjectFinance: Decodable {
         categoryLabels = Dictionary(cats.map { ($0.id, $0.text) }, uniquingKeysWith: { a, _ in a })
         let budget = (try? c.decode([Named].self, forKey: .budget)) ?? []
         budgetLabels = Dictionary(budget.map { ($0.id, $0.text) }, uniquingKeysWith: { a, _ in a })
+        customCategories = cats.map { NamedItem(id: $0.id, label: $0.text) }
+        budgetItems = budget.map { NamedItem(id: $0.id, label: $0.text) }
     }
 
     /// Same rule as the website's catLabel (features/finance/labels.ts).
@@ -202,6 +224,11 @@ struct ProjectFinance: Decodable {
         if cat.hasPrefix("bdg_") { return budgetLabels[String(cat.dropFirst(4))].flatMap { $0.isEmpty ? nil : $0 } ?? "بند ميزانية" }
         return categoryLabels[cat] ?? "تصنيف محذوف"
     }
+}
+
+struct NamedItem: Identifiable, Hashable {
+    let id: String
+    let label: String
 }
 
 // MARK: GET /api/receivables/projects/:id
