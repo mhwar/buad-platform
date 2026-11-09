@@ -9,6 +9,8 @@ enum APIError: Error, Equatable {
     case server(Int)
     /// A 4xx answer with the API's own error code (e.g. "end_before_start").
     case rejected(String)
+    /// POST …/receipts answered «over_contract»: received so far and the contract, both in halalas.
+    case overContract(received: Int, gross: Int)
     case network
     case decoding
 
@@ -21,6 +23,8 @@ enum APIError: Error, Equatable {
         case .tooManyAttempts: return "محاولات دخول كثيرة. انتظر دقيقة ثم حاول مجدداً."
         case .forbidden: return "دورك لا يسمح بهذه الصفحة."
         case .server: return "تعذّر التحميل. حاول مرة أخرى."
+        case .overContract(let received, let gross):
+            return "استُلم \(Fmt.sar(received)) من عقد قيمته \(Fmt.sar(gross)). هل هذه دفعة فعلية وليست مكررة؟"
         case .rejected(let code):
             switch code {
             case "end_before_start": return "تاريخ الاستحقاق قبل تاريخ البداية."
@@ -28,6 +32,8 @@ enum APIError: Error, Equatable {
             case "not_pending": return "سُجّلت هذه الدفعة من قبل. اسحب للتحديث."
             case "amount_exceeds_line": return "المبلغ أكبر من الدفعة."
             case "closed", "project_closed": return "المشروع مغلق مالياً. أعد فتحه من الموقع أولاً."
+            case "in_distribution": return "وُزّع ربح هذا المبلغ على الشركاء في توزيع مكتمل؛ ألغِ التوزيع أولاً من الموقع."
+            case "already_received": return "استُلمت هذه الدفعة، فلا تُعدَّل ولا تُحذف."
             case "invalid_category": return "التصنيف غير موجود. اسحب للتحديث ثم اختر تصنيفاً آخر."
             case "tax_invoice_on_expense_only": return "الفاتورة الضريبية للمصروفات فقط."
             default: return "رفضت المنصة هذا التعديل."
@@ -83,7 +89,12 @@ final class APIClient: @unchecked Sendable {
         case 403: throw APIError.forbidden
         case 429: throw APIError.tooManyAttempts
         case 400, 404, 409, 422:
-            let reason = (try? JSONSerialization.jsonObject(with: data) as? [String: Any])?["error"] as? String
+            let json = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any]
+            let reason = json?["error"] as? String
+            if reason == "over_contract" {
+                let riyals = { (k: String) -> Int in Int((((json?[k] as? NSNumber)?.doubleValue ?? 0) * 100).rounded()) }
+                throw APIError.overContract(received: riyals("received"), gross: riyals("gross"))
+            }
             throw APIError.rejected(reason ?? "")
         default: throw APIError.server(code)
         }
@@ -219,6 +230,56 @@ final class APIClient: @unchecked Sendable {
 
     func deleteEntry(_ projectId: String, _ entryId: String) async throws -> ProjectFinance {
         try await send("DELETE", "/api/projects/\(projectId)/finance/entries/\(entryId)")
+    }
+
+    // MARK: 0.2.5 — receipts, the payment schedule, sales tax invoices (the website's own calls)
+
+    /// features/finance/api.ts addReceipt. `confirmOver` after the person confirms an over-contract amount.
+    func addReceipt(_ projectId: String, date: String, riyals: Double, note: String, confirmOver: Bool) async throws -> ProjectFinance {
+        var body: [String: Any] = ["date": date, "amount": riyals, "note": note, "basis": ""]
+        if confirmOver { body["confirmOver"] = true }
+        return try await send("POST", "/api/projects/\(projectId)/finance/receipts", body: body)
+    }
+
+    func updateReceipt(_ projectId: String, _ id: String, date: String, riyals: Double, note: String) async throws -> ProjectFinance {
+        try await send("PATCH", "/api/projects/\(projectId)/finance/receipts/\(id)", body: ["date": date, "amount": riyals, "note": note])
+    }
+
+    func approveReceipt(_ projectId: String, _ id: String) async throws -> ProjectFinance {
+        try await send("POST", "/api/projects/\(projectId)/finance/receipts/\(id)/approve")
+    }
+
+    func deleteReceipt(_ projectId: String, _ id: String) async throws -> ProjectFinance {
+        try await send("DELETE", "/api/projects/\(projectId)/finance/receipts/\(id)")
+    }
+
+    /// features/receivables/ScheduleCard.tsx: an instalment expected from the client (riyals, gross).
+    func addScheduleLine(_ projectId: String, label: String, dueDate: String, riyals: Double) async throws {
+        let _: OKEnvelope = try await send("POST", "/api/receivables/projects/\(projectId)", body: ["label": label, "dueDate": dueDate, "amount": riyals])
+    }
+
+    func deleteScheduleLine(_ id: String) async throws {
+        let _: OKEnvelope = try await send("DELETE", "/api/receivables/\(id)")
+    }
+
+    func salesInvoices(_ projectId: String) async throws -> [SalesInvoice] {
+        let envelope: SalesInvoicesEnvelope = try await send("GET", "/api/finance/vat/invoices?projectId=\(projectId)")
+        return envelope.items
+    }
+
+    /// features/finance/SalesInvoices.tsx. `vat` nil = the server works it out from the project's rate.
+    func saveSalesInvoice(id: String?, projectId: String, number: String, date: String, riyals: Double, vat: Double?, receiptId: String, note: String) async throws {
+        var body: [String: Any] = ["projectId": projectId, "number": number, "date": date, "amount": riyals, "receiptId": receiptId, "note": note]
+        if let vat { body["vat"] = vat }
+        if let id {
+            let _: OKEnvelope = try await send("PATCH", "/api/finance/vat/invoices/\(id)", body: body)
+        } else {
+            let _: OKEnvelope = try await send("POST", "/api/finance/vat/invoices", body: body)
+        }
+    }
+
+    func deleteSalesInvoice(_ id: String) async throws {
+        let _: OKEnvelope = try await send("DELETE", "/api/finance/vat/invoices/\(id)")
     }
 
     func signOut() async {

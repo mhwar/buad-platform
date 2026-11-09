@@ -9,7 +9,7 @@ struct ProjectDetailView: View {
     @EnvironmentObject private var session: Session
     let project: ProjectItem
 
-    enum ContractPart: Hashable { case summary, receipts, schedule }
+    enum ContractPart: Hashable { case summary, receipts, invoices, schedule }
     enum WorkPart: Hashable { case entries, documents, execution }
     enum EntryKind: Hashable { case all, income, expense }
 
@@ -25,6 +25,20 @@ struct ProjectDetailView: View {
     @State private var entryKind: EntryKind = .all
     @State private var receiving: ReceiveSheet.LineInfo?
     @State private var entryTarget: EntryTarget?
+    @State private var receiptTarget: ReceiptTarget?
+    @State private var invoiceTarget: InvoiceTarget?
+    @State private var addingLine = false
+    @State private var invoices: [SalesInvoice]?
+
+    struct ReceiptTarget: Identifiable {
+        let receipt: Receipt?
+        var id: String { receipt?.id ?? "new" }
+    }
+
+    struct InvoiceTarget: Identifiable {
+        let invoice: SalesInvoice?
+        var id: String { invoice?.id ?? "new" }
+    }
 
     /// A new entry (nil) or one to edit, for the entry sheet.
     struct EntryTarget: Identifiable {
@@ -37,6 +51,8 @@ struct ProjectDetailView: View {
     private var canFinance: Bool { (me?.can("finance.view") ?? false) && !project.external }
     private var canReceive: Bool { (me?.can("finance.edit") ?? false) && canFinance && !project.closed && project.status != "draft" && project.status != "cancelled" }
     private var canEditEntries: Bool { (me?.can("finance.edit") ?? false) && canFinance && !project.closed }
+    private var canInvoices: Bool { (me?.can("vat.view") ?? false) && canFinance }
+    private var canEditInvoices: Bool { (me?.can("vat.edit") ?? false) && canInvoices && !project.closed }
     private var canTasks: Bool { me?.can("tasks.view") ?? false }
     private var canDocs: Bool { me?.can("documents.view") ?? false }
 
@@ -88,6 +104,27 @@ struct ProjectDetailView: View {
                     finance = fin
                     toast = message
                 }
+            }
+        }
+        .sheet(item: $receiptTarget) { target in
+            ReceiptFormSheet(projectId: project.id, receipt: target.receipt,
+                             remaining: max(0, (finance?.summary.grossTotal ?? 0) - (finance?.received ?? 0)),
+                             contractDate: finance?.contractDate ?? "") { fin, message in
+                finance = fin
+                toast = message
+                Task { await load() }
+            }
+        }
+        .sheet(item: $invoiceTarget) { target in
+            InvoiceSheet(projectId: project.id, invoice: target.invoice, receipts: finance?.receipts ?? []) { message in
+                toast = message
+                Task { await load() }
+            }
+        }
+        .sheet(isPresented: $addingLine) {
+            ScheduleLineSheet(projectId: project.id) { message in
+                toast = message
+                Task { await load() }
             }
         }
         .sheet(item: $receiving) { line in
@@ -153,11 +190,13 @@ struct ProjectDetailView: View {
 
     /// The website's header actions on the phone: primary «تسجيل مقبوض», secondary «قيد جديد».
     @ViewBuilder private var actions: some View {
-        let receive = canReceive ? pending.first : nil
-        if receive != nil || (canEditEntries && finance != nil) {
+        let receive = canReceive && finance != nil
+        if receive || (canEditEntries && finance != nil) {
             HStack(spacing: 10) {
-                if let next = receive {
-                    Button { startReceive(next) } label: {
+                if receive {
+                    Button {
+                        if let next = pending.first { startReceive(next) } else { toast = nil; receiptTarget = ReceiptTarget(receipt: nil) }
+                    } label: {
                         Label("تسجيل مقبوض", systemImage: "banknote")
                             .font(.body.weight(.semibold))
                             .frame(maxWidth: .infinity).frame(height: 48)
@@ -344,14 +383,20 @@ struct ProjectDetailView: View {
                 Picker("أقسام العقد", selection: Binding(get: { part }, set: { contractPart = $0 })) {
                     Text("الملخص").tag(ContractPart.summary)
                     Text("الاستلامات (\(f.receipts.count))").tag(ContractPart.receipts)
+                    if canInvoices { Text("الفواتير (\(invoices?.count ?? 0))").tag(ContractPart.invoices) }
                     Text("الدفعات (\(pending.count))").tag(ContractPart.schedule)
                 }
                 .pickerStyle(.segmented)
 
                 switch part {
                 case .summary: contractTrail(f)
-                case .receipts: receiptsList(f)
-                case .schedule: scheduleList
+                case .receipts:
+                    receiptsList(f)
+                    if canReceive { addButton("تسجيل مقبوض") { receiptTarget = ReceiptTarget(receipt: nil) } }
+                case .invoices: invoicesList
+                case .schedule:
+                    scheduleList
+                    if canEditEntries { addButton("دفعة") { addingLine = true } }
                 }
             }
         } else if !loaded {
@@ -380,6 +425,14 @@ struct ProjectDetailView: View {
         } else {
             ForEach(Array(f.receipts.reversed().enumerated()), id: \.element.id) { i, r in
                 if i > 0 { Divider() }
+                Button { if canEditEntries { toast = nil; receiptTarget = ReceiptTarget(receipt: r) } } label: { receiptRow(r) }
+                    .buttonStyle(.plain)
+                    .disabled(!canEditEntries)
+            }
+        }
+    }
+
+    private func receiptRow(_ r: Receipt) -> some View {
                 HStack(alignment: .firstTextBaseline) {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(Fmt.day(r.date)).font(.subheadline.weight(.medium))
@@ -391,18 +444,81 @@ struct ProjectDetailView: View {
                         if !r.approved { Pill(text: "غير معتمد", tone: .warn) }
                     }
                 }
-            }
+                .contentShape(Rectangle())
+    }
+
+    private func addButton(_ title: String, _ action: @escaping () -> Void) -> some View {
+        Button { toast = nil; action() } label: {
+            Label(title, systemImage: "plus").font(.subheadline.weight(.semibold))
+                .frame(maxWidth: .infinity).frame(height: 40)
+                .background(Buad.brandSoft, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                .foregroundStyle(Buad.ink)
         }
+        .buttonStyle(.plain)
+    }
+
+    /// «الفواتير»: tax invoices sent to the client; their date sets the quarter of the sales VAT.
+    @ViewBuilder private var invoicesList: some View {
+        Text("الفواتير الضريبية المرسلة للعميل: تاريخها يحدد ربع ضريبة المبيعات. ما لم تُسجَّل فاتورة، تُحتسب ضريبة المشروع بتاريخ كل استلام.")
+            .font(.caption).foregroundStyle(Buad.muted)
+        if let list = invoices {
+            if list.isEmpty {
+                Text("لا فواتير مسجّلة.").font(.footnote).foregroundStyle(Buad.muted)
+            } else {
+                ForEach(Array(list.enumerated()), id: \.element.id) { i, inv in
+                    if i > 0 { Divider() }
+                    Button { if canEditInvoices { toast = nil; invoiceTarget = InvoiceTarget(invoice: inv) } } label: {
+                        HStack(alignment: .firstTextBaseline) {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("\(Fmt.day(inv.date)) · \(inv.number.isEmpty ? "بلا رقم" : inv.number)").font(.subheadline.weight(.medium))
+                                Text("منها ضريبة \(Fmt.sar(inv.vat))" + (inv.hasFile ? " · مرفقة" : "")).font(.caption).foregroundStyle(Buad.muted)
+                            }
+                            Spacer()
+                            Text(Fmt.sar(inv.amount)).font(.subheadline.weight(.semibold)).monospacedDigit()
+                        }
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(!canEditInvoices)
+                }
+            }
+        } else {
+            ProgressView().frame(maxWidth: .infinity)
+        }
+        if canEditInvoices { addButton("فاتورة ضريبية مرسلة") { invoiceTarget = InvoiceTarget(invoice: nil) } }
     }
 
     @ViewBuilder private var scheduleList: some View {
         if schedule.isEmpty {
-            Text("لا دفعات مجدولة. تُضاف من الموقع.").font(.footnote).foregroundStyle(Buad.muted)
+            Text(canEditEntries ? "أضف الدفعات المنتظرة من العميل لتتابعها وتظهر أعمارها." : "لا دفعات مجدولة.").font(.footnote).foregroundStyle(Buad.muted)
         } else {
             ForEach(Array(schedule.enumerated()), id: \.element.id) { i, item in
                 if i > 0 { Divider() }
                 let st = Vocabulary.scheduleStatus(item.status, dueDate: item.dueDate)
                 let late = item.status == "pending" && item.dueDate < Fmt.todayISO
+                scheduleRow(item, st: st, late: late)
+                    .contextMenu {
+                        if canEditEntries && item.status == "pending" {
+                            Button(role: .destructive) { Task { await deleteLine(item) } } label: { Label("حذف الدفعة", systemImage: "trash") }
+                        }
+                    }
+            }
+        }
+    }
+
+    private func deleteLine(_ item: ScheduleItem) async {
+        guard await Confirm.owner("تأكيد حذف الدفعة «\(item.label)»") else { return }
+        do {
+            try await APIClient.shared.deleteScheduleLine(item.id)
+            toast = "حُذفت الدفعة"
+            await load()
+        } catch {
+            session.handle(error)
+            failed = true
+        }
+    }
+
+    private func scheduleRow(_ item: ScheduleItem, st: (label: String, tone: Tone), late: Bool) -> some View {
                 HStack(alignment: .center, spacing: 10) {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(item.label.isEmpty ? "دفعة" : item.label).font(.subheadline.weight(.medium))
@@ -423,8 +539,6 @@ struct ProjectDetailView: View {
                         .accessibilityLabel("تسجيل مقبوض \(item.label)")
                     }
                 }
-            }
-        }
     }
 
     private var externalCard: some View {
@@ -682,13 +796,14 @@ struct ProjectDetailView: View {
 
     private func load() async {
         let id = project.id
-        let (fin, tasks, docsAllowed) = (canFinance, canTasks, canDocs)
+        let (fin, tasks, docsAllowed, inv) = (canFinance, canTasks, canDocs, canInvoices)
         async let d = Self.attempt(true) { try await APIClient.shared.project(id) }
         async let f = Self.attempt(fin) { try await APIClient.shared.finance(id) }
         async let s = Self.attempt(fin) { try await APIClient.shared.schedule(id) }
         async let e = Self.attempt(tasks) { try await APIClient.shared.execution(id) }
         async let docs = Self.attempt(docsAllowed) { try await APIClient.shared.documents(id) }
-        let (dr, fr, sr, er, docr) = await (d, f, s, e, docs)
+        async let invs = Self.attempt(inv) { try await APIClient.shared.salesInvoices(id) }
+        let (dr, fr, sr, er, docr, ir) = await (d, f, s, e, docs, invs)
         var anyFailed = false
         func take<T>(_ r: Loaded<T>) -> T? {
             switch r {
@@ -704,6 +819,7 @@ struct ProjectDetailView: View {
         schedule = take(sr) ?? schedule
         execution = take(er) ?? execution
         documents = take(docr) ?? documents
+        invoices = take(ir) ?? invoices
         failed = anyFailed
         loaded = true
     }
