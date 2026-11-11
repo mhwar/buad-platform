@@ -571,3 +571,77 @@ struct ConvertOpportunitySheet: View {
         }
     }
 }
+
+// MARK: - Pricing an opportunity from a service
+
+/// «تسعير من الخدمة» (PricingDialog): a published service package and how many (beneficiaries, rounds).
+/// The platform prices it from the service's own cost model and keeps it on the opportunity; a new
+/// one moves to «عرض سعر», and its value is filled if it had none.
+struct PriceOpportunitySheet: View {
+    @EnvironmentObject private var session: Session
+    @Environment(\.dismiss) private var dismiss
+    let opportunity: Opportunity
+    let saved: () -> Void
+
+    @State private var catalog: [CatalogItem] = []
+    @State private var loaded = false
+    @State private var choice = ""
+    @State private var times = "1"
+    @State private var error: String?
+    @State private var busy = false
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                if let error {
+                    Section { Label(error, systemImage: "exclamationmark.circle").foregroundStyle(Buad.dangerInk) }
+                }
+                Section {
+                    if !loaded {
+                        ProgressView().frame(maxWidth: .infinity)
+                    } else if catalog.isEmpty {
+                        Text("لا خدمات منشورة بتسعير مكتمل.").foregroundStyle(Buad.muted)
+                    } else {
+                        Picker("الخدمة والباقة", selection: $choice) {
+                            ForEach(catalog) { Text("\($0.productName) · \($0.packageName)").tag($0.id) }
+                        }
+                        .pickerStyle(.inline)
+                        .labelsHidden()
+                    }
+                } header: { Text("الباقة") }
+                Section {
+                    HStack {
+                        Text("العدد (مستفيدون أو دورات)")
+                        TextField("1", text: $times).keyboardType(.decimalPad).multilineTextAlignment(.trailing)
+                            .environment(\.layoutDirection, .leftToRight)
+                    }
+                } footer: {
+                    Text("تحسب المنصة السعر والضريبة (والتكلفة والربح لمن يملك صلاحيتها) من نموذج تكلفة الباقة.")
+                }
+            }
+            .navigationTitle("تسعير من الخدمة")
+            .navigationBarTitleDisplayMode(.inline)
+            .formChrome(dirty: false, busy: busy || choice.isEmpty, saveTitle: "حفظ") { Task { await save() } }
+            .task {
+                catalog = (try? await APIClient.shared.catalog()) ?? []
+                loaded = true
+                if choice.isEmpty { choice = catalog.first { $0.productName == opportunity.productName }?.id ?? catalog.first?.id ?? "" }
+            }
+        }
+    }
+
+    private func save() async {
+        guard let item = catalog.first(where: { $0.id == choice }) else { return }
+        guard let n = ReceiptRules.riyals(times), n >= 0.01 else { error = "اكتب عدداً صحيحاً أكبر من صفر."; return }
+        busy = true
+        defer { busy = false }
+        do {
+            try await APIClient.shared.priceOpportunity(opportunity.id, productId: item.productId, packageId: item.packageId, times: n)
+            saved()
+            dismiss()
+        } catch {
+            session.handle(error)
+            self.error = (error as? APIError)?.message ?? "تعذّر التسعير، حاول مرة أخرى."
+        }
+    }
+}

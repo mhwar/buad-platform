@@ -162,6 +162,8 @@ enum QuoteVocabulary {
         case "already_converted": return "حُوّل هذا العرض إلى مشروع من قبل."
         case "client_archived": return "هذا العميل مؤرشف، فلا يُنشأ له عرض أو مشروع."
         case "pdf_unavailable": return "تعذّر إنشاء ملف PDF الآن. حاول بعد قليل."
+        case "quote_incomplete": return "تسعير هذه الباقة غير مكتمل في الخدمة. أكمل نموذج تكلفتها من إعدادات الخدمة على الحاسوب."
+        case "package_not_found": return "الباقة لم تعد موجودة في الخدمة. اختر باقة أخرى."
         case "name_required": return "اكتب اسم الجهة أو الشخص."
         case "contact_required": return "أضف رقم جوال أو بريداً للتواصل، أو اختر «عميل جديد»."
         case "client_not_found": return "لم يعد هذا العميل موجوداً. اختر عميلاً آخر."

@@ -16,6 +16,9 @@ enum ScreenMemory {
 
     static var salesStage = "open"
     static var salesDueOnly = false
+    static var salesOwner = ""
+    static var salesSource = ""
+    static var salesService = ""
     static var opportunities: [Opportunity]?
     static var salesOverview: SalesOverview?
     static var quotes: [SalesQuote]?
@@ -30,6 +33,9 @@ enum ScreenMemory {
         receivables = nil
         salesStage = "open"
         salesDueOnly = false
+        salesOwner = ""
+        salesSource = ""
+        salesService = ""
         opportunities = nil
         salesOverview = nil
         quotes = nil

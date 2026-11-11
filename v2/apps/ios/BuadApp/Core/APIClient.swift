@@ -327,8 +327,9 @@ final class APIClient: @unchecked Sendable {
         try await send("GET", "/api/product-requests/\(id)")
     }
 
-    func salesOverview() async throws -> SalesOverview {
-        try await send("GET", "/api/sales/overview")
+    func salesOverview(_ period: FinancePeriod = FinancePeriod()) async throws -> SalesOverview {
+        guard let (from, to) = period.bounds else { return try await send("GET", "/api/sales/overview") }
+        return try await send("GET", "/api/sales/overview?from=\(from)&to=\(to)")
     }
 
     /// «تسجيل تواصل»: a call, meeting, … on the opportunity, with an optional next follow-up.
@@ -670,6 +671,13 @@ final class APIClient: @unchecked Sendable {
         var body: [String: Any] = ["projectName": projectName, "confirmSimilarName": confirmSimilarName]
         if let clientId, !clientId.isEmpty { body["clientId"] = clientId }
         return try await send("POST", "/api/product-requests/\(id)/convert", body: body)
+    }
+
+    /// «تسعير من الخدمة»: the server prices the package × times from the service's cost model and
+    /// keeps the result on the opportunity (moving a new one to «عرض سعر»).
+    func priceOpportunity(_ id: String, productId: String, packageId: String, times: Double) async throws {
+        let _: OKEnvelope = try await send("PUT", "/api/product-requests/\(id)/quote",
+                                           body: ["productId": productId, "packageId": packageId, "times": times])
     }
 
     func signOut() async {

@@ -64,6 +64,11 @@ private struct OpportunitiesList: View {
     @State private var stage = ScreenMemory.salesStage
     @State private var dueOnly = ScreenMemory.salesDueOnly
     @State private var query = ""
+    /// Narrowing by who owns it ("none" = nobody), where it came from, and the service asked for.
+    @State private var owner = ScreenMemory.salesOwner
+    @State private var source = ScreenMemory.salesSource
+    @State private var service = ScreenMemory.salesService
+    @State private var people: [Person] = []
 
     /// Follow-up overdue or due today, on an open opportunity (the website's «تحتاج متابعة»).
     private static func isDue(_ o: Opportunity) -> Bool {
@@ -76,8 +81,13 @@ private struct OpportunitiesList: View {
         return items.filter { o in
             (q.isEmpty || "\(o.name) \(o.entity) \(o.productName) \(o.phone)".localizedCaseInsensitiveContains(q))
                 && (!dueOnly || Self.isDue(o))
+                && (owner.isEmpty || (owner == "none" ? o.ownerId.isEmpty : o.ownerId == owner))
+                && (source.isEmpty || o.source == source)
+                && (service.isEmpty || o.productName == service)
         }
     }
+
+    private var filtersOn: Bool { !owner.isEmpty || !source.isEmpty || !service.isEmpty }
 
     private var shown: [Opportunity] {
         pool.filter { stage == "all" || (stage == "open" ? $0.isOpen : $0.status == stage) }
@@ -93,7 +103,7 @@ private struct OpportunitiesList: View {
                         EmptyNote(text: error, icon: "wifi.exclamationmark")
                     } else if shown.isEmpty {
                         EmptyNote(text: items.isEmpty ? "لا فرص بعد. تصل طلبات الموقع هنا، وتُضاف الفرص من زر «+»."
-                                    : dueOnly || !query.isEmpty ? "لا فرص تطابق هذا البحث. غيّر التصفية أو امسح البحث."
+                                    : dueOnly || !query.isEmpty || filtersOn ? "لا فرص تطابق هذا البحث. غيّر التصفية أو امسح البحث."
                                     : "لا فرص في هذا العرض.",
                                   icon: "target")
                     } else {
@@ -118,6 +128,9 @@ private struct OpportunitiesList: View {
         .onChange(of: center.revision) { _, _ in Task { await load() } }
         .onChange(of: stage) { _, now in ScreenMemory.salesStage = now }
         .onChange(of: dueOnly) { _, now in ScreenMemory.salesDueOnly = now }
+        .onChange(of: owner) { _, now in ScreenMemory.salesOwner = now }
+        .onChange(of: source) { _, now in ScreenMemory.salesSource = now }
+        .onChange(of: service) { _, now in ScreenMemory.salesService = now }
     }
 
     /// The open pipeline at a glance: each open stage with its count and value, the bar showing its
@@ -171,6 +184,35 @@ private struct OpportunitiesList: View {
     private var pills: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
+                filterMenu("المسؤول", value: owner == "none" ? "بلا مسؤول" : people.first { $0.id == owner }?.name ?? "") {
+                    Picker("المسؤول", selection: $owner) {
+                        Text("الكل").tag("")
+                        Text("بلا مسؤول").tag("none")
+                        ForEach(people) { Text($0.name).tag($0.id) }
+                    }
+                }
+                filterMenu("المصدر", value: source.isEmpty ? "" : Sales.source(source)) {
+                    Picker("المصدر", selection: $source) {
+                        Text("الكل").tag("")
+                        ForEach(Array(Set(items.map(\.source))).sorted(), id: \.self) { Text(Sales.source($0)).tag($0) }
+                    }
+                }
+                let services = Array(Set(items.map(\.productName).filter { !$0.isEmpty })).sorted()
+                if !services.isEmpty {
+                    filterMenu("الخدمة", value: service) {
+                        Picker("الخدمة", selection: $service) {
+                            Text("الكل").tag("")
+                            ForEach(services, id: \.self) { Text($0).tag($0) }
+                        }
+                    }
+                }
+                if filtersOn {
+                    Button { owner = ""; source = ""; service = "" } label: {
+                        Label("مسح", systemImage: "xmark.circle.fill").font(.subheadline.weight(.medium)).foregroundStyle(Buad.muted)
+                            .padding(.horizontal, 8).frame(minHeight: Buad.tap)
+                    }
+                    .buttonStyle(.plain)
+                }
                 // «تحتاج متابعة» first: a filter on top of the stage, and a different colour so it reads as one.
                 let due = items.filter(Self.isDue).count
                 if due > 0 || dueOnly {
@@ -204,7 +246,22 @@ private struct OpportunitiesList: View {
         .background(Buad.canvas)
     }
 
+    /// A menu chip: its name, or the choice made.
+    private func filterMenu<M: View>(_ title: String, value: String, @ViewBuilder _ content: () -> M) -> some View {
+        Menu { content() } label: {
+            HStack(spacing: 4) {
+                Text(value.isEmpty ? title : value).font(.subheadline.weight(.medium)).lineLimit(1)
+                Image(systemName: "chevron.down").font(.caption2.weight(.bold))
+            }
+            .padding(.horizontal, 12).frame(minHeight: 34)
+            .background(value.isEmpty ? Buad.surface : Buad.accentSoft, in: Capsule())
+            .foregroundStyle(value.isEmpty ? Buad.ink : Buad.accentInk)
+            .padding(.vertical, 5).contentShape(Rectangle())
+        }
+    }
+
     private func load() async {
+        if people.isEmpty { people = (try? await APIClient.shared.assignees()) ?? [] }
         do {
             items = try await APIClient.shared.opportunities()
             ScreenMemory.opportunities = items
@@ -268,10 +325,13 @@ private struct SalesBoard: View {
     @State private var data: SalesOverview? = ScreenMemory.salesOverview
     @State private var loaded = ScreenMemory.salesOverview != nil
     @State private var error: String?
+    @State private var period = FinancePeriod()
+    @State private var reloading = false
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
+                PeriodBar(period: $period, reloading: reloading)
                 if !loaded {
                     ProgressView().frame(maxWidth: .infinity).padding(.vertical, 40)
                 } else if let error {
@@ -279,6 +339,9 @@ private struct SalesBoard: View {
                 } else if let d = data {
                     tiles(d)
                     pipeline(d)
+                    if !d.sources.isEmpty { sources(d) }
+                    if d.monthlyWon.contains(where: { $0.value > 0 }) { monthly(d) }
+                    if !d.topClients.isEmpty { topClients(d) }
                     if !d.stale.isEmpty { stale(d) }
                     quotes(d)
                 }
@@ -288,6 +351,58 @@ private struct SalesBoard: View {
         }
         .refreshable { await load() }
         .task { await load() }
+        .onChange(of: period) { _, _ in Task { reloading = true; await load(); reloading = false } }
+    }
+
+    /// «التحويل حسب المصدر»: where the period's leads came from and how many were won.
+    private func sources(_ d: SalesOverview) -> some View {
+        Card {
+            Text("التحويل حسب المصدر").font(.headline)
+            ForEach(d.sources) { x in
+                HStack {
+                    Text(Sales.source(x.source)).font(.subheadline.weight(.medium))
+                    Spacer()
+                    Text("\(x.won) من \(x.total)").font(.caption).foregroundStyle(Buad.muted).monospacedDigit()
+                    Text(x.rate.map { Self.pct($0) } ?? "—").font(.subheadline.weight(.bold)).monospacedDigit().frame(minWidth: 48, alignment: .trailing)
+                }
+            }
+        }
+    }
+
+    /// «المكسوب شهرياً»: the won value of the last twelve months.
+    private func monthly(_ d: SalesOverview) -> some View {
+        let top = max(1, d.monthlyWon.map(\.value).max() ?? 1)
+        return Card {
+            Text("المكسوب شهرياً").font(.headline)
+            ForEach(d.monthlyWon.suffix(12)) { m in
+                HStack(spacing: 10) {
+                    Text(Self.monthLabel(m.month)).font(.caption).foregroundStyle(Buad.muted).frame(width: 74, alignment: .leading)
+                    ProgressBar(value: Double(m.value) / Double(top), color: Buad.success)
+                    Text(m.value > 0 ? Fmt.short(m.value) : "—").font(.caption.weight(.semibold)).monospacedDigit().frame(width: 56, alignment: .trailing)
+                }
+            }
+        }
+    }
+
+    private func topClients(_ d: SalesOverview) -> some View {
+        Card {
+            Text("أهم العملاء قيمةً").font(.headline)
+            ForEach(Array(d.topClients.prefix(5).enumerated()), id: \.element.id) { i, c in
+                HStack {
+                    Text(verbatim: String(i + 1)).font(.caption.weight(.bold)).foregroundStyle(Buad.muted).frame(width: 18)
+                    Text(c.name).font(.subheadline).lineLimit(1)
+                    Spacer()
+                    Text(Fmt.sar(c.value)).font(.subheadline.weight(.semibold)).monospacedDigit()
+                }
+            }
+        }
+    }
+
+    private static let monthNames = ["", "يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"]
+    private static func monthLabel(_ ym: String) -> String {
+        let p = ym.split(separator: "-").compactMap { Int($0) }
+        guard p.count == 2, (1...12).contains(p[1]) else { return ym }
+        return "\(monthNames[p[1]]) \(String(p[0]).suffix(2))"
     }
 
     private func tiles(_ d: SalesOverview) -> some View {
@@ -304,7 +419,7 @@ private struct SalesBoard: View {
             }
             GridRow {
                 tile("متابعات مستحقة", String(d.leadsDue), sub: d.clientsDue > 0 ? "و\(d.clientsDue) عميل" : "لا شيء متأخر", tone: d.leadsDue > 0 ? .warn : nil)
-                tile("قبول العروض", d.acceptRate.map { Self.pct($0) } ?? "—", sub: "\(d.quotesAccepted) من \(d.quotesSent) · \(Fmt.short(d.acceptedValue))")
+                tile("قبول العروض", d.acceptRate.map { Self.pct($0) } ?? "—", sub: "\(d.quotesAccepted) من \(d.quotesSent) · \(Fmt.short(d.acceptedValue))" + (d.avgValue > 0 ? " · متوسط \(Fmt.short(d.avgValue))" : ""))
             }
         }
     }
@@ -383,8 +498,11 @@ private struct SalesBoard: View {
 
     private func load() async {
         do {
-            data = try await APIClient.shared.salesOverview()
-            ScreenMemory.salesOverview = data
+            let asked = period
+            let fresh = try await APIClient.shared.salesOverview(asked)
+            guard asked == period else { return }
+            data = fresh
+            if asked.preset == .all { ScreenMemory.salesOverview = fresh }
             error = nil
         } catch {
             session.handle(error)
@@ -415,6 +533,7 @@ struct OpportunityView: View {
     @State private var toast: ToastItem?
     @State private var quoting = false
     @State private var editing = false
+    @State private var pricing = false
 
     private var canEdit: Bool { session.me?.can("sales.edit") ?? false }
     private var o: Opportunity { detail?.opportunity ?? preview }
@@ -427,6 +546,7 @@ struct OpportunityView: View {
                 track
                 actionRow
                 details
+                pricingCard
                 if let d = detail, !d.quotes.isEmpty || (canEdit && o.isOpen) { offers(d) }
                 MeetingsSection(requestId: id, presetClientId: o.clientId)
                 timeline
@@ -446,6 +566,13 @@ struct OpportunityView: View {
                 Task { await load() }
             }
             .presentationDetents([.medium, .large])
+        }
+        .sheet(isPresented: $pricing) {
+            PriceOpportunitySheet(opportunity: o) {
+                toast = ToastItem(text: "سُعّرت الفرصة من الخدمة")
+                ScreenMemory.opportunities = nil
+                Task { await load() }
+            }
         }
         .sheet(isPresented: $editing) {
             OpportunityEditSheet(opportunity: o) {
@@ -592,6 +719,14 @@ struct OpportunityView: View {
             if let owner = detail?.ownerName, !owner.isEmpty { row("المسؤول", owner) }
             if !o.followUpAt.isEmpty { row("موعد المتابعة", Fmt.day(o.followUpAt)) }
             row("وصلت", Fmt.epochDay(o.createdAt))
+            row("عمر الفرصة", Fmt.days(o.ageDays))
+            if o.isOpen {
+                row("في هذه المرحلة", Fmt.days(o.stageDays))
+                if o.stageDays >= 14 {
+                    Label("بلا حركة في هذه المرحلة منذ أسبوعين أو أكثر. سجّل تواصلاً أو حدّد موعد متابعة.", systemImage: "hourglass")
+                        .font(.footnote).foregroundStyle(Buad.warningInk)
+                }
+            }
             if o.status == "lost" && !o.lostReason.isEmpty { row("سبب عدم الإتمام", o.lostReason) }
             if !o.phone.isEmpty { row("الجوال", Fmt.ltr(o.phone)) }
             if !o.email.isEmpty { row("البريد الإلكتروني", Fmt.ltr(o.email)) }
@@ -600,7 +735,67 @@ struct OpportunityView: View {
                     .padding(10).frame(maxWidth: .infinity, alignment: .leading)
                     .background(Buad.surface2, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
             }
+            if !o.answers.isEmpty {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("إجابات النموذج").font(.caption.weight(.semibold)).foregroundStyle(Buad.muted)
+                    ForEach(o.answers.keys.sorted(), id: \.self) { k in
+                        row(k, o.answers[k] ?? "")
+                    }
+                }
+            }
             if !o.notes.isEmpty { Text(o.notes).font(.footnote).foregroundStyle(Buad.muted) }
+        }
+    }
+
+    /// «التسعير من الخدمة»: the package priced from the service's cost model. Cost, profit and margin
+    /// are the company's own numbers, shown only to a role that may see profit.
+    @ViewBuilder private var pricingCard: some View {
+        if let p = o.pricing {
+            Card {
+                HStack {
+                    Text("التسعير من الخدمة").font(.headline)
+                    Spacer()
+                    if canEdit && o.isOpen {
+                        Button { pricing = true } label: { Label("إعادة التسعير", systemImage: "arrow.triangle.2.circlepath").font(.subheadline.weight(.medium)) }
+                            .frame(minHeight: Buad.tap)
+                    }
+                }
+                row("الباقة", [p.packageName, p.times > 0 ? "× \(QuoteView.qty(p.times))" : ""].filter { !$0.isEmpty }.joined(separator: " "))
+                row("السعر قبل الضريبة", Fmt.sar(p.price))
+                row("الضريبة", Fmt.sar(p.vat))
+                row("الإجمالي", Fmt.sar(p.total))
+                if p.seesProfit, let cost = p.cost, let profit = p.profit {
+                    Divider()
+                    row("التكلفة", Fmt.sar(cost))
+                    HStack(alignment: .firstTextBaseline) {
+                        Text("الربح").foregroundStyle(Buad.muted)
+                        Spacer()
+                        Text(Fmt.sar(profit) + (p.marginPct.map { " (\(QuoteView.qty($0.rounded()))%)" } ?? ""))
+                            .foregroundStyle(profit >= 0 ? Buad.successInk : Buad.dangerInk).fontWeight(.semibold)
+                    }
+                    .font(.subheadline)
+                    if !p.lines.isEmpty {
+                        ForEach(p.lines) { l in
+                            HStack {
+                                Text(l.label).font(.caption).foregroundStyle(Buad.muted).lineLimit(1)
+                                Spacer()
+                                Text([QuoteView.qty(l.qty), l.amount.map { Fmt.sar($0) } ?? ""].filter { !$0.isEmpty }.joined(separator: " · "))
+                                    .font(.caption).foregroundStyle(Buad.muted).monospacedDigit()
+                            }
+                        }
+                    }
+                    Label("أرقام داخلية لا تظهر للعميل", systemImage: "lock").font(.caption).foregroundStyle(Buad.muted)
+                }
+            }
+        } else if canEdit && o.isOpen {
+            Button { pricing = true } label: {
+                Label("تسعير من الخدمة", systemImage: "tag")
+                    .font(.subheadline.weight(.semibold)).frame(maxWidth: .infinity, minHeight: 48)
+                    .background(Buad.surface, in: RoundedRectangle(cornerRadius: Buad.control, style: .continuous))
+                    .overlay(RoundedRectangle(cornerRadius: Buad.control, style: .continuous).stroke(Buad.line))
+                    .foregroundStyle(Buad.ink)
+            }
+            .buttonStyle(.plain)
         }
     }
 
