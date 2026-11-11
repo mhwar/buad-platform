@@ -103,6 +103,11 @@ struct TodayView: View {
             .navigationTitle("اليوم")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    NavigationLink { SearchView() } label: {
+                        Image(systemName: "magnifyingglass").accessibilityLabel("بحث")
+                    }
+                }
                 ToolbarItem(placement: .primaryAction) {
                     NavigationLink {
                         NotificationsView(onUnreadChange: { unread = $0 })

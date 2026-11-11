@@ -21,6 +21,7 @@ enum AppRoute: Identifiable, Hashable {
     case meeting(String)
     case decisions
     case settings
+    case search
     case plans
     case reports
     case audit
@@ -45,6 +46,7 @@ enum AppRoute: Identifiable, Hashable {
         case .meeting(let i): return "meeting-\(i)"
         case .decisions: return "decisions"
         case .settings: return "settings"
+        case .search: return "search"
         case .plans: return "plans"
         case .reports: return "reports"
         case .audit: return "audit"
@@ -88,6 +90,7 @@ enum AppRoute: Identifiable, Hashable {
             if p.count >= 2, p[1] == "account" { return .account }
             return .settings
         case "account": return .account
+        case "search": return .search
         case "reports": return .reports
         default: return .soon("هذا القسم")
         }
@@ -173,6 +176,7 @@ struct RouteSheet: View {
         case .meeting(let id): MeetingPage(id: id) {}
         case .decisions: DecisionsView()
         case .settings: SettingsHubView()
+        case .search: SearchView()
         case .plans: PlansView()
         case .reports: ReportsHubView()
         case .audit: AuditLogView()

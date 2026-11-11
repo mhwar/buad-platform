@@ -26,6 +26,10 @@ struct MoreView: View {
                     }
                 }
 
+                Section {
+                    NavigationLink { SearchView() } label: { Label("بحث في كل المنصة", systemImage: "magnifyingglass") }
+                }
+
                 if let me = session.me {
                     let work = me.can("tasks.view") || me.can("clients.view") || me.can("documents.view") || me.can("meetings.view")
                     if work {
