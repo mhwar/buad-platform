@@ -1,3 +1,4 @@
+import QuickLook
 import SwiftUI
 
 /// «العملاء» (features/clients/ClientsPage.tsx), read-only: the list with search, then the client's
@@ -10,6 +11,9 @@ struct ClientsView: View {
     @State private var query = ""
     @State private var loaded = false
     @State private var error: String?
+    @State private var sort = "newest"
+    @State private var rel = ""
+    @State private var archived = false
 
     private var shown: [ClientItem] {
         let q = query.trimmingCharacters(in: .whitespaces)
@@ -25,7 +29,7 @@ struct ClientsView: View {
                 } else if let error, items.isEmpty {
                     EmptyNote(text: error, icon: "wifi.exclamationmark")
                 } else if shown.isEmpty {
-                    EmptyNote(text: query.isEmpty ? "لا يوجد عملاء بعد." : "لا نتائج. جرّبوا كلمة بحث أخرى.", icon: query.isEmpty ? "person.2" : "magnifyingglass")
+                    EmptyNote(text: query.isEmpty ? (archived ? "لا عملاء مؤرشفون." : rel.isEmpty ? "لا يوجد عملاء بعد." : "لا عملاء بهذه العلاقة.") : "لا نتائج. جرّبوا كلمة بحث أخرى.", icon: query.isEmpty ? "person.2" : "magnifyingglass")
                 } else {
                     if let error { RefreshBanner(text: error) }
                     ForEach(shown) { c in
@@ -41,9 +45,27 @@ struct ClientsView: View {
         .navigationBarTitleDisplayMode(.inline)
         .searchable(text: $query, prompt: "ابحث بالاسم أو الرقم أو المدينة أو البريد")
         .refreshable { await load() }
-        .task { if !loaded { await load() } }
+        .task(id: "\(sort)|\(rel)|\(archived)") { await load() }
         .onChange(of: center.revision) { _, _ in Task { await load() } }
         .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                Menu {
+                    Picker("الترتيب", selection: $sort) {
+                        Text("الأحدث").tag("newest")
+                        Text("الاسم").tag("name")
+                        Text("قيمة العقود").tag("value")
+                        Text("الأقل تواصلاً").tag("contact")
+                    }
+                    Picker("العلاقة", selection: $rel) {
+                        Text("كل العلاقات").tag("")
+                        ForEach(["active", "prospect", "new", "dormant", "former"], id: \.self) { Text(Vocabulary.relationship($0).label).tag($0) }
+                    }
+                    Toggle("المؤرشفون", isOn: $archived)
+                } label: {
+                    Image(systemName: (rel.isEmpty && !archived && sort == "newest") ? "line.3.horizontal.decrease.circle" : "line.3.horizontal.decrease.circle.fill")
+                        .accessibilityLabel("ترتيب وتصفية")
+                }
+            }
             if session.me?.can("clients.edit") == true {
                 ToolbarItem(placement: .primaryAction) {
                     Button { center.sheet = .client } label: {
@@ -57,7 +79,7 @@ struct ClientsView: View {
 
     private func load() async {
         do {
-            items = try await APIClient.shared.clients()
+            items = try await APIClient.shared.clients(sort: sort, rel: rel, archived: archived)
             error = nil
         } catch {
             session.handle(error)
@@ -114,6 +136,7 @@ private struct ClientCard: View {
 
 struct ClientDetailView: View {
     @EnvironmentObject private var session: Session
+    @Environment(\.openURL) private var openURL
     let client: ClientItem
     @State private var detail: ClientDetail?
     @State private var statement: Statement?
@@ -129,6 +152,11 @@ struct ClientDetailView: View {
     @State private var contacting = false
     @State private var newProject = false
     @State private var toast: ToastItem?
+    /// Bumped after something is logged or changed, so the log and the opportunities reload.
+    @State private var tick = 0
+    @State private var pdf: URL?
+    @State private var confirmArchive = false
+    @State private var busy = false
 
     var body: some View {
         ScrollView {
@@ -144,12 +172,21 @@ struct ClientDetailView: View {
                 }
 
                 if let error { EmptyNote(text: error, icon: "wifi.exclamationmark") }
+                if detail?.archived == true {
+                    Label("هذا العميل مؤرشف مع مشاريعه. استعده من «…» لإظهاره.", systemImage: "archivebox")
+                        .font(.footnote).foregroundStyle(Buad.warningInk)
+                        .padding(12).frame(maxWidth: .infinity, alignment: .leading)
+                        .background(Buad.warningSoft, in: RoundedRectangle(cornerRadius: Buad.control, style: .continuous))
+                }
 
-                if canEditClient || canNewProject {
+                if canEditClient || canNewProject || !ReceiptRules.whatsapp(client.phone).isEmpty {
                     ActionRow {
                         if canEditClient { ActionTile(icon: "pencil", title: "تعديل", primary: true) { editing = true } }
                         if canEditClient { ActionTile(icon: "plus.bubble", title: "تسجيل تواصل") { contacting = true } }
                         if canNewProject { ActionTile(icon: "briefcase", title: "مشروع جديد") { newProject = true } }
+                        if !ReceiptRules.whatsapp(client.phone).isEmpty, let wa = URL(string: "https://wa.me/\(ReceiptRules.whatsapp(client.phone))") {
+                            ActionTile(icon: "message.fill", title: "واتساب") { openURL(wa) }
+                        }
                     }
                 }
 
@@ -211,6 +248,9 @@ struct ClientDetailView: View {
                     .background(Buad.surface, in: RoundedRectangle(cornerRadius: Buad.radius, style: .continuous))
                 }
 
+                ClientCRMCard(client: client, refresh: tick)
+                ClientOpportunitiesCard(clientId: client.id, refresh: tick)
+                MeetingsSection(clientId: client.id)
                 Text("المشاريع").font(.headline)
                 if let projects = detail?.projects {
                     if projects.isEmpty {
@@ -263,14 +303,56 @@ struct ClientDetailView: View {
         .refreshable { await load() }
         .task { if !loaded { await load() } }
         .toast($toast)
+        .quickLookPreview($pdf)
+        .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                Menu {
+                    if canFinance { Button { Task { await makeStatement() } } label: { Label("كشف الحساب PDF", systemImage: "doc.richtext") } }
+                    if session.me?.can("clients.archive") == true, let d = detail {
+                        if d.archived { Button { Task { await setArchived(false) } } label: { Label("استعادة العميل", systemImage: "arrow.uturn.backward") } }
+                        else { Button(role: .destructive) { confirmArchive = true } label: { Label("أرشفة العميل", systemImage: "archivebox") } }
+                    }
+                } label: { Image(systemName: "ellipsis.circle").accessibilityLabel("إجراءات العميل") }
+            }
+        }
+        .confirmationDialog("أرشفة «\(client.name)»؟", isPresented: $confirmArchive, titleVisibility: .visible) {
+            Button("أرشفة العميل ومشاريعه", role: .destructive) { Task { await setArchived(true) } }
+            Button("إلغاء", role: .cancel) {}
+        } message: { Text("يُخفى العميل ومشاريعه من القوائم ويمكن استعادته.") }
         .sheet(isPresented: $editing) {
             ClientEditSheet(client: client, detail: detail) { toast = ToastItem(text: "حُفظت بيانات العميل"); Task { await load() } }
         }
         .sheet(isPresented: $contacting) {
-            ClientContactSheet(client: client) { toast = ToastItem(text: "سُجّل التواصل") }
+            ClientContactSheet(client: client) { toast = ToastItem(text: "سُجّل التواصل"); tick += 1 }
         }
         .sheet(isPresented: $newProject) {
             ProjectEditSheet(presetClient: client) { _ in toast = ToastItem(text: "أُنشئ المشروع"); Task { await load() } }
+        }
+    }
+
+    private func makeStatement() async {
+        busy = true
+        defer { busy = false }
+        do {
+            let data = try await APIClient.shared.statementPDF(client.id, name: "كشف-حساب-\(client.code)")
+            let url = FileManager.default.temporaryDirectory.appendingPathComponent("كشف حساب \(client.name).pdf")
+            try data.write(to: url, options: .atomic)
+            pdf = url
+        } catch {
+            session.handle(error)
+            self.error = (error as? APIError)?.message ?? "تعذّر إنشاء كشف الحساب"
+        }
+    }
+
+    private func setArchived(_ archive: Bool) async {
+        do {
+            if archive { try await APIClient.shared.archiveClient(client.id) } else { try await APIClient.shared.restoreClient(client.id) }
+            toast = ToastItem(text: archive ? "أُرشف العميل ومشاريعه" : "استُعيد العميل")
+            NotificationCenter.default.post(name: .projectsChanged, object: nil)
+            await load()
+        } catch {
+            session.handle(error)
+            self.error = (error as? APIError)?.message ?? "تعذّر التنفيذ"
         }
     }
 

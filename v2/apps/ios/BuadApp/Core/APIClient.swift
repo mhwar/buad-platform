@@ -199,9 +199,32 @@ final class APIClient: @unchecked Sendable {
         let _: OKEnvelope = try await send("POST", "/api/notifications/read-all")
     }
 
-    func clients() async throws -> [ClientItem] {
-        let envelope: ClientsEnvelope = try await send("GET", "/api/clients")
+    /// The client list: newest, by name, by contract value or least recently contacted; one relationship;
+    /// or the archived ones.
+    func clients(sort: String = "newest", rel: String = "", archived: Bool = false) async throws -> [ClientItem] {
+        var q = ["sort=\(sort)"]
+        if !rel.isEmpty { q.append("rel=\(rel)") }
+        if archived { q.append("archived=1") }
+        let envelope: ClientsEnvelope = try await send("GET", "/api/clients?" + q.joined(separator: "&"))
         return envelope.items
+    }
+
+    func archiveClient(_ id: String) async throws { let _: OKEnvelope = try await send("POST", "/api/clients/\(id)/archive") }
+    func restoreClient(_ id: String) async throws { let _: OKEnvelope = try await send("POST", "/api/clients/\(id)/restore") }
+
+    /// GET /api/crm/clients/:id — the relationship, owner, source, tags, next contact and the contact log.
+    func crm(_ id: String) async throws -> ClientCRM { try await send("GET", "/api/crm/clients/\(id)") }
+
+    /// PATCH /api/crm/clients/:id — owner, source, tags, next follow-up (clients.edit).
+    func updateCRM(_ id: String, _ fields: [String: Any]) async throws {
+        let _: OKEnvelope = try await send("PATCH", "/api/crm/clients/\(id)", body: fields)
+    }
+
+    func deleteActivity(_ id: String) async throws { let _: OKEnvelope = try await send("DELETE", "/api/crm/activities/\(id)") }
+
+    /// The client's statement of account as the website prints it, as PDF bytes.
+    func statementPDF(_ clientId: String, name: String) async throws -> Data {
+        try await perform("POST", "/api/pdf", body: ["path": "/clients/\(clientId)/statement", "name": name])
     }
 
     func client(_ id: String) async throws -> ClientDetail {
