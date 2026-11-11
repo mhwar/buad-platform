@@ -20,6 +20,12 @@ enum AppRoute: Identifiable, Hashable {
     case meetings
     case meeting(String)
     case decisions
+    case settings
+    case plans
+    case reports
+    case audit
+    case team
+    case account
     case soon(String)
 
     var id: String {
@@ -38,6 +44,12 @@ enum AppRoute: Identifiable, Hashable {
         case .meetings: return "meetings"
         case .meeting(let i): return "meeting-\(i)"
         case .decisions: return "decisions"
+        case .settings: return "settings"
+        case .plans: return "plans"
+        case .reports: return "reports"
+        case .audit: return "audit"
+        case .team: return "team"
+        case .account: return "account"
         case .soon(let s): return "soon-\(s)"
         }
     }
@@ -68,10 +80,15 @@ enum AppRoute: Identifiable, Hashable {
             if let open = q.split(separator: "&").first(where: { $0.hasPrefix("open=") }) { return .meeting(String(open.dropFirst(5))) }
             return .meetings
         case "decisions": return .decisions
-        case "plans": return .soon("الخطط والأهداف")
+        case "plans": return .plans
         case "products": return .soon("المنتجات والخدمات")
-        case "settings": return .soon("الإعدادات")
-        case "reports": return .soon("التقارير")
+        case "settings":
+            if p.count >= 2, p[1] == "activity" { return .audit }
+            if p.count >= 2, p[1] == "team" { return .team }
+            if p.count >= 2, p[1] == "account" { return .account }
+            return .settings
+        case "account": return .account
+        case "reports": return .reports
         default: return .soon("هذا القسم")
         }
     }
@@ -132,6 +149,12 @@ struct RouteSheet: View {
         case .meetings: MeetingsView()
         case .meeting(let id): MeetingPage(id: id) {}
         case .decisions: DecisionsView()
+        case .settings: SettingsHubView()
+        case .plans: PlansView()
+        case .reports: ReportsHubView()
+        case .audit: AuditLogView()
+        case .team: TeamView()
+        case .account: AccountView()
         case .soon(let name): SoonView(name: name)
         case .tab, .quotes: EmptyView()
         }

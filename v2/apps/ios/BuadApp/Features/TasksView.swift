@@ -14,6 +14,7 @@ struct TasksView: View {
     @State private var error: String?
     @State private var busy: Set<String> = []
     @State private var postponing: TaskItem?
+    @State private var creating = false
     @State private var notice: String?
     @State private var toast: ToastItem?
     /// «مهامي» ⇄ «كل الفريق» is loading: the old rows are dimmed so they are not mistaken for the new scope.
@@ -96,6 +97,16 @@ struct TasksView: View {
             Task { await load(); switching = false }
         }
         .toast($toast)
+        .toolbar {
+            if canEdit {
+                ToolbarItem(placement: .primaryAction) {
+                    Button { creating = true } label: { Image(systemName: "plus").font(.body.weight(.semibold)).accessibilityLabel("مهمة جديدة") }
+                }
+            }
+        }
+        .sheet(isPresented: $creating) {
+            TaskSheet(projectId: "", stages: [], existing: nil) { m in toast = ToastItem(text: m); Task { await load() } }
+        }
         .sheet(item: $postponing) { t in
             PostponeSheet(task: t) { day in
                 postponing = nil

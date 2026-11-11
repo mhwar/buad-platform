@@ -30,7 +30,7 @@ enum APIError: Error, Equatable {
         case .similarName(let name):
             return "يوجد عميل باسم مشابه" + (name.isEmpty ? "" : " («\(name)»)") + ". هل تريد إنشاء عميل جديد رغم ذلك؟"
         case .rejected(let code):
-            if let q = QuoteVocabulary.error(code) ?? ProjectVocabulary.error(code) ?? MeetingVocabulary.error(code) ?? CompanyVocabulary.error(code) { return q }
+            if let q = QuoteVocabulary.error(code) ?? ProjectVocabulary.error(code) ?? MeetingVocabulary.error(code) ?? CompanyVocabulary.error(code) ?? AdminVocabulary.error(code) { return q }
             switch code {
             case "end_before_start": return "تاريخ الاستحقاق قبل تاريخ البداية."
             case "not_found": return "لم يعد هذا العنصر موجوداً أو لا تملك صلاحية الوصول إليه."
@@ -831,6 +831,79 @@ final class APIClient: @unchecked Sendable {
 
     func quarter(year: Int, q: Int) async throws -> QuarterReport {
         try await send("GET", "/api/finance/company/quarter?year=\(year)&q=\(q)")
+    }
+
+    // MARK: 0.10.0 — management
+
+    func audit(entity: String, user: String, from: String, to: String) async throws -> [AuditEntry] {
+        var q = ["limit=100"]
+        if !entity.isEmpty { q.append("entity=\(entity)") }
+        if !user.isEmpty { q.append("user=\(user)") }
+        if !from.isEmpty { q.append("from=\(from)") }
+        if !to.isEmpty { q.append("to=\(to)") }
+        let r: AuditEnvelope = try await send("GET", "/api/audit?" + q.joined(separator: "&"))
+        return r.items
+    }
+
+    func teamMembers() async throws -> [TeamUser] {
+        let r: TeamUsersEnvelope = try await send("GET", "/api/team/users")
+        return r.users
+    }
+
+    func teamRoles() async throws -> [TeamRole] {
+        let r: TeamRolesEnvelope = try await send("GET", "/api/team/roles")
+        return r.roles
+    }
+
+    func orgProfile() async throws -> OrgProfile { try await send("GET", "/api/org/profile") }
+    func orgStorage() async throws -> OrgStorage { try await send("GET", "/api/org/storage") }
+
+    /// 403 here means the current password is wrong (not a missing permission).
+    func changePassword(current: String, new: String) async throws {
+        do {
+            let _: OKEnvelope = try await send("POST", "/api/auth/change-password", body: ["current": current, "password": new])
+        } catch APIError.forbidden {
+            throw APIError.rejected("wrong_password")
+        }
+    }
+
+    func logoutOthers() async throws { let _: OKEnvelope = try await send("POST", "/api/auth/logout-others") }
+    func recoveryKey() async throws -> RecoveryKeyStatus { try await send("GET", "/api/auth/recovery-key") }
+    func createRecoveryKey() async throws -> String {
+        let r: RecoveryKeyCreated = try await send("POST", "/api/auth/recovery-key")
+        return r.key
+    }
+
+    // MARK: 0.10.1 — plans and reports
+
+    func planCycles() async throws -> [PlanCycle] {
+        let r: PlanCyclesEnvelope = try await send("GET", "/api/plans/cycles")
+        return r.cycles
+    }
+
+    func planCycle(_ id: String) async throws -> PlanDetail { try await send("GET", "/api/plans/cycles/\(id)") }
+
+    func planOwners() async throws -> [Person] {
+        let r: PlanOwnersEnvelope = try await send("GET", "/api/plans/owners")
+        return r.owners
+    }
+
+    func setInitiativeStatus(_ id: String, _ status: String) async throws {
+        let _: OKEnvelope = try await send("PATCH", "/api/plans/initiatives/\(id)", body: ["status": status])
+    }
+
+    func setIndicatorCurrent(_ id: String, _ value: Double) async throws {
+        let _: OKEnvelope = try await send("PATCH", "/api/plans/indicators/\(id)", body: ["current": value])
+    }
+
+    func reviewObjective(_ id: String, quarter: Int, note: String) async throws {
+        let _: CreatedEnvelope = try await send("POST", "/api/plans/objectives/\(id)/reviews", body: ["quarter": quarter, "note": note])
+    }
+
+    func executionReport(from: String, to: String) async throws -> ExecutionReport {
+        var q = ""
+        if !from.isEmpty, !to.isEmpty { q = "?from=\(from)&to=\(to)" }
+        return try await send("GET", "/api/reports/execution" + q)
     }
 
     func signOut() async {

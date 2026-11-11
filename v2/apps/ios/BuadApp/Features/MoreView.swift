@@ -1,9 +1,6 @@
 import SwiftUI
 
 struct MoreView: View {
-    private static let soonIcon = ["الاجتماعات": "person.3", "القرارات": "checkmark.seal", "الخطط والأهداف": "target",
-                                   "التقارير": "chart.bar.doc.horizontal", "الإعدادات": "gearshape"]
-
     @EnvironmentObject private var session: Session
     @AppStorage("buad.faceid") private var faceID = false
     @AppStorage("buad.theme") private var theme = "system"
@@ -51,19 +48,15 @@ struct MoreView: View {
                         } header: { Text("المالية") }
                     }
                     Section {
-                        ForEach(["الخطط والأهداف", "التقارير", "الإعدادات"], id: \.self) { name in
-                            NavigationLink { SoonView(name: name) } label: {
-                                HStack {
-                                    Label(name, systemImage: Self.soonIcon[name] ?? "hammer")
-                                    Spacer()
-                                    Text("قريباً").font(.caption.weight(.semibold)).foregroundStyle(Buad.accentInk)
-                                        .padding(.horizontal, 8).padding(.vertical, 3)
-                                        .background(Buad.accentSoft, in: Capsule())
-                                }
-                            }
-                        }
-                    } header: { Text("قيد النقل إلى التطبيق") } footer: {
-                        Text("أقسام الموقع التي تنتقل إلى التطبيق تباعاً. كل قسم يظهر هنا بمجرد جاهزيته.")
+                        NavigationLink { SettingsHubView() } label: { Label("الإعدادات والحساب", systemImage: "gearshape") }
+                    } header: { Text("الإدارة") } footer: {
+                        Text("حسابك وكلمة المرور وسجل النشاط والفريق وبيانات المنشأة.")
+                    }
+                    if me.can("plans.view") || me.can("tasks.view") || me.can("projects.view") {
+                        Section {
+                            if me.can("plans.view") { NavigationLink { PlansView() } label: { Label("الخطط والأهداف", systemImage: "target") } }
+                            NavigationLink { ReportsHubView() } label: { Label("التقارير", systemImage: "chart.bar.doc.horizontal") }
+                        } header: { Text("التخطيط والتحليل") }
                     }
                 }
 
