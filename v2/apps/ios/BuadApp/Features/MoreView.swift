@@ -30,7 +30,7 @@ struct MoreView: View {
                 }
 
                 if let me = session.me {
-                    let work = me.can("tasks.view") || me.can("clients.view") || me.can("documents.view")
+                    let work = me.can("tasks.view") || me.can("clients.view") || me.can("documents.view") || me.can("meetings.view")
                     if work {
                         Section {
                             if me.can("tasks.view") { NavigationLink { TasksView().navigationTitle("المهام").navigationBarTitleDisplayMode(.inline) } label: { Label("المهام", systemImage: "checklist") } }
@@ -39,6 +39,10 @@ struct MoreView: View {
                                 NavigationLink { ClientsView() } label: { Label("العملاء", systemImage: "person.2") }
                             }
                             if me.can("documents.view") { NavigationLink { DocumentsRegisterView() } label: { Label("المستندات", systemImage: "doc.text") } }
+                            if me.can("meetings.view") {
+                                NavigationLink { MeetingsView() } label: { Label("الاجتماعات", systemImage: "person.3") }
+                                NavigationLink { DecisionsView() } label: { Label("القرارات", systemImage: "checkmark.seal") }
+                            }
                         } header: { Text("العمل") }
                     }
                     if me.can("treasury.view") || me.can("vat.view") {
@@ -47,7 +51,7 @@ struct MoreView: View {
                         } header: { Text("المالية") }
                     }
                     Section {
-                        ForEach(["الاجتماعات", "القرارات", "الخطط والأهداف", "التقارير", "الإعدادات"], id: \.self) { name in
+                        ForEach(["الخطط والأهداف", "التقارير", "الإعدادات"], id: \.self) { name in
                             NavigationLink { SoonView(name: name) } label: {
                                 HStack {
                                     Label(name, systemImage: Self.soonIcon[name] ?? "hammer")

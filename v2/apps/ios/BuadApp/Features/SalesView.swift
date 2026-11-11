@@ -398,6 +398,7 @@ private struct SalesBoard: View {
 
 struct OpportunityView: View {
     @EnvironmentObject private var session: Session
+    @EnvironmentObject private var nav: Navigator
     let id: String
     let preview: Opportunity
 
@@ -407,6 +408,7 @@ struct OpportunityView: View {
     @State private var logging = false
     @State private var losing = false
     @State private var winning = false
+    @State private var converting = false
     @State private var lostReason = ""
     /// The stage a move is on its way to (shows a spinner on that step).
     @State private var movingTo: String?
@@ -426,6 +428,7 @@ struct OpportunityView: View {
                 actionRow
                 details
                 if let d = detail, !d.quotes.isEmpty || (canEdit && o.isOpen) { offers(d) }
+                MeetingsSection(requestId: id, presetClientId: o.clientId)
                 timeline
             }
             .padding(.horizontal, Buad.gutter)
@@ -457,10 +460,19 @@ struct OpportunityView: View {
             }
         }
         .confirmationDialog("كسب الفرصة", isPresented: $winning, titleVisibility: .visible) {
-            Button("تعليمها كمكسوبة") { Task { await move("won") } }
+            if canEdit && o.projectId.isEmpty { Button("مكسوبة وإنشاء مشروعها") { converting = true } }
+            Button("تعليمها كمكسوبة فقط") { Task { await move("won") } }
             Button("إلغاء", role: .cancel) {}
         } message: {
-            Text("تُعلَّم الفرصة «مكسوب». لتحويلها إلى مشروع اقبل عرض سعرها ثم «تحويل إلى مشروع».")
+            Text("«مكسوبة وإنشاء مشروعها» يُنشئ العميل (إن لم يكن موجوداً) ومشروعاً مسودة، ويربطهما بالفرصة. وإن كان لها عرض سعر مقبول فالأفضل «تحويل إلى مشروع» من صفحة العرض ليحمل سعره وجدول دفعاته.")
+        }
+        .sheet(isPresented: $converting) {
+            ConvertOpportunitySheet(opportunity: o) { result in
+                toast = ToastItem(text: "أُنشئ المشروع \(result.number)")
+                ScreenMemory.opportunities = nil
+                Task { await load() }
+                nav.open("/projects/\(result.projectId)")
+            }
         }
         .alert("إغلاق الفرصة كخاسرة", isPresented: $losing) {
             TextField("السبب: السعر، اختاروا جهة أخرى، لا ميزانية…", text: $lostReason)

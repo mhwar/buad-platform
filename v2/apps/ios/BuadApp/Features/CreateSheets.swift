@@ -487,3 +487,87 @@ struct OpportunityEditSheet: View {
         }
     }
 }
+
+// MARK: - Winning an opportunity into a project
+
+/// «اكسب وحوّل إلى مشروع» (ConvertRequestDialog): the opportunity is won, its client is the one it has
+/// (or another you pick, or a new one made from it after the similar-name check) and a draft project is
+/// opened for it. A draft project that was moved here comes back instead of a new one.
+struct ConvertOpportunitySheet: View {
+    @EnvironmentObject private var session: Session
+    @Environment(\.dismiss) private var dismiss
+    let opportunity: Opportunity
+    let done: (ConvertResult) -> Void
+
+    @State private var name = ""
+    @State private var clientId = ""
+    @State private var clientName = ""
+    @State private var choosingClient = false
+    @State private var similar: String?
+    @State private var error: String?
+    @State private var busy = false
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                if let error {
+                    Section { Label(error, systemImage: "exclamationmark.circle").foregroundStyle(Buad.dangerInk) }
+                }
+                if let similar {
+                    Section {
+                        Text(APIError.similarName(similar).message).foregroundStyle(Buad.warningInk)
+                        Button("نعم، أنشئ عميلاً جديداً") { Task { await go(confirm: true) } }.bold()
+                        Button("اختيار العميل الموجود") { choosingClient = true }
+                    }
+                }
+                Section {
+                    TextField("اسم المشروع", text: $name)
+                    Button { choosingClient = true } label: {
+                        HStack {
+                            Text("العميل").foregroundStyle(Buad.ink)
+                            Spacer()
+                            Text(clientName.isEmpty ? (opportunity.clientId.isEmpty ? "يُنشأ من الفرصة" : "عميل الفرصة") : clientName)
+                                .foregroundStyle(clientName.isEmpty ? Buad.muted : Buad.accentInk)
+                            Chevron()
+                        }
+                    }
+                } footer: {
+                    Text("يُنشأ مشروع مسودة، وتُعلَّم الفرصة «مكسوب» وتُربط به. اضبط عقده ودفعاته من صفحته.")
+                }
+            }
+            .navigationTitle("تحويل إلى مشروع")
+            .navigationBarTitleDisplayMode(.inline)
+            .formChrome(dirty: false, busy: busy || name.trimmingCharacters(in: .whitespaces).isEmpty, saveTitle: "تحويل") {
+                Task { await go(confirm: false) }
+            }
+            .sheet(isPresented: $choosingClient) {
+                ClientPicker(allowNone: false) { c in
+                    if let c { clientId = c.id; clientName = c.name; similar = nil }
+                }
+            }
+            .onAppear {
+                if name.isEmpty {
+                    let who = opportunity.entity.isEmpty ? opportunity.name : opportunity.entity
+                    name = [opportunity.productName, who].filter { !$0.isEmpty }.joined(separator: " — ")
+                }
+            }
+        }
+    }
+
+    private func go(confirm: Bool) async {
+        busy = true
+        defer { busy = false }
+        do {
+            let r = try await APIClient.shared.convertOpportunity(opportunity.id, projectName: name.trimmingCharacters(in: .whitespaces),
+                                                                  clientId: clientId.isEmpty ? nil : clientId, confirmSimilarName: confirm)
+            NotificationCenter.default.post(name: .projectsChanged, object: nil)
+            done(r)
+            dismiss()
+        } catch let APIError.similarName(n) {
+            similar = n
+        } catch {
+            session.handle(error)
+            self.error = (error as? APIError)?.message ?? "تعذّر التحويل، حاول مرة أخرى."
+        }
+    }
+}

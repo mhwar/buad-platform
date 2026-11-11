@@ -24,6 +24,8 @@
 		6F386E55301D32ADA1368A11 /* FollowupsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B932F4FB266D40515545DA76 /* FollowupsView.swift */; };
 		439B91AD00AA6A38A509686C /* FormChrome.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80A6E462E728C4AB4F70C873 /* FormChrome.swift */; };
 		F37391568EFFD96C654900E3 /* Format.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42671CCBC6E8669BCF2A9F27 /* Format.swift */; };
+		4E7F309D19841C2A29A1BD16 /* MeetingModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56F319BE81315C8753BF9390 /* MeetingModels.swift */; };
+		93ECAFE34C62A2F54C122112 /* MeetingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3359BA192B64B9E56ED0D1B /* MeetingsView.swift */; };
 		7393F02EC54916C7EDE9A3B4 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00315442E9DAF7B3CC3ED5A9 /* Models.swift */; };
 		51F020F2F35B5FAEF11A13D1 /* MoneySheets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26EB1F0CFB5AA4D4D4FD8C9D /* MoneySheets.swift */; };
 		A289450366D35817DEC0755B /* MoreView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5BBF222B60004DD31D3FBEB8 /* MoreView.swift */; };
@@ -72,6 +74,8 @@
 		B932F4FB266D40515545DA76 /* FollowupsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FollowupsView.swift; sourceTree = "<group>"; };
 		80A6E462E728C4AB4F70C873 /* FormChrome.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FormChrome.swift; sourceTree = "<group>"; };
 		42671CCBC6E8669BCF2A9F27 /* Format.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Format.swift; sourceTree = "<group>"; };
+		56F319BE81315C8753BF9390 /* MeetingModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeetingModels.swift; sourceTree = "<group>"; };
+		B3359BA192B64B9E56ED0D1B /* MeetingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeetingsView.swift; sourceTree = "<group>"; };
 		00315442E9DAF7B3CC3ED5A9 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
 		26EB1F0CFB5AA4D4D4FD8C9D /* MoneySheets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoneySheets.swift; sourceTree = "<group>"; };
 		5BBF222B60004DD31D3FBEB8 /* MoreView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoreView.swift; sourceTree = "<group>"; };
@@ -147,6 +151,7 @@
 				812AEA46536EF9D0366B74DD /* Confirm.swift */,
 				F984DF6F04EBA163D323946D /* FinanceModels.swift */,
 				42671CCBC6E8669BCF2A9F27 /* Format.swift */,
+				56F319BE81315C8753BF9390 /* MeetingModels.swift */,
 				00315442E9DAF7B3CC3ED5A9 /* Models.swift */,
 				C5A5EF53C6D7B76F4A56FC27 /* ProjectModels.swift */,
 				4F864F26CE1CBE1654BE5B1A /* ProjectOpsModels.swift */,
@@ -171,6 +176,7 @@
 				F0E8E8409B2DD629F3FF356C /* FinanceView.swift */,
 				B932F4FB266D40515545DA76 /* FollowupsView.swift */,
 				80A6E462E728C4AB4F70C873 /* FormChrome.swift */,
+				B3359BA192B64B9E56ED0D1B /* MeetingsView.swift */,
 				26EB1F0CFB5AA4D4D4FD8C9D /* MoneySheets.swift */,
 				5BBF222B60004DD31D3FBEB8 /* MoreView.swift */,
 				4A45104A6141BFBC1B0E4747 /* NotificationsView.swift */,
@@ -287,6 +293,8 @@
 				6F386E55301D32ADA1368A11 /* FollowupsView.swift in Sources */,
 				439B91AD00AA6A38A509686C /* FormChrome.swift in Sources */,
 				F37391568EFFD96C654900E3 /* Format.swift in Sources */,
+				4E7F309D19841C2A29A1BD16 /* MeetingModels.swift in Sources */,
+				93ECAFE34C62A2F54C122112 /* MeetingsView.swift in Sources */,
 				7393F02EC54916C7EDE9A3B4 /* Models.swift in Sources */,
 				51F020F2F35B5FAEF11A13D1 /* MoneySheets.swift in Sources */,
 				A289450366D35817DEC0755B /* MoreView.swift in Sources */,
@@ -398,7 +406,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.6.0;
+				MARKETING_VERSION = 0.7.0;
 				PRODUCT_BUNDLE_IDENTIFIER = sa.buad.app;
 				PRODUCT_NAME = BuadApp;
 				SDKROOT = iphoneos;
@@ -421,7 +429,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.6.0;
+				MARKETING_VERSION = 0.7.0;
 				PRODUCT_BUNDLE_IDENTIFIER = sa.buad.app;
 				PRODUCT_NAME = BuadApp;
 				SDKROOT = iphoneos;

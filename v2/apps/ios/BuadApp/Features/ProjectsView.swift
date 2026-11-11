@@ -182,7 +182,7 @@ struct ProjectsView: View {
                 Picker("المالية", selection: $money) {
                     Text("داخلية وخارجية").tag(Money.all)
                     Text("داخلية (تدخل في المالية)").tag(Money.inside)
-                    Text("خارجية (لا تدخل في المالية)").tag(Money.external)
+                    Text("خارجية (حساباتها منفصلة)").tag(Money.external)
                 }
                 Picker("النوع", selection: $type) {
                     Text("كل الأنواع").tag("")
@@ -269,7 +269,7 @@ struct ProjectCard: View {
                 meter("التنفيذ", exec.total > 0 ? "\(exec.done)/\(exec.total)" : "—",
                       exec.total > 0 ? Double(exec.done) / Double(exec.total) : 0, Buad.accent,
                       extra: p.tasksOverdue > 0 ? "\(p.tasksOverdue) متأخرة" : nil)
-                if let received = p.received, !p.external, p.status != "draft" {
+                if let received = p.received, p.status != "draft" {
                     meter("التحصيل", "\(Fmt.percent(received, of: p.contractTotal))%",
                           p.contractTotal > 0 ? Double(received) / Double(p.contractTotal) : 0, Buad.success)
                 }
@@ -279,10 +279,9 @@ struct ProjectCard: View {
                 Text([Vocabulary.type(p.type), Fmt.dayMonth(p.startDate)].filter { !$0.isEmpty }.joined(separator: " · "))
                     .font(.footnote).foregroundStyle(Buad.muted)
                 Spacer()
-                if p.external {
-                    Text("لا يدخل في المالية").font(.caption).foregroundStyle(Buad.muted)
-                } else if p.received != nil {
+                if p.received != nil {
                     HStack(spacing: 4) {
+                        if p.external { Text("حساب منفصل").font(.caption).foregroundStyle(Buad.muted) }
                         Text(Fmt.short(p.contractTotal)).font(.subheadline.weight(.semibold)).monospacedDigit()
                         if p.estimated { Text("تقديري").font(.caption).foregroundStyle(Buad.muted) }
                     }

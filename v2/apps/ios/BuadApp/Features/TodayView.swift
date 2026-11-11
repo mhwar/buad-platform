@@ -19,6 +19,7 @@ struct TodayView: View {
     @State private var followups: [Followup] = []
     @State private var receivables: Receivables?
     @State private var sales: SalesOverview?
+    @State private var meetings: [Meeting] = []
     @State private var loaded = false
     @State private var error: String?
     @State private var unread = 0
@@ -62,6 +63,11 @@ struct TodayView: View {
             out.append(.init(id: "f" + f.key, icon: f.kind == "request" ? "target" : "person.crop.circle", title: f.title,
                              meta: [f.subtitle, Fmt.dayMonth(f.date)].filter { !$0.isEmpty }.joined(separator: " · "),
                              date: f.date, tone: late ? .bad : .info, tag: late ? "متابعة متأخرة" : "متابعة", link: f.link))
+        }
+        for m in meetings where m.upcoming && (Fmt.daysUntil(String(m.startsAt.prefix(10))) ?? 99) <= 1 {
+            out.append(.init(id: "m" + m.id, icon: "person.3", title: m.title,
+                             meta: [MeetingFmt.time(m.startsAt), m.location].filter { !$0.isEmpty }.joined(separator: " · "),
+                             date: String(m.startsAt.prefix(10)), tone: .info, tag: "اجتماع", link: "/meetings?open=\(m.id)"))
         }
         if let r = receivables {
             for l in r.items where l.dueDate < today || (Fmt.daysUntil(l.dueDate) ?? 99) <= 7 {
@@ -261,6 +267,10 @@ struct TodayView: View {
             t.append(.init(title: "العملاء", icon: "person.2", link: "/clients", note: nil))
         }
         if can("documents.view") { t.append(.init(title: "المستندات", icon: "doc.text", link: "/documents", note: nil)) }
+        if can("meetings.view") {
+            t.append(.init(title: "الاجتماعات", icon: "person.3", link: "/meetings", note: nil))
+            t.append(.init(title: "القرارات", icon: "checkmark.seal", link: "/decisions", note: nil))
+        }
         if can("treasury.view") || can("vat.view") { t.append(.init(title: "المالية", icon: "banknote", link: "/finance", note: nil)) }
         if can("sales.view") { t.append(.init(title: "عروض الأسعار", icon: "doc.richtext", link: "/sales/quotes", note: nil)) }
         return t
@@ -302,14 +312,16 @@ struct TodayView: View {
     // MARK: loading
 
     private func load() async {
-        let (t, c, f, s) = (can("tasks.view"), can("clients.view"), can("treasury.view"), can("sales.view"))
+        let (t, c, f, s, mt) = (can("tasks.view"), can("clients.view"), can("treasury.view"), can("sales.view"), can("meetings.view"))
         async let a = Self.attempt(true) { try await APIClient.shared.attention() }
         async let k = Self.attempt(t) { try await APIClient.shared.tasks(mine: true) }
         async let fu = Self.attempt(c) { try await APIClient.shared.followups(all: false) }
         async let r = Self.attempt(f) { try await APIClient.shared.receivables() }
         async let o = Self.attempt(s) { try await APIClient.shared.salesOverview() }
         async let n = Self.attempt(true) { try await APIClient.shared.notifications().unread }
+        async let mm = Self.attempt(mt) { try await APIClient.shared.meetings(mine: true) }
         let (ar, kr, fr, rr, or, nr) = await (a, k, fu, r, o, n)
+        let mr = await mm
         var failed: APIError?
         func take<T>(_ x: Result<T, APIError>?) -> T? {
             switch x {
@@ -326,6 +338,7 @@ struct TodayView: View {
         receivables = take(rr) ?? receivables
         sales = take(or) ?? sales
         unread = take(nr) ?? unread
+        meetings = take(mr) ?? meetings
         error = failed?.message
         loaded = true
     }

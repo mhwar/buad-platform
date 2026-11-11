@@ -76,7 +76,7 @@ struct ProjectDetailView: View {
 
     private var me: Me? { session.me }
     private func can(_ p: String) -> Bool { me?.can(p) ?? false }
-    private var canFinance: Bool { can("finance.view") && !external }
+    private var canFinance: Bool { can("finance.view") }
     private var manager: Bool { can("finance.edit") && canFinance && !archived }
     private var canReceive: Bool { manager && !closed && status != "draft" && status != "cancelled" }
     private var canEditEntries: Bool { manager && !closed }
@@ -424,7 +424,7 @@ struct ProjectDetailView: View {
             notice("المشروع مغلق مالياً\(detail.map { $0.closeNote.isEmpty ? "" : ": \($0.closeNote)" } ?? ""). قيوده ومقبوضاته وفواتيره للاطلاع فقط.")
         }
         if external {
-            notice("مشروع خارجي: يُتابَع للعمل فقط، ولا يدخل في أي رقم مالي.")
+            notice("مشروع خارجي بحسابات منفصلة: قيوده ومقبوضاته وفواتيره ودفعاته وأرقامه هنا فقط، ولا تدخل في مالية الشركة ولا أرباحها ولا ضريبتها ولا تقاريرها.")
         }
     }
 
@@ -484,8 +484,8 @@ struct ProjectDetailView: View {
             financeStrip(f)
             collection(f)
         }
-        if external { externalCard }
         if canTasks, let x = execution { upcoming(x) }
+        MeetingsSection(projectId: project.id)
         if canDocs, let docs = documents, !docs.isEmpty { docsSummary(docs) }
         detailsCard
     }
@@ -962,14 +962,6 @@ struct ProjectDetailView: View {
                 .contentShape(Rectangle())
     }
 
-    private var externalCard: some View {
-        Card {
-            Label("مشروع خارجي", systemImage: "arrow.up.forward.square").font(.headline)
-            Text("لا يدخل في أي رقم مالي: لا قيود ولا استلامات ولا فواتير، ولا يُحسب في الإيرادات أو الضريبة أو الأرباح أو المستهدف.")
-                .font(.footnote).foregroundStyle(Buad.muted)
-            if project.contractTotal > 0 { row("القيمة التقديرية (للاطلاع)", Fmt.sar(project.contractTotal)) }
-        }
-    }
 
 
     // المعاملات: pills الكل/دخل/مصروف, grouped by month with the month's net.
