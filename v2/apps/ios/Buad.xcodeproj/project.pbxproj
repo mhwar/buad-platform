@@ -13,8 +13,10 @@
 		08DAD6D596B245526ABD1785 /* Attachment.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9CB4FA99E9B52EF13622430 /* Attachment.swift */; };
 		4631689EFBD0AAB5ED7F076B /* Biometry.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD0664540D4150EE5C127C37 /* Biometry.swift */; };
 		CB60977C5196898E7D4C296C /* BuadApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 127400BDE1AF9943F93E87CB /* BuadApp.swift */; };
+		8B24A3460E92064C2403D8A3 /* ChecksCards.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6516B73CEC277EDC146AA345 /* ChecksCards.swift */; };
 		FEB0375F1C4C35E863876F6E /* ClientSheets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 462D7A798A74BCE4716EA2E9 /* ClientSheets.swift */; };
 		BAA9A3BD252FDB3E68B82BA2 /* ClientsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 798EC49321C73A148E681BF9 /* ClientsView.swift */; };
+		598C496469C37A7E4EAA1E17 /* CompanyModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = A199A0C1A89CDCF16AC20ADD /* CompanyModels.swift */; };
 		2A3711E166FDAE66E2620214 /* Confirm.swift in Sources */ = {isa = PBXBuildFile; fileRef = 812AEA46536EF9D0366B74DD /* Confirm.swift */; };
 		72110C3FB02CF8825168B222 /* CreateSheets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17D48BA4D194BEF3A480C507 /* CreateSheets.swift */; };
 		307EA3EB4C3DF642C99644A8 /* Dock.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20D428ECD75E6CF9049A5045 /* Dock.swift */; };
@@ -54,6 +56,7 @@
 		35D0B64E32DD55EB1CA3320C /* TodayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EDED3C9ED002E54E5093676D /* TodayView.swift */; };
 		96CB14CF0F5CFC522D7E291E /* VatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6EA1054592F66534711D98D0 /* VatView.swift */; };
 		6E1392A105CC77CC17EB8A05 /* WorkModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7141BFC28AD41895A81CA744 /* WorkModels.swift */; };
+		20EEA96019A84D21B9157BF0 /* YearReviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4CDF70DE89E4B3355A847DB /* YearReviewView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -64,8 +67,10 @@
 		F9CB4FA99E9B52EF13622430 /* Attachment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Attachment.swift; sourceTree = "<group>"; };
 		FD0664540D4150EE5C127C37 /* Biometry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Biometry.swift; sourceTree = "<group>"; };
 		127400BDE1AF9943F93E87CB /* BuadApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuadApp.swift; sourceTree = "<group>"; };
+		6516B73CEC277EDC146AA345 /* ChecksCards.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChecksCards.swift; sourceTree = "<group>"; };
 		462D7A798A74BCE4716EA2E9 /* ClientSheets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClientSheets.swift; sourceTree = "<group>"; };
 		798EC49321C73A148E681BF9 /* ClientsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClientsView.swift; sourceTree = "<group>"; };
+		A199A0C1A89CDCF16AC20ADD /* CompanyModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompanyModels.swift; sourceTree = "<group>"; };
 		812AEA46536EF9D0366B74DD /* Confirm.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Confirm.swift; sourceTree = "<group>"; };
 		17D48BA4D194BEF3A480C507 /* CreateSheets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateSheets.swift; sourceTree = "<group>"; };
 		20D428ECD75E6CF9049A5045 /* Dock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Dock.swift; sourceTree = "<group>"; };
@@ -105,6 +110,7 @@
 		EDED3C9ED002E54E5093676D /* TodayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayView.swift; sourceTree = "<group>"; };
 		6EA1054592F66534711D98D0 /* VatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VatView.swift; sourceTree = "<group>"; };
 		7141BFC28AD41895A81CA744 /* WorkModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkModels.swift; sourceTree = "<group>"; };
+		F4CDF70DE89E4B3355A847DB /* YearReviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YearReviewView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -150,6 +156,7 @@
 			children = (
 				200807A70C4DACF32C5CEBB6 /* APIClient.swift */,
 				FD0664540D4150EE5C127C37 /* Biometry.swift */,
+				A199A0C1A89CDCF16AC20ADD /* CompanyModels.swift */,
 				812AEA46536EF9D0366B74DD /* Confirm.swift */,
 				F984DF6F04EBA163D323946D /* FinanceModels.swift */,
 				42671CCBC6E8669BCF2A9F27 /* Format.swift */,
@@ -170,6 +177,7 @@
 			isa = PBXGroup;
 			children = (
 				F9CB4FA99E9B52EF13622430 /* Attachment.swift */,
+				6516B73CEC277EDC146AA345 /* ChecksCards.swift */,
 				462D7A798A74BCE4716EA2E9 /* ClientSheets.swift */,
 				798EC49321C73A148E681BF9 /* ClientsView.swift */,
 				17D48BA4D194BEF3A480C507 /* CreateSheets.swift */,
@@ -198,6 +206,7 @@
 				78067E7E3A51FEED36F0B4AC /* TasksView.swift */,
 				EDED3C9ED002E54E5093676D /* TodayView.swift */,
 				6EA1054592F66534711D98D0 /* VatView.swift */,
+				F4CDF70DE89E4B3355A847DB /* YearReviewView.swift */,
 			);
 			path = Features;
 			sourceTree = "<group>";
@@ -285,8 +294,10 @@
 				08DAD6D596B245526ABD1785 /* Attachment.swift in Sources */,
 				4631689EFBD0AAB5ED7F076B /* Biometry.swift in Sources */,
 				CB60977C5196898E7D4C296C /* BuadApp.swift in Sources */,
+				8B24A3460E92064C2403D8A3 /* ChecksCards.swift in Sources */,
 				FEB0375F1C4C35E863876F6E /* ClientSheets.swift in Sources */,
 				BAA9A3BD252FDB3E68B82BA2 /* ClientsView.swift in Sources */,
+				598C496469C37A7E4EAA1E17 /* CompanyModels.swift in Sources */,
 				2A3711E166FDAE66E2620214 /* Confirm.swift in Sources */,
 				72110C3FB02CF8825168B222 /* CreateSheets.swift in Sources */,
 				307EA3EB4C3DF642C99644A8 /* Dock.swift in Sources */,
@@ -326,6 +337,7 @@
 				35D0B64E32DD55EB1CA3320C /* TodayView.swift in Sources */,
 				96CB14CF0F5CFC522D7E291E /* VatView.swift in Sources */,
 				6E1392A105CC77CC17EB8A05 /* WorkModels.swift in Sources */,
+				20EEA96019A84D21B9157BF0 /* YearReviewView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -410,7 +422,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.9.0;
+				MARKETING_VERSION = 0.9.1;
 				PRODUCT_BUNDLE_IDENTIFIER = sa.buad.app;
 				PRODUCT_NAME = BuadApp;
 				SDKROOT = iphoneos;
@@ -433,7 +445,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.9.0;
+				MARKETING_VERSION = 0.9.1;
 				PRODUCT_BUNDLE_IDENTIFIER = sa.buad.app;
 				PRODUCT_NAME = BuadApp;
 				SDKROOT = iphoneos;

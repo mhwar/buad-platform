@@ -249,9 +249,12 @@ final class APIClient: @unchecked Sendable {
         return r.rest
     }
 
-    func financeOverview(_ period: FinancePeriod) async throws -> FinanceOverview {
-        guard let (from, to) = period.bounds else { return try await send("GET", "/api/finance/overview") }
-        return try await send("GET", "/api/finance/overview?from=\(from)&to=\(to)")
+    func financeOverview(_ period: FinancePeriod, client: String = "", status: String = "") async throws -> FinanceOverview {
+        var q: [String] = []
+        if let (from, to) = period.bounds { q += ["from=\(from)", "to=\(to)"] }
+        if !client.isEmpty { q.append("client=\(client)") }
+        if !status.isEmpty { q.append("status=\(status)") }
+        return try await send("GET", "/api/finance/overview" + (q.isEmpty ? "" : "?" + q.joined(separator: "&")))
     }
 
     /// q = 0: the whole year, as the website's VatTab.
@@ -281,8 +284,8 @@ final class APIClient: @unchecked Sendable {
     // MARK: 0.2.5 — receipts, the payment schedule, sales tax invoices (the website's own calls)
 
     /// features/finance/api.ts addReceipt. `confirmOver` after the person confirms an over-contract amount.
-    func addReceipt(_ projectId: String, date: String, riyals: Double, note: String, confirmOver: Bool) async throws -> ProjectFinance {
-        var body: [String: Any] = ["date": date, "amount": riyals, "note": note, "basis": ""]
+    func addReceipt(_ projectId: String, date: String, riyals: Double, note: String, confirmOver: Bool, basis: String = "") async throws -> ProjectFinance {
+        var body: [String: Any] = ["date": date, "amount": riyals, "note": note, "basis": basis]
         if confirmOver { body["confirmOver"] = true }
         return try await send("POST", "/api/projects/\(projectId)/finance/receipts", body: body)
     }
@@ -733,6 +736,44 @@ final class APIClient: @unchecked Sendable {
 
     func deleteCategory(_ projectId: String, _ id: String) async throws -> ProjectFinance {
         try await send("DELETE", "/api/projects/\(projectId)/finance/categories/\(id)")
+    }
+
+    // MARK: 0.9.1 — filings, VAT settings, year review, checks, suggestions
+
+    /// PUT /api/finance/vat/filings/:key — a quarter's return: open, filed, or paid with its date, amount, reference.
+    func saveFiling(_ key: String, status: String, filedOn: String, paidOn: String, paidRiyals: Double, reference: String, note: String) async throws {
+        let _: OKEnvelope = try await send("PUT", "/api/finance/vat/filings/\(key)", body: [
+            "status": status, "filedOn": filedOn, "paidOn": paidOn, "paidAmount": paidRiyals, "reference": reference, "note": note,
+        ])
+    }
+
+    func vatSettings() async throws -> VatSettings { try await send("GET", "/api/finance/vat/settings") }
+
+    func saveVatSettings(rate: Double, period: String) async throws {
+        let _: OKEnvelope = try await send("PATCH", "/api/finance/vat/settings", body: ["rate": rate, "period": period])
+    }
+
+    /// A tax payment booked as a project expense → paid on that quarter's filing.
+    func convertVatEntry(projectId: String, entryId: String, periodKey: String) async throws {
+        let _: OKEnvelope = try await send("POST", "/api/finance/vat/convert-entry", body: ["projectId": projectId, "entryId": entryId, "periodKey": periodKey])
+    }
+
+    func yearReview(_ year: Int) async throws -> YearReview { try await send("GET", "/api/finance/year-review?year=\(year)") }
+
+    /// PATCH /api/org/settings {targets:{year: riyals}} — null clears it (treasury.edit).
+    func setYearTarget(_ year: Int, riyals: Double?) async throws {
+        let value: Any = riyals.map { $0 as Any } ?? NSNull()
+        let _: OKEnvelope = try await send("PATCH", "/api/org/settings", body: ["targets": [String(year): value]])
+    }
+
+    func financeChecks() async throws -> [FinanceCheck] {
+        let r: ChecksEnvelope = try await send("GET", "/api/finance/checks")
+        return r.checks
+    }
+
+    func receiptSuggestions() async throws -> [ReceiptSuggestion] {
+        let r: SuggestionsEnvelope = try await send("GET", "/api/finance/company/receipt-suggestions")
+        return r.items
     }
 
     func signOut() async {
