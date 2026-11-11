@@ -50,6 +50,8 @@ struct ProjectDetailView: View {
     @State private var statusBusy = false
     @State private var report: URL?
     @State private var contract = false
+    @State private var budget = false
+    @State private var entryQuery = ""
 
     struct ReceiptTarget: Identifiable {
         let receipt: Receipt?
@@ -63,6 +65,7 @@ struct ProjectDetailView: View {
 
     struct EntryTarget: Identifiable {
         let entry: FinanceEntry?
+        var preset: EntrySheet.Preset? = nil
         var id: String { entry?.id ?? "new" }
     }
 
@@ -181,7 +184,7 @@ struct ProjectDetailView: View {
         }
         .sheet(item: $entryTarget) { target in
             if let f = finance {
-                EntrySheet(projectId: project.id, projectName: name, finance: f, existing: target.entry) { fin, message in
+                EntrySheet(projectId: project.id, projectName: name, finance: f, existing: target.entry, preset: target.preset) { fin, message in
                     finance = fin
                     toast = ToastItem(text: message)
                 }
@@ -229,6 +232,11 @@ struct ProjectDetailView: View {
             CloseProjectSheet(projectId: project.id, projectName: name, mode: mode) { message in
                 toast = ToastItem(text: message)
                 Task { await load() }
+            }
+        }
+        .sheet(isPresented: $budget) {
+            if let f = finance {
+                ProjectBudgetSheet(projectId: project.id, projectName: name, finance: f) { fin in finance = fin }
             }
         }
         .sheet(isPresented: $contract) {
@@ -323,6 +331,7 @@ struct ProjectDetailView: View {
                     if !closed {
                         Button { contract = true } label: { Label("إعدادات العقد", systemImage: "slider.horizontal.3") }
                         Button { confirm = "agreement" } label: { Label("تسجيل بنود الاتفاقية", systemImage: "checkmark.rectangle.stack") }
+                        Button { budget = true } label: { Label("الميزانية والتصنيفات", systemImage: "chart.pie") }
                     }
                     if closed {
                         Button { closing = .reopen } label: { Label("إعادة فتح المشروع", systemImage: "lock.open") }
@@ -614,6 +623,7 @@ struct ProjectDetailView: View {
     @ViewBuilder private var financeTab: some View {
         if let f = finance {
             contractCard(f)
+            unclassified(f)
             scheduleCard
             receiptsCard(f)
             if canInvoices { Card { Label("الفواتير الضريبية", systemImage: "doc.text").font(.headline); invoicesList } }
@@ -655,6 +665,58 @@ struct ProjectDetailView: View {
                 Text("تفصيل العقد: الأتعاب والمتاح للتنفيذ").font(.subheadline.weight(.medium))
             }
             .tint(Buad.ink)
+        }
+    }
+
+    /// «غير مصنّف من العقد»: once the contract is collected what is left of it must not float — it
+    /// becomes profit (an income entry «فائض المشروع») or an expense of the project.
+    @ViewBuilder private func unclassified(_ f: ProjectFinance) -> some View {
+        let gross = f.summary.grossTotal
+        let left = f.summary.remainingFromGross
+        if canEditEntries, gross > 0, f.received >= gross - 50, left > 50 {
+            VStack(alignment: .leading, spacing: 10) {
+                HStack {
+                    Text("غير مصنّف من العقد").font(.subheadline.weight(.semibold))
+                    Spacer()
+                    Text(Fmt.sar(left)).font(.subheadline.weight(.bold)).monospacedDigit()
+                }
+                Text("حُصّل العقد كاملاً وبقي هذا المبلغ بلا قيد: صنّفه أرباحاً أو مصروفاً للمشروع.")
+                    .font(.caption).foregroundStyle(Buad.warningInk)
+                ActionRow {
+                    ActionTile(icon: "arrow.up.right.circle", title: "إلى أرباح", primary: true, busy: statusBusy) { Task { await toProfit(left) } }
+                    ActionTile(icon: "arrow.down.right.circle", title: "إلى مصروف") {
+                        entryTarget = EntryTarget(entry: nil, preset: .init(type: "expense", amountHalalas: left, description: ""))
+                    }
+                }
+            }
+            .padding(12)
+            .background(Buad.warningSoft, in: RoundedRectangle(cornerRadius: Buad.radius, style: .continuous))
+        }
+    }
+
+    private func toProfit(_ halalas: Int) async {
+        guard await Confirm.owner("تأكيد تحويل \(Fmt.sar(halalas)) إلى أرباح (قيد إيراد «فائض المشروع»)") else { return }
+        statusBusy = true
+        defer { statusBusy = false }
+        do {
+            let body: [String: Any] = ["type": "income", "cat": "other", "description": "فائض المشروع", "amount": (Double(halalas) / 100 * 100).rounded() / 100,
+                                       "status": "paid", "date": Fmt.todayISO]
+            finance = try await APIClient.shared.addEntry(project.id, body)
+            toast = ToastItem(text: "حُوّل المبلغ إلى أرباح")
+        } catch {
+            session.handle(error)
+            writeError = "تعذّر التحويل. " + ((error as? APIError)?.message ?? "")
+        }
+    }
+
+    private func setUnsetStatus(_ status: String) async {
+        guard await Confirm.owner("تأكيد تعليم القيود بلا حالة كـ«\(status == "paid" ? "مدفوعة" : "معلّقة")»") else { return }
+        do {
+            finance = try await APIClient.shared.bulkEntryStatus(project.id, to: status)
+            toast = ToastItem(text: "عُلّمت القيود")
+        } catch {
+            session.handle(error)
+            writeError = "تعذّر التعليم. " + ((error as? APIError)?.message ?? "")
         }
     }
 
@@ -969,7 +1031,32 @@ struct ProjectDetailView: View {
         if let f = finance {
             let all = f.entries
             let incomeN = all.filter { $0.type == "income" }.count
-            let list = all.filter { entryKind == .all || (entryKind == .income) == ($0.type == "income") }
+            let q = entryQuery.trimmingCharacters(in: .whitespaces)
+            let list = all.filter {
+                (entryKind == .all || (entryKind == .income) == ($0.type == "income"))
+                    && (q.isEmpty || "\($0.description) \($0.supplierName) \(f.categoryName($0.cat)) \($0.note)".localizedCaseInsensitiveContains(q))
+            }
+            let unset = all.filter { $0.status.isEmpty }.count
+            if unset > 0 && canEditEntries {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("\(unset) قيد بلا حالة (مدفوع/معلّق)").font(.subheadline.weight(.semibold)).foregroundStyle(Buad.warningInk)
+                    ActionRow {
+                        ActionTile(icon: "checkmark.circle", title: "كلها مدفوعة") { Task { await setUnsetStatus("paid") } }
+                        ActionTile(icon: "clock", title: "كلها معلّقة") { Task { await setUnsetStatus("pending") } }
+                    }
+                }
+                .padding(12)
+                .background(Buad.warningSoft, in: RoundedRectangle(cornerRadius: Buad.radius, style: .continuous))
+            }
+            HStack(spacing: 8) {
+                Image(systemName: "magnifyingglass").foregroundStyle(Buad.muted)
+                TextField("ابحث في المعاملات: الوصف، المورد، التصنيف", text: $entryQuery)
+                if !entryQuery.isEmpty {
+                    Button { entryQuery = "" } label: { Image(systemName: "xmark.circle.fill").foregroundStyle(Buad.faint) }.buttonStyle(.plain)
+                }
+            }
+            .padding(.horizontal, 12).frame(minHeight: 40)
+            .background(Buad.surface, in: RoundedRectangle(cornerRadius: Buad.control, style: .continuous))
             HStack(spacing: 8) {
                 FilterChip(title: "الكل", count: all.count, on: entryKind == .all) { entryKind = .all }
                 FilterChip(title: "دخل", count: incomeN, on: entryKind == .income) { entryKind = .income }

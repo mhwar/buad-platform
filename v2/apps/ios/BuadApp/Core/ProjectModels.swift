@@ -106,10 +106,13 @@ struct FinanceEntry: Decodable, Identifiable {
     let source: String
     /// The receipt or invoice attached to the entry (asset id); "" = none.
     let assetId: String
+    /// «يتضمن هامش ربح»: the company's profit inside an expense, a percentage or a fixed amount.
+    let profitMargin: Double
+    let profitMarginType: String
 
     private enum K: String, CodingKey {
         case id, date, description, cat, type, amount, status, note, supplierName
-        case cfKind, taxInvoice, vatAmount, supplierVatNo, invoiceNo, invoiceDate, source, assetId
+        case cfKind, taxInvoice, vatAmount, supplierVatNo, invoiceNo, invoiceDate, source, assetId, profitMargin, profitMarginType
     }
 
     init(from decoder: Decoder) throws {
@@ -131,6 +134,8 @@ struct FinanceEntry: Decodable, Identifiable {
         invoiceDate = c.string(.invoiceDate)
         source = c.string(.source)
         assetId = c.string(.assetId)
+        profitMargin = c.double(.profitMargin)
+        profitMarginType = c.string(.profitMarginType).isEmpty ? "pct" : c.string(.profitMarginType)
     }
 }
 
@@ -191,6 +196,9 @@ struct ProjectFinance: Decodable {
     /// The same, in the website's order, for the category picker.
     let customCategories: [NamedItem]
     let budgetItems: [NamedItem]
+    /// The planned budget with its amounts (halalas) and notes, and the custom categories' kind.
+    let budgetLines: [BudgetLine]
+    let categoryKinds: [String: String]
 
     private enum K: String, CodingKey { case summary, received, profitHidden, ctrl, entries, receipts, categories, budget }
     private enum S: String, CodingKey {
@@ -205,10 +213,16 @@ struct ProjectFinance: Decodable {
     private struct Named: Decodable {
         let id: String
         let text: String
-        private enum K: String, CodingKey { case id, label, name }
+        let amount: Int
+        let note: String
+        let type: String
+        private enum K: String, CodingKey { case id, label, name, amount, note, type }
         init(from decoder: Decoder) throws {
             let c = try decoder.container(keyedBy: K.self)
             id = c.string(.id)
+            amount = c.optionalInt(.amount) ?? 0
+            note = c.string(.note)
+            type = c.string(.type)
             let label = c.string(.label)
             text = label.isEmpty ? c.string(.name) : label
         }
@@ -257,6 +271,8 @@ struct ProjectFinance: Decodable {
         budgetLabels = Dictionary(budget.map { ($0.id, $0.text) }, uniquingKeysWith: { a, _ in a })
         customCategories = cats.map { NamedItem(id: $0.id, label: $0.text) }
         budgetItems = budget.map { NamedItem(id: $0.id, label: $0.text) }
+        budgetLines = budget.map { BudgetLine(id: $0.id, name: $0.text, amount: $0.amount, note: $0.note) }
+        categoryKinds = Dictionary(cats.map { ($0.id, $0.type) }, uniquingKeysWith: { a, _ in a })
     }
 
     /// Same rule as the website's catLabel (features/finance/labels.ts).
@@ -441,4 +457,13 @@ struct ContractSettings {
     var mkt: Fee
     var cb: Fee
     var cf: Fee
+}
+
+
+/// One row of the planned budget (halalas).
+struct BudgetLine: Identifiable, Hashable {
+    let id: String
+    let name: String
+    let amount: Int
+    let note: String
 }

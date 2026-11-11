@@ -703,6 +703,38 @@ final class APIClient: @unchecked Sendable {
                                            body: ["productId": productId, "packageId": packageId, "times": times])
     }
 
+    // MARK: 0.9.0 — the project's money, the rest of it (finance.ts)
+
+    /// Entries that came without a status: all «مدفوع» or all «معلّق».
+    func bulkEntryStatus(_ projectId: String, to status: String) async throws -> ProjectFinance {
+        try await send("POST", "/api/projects/\(projectId)/finance/entries/bulk-status", body: ["status": status])
+    }
+
+    /// One agreement item (exec, mkt, cashback, cf) as an entry with its computed amount, once only.
+    func registerAgreementItem(_ projectId: String, _ item: String) async throws -> ProjectFinance {
+        try await send("POST", "/api/projects/\(projectId)/finance/agreement/\(item)")
+    }
+
+    func addBudgetItem(_ projectId: String, name: String, riyals: Double, note: String) async throws -> ProjectFinance {
+        try await send("POST", "/api/projects/\(projectId)/finance/budget", body: ["name": name, "amount": riyals, "note": note])
+    }
+
+    func updateBudgetItem(_ projectId: String, _ id: String, name: String, riyals: Double, note: String) async throws -> ProjectFinance {
+        try await send("PATCH", "/api/projects/\(projectId)/finance/budget/\(id)", body: ["name": name, "amount": riyals, "note": note])
+    }
+
+    func deleteBudgetItem(_ projectId: String, _ id: String) async throws -> ProjectFinance {
+        try await send("DELETE", "/api/projects/\(projectId)/finance/budget/\(id)")
+    }
+
+    func addCategory(_ projectId: String, label: String, type: String) async throws -> ProjectFinance {
+        try await send("POST", "/api/projects/\(projectId)/finance/categories", body: ["label": label, "type": type])
+    }
+
+    func deleteCategory(_ projectId: String, _ id: String) async throws -> ProjectFinance {
+        try await send("DELETE", "/api/projects/\(projectId)/finance/categories/\(id)")
+    }
+
     func signOut() async {
         _ = try? await send("POST", "/api/auth/logout") as OKEnvelope
         if let base = AppConfig.apiBase, let cookies = HTTPCookieStorage.shared.cookies(for: base) {

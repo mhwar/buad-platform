@@ -37,6 +37,8 @@ enum ProjectVocabulary {
         case "no_service": return "المشروع غير مرتبط بخدمة."
         case "assignee_not_found": return "المسؤول المختار لم يعد في الفريق."
         case "has_documents_or_tasks": return "للمشروع مستندات أو مهام. انقلها أو احذفها أولاً."
+        case "in_use": return "يستخدم هذا التصنيف قيد أو أكثر. غيّر تصنيف القيود أولاً ثم احذفه."
+        case "already_registered": return "سُجّل هذا البند من قبل."
         case "not_draft": return "يُنقل إلى المبيعات المشروع المسودة فقط."
         default: return nil
         }

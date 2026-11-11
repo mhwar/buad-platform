@@ -13,7 +13,11 @@ struct EntrySheet: View {
     let projectName: String
     let finance: ProjectFinance
     let existing: FinanceEntry?
+    /// A new entry that starts filled (e.g. the unclassified remainder as an expense).
+    var preset: Preset? = nil
     let saved: (ProjectFinance, String) -> Void
+
+    struct Preset { let type: String; let amountHalalas: Int; let description: String }
 
     @State private var type = "expense"
     @State private var description = ""
@@ -30,6 +34,9 @@ struct EntrySheet: View {
     @State private var invoiceDate = Date()
     @State private var vatAmount = ""
     @State private var assetId = ""
+    @State private var hasMargin = false
+    @State private var margin = ""
+    @State private var marginType = "pct"
     @State private var uploading = false
     @State private var error: String?
     @State private var busy = false
@@ -39,7 +46,7 @@ struct EntrySheet: View {
 
     private var snapshot: String {
         [type, description, cat, cfKind, amount, Fmt.isoDay(date), status, note, String(hasInvoice), supplierName,
-         supplierVatNo, invoiceNo, Fmt.isoDay(invoiceDate), vatAmount, assetId].joined(separator: "|")
+         supplierVatNo, invoiceNo, Fmt.isoDay(invoiceDate), vatAmount, assetId, String(hasMargin), margin, marginType].joined(separator: "|")
     }
 
     private static let builtIn = ["salary", "logistics", "materials", "other", "exec", "mkt", "cashback", "cf", "vat"]
@@ -103,6 +110,23 @@ struct EntrySheet: View {
                 }
 
                 if type == "expense" {
+                    Section {
+                        Toggle("يتضمن هامش ربح", isOn: $hasMargin.animation())
+                        if hasMargin {
+                            HStack {
+                                Text("الهامش")
+                                TextField("0", text: $margin).keyboardType(.decimalPad).multilineTextAlignment(.trailing)
+                                    .environment(\.layoutDirection, .leftToRight)
+                                Picker("النوع", selection: $marginType) {
+                                    Text("%").tag("pct")
+                                    Text("ثابت").tag("fixed")
+                                }
+                                .pickerStyle(.segmented).frame(width: 110)
+                            }
+                        }
+                    } footer: {
+                        Text("إن كان هذا المصروف يحمل ربحاً للشركة (نسبة من المبلغ أو مبلغاً ثابتاً)، يُحتسب في الربح.")
+                    }
                     Section {
                         Toggle("له فاتورة ضريبية", isOn: $hasInvoice.animation())
                         if hasInvoice {
@@ -178,7 +202,11 @@ struct EntrySheet: View {
         guard !started else { return }
         started = true
         defer { Task { @MainActor in baseline = snapshot } }
+        if existing == nil, let p = preset {
+            type = p.type; description = p.description; amount = Self.plain(p.amountHalalas)
+        }
         guard let e = existing else { return }
+        hasMargin = e.profitMargin > 0; margin = e.profitMargin > 0 ? Self.num(e.profitMargin) : ""; marginType = e.profitMarginType
         type = e.type
         description = e.description
         cat = e.cat
@@ -205,6 +233,10 @@ struct EntrySheet: View {
             guard let v = ReceiptRules.riyals(vatAmount), v >= 0 else { error = "مبلغ الضريبة غير صحيح"; return }
             vat = v
         }
+        if type == "expense", hasMargin {
+            guard let m = ReceiptRules.riyals(margin), m >= 0 else { error = "هامش الربح غير صحيح"; return }
+            if marginType == "pct" && m > 100 { error = "نسبة الهامش لا تتجاوز 100%"; return }
+        }
         let halalas = Int((riyals * 100).rounded())
         guard await Confirm.owner("تأكيد \(existing == nil ? "إضافة" : "تعديل") قيد \(type == "income" ? "دخل" : "مصروف") بمبلغ \(Fmt.sar(halalas))") else { return }
 
@@ -213,6 +245,8 @@ struct EntrySheet: View {
             "amount": (riyals * 100).rounded() / 100, "date": Fmt.isoDay(date), "status": status,
             "note": note.trimmingCharacters(in: .whitespacesAndNewlines),
             "assetId": assetId,
+            "profitMargin": (type == "expense" && hasMargin) ? (ReceiptRules.riyals(margin) ?? 0) : 0,
+            "profitMarginType": marginType,
         ]
         // As EntryDialog: an object registers/updates the invoice, null removes it, absent leaves it.
         if type == "expense" && hasInvoice {
@@ -256,6 +290,8 @@ struct EntrySheet: View {
             self.error = (error as? APIError)?.message ?? "تعذّر الحذف"
         }
     }
+
+    static func num(_ v: Double) -> String { v == v.rounded() ? String(Int(v)) : String(v) }
 
     /// Halalas as a plain riyal number for a field: 1250000 → «12500», 1250050 → «12500.5».
     static func plain(_ halalas: Int) -> String {

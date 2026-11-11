@@ -511,6 +511,22 @@ struct ContractSettingsSheet: View {
                             .environment(\.layoutDirection, .leftToRight)
                     }
                 }
+                Section {
+                    ForEach([("exec", "أتعاب التنفيذ"), ("mkt", "التسويق"), ("cashback", "كاش باك"), ("cf", "رسوم إضافية")], id: \.0) { item, title in
+                        let done = finance.entries.contains { $0.cat == item && $0.status != "cancelled" }
+                        HStack {
+                            Text(title)
+                            Spacer()
+                            if done {
+                                Label("مسجّل", systemImage: "checkmark.circle.fill").font(.caption).foregroundStyle(Buad.successInk)
+                            } else {
+                                Button("تسجيل") { Task { await register(item, title) } }.font(.subheadline.weight(.bold)).disabled(busy)
+                            }
+                        }
+                    }
+                } header: { Text("بنود الاتفاقية") } footer: {
+                    Text("يُسجَّل البند قيداً معلّقاً بمبلغه المحسوب من الإعدادات المحفوظة، مرة واحدة. احفظ الإعدادات أولاً إن غيّرتها.")
+                }
                 feeSection("أتعاب التنفيذ", $exec, footer: "تُحسب من العقد وتدخل دخلاً للشركة.")
                 feeSection("التسويق", $mkt, footer: nil)
                 Section { Toggle("التسويق داخلي (لا يُخصم من المتاح للتنفيذ)", isOn: $mktInternal) }
@@ -542,6 +558,20 @@ struct ContractSettingsSheet: View {
                 }
             }
         } header: { Text(title) } footer: { if let footer { Text(footer) } }
+    }
+
+    private func register(_ item: String, _ title: String) async {
+        guard await Confirm.owner("تأكيد تسجيل بند «\(title)» من الاتفاقية") else { return }
+        busy = true
+        defer { busy = false }
+        do {
+            _ = try await APIClient.shared.registerAgreementItem(projectId, item)
+            saved()
+            dismiss()
+        } catch {
+            session.handle(error)
+            self.error = (error as? APIError)?.message ?? "تعذّر التسجيل"
+        }
     }
 
     private func plain(_ v: Double) -> String { v == 0 ? "" : (v == v.rounded() ? String(Int(v)) : String(v)) }
@@ -596,5 +626,188 @@ struct ContractSettingsSheet: View {
                 self.error = (error as? APIError)?.message ?? "تعذّر الحفظ، حاول مرة أخرى."
             }
         }
+    }
+}
+
+// MARK: - الميزانية والتصنيفات
+
+/// «الميزانية المخططة» and «تصنيفات مخصّصة» (FinanceTab / ControlCentre): the planned cost lines of the
+/// project, each with an amount a cost entry can be assigned to, and the project's own categories for
+/// its entries. Every change answers with the project's whole finance, which replaces what is shown.
+struct ProjectBudgetSheet: View {
+    @EnvironmentObject private var session: Session
+    @Environment(\.dismiss) private var dismiss
+    let projectId: String
+    let projectName: String
+    @State var finance: ProjectFinance
+    let changed: (ProjectFinance) -> Void
+
+    @State private var editing: BudgetTarget?
+    @State private var newCategory = false
+    @State private var categoryLabel = ""
+    @State private var categoryKind = "expense"
+    @State private var error: String?
+    @State private var busy = false
+
+    struct BudgetTarget: Identifiable {
+        let line: BudgetLine?
+        var id: String { line?.id ?? "new" }
+    }
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                if let error {
+                    Section { Label(error, systemImage: "exclamationmark.circle").foregroundStyle(Buad.dangerInk) }
+                }
+                Section {
+                    if finance.budgetLines.isEmpty {
+                        Text("لا بنود في الميزانية بعد.").foregroundStyle(Buad.muted)
+                    }
+                    ForEach(finance.budgetLines) { b in
+                        Button { editing = BudgetTarget(line: b) } label: {
+                            HStack {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(b.name.isEmpty ? "بند ميزانية" : b.name).foregroundStyle(Buad.ink)
+                                    if !b.note.isEmpty { Text(b.note).font(.caption).foregroundStyle(Buad.muted).lineLimit(1) }
+                                }
+                                Spacer()
+                                Text(Fmt.sar(b.amount)).monospacedDigit().foregroundStyle(Buad.ink)
+                                Chevron()
+                            }
+                        }
+                    }
+                    .onDelete { offsets in
+                        let doomed = offsets.map { finance.budgetLines[$0] }
+                        Task { for b in doomed { await run { try await APIClient.shared.deleteBudgetItem(projectId, b.id) } } }
+                    }
+                    Button { editing = BudgetTarget(line: nil) } label: { Label("بند ميزانية", systemImage: "plus") }
+                    if !finance.budgetLines.isEmpty {
+                        HStack {
+                            Text("المجموع").foregroundStyle(Buad.muted)
+                            Spacer()
+                            Text(Fmt.sar(finance.budgetLines.reduce(0) { $0 + $1.amount })).bold().monospacedDigit()
+                        }
+                    }
+                } header: { Text("الميزانية المخططة") } footer: {
+                    Text("بنود تكلفة مخططة تُسند إليها القيود لتقارن المخطط بالفعلي. اسحب البند لحذفه.")
+                }
+
+                Section {
+                    if finance.customCategories.isEmpty {
+                        Text("لا تصنيفات مخصصة.").foregroundStyle(Buad.muted)
+                    }
+                    ForEach(finance.customCategories) { c in
+                        HStack {
+                            Text(c.label)
+                            Spacer()
+                            Text(Self.kind(finance.categoryKinds[c.id] ?? "")).font(.caption).foregroundStyle(Buad.muted)
+                        }
+                    }
+                    .onDelete { offsets in
+                        let doomed = offsets.map { finance.customCategories[$0] }
+                        Task { for c in doomed { await run { try await APIClient.shared.deleteCategory(projectId, c.id) } } }
+                    }
+                    if newCategory {
+                        TextField("اسم التصنيف", text: $categoryLabel)
+                        Picker("النوع", selection: $categoryKind) {
+                            Text("مصروف").tag("expense")
+                            Text("دخل").tag("income")
+                            Text("كلاهما").tag("both")
+                        }
+                        Button("إضافة التصنيف") { Task { await addCategory() } }.bold().disabled(busy || categoryLabel.trimmingCharacters(in: .whitespaces).isEmpty)
+                    } else {
+                        Button { newCategory = true } label: { Label("تصنيف جديد", systemImage: "plus") }
+                    }
+                } header: { Text("تصنيفات مخصّصة") } footer: {
+                    Text("لا يُحذف تصنيف تستخدمه قيود.")
+                }
+            }
+            .navigationTitle("الميزانية والتصنيفات")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar { ToolbarItem(placement: .confirmationAction) { Button("تم") { dismiss() }.bold() } }
+            .sheet(item: $editing) { target in
+                BudgetItemSheet(line: target.line) { name, riyals, note in
+                    await run {
+                        if let l = target.line { return try await APIClient.shared.updateBudgetItem(projectId, l.id, name: name, riyals: riyals, note: note) }
+                        return try await APIClient.shared.addBudgetItem(projectId, name: name, riyals: riyals, note: note)
+                    }
+                }
+            }
+        }
+    }
+
+    private static func kind(_ k: String) -> String { k == "income" ? "دخل" : k == "both" ? "كلاهما" : "مصروف" }
+
+    private func addCategory() async {
+        let label = categoryLabel.trimmingCharacters(in: .whitespaces)
+        await run { try await APIClient.shared.addCategory(projectId, label: label, type: categoryKind) }
+        if error == nil { categoryLabel = ""; newCategory = false }
+    }
+
+    /// Runs a change that answers with the project's finance; false when it failed (the message is shown).
+    @discardableResult
+    private func run(_ work: () async throws -> ProjectFinance) async -> Bool {
+        guard await Confirm.owner("تأكيد تعديل ميزانية «\(projectName)»") else { return false }
+        busy = true
+        defer { busy = false }
+        do {
+            finance = try await work()
+            changed(finance)
+            error = nil
+            return true
+        } catch {
+            session.handle(error)
+            self.error = (error as? APIError)?.message ?? "تعذّر الحفظ، حاول مرة أخرى."
+            return false
+        }
+    }
+}
+
+struct BudgetItemSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    let line: BudgetLine?
+    let save: (String, Double, String) async -> Bool
+
+    @State private var name = ""
+    @State private var amount = ""
+    @State private var note = ""
+    @State private var error: String?
+    @State private var busy = false
+    @State private var started = false
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                if let error { Section { Label(error, systemImage: "exclamationmark.circle").foregroundStyle(Buad.dangerInk) } }
+                Section {
+                    TextField("اسم البند *", text: $name)
+                    HStack {
+                        Text("المبلغ المخطط (ر.س)")
+                        TextField("0", text: $amount).keyboardType(.decimalPad).multilineTextAlignment(.trailing)
+                            .environment(\.layoutDirection, .leftToRight)
+                    }
+                    TextField("ملاحظة", text: $note)
+                }
+            }
+            .navigationTitle(line == nil ? "بند ميزانية" : "تعديل البند")
+            .navigationBarTitleDisplayMode(.inline)
+            .formChrome(dirty: !name.isEmpty || !amount.isEmpty, busy: busy, saveTitle: "حفظ") { Task { await go() } }
+            .onAppear {
+                guard !started, let l = line else { return }
+                started = true
+                name = l.name; amount = l.amount > 0 ? EntrySheet.plain(l.amount) : ""; note = l.note
+            }
+        }
+    }
+
+    private func go() async {
+        let n = name.trimmingCharacters(in: .whitespaces)
+        guard !n.isEmpty else { error = "اكتب اسم البند."; return }
+        let a = amount.trimmingCharacters(in: .whitespaces).isEmpty ? 0 : (ReceiptRules.riyals(amount) ?? -1)
+        guard a >= 0 else { error = "المبلغ غير صحيح."; return }
+        busy = true
+        defer { busy = false }
+        if await save(n, a, note.trimmingCharacters(in: .whitespaces)) { dismiss() } else { error = "تعذّر الحفظ." }
     }
 }
