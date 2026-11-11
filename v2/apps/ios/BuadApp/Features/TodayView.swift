@@ -20,6 +20,7 @@ struct TodayView: View {
     @State private var receivables: Receivables?
     @State private var sales: SalesOverview?
     @State private var meetings: [Meeting] = []
+    @State private var yearReview: YearReview?
     @State private var loaded = false
     @State private var error: String?
     @State private var unread = 0
@@ -90,6 +91,7 @@ struct TodayView: View {
                     header
                     quickTools
                     figures
+                    targetCard
                     schedule
                     attentionSection
                     sections
@@ -190,6 +192,25 @@ struct TodayView: View {
             .joinedCell(minHeight: 70)
         }
         .buttonStyle(.plain)
+    }
+
+    /// «الإيراد مقابل المستهدف» for this year, when the organisation has set one.
+    @ViewBuilder private var targetCard: some View {
+        if let y = yearReview, let t = y.target, t > 0 {
+            Button { nav.open("/finance") } label: {
+                Card {
+                    HStack {
+                        Text("الإيراد مقابل المستهدف").font(.subheadline.weight(.semibold)).foregroundStyle(Buad.ink)
+                        Spacer()
+                        Text("\(String(format: "%.0f", y.progress * 100))%").font(.subheadline.weight(.bold)).monospacedDigit().foregroundStyle(Buad.successInk)
+                    }
+                    ProgressBar(value: y.progress, color: Buad.success)
+                    Text("\(Fmt.sar(y.revenue)) من \(Fmt.sar(t)) · المتبقي \(Fmt.short(max(0, t - y.revenue)))")
+                        .font(.caption).foregroundStyle(Buad.muted)
+                }
+            }
+            .buttonStyle(.plain)
+        }
     }
 
     @ViewBuilder private var schedule: some View {
@@ -320,8 +341,11 @@ struct TodayView: View {
         async let o = Self.attempt(s) { try await APIClient.shared.salesOverview() }
         async let n = Self.attempt(true) { try await APIClient.shared.notifications().unread }
         async let mm = Self.attempt(mt) { try await APIClient.shared.meetings(mine: true) }
+        let thisYear = Calendar(identifier: .gregorian).component(.year, from: Date())
+        async let yr = Self.attempt(f) { try await APIClient.shared.yearReview(thisYear) }
         let (ar, kr, fr, rr, or, nr) = await (a, k, fu, r, o, n)
         let mr = await mm
+        let yrr = await yr
         var failed: APIError?
         func take<T>(_ x: Result<T, APIError>?) -> T? {
             switch x {
@@ -339,6 +363,7 @@ struct TodayView: View {
         sales = take(or) ?? sales
         unread = take(nr) ?? unread
         meetings = take(mr) ?? meetings
+        yearReview = take(yrr) ?? yearReview
         error = failed?.message
         loaded = true
     }

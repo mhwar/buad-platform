@@ -3,7 +3,7 @@ import SwiftUI
 /// «المالية»: the website's sections that the app has so far — «النظرة العامة» and «التحصيل»
 /// (treasury.view) and «الضريبة» (vat.view) — each shown only when the role holds its permission.
 struct FinanceView: View {
-    enum Part: String { case overview, collection, vat }
+    enum Part: String { case overview, collection, vat, year }
     @EnvironmentObject private var session: Session
     @State private var part: Part?
     /// Opened from «المزيد»: inside its navigation, not a stack of its own.
@@ -11,29 +11,40 @@ struct FinanceView: View {
 
     private var parts: [Part] {
         guard let me = session.me else { return [] }
-        return (me.can("treasury.view") ? [.overview, .collection] : []) + (me.can("vat.view") ? [.vat] : [])
+        return (me.can("treasury.view") ? [.overview, .collection] : []) + (me.can("vat.view") ? [.vat] : []) + (me.can("treasury.view") ? [.year] : [])
     }
 
     var body: some View {
         if embedded { content } else { NavigationStack { content } }
     }
 
+    private static func title(_ p: Part) -> String {
+        switch p {
+        case .overview: return "نظرة عامة"
+        case .collection: return "التحصيل"
+        case .vat: return "الضريبة"
+        case .year: return "مراجعة السنة"
+        }
+    }
+
     private var content: some View {
             VStack(spacing: 0) {
                 if parts.count > 1 {
-                    Picker("أقسام المالية", selection: Binding(get: { part ?? parts.first }, set: { part = $0 })) {
-                        ForEach(parts, id: \.self) { p in
-                            Text(p == .overview ? "نظرة عامة" : p == .collection ? "التحصيل" : "الضريبة").tag(Optional(p))
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 8) {
+                            ForEach(parts, id: \.self) { p in
+                                FilterChip(title: Self.title(p), on: (part ?? parts.first) == p) { part = p }
+                            }
                         }
+                        .padding(.horizontal, Buad.gutter)
                     }
-                    .pickerStyle(.segmented)
-                    .padding(.horizontal, Buad.gutter)
-                    .padding(.vertical, 8)
+                    .padding(.vertical, 4)
                 }
                 switch part ?? parts.first {
                 case .overview: OverviewView()
                 case .collection: CollectionView()
                 case .vat: VatView()
+                case .year: YearReviewView()
                 case nil: EmptyNote(text: APIError.forbidden.message, icon: "lock")
                 }
             }

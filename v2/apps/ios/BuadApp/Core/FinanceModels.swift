@@ -377,7 +377,7 @@ struct VatReport: Decodable {
             case "sales_without_invoice": return "\(n) مقبوض في مشاريع لم تُسجَّل لها فواتير ضريبية بعد: احتُسبت بتاريخ الاستلام مؤقتاً. سجّلوا الفاتورة المرسلة للعميل من صفحة المشروع لتُحتسب بتاريخها."
             case "invoices_below_receipts": return "\(n) مشروع فواتيره المسجّلة أقل مما استُلم منه: قد تنقصه فاتورة."
             case "cf_undecided": return "\(n) بند «رسوم إضافية» لم يُحدَّد: هل هو ضريبة العقد المحجوزة للهيئة أم رسوم فعلية؟"
-            case "vat_as_expense": return "\(n) قيد سداد ضريبة مسجّل كمصروف مشروع: انقلوه إلى سداد الربع (من الموقع)."
+            case "vat_as_expense": return "\(n) قيد سداد ضريبة مسجّل كمصروف مشروع: انقله إلى سداد الإقرار من «سداد ضريبة مسجّل كمصروف» أدناه."
             default: return code
             }
         }
@@ -392,7 +392,16 @@ struct VatReport: Decodable {
     let unidentified: [Unidentified]
     let warnings: [Warning]
 
-    private enum K: String, CodingKey { case period, rate, outputVat, inputVat, netPayable, reserved, sales, purchases, unidentified, warnings }
+    /// A tax payment booked as a project expense, to move into a quarter's filing.
+    struct VatExpense: Identifiable {
+        let id = UUID()
+        let entryId, projectId, projectName, date, description: String
+        let amount: Int
+    }
+
+    let vatExpenses: [VatExpense]
+
+    private enum K: String, CodingKey { case period, rate, outputVat, inputVat, netPayable, reserved, sales, purchases, unidentified, warnings, vatExpenses }
     private enum P: String, CodingKey { case label }
     private enum Part: String, CodingKey { case rows, base }
 
@@ -411,25 +420,46 @@ struct VatReport: Decodable {
         let u = try? c.nestedContainer(keyedBy: Part.self, forKey: .unidentified)
         unidentified = (try? u?.decode([Unidentified].self, forKey: .rows)) ?? []
         warnings = (try? c.decode([Warning].self, forKey: .warnings)) ?? []
+        var ve: [VatExpense] = []
+        if var arr = try? c.nestedUnkeyedContainer(forKey: .vatExpenses) {
+            while !arr.isAtEnd {
+                guard let x = try? arr.nestedContainer(keyedBy: JKey.self) else { break }
+                ve.append(VatExpense(entryId: x.string(JKey("entryId")), projectId: x.string(JKey("projectId")), projectName: x.string(JKey("projectName")),
+                                     date: x.string(JKey("date")), description: x.string(JKey("description")), amount: x.halalasFromRiyals(JKey("amount"))))
+            }
+        }
+        vatExpenses = ve
     }
 }
 
 struct VatYear: Decodable {
     struct Quarter: Decodable, Identifiable {
         let q: Int
+        /// «2026-Q2»: the key a filing is saved under.
+        let key: String
+        let label: String
         let dueDate: String
         let outputVat, inputVat, netPayable: Int
         let warnings: Int
         let status: String
+        let filedOn: String
+        let paidOn: String
+        let paidAmount: Int
+        let reference: String
+        let note: String
         var id: Int { q }
-        private enum K: String, CodingKey { case q, dueDate, outputVat, inputVat, netPayable, warnings, filing }
-        private enum F: String, CodingKey { case status }
+        private enum K: String, CodingKey { case q, key, label, dueDate, outputVat, inputVat, netPayable, warnings, filing }
+        private enum F: String, CodingKey { case status, filedOn, paidOn, paidAmount, reference, note }
         init(from decoder: Decoder) throws {
             let c = try decoder.container(keyedBy: K.self)
-            q = c.int(.q); dueDate = c.string(.dueDate)
+            q = c.int(.q); key = c.string(.key); label = c.string(.label); dueDate = c.string(.dueDate)
             outputVat = c.halalasFromRiyals(.outputVat); inputVat = c.halalasFromRiyals(.inputVat)
             netPayable = c.halalasFromRiyals(.netPayable); warnings = c.int(.warnings)
-            status = (try? c.nestedContainer(keyedBy: F.self, forKey: .filing))?.string(.status) ?? "open"
+            let f = try? c.nestedContainer(keyedBy: F.self, forKey: .filing)
+            status = f?.string(.status).isEmpty == false ? f!.string(.status) : "open"
+            filedOn = f?.string(.filedOn) ?? ""; paidOn = f?.string(.paidOn) ?? ""
+            paidAmount = f?.halalasFromRiyals(.paidAmount) ?? 0
+            reference = f?.string(.reference) ?? ""; note = f?.string(.note) ?? ""
         }
     }
 

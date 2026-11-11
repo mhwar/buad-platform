@@ -13,6 +13,10 @@ struct OverviewView: View {
     /// A new period is on its way: the old figures stay, dimmed, until it arrives.
     @State private var reloading = false
     @State private var error: String?
+    /// Narrowing the figures to one client or one project status.
+    @State private var client = ""
+    @State private var status = ""
+    @State private var clients: [ClientItem] = []
 
     private var years: [Int] {
         let y = Calendar(identifier: .gregorian).component(.year, from: Date())
@@ -23,6 +27,7 @@ struct OverviewView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
                 periodPicker
+                filterBar
                 if !loaded {
                     ProgressView().frame(maxWidth: .infinity).padding(.vertical, 28)
                 } else if let error {
@@ -34,6 +39,8 @@ struct OverviewView: View {
                     } else {
                         quality(d)
                         tiles(d)
+                        if client.isEmpty && status.isEmpty { FinanceChecksCard() }
+                        if client.isEmpty && status.isEmpty && session.me?.can("finance.view") == true { ReceiptSuggestionsCard() }
                         monthly(d)
                         categories(d)
                         profitability(d)
@@ -55,9 +62,48 @@ struct OverviewView: View {
             reloading = true
             Task { await load() }
         }
+        .onChange(of: client) { _, _ in reloading = true; Task { await load() } }
+        .onChange(of: status) { _, _ in reloading = true; Task { await load() } }
+        .task { if clients.isEmpty, session.me?.can("clients.view") == true { clients = (try? await APIClient.shared.clients()) ?? [] } }
     }
 
     // MARK: الفترة
+
+    /// «العميل» and «الحالة»: the same figures for one client, or only completed / running / … projects.
+    private var filterBar: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                if !clients.isEmpty {
+                    Menu {
+                        Picker("العميل", selection: $client) {
+                            Text("كل العملاء").tag("")
+                            ForEach(clients) { Text($0.name).tag($0.id) }
+                        }
+                    } label: { chip(client.isEmpty ? "العميل" : clients.first { $0.id == client }?.name ?? "العميل", on: !client.isEmpty) }
+                }
+                Menu {
+                    Picker("الحالة", selection: $status) {
+                        Text("كل الحالات").tag("")
+                        ForEach(["active", "completed", "paused", "cancelled"], id: \.self) { Text(Vocabulary.status($0).label).tag($0) }
+                    }
+                } label: { chip(status.isEmpty ? "الحالة" : Vocabulary.status(status).label, on: !status.isEmpty) }
+                if !client.isEmpty || !status.isEmpty {
+                    Button { client = ""; status = "" } label: { Label("مسح", systemImage: "xmark.circle.fill").font(.subheadline).foregroundStyle(Buad.muted).frame(minHeight: Buad.tap) }
+                        .buttonStyle(.plain)
+                }
+            }
+        }
+    }
+
+    private func chip(_ text: String, on: Bool) -> some View {
+        HStack(spacing: 4) {
+            Text(text).font(.subheadline.weight(.medium)).lineLimit(1)
+            Image(systemName: "chevron.down").font(.caption2.weight(.bold))
+        }
+        .padding(.horizontal, 12).frame(height: 34)
+        .background(on ? Buad.accentSoft : Buad.surface, in: Capsule())
+        .foregroundStyle(on ? Buad.accentInk : Buad.ink)
+    }
 
     private var periodPicker: some View {
         HStack(spacing: 8) {
@@ -295,14 +341,15 @@ struct OverviewView: View {
     private func load() async {
         let current = period
         do {
-            async let now = APIClient.shared.financeOverview(current)
-            async let before: FinanceOverview? = Self.optional(current.previous)
+            let (cl, st) = (client, status)
+            async let now = APIClient.shared.financeOverview(current, client: cl, status: st)
+            async let before: FinanceOverview? = Self.optional(current.previous, client: cl, status: st)
             let (n, b) = try await (now, before)
-            guard current == period else { return }
+            guard current == period, cl == client, st == status else { return }
             data = n
             prev = b
             error = nil
-            ScreenMemory.overview = (current, n, b)
+            if cl.isEmpty && st.isEmpty { ScreenMemory.overview = (current, n, b) }
         } catch {
             session.handle(error)
             if data == nil { self.error = (error as? APIError)?.message ?? APIError.network.message }
@@ -311,9 +358,9 @@ struct OverviewView: View {
         reloading = false
     }
 
-    private static func optional(_ p: FinancePeriod?) async -> FinanceOverview? {
+    private static func optional(_ p: FinancePeriod?, client: String, status: String) async -> FinanceOverview? {
         guard let p else { return nil }
-        return try? await APIClient.shared.financeOverview(p)
+        return try? await APIClient.shared.financeOverview(p, client: client, status: status)
     }
 
     private static func pct(_ v: Double) -> String {

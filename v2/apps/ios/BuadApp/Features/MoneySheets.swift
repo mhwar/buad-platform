@@ -53,6 +53,9 @@ struct ReceiptFormSheet: View {
     /// What is still owed on the contract (halalas), to prefill a new receipt.
     let remaining: Int
     let contractDate: String
+    /// A suggested receipt: the date the platform worked out and why (kept with the receipt as its basis).
+    var presetDate = ""
+    var basis = ""
     let saved: (ProjectFinance, String) -> Void
 
     @State private var date = Date()
@@ -138,6 +141,7 @@ struct ReceiptFormSheet: View {
             note = r.note
         } else if remaining > 0 {
             amount = plain(remaining)
+            if let d = Fmt.date(presetDate) { date = d }
         }
         Task { @MainActor in baseline = snapshot }
     }
@@ -155,7 +159,7 @@ struct ReceiptFormSheet: View {
             if let r = receipt {
                 fin = try await APIClient.shared.updateReceipt(projectId, r.id, date: iso, riyals: riyals, note: note)
             } else {
-                fin = try await APIClient.shared.addReceipt(projectId, date: iso, riyals: riyals, note: note, confirmOver: confirmOver)
+                fin = try await APIClient.shared.addReceipt(projectId, date: iso, riyals: riyals, note: note, confirmOver: confirmOver, basis: basis)
             }
             saved(fin, receipt == nil ? "سُجّل المقبوض" : "حُفظ المقبوض")
             dismiss()
