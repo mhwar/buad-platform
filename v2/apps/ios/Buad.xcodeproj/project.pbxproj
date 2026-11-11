@@ -17,6 +17,7 @@
 		FEB0375F1C4C35E863876F6E /* ClientSheets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 462D7A798A74BCE4716EA2E9 /* ClientSheets.swift */; };
 		BAA9A3BD252FDB3E68B82BA2 /* ClientsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 798EC49321C73A148E681BF9 /* ClientsView.swift */; };
 		598C496469C37A7E4EAA1E17 /* CompanyModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = A199A0C1A89CDCF16AC20ADD /* CompanyModels.swift */; };
+		935E87E79FC6636085968808 /* CompanyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40DA690FF6060648B69B93E7 /* CompanyView.swift */; };
 		2A3711E166FDAE66E2620214 /* Confirm.swift in Sources */ = {isa = PBXBuildFile; fileRef = 812AEA46536EF9D0366B74DD /* Confirm.swift */; };
 		72110C3FB02CF8825168B222 /* CreateSheets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17D48BA4D194BEF3A480C507 /* CreateSheets.swift */; };
 		307EA3EB4C3DF642C99644A8 /* Dock.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20D428ECD75E6CF9049A5045 /* Dock.swift */; };
@@ -33,6 +34,7 @@
 		A289450366D35817DEC0755B /* MoreView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5BBF222B60004DD31D3FBEB8 /* MoreView.swift */; };
 		E4AEA7F7909FACED2CEECE7F /* NotificationsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A45104A6141BFBC1B0E4747 /* NotificationsView.swift */; };
 		F532ED040701AB19A54DB4D9 /* OverviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34245588C64BDAE7C90CFCFB /* OverviewView.swift */; };
+		718877D5011BFFED260113F2 /* PartnersView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 52134ED88743F6DB7EA9AD3B /* PartnersView.swift */; };
 		E9BAADBBA62FB64876C5CF90 /* PeriodBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45B9B40D10C309F2DA410440 /* PeriodBar.swift */; };
 		D26BF7A8214E4D68FB3AF938 /* ProjectDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F5CAFFCF496277E305DC4E4 /* ProjectDetailView.swift */; };
 		AF6BF7FDA6078F772D2DFCAD /* ProjectDocs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CBC658E2A3D21EEAF2388EC /* ProjectDocs.swift */; };
@@ -41,6 +43,7 @@
 		4967A421A98F5FD90E8AC02D /* ProjectSheets.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF184329246D455F53B1A775 /* ProjectSheets.swift */; };
 		F3C371AC3D727E1F2DCD5302 /* ProjectWork.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3726901C1F6DE6361360AEF5 /* ProjectWork.swift */; };
 		35CF01C60CA46ED759C83A65 /* ProjectsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 118AB449F27FDDD25C375DC5 /* ProjectsView.swift */; };
+		FF8E82CE077E0B3A1B95F1BA /* QuarterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5BE628CDA0C02EA5B30A17B2 /* QuarterView.swift */; };
 		A515A34034E8D5D7CDE7F2DA /* QuoteModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 55C8010DA3674BE55AF99ED6 /* QuoteModels.swift */; };
 		7815121FED1C0694E207C6B5 /* QuotesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E16543CFF108FDC96E0C6B6 /* QuotesView.swift */; };
 		1DBB3A842F02163614F44FAB /* ReceiveSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92196FB501D5B083E6E7B609 /* ReceiveSheet.swift */; };
@@ -71,6 +74,7 @@
 		462D7A798A74BCE4716EA2E9 /* ClientSheets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClientSheets.swift; sourceTree = "<group>"; };
 		798EC49321C73A148E681BF9 /* ClientsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClientsView.swift; sourceTree = "<group>"; };
 		A199A0C1A89CDCF16AC20ADD /* CompanyModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompanyModels.swift; sourceTree = "<group>"; };
+		40DA690FF6060648B69B93E7 /* CompanyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompanyView.swift; sourceTree = "<group>"; };
 		812AEA46536EF9D0366B74DD /* Confirm.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Confirm.swift; sourceTree = "<group>"; };
 		17D48BA4D194BEF3A480C507 /* CreateSheets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateSheets.swift; sourceTree = "<group>"; };
 		20D428ECD75E6CF9049A5045 /* Dock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Dock.swift; sourceTree = "<group>"; };
@@ -87,6 +91,7 @@
 		5BBF222B60004DD31D3FBEB8 /* MoreView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoreView.swift; sourceTree = "<group>"; };
 		4A45104A6141BFBC1B0E4747 /* NotificationsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationsView.swift; sourceTree = "<group>"; };
 		34245588C64BDAE7C90CFCFB /* OverviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OverviewView.swift; sourceTree = "<group>"; };
+		52134ED88743F6DB7EA9AD3B /* PartnersView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PartnersView.swift; sourceTree = "<group>"; };
 		45B9B40D10C309F2DA410440 /* PeriodBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PeriodBar.swift; sourceTree = "<group>"; };
 		4F5CAFFCF496277E305DC4E4 /* ProjectDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectDetailView.swift; sourceTree = "<group>"; };
 		4CBC658E2A3D21EEAF2388EC /* ProjectDocs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectDocs.swift; sourceTree = "<group>"; };
@@ -95,6 +100,7 @@
 		AF184329246D455F53B1A775 /* ProjectSheets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectSheets.swift; sourceTree = "<group>"; };
 		3726901C1F6DE6361360AEF5 /* ProjectWork.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectWork.swift; sourceTree = "<group>"; };
 		118AB449F27FDDD25C375DC5 /* ProjectsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectsView.swift; sourceTree = "<group>"; };
+		5BE628CDA0C02EA5B30A17B2 /* QuarterView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuarterView.swift; sourceTree = "<group>"; };
 		55C8010DA3674BE55AF99ED6 /* QuoteModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuoteModels.swift; sourceTree = "<group>"; };
 		5E16543CFF108FDC96E0C6B6 /* QuotesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuotesView.swift; sourceTree = "<group>"; };
 		92196FB501D5B083E6E7B609 /* ReceiveSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReceiveSheet.swift; sourceTree = "<group>"; };
@@ -180,6 +186,7 @@
 				6516B73CEC277EDC146AA345 /* ChecksCards.swift */,
 				462D7A798A74BCE4716EA2E9 /* ClientSheets.swift */,
 				798EC49321C73A148E681BF9 /* ClientsView.swift */,
+				40DA690FF6060648B69B93E7 /* CompanyView.swift */,
 				17D48BA4D194BEF3A480C507 /* CreateSheets.swift */,
 				20D428ECD75E6CF9049A5045 /* Dock.swift */,
 				E718E8BC35421FAA341657FC /* EntrySheet.swift */,
@@ -191,12 +198,14 @@
 				5BBF222B60004DD31D3FBEB8 /* MoreView.swift */,
 				4A45104A6141BFBC1B0E4747 /* NotificationsView.swift */,
 				34245588C64BDAE7C90CFCFB /* OverviewView.swift */,
+				52134ED88743F6DB7EA9AD3B /* PartnersView.swift */,
 				45B9B40D10C309F2DA410440 /* PeriodBar.swift */,
 				4F5CAFFCF496277E305DC4E4 /* ProjectDetailView.swift */,
 				4CBC658E2A3D21EEAF2388EC /* ProjectDocs.swift */,
 				AF184329246D455F53B1A775 /* ProjectSheets.swift */,
 				3726901C1F6DE6361360AEF5 /* ProjectWork.swift */,
 				118AB449F27FDDD25C375DC5 /* ProjectsView.swift */,
+				5BE628CDA0C02EA5B30A17B2 /* QuarterView.swift */,
 				5E16543CFF108FDC96E0C6B6 /* QuotesView.swift */,
 				92196FB501D5B083E6E7B609 /* ReceiveSheet.swift */,
 				23FC1395DDA99163E7BB7487 /* RootView.swift */,
@@ -298,6 +307,7 @@
 				FEB0375F1C4C35E863876F6E /* ClientSheets.swift in Sources */,
 				BAA9A3BD252FDB3E68B82BA2 /* ClientsView.swift in Sources */,
 				598C496469C37A7E4EAA1E17 /* CompanyModels.swift in Sources */,
+				935E87E79FC6636085968808 /* CompanyView.swift in Sources */,
 				2A3711E166FDAE66E2620214 /* Confirm.swift in Sources */,
 				72110C3FB02CF8825168B222 /* CreateSheets.swift in Sources */,
 				307EA3EB4C3DF642C99644A8 /* Dock.swift in Sources */,
@@ -314,6 +324,7 @@
 				A289450366D35817DEC0755B /* MoreView.swift in Sources */,
 				E4AEA7F7909FACED2CEECE7F /* NotificationsView.swift in Sources */,
 				F532ED040701AB19A54DB4D9 /* OverviewView.swift in Sources */,
+				718877D5011BFFED260113F2 /* PartnersView.swift in Sources */,
 				E9BAADBBA62FB64876C5CF90 /* PeriodBar.swift in Sources */,
 				D26BF7A8214E4D68FB3AF938 /* ProjectDetailView.swift in Sources */,
 				AF6BF7FDA6078F772D2DFCAD /* ProjectDocs.swift in Sources */,
@@ -322,6 +333,7 @@
 				4967A421A98F5FD90E8AC02D /* ProjectSheets.swift in Sources */,
 				F3C371AC3D727E1F2DCD5302 /* ProjectWork.swift in Sources */,
 				35CF01C60CA46ED759C83A65 /* ProjectsView.swift in Sources */,
+				FF8E82CE077E0B3A1B95F1BA /* QuarterView.swift in Sources */,
 				A515A34034E8D5D7CDE7F2DA /* QuoteModels.swift in Sources */,
 				7815121FED1C0694E207C6B5 /* QuotesView.swift in Sources */,
 				1DBB3A842F02163614F44FAB /* ReceiveSheet.swift in Sources */,
@@ -422,7 +434,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.9.1;
+				MARKETING_VERSION = 0.9.2;
 				PRODUCT_BUNDLE_IDENTIFIER = sa.buad.app;
 				PRODUCT_NAME = BuadApp;
 				SDKROOT = iphoneos;
@@ -445,7 +457,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.9.1;
+				MARKETING_VERSION = 0.9.2;
 				PRODUCT_BUNDLE_IDENTIFIER = sa.buad.app;
 				PRODUCT_NAME = BuadApp;
 				SDKROOT = iphoneos;
