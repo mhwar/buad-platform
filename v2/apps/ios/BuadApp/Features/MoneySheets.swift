@@ -118,7 +118,7 @@ struct ReceiptFormSheet: View {
                 Task { await save(confirmOver: false) }
             }
             .alert("المبلغ يتجاوز قيمة العقد", isPresented: $askOver, presenting: overContract) { _ in
-                Button("تسجيله رغم ذلك") { Task { await save(confirmOver: true, basis: basis) } }
+                Button("تسجيله رغم ذلك") { Task { await save(confirmOver: true) } }
                 Button("إلغاء", role: .cancel) {}
             } message: { o in
                 Text(APIError.overContract(received: o.received, gross: o.gross).message)
