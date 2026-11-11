@@ -30,7 +30,7 @@ enum APIError: Error, Equatable {
         case .similarName(let name):
             return "يوجد عميل باسم مشابه" + (name.isEmpty ? "" : " («\(name)»)") + ". هل تريد إنشاء عميل جديد رغم ذلك؟"
         case .rejected(let code):
-            if let q = QuoteVocabulary.error(code) ?? ProjectVocabulary.error(code) ?? MeetingVocabulary.error(code) { return q }
+            if let q = QuoteVocabulary.error(code) ?? ProjectVocabulary.error(code) ?? MeetingVocabulary.error(code) ?? CompanyVocabulary.error(code) { return q }
             switch code {
             case "end_before_start": return "تاريخ الاستحقاق قبل تاريخ البداية."
             case "not_found": return "لم يعد هذا العنصر موجوداً أو لا تملك صلاحية الوصول إليه."
@@ -774,6 +774,63 @@ final class APIClient: @unchecked Sendable {
     func receiptSuggestions() async throws -> [ReceiptSuggestion] {
         let r: SuggestionsEnvelope = try await send("GET", "/api/finance/company/receipt-suggestions")
         return r.items
+    }
+
+    // MARK: 0.9.2 — the company's own finance, partners, distributions (company-finance.ts)
+
+    func companyOverview(_ period: FinancePeriod) async throws -> CompanyOverview {
+        guard let (from, to) = period.bounds else { return try await send("GET", "/api/finance/company/overview") }
+        return try await send("GET", "/api/finance/company/overview?from=\(from)&to=\(to)")
+    }
+
+    func companyEntries(archived: Bool) async throws -> [CompanyEntry] {
+        let r: CompanyEntriesEnvelope = try await send("GET", "/api/finance/company/entries" + (archived ? "?archived=1" : ""))
+        return r.items
+    }
+
+    func saveCompanyEntry(_ id: String?, _ body: [String: Any]) async throws {
+        if let id { let _: OKEnvelope = try await send("PATCH", "/api/finance/company/entries/\(id)", body: body) }
+        else { let _: CreatedEnvelope = try await send("POST", "/api/finance/company/entries", body: body) }
+    }
+
+    func deleteCompanyEntry(_ id: String) async throws { let _: OKEnvelope = try await send("DELETE", "/api/finance/company/entries/\(id)") }
+    func restoreCompanyEntry(_ id: String) async throws { let _: OKEnvelope = try await send("POST", "/api/finance/company/entries/\(id)/restore") }
+
+    func companyBalances() async throws -> CompanyBalances { try await send("GET", "/api/finance/company/balances") }
+
+    func partners() async throws -> PartnersEnvelope { try await send("GET", "/api/finance/company/partners") }
+
+    func savePartner(_ id: String?, name: String, sharePct: Double, note: String) async throws {
+        let body: [String: Any] = ["name": name, "sharePct": sharePct, "note": note]
+        if let id { let _: OKEnvelope = try await send("PATCH", "/api/finance/company/partners/\(id)", body: body) }
+        else { let _: CreatedEnvelope = try await send("POST", "/api/finance/company/partners", body: body) }
+    }
+
+    func deletePartner(_ id: String) async throws { let _: OKEnvelope = try await send("DELETE", "/api/finance/company/partners/\(id)") }
+
+    func distributions() async throws -> [Distribution] {
+        let r: DistributionsEnvelope = try await send("GET", "/api/finance/company/distributions")
+        return r.items
+    }
+
+    func previewDistribution(_ body: [String: Any]) async throws -> DistributionPreview {
+        try await send("POST", "/api/finance/company/distributions/preview", body: body)
+    }
+
+    func createDistribution(_ body: [String: Any]) async throws {
+        let _: CreatedEnvelope = try await send("POST", "/api/finance/company/distributions", body: body)
+    }
+
+    func completeDistribution(_ id: String) async throws { let _: OKEnvelope = try await send("POST", "/api/finance/company/distributions/\(id)/complete") }
+
+    func payDistribution(_ id: String, date: String, ref: String) async throws {
+        let _: OKEnvelope = try await send("POST", "/api/finance/company/distributions/\(id)/pay", body: ["date": date, "ref": ref])
+    }
+
+    func deleteDistribution(_ id: String) async throws { let _: OKEnvelope = try await send("DELETE", "/api/finance/company/distributions/\(id)") }
+
+    func quarter(year: Int, q: Int) async throws -> QuarterReport {
+        try await send("GET", "/api/finance/company/quarter?year=\(year)&q=\(q)")
     }
 
     func signOut() async {

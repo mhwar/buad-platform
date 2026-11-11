@@ -3,7 +3,7 @@ import SwiftUI
 /// «المالية»: the website's sections that the app has so far — «النظرة العامة» and «التحصيل»
 /// (treasury.view) and «الضريبة» (vat.view) — each shown only when the role holds its permission.
 struct FinanceView: View {
-    enum Part: String { case overview, collection, vat, year }
+    enum Part: String { case overview, collection, vat, year, company, partners }
     @EnvironmentObject private var session: Session
     @State private var part: Part?
     /// Opened from «المزيد»: inside its navigation, not a stack of its own.
@@ -11,7 +11,7 @@ struct FinanceView: View {
 
     private var parts: [Part] {
         guard let me = session.me else { return [] }
-        return (me.can("treasury.view") ? [.overview, .collection] : []) + (me.can("vat.view") ? [.vat] : []) + (me.can("treasury.view") ? [.year] : [])
+        return (me.can("treasury.view") ? [.overview, .collection] : []) + (me.can("vat.view") ? [.vat] : []) + (me.can("treasury.view") ? [.year, .company, .partners] : [])
     }
 
     var body: some View {
@@ -24,6 +24,8 @@ struct FinanceView: View {
         case .collection: return "التحصيل"
         case .vat: return "الضريبة"
         case .year: return "مراجعة السنة"
+        case .company: return "الشركة"
+        case .partners: return "الشركاء والتوزيع"
         }
     }
 
@@ -45,6 +47,8 @@ struct FinanceView: View {
                 case .collection: CollectionView()
                 case .vat: VatView()
                 case .year: YearReviewView()
+                case .company: CompanyView()
+                case .partners: PartnersView()
                 case nil: EmptyNote(text: APIError.forbidden.message, icon: "lock")
                 }
             }
