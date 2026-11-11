@@ -156,11 +156,14 @@ struct ClientDetail: Decodable {
     let address: String
     let website: String
     let notes: String
+    let signatoryName: String
+    let signatoryTitle: String
+    let archived: Bool
     let contacts: [Contact]
     let projects: [Project]
 
     private enum K: String, CodingKey { case client, contacts, projects }
-    private enum C: String, CodingKey { case regNo, taxNo, address, website, notes }
+    private enum C: String, CodingKey { case regNo, taxNo, address, website, notes, signatoryName, signatoryTitle, archivedAt }
 
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: K.self)
@@ -170,6 +173,9 @@ struct ClientDetail: Decodable {
         address = cl.string(.address)
         website = cl.string(.website)
         notes = cl.string(.notes)
+        signatoryName = cl.string(.signatoryName)
+        signatoryTitle = cl.string(.signatoryTitle)
+        archived = (cl.optionalInt(.archivedAt) ?? 0) > 0
         contacts = (try? c.decode([Contact].self, forKey: .contacts)) ?? []
         projects = (try? c.decode([Project].self, forKey: .projects)) ?? []
     }

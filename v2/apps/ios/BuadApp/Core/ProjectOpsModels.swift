@@ -300,3 +300,42 @@ struct RegisterDocument: Decodable, Identifiable {
 }
 
 struct RegisterEnvelope: Decodable { let items: [RegisterDocument] }
+
+
+// MARK: client CRM (GET /api/crm/clients/:id)
+
+struct ClientActivity: Decodable, Identifiable {
+    let id: String
+    let type: String
+    let summary: String
+    let at: Int
+    let createdByName: String
+    private enum K: String, CodingKey { case id, type, summary, at, createdByName }
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: K.self)
+        id = c.string(.id); type = c.string(.type); summary = c.string(.summary); at = c.int(.at); createdByName = c.string(.createdByName)
+    }
+}
+
+struct ClientCRM: Decodable {
+    let relationship: String
+    let ownerId: String
+    let ownerName: String
+    let source: String
+    let tags: [String]
+    let nextFollowUpAt: String
+    let lastContactAt: Int
+    let activities: [ClientActivity]
+
+    private enum K: String, CodingKey { case relationship, crm, activities }
+    private enum C: String, CodingKey { case ownerId, ownerName, source, tags, nextFollowUpAt, lastContactAt }
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: K.self)
+        relationship = c.string(.relationship)
+        let m = try c.nestedContainer(keyedBy: C.self, forKey: .crm)
+        ownerId = m.string(.ownerId); ownerName = m.string(.ownerName); source = m.string(.source)
+        tags = (try? m.decode([String].self, forKey: .tags)) ?? []
+        nextFollowUpAt = m.string(.nextFollowUpAt); lastContactAt = m.int(.lastContactAt)
+        activities = (try? c.decode([ClientActivity].self, forKey: .activities)) ?? []
+    }
+}
