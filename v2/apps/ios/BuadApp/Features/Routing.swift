@@ -20,6 +20,10 @@ enum AppRoute: Identifiable, Hashable {
     case meetings
     case meeting(String)
     case decisions
+    case settings
+    case audit
+    case team
+    case account
     case soon(String)
 
     var id: String {
@@ -38,6 +42,10 @@ enum AppRoute: Identifiable, Hashable {
         case .meetings: return "meetings"
         case .meeting(let i): return "meeting-\(i)"
         case .decisions: return "decisions"
+        case .settings: return "settings"
+        case .audit: return "audit"
+        case .team: return "team"
+        case .account: return "account"
         case .soon(let s): return "soon-\(s)"
         }
     }
@@ -70,7 +78,12 @@ enum AppRoute: Identifiable, Hashable {
         case "decisions": return .decisions
         case "plans": return .soon("الخطط والأهداف")
         case "products": return .soon("المنتجات والخدمات")
-        case "settings": return .soon("الإعدادات")
+        case "settings":
+            if p.count >= 2, p[1] == "activity" { return .audit }
+            if p.count >= 2, p[1] == "team" { return .team }
+            if p.count >= 2, p[1] == "account" { return .account }
+            return .settings
+        case "account": return .account
         case "reports": return .soon("التقارير")
         default: return .soon("هذا القسم")
         }
@@ -132,6 +145,10 @@ struct RouteSheet: View {
         case .meetings: MeetingsView()
         case .meeting(let id): MeetingPage(id: id) {}
         case .decisions: DecisionsView()
+        case .settings: SettingsHubView()
+        case .audit: AuditLogView()
+        case .team: TeamView()
+        case .account: AccountView()
         case .soon(let name): SoonView(name: name)
         case .tab, .quotes: EmptyView()
         }

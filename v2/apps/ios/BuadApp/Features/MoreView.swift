@@ -51,7 +51,12 @@ struct MoreView: View {
                         } header: { Text("المالية") }
                     }
                     Section {
-                        ForEach(["الخطط والأهداف", "التقارير", "الإعدادات"], id: \.self) { name in
+                        NavigationLink { SettingsHubView() } label: { Label("الإعدادات والحساب", systemImage: "gearshape") }
+                    } header: { Text("الإدارة") } footer: {
+                        Text("حسابك وكلمة المرور وسجل النشاط والفريق وبيانات المنشأة.")
+                    }
+                    Section {
+                        ForEach(["الخطط والأهداف", "التقارير"], id: \.self) { name in
                             NavigationLink { SoonView(name: name) } label: {
                                 HStack {
                                     Label(name, systemImage: Self.soonIcon[name] ?? "hammer")

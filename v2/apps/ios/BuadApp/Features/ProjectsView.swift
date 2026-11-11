@@ -19,6 +19,8 @@ struct ProjectsView: View {
     @State private var attention: Attention = .all
     @State private var money: Money = .all
     @State private var type = ""
+    /// «مشاريع هذه الخدمة»: a service's name, or "-" for projects with none.
+    @State private var service = ""
     @State private var filtering = false
     @State private var creating = false
     @State private var toast: ToastItem?
@@ -28,7 +30,9 @@ struct ProjectsView: View {
         ("completed", "مكتمل"), ("paused", "متوقف"), ("cancelled", "ملغي"),
     ]
 
-    private var filtersOn: Int { (attention != .all ? 1 : 0) + (money != .all ? 1 : 0) + (type.isEmpty ? 0 : 1) }
+    private var filtersOn: Int { (attention != .all ? 1 : 0) + (money != .all ? 1 : 0) + (type.isEmpty ? 0 : 1) + (service.isEmpty ? 0 : 1) }
+
+    private var services: [String] { Array(Set(projects.map(\.productName).filter { !$0.isEmpty })).sorted() }
 
     /// Everything but the status: the pills count within it.
     private var pool: [ProjectItem] {
@@ -38,6 +42,7 @@ struct ProjectsView: View {
                 && (attention == .all || (attention == .late ? p.late : p.paymentLate))
                 && (money == .all || (money == .external) == p.external)
                 && (type.isEmpty || p.type == type)
+                && (service.isEmpty || (service == "-" ? p.productName.isEmpty : p.productName == service))
         }
     }
 
@@ -148,7 +153,8 @@ struct ProjectsView: View {
                 if attention != .all { removable(attention == .late ? "متأخرة عن موعد الانتهاء" : "عليها دفعة متأخرة") { attention = .all } }
                 if money != .all { removable(money == .inside ? "داخلية" : "خارجية") { money = .all } }
                 if !type.isEmpty { removable(Vocabulary.type(type)) { type = "" } }
-                Button("مسح الكل") { attention = .all; money = .all; type = "" }
+                if !service.isEmpty { removable(service == "-" ? "مشاريع بلا خدمة" : "الخدمة: \(service)") { service = "" } }
+                Button("مسح الكل") { attention = .all; money = .all; type = ""; service = "" }
                     .font(.caption.weight(.semibold)).foregroundStyle(Buad.infoInk)
             }
         }
@@ -188,12 +194,19 @@ struct ProjectsView: View {
                     Text("كل الأنواع").tag("")
                     ForEach(["training", "consulting", "event", "other"], id: \.self) { Text(Vocabulary.type($0)).tag($0) }
                 }
+                if !services.isEmpty {
+                    Picker("الخدمة", selection: $service) {
+                        Text("كل الخدمات").tag("")
+                        Text("بلا خدمة").tag("-")
+                        ForEach(services, id: \.self) { Text($0).tag($0) }
+                    }
+                }
             }
             .navigationTitle("تصفية")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("إعادة الضبط") { attention = .all; money = .all; type = "" }.disabled(filtersOn == 0)
+                    Button("إعادة الضبط") { attention = .all; money = .all; type = ""; service = "" }.disabled(filtersOn == 0)
                 }
                 ToolbarItem(placement: .confirmationAction) { Button("تم") { filtering = false }.bold() }
             }
