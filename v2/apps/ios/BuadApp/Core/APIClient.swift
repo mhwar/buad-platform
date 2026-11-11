@@ -845,7 +845,7 @@ final class APIClient: @unchecked Sendable {
         return r.items
     }
 
-    func teamUsers() async throws -> [TeamUser] {
+    func teamMembers() async throws -> [TeamUser] {
         let r: TeamUsersEnvelope = try await send("GET", "/api/team/users")
         return r.users
     }
@@ -872,6 +872,38 @@ final class APIClient: @unchecked Sendable {
     func createRecoveryKey() async throws -> String {
         let r: RecoveryKeyCreated = try await send("POST", "/api/auth/recovery-key")
         return r.key
+    }
+
+    // MARK: 0.10.1 — plans and reports
+
+    func planCycles() async throws -> [PlanCycle] {
+        let r: PlanCyclesEnvelope = try await send("GET", "/api/plans/cycles")
+        return r.cycles
+    }
+
+    func planCycle(_ id: String) async throws -> PlanDetail { try await send("GET", "/api/plans/cycles/\(id)") }
+
+    func planOwners() async throws -> [Person] {
+        let r: PlanOwnersEnvelope = try await send("GET", "/api/plans/owners")
+        return r.owners
+    }
+
+    func setInitiativeStatus(_ id: String, _ status: String) async throws {
+        let _: OKEnvelope = try await send("PATCH", "/api/plans/initiatives/\(id)", body: ["status": status])
+    }
+
+    func setIndicatorCurrent(_ id: String, _ value: Double) async throws {
+        let _: OKEnvelope = try await send("PATCH", "/api/plans/indicators/\(id)", body: ["current": value])
+    }
+
+    func reviewObjective(_ id: String, quarter: Int, note: String) async throws {
+        let _: CreatedEnvelope = try await send("POST", "/api/plans/objectives/\(id)/reviews", body: ["quarter": quarter, "note": note])
+    }
+
+    func executionReport(from: String, to: String) async throws -> ExecutionReport {
+        var q = ""
+        if !from.isEmpty, !to.isEmpty { q = "?from=\(from)&to=\(to)" }
+        return try await send("GET", "/api/reports/execution" + q)
     }
 
     func signOut() async {

@@ -38,6 +38,8 @@
 		F532ED040701AB19A54DB4D9 /* OverviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34245588C64BDAE7C90CFCFB /* OverviewView.swift */; };
 		718877D5011BFFED260113F2 /* PartnersView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 52134ED88743F6DB7EA9AD3B /* PartnersView.swift */; };
 		E9BAADBBA62FB64876C5CF90 /* PeriodBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45B9B40D10C309F2DA410440 /* PeriodBar.swift */; };
+		484778F49BE88C8706AC2C68 /* PlanModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = C776386F53204D4C6E544836 /* PlanModels.swift */; };
+		6E3462FF172435AE508DCEA4 /* PlansView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC3E1F38CEAB1811A60240BD /* PlansView.swift */; };
 		D26BF7A8214E4D68FB3AF938 /* ProjectDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F5CAFFCF496277E305DC4E4 /* ProjectDetailView.swift */; };
 		AF6BF7FDA6078F772D2DFCAD /* ProjectDocs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CBC658E2A3D21EEAF2388EC /* ProjectDocs.swift */; };
 		59E6DDE312BBB17209772C1C /* ProjectModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5A5EF53C6D7B76F4A56FC27 /* ProjectModels.swift */; };
@@ -49,6 +51,7 @@
 		A515A34034E8D5D7CDE7F2DA /* QuoteModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 55C8010DA3674BE55AF99ED6 /* QuoteModels.swift */; };
 		7815121FED1C0694E207C6B5 /* QuotesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E16543CFF108FDC96E0C6B6 /* QuotesView.swift */; };
 		1DBB3A842F02163614F44FAB /* ReceiveSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92196FB501D5B083E6E7B609 /* ReceiveSheet.swift */; };
+		19993EEFDEA070A26156989D /* ReportsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00850D231E0B27BEBE1466C3 /* ReportsView.swift */; };
 		E1F3EC802D75BAE3B9FEFD79 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23FC1395DDA99163E7BB7487 /* RootView.swift */; };
 		1C37A726B2DEC37D5CC1619D /* Routing.swift in Sources */ = {isa = PBXBuildFile; fileRef = 847681A964433F0F980DF410 /* Routing.swift */; };
 		B4319087A2F5EAA78DC4856B /* SalesModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E731ACAA5B22BD0A5DCC8CF /* SalesModels.swift */; };
@@ -97,6 +100,8 @@
 		34245588C64BDAE7C90CFCFB /* OverviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OverviewView.swift; sourceTree = "<group>"; };
 		52134ED88743F6DB7EA9AD3B /* PartnersView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PartnersView.swift; sourceTree = "<group>"; };
 		45B9B40D10C309F2DA410440 /* PeriodBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PeriodBar.swift; sourceTree = "<group>"; };
+		C776386F53204D4C6E544836 /* PlanModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanModels.swift; sourceTree = "<group>"; };
+		DC3E1F38CEAB1811A60240BD /* PlansView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlansView.swift; sourceTree = "<group>"; };
 		4F5CAFFCF496277E305DC4E4 /* ProjectDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectDetailView.swift; sourceTree = "<group>"; };
 		4CBC658E2A3D21EEAF2388EC /* ProjectDocs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectDocs.swift; sourceTree = "<group>"; };
 		C5A5EF53C6D7B76F4A56FC27 /* ProjectModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectModels.swift; sourceTree = "<group>"; };
@@ -108,6 +113,7 @@
 		55C8010DA3674BE55AF99ED6 /* QuoteModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuoteModels.swift; sourceTree = "<group>"; };
 		5E16543CFF108FDC96E0C6B6 /* QuotesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuotesView.swift; sourceTree = "<group>"; };
 		92196FB501D5B083E6E7B609 /* ReceiveSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReceiveSheet.swift; sourceTree = "<group>"; };
+		00850D231E0B27BEBE1466C3 /* ReportsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReportsView.swift; sourceTree = "<group>"; };
 		23FC1395DDA99163E7BB7487 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		847681A964433F0F980DF410 /* Routing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Routing.swift; sourceTree = "<group>"; };
 		9E731ACAA5B22BD0A5DCC8CF /* SalesModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SalesModels.swift; sourceTree = "<group>"; };
@@ -173,6 +179,7 @@
 				42671CCBC6E8669BCF2A9F27 /* Format.swift */,
 				56F319BE81315C8753BF9390 /* MeetingModels.swift */,
 				00315442E9DAF7B3CC3ED5A9 /* Models.swift */,
+				C776386F53204D4C6E544836 /* PlanModels.swift */,
 				C5A5EF53C6D7B76F4A56FC27 /* ProjectModels.swift */,
 				4F864F26CE1CBE1654BE5B1A /* ProjectOpsModels.swift */,
 				55C8010DA3674BE55AF99ED6 /* QuoteModels.swift */,
@@ -206,6 +213,7 @@
 				34245588C64BDAE7C90CFCFB /* OverviewView.swift */,
 				52134ED88743F6DB7EA9AD3B /* PartnersView.swift */,
 				45B9B40D10C309F2DA410440 /* PeriodBar.swift */,
+				DC3E1F38CEAB1811A60240BD /* PlansView.swift */,
 				4F5CAFFCF496277E305DC4E4 /* ProjectDetailView.swift */,
 				4CBC658E2A3D21EEAF2388EC /* ProjectDocs.swift */,
 				AF184329246D455F53B1A775 /* ProjectSheets.swift */,
@@ -214,6 +222,7 @@
 				5BE628CDA0C02EA5B30A17B2 /* QuarterView.swift */,
 				5E16543CFF108FDC96E0C6B6 /* QuotesView.swift */,
 				92196FB501D5B083E6E7B609 /* ReceiveSheet.swift */,
+				00850D231E0B27BEBE1466C3 /* ReportsView.swift */,
 				23FC1395DDA99163E7BB7487 /* RootView.swift */,
 				847681A964433F0F980DF410 /* Routing.swift */,
 				46942E167CEA9090F443071F /* SalesView.swift */,
@@ -334,6 +343,8 @@
 				F532ED040701AB19A54DB4D9 /* OverviewView.swift in Sources */,
 				718877D5011BFFED260113F2 /* PartnersView.swift in Sources */,
 				E9BAADBBA62FB64876C5CF90 /* PeriodBar.swift in Sources */,
+				484778F49BE88C8706AC2C68 /* PlanModels.swift in Sources */,
+				6E3462FF172435AE508DCEA4 /* PlansView.swift in Sources */,
 				D26BF7A8214E4D68FB3AF938 /* ProjectDetailView.swift in Sources */,
 				AF6BF7FDA6078F772D2DFCAD /* ProjectDocs.swift in Sources */,
 				59E6DDE312BBB17209772C1C /* ProjectModels.swift in Sources */,
@@ -345,6 +356,7 @@
 				A515A34034E8D5D7CDE7F2DA /* QuoteModels.swift in Sources */,
 				7815121FED1C0694E207C6B5 /* QuotesView.swift in Sources */,
 				1DBB3A842F02163614F44FAB /* ReceiveSheet.swift in Sources */,
+				19993EEFDEA070A26156989D /* ReportsView.swift in Sources */,
 				E1F3EC802D75BAE3B9FEFD79 /* RootView.swift in Sources */,
 				1C37A726B2DEC37D5CC1619D /* Routing.swift in Sources */,
 				B4319087A2F5EAA78DC4856B /* SalesModels.swift in Sources */,

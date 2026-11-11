@@ -184,7 +184,7 @@ struct AuditLogView: View {
         .navigationBarTitleDisplayMode(.inline)
         .refreshable { await load() }
         .task(id: "\(entity)|\(user)|\(from.map(Fmt.isoDay) ?? "")|\(to.map(Fmt.isoDay) ?? "")") { await load() }
-        .task { if session.me?.can("team.view") == true { users = (try? await APIClient.shared.teamUsers()) ?? [] } }
+        .task { if session.me?.can("team.view") == true { users = (try? await APIClient.shared.teamMembers()) ?? [] } }
     }
 
     private func row(_ e: AuditEntry) -> some View {
@@ -304,7 +304,7 @@ struct TeamView: View {
 
     private func load() async {
         do {
-            users = try await APIClient.shared.teamUsers()
+            users = try await APIClient.shared.teamMembers()
             roles = (try? await APIClient.shared.teamRoles()) ?? roles
             error = nil
         } catch {

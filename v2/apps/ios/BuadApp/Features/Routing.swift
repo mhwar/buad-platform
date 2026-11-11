@@ -21,6 +21,8 @@ enum AppRoute: Identifiable, Hashable {
     case meeting(String)
     case decisions
     case settings
+    case plans
+    case reports
     case audit
     case team
     case account
@@ -43,6 +45,8 @@ enum AppRoute: Identifiable, Hashable {
         case .meeting(let i): return "meeting-\(i)"
         case .decisions: return "decisions"
         case .settings: return "settings"
+        case .plans: return "plans"
+        case .reports: return "reports"
         case .audit: return "audit"
         case .team: return "team"
         case .account: return "account"
@@ -76,7 +80,7 @@ enum AppRoute: Identifiable, Hashable {
             if let open = q.split(separator: "&").first(where: { $0.hasPrefix("open=") }) { return .meeting(String(open.dropFirst(5))) }
             return .meetings
         case "decisions": return .decisions
-        case "plans": return .soon("الخطط والأهداف")
+        case "plans": return .plans
         case "products": return .soon("المنتجات والخدمات")
         case "settings":
             if p.count >= 2, p[1] == "activity" { return .audit }
@@ -84,7 +88,7 @@ enum AppRoute: Identifiable, Hashable {
             if p.count >= 2, p[1] == "account" { return .account }
             return .settings
         case "account": return .account
-        case "reports": return .soon("التقارير")
+        case "reports": return .reports
         default: return .soon("هذا القسم")
         }
     }
@@ -146,6 +150,8 @@ struct RouteSheet: View {
         case .meeting(let id): MeetingPage(id: id) {}
         case .decisions: DecisionsView()
         case .settings: SettingsHubView()
+        case .plans: PlansView()
+        case .reports: ReportsHubView()
         case .audit: AuditLogView()
         case .team: TeamView()
         case .account: AccountView()
