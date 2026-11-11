@@ -88,10 +88,16 @@ struct Opportunity: Decodable, Identifiable, Hashable {
     let createdAt: Int
     let updatedAt: Int
     let interest: Bool
+    /// What they filled in on the request form (question → answer).
+    let answers: [String: String]
+    /// When it last changed stage (epoch seconds; 0 = never moved).
+    let stageChangedAt: Int
+    /// «التسعير من الخدمة»: the priced package. Cost, profit and margin come only with finance.profit.
+    let pricing: OpportunityPricing?
 
     private enum K: String, CodingKey {
         case id, name, entity, phone, email, message, notes, status, source, productName, clientId, projectId, ownerId, draftProjectId
-        case followUpAt, value, lostReason, createdAt, updatedAt, interest
+        case followUpAt, value, lostReason, createdAt, updatedAt, interest, answers, stageChangedAt, quote
     }
 
     init(from decoder: Decoder) throws {
@@ -102,12 +108,74 @@ struct Opportunity: Decodable, Identifiable, Hashable {
         projectId = c.string(.projectId); draftProjectId = c.string(.draftProjectId); ownerId = c.string(.ownerId); followUpAt = c.string(.followUpAt)
         value = c.halalasFromRiyals(.value); lostReason = c.string(.lostReason)
         createdAt = c.int(.createdAt); updatedAt = c.int(.updatedAt); interest = c.bool(.interest)
+        answers = (try? c.decode([String: String].self, forKey: .answers)) ?? [:]
+        stageChangedAt = c.int(.stageChangedAt)
+        pricing = try? c.decode(OpportunityPricing.self, forKey: .quote)
     }
 
     static func == (a: Opportunity, b: Opportunity) -> Bool { a.id == b.id }
     func hash(into h: inout Hasher) { h.combine(id) }
 
     var isOpen: Bool { Sales.openStages.contains(status) }
+
+    /// Whole days since a moment in epoch seconds.
+    static func days(since seconds: Int) -> Int { max(0, Int((Date().timeIntervalSince1970 - Double(seconds)) / 86_400)) }
+    var ageDays: Int { Self.days(since: createdAt) }
+    /// Days in the current stage: since the last move, or since it arrived when it never moved.
+    var stageDays: Int { Self.days(since: stageChangedAt > 0 ? stageChangedAt : createdAt) }
+}
+
+/// The priced quote kept on an opportunity (product_requests.quote). Riyals on the wire, halalas here.
+/// `profit`, `cost` and `marginPct` are nil for roles without «إظهار الأرباح».
+struct OpportunityPricing: Decodable {
+    struct Line: Identifiable {
+        let id = UUID()
+        let label: String
+        let qty: Double
+        let unitCost: Int?
+        let amount: Int?
+    }
+
+    let packageName: String
+    let times: Double
+    let price: Int
+    let vat: Int
+    let total: Int
+    let cost: Int?
+    let profit: Int?
+    let marginPct: Double?
+    let lines: [Line]
+
+    private struct Key: CodingKey {
+        var stringValue: String
+        var intValue: Int? { nil }
+        init(stringValue: String) { self.stringValue = stringValue }
+        init?(intValue: Int) { nil }
+        init(_ s: String) { stringValue = s }
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: Key.self)
+        packageName = c.string(Key("packageName"))
+        guard !packageName.isEmpty || c.contains(Key("price")) else { throw DecodingError.dataCorruptedError(forKey: Key("price"), in: c, debugDescription: "empty quote") }
+        times = c.double(Key("times"))
+        price = c.halalasFromRiyals(Key("price")); vat = c.halalasFromRiyals(Key("vat")); total = c.halalasFromRiyals(Key("total"))
+        cost = c.contains(Key("cost")) ? c.halalasFromRiyals(Key("cost")) : nil
+        profit = c.contains(Key("profit")) ? c.halalasFromRiyals(Key("profit")) : nil
+        marginPct = c.contains(Key("marginPct")) ? c.double(Key("marginPct")) : nil
+        var list: [Line] = []
+        if var arr = try? c.nestedUnkeyedContainer(forKey: Key("lines")) {
+            while !arr.isAtEnd {
+                guard let l = try? arr.nestedContainer(keyedBy: Key.self) else { break }
+                list.append(Line(label: l.string(Key("label")), qty: l.double(Key("qty")),
+                                 unitCost: l.contains(Key("unitCost")) ? l.halalasFromRiyals(Key("unitCost")) : nil,
+                                 amount: l.contains(Key("amount")) ? l.halalasFromRiyals(Key("amount")) : nil))
+            }
+        }
+        lines = list
+    }
+
+    var seesProfit: Bool { profit != nil }
 }
 
 struct OpportunitiesEnvelope: Decodable {
@@ -175,6 +243,18 @@ struct SalesOverview: Decodable {
     let acceptedValue: Int
     let expiring: [QuoteBrief]
     let waiting: [QuoteBrief]
+    /// The average offer's value (halalas).
+    let avgValue: Int
+    /// Where leads came from, and how many of them were won (the period's leads).
+    let sources: [Source]
+    /// Won value by month, the last twelve (halalas).
+    let monthlyWon: [MonthWon]
+    /// The clients with the largest contracts (halalas).
+    let topClients: [TopClient]
+
+    struct Source: Identifiable { let source: String; let total: Int; let won: Int; let rate: Double?; var id: String { source } }
+    struct MonthWon: Identifiable { let month: String; let value: Int; var id: String { month } }
+    struct TopClient: Identifiable { let id: String; let name: String; let value: Int }
 
     private struct Key: CodingKey {
         var stringValue: String
@@ -232,5 +312,31 @@ struct SalesOverview: Decodable {
         }
         expiring = briefs("expiring")
         waiting = briefs("waiting")
+        avgValue = q.halalasFromRiyals(Key("avgValue"))
+        var src: [Source] = []
+        if var arr = try? c.nestedUnkeyedContainer(forKey: Key("sources")) {
+            while !arr.isAtEnd {
+                guard let x = try? arr.nestedContainer(keyedBy: Key.self) else { break }
+                src.append(Source(source: x.string(Key("source")), total: x.int(Key("total")), won: x.int(Key("won")),
+                                  rate: try? x.decodeIfPresent(Double.self, forKey: Key("rate"))))
+            }
+        }
+        sources = src
+        var months: [MonthWon] = []
+        if var arr = try? c.nestedUnkeyedContainer(forKey: Key("monthlyWon")) {
+            while !arr.isAtEnd {
+                guard let x = try? arr.nestedContainer(keyedBy: Key.self) else { break }
+                months.append(MonthWon(month: x.string(Key("month")), value: x.halalasFromRiyals(Key("value"))))
+            }
+        }
+        monthlyWon = months
+        var tops: [TopClient] = []
+        if var arr = try? c.nestedUnkeyedContainer(forKey: Key("topClients")) {
+            while !arr.isAtEnd {
+                guard let x = try? arr.nestedContainer(keyedBy: Key.self) else { break }
+                tops.append(TopClient(id: x.string(Key("id")), name: x.string(Key("name")), value: x.halalasFromRiyals(Key("value"))))
+            }
+        }
+        topClients = tops
     }
 }
