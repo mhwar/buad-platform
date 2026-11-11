@@ -96,7 +96,7 @@ LD_RUNPATH_SEARCH_PATHS = (
 	"$(inherited)",
 	"@executable_path/Frameworks",
 );
-MARKETING_VERSION = 0.6.0;
+MARKETING_VERSION = 0.7.0;
 PRODUCT_BUNDLE_IDENTIFIER = sa.buad.app;
 PRODUCT_NAME = BuadApp;
 SDKROOT = iphoneos;

@@ -30,7 +30,7 @@ enum APIError: Error, Equatable {
         case .similarName(let name):
             return "يوجد عميل باسم مشابه" + (name.isEmpty ? "" : " («\(name)»)") + ". هل تريد إنشاء عميل جديد رغم ذلك؟"
         case .rejected(let code):
-            if let q = QuoteVocabulary.error(code) ?? ProjectVocabulary.error(code) { return q }
+            if let q = QuoteVocabulary.error(code) ?? ProjectVocabulary.error(code) ?? MeetingVocabulary.error(code) { return q }
             switch code {
             case "end_before_start": return "تاريخ الاستحقاق قبل تاريخ البداية."
             case "not_found": return "لم يعد هذا العنصر موجوداً أو لا تملك صلاحية الوصول إليه."
@@ -615,6 +615,61 @@ final class APIClient: @unchecked Sendable {
         if !q.isEmpty, let e = q.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) { items.append("q=\(e)") }
         let r: RegisterEnvelope = try await send("GET", "/api/documents" + (items.isEmpty ? "" : "?" + items.joined(separator: "&")))
         return r.items
+    }
+
+    // MARK: 0.7.0 — meetings and decisions (workspace.ts)
+
+    func meetings(mine: Bool = false, projectId: String = "", clientId: String = "", requestId: String = "") async throws -> [Meeting] {
+        var q: [String] = []
+        if mine { q.append("mine=1") }
+        if !projectId.isEmpty { q.append("projectId=\(projectId)") }
+        if !clientId.isEmpty { q.append("clientId=\(clientId)") }
+        if !requestId.isEmpty { q.append("requestId=\(requestId)") }
+        let r: MeetingsEnvelope = try await send("GET", "/api/meetings" + (q.isEmpty ? "" : "?" + q.joined(separator: "&")))
+        return r.items
+    }
+
+    func meeting(_ id: String) async throws -> MeetingDetail { try await send("GET", "/api/meetings/\(id)") }
+
+    func createMeeting(_ body: [String: Any]) async throws -> String {
+        let r: CreatedEnvelope = try await send("POST", "/api/meetings", body: body)
+        return r.id
+    }
+
+    func updateMeeting(_ id: String, _ fields: [String: Any]) async throws {
+        let _: OKEnvelope = try await send("PATCH", "/api/meetings/\(id)", body: fields)
+    }
+
+    func deleteMeeting(_ id: String) async throws { let _: OKEnvelope = try await send("DELETE", "/api/meetings/\(id)") }
+
+    func decisions(status: String = "", mine: Bool = false) async throws -> [DecisionItem] {
+        var q: [String] = []
+        if !status.isEmpty { q.append("status=\(status)") }
+        if mine { q.append("mine=1") }
+        let r: DecisionsEnvelope = try await send("GET", "/api/decisions" + (q.isEmpty ? "" : "?" + q.joined(separator: "&")))
+        return r.items
+    }
+
+    func createDecision(_ body: [String: Any]) async throws {
+        let _: CreatedEnvelope = try await send("POST", "/api/decisions", body: body)
+    }
+
+    func updateDecision(_ id: String, _ fields: [String: Any]) async throws {
+        let _: OKEnvelope = try await send("PATCH", "/api/decisions/\(id)", body: fields)
+    }
+
+    func deleteDecision(_ id: String) async throws { let _: OKEnvelope = try await send("DELETE", "/api/decisions/\(id)") }
+
+    /// «تحويل إلى مهمة»: same owner, date and project, linked both ways (tasks.edit).
+    func decisionToTask(_ id: String) async throws {
+        let _: OKEnvelope = try await send("POST", "/api/decisions/\(id)/task")
+    }
+
+    /// «اكسب وحوّل إلى مشروع» from the opportunity: the client (existing, or made from it) and a draft project.
+    func convertOpportunity(_ id: String, projectName: String, clientId: String?, confirmSimilarName: Bool) async throws -> ConvertResult {
+        var body: [String: Any] = ["projectName": projectName, "confirmSimilarName": confirmSimilarName]
+        if let clientId, !clientId.isEmpty { body["clientId"] = clientId }
+        return try await send("POST", "/api/product-requests/\(id)/convert", body: body)
     }
 
     func signOut() async {

@@ -17,6 +17,9 @@ enum AppRoute: Identifiable, Hashable {
     case followups
     case finance
     case documents
+    case meetings
+    case meeting(String)
+    case decisions
     case soon(String)
 
     var id: String {
@@ -32,6 +35,9 @@ enum AppRoute: Identifiable, Hashable {
         case .followups: return "followups"
         case .finance: return "finance"
         case .documents: return "documents"
+        case .meetings: return "meetings"
+        case .meeting(let i): return "meeting-\(i)"
+        case .decisions: return "decisions"
         case .soon(let s): return "soon-\(s)"
         }
     }
@@ -58,13 +64,15 @@ enum AppRoute: Identifiable, Hashable {
         case "tasks": return .tasks
         case "finance": return .finance
         case "documents": return .documents
-        case "meetings": return .soon("الاجتماعات")
-        case "decisions": return .soon("القرارات")
+        case "meetings":
+            if let open = q.split(separator: "&").first(where: { $0.hasPrefix("open=") }) { return .meeting(String(open.dropFirst(5))) }
+            return .meetings
+        case "decisions": return .decisions
         case "plans": return .soon("الخطط والأهداف")
         case "products": return .soon("المنتجات والخدمات")
         case "settings": return .soon("الإعدادات")
         case "reports": return .soon("التقارير")
-        default: _ = q; return .soon("هذا القسم")
+        default: return .soon("هذا القسم")
         }
     }
 }
@@ -121,6 +129,9 @@ struct RouteSheet: View {
         case .followups: FollowupsView()
         case .finance: FinanceView(embedded: true)
         case .documents: DocumentsRegisterView()
+        case .meetings: MeetingsView()
+        case .meeting(let id): MeetingPage(id: id) {}
+        case .decisions: DecisionsView()
         case .soon(let name): SoonView(name: name)
         case .tab, .quotes: EmptyView()
         }
@@ -132,8 +143,6 @@ struct SoonView: View {
     let name: String
 
     static let notes: [String: String] = [
-        "الاجتماعات": "محاضر الاجتماعات وربطها بالمشروع أو العميل أو الفرصة، وقراراتها.",
-        "القرارات": "قرارات الاجتماعات وتحويل القرار إلى مهمة بمسؤول وموعد.",
         "الخطط والأهداف": "الخطط والأهداف ومتابعة تقدمها.",
         "المنتجات والخدمات": "الخدمات والباقات والتسعير.",
         "الإعدادات": "بيانات الجهة والفريق والصلاحيات وسجل النشاط.",
