@@ -63,6 +63,7 @@ struct MainTabs: View {
     @StateObject private var center = CreateCenter()
     @StateObject private var nav = Navigator()
     @State private var tab: Tab = .today
+    @State private var quickTask = false
     /// Tapping a section of the dock brings it back to its first page: its screen is made again.
     @State private var resets: [Tab: Int] = [:]
 
@@ -97,6 +98,24 @@ struct MainTabs: View {
         }
         .sheet(item: $nav.sheet) { route in
             RouteSheet(route: route).environmentObject(session).environmentObject(center).environmentObject(nav)
+        }
+        .sheet(isPresented: $quickTask) {
+            TaskSheet(projectId: "", stages: [], existing: nil) { m in center.toast = ToastItem(text: m) }
+                .environmentObject(session)
+        }
+        .onOpenURL { url in
+            switch DeepLink.parse(url) {
+            case .create(let what):
+                switch what {
+                case "opportunity" where me.can("sales.edit"): center.sheet = .opportunity
+                case "quote" where me.can("sales.edit"): center.sheet = .quote
+                case "client" where me.can("clients.edit"): center.sheet = .client
+                case "task" where me.can("tasks.edit"): quickTask = true
+                default: break
+                }
+            case .open(let path): nav.open(path)
+            case nil: break
+            }
         }
         .onChange(of: nav.tabRequest) { _, wanted in
             guard let wanted else { return }

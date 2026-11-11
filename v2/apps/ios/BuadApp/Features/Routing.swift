@@ -121,6 +121,29 @@ final class Navigator: ObservableObject {
 
 }
 
+/// The app's own links, for a home-screen widget or a shortcut: «buad://new/opportunity» opens the form,
+/// «buad://open/projects/…» opens a page by its website path. Anything else is ignored.
+enum DeepLink {
+    enum Action: Equatable {
+        case create(String)
+        case open(String)
+    }
+
+    static func parse(_ url: URL) -> Action? {
+        guard url.scheme == "buad", let host = url.host else { return nil }
+        let rest = url.path.split(separator: "/").map(String.init)
+        switch host {
+        case "new":
+            guard let what = rest.first, ["opportunity", "quote", "client", "task"].contains(what) else { return nil }
+            return .create(what)
+        case "open":
+            return rest.isEmpty ? nil : .open("/" + rest.joined(separator: "/"))
+        default:
+            return nil
+        }
+    }
+}
+
 /// A route shown over the app: its screen in its own navigation, with «إغلاق».
 struct RouteSheet: View {
     @Environment(\.dismiss) private var dismiss
